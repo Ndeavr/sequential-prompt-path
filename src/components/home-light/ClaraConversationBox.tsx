@@ -6,6 +6,7 @@
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Video, X } from "lucide-react";
 
@@ -24,6 +25,7 @@ import {
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
+import { resolveClaraDestination, rewriteGuidance } from "@/services/clara/claraNavigation";
 import {
   logClaraWorkflowEvent,
   nextWorkflowState,
@@ -105,9 +107,11 @@ export default function ClaraConversationBox() {
   const { openAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
+  const navigate = useNavigate();
   const copy = lang === "fr"
     ? {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
+        placeholderActive: "Répondez à Clara…",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Parler à Clara",
@@ -117,6 +121,7 @@ export default function ClaraConversationBox() {
       }
     : {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
+        placeholderActive: "Répondez à Clara…",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Talk to Clara",
@@ -155,6 +160,10 @@ export default function ClaraConversationBox() {
     }
   }, []);
   const hasInteracted = messages.length > 0 || mode !== "IDLE";
+  // La salutation d'accueil n'est permise qu'AVANT toute interaction : texte,
+  // voix ou média. Une fois la conversation démarrée, elle ne revient jamais,
+  // même après un remontage du composant.
+  const conversationStarted = messages.length > 0;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
   const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
 
@@ -188,11 +197,15 @@ export default function ClaraConversationBox() {
     const onVoiceMessage = (event: Event) => {
       const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string };
       if (!detail?.text) return;
-      setMessages((previous) =>
-        previous.some((m) => m.id === detail.id)
-          ? previous
-          : [...previous, { id: detail.id, role: detail.role, text: detail.text }],
-      );
+      // Anti-duplication : même identifiant, ou même énoncé final déjà affiché
+      // (les transcriptions partielles ne doivent jamais créer un doublon).
+      const normalized = detail.text.trim().toLowerCase();
+      setMessages((previous) => {
+        if (previous.some((m) => m.id === detail.id)) return previous;
+        const last = [...previous].reverse().find((m) => m.role === detail.role);
+        if (last && last.text.trim().toLowerCase() === normalized) return previous;
+        return [...previous, { id: detail.id, role: detail.role, text: detail.text }];
+      });
       if (detail.role === "user") {
         setQuickReplies(null);
         const nextMode = detectSurfaceMode(detail.text);
@@ -254,7 +267,9 @@ export default function ClaraConversationBox() {
 
       // Routeur unique : l'intention ouvre, suspend ou reprend un parcours réel,
       // sans jamais être montrée à l'utilisateur ni perdre l'étape en cours.
-      const detected = detectClaraWorkflowIntent(text).intent;
+      const classified = detectClaraWorkflowIntent(text);
+      const detected = classified.intent;
+      const destination = resolveClaraDestination(detected, classified.confidence);
       logClaraWorkflowEvent("intent_detected", { intent: detected });
       const transition = nextWorkflowState(workflowRef.current, detected);
       if (transition.state !== workflowRef.current) {
@@ -335,8 +350,10 @@ export default function ClaraConversationBox() {
 
         const parsed = extractQuickReplies(full);
         const finalText = cleanAlexText(parsed.text);
+        // Clara ne renvoie jamais l'utilisateur chercher : elle prend en charge.
+        const guidedText = rewriteGuidance(finalText, destination);
         const shownText =
-          finalText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
+          guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
         );
@@ -346,6 +363,17 @@ export default function ClaraConversationBox() {
           text: shownText,
           clientMessageId: assistantId,
         }).catch(() => {});
+
+        // Navigation assistée : Clara ouvre elle-même l'écran réel, en
+        // conservant la session canonique et le contexte déjà recueilli.
+        if (destination) {
+          logClaraWorkflowEvent("workflow_started", { intent: detected, step: destination.path });
+          window.setTimeout(() => {
+            navigate(destination.path, {
+              state: { fromClara: true, claraIntent: detected, claraContext: text },
+            });
+          }, 600);
+        }
       } catch {
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
         setError(copy.fallback);
@@ -565,8 +593,8 @@ export default function ClaraConversationBox() {
           className="home-clara-prompt"
         >
           <PromptInputTextarea
-            aria-label={copy.placeholder}
-            placeholder={copy.placeholder}
+            aria-label={conversationStarted ? copy.placeholderActive : copy.placeholder}
+            placeholder={conversationStarted ? copy.placeholderActive : copy.placeholder}
             disabled={busy}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
