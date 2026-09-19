@@ -1153,6 +1153,15 @@ export default function OverlayAlexVoiceFullScreen() {
                   <MessageSquare className="w-4 h-4" />
                 </Button>
               </div>
+            ) : isPaused ? (
+              <>
+                <Button onClick={handleResumeVoice} className="rounded-full gap-2 px-6" variant="default">
+                  <Sparkles className="w-4 h-4" /> Reprendre
+                </Button>
+                <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
+                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                </Button>
+              </>
             ) : (
               <>
                 <Button onClick={handleClose} variant="destructive" className="rounded-full gap-2 px-8">
