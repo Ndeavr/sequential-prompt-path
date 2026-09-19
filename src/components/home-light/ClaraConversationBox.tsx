@@ -615,17 +615,45 @@ export default function ClaraConversationBox() {
   );
 }
 
-function AttachmentButton({ label }: { label: string }) {
+interface MediaMenuProps {
+  label: string;
+  onTakePhoto: () => void;
+  onChoosePhoto: () => void;
+  onTakeVideo: () => void;
+  onChooseVideo: () => void;
+}
+
+function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
   return (
-    <PromptInputButton
-      type="button"
-      onClick={attachments.openFileDialog}
-      tooltip={label}
-      aria-label={label}
-      className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
-    >
-      <Plus className="h-5 w-5" />
-    </PromptInputButton>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <PromptInputButton
+          type="button"
+          tooltip={label}
+          aria-label={label}
+          className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-5 w-5" />
+        </PromptInputButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuItem onSelect={() => onTakePhoto()}>
+          <Camera className="h-4 w-4" /> Prendre une photo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onChoosePhoto()}>
+          <ImageIcon className="h-4 w-4" /> Choisir une photo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onTakeVideo()}>
+          <Video className="h-4 w-4" /> Prendre une vidéo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onChooseVideo()}>
+          <Video className="h-4 w-4" /> Choisir une vidéo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => attachments.openFileDialog()}>
+          <FileText className="h-4 w-4" /> Joindre un document
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
