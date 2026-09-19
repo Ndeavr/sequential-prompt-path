@@ -175,6 +175,46 @@ export default function ClaraConversationBox() {
     }
   }, []);
   const hasInteracted = messages.length > 0 || mode !== "IDLE";
+
+  /**
+   * Nouvelle conversation : une VRAIE session canonique est créée côté serveur
+   * (nouvel identifiant), l'état local est vidé et l'accueil revient.
+   * Le compte, le profil, la maison et les préférences ne sont jamais touchés.
+   */
+  const startFreshConversation = useCallback(async () => {
+    setConfirmReset(false);
+    // La voix est un canal de la même conversation : on la coupe proprement avant.
+    try {
+      closeAlex();
+    } catch {
+      /* aucune session vocale active */
+    }
+    clearMedia();
+    announcedMedia.current = new Set();
+    workflowRef.current = null;
+    setMessages([]);
+    setQuickReplies(null);
+    setError(null);
+    setQuoteCount(0);
+    setContextStatus(null);
+    setMode("IDLE");
+    try {
+      await startNewClaraSession({ language: lang, entrypoint: "home_clara_box" });
+    } catch {
+      // La conversation reste utilisable : la session sera recréée à la première écriture.
+    }
+    focusComposer();
+  }, [clearMedia, closeAlex, focusComposer, lang]);
+
+  const handleResetClick = useCallback(() => {
+    // Conversation vide : aucune confirmation inutile.
+    if (messages.length === 0 && mediaItems.length === 0) {
+      void startFreshConversation();
+      return;
+    }
+    setConfirmReset((previous) => !previous);
+  }, [mediaItems.length, messages.length, startFreshConversation]);
+
   // La salutation d'accueil n'est permise qu'AVANT toute interaction : texte,
   // voix ou média. Une fois la conversation démarrée, elle ne revient jamais,
   // même après un remontage du composant.
