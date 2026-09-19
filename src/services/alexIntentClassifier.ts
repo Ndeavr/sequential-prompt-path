@@ -90,6 +90,8 @@ const INTENT_RULES: IntentRule[] = [
   ], weight: 80 },
   { intent: "contractor_join_platform", keywords: [
     "rejoindre unpro", "devenir partenaire", "inscription entrepreneur",
+    "je suis entrepreneur", "je suis un entrepreneur", "j'ai une entreprise",
+    "mon entreprise de", "je suis contracteur",
   ], weight: 75 },
   { intent: "contractor_booking_settings", keywords: [
     "configurer disponibilités", "mes créneaux", "heures d'ouverture",
