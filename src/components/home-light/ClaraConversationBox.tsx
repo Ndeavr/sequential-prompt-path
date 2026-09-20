@@ -399,6 +399,34 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, [mediaItems]);
 
+  /**
+   * Ouverture unique : Clara et le bouton visible passent exactement ici.
+   * Aucune confirmation n'est écrite avant que la route ait réellement changé.
+   */
+  const runOpen = useCallback(
+    async (intent: ClaraWorkflowIntent, note?: string) => {
+      const destination = resolveClaraDestination(intent);
+      if (!destination) return false;
+
+      trackCopilotEvent("clara_navigation_attempted", { surface: "home_clara_box", kind: destination.path });
+      logClaraWorkflowEvent("workflow_started", { intent, step: destination.path });
+      const { ok } = await openClaraDestination(navigate, destination, { intent, note });
+
+      const messageId = uid();
+      const text = ok ? openSuccessMessage(destination) : openFailureMessage(destination);
+      setMessages((previous) => [
+        ...previous,
+        { id: messageId, role: "assistant", text, action: ok ? undefined : { label: destinationCtaLabel(destination), intent } },
+      ]);
+      void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
+      trackCopilotEvent(ok ? "clara_navigation_succeeded" : "clara_navigation_failed", {
+        surface: "home_clara_box",
+        kind: destination.path,
+      });
+      return ok;
+    },
+    [navigate],
+  );
 
   const send = useCallback(
     async (raw: string) => {
