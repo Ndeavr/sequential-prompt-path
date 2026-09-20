@@ -97,7 +97,6 @@ const DEFAULT_WEIGHTS = {
   exclusivity_multiplier: 1.45,
   territory_multiplier_per_extra_city: 0.12,
   territory_multiplier_cap: 1.6,
-  volume_per_appointment_cents: 9000,
   objective_multipliers: {
     visibility: 0.85,
     few_projects: 1.0,
