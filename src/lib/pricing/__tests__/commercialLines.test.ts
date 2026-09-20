@@ -51,7 +51,7 @@ describe("détail commercial du plan", () => {
   it("affiche le prix unitaire du métier et le rabais de volume en note", () => {
     const { lines } = buildCommercialLines(roofingQuote, { trade: "toiture" });
     const appt = lines.find((l) => l.label.includes("rendez-vous"))!;
-    expect(appt.sublabel).toContain("111 $ par rendez-vous");
+    expect(appt.sublabel).toMatch(/111\s\$ par rendez-vous/);
     expect(appt.sublabel).toContain("−5 %");
     expect(appt.cents).toBe(132600 - 6630);
   });
