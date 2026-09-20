@@ -583,7 +583,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       clientMessageId: assistantId,
     }).catch(() => undefined);
     await finishContractorTransition(note);
-  }, [busy, finishContractorTransition]);
+  }, [finishContractorTransition]);
 
   useEffect(() => {
     const onVoiceFinished = (event: Event) => {
