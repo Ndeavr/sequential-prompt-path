@@ -44,7 +44,11 @@ interface Input {
   total_price_cents?: number;
   /** Delivery window of the pack guarantee (months). */
   guarantee_duration_months?: number;
+  /** Rendez-vous exclusifs réellement souhaités par mois (jamais un objectif de contrats). */
   target_monthly_appointments: number;
+  /** Objectif de contrats — distinct des rendez-vous et de la capacité. */
+  contract_goal_value?: number;
+  contract_goal_unit?: "month" | "year";
   average_project_value: number; // CAD dollars
   monthly_capacity: number;
   close_rate_estimate: number; // 0..1 or 0..100
