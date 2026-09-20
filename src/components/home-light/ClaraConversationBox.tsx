@@ -557,7 +557,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [busy, copy.fallback, focusComposer, messages],
+    [busy, copy.fallback, focusComposer, messages, runOpen],
   );
 
   const chooseQuickReply = useCallback(
@@ -569,13 +569,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         cameraRef.current?.click();
         return;
       }
+      // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
+      if (/^ouvrir\b/i.test(option) && lastIntentRef.current) {
+        void runOpen(lastIntentRef.current);
+        return;
+      }
       if (/^autre$/i.test(option)) {
         focusComposer();
         return;
       }
       void send(option);
     },
-    [busy, focusComposer, send],
+    [busy, focusComposer, runOpen, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
