@@ -558,6 +558,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           files.push(prepared.file);
         }
         const quoteMode = mode === "QUOTE" || files.length > 1 || files.some((file) => /pdf/i.test(file.type));
+        let analysisContinuation: string | null = null;
         if (quoteMode) {
           setMode("QUOTE");
           setQuoteCount(files.length);
@@ -565,13 +566,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           const analysis = await runQuoteAnalysis(files.slice(0, 3));
           const recommendation = analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.";
           setContextStatus(recommendation);
-          const analysisMessageId = uid();
-          setMessages((previous) => [...previous, { id: analysisMessageId, role: "assistant", text: recommendation }]);
-          void appendClaraMessage({
-            role: "assistant",
-            text: recommendation,
-            clientMessageId: analysisMessageId,
-          }).catch(() => {});
+          analysisContinuation = recommendation;
         } else {
           const first = files[0];
           if (first) {
@@ -609,6 +604,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           messageType: "attachment",
           clientMessageId: uploadId,
         }).catch(() => {});
+        if (analysisContinuation) {
+          const analysisMessageId = uid();
+          setMessages((previous) => [...previous, { id: analysisMessageId, role: "assistant", text: analysisContinuation as string }]);
+          void appendClaraMessage({
+            role: "assistant",
+            text: analysisContinuation,
+            clientMessageId: analysisMessageId,
+          }).catch(() => {});
+        }
         trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", count: files.length });
         trackCopilotEvent("clara_attachment_selected", { surface: "home_clara_box", count: files.length });
       } catch {
