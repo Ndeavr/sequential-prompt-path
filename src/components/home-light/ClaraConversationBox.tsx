@@ -269,6 +269,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const activationTracked = useRef(false);
   const keyboardWasOpen = useRef(false);
   const contractorTransitionRef = useRef(false);
+  /** Question de qualification en attente de réponse (une seule à la fois). */
+  const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
