@@ -263,8 +263,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const contractorTransitionRef = useRef(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => {
-    mountedRef.current = false;
+  useEffect(() => {
+    // Remonté explicitement : en double montage (StrictMode), le nettoyage du
+    // premier passage laissait la carte définitivement « démontée ».
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const createLocalPreview = useCallback((file: File) => {
