@@ -554,7 +554,16 @@ Deno.serve(async (req) => {
 
       await db.from("ai_recommendation_audit_events").insert([
         { audit_id: audit.id, event_type: "audit_started", metadata: { query: queryText, kind } },
-        { audit_id: audit.id, event_type: "audit_completed", metadata: { score, gaps: gaps.length } },
+        {
+          audit_id: audit.id,
+          event_type: "audit_completed",
+          metadata: {
+            score,
+            gaps: gaps.length,
+            business_city_provenance: businessCity.provenance,
+            ...(cityMismatch ? { city_mismatch: cityMismatch } : {}),
+          },
+        },
       ]);
 
       return json({
