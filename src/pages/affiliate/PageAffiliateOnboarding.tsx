@@ -220,7 +220,8 @@ export default function PageAffiliateOnboarding() {
   }
 
   async function activate() {
-    if (!user) return;
+    if (!user || busy) return;
+    setActivationError(null);
     setBusy(true);
     try {
       const stored = getStoredAttribution();
