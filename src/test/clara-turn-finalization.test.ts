@@ -52,9 +52,16 @@ describe("Clara — réponses rapides", () => {
     expect(options).toEqual([]);
   });
 
-  it("limite à six options", () => {
+  it("limite les choix généraux à quatre options", () => {
     const { options } = extractQuickReplies("Q\n[[CHOIX: 1 | 2 | 3 | 4 | 5 | 6 | 7]]");
-    expect(options).toHaveLength(6);
+    expect(options).toHaveLength(4);
+  });
+
+  it("normalise une demande de photo vers deux choix temporaires", () => {
+    const { options } = extractQuickReplies(
+      "Pouvez-vous ajouter une photo ?\n[[CHOIX: Prendre une photo | Galerie | Plus tard | Autre]]",
+    );
+    expect(options).toEqual(["📷 Ajouter une photo", "Continuer sans photo"]);
   });
 
   it("envoie le choix comme un vrai message utilisateur", () => {

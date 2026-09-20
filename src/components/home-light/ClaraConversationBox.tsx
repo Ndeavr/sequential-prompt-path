@@ -777,7 +777,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           maxFiles={5}
           maxFileSize={50 * 1024 * 1024}
           onSubmit={submit}
-          onError={() => setError(copy.fallback)}
+          onError={() => setError("Impossible d’ajouter ce fichier. Choisir un autre fichier.")}
           className="home-clara-prompt"
         >
           <PromptInputTextarea
