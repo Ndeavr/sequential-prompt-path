@@ -44,5 +44,14 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain('alt="Photo ajoutée"');
     expect(box).toContain('title="Nouveau message"');
     expect(box).toContain('item.kind === "photo" ? "Photo ajoutée"');
+    expect(box).toContain('aria-label="Réessayer ce fichier"');
+    expect(box).toContain('aria-label="Retirer ce fichier"');
+  });
+
+  it("nettoie les aperçus locaux et poursuit une analyse de soumissions dans le même fil", () => {
+    expect(box).toContain("localPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))");
+    expect(box).toContain("await appendClaraMessage({");
+    expect(box).toContain("analysisContinuation");
+    expect(box).toContain('role: "assistant"');
   });
 });
