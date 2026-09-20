@@ -182,7 +182,9 @@ Deno.serve(async (req) => {
     const ua = req.headers.get("user-agent") ?? null;
     const { error: termsErr } = await sb.from("partner_terms_acceptance").upsert(
       {
-        partner_id: row.id,
+        // partner_id référence la table des partenaires d'affaires : pour une
+        // affiliée, la preuve d'acceptation est rattachée au compte utilisateur.
+        partner_id: null,
         user_id: user.id,
         role: "affiliate",
         terms_version: TERMS_VERSION,
@@ -191,7 +193,7 @@ Deno.serve(async (req) => {
         ip_address: ip,
         user_agent: ua,
       },
-      { onConflict: "partner_id,role,terms_version" }
+      { onConflict: "user_id,role,terms_version" }
     );
     // La preuve d'acceptation est exigée : pas d'activation silencieuse sans trace.
     if (termsErr) {
