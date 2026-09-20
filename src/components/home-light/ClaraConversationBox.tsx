@@ -780,6 +780,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     </ul>
                   )}
                   <MessageResponse>{message.text}</MessageResponse>
+                  {message.action && (
+                    <div className="home-clara-quick" role="group" aria-label="Action proposée">
+                      <button type="button" onClick={() => void runOpen(message.action!.intent as ClaraWorkflowIntent)}>
+                        {message.action.label}
+                      </button>
+                    </div>
+                  )}
                 </MessageContent>
               </Message>
             ))}
