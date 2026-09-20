@@ -27,7 +27,7 @@ const DESTINATIONS: Record<ClaraWorkflowIntent, ClaraDestination | null> = {
   quote_comparison: { path: "/compare-quotes", spoken: "Oui — je vous y amène." },
   quote_analysis: { path: "/compare-quotes", spoken: "Oui — je vous y amène." },
   contractor_verification: { path: "/verifier-un-entrepreneur", spoken: "Oui — je vous y amène." },
-  contractor_onboarding: { path: "/entrepreneur/onboarding", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir le formulaire" },
+  contractor_onboarding: { path: "/entrepreneurs/audit-ia", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir mon audit gratuit" },
   affiliate_onboarding: { path: "/affilies/onboarding", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir le formulaire" },
   design_generation: { path: "/design", spoken: "Oui — je vous y amène." },
   photo_problem_analysis: null,

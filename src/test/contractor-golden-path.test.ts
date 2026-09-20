@@ -14,11 +14,11 @@ import {
 const read = (p: string) => readFileSync(p, "utf8");
 
 describe("Parcours entrepreneur — entrée unique", () => {
-  it("la route /entrepreneur/onboarding rend l'entrée unique", () => {
+  it("les anciennes entrées redirigent vers l'audit IA en gardant l'attribution", () => {
     const router = read("src/app/router.tsx");
-    expect(router).toContain(
-      '<Route path="/entrepreneur/onboarding" element={<Suspense fallback={<LazyFallback />}><PageContractorOnboardingEntry /></Suspense>} />',
-    );
+    for (const path of ["/entrepreneur/onboarding", "/entrepreneur/join", "/join"]) {
+      expect(router).toContain(`<Route path="${path}" element={<LegacyRedirect to="/entrepreneurs/audit-ia" />} />`);
+    }
   });
 
   it("l'entrée ouvre l'analyse d'entreprise, le formulaire restant en repli", () => {
@@ -29,7 +29,7 @@ describe("Parcours entrepreneur — entrée unique", () => {
 
   it("Clara conduit vers cette entrée unique, jamais vers une route parallèle", () => {
     const nav = read("src/services/clara/claraNavigation.ts");
-    expect(nav).toContain('contractor_onboarding: { path: "/entrepreneur/onboarding"');
+    expect(nav).toContain('contractor_onboarding: { path: "/entrepreneurs/audit-ia"');
   });
 });
 
@@ -81,6 +81,15 @@ describe("Parcours entrepreneur — points d'abandon", () => {
   it("le paiement et l'activation restent journalisés côté serveur", () => {
     const webhook = read("supabase/functions/stripe-webhook/index.ts");
     expect(webhook).toContain("payment_completed:${session.id}");
-    expect(webhook).toContain("contractor_activated:${session.id}");
+    expect(webhook).toContain("profile_activated:${session.id}");
+  });
+
+  it("l'abandon avant paiement crée un lead de relance unique et se ferme au paiement", () => {
+    const relance = read("supabase/functions/contractor-relance-abandon/index.ts");
+    expect(relance).toContain("contractor_leads");
+    expect(relance).toContain("checkout_abandon");
+    expect(relance).toContain("contractor-abandon-admin-alert");
+    const webhook = read("supabase/functions/stripe-webhook/index.ts");
+    expect(webhook).toContain('body: { action: "close", quote_id: quoteId }');
   });
 });

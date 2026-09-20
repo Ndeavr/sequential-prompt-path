@@ -26,7 +26,7 @@ const patternFallbacks: Array<{ pattern: RegExp; fallback: string; intent: strin
   { pattern: /^\/admin/, fallback: "/admin", intent: "admin" },
   { pattern: /^\/pro/, fallback: "/pro", intent: "contractor" },
   { pattern: /^\/dashboard/, fallback: "/dashboard", intent: "homeowner" },
-  { pattern: /^\/entrepreneur/, fallback: "/entrepreneur/onboarding-voice", intent: "contractor_onboarding" },
+  { pattern: /^\/entrepreneur/, fallback: "/entrepreneurs/audit-ia", intent: "contractor_onboarding" },
   { pattern: /^\/checkout/, fallback: "/tarifs", intent: "checkout" },
   { pattern: /^\/booking/, fallback: "/", intent: "booking" },
   { pattern: /^\/services\//, fallback: "/services", intent: "services" },
