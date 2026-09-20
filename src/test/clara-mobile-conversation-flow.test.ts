@@ -35,7 +35,8 @@ describe("Clara mobile — conversation compacte", () => {
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {
     expect(queue.indexOf("prepareImageForUpload")).toBeLessThan(queue.indexOf("validateFile(payload)"));
     expect(upload).toContain('return { ok: false, error: "Cette photo n’a pas été envoyée. Réessayer." }');
-    expect(upload).not.toContain("return { ok: true, file: guestFile() };");
+    expect(upload).toMatch(/if \(!userId \|\| !accessToken\)[\s\S]*return \{ ok: true, file: guestFile\(\) \};/);
+    expect(upload).toMatch(/if \(!uploaded\.ok\)[\s\S]*return \{ ok: false, error:/);
   });
 
   it("masque les noms techniques de photos et fournit un retour au dernier message accessible", () => {

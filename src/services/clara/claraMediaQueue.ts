@@ -116,6 +116,7 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
 
       patch(id, { progress: 1, uploaded: uploadResult.file, status: "analyzing" });
       void logClaraWorkflowEvent("media_upload_completed");
+      trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", kind: item.kind });
       trackCopilotEvent("clara_attachment_uploaded", { surface: "home_clara_box", kind: item.kind });
 
       if (item.kind === "document") {
