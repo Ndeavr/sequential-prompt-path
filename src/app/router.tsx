@@ -1381,11 +1381,12 @@ export const AppRouter = () => (
         <Route path="/sitemap" element={<SeoSitemapPage />} />
         <Route path="/accessibilite" element={<StaticContentPage slug="accessibilite" />} />
 
-        {/* Entrepreneur Onboarding Flow */}
-        <Route path="/entrepreneur/onboarding/import" element={<PageOnboardingImport />} />
-        <Route path="/entrepreneur/onboarding/analyse" element={<PageOnboardingAnalyse />} />
-        <Route path="/entrepreneur/onboarding/plan" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
-        <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
+        {/* Parcours entrepreneur — chemin canonique unique.
+            Les anciennes étapes parallèles redirigent, attribution préservée. */}
+        <Route path="/entrepreneur/onboarding/import" element={<LegacyRedirect to="/entrepreneur/onboarding" />} />
+        <Route path="/entrepreneur/onboarding/analyse" element={<LegacyRedirect to="/entrepreneur/onboarding" />} />
+        <Route path="/entrepreneur/onboarding/plan" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
+        <Route path="/entrepreneur/onboarding/payment" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
         <Route path="/entrepreneur/vision-5-ans/:companyId" element={<PageVision5Ans />} />
         <Route path="/entrepreneur/vision-5-ans" element={<PageVision5Ans />} />
