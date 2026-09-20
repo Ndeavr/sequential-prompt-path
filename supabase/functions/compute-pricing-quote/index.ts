@@ -1092,7 +1092,7 @@ Deno.serve(async (req) => {
       volume_discount_rate: chain.volume_discount_rate,
       volume_discount_cents: chain.volume_discount_cents,
       monthly_cap_applied: false,
-      reference_cap_cents: referenceCapCents,
+
       monthly_budget_cents: monthlyBudgetCents,
       guaranteed_appointments: guaranteedAppointments,
       budget_solve: budgetSolve,
