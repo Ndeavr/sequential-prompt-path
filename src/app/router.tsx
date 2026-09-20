@@ -677,7 +677,7 @@ const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entreprene
 const PageMatchingProfileWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageMatchingProfileWizard"));
 const PageForfaitGrowthCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageForfaitGrowthCalculator"));
 
-const PagePlanResult = lazyWithRetry(() => import("@/pages/entrepreneur/PagePlanResult"));
+
 const PageEntrepreneurGoalToPlanLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurGoalToPlanLanding"));
 const PagePaymentSuccess = lazyWithRetry(() => import("@/pages/entrepreneur/PagePaymentSuccess"));
 const PagePaymentCancelled = lazyWithRetry(() => import("@/pages/entrepreneur/PagePaymentCancelled"));
@@ -1119,7 +1119,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
         <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
 
-        <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
+        {/* Second moteur de prix retiré : un seul devis personnalisé peut être facturé. */}
+        <Route path="/entrepreneur/plan-result" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
         <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
         <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
         <Route path="/entrepreneur/payment-cancelled" element={<PagePaymentCancelled />} />
