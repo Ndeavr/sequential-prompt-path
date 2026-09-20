@@ -21,7 +21,9 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("openAlex(\"home_hero\"");
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
-    expect(clara).toContain("Bonjour ! Que puis-je-faire pour vous?");
+    expect(clara).toContain("<MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>");
+    expect(clara).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(clara).toContain('const [composerText, setComposerText] = useState("")');
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");
     expect(clara).toContain("ClaraContextPanel");

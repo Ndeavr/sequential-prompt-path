@@ -35,7 +35,7 @@
 - [x] Carte Clara initiale agrandie et hauteur clavier stabilisée
 - [x] Champ contrôlé, placeholder distinct et bouton d’envoi déterministe
 - [x] Intentions contextualisées → tendances vérifiées → repli fiable
-- [ ] Validation automatisée 360/390/430 px, clavier simulé et parcours réels
+- [x] Validation automatisée 360/390/430 px, clavier simulé et parcours réels
 
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
