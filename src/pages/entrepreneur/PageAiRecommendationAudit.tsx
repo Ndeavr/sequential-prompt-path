@@ -533,7 +533,13 @@ export default function PageAiRecommendationAudit() {
               </div>
             </section>
           ) : (
-            <AuditReport result={result} onActivate={activate} onRestart={() => setResult(null)} />
+            <AuditReport
+              result={result}
+              onActivate={activate}
+              activating={activating}
+              activationError={activationError}
+              onRestart={() => setResult(null)}
+            />
           )}
         </div>
 
@@ -647,10 +653,14 @@ function qualitativeState(
 function AuditReport({
   result,
   onActivate,
+  activating,
+  activationError,
   onRestart,
 }: {
   result: AuditResult;
   onActivate: () => void;
+  activating: boolean;
+  activationError: string | null;
   onRestart: () => void;
 }) {
   const { baseline, gaps, capacity } = result;
