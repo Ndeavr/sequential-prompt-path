@@ -418,7 +418,7 @@ export default function PageContractorPersonalizedPlan() {
           ))}
         </div>
 
-        {/* Breakdown */}
+        {/* Détail commercial — uniquement ce qui est compréhensible */}
         <GlassCard className="p-0 mb-6 overflow-hidden">
           <button
             onClick={() => setBreakdownOpen((v) => !v)}
@@ -426,7 +426,7 @@ export default function PageContractorPersonalizedPlan() {
           >
             <div className="flex items-center gap-2 text-sm">
               <ShieldCheck className="w-4 h-4 text-white/60" />
-              Détail transparent du calcul
+              Ce qui est inclus dans votre plan
             </div>
             <ChevronDown
               className={`w-4 h-4 text-white/60 transition-transform ${
@@ -434,36 +434,45 @@ export default function PageContractorPersonalizedPlan() {
               }`}
             />
           </button>
-          {breakdownOpen && (
-            <div className="px-5 pb-5 text-sm text-white/80 space-y-1.5 border-t border-white/5">
-              {buildBreakdownLines(quote as never).map((line, i) =>
-                line.kind === "total" ? (
-                  <div
-                    key={i}
-                    className="border-t border-white/10 mt-3 pt-3 flex justify-between font-semibold"
-                  >
-                    <span>{line.label}</span>
-                    <span>{formatCAD(line.cents ?? 0)}</span>
+          {breakdownOpen && (() => {
+            const summary = buildCommercialLines(quote as never, {
+              trade: quote.trade_primary,
+              city: quote.city,
+              plan_label: planLabel,
+              monthly_budget_cents: quote.monthly_budget ?? null,
+              guaranteed_appointments: quote.guaranteed_appointments ?? null,
+            });
+            return (
+              <div className="px-5 pb-5 text-sm text-white/80 space-y-1.5 border-t border-white/5">
+                {summary.budget_note && (
+                  <p className="pt-3 text-[13px] text-cyan-200/90">{summary.budget_note}</p>
+                )}
+                {summary.lines.map((line, i) => (
+                  <div key={i} className="pt-1">
+                    <Row label={line.label} value={formatCAD(line.cents)} />
+                    {line.sublabel && (
+                      <p className="text-[11px] text-white/45 -mt-0.5">{line.sublabel}</p>
+                    )}
                   </div>
-                ) : (
-                  <Row
-                    key={i}
-                    label={line.label}
-                    value={
-                      line.kind === "multiplier"
-                        ? `×${(line.multiplier ?? 1).toFixed(2)}`
-                        : `${line.kind === "adjustment" && (line.cents ?? 0) > 0 ? "+" : ""}${formatCAD(line.cents ?? 0)}`
-                    }
-                  />
-                ),
-              )}
-              <p className="pt-2 text-[11px] text-white/45">
-                Sous-total × multiplicateur marché, plus l'ajustement affiché, donne exactement le
-                prix mensuel. Les rendez-vous visés proviennent de votre dossier.
-              </p>
-            </div>
-          )}
+                ))}
+                <div className="border-t border-white/10 mt-3 pt-3 flex justify-between font-semibold">
+                  <span>Total mensuel</span>
+                  <span>{formatCAD(summary.total_cents)}</span>
+                </div>
+                {summary.appointments_unavailable && (
+                  <p className="pt-2 text-[11px] text-white/45">
+                    Aucun volume de rendez-vous n'est vendu tant que nous n'avons pas de référence
+                    fiable pour votre métier dans ce marché.
+                  </p>
+                )}
+                <p className="pt-2 text-[11px] text-white/45">
+                  C'est exactement le montant facturé au paiement. Aucun frais additionnel.
+                </p>
+              </div>
+            );
+          })()}
         </GlassCard>
+
 
         <div className="text-center text-xs text-white/40 mt-8">
           Devis #{quote.id.slice(0, 8)} · Valide 30 jours.
