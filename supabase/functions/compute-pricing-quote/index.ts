@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
     // ---------- Config ----------
     const { data: cfgRow } = await svc
       .from("pricing_config")
-      .select("pricing_version,weights,min_monthly_cents,max_monthly_cents,trial_price_cents,trial_days,default_plan_code")
+      .select("pricing_version,weights,min_monthly_cents,trial_price_cents,trial_days,default_plan_code")
       .eq("active", true)
       .maybeSingle();
 
@@ -384,10 +384,10 @@ Deno.serve(async (req) => {
     const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
 
-    // `max_monthly_cents` reste un repère administratif : il n'est PLUS
-    // appliqué comme plafond de prix. Un volume réellement demandé se facture
-    // à son vrai prix, avec rabais de volume explicite.
-    const referenceCapCents = cfgRow?.max_monthly_cents ?? null;
+    // AUCUN plafond mensuel n'existe plus dans la chaîne de prix :
+    // `max_monthly_cents` n'est ni lu ni appliqué. Un volume réellement
+    // demandé se facture à son vrai prix, avec rabais de volume explicite.
+
 
     // ---------- Growth settings (profile fee, annual discount, caps) ----------
     const { data: growthCfg } = await svc
