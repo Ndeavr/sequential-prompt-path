@@ -567,6 +567,37 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, [openContractorAfterTransition]);
 
+  /** Écrit une phrase de Clara dans la conversation visible ET canonique. */
+  const sayClara = useCallback(async (text: string, quick?: string[]) => {
+    if (!mountedRef.current) return;
+    const messageId = uid();
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text }]);
+    setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
+    await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
+  }, []);
+
+  /**
+   * Qualification entrepreneur : Clara pose une seule question utile par tour,
+   * jamais une déjà répondue. L'audit ne s'ouvre qu'ensuite.
+   * Retourne `true` quand une question a été posée (donc pas de navigation).
+   */
+  const askNextQualification = useCallback(
+    async (options: { opening?: boolean } = {}) => {
+      const step = nextQualificationStep(getClaraQualification());
+      qualificationStepRef.current = step;
+      if (!step) return false;
+      if (options.opening) await sayClara(CLARA_CONTRACTOR_OPENING);
+      await sayClara(step.question, step.quickReplies);
+      trackCopilotEvent("contractor_context_captured", {
+        surface: "home_clara_box",
+        kind: step.field,
+      });
+      return true;
+    },
+    [sayClara],
+  );
+
+
   const beginTextContractorTransition = useCallback(async (note: string) => {
     // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
     // jamais bloquer la transition entrepreneur.
