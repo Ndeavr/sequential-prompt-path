@@ -4,7 +4,7 @@
  * Objectif : compréhension < 30 s → CTA « JE COMMENCE! » → onboarding 4 étapes.
  * Aucun taux affiché (le taux est propre à chaque affiliée) — mécanismes réels seulement.
  */
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -95,6 +95,19 @@ export default function PageAffiliesPublic() {
   }, []);
 
   const startHref = `/affilies/onboarding${location.search}`;
+
+  // Le CTA collant n'apparaît qu'une fois le premier bouton sorti de l'écran.
+  const heroCtaRef = useRef<HTMLAnchorElement | null>(null);
+  const [showSticky, setShowSticky] = useState(false);
+  useEffect(() => {
+    const el = heroCtaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setShowSticky(!entry.isIntersecting), {
+      threshold: 0,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div className="landing-warm min-h-screen bg-background text-foreground">
