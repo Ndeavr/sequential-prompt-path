@@ -703,12 +703,23 @@ Deno.serve(async (req) => {
       const p = picked.plan;
       const base = p.monthly_price;
 
-      const extraAppointments = Math.max(0, t - (p.appointments_included ?? 0));
-      const unitPrice = extra.price_cents ?? w.volume_per_appointment_cents;
-      const apptPkg = extraAppointments * unitPrice;
+      /**
+       * AUCUN tarif universel. Le prix d'un rendez-vous vient de la grille du
+       * métier (marché exact → moyenne métier → économie déclarée du dossier).
+       * Si aucune base fiable n'existe, UNPRO ne vend AUCUN volume : seul
+       * l'abonnement est proposé, jamais un tarif inventé.
+       */
+      const unitPrice = typeof extra.price_cents === "number" && extra.price_cents > 0
+        ? extra.price_cents
+        : null;
+      const extraAppointments = unitPrice === null
+        ? 0
+        : Math.max(0, t - (p.appointments_included ?? 0));
+      const apptPkg = extraAppointments * (unitPrice ?? 0);
       // Rabais de volume EXPLICITE : jamais un plafond invisible.
-      const discountRate = volumeDiscountRate(t, volumeTiers);
+      const discountRate = apptPkg > 0 ? volumeDiscountRate(t, volumeTiers) : 0;
       const volumeDiscount = -Math.round(apptPkg * discountRate);
+
 
       // Exclusivity is only charged when the inventory can actually grant it.
       const exclusivity = exclusivityGranted
