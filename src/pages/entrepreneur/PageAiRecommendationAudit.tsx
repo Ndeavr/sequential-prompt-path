@@ -37,6 +37,8 @@ import { JourneySteps } from "@/components/audit-ia/JourneySteps";
 import { OperationalSections } from "@/components/audit-ia/OperationalSections";
 import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
+import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import { getClaraQualification } from "@/services/clara/claraContractorQualification";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
@@ -149,6 +151,8 @@ export default function PageAiRecommendationAudit() {
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
+  const [activating, setActivating] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
   const auditInputRef = useRef<HTMLInputElement | null>(null);
@@ -216,6 +220,28 @@ export default function PageAiRecommendationAudit() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviteToken, trackInvite]);
+
+  /**
+   * Continuité : ce que l'entrepreneur vient de dire à Clara prépare l'audit.
+   * Rien n'est inventé — seules les réponses réellement données sont réutilisées.
+   */
+  useEffect(() => {
+    const qualification = getClaraQualification();
+    trackCopilotEvent("contractor_audit_opened", {
+      surface: "audit_ia",
+      kind: qualification.primary_trade ?? "unknown",
+    });
+    if (qualification.business_city) {
+      trackCopilotEvent("business_location_confirmed", { surface: "audit_ia" });
+    }
+    if (qualification.service_areas?.length) {
+      trackCopilotEvent("service_area_confirmed", {
+        surface: "audit_ia",
+        count: qualification.service_areas.length,
+      });
+    }
+  }, []);
+
 
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -316,35 +342,63 @@ export default function PageAiRecommendationAudit() {
     }
   }
 
+  /**
+   * « Compléter mon profil » — P0 : ce bouton ouvre TOUJOURS l'écran suivant.
+   * La journalisation d'événements ne peut jamais bloquer la navigation, et un
+   * échec réel est affiché avec une action de secours plutôt qu'un cul-de-sac.
+   */
   async function activate() {
-    if (!result) return;
-    // claim_started → activation_started, both attribution-preserving.
-    for (const event_type of ["claim_started", "activation_started"] as const) {
-      await supabase.functions.invoke("ai-recommendation-audit", {
-        body: { action: "event", audit_id: result.audit_id, token: result.token, event_type },
-      });
+    if (!result || activating) return;
+    setActivating(true);
+    setActivationError(null);
+    trackCopilotEvent("profile_completion_clicked", {
+      surface: "audit_ia",
+      kind: result.audit_id,
+    });
+
+    // Journalisation best-effort : jamais bloquante.
+    try {
+      for (const event_type of ["claim_started", "activation_started"] as const) {
+        await supabase.functions.invoke("ai-recommendation-audit", {
+          body: { action: "event", audit_id: result.audit_id, token: result.token, event_type },
+        });
+      }
+    } catch (error) {
+      console.warn("[audit-ia] activation event non journalisé (non bloquant)", error);
     }
-    const params = new URLSearchParams();
-    if (result.business_name) params.set("entreprise", result.business_name);
-    if (result.city) params.set("ville", result.city);
-    if (result.trade) params.set("metier", result.trade);
-    params.set("audit", result.audit_id);
-    params.set("audit_token", result.token);
-    // Preserve outreach attribution: garantie reads `t` for the attributed
-    // personalized profile and quote flow.
-    if (activationToken) params.set("t", activationToken);
-    const ref = sp.get("ref");
-    if (ref) params.set("ref", ref);
-    // Toute l'attribution suit le dossier jusqu'au paiement.
-    for (const k of [
-      "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
-      "prospect", "prospect_id", "campaign", "campaign_id", "source", "offer", "promo", "aff", "affiliate",
-    ]) {
-      const v = sp.get(k);
-      if (v) params.set(k, v);
+
+    try {
+      const params = new URLSearchParams();
+      if (result.business_name) params.set("entreprise", result.business_name);
+      if (result.city) params.set("ville", result.city);
+      if (result.trade) params.set("metier", result.trade);
+      params.set("audit", result.audit_id);
+      params.set("audit_token", result.token);
+      // Preserve outreach attribution: garantie reads `t` for the attributed
+      // personalized profile and quote flow.
+      if (activationToken) params.set("t", activationToken);
+      const ref = sp.get("ref");
+      if (ref) params.set("ref", ref);
+      // Toute l'attribution suit le dossier jusqu'au paiement.
+      for (const k of [
+        "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
+        "prospect", "prospect_id", "campaign", "campaign_id", "source", "offer", "promo", "aff", "affiliate",
+      ]) {
+        const v = sp.get(k);
+        if (v) params.set(k, v);
+      }
+      // Reprise à la première étape incomplète, pas au début du parcours.
+      const target = `/entrepreneurs/profil?${params.toString()}`;
+      navigate(target);
+      trackCopilotEvent("contractor_onboarding_resumed", { surface: "audit_ia", kind: target });
+    } catch (error) {
+      console.error("[audit-ia] navigation profil impossible", error);
+      setActivationError(
+        "Je n'ai pas réussi à ouvrir votre profil. Réessayez — vos informations sont conservées.",
+      );
+    } finally {
+      setActivating(false);
     }
-    // Valeur avant prix : on complète le profil de matching, puis les forfaits.
-    navigate(`/entrepreneurs/profil?${params.toString()}`);
   }
 
   const scrollToAudit = useCallback(() => {
@@ -501,7 +555,13 @@ export default function PageAiRecommendationAudit() {
               </div>
             </section>
           ) : (
-            <AuditReport result={result} onActivate={activate} onRestart={() => setResult(null)} />
+            <AuditReport
+              result={result}
+              onActivate={activate}
+              activating={activating}
+              activationError={activationError}
+              onRestart={() => setResult(null)}
+            />
           )}
         </div>
 
@@ -615,10 +675,14 @@ function qualitativeState(
 function AuditReport({
   result,
   onActivate,
+  activating,
+  activationError,
   onRestart,
 }: {
   result: AuditResult;
   onActivate: () => void;
+  activating: boolean;
+  activationError: string | null;
   onRestart: () => void;
 }) {
   const { baseline, gaps, capacity } = result;
@@ -828,12 +892,22 @@ function AuditReport({
         <div className="mx-auto w-full max-w-md sm:max-w-lg">
           <Button
             onClick={onActivate}
+            disabled={activating}
             size="lg"
             className="gold-btn h-14 w-full rounded-2xl border-0 px-3 text-[15px] font-bold leading-tight hover:text-primary-foreground"
           >
-            <span className="truncate">Compléter mon profil</span>
-            <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+            {activating ? (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            ) : (
+              <>
+                <span className="truncate">Compléter mon profil</span>
+                <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+              </>
+            )}
           </Button>
+          {activationError ? (
+            <p className="mt-2 text-center text-[12.5px] font-medium text-destructive">{activationError}</p>
+          ) : null}
         </div>
       </div>
     </div>

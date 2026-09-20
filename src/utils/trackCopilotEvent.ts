@@ -59,7 +59,15 @@ export type CopilotEventName =
   | "clara_navigation_failed"
   | "example_clicked"
   | "theme_changed"
-  | "contractor_nav_clicked";
+  | "contractor_nav_clicked"
+  // Parcours entrepreneur : qualification Clara → audit → profil.
+  | "contractor_intent_detected"
+  | "contractor_context_captured"
+  | "business_location_confirmed"
+  | "service_area_confirmed"
+  | "contractor_audit_opened"
+  | "profile_completion_clicked"
+  | "contractor_onboarding_resumed";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 

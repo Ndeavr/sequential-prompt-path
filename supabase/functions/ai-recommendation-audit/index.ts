@@ -274,10 +274,39 @@ Deno.serve(async (req) => {
         first<string>(contractor?.business_name, prospect?.business_name) ?? (rawQuery.trim() || null);
       const legalName = first<string>(contractor?.legal_name, prospect?.legal_name);
       const trade = first<string>(contractor?.specialty, prospect?.category);
-      const city = first<string>(contractor?.city, prospect?.city, String(body.city ?? "").slice(0, 120) || null);
+      /* ---- Ville de l'entreprise (siège) — JAMAIS un territoire ni une ville de campagne.
+         Ordre de confiance : registre officiel > fiche UNPRO déclarée > inconnu.
+         `body.city` (ville de la requête, du lead ou de la campagne) n'est jamais candidat. */
+      const businessCity: { value: string | null; provenance: Provenance; source?: string } = prospect?.city
+        ? { value: String(prospect.city), provenance: "verified", source: "Registre officiel" }
+        : contractor?.city
+          ? { value: String(contractor.city), provenance: "declared", source: "Fiche UNPRO" }
+          : { value: null, provenance: "pending" };
+      const city = businessCity.value;
+      /* Écart entre la fiche UNPRO et la source officielle : journalisé, jamais affiché
+         comme un second siège. */
+      const cityMismatch =
+        contractor?.city && prospect?.city && slug(contractor.city) !== slug(prospect.city)
+          ? { contractor_city: String(contractor.city), official_city: String(prospect.city) }
+          : null;
       const region = first<string>(prospect?.region);
+
+      /* ---- Territoires réellement desservis : uniquement des territoires enregistrés. */
+      let registeredAreas: string[] = [];
+      if (contractorId) {
+        const { data: areaRows } = await db
+          .from("contractor_service_areas")
+          .select("city_name, validation_status")
+          .eq("contractor_id", contractorId)
+          .limit(50);
+        registeredAreas = (areaRows ?? []).map((r: any) => String(r.city_name)).filter(Boolean);
+      }
       const areas = Array.from(
-        new Set([...(contractor?.service_areas ?? []), ...(prospect?.service_areas ?? [])].filter(Boolean).map(String))
+        new Set(
+          [...registeredAreas, ...(contractor?.service_areas ?? []), ...(prospect?.service_areas ?? [])]
+            .filter(Boolean)
+            .map(String)
+        )
       );
       const website = first<string>(contractor?.website, contractor?.normalized_website, prospect?.website_url);
       const gmb = first<string>(contractor?.google_business_url, prospect?.google_business_url);
@@ -321,20 +350,27 @@ Deno.serve(async (req) => {
         facts,
         city
           ? {
-              key: "city",
-              label: "Territoire principal",
+              key: "business_city",
+              label: "Ville de l'entreprise",
               value: city,
-              provenance: prospect?.city === city ? "verified" : "declared",
-              source: prospect?.city === city ? "Source officielle" : undefined,
+              provenance: businessCity.provenance,
+              source: businessCity.source,
             }
           : null
       );
       push(facts, region ? { key: "region", label: "Région", value: region, provenance: "inferred" } : null);
-      {
-        const other = [contractor?.city, prospect?.city].filter(Boolean).map(String).find((v) => v !== city);
-        push(other ? facts : facts, other ? { key: "city_alt", label: "Autre ville détectée", value: other, provenance: "inferred", source: "Fiches UNPRO" } : null);
-      }
-      push(facts, areas.length ? { key: "areas", label: "Zones desservies", value: areas.slice(0, 4).join(", "), provenance: "declared" } : null);
+      push(
+        facts,
+        areas.length
+          ? {
+              key: "areas",
+              label: "Territoires desservis",
+              value: areas.slice(0, 6).join(", "),
+              provenance: "declared",
+              source: "Déclaré par l'entreprise",
+            }
+          : null
+      );
       push(facts, rbq ? { key: "rbq", label: "Licence RBQ", value: rbq, provenance: rbqVerified ? "verified" : "declared", source: "RBQ" } : null);
       push(facts, neq ? { key: "neq", label: "NEQ", value: neq, provenance: "verified", source: "Registraire des entreprises" } : null);
       push(
@@ -414,7 +450,7 @@ Deno.serve(async (req) => {
           "Sans identité confirmée, aucune IA ne peut vous nommer.", "Votre nom devient citable par l'IA"),
         mk("trade", "Spécialité principale", 15, "high", Boolean(contractor?.specialty), trade,
           "L'IA doit savoir exactement ce que vous faites.", "Éligible aux recommandations de votre métier"),
-        mk("territory", "Territoire desservi", 15, "high", areas.length > 0, city ?? (areas[0] ?? null),
+        mk("territory", "Territoire desservi", 15, "high", areas.length > 0, areas[0] ?? null,
           "Sans territoire confirmé, aucune recommandation locale.", "+ visibilité locale"),
         mk("contact", "Canal de rendez-vous", 20, "high", Boolean(contractor?.phone || contractor?.email), phone ?? email,
           "Un rendez-vous exclusif exige un canal joignable.", "Rendez-vous activables"),
@@ -445,11 +481,14 @@ Deno.serve(async (req) => {
         status: "needs_confirmation",
         label: "Confirmez votre territoire et votre spécialité pour voir les places disponibles.",
       };
-      if (city && trade) {
+      // La capacité se mesure sur un territoire réellement desservi; à défaut,
+      // sur la ville de l'entreprise.
+      const capacityCity = areas[0] ?? city;
+      if (capacityCity && trade) {
         const { data: cap } = await db
           .from("market_capacity")
           .select("city, specialty, max_contractors, active_contractors, remaining_positions, capacity_status, market_open")
-          .eq("city_slug", slug(city))
+          .eq("city_slug", slug(capacityCity))
           .eq("service_slug", slug(trade))
           .maybeSingle();
         if (cap && cap.max_contractors != null && cap.active_contractors != null) {
@@ -466,9 +505,9 @@ Deno.serve(async (req) => {
         } else {
           capacity = {
             status: "not_tracked",
-            city,
+            city: capacityCity,
             trade,
-            label: `Aucune limite de place publiée pour ${trade} à ${city}.`,
+            label: `Aucune limite de place publiée pour ${trade} à ${capacityCity}.`,
           };
         }
       }
@@ -481,6 +520,8 @@ Deno.serve(async (req) => {
         remaining_steps: remainingSteps,
         recommendable,
         review_note: reviewNote,
+        business_city: { value: city, provenance: businessCity.provenance, source: businessCity.source ?? null },
+        service_areas: areas,
         matched: {
           contractor_id: contractorId,
           prospect_id: prospectId,
@@ -513,7 +554,16 @@ Deno.serve(async (req) => {
 
       await db.from("ai_recommendation_audit_events").insert([
         { audit_id: audit.id, event_type: "audit_started", metadata: { query: queryText, kind } },
-        { audit_id: audit.id, event_type: "audit_completed", metadata: { score, gaps: gaps.length } },
+        {
+          audit_id: audit.id,
+          event_type: "audit_completed",
+          metadata: {
+            score,
+            gaps: gaps.length,
+            business_city_provenance: businessCity.provenance,
+            ...(cityMismatch ? { city_mismatch: cityMismatch } : {}),
+          },
+        },
       ]);
 
       return json({

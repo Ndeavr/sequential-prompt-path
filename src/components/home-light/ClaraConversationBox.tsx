@@ -28,6 +28,14 @@ import {
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
+import {
+  applyAnswer,
+  CLARA_CONTRACTOR_ANALYSIS_NOTE,
+  CLARA_CONTRACTOR_OPENING,
+  getClaraQualification,
+  nextQualificationStep,
+  type ClaraQualificationStep,
+} from "@/services/clara/claraContractorQualification";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
   destinationCtaLabel,
@@ -261,6 +269,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const activationTracked = useRef(false);
   const keyboardWasOpen = useRef(false);
   const contractorTransitionRef = useRef(false);
+  /** Question de qualification en attente de réponse (une seule à la fois). */
+  const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -557,6 +567,37 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, [openContractorAfterTransition]);
 
+  /** Écrit une phrase de Clara dans la conversation visible ET canonique. */
+  const sayClara = useCallback(async (text: string, quick?: string[]) => {
+    if (!mountedRef.current) return;
+    const messageId = uid();
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text }]);
+    setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
+    await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
+  }, []);
+
+  /**
+   * Qualification entrepreneur : Clara pose une seule question utile par tour,
+   * jamais une déjà répondue. L'audit ne s'ouvre qu'ensuite.
+   * Retourne `true` quand une question a été posée (donc pas de navigation).
+   */
+  const askNextQualification = useCallback(
+    async (options: { opening?: boolean } = {}) => {
+      const step = nextQualificationStep(getClaraQualification());
+      qualificationStepRef.current = step;
+      if (!step) return false;
+      if (options.opening) await sayClara(CLARA_CONTRACTOR_OPENING);
+      await sayClara(step.question, step.quickReplies);
+      trackCopilotEvent("contractor_context_captured", {
+        surface: "home_clara_box",
+        kind: step.field,
+      });
+      return true;
+    },
+    [sayClara],
+  );
+
+
   const beginTextContractorTransition = useCallback(async (note: string) => {
     // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
     // jamais bloquer la transition entrepreneur.
@@ -612,6 +653,29 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
+
+      // Qualification entrepreneur en cours : la réponse est enregistrée tout
+      // de suite, puis Clara pose la question suivante — ou ouvre l'audit.
+      const pendingStep = qualificationStepRef.current;
+      if (pendingStep) {
+        setBusy(true);
+        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        applyAnswer(pendingStep, text);
+        qualificationStepRef.current = null;
+        try {
+          const asked = await askNextQualification();
+          if (!asked) {
+            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            await beginTextContractorTransition(text);
+            return;
+          }
+        } finally {
+          if (mountedRef.current && qualificationStepRef.current) setBusy(false);
+          focusComposer();
+        }
+        return;
+      }
+
       const nextMode = detectSurfaceMode(text);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
@@ -720,7 +784,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         // onglet, et ne confirme qu'après le changement de route réussi.
         if (destination && detected === "contractor_onboarding") {
           setQuickReplies(null);
-          await beginTextContractorTransition(text);
+          trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
+          // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
+          const asked = await askNextQualification();
+          if (!asked) {
+            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            await beginTextContractorTransition(text);
+          }
         } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
@@ -734,7 +804,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen],
+    [askNextQualification, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara],
   );
 
   const chooseQuickReply = useCallback(
@@ -796,6 +866,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }).catch(() => undefined);
 
       if (suggestion.intent === "contractor_onboarding") {
+        trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
+        const asked = await askNextQualification({ opening: true });
+        if (asked) {
+          focusComposer();
+          return;
+        }
+        await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
         await beginTextContractorTransition(suggestion.label);
         return;
       }
@@ -806,7 +883,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setBusy(false);
       }
     },
-    [beginTextContractorTransition, busy, runOpen, send],
+    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
