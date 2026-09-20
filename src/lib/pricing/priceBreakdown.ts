@@ -2,11 +2,14 @@
  * UNPRO — Détail transparent du plan personnalisé.
  *
  * Règle unique : le détail affiché est une identité mathématique exacte.
- *   (base + rendez-vous + exclusivité + visibilité IA) × multiplicateur
+ *   (abonnement + rendez-vous supplémentaires − rabais de volume
+ *    + exclusivité + visibilité IA) × multiplicateur
  *   + ajustement = prix mensuel final
  *
- * L'ajustement (plafond, plancher, forfait fixe, marché indisponible) est
- * TOUJOURS affiché. Aucun rabais ni plafond caché.
+ * AUCUN plafond mensuel universel. Un volume réellement demandé est facturé
+ * à son vrai prix, réduit uniquement par un rabais de volume affiché.
+ * Le seul ajustement possible est explicite (budget mensuel choisi, plancher
+ * de service, forfait fixe, marché indisponible) et toujours visible.
  * Les objectifs proviennent uniquement du dossier confirmé : aucune valeur
  * par défaut ne remplace une donnée saisie par l'entrepreneur.
  */
@@ -15,6 +18,11 @@ export interface PriceIdentity {
   target_appointments: number;
   requested_appointments?: number;
   base_platform_cents: number;
+  appointment_unit_price_cents?: number;
+  appointment_unit_status?: string;
+  extra_appointments?: number;
+  volume_discount_rate?: number;
+  volume_discount_cents?: number;
   appointment_package_cents: number;
   exclusivity_cents: number;
   aipp_cents: number;
@@ -41,14 +49,14 @@ export interface BreakdownLine {
   label: string;
   cents?: number;
   multiplier?: number;
-  kind: "fee" | "subtotal" | "multiplier" | "adjustment" | "total";
+  kind: "fee" | "discount" | "subtotal" | "multiplier" | "adjustment" | "total";
 }
 
 const ADJUSTMENT_LABELS: Record<string, string> = {
-  plafond_plan_personnalise: "Plafond plan personnalisé",
-  plancher_plan_personnalise: "Plancher plan personnalisé",
-  forfait_fixe: "Ajustement forfait fixe",
-  marche_indisponible: "Ajustement marché indisponible",
+  budget_mensuel_choisi: "Budget mensuel choisi",
+  plancher_plan_personnalise: "Minimum de service",
+  forfait_fixe: "Forfait à montant fixe",
+  marche_indisponible: "Marché indisponible — plan d'attente",
   ajustement_plan_personnalise: "Ajustement plan personnalisé",
 };
 
@@ -59,9 +67,10 @@ export function resolvePriceIdentity(quote: QuoteLike): PriceIdentity {
   const stored = quote.breakdown?.price_identity;
   const base = n(stored?.base_platform_cents ?? quote.base_platform_fee);
   const appt = n(stored?.appointment_package_cents ?? quote.appointment_package_fee);
+  const discount = n(stored?.volume_discount_cents);
   const excl = n(stored?.exclusivity_cents ?? quote.exclusivity_fee);
   const aipp = n(stored?.aipp_cents ?? quote.aipp_optimization_fee);
-  const subtotal = n(stored?.subtotal_cents ?? base + appt + excl + aipp);
+  const subtotal = n(stored?.subtotal_cents ?? base + appt + discount + excl + aipp);
   const multiplier =
     typeof stored?.market_multiplier === "number"
       ? stored.market_multiplier
@@ -75,6 +84,11 @@ export function resolvePriceIdentity(quote: QuoteLike): PriceIdentity {
     target_appointments: n(stored?.target_appointments ?? quote.target_monthly_appointments),
     requested_appointments: stored?.requested_appointments,
     base_platform_cents: base,
+    appointment_unit_price_cents: stored?.appointment_unit_price_cents,
+    appointment_unit_status: stored?.appointment_unit_status,
+    extra_appointments: stored?.extra_appointments,
+    volume_discount_rate: stored?.volume_discount_rate,
+    volume_discount_cents: discount,
     appointment_package_cents: appt,
     exclusivity_cents: excl,
     aipp_cents: aipp,
@@ -89,6 +103,9 @@ export function resolvePriceIdentity(quote: QuoteLike): PriceIdentity {
   };
 }
 
+const unitLabel = (cents?: number) =>
+  typeof cents === "number" && cents > 0 ? ` à ${Math.round(cents / 100)} $ chacun` : "";
+
 /** Lignes affichables. La somme vérifie toujours le total final. */
 export function buildBreakdownLines(quote: QuoteLike): BreakdownLine[] {
   const id = resolvePriceIdentity(quote);
@@ -96,10 +113,19 @@ export function buildBreakdownLines(quote: QuoteLike): BreakdownLine[] {
     { label: "Abonnement du forfait", cents: id.base_platform_cents, kind: "fee" },
   ];
   if (id.appointment_package_cents > 0) {
+    const count = id.extra_appointments ?? id.target_appointments;
     lines.push({
-      label: `Rendez-vous supplémentaires (${id.target_appointments} visés)`,
+      label: `Rendez-vous supplémentaires (${count}${unitLabel(id.appointment_unit_price_cents)})`,
       cents: id.appointment_package_cents,
       kind: "fee",
+    });
+  }
+  if ((id.volume_discount_cents ?? 0) !== 0) {
+    const pct = Math.round((id.volume_discount_rate ?? 0) * 100);
+    lines.push({
+      label: `Rabais de volume${pct ? ` (−${pct} %)` : ""}`,
+      cents: id.volume_discount_cents ?? 0,
+      kind: "discount",
     });
   }
   if (id.aipp_cents > 0) {

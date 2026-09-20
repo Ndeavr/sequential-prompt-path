@@ -11,6 +11,12 @@ export interface PricingIntakeInput {
   city: string;
   service_radius_km?: number;
   target_monthly_appointments: number;
+  /** Objectif de contrats confirmé — distinct du nombre de rendez-vous. */
+  contract_goal_value?: number;
+  contract_goal_unit?: "month" | "year";
+  /** Budget mensuel maximum explicitement choisi (en cents), jamais implicite. */
+  monthly_budget_cents?: number;
+  pricing_mode?: "goal" | "budget";
   average_project_value: number;
   monthly_capacity: number;
   close_rate_estimate: number;

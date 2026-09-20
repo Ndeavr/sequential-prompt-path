@@ -44,7 +44,11 @@ interface Input {
   total_price_cents?: number;
   /** Delivery window of the pack guarantee (months). */
   guarantee_duration_months?: number;
+  /** Rendez-vous exclusifs réellement souhaités par mois (jamais un objectif de contrats). */
   target_monthly_appointments: number;
+  /** Objectif de contrats — distinct des rendez-vous et de la capacité. */
+  contract_goal_value?: number;
+  contract_goal_unit?: "month" | "year";
   average_project_value: number; // CAD dollars
   monthly_capacity: number;
   close_rate_estimate: number; // 0..1 or 0..100
@@ -196,27 +200,96 @@ function aippFee(score: number | undefined | null): number {
   return 14900;
 }
 
+/** Rabais de volume EXPLICITE sur les rendez-vous supplémentaires (jamais un plafond caché). */
+interface VolumeTier {
+  min_appointments: number;
+  rate: number;
+}
+
+const DEFAULT_VOLUME_TIERS: VolumeTier[] = [
+  { min_appointments: 10, rate: 0.05 },
+  { min_appointments: 25, rate: 0.1 },
+  { min_appointments: 50, rate: 0.15 },
+  { min_appointments: 100, rate: 0.2 },
+];
+
+function volumeTiersFrom(w: any): VolumeTier[] {
+  const raw = Array.isArray(w?.volume_discount_tiers) ? w.volume_discount_tiers : null;
+  if (!raw?.length) return DEFAULT_VOLUME_TIERS;
+  return raw
+    .map((t: any) => ({
+      min_appointments: Math.max(1, Math.round(Number(t?.min_appointments ?? 0))),
+      rate: clamp(Number(t?.rate ?? 0), 0, 0.5),
+    }))
+    .filter((t: VolumeTier) => Number.isFinite(t.min_appointments) && t.rate > 0)
+    .sort((a: VolumeTier, b: VolumeTier) => a.min_appointments - b.min_appointments);
+}
+
+function volumeDiscountRate(appointments: number, tiers: VolumeTier[]): number {
+  let rate = 0;
+  for (const t of tiers) if (appointments >= t.min_appointments) rate = t.rate;
+  return rate;
+}
+
 /**
- * Price of ONE extra exclusive appointment for THIS contractor.
- * It is the market value of an appointment in this contractor's economics —
- * NEVER `plan price ÷ included appointments`.
+ * Prix d'UN rendez-vous exclusif supplémentaire pour CE métier / CE marché.
  *
- * value = average project value × close rate × configured appointment share.
- * Provenance is always reported: configured | inferred | calculated | unavailable.
+ * Source 1 (canonique) : `appointment_pricing_benchmarks` (métier × marché,
+ * dérivé du coût réel d'acquisition). Un rendez-vous en tonte de pelouse ne
+ * vaut pas un rendez-vous en toiture : aucun tarif universel n'est appliqué.
+ * Source 2 : moyenne du métier sur les autres marchés.
+ * Source 3 : économie déclarée (valeur moyenne × taux de fermeture × part).
+ * Sinon : indisponible — jamais un tarif inventé.
  */
-async function computeExtraAppointmentPrice(
+async function resolveAppointmentUnitPrice(
   svc: any,
   body: Input,
   close: number,
   w: any,
+  tradeSlug: string,
+  citySlug: string,
 ): Promise<{ price_cents: number | null; status: string; basis: Record<string, unknown> }> {
   const share = Number(w.appointment_value_share ?? 0.08);
   const minCents = Number(w.extra_appointment_min_cents ?? 4900);
   const maxCents = Number(w.extra_appointment_max_cents ?? 99900);
+  const basis: Record<string, unknown> = {
+    trade_slug: tradeSlug,
+    city_slug: citySlug,
+    close_rate: round2(close),
+  };
 
+  const { data: benchRows, error: benchErr } = await svc
+    .from("appointment_pricing_benchmarks")
+    .select("category_slug,market_slug,final_appointment_price_cents,data_source")
+    .eq("category_slug", tradeSlug)
+    .eq("is_active", true);
+
+  if (benchErr) {
+    basis.benchmark_error = benchErr.message;
+  } else if (Array.isArray(benchRows) && benchRows.length) {
+    const exact = benchRows.find((r: any) => r.market_slug === citySlug);
+    if (exact && Number(exact.final_appointment_price_cents) > 0) {
+      basis.benchmark = { market: exact.market_slug, source: exact.data_source };
+      return {
+        price_cents: Math.round(Number(exact.final_appointment_price_cents)),
+        status: "benchmark_trade_market",
+        basis,
+      };
+    }
+    const values = benchRows
+      .map((r: any) => Number(r.final_appointment_price_cents))
+      .filter((v: number) => Number.isFinite(v) && v > 0);
+    if (values.length) {
+      const avg = Math.round(values.reduce((a: number, b: number) => a + b, 0) / values.length);
+      basis.benchmark = { markets: benchRows.length, averaged: true };
+      return { price_cents: avg, status: "benchmark_trade", basis };
+    }
+  }
+
+  // Aucun repère métier : on retombe sur l'économie déclarée du dossier.
   let projectValue = Number(body.average_project_value ?? 0);
   let status = "calculated";
-  const basis: Record<string, unknown> = { share, close_rate: round2(close) };
+  basis.share = share;
 
   const { data: bands, error } = await svc
     .from("appointment_values")
@@ -236,7 +309,6 @@ async function computeExtraAppointmentPrice(
       status = band.value_status ?? "configured";
       basis.band = { size: band.project_size, label: band.label_fr };
     } else if (!projectValue) {
-      // No declared project value: fall back to the configured mid band.
       const mid = bands[Math.floor(bands.length / 2)];
       projectValue =
         (Number(mid.estimated_value_min ?? 0) + Number(mid.estimated_value_max ?? 0)) / 2;
@@ -312,7 +384,10 @@ Deno.serve(async (req) => {
     const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
 
-    const maxCents = cfgRow?.max_monthly_cents ?? 149900;
+    // `max_monthly_cents` reste un repère administratif : il n'est PLUS
+    // appliqué comme plafond de prix. Un volume réellement demandé se facture
+    // à son vrai prix, avec rabais de volume explicite.
+    const referenceCapCents = cfgRow?.max_monthly_cents ?? null;
 
     // ---------- Growth settings (profile fee, annual discount, caps) ----------
     const { data: growthCfg } = await svc
@@ -612,8 +687,9 @@ Deno.serve(async (req) => {
     const objective = body.business_objective ?? "grow";
     const objectiveMultiplier = w.objective_multipliers[objective] ?? 1.0;
 
-    // ---------- Extra appointment price (market value, never plan ÷ included) ----------
-    const extra = await computeExtraAppointmentPrice(svc, body, close, w);
+    // ---------- Extra appointment price (trade × market, never plan ÷ included) ----------
+    const extra = await resolveAppointmentUnitPrice(svc, body, close, w, tradeSlug, citySlug);
+    const volumeTiers = volumeTiersFrom(w);
     const aipp = aippFee(body.current_ai_visibility_score);
 
     /**
@@ -628,9 +704,11 @@ Deno.serve(async (req) => {
       const base = p.monthly_price;
 
       const extraAppointments = Math.max(0, t - (p.appointments_included ?? 0));
-      const apptPkg = extra.price_cents
-        ? extraAppointments * extra.price_cents
-        : extraAppointments * w.volume_per_appointment_cents;
+      const unitPrice = extra.price_cents ?? w.volume_per_appointment_cents;
+      const apptPkg = extraAppointments * unitPrice;
+      // Rabais de volume EXPLICITE : jamais un plafond invisible.
+      const discountRate = volumeDiscountRate(t, volumeTiers);
+      const volumeDiscount = -Math.round(apptPkg * discountRate);
 
       // Exclusivity is only charged when the inventory can actually grant it.
       const exclusivity = exclusivityGranted
@@ -644,7 +722,7 @@ Deno.serve(async (req) => {
         w.capacity_factor_max,
       );
 
-      const subtotal = base + apptPkg + exclusivity + aipp;
+      const subtotal = base + apptPkg + volumeDiscount + exclusivity + aipp;
       // Compounding six factors can double the price; the blended multiplier is
       // clamped so the personalized price stays within a defensible band of the
       // plan's published price.
@@ -663,13 +741,12 @@ Deno.serve(async (req) => {
         ),
       );
 
-      // Prix brut de la chaîne AVANT plafond/plancher : conservé tel quel pour
-      // que le détail affiché soit une identité vérifiable.
+      // Prix réel de la chaîne. AUCUN plafond mensuel universel : un volume
+      // élevé se paie à son vrai prix, réduit uniquement par le rabais de
+      // volume affiché ci-dessus. Seuls les planchers (minimum de service et
+      // plancher territorial validé) s'appliquent.
       const rawPriceCents = Math.round(subtotal * marketMultiplier * overrideMultiplier);
-      const boundedPriceCents = Math.max(
-        overrideFloorCents,
-        clamp(rawPriceCents, minCents, maxCents),
-      );
+      const boundedPriceCents = Math.max(overrideFloorCents, minCents, rawPriceCents);
 
       return {
         target: t,
@@ -677,6 +754,10 @@ Deno.serve(async (req) => {
         plan_code: p.code,
         capacity_capped: picked.capped,
         base,
+        appointment_unit_price_cents: unitPrice,
+        extra_appointments: extraAppointments,
+        volume_discount_rate: discountRate,
+        volume_discount_cents: volumeDiscount,
         appointment_package_fee: apptPkg,
         exclusivity_fee: exclusivity,
         aipp_fee: aipp,
@@ -911,14 +992,23 @@ Deno.serve(async (req) => {
       final_monthly_price: finalPrice,
       /**
        * IDENTITÉ TARIFAIRE — le détail affiché doit être vérifiable :
-       * (base + rendez-vous + exclusivité + visibilité IA) × multiplicateur
-       * + ajustement = prix mensuel final. L'ajustement porte le plafond, le
-       * plancher et les modes forfait/budget : rien n'est caché.
+       * (abonnement + rendez-vous supplémentaires − rabais de volume
+       * + exclusivité + visibilité IA) × multiplicateur + ajustement
+       * = prix mensuel final.
+       * AUCUN plafond mensuel universel : un volume élevé se facture à son
+       * vrai prix. Seuls le plancher de service, un plancher territorial
+       * validé, le budget mensuel explicitement choisi ou un forfait fixe
+       * peuvent créer un ajustement — et il est toujours affiché.
        */
       price_identity: {
         target_appointments: effectiveTarget,
         requested_appointments: Math.max(0, Math.round(body.target_monthly_appointments ?? 0)),
         base_platform_cents: base,
+        appointment_unit_price_cents: chain.appointment_unit_price_cents,
+        appointment_unit_status: extra.status,
+        extra_appointments: chain.extra_appointments,
+        volume_discount_rate: chain.volume_discount_rate,
+        volume_discount_cents: chain.volume_discount_cents,
         appointment_package_cents: apptPkg,
         exclusivity_cents: exclusivity,
         aipp_cents: aipp,
@@ -926,7 +1016,11 @@ Deno.serve(async (req) => {
         market_multiplier: marketMultiplier,
         override_multiplier: overrideMultiplier,
         raw_price_cents: chain.raw_price_cents,
-        bounds: { min_cents: minCents, max_cents: maxCents, floor_cents: overrideFloorCents },
+        bounds: {
+          min_cents: minCents,
+          floor_cents: overrideFloorCents,
+          monthly_cap_applied: false,
+        },
         adjustment_cents: finalPrice - chain.raw_price_cents,
         adjustment_reason:
           finalPrice === chain.raw_price_cents
@@ -935,8 +1029,8 @@ Deno.serve(async (req) => {
               ? "forfait_fixe"
               : status === "waitlisted"
                 ? "marche_indisponible"
-                : chain.raw_price_cents > maxCents
-                  ? "plafond_plan_personnalise"
+                : pricingMode === "budget"
+                  ? "budget_mensuel_choisi"
                   : chain.raw_price_cents < minCents || finalPrice === overrideFloorCents
                     ? "plancher_plan_personnalise"
                     : "ajustement_plan_personnalise",
@@ -958,10 +1052,47 @@ Deno.serve(async (req) => {
     };
 
     // Human-readable, evidence-only explanation (no invented scarcity).
+    /**
+     * OBJECTIF ≠ RENDEZ-VOUS ≠ CAPACITÉ ≠ BUDGET.
+     * Un objectif de 100 contrats par année n'est pas 100 rendez-vous par mois.
+     * On calcule le nombre de rendez-vous nécessaire pour atteindre l'objectif
+     * déclaré, borné par la capacité réelle de l'entrepreneur.
+     */
+    const contractGoalMonthly = (() => {
+      const v = Number(body.contract_goal_value ?? 0);
+      if (!Number.isFinite(v) || v <= 0) return null;
+      return body.contract_goal_unit === "year" ? v / 12 : v;
+    })();
+    const appointmentRecommendation = contractGoalMonthly
+      ? {
+          contract_goal_value: Number(body.contract_goal_value),
+          contract_goal_unit: body.contract_goal_unit ?? "month",
+          contracts_per_month: round2(contractGoalMonthly),
+          close_rate: round2(close),
+          appointments_needed: Math.ceil(contractGoalMonthly / Math.max(0.01, close)),
+          contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+          recommended_appointments: Math.max(
+            1,
+            Math.min(
+              Math.ceil(contractGoalMonthly / Math.max(0.01, close)),
+              Math.max(1, Math.round(body.monthly_capacity ?? 0)),
+            ),
+          ),
+        }
+      : null;
+
     const pricingExplanation = {
       calculation_version: CALCULATION_VERSION,
       pricing_mode: pricingMode,
       mode_outcome: modeOutcome,
+      appointment_recommendation: appointmentRecommendation,
+      appointment_unit_price_cents: chain.appointment_unit_price_cents,
+      appointment_unit_status: extra.status,
+      appointment_unit_basis: extra.basis,
+      volume_discount_rate: chain.volume_discount_rate,
+      volume_discount_cents: chain.volume_discount_cents,
+      monthly_cap_applied: false,
+      reference_cap_cents: referenceCapCents,
       monthly_budget_cents: monthlyBudgetCents,
       guaranteed_appointments: guaranteedAppointments,
       budget_solve: budgetSolve,
