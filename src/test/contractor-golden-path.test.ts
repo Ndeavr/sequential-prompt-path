@@ -81,6 +81,15 @@ describe("Parcours entrepreneur — points d'abandon", () => {
   it("le paiement et l'activation restent journalisés côté serveur", () => {
     const webhook = read("supabase/functions/stripe-webhook/index.ts");
     expect(webhook).toContain("payment_completed:${session.id}");
-    expect(webhook).toContain("contractor_activated:${session.id}");
+    expect(webhook).toContain("profile_activated:${session.id}");
+  });
+
+  it("l'abandon avant paiement crée un lead de relance unique et se ferme au paiement", () => {
+    const relance = read("supabase/functions/contractor-relance-abandon/index.ts");
+    expect(relance).toContain("contractor_leads");
+    expect(relance).toContain("checkout_abandon");
+    expect(relance).toContain("contractor-abandon-admin-alert");
+    const webhook = read("supabase/functions/stripe-webhook/index.ts");
+    expect(webhook).toContain('body: { action: "close", quote_id: quoteId }');
   });
 });
