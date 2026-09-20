@@ -371,6 +371,7 @@
     padding-top: clamp(3rem, 9vh, 7rem);
     padding-bottom: clamp(3rem, 8vh, 6rem);
   }
+  .home-light .home-hero-intro { display: contents; }
   .home-light .home-hero-title {
     font-family: var(--font-display);
     max-width: 980px;
@@ -778,12 +779,27 @@
     .home-light .home-language-switch { gap: 0.8rem; height: 38px; }
     .home-light .home-language-switch button { height: 38px; font-size: 0.72rem; }
     .home-light .home-header-icon { width: 36px; height: 36px; }
+    .home-light .home-minimal-header.is-conversation-active > div { padding-inline: 0.65rem; }
+    .home-light .home-minimal-header.is-conversation-active > div > div { height: 52px; }
+    .home-light .home-minimal-header.is-conversation-active img[alt="UNPRO"] { height: 25px; max-width: 108px; }
+    .home-light .home-minimal-header.is-conversation-active .home-language-switch,
+    .home-light .home-minimal-header.is-conversation-active .home-language-switch button { height: 34px; }
+    .home-light .home-minimal-header.is-conversation-active .home-header-icon { width: 34px; height: 34px; }
     .home-light .home-glossy-hero { min-height: calc(100dvh - 58px); }
     .home-light .home-hero-content {
       min-height: calc(100dvh - 58px);
       justify-content: center;
       padding-top: max(2.5rem, env(safe-area-inset-top));
       padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    }
+    .home-light .home-glossy-hero.is-conversation-active,
+    .home-light .home-glossy-hero.is-conversation-active .home-hero-content {
+      min-height: calc(100dvh - 52px);
+    }
+    .home-light .home-glossy-hero.is-conversation-active .home-hero-content {
+      justify-content: flex-start;
+      padding-top: 0.5rem;
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
     }
     .home-light .home-hero-title {
       max-width: 360px;
@@ -798,14 +814,27 @@
     }
     .home-light .home-clara-shell,
     .home-light .home-clara-shell.has-context { grid-template-columns: minmax(0, 1fr); margin-top: 2rem; }
+    .home-light .home-clara-shell.is-conversation-active,
+    .home-light .home-clara-shell.is-conversation-active.has-context { margin-top: 0; }
     .home-light .home-clara-glass { border-radius: 20px; }
-    .home-light .home-clara-main { max-height: min(64dvh, calc(100dvh - 7rem - var(--clara-keyboard-offset, 0px))); }
+    .home-light .home-clara-main { max-height: min(64dvh, calc(var(--clara-visible-height, 100dvh) - 7rem)); }
+    .home-light .home-clara-shell.is-conversation-active .home-clara-main {
+      height: max(320px, calc(var(--clara-visible-height, 100dvh) - 62px));
+      max-height: calc(var(--clara-visible-height, 100dvh) - 62px);
+    }
     .home-light .home-clara-composer { padding: 0.6rem 0.65rem max(0.45rem, env(safe-area-inset-bottom)); }
-    .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 100px; border-radius: 16px; }
-    .home-light .home-clara-textarea { min-height: 98px; max-height: 132px; padding: 1rem 1rem 3.45rem; font-size: 1rem; }
+    .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 68px; border-radius: 16px; }
+    .home-light .home-clara-textarea { field-sizing: fixed; box-sizing: border-box; min-height: 68px !important; height: 68px; max-height: 120px; padding: 0.62rem 1rem 2.15rem; overflow-y: auto; font-size: 1rem; }
     .home-light .home-clara-controls { right: 0.7rem; bottom: 0.6rem; left: 0.7rem; justify-content: space-between; }
     .home-light .home-clara-tool { width: 38px; height: 38px; }
     .home-light .home-clara-submit { width: 46px; height: 46px; }
+    .home-light .home-clara-media { gap: 0.3rem; padding: 0 0.65rem 0.4rem; }
+    .home-light .home-clara-media-item { gap: 0.5rem; min-height: 48px; padding: 0.35rem 0.5rem; border-radius: 12px; }
+    .home-light .home-clara-media-item img,
+    .home-light .home-clara-media-item video,
+    .home-light .home-clara-media-icon { width: 36px; height: 36px; border-radius: 9px; }
+    .home-light .home-clara-quick { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.2rem; }
+    .home-light .home-clara-quick button { flex: 0 0 auto; }
     .home-light .home-clara-examples { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0.8rem; scrollbar-width: none; }
     .home-light .home-clara-examples button { flex: 0 0 auto; }
   }

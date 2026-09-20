@@ -25,7 +25,7 @@ vi.mock("@/features/visualAI/visualAnalysisService", () => ({
 vi.mock("@/services/clara/claraMedia", () => ({
   VIDEO_ANALYSIS_DISCLOSURE: "Je n’analyse pas le son.",
   MAX_VIDEO_KEYFRAMES: 5,
-  compressImageFile: async (file: File) => file,
+  prepareImageForUpload: async (file: File) => ({ file, compressed: false, originalBytes: file.size }),
   extractVideoKeyframes: async () => [new File(["x"], "image-1.jpg", { type: "image/jpeg" })],
 }));
 
@@ -62,6 +62,15 @@ describe("Clara media queue", () => {
     const result = validateFile(big);
     expect(result.ok).toBe(false);
     expect(result.error).toContain("trop volumineux");
+  });
+
+  it("accepte une grande photo dans la file avant sa validation après optimisation", () => {
+    const big = imageFile("grand-angle.jpg");
+    Object.defineProperty(big, "size", { value: 14 * 1024 * 1024 });
+    uploadAlexFile.mockResolvedValue({ ok: true, file: { id: "large", kind: "photo" } });
+    analyzeImageVisually.mockResolvedValue({ summary: "Image reçue." });
+    const items = useClaraMediaQueue.getState().enqueue([big]);
+    expect(items[0]?.status).toBe("queued");
   });
 
   it("ne met jamais deux fois le même fichier dans la file", () => {

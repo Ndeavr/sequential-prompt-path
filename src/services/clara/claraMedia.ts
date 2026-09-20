@@ -11,10 +11,16 @@ export const VIDEO_ANALYSIS_DISCLOSURE =
 
 export const MAX_VIDEO_KEYFRAMES = 5;
 
+export interface CompressedImageResult {
+  file: File;
+  compressed: boolean;
+  originalBytes: number;
+}
+
 /** Réduit une image trop grande sans déformer la géométrie. */
 export async function compressImageFile(
   file: File,
-  maxDimension = 1920,
+  maxDimension = 2560,
   quality = 0.82,
 ): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
@@ -44,6 +50,19 @@ export async function compressImageFile(
   } catch {
     return file;
   }
+}
+
+/** Prépare une photo avant toute limite d'envoi; les documents restent intacts. */
+export async function prepareImageForUpload(file: File): Promise<CompressedImageResult> {
+  if (!file.type.startsWith("image/")) {
+    return { file, compressed: false, originalBytes: file.size };
+  }
+  const prepared = await compressImageFile(file);
+  return {
+    file: prepared,
+    compressed: prepared !== file,
+    originalBytes: file.size,
+  };
 }
 
 /**
