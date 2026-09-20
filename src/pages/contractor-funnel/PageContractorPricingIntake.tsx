@@ -486,6 +486,21 @@ export default function PageContractorPricingIntake() {
 
   const submit = async () => {
     setSubmitting(true);
+    // Profil confirmé et objectifs réellement saisis avant tout calcul de plan.
+    void trackFunnelStep("profile_completed", {
+      subjectId: data.company_name ?? null,
+      city: data.city ?? null,
+      metadata: { manual_entry: manualEntry },
+    });
+    void trackFunnelStep("goals_completed", {
+      subjectId: data.company_name ?? null,
+      metadata: {
+        target_monthly_appointments: data.target_monthly_appointments ?? null,
+        monthly_capacity: data.monthly_capacity ?? null,
+        average_project_value: data.average_project_value ?? null,
+        growth_level: data.desired_growth_level ?? null,
+      },
+    });
     try {
       const quote = await computePricingQuote(data as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
