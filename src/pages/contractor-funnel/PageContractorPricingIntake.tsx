@@ -959,3 +959,47 @@ function Toggle({
     </button>
   );
 }
+
+/* ---------- Objectif de contrats → rendez-vous recommandés ---------- */
+
+export type GoalFields = {
+  contract_goal_value?: number;
+  contract_goal_unit?: "month" | "year";
+  monthly_budget_cents?: number;
+  pricing_mode?: "goal" | "budget";
+};
+
+/**
+ * Convertit un objectif de contrats en nombre de rendez-vous exclusifs.
+ * Aucune valeur inventée : sans objectif confirmé, aucune recommandation.
+ */
+export function recommendAppointments(d: Partial<PricingIntakeInput>): {
+  contractsPerMonth: number;
+  closeRate: number;
+  needed: number;
+  capacity: number;
+  recommended: number;
+  limitedByCapacity: boolean;
+} | null {
+  const g = d as GoalFields;
+  const goal = g.contract_goal_value;
+  if (!goal || goal <= 0) return null;
+  const perMonth = (g.contract_goal_unit ?? "year") === "year" ? goal / 12 : goal;
+  const contractsPerMonth = Math.max(1, Math.ceil(perMonth));
+  const closeRate =
+    typeof d.close_rate_estimate === "number" && d.close_rate_estimate > 0
+      ? Math.min(0.95, d.close_rate_estimate)
+      : 0.4;
+  const needed = Math.max(1, Math.ceil(contractsPerMonth / closeRate));
+  const capacity = d.monthly_capacity ?? 0;
+  const capacityAppointments = capacity > 0 ? Math.max(1, Math.ceil(capacity / closeRate)) : needed;
+  const recommended = Math.min(needed, capacityAppointments);
+  return {
+    contractsPerMonth,
+    closeRate,
+    needed,
+    capacity,
+    recommended,
+    limitedByCapacity: recommended < needed,
+  };
+}
