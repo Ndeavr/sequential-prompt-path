@@ -75,8 +75,11 @@ const BASE_DEFAULTS: Partial<PricingIntakeInput> = {
   desired_growth_level: "growth",
   service_radius_km: 50,
   close_rate_estimate: 0.4,
-  current_ai_visibility_score: 30,
+  // Aucun score de visibilité par défaut : une valeur inventée fausserait le plan.
 };
+
+/** Champs que l'entrepreneur a lui-même confirmés — priorité absolue. */
+type ConfirmableField = "city" | "trade_primary" | "trade_secondary" | "company_name";
 
 export default function PageContractorPricingIntake() {
   const navigate = useNavigate();
@@ -96,6 +99,17 @@ export default function PageContractorPricingIntake() {
   const [manualEntry, setManualEntry] = useState(false);
   const [searchState, setSearchState] = useState({ loading: false, count: 0, searched: false });
   const [hydrated, setHydrated] = useState(false);
+  /**
+   * Hiérarchie de confiance : confirmé par l'entrepreneur > vérifié par une
+   * source > déduit. Une donnée déduite (ville d'un autre appel, catégorie
+   * devinée) ne remplace jamais silencieusement un champ confirmé ici.
+   */
+  const [confirmedFields, setConfirmedFields] = useState<ConfirmableField[]>([]);
+  const confirm = useCallback(
+    (field: ConfirmableField) =>
+      setConfirmedFields((f) => (f.includes(field) ? f : [...f, field])),
+    [],
+  );
 
   const set = useCallback(
     (patch: Partial<PricingIntakeInput>) => setData((d) => ({ ...d, ...patch })),
@@ -121,12 +135,14 @@ export default function PageContractorPricingIntake() {
           businessConfirmed?: boolean;
           manualEntry?: boolean;
           detected?: { trade: boolean; city: boolean };
+          confirmedFields?: ConfirmableField[];
         };
         if (parsed.data) setData({ ...BASE_DEFAULTS, ...parsed.data });
         if (typeof parsed.step === "number") setStep(Math.max(0, parsed.step));
         if (parsed.businessConfirmed) setBusinessConfirmed(true);
         if (parsed.manualEntry) setManualEntry(true);
         if (parsed.detected) setDetected(parsed.detected);
+        if (Array.isArray(parsed.confirmedFields)) setConfirmedFields(parsed.confirmedFields);
       }
     } catch {
       /* brouillon illisible : on repart proprement, sans fausse donnée */
@@ -143,12 +159,12 @@ export default function PageContractorPricingIntake() {
     try {
       localStorage.setItem(
         draftKey,
-        JSON.stringify({ data, step, businessConfirmed, manualEntry, detected }),
+        JSON.stringify({ data, step, businessConfirmed, manualEntry, detected, confirmedFields }),
       );
     } catch {
       /* stockage indisponible : le parcours reste utilisable */
     }
-  }, [hydrated, draftKey, data, step, businessConfirmed, manualEntry, detected]);
+  }, [hydrated, draftKey, data, step, businessConfirmed, manualEntry, detected, confirmedFields]);
 
 
   /* ---------- Audit revalidé côté serveur avant tout rendu ---------- */
@@ -166,9 +182,14 @@ export default function PageContractorPricingIntake() {
           setAudit(resolved);
           setData((d) => ({
             ...d,
-            company_name: resolved.business_name ?? d.company_name,
-            trade_primary: resolved.trade ?? d.trade_primary,
-            city: resolved.city ?? d.city,
+            // Une valeur confirmée par l'entrepreneur n'est jamais écrasée.
+            company_name: confirmedFields.includes("company_name")
+              ? d.company_name
+              : resolved.business_name ?? d.company_name,
+            trade_primary: confirmedFields.includes("trade_primary")
+              ? d.trade_primary
+              : resolved.trade ?? d.trade_primary,
+            city: confirmedFields.includes("city") ? d.city : resolved.city ?? d.city,
           }));
           setBusinessConfirmed(true);
         }
@@ -181,10 +202,13 @@ export default function PageContractorPricingIntake() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditId, auditToken, sessionKey]);
 
   const auditValid = Boolean(audit?.business_name);
   const detectedCity = audit?.city ?? data.city ?? null;
+  /** L'audit vient de mesurer la présence : on ne la redemande pas. */
+  const auditScoreKnown = typeof audit?.readiness_score === "number";
 
   /* ---------- Points d'abandon mesurables (une seule table, dédupliqués) ---------- */
   useEffect(() => {
@@ -198,8 +222,11 @@ export default function PageContractorPricingIntake() {
     setData((d) => ({
       ...d,
       company_name: r.business_name,
-      city: r.city || d.city,
-      trade_primary: r.primary_category || d.trade_primary,
+      // Source vérifiée : elle complète, mais n'écrase jamais un champ confirmé.
+      city: confirmedFields.includes("city") ? d.city : r.city || d.city,
+      trade_primary: confirmedFields.includes("trade_primary")
+        ? d.trade_primary
+        : r.primary_category || d.trade_primary,
       website_url: r.website || d.website_url,
     }));
     setDetected({ trade: Boolean(r.primary_category), city: Boolean(r.city) });
@@ -216,7 +243,7 @@ export default function PageContractorPricingIntake() {
       city: r.city ?? null,
       metadata: { provenance: "verifie_source_google" },
     });
-  }, []);
+  }, [confirmedFields]);
 
   /* ---------- Étapes ---------- */
   const identityStep: Step = {
@@ -295,14 +322,15 @@ export default function PageContractorPricingIntake() {
               label={`Métier principal${detected.trade ? " · Détecté — à confirmer" : ""}`}
               value={tradeSlugOf(d.trade_primary)}
               fallbackLabel={d.trade_primary ?? null}
-              onChange={(trade) => set({ trade_primary: trade.label })}
+              excludeSlug={tradeSlugOf(d.trade_secondary)}
+              onChange={(trade) => { confirm("trade_primary"); set({ trade_primary: trade.label }); }}
               testId="trade-primary-picker"
             />
 
             <TextInput
               label={`Ville desservie${detected.city ? " · Détecté — à confirmer" : ""}`}
               value={d.city ?? ""}
-              onChange={(v) => set({ city: v })}
+              onChange={(v) => { confirm("city"); set({ city: v }); }}
             />
           </>
         )}
@@ -322,21 +350,26 @@ export default function PageContractorPricingIntake() {
         <TextInput
           label="Ville principale desservie"
           value={d.city ?? ""}
-          onChange={(v) => set({ city: v })}
+          onChange={(v) => { confirm("city"); set({ city: v }); }}
         />
         <NumberInput
           label="Rayon de service (km)"
-          value={d.service_radius_km ?? 50}
-          onChange={(v) => set({ service_radius_km: v })}
+          value={d.service_radius_km ?? null}
+          onChange={(v) => set({ service_radius_km: v ?? undefined })}
           min={5}
           max={300}
+          placeholder="Ex. 50"
         />
         <TradePickerSheet
           label="Métier secondaire (optionnel)"
+          sheetTitle="Votre métier secondaire"
           placeholder="Aucun"
+          allowNone
+          excludeSlug={tradeSlugOf(d.trade_primary)}
+          onClear={() => { confirm("trade_secondary"); set({ trade_secondary: undefined }); }}
           value={tradeSlugOf(d.trade_secondary)}
           fallbackLabel={d.trade_secondary ?? null}
-          onChange={(trade) => set({ trade_secondary: trade.label })}
+          onChange={(trade) => { confirm("trade_secondary"); set({ trade_secondary: trade.label }); }}
           testId="trade-secondary-picker"
         />
 
@@ -358,18 +391,20 @@ export default function PageContractorPricingIntake() {
         <div className="space-y-3">
           <NumberInput
             label="Rendez-vous visés / mois"
-            value={d.target_monthly_appointments ?? 0}
-            onChange={(v) => set({ target_monthly_appointments: v })}
-            min={0}
+            value={d.target_monthly_appointments ?? null}
+            onChange={(v) => set({ target_monthly_appointments: v ?? undefined })}
+            min={1}
             max={100}
+            placeholder="Ex. 4"
           />
           <NumberInput
             label="Valeur moyenne d'un projet ($)"
-            value={d.average_project_value ?? 0}
-            onChange={(v) => set({ average_project_value: v })}
-            min={0}
+            value={d.average_project_value ?? null}
+            onChange={(v) => set({ average_project_value: v ?? undefined })}
+            min={1}
             max={500000}
             step={500}
+            placeholder="Ex. 3000"
           />
         </div>
       ),
@@ -383,18 +418,24 @@ export default function PageContractorPricingIntake() {
         <div className="space-y-3">
           <NumberInput
             label="Capacité mensuelle (projets)"
-            value={d.monthly_capacity ?? 0}
-            onChange={(v) => set({ monthly_capacity: v })}
-            min={0}
+            value={d.monthly_capacity ?? null}
+            onChange={(v) => set({ monthly_capacity: v ?? undefined })}
+            min={1}
             max={100}
+            placeholder="Ex. 6"
           />
           <NumberInput
             label="Taux de fermeture estimé (%)"
-            value={Math.round((d.close_rate_estimate ?? 0.4) * 100)}
-            onChange={(v) => set({ close_rate_estimate: v / 100 })}
+            value={
+              typeof d.close_rate_estimate === "number"
+                ? Math.round(d.close_rate_estimate * 100)
+                : null
+            }
+            onChange={(v) => set({ close_rate_estimate: v === null ? undefined : v / 100 })}
             min={5}
             max={95}
             step={5}
+            placeholder="Ex. 40"
           />
         </div>
       ),
@@ -429,32 +470,39 @@ export default function PageContractorPricingIntake() {
         </div>
       ),
     },
-    {
-      key: "visibility",
-      question: "Votre présence actuelle?",
-      hint: "Pour calibrer l'optimisation visibilité IA.",
-      isValid: () => true,
-      render: (d, set) => (
-        <div className="space-y-3">
-          <NumberInput
-            label="Score Google Business actuel (0-100)"
-            value={d.current_google_presence ?? 0}
-            onChange={(v) => set({ current_google_presence: v })}
-            min={0}
-            max={100}
-            step={5}
-          />
-          <NumberInput
-            label="Score visibilité IA actuel (0-100)"
-            value={d.current_ai_visibility_score ?? 0}
-            onChange={(v) => set({ current_ai_visibility_score: v })}
-            min={0}
-            max={100}
-            step={5}
-          />
-        </div>
-      ),
-    },
+    // Présence actuelle : si l'audit vient de la mesurer, on l'affiche avec sa
+    // provenance au lieu de la redemander. Sinon, champs libres avec « Non
+    // déterminé » possible — jamais de valeur inventée.
+    ...(auditScoreKnown
+      ? []
+      : [{
+          key: "visibility",
+          question: "Votre présence actuelle?",
+          hint: "Laissez vide si vous ne le savez pas : nous inscrirons « Non déterminé ».",
+          isValid: () => true,
+          render: (d: Partial<PricingIntakeInput>, set: (p: Partial<PricingIntakeInput>) => void) => (
+            <div className="space-y-3">
+              <NumberInput
+                label="Score Google Business actuel (0-100)"
+                value={d.current_google_presence ?? null}
+                onChange={(v) => set({ current_google_presence: v ?? undefined })}
+                min={0}
+                max={100}
+                step={5}
+                placeholder="Non déterminé"
+              />
+              <NumberInput
+                label="Score visibilité IA actuel (0-100)"
+                value={d.current_ai_visibility_score ?? null}
+                onChange={(v) => set({ current_ai_visibility_score: v ?? undefined })}
+                min={0}
+                max={100}
+                step={5}
+                placeholder="Non déterminé"
+              />
+            </div>
+          ),
+        } satisfies Step]),
     {
       key: "credentials",
       question: "Finalisons votre profil.",
@@ -692,6 +740,12 @@ function TextInput({
   );
 }
 
+/**
+ * Champ numérique mobile — jamais de zéro parasite.
+ * Le champ vide affiche un texte d'aide (pas la valeur 0), la première frappe
+ * remplace réellement la valeur et les zéros de tête sont normalisés
+ * (« 075 » → 75, « 04 » → 4, « 03000 » → 3000).
+ */
 function NumberInput({
   label,
   value,
@@ -699,29 +753,70 @@ function NumberInput({
   min,
   max,
   step = 1,
+  placeholder,
+  hint,
 }: {
   label: string;
-  value: number;
-  onChange: (v: number) => void;
+  value: number | null | undefined;
+  onChange: (v: number | null) => void;
   min?: number;
   max?: number;
   step?: number;
+  placeholder?: string;
+  hint?: string;
 }) {
+  const external = typeof value === "number" && Number.isFinite(value) ? String(value) : "";
+  const [draft, setDraft] = useState(external);
+  const [focused, setFocused] = useState(false);
+
+  // Hors saisie, la valeur affichée suit toujours le dossier.
+  useEffect(() => {
+    if (!focused) setDraft(external);
+  }, [external, focused]);
+
+  const commit = (raw: string) => {
+    const cleaned = raw.replace(/[^\d.]/g, "");
+    if (cleaned === "") {
+      setDraft("");
+      onChange(null);
+      return;
+    }
+    const normalized = cleaned.replace(/^0+(?=\d)/, "");
+    setDraft(normalized);
+    const parsed = Number(normalized);
+    onChange(Number.isFinite(parsed) ? parsed : null);
+  };
+
   return (
     <label className="block">
       <span className="text-xs uppercase tracking-wider text-white/50">
         {label}
       </span>
       <input
-        type="number"
+        type="text"
         inputMode="numeric"
-        value={Number.isFinite(value) ? value : 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-        min={min}
-        max={max}
-        step={step}
+        pattern="[0-9]*"
+        value={draft}
+        placeholder={placeholder ?? "—"}
+        onFocus={(e) => {
+          setFocused(true);
+          e.currentTarget.select();
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          const raw = e.currentTarget.value.trim();
+          if (raw === "") return;
+          let parsed = Number(raw.replace(/^0+(?=\d)/, ""));
+          if (!Number.isFinite(parsed)) { onChange(null); setDraft(""); return; }
+          if (typeof min === "number" && parsed < min) parsed = min;
+          if (typeof max === "number" && parsed > max) parsed = max;
+          setDraft(String(parsed));
+          onChange(parsed);
+        }}
+        onChange={(e) => commit(e.target.value)}
         className="mt-1.5 w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400"
       />
+      {hint && <span className="mt-1 block text-[11px] text-white/45">{hint}</span>}
     </label>
   );
 }

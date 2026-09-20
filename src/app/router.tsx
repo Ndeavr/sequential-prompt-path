@@ -1057,7 +1057,9 @@ export const AppRouter = () => (
         <Route path="/contractor/activated" element={<Suspense fallback={<LazyFallback />}><PageContractorActivated /></Suspense>} />
 
         {/* Contractor Onboarding AIPP Funnel */}
-        <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
+        {/* Porte d'entrée entrepreneur unique : tout converge vers l'audit IA gratuit,
+            en conservant l'attribution (prospect, ref, affilié, UTM, jeton). */}
+        <Route path="/entrepreneur/join" element={<LegacyRedirect to="/entrepreneurs/audit-ia" />} />
         <Route path="/entrepreneur/ai-trust-audit" element={<Suspense fallback={<LazyFallback />}><PageAiTrustAudit /></Suspense>} />
         <Route path="/entrepreneur/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
         <Route path="/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
@@ -1069,8 +1071,8 @@ export const AppRouter = () => (
         <Route path="/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageApparaitreRechercheIA2026 /></Suspense>} />
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
-        <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
-        <Route path="/entrepreneur/onboarding" element={<Suspense fallback={<LazyFallback />}><PageContractorOnboardingEntry /></Suspense>} />
+        <Route path="/entrepreneur/onboarding-voice" element={<LegacyRedirect to="/entrepreneurs/audit-ia" />} />
+        <Route path="/entrepreneur/onboarding" element={<LegacyRedirect to="/entrepreneurs/audit-ia" />} />
         <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
         <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
         <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
@@ -1931,7 +1933,7 @@ export const AppRouter = () => (
          <Route path="/admin/recruitment/logs" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentLogs /></UniversalRouteGuard>} />
 
          {/* Recruitment — Prospect-facing (public) */}
-         <Route path="/join" element={<Suspense fallback={<LazyFallback />}><PageContractorJoinPublic /></Suspense>} />
+         <Route path="/join" element={<LegacyRedirect to="/entrepreneurs/audit-ia" />} />
          {/* IMPORTANT: /join/profile MUST come before /join/:token so the literal wins */}
          <Route path="/join/profile" element={<Suspense fallback={<LazyFallback />}><PageContractorJoinProfileGate /></Suspense>} />
          <Route path="/join/:token" element={<PageContractorJoinOffer />} />

@@ -335,7 +335,11 @@ export default function PageAiRecommendationAudit() {
     if (activationToken) params.set("t", activationToken);
     const ref = sp.get("ref");
     if (ref) params.set("ref", ref);
-    for (const k of ["utm_source", "utm_medium", "utm_campaign"]) {
+    // Toute l'attribution suit le dossier jusqu'au paiement.
+    for (const k of [
+      "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
+      "prospect", "prospect_id", "campaign", "campaign_id", "source", "offer", "promo", "aff", "affiliate",
+    ]) {
       const v = sp.get(k);
       if (v) params.set(k, v);
     }

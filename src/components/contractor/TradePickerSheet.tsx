@@ -24,6 +24,13 @@ interface Props {
   tone?: "dark" | "light";
   placeholder?: string;
   testId?: string;
+  /** Titre de la feuille (ex. « Votre métier secondaire »). */
+  sheetTitle?: string;
+  /** Propose « Aucun » — utilisé pour un métier secondaire optionnel. */
+  allowNone?: boolean;
+  onClear?: () => void;
+  /** Métier déjà retenu ailleurs : jamais proposé deux fois. */
+  excludeSlug?: string | null;
 }
 
 export default function TradePickerSheet({
@@ -34,13 +41,20 @@ export default function TradePickerSheet({
   tone = "dark",
   placeholder = "Choisir un métier",
   testId = "trade-picker",
+  sheetTitle = "Votre métier principal",
+  allowNone = false,
+  onClear,
+  excludeSlug = null,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const { taxonomy, isLoading } = useTradeTaxonomy();
 
   const selected = value ? taxonomy.bySlug.get(value) ?? null : null;
-  const results = useMemo(() => searchTaxonomy(taxonomy, query), [taxonomy, query]);
+  const results = useMemo(
+    () => searchTaxonomy(taxonomy, query).filter((t) => t.slug !== excludeSlug),
+    [taxonomy, query, excludeSlug],
+  );
 
   const dark = tone === "dark";
   const display = selected?.label ?? fallbackLabel ?? null;
@@ -75,7 +89,7 @@ export default function TradePickerSheet({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="h-[85vh] rounded-t-[28px] p-0">
           <SheetHeader className="px-5 pt-5 pb-3">
-            <SheetTitle>Votre métier principal</SheetTitle>
+            <SheetTitle>{sheetTitle}</SheetTitle>
           </SheetHeader>
 
           <div className="px-5 pb-3">
@@ -93,6 +107,24 @@ export default function TradePickerSheet({
           </div>
 
           <div className="h-[calc(85vh-9rem)] overflow-y-auto px-5 pb-8">
+            {allowNone && (
+              <button
+                type="button"
+                data-testid={`${testId}-none`}
+                onClick={() => {
+                  onClear?.();
+                  setOpen(false);
+                  setQuery("");
+                }}
+                className={cn(
+                  "mb-3 w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-colors",
+                  !value ? "border-primary bg-primary/10 text-foreground" : "border-border bg-background text-muted-foreground hover:bg-muted",
+                )}
+              >
+                Aucun
+              </button>
+            )}
+
             {isLoading ? (
               <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> Chargement des métiers…

@@ -7,8 +7,12 @@
  * across the hop.
  */
 
-/** Public, no-payment entry for an organic contractor. */
-export const CONTRACTOR_ENTRY_PATH = "/join";
+/**
+ * Public, no-payment entry for an organic contractor.
+ * Porte d'entrée canonique unique : l'audit IA gratuit. Les anciennes pages
+ * d'entrée restent en place mais redirigent ici en conservant l'attribution.
+ */
+export const CONTRACTOR_ENTRY_PATH = "/entrepreneurs/audit-ia";
 /** Authenticated activation gate (creates role + contractor row, no payment). */
 export const CONTRACTOR_ACTIVATION_PATH = "/join/profile";
 
