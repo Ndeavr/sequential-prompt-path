@@ -529,7 +529,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const parsed = extractQuickReplies(full);
         const finalText = cleanAlexText(parsed.text);
         // Clara ne renvoie jamais l'utilisateur chercher : elle prend en charge.
-        const guidedText = rewriteGuidance(finalText, destination);
+        const guidedText = stripOpenAnnouncement(rewriteGuidance(finalText, destination));
         const shownText =
           guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
@@ -542,15 +542,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           clientMessageId: assistantId,
         }).catch(() => {});
 
-        // Navigation assistée : Clara ouvre elle-même l'écran réel, en
-        // conservant la session canonique et le contexte déjà recueilli.
+        // Navigation assistée : Clara ouvre elle-même l'écran réel, dans le même
+        // onglet, et ne confirme qu'après le changement de route réussi.
         if (destination) {
-          logClaraWorkflowEvent("workflow_started", { intent: detected, step: destination.path });
-          window.setTimeout(() => {
-            navigate(destination.path, {
-              state: { fromClara: true, claraIntent: detected, claraContext: text },
-            });
-          }, 600);
+          setQuickReplies(null);
+          await runOpen(detected, text);
         }
       } catch {
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
