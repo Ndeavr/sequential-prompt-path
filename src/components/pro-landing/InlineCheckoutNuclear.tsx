@@ -101,7 +101,7 @@ export default function InlineCheckoutNuclear({
   const basePrice = useMemo(() => {
     if (!activePlan) return 0;
     if (mode === "founder") return activePlan.oneTimePrice;
-    return mode === "year" ? activePlan.yearlyPrice : activePlan.monthlyPrice;
+    return mode === "year" && yearlyAvailable ? activePlan.yearlyPrice : activePlan.monthlyPrice;
   }, [activePlan, mode]);
 
   // view_checkout
@@ -207,7 +207,8 @@ export default function InlineCheckoutNuclear({
   }
 
   const subscriptionPlans = plans.filter((p) => p.billingMode === "subscription");
-  const displayPrice = mode === "year"
+  const anyYearly = subscriptionPlans.some((p) => p.supportsYearly);
+  const displayPrice = mode === "year" && yearlyAvailable
     ? `${(activePlan.yearlyPrice / 100).toFixed(0)} $/an`
     : mode === "founder"
       ? `${(activePlan.oneTimePrice / 100).toFixed(0)} $ une seule fois`
