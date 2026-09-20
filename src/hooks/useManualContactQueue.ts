@@ -45,6 +45,9 @@ export type ManualQueueRow = {
   is_unassigned: boolean;
   can_sms: boolean;
   can_email: boolean;
+  /** Statut réel de validation du numéro (jamais inventé). */
+  phone_validation_status: string | null;
+  phone_invalid: boolean | null;
   activation_token: string | null;
 };
 

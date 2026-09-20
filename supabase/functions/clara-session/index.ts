@@ -350,13 +350,16 @@ Deno.serve(async (req) => {
   }
 
   async function loadMessages(sessionId: string) {
+    // On charge les MESSAGES LES PLUS RÉCENTS (ordre décroissant + limite),
+    // puis on rétablit l'ordre chronologique. Charger les plus anciens faisait
+    // disparaître le dernier échange au rechargement et au retour du mode voix.
     const { data } = await admin
       .from("alex_messages")
       .select("id,sender,message,message_type,created_at")
       .eq("session_id", sessionId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(MAX_MESSAGES);
-    return (data ?? []).map((m: Record<string, unknown>) => ({
+    return (data ?? []).slice().reverse().map((m: Record<string, unknown>) => ({
       id: m.id as string,
       role: m.sender === "user" ? "user" : "assistant",
       text: (m.message as string) ?? "",

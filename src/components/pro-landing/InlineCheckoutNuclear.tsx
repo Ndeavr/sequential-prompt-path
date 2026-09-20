@@ -89,12 +89,19 @@ export default function InlineCheckoutNuclear({
     return plans.find((p) => p.code === selectedCode) ?? recommended;
   }, [mode, plans, selectedCode, recommended, founderPlan]);
 
-  const interval: BillingInterval = mode === "year" ? "year" : "month";
+  // Le mode annuel n'existe que si le plan a un vrai prix annuel au catalogue.
+  // Sans cette garde, un plan sans prix annuel affichait « 0 $/an ».
+  const yearlyAvailable = activePlan?.supportsYearly === true;
+  useEffect(() => {
+    if (mode === "year" && activePlan && !yearlyAvailable) setMode("month");
+  }, [mode, activePlan, yearlyAvailable]);
+
+  const interval: BillingInterval = mode === "year" && yearlyAvailable ? "year" : "month";
 
   const basePrice = useMemo(() => {
     if (!activePlan) return 0;
     if (mode === "founder") return activePlan.oneTimePrice;
-    return mode === "year" ? activePlan.yearlyPrice : activePlan.monthlyPrice;
+    return mode === "year" && yearlyAvailable ? activePlan.yearlyPrice : activePlan.monthlyPrice;
   }, [activePlan, mode]);
 
   // view_checkout
@@ -200,7 +207,8 @@ export default function InlineCheckoutNuclear({
   }
 
   const subscriptionPlans = plans.filter((p) => p.billingMode === "subscription");
-  const displayPrice = mode === "year"
+  const anyYearly = subscriptionPlans.some((p) => p.supportsYearly);
+  const displayPrice = mode === "year" && yearlyAvailable
     ? `${(activePlan.yearlyPrice / 100).toFixed(0)} $/an`
     : mode === "founder"
       ? `${(activePlan.oneTimePrice / 100).toFixed(0)} $ une seule fois`
@@ -227,7 +235,8 @@ export default function InlineCheckoutNuclear({
       <div className="mt-5 inline-flex w-full overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] p-1 text-xs md:w-auto">
         {([
           { v: "month", label: "Mensuel" },
-          { v: "year", label: "Annuel · -2 mois" },
+          // Onglet annuel affiché seulement si un prix annuel réel existe.
+          ...(anyYearly ? [{ v: "year" as const, label: "Annuel · -2 mois" }] : []),
           ...(founderPlan ? [{ v: "founder" as const, label: "Fondateur" }] : []),
         ] as Array<{ v: Mode; label: string }>).map((opt) => (
           <button
@@ -277,7 +286,7 @@ export default function InlineCheckoutNuclear({
                 )}
                 <p className="text-xs uppercase tracking-wider text-white/60">{p.name}</p>
                 <p className="mt-1 text-base font-semibold text-white">
-                  {mode === "year"
+                  {mode === "year" && p.supportsYearly
                     ? `${(p.yearlyPrice / 100).toFixed(0)} $/an`
                     : `${(p.monthlyPrice / 100).toFixed(0)} $/mois`}
                 </p>

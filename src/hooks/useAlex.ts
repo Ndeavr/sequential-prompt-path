@@ -6,6 +6,13 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const ALEX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-chat`;
 
+/**
+ * Retire le marqueur interne « [[CHOIX: …]] », y compris sa forme partielle en
+ * cours de diffusion, pour qu'aucune ligne technique n'apparaisse dans le chat.
+ */
+const stripChoiceMarker = (text: string): string =>
+  text.replace(/\[\[\s*CHOIX\s*:[^\]]*\]\]/gi, "").replace(/\[\[\s*C?H?O?I?X?\s*:?[^\]]*$/i, "").trimEnd();
+
 interface UseAlexOptions {
   onResponseComplete?: (fullText: string) => void;
   onSentenceReady?: (sentence: string) => void;
@@ -49,14 +56,17 @@ export const useAlex = (options?: UseAlexOptions) => {
 
       const upsertAssistant = (chunk: string) => {
         assistantSoFar += chunk;
+        // Le marqueur interne de réponses rapides n'est jamais affiché ici :
+        // seule la conversation d'accueil le transforme en boutons.
+        const visible = stripChoiceMarker(assistantSoFar);
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") {
             return prev.map((m, i) =>
-              i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
+              i === prev.length - 1 ? { ...m, content: visible } : m
             );
           }
-          return [...prev, { role: "assistant", content: assistantSoFar }];
+          return [...prev, { role: "assistant", content: visible }];
         });
 
         // Stream sentences to TTS as they arrive

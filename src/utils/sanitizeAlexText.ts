@@ -24,6 +24,13 @@ const CODE_FENCE_RE = /```[\s\S]*?```/g;
 const BACKTICK_TOKEN_RE = /`(open_upload|open_camera|open_voice|save_profile|match_pro|trigger_upload)`/gi;
 
 /**
+ * Marqueur interne de réponses rapides (« [[CHOIX: Oui | Non]] »). Seule la
+ * conversation d'accueil sait le transformer en boutons : partout ailleurs il
+ * doit disparaître du texte affiché.
+ */
+const CHOICE_MARKER_RE = /\[\[\s*CHOIX\s*:[^\]]*\]\]/gi;
+
+/**
  * Technical leak phrases — if any appear in an Alex bubble, the ENTIRE bubble
  * is replaced with the graceful fallback. Governed by mem://ai/alex/behavioral-kernel.
  */
@@ -78,6 +85,10 @@ export function sanitizeAlexText(input: string | null | undefined): SanitizeResu
 
   let text = input;
   let hadForbidden = false;
+
+  // Marqueur interne de réponses rapides : jamais visible pour l'utilisateur.
+  text = text.replace(CHOICE_MARKER_RE, "").trim();
+
 
   // Strip code fences entirely — Alex chat never shows code blocks
   if (CODE_FENCE_RE.test(text)) {

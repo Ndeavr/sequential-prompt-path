@@ -240,7 +240,15 @@ function QueueCard({
           // L'appel n'est jamais autorisé sans validation positive côté file.
           policy={{
             contact_locked: row.opted_out === true,
-            can_call: false,
+            // L'appel manuel composé par un humain n'est pas un envoi commercial
+            // électronique : il est bloqué uniquement sans numéro, sur retrait,
+            // numéro invalide ou hors Québec. SMS/courriel gardent la porte LCAP.
+            can_call:
+              row.opted_out !== true &&
+              Boolean(row.phone_e164) &&
+              row.phone_invalid !== true &&
+              row.phone_validation_status !== "outside_quebec" &&
+              row.phone_validation_status !== "do_not_contact",
             can_sms: row.opted_out !== true && row.can_sms === true,
             can_email: row.opted_out !== true && row.can_email === true,
             blocked_reason: row.blocked_reason ?? null,
