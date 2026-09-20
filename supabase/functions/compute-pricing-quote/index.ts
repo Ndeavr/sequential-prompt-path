@@ -680,8 +680,9 @@ Deno.serve(async (req) => {
     const objective = body.business_objective ?? "grow";
     const objectiveMultiplier = w.objective_multipliers[objective] ?? 1.0;
 
-    // ---------- Extra appointment price (market value, never plan ÷ included) ----------
-    const extra = await computeExtraAppointmentPrice(svc, body, close, w);
+    // ---------- Extra appointment price (trade × market, never plan ÷ included) ----------
+    const extra = await resolveAppointmentUnitPrice(svc, body, close, w, tradeSlug, citySlug);
+    const volumeTiers = volumeTiersFrom(w);
     const aipp = aippFee(body.current_ai_visibility_score);
 
     /**
@@ -696,9 +697,11 @@ Deno.serve(async (req) => {
       const base = p.monthly_price;
 
       const extraAppointments = Math.max(0, t - (p.appointments_included ?? 0));
-      const apptPkg = extra.price_cents
-        ? extraAppointments * extra.price_cents
-        : extraAppointments * w.volume_per_appointment_cents;
+      const unitPrice = extra.price_cents ?? w.volume_per_appointment_cents;
+      const apptPkg = extraAppointments * unitPrice;
+      // Rabais de volume EXPLICITE : jamais un plafond invisible.
+      const discountRate = volumeDiscountRate(t, volumeTiers);
+      const volumeDiscount = -Math.round(apptPkg * discountRate);
 
       // Exclusivity is only charged when the inventory can actually grant it.
       const exclusivity = exclusivityGranted
@@ -712,7 +715,7 @@ Deno.serve(async (req) => {
         w.capacity_factor_max,
       );
 
-      const subtotal = base + apptPkg + exclusivity + aipp;
+      const subtotal = base + apptPkg + volumeDiscount + exclusivity + aipp;
       // Compounding six factors can double the price; the blended multiplier is
       // clamped so the personalized price stays within a defensible band of the
       // plan's published price.
@@ -731,13 +734,12 @@ Deno.serve(async (req) => {
         ),
       );
 
-      // Prix brut de la chaîne AVANT plafond/plancher : conservé tel quel pour
-      // que le détail affiché soit une identité vérifiable.
+      // Prix réel de la chaîne. AUCUN plafond mensuel universel : un volume
+      // élevé se paie à son vrai prix, réduit uniquement par le rabais de
+      // volume affiché ci-dessus. Seuls les planchers (minimum de service et
+      // plancher territorial validé) s'appliquent.
       const rawPriceCents = Math.round(subtotal * marketMultiplier * overrideMultiplier);
-      const boundedPriceCents = Math.max(
-        overrideFloorCents,
-        clamp(rawPriceCents, minCents, maxCents),
-      );
+      const boundedPriceCents = Math.max(overrideFloorCents, minCents, rawPriceCents);
 
       return {
         target: t,
@@ -745,6 +747,10 @@ Deno.serve(async (req) => {
         plan_code: p.code,
         capacity_capped: picked.capped,
         base,
+        appointment_unit_price_cents: unitPrice,
+        extra_appointments: extraAppointments,
+        volume_discount_rate: discountRate,
+        volume_discount_cents: volumeDiscount,
         appointment_package_fee: apptPkg,
         exclusivity_fee: exclusivity,
         aipp_fee: aipp,
