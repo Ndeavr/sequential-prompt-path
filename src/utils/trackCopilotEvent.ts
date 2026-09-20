@@ -36,6 +36,8 @@ export type CopilotEventName =
   | "alex_analysis_started"
   | "clara_chat_opened"
   | "clara_voice_started"
+  | "clara_voice_suggested"
+  | "clara_voice_suggestion_dismissed"
   | "clara_voice_connected"
   | "clara_voice_ended"
   | "clara_voice_error"

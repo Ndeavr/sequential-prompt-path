@@ -157,8 +157,10 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!s.isOverlayOpen) return;
     // En pause : jamais de parole de secours.
     if (HALTED.has(s.machineState)) return;
-    if (hasGreeted()) {
-      // Greeting already delivered this tab session — no replay, no red banner.
+    // ONE CLARA : une conversation déjà en cours ne reçoit JAMAIS de salutation
+    // de secours — la voix se contente d'écouter la suite du même échange.
+    if (hasGreeted() || claraBriefRef.current?.has_conversation) {
+      // Greeting already delivered (or conversation in progress) — no replay, no red banner.
       // Just settle into a calm listening state so the user can speak.
       console.warn("[VoiceOverlay] Greeting already delivered — settling to listening", reason);
       firstAudioReceivedRef.current = true;
