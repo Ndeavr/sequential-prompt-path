@@ -909,6 +909,39 @@ Deno.serve(async (req) => {
       subtotal,
       market_multiplier: marketMultiplier,
       final_monthly_price: finalPrice,
+      /**
+       * IDENTITÉ TARIFAIRE — le détail affiché doit être vérifiable :
+       * (base + rendez-vous + exclusivité + visibilité IA) × multiplicateur
+       * + ajustement = prix mensuel final. L'ajustement porte le plafond, le
+       * plancher et les modes forfait/budget : rien n'est caché.
+       */
+      price_identity: {
+        target_appointments: effectiveTarget,
+        requested_appointments: Math.max(0, Math.round(body.target_monthly_appointments ?? 0)),
+        base_platform_cents: base,
+        appointment_package_cents: apptPkg,
+        exclusivity_cents: exclusivity,
+        aipp_cents: aipp,
+        subtotal_cents: subtotal,
+        market_multiplier: marketMultiplier,
+        override_multiplier: overrideMultiplier,
+        raw_price_cents: chain.raw_price_cents,
+        bounds: { min_cents: minCents, max_cents: maxCents, floor_cents: overrideFloorCents },
+        adjustment_cents: finalPrice - chain.raw_price_cents,
+        adjustment_reason:
+          finalPrice === chain.raw_price_cents
+            ? null
+            : pricingMode === "pack"
+              ? "forfait_fixe"
+              : status === "waitlisted"
+                ? "marche_indisponible"
+                : chain.raw_price_cents > maxCents
+                  ? "plafond_plan_personnalise"
+                  : chain.raw_price_cents < minCents || finalPrice === overrideFloorCents
+                    ? "plancher_plan_personnalise"
+                    : "ajustement_plan_personnalise",
+        final_price_cents: finalPrice,
+      },
       extra_appointment_price: extra.price_cents,
       extra_appointment_status: extra.status,
       extra_appointment_basis: extra.basis,
