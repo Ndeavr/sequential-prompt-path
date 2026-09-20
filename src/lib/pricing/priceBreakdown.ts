@@ -159,3 +159,94 @@ export function breakdownIsExact(quote: QuoteLike): boolean {
   );
   return Math.abs(computed + id.adjustment_cents - id.final_price_cents) <= 1;
 }
+
+/* ---------- Vue commerciale (écran entrepreneur) ---------- */
+
+export interface CommercialLine {
+  label: string;
+  sublabel?: string;
+  cents: number;
+}
+
+export interface CommercialSummary {
+  lines: CommercialLine[];
+  total_cents: number;
+  /** Phrase affichée quand l'entrepreneur a fixé lui-même un budget mensuel. */
+  budget_note?: string;
+  /** Vrai quand aucun tarif fiable n'existe pour ce métier : abonnement seul. */
+  appointments_unavailable: boolean;
+}
+
+export interface CommercialContext {
+  trade?: string | null;
+  city?: string | null;
+  plan_label?: string | null;
+  monthly_budget_cents?: number | null;
+  guaranteed_appointments?: number | null;
+}
+
+const money = (cents: number) =>
+  new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })
+    .format(Math.round(cents / 100));
+
+/**
+ * Détail commercial : uniquement ce que l'entrepreneur comprend.
+ * Aucun sous-total, multiplicateur, plafond ni ajustement interne.
+ */
+export function buildCommercialLines(
+  quote: QuoteLike,
+  ctx: CommercialContext = {},
+): CommercialSummary {
+  const id = resolvePriceIdentity(quote);
+  const lines: CommercialLine[] = [
+    {
+      label: ctx.plan_label ? `Abonnement UNPRO — forfait ${ctx.plan_label}` : "Abonnement UNPRO",
+      cents: id.base_platform_cents,
+    },
+  ];
+
+  const count = id.extra_appointments ?? 0;
+  const unavailable = id.appointment_unit_status === "unavailable" || count === 0;
+  if (count > 0 && id.appointment_package_cents > 0) {
+    const where = [ctx.trade, ctx.city].filter(Boolean).join(", ");
+    const net = id.appointment_package_cents + (id.volume_discount_cents ?? 0);
+    const pct = Math.round((id.volume_discount_rate ?? 0) * 100);
+    const unit = id.appointment_unit_price_cents;
+    const details = [
+      typeof unit === "number" && unit > 0 ? `${money(unit)} par rendez-vous` : null,
+      pct > 0 ? `rabais de volume −${pct} % inclus` : null,
+    ].filter(Boolean);
+    lines.push({
+      label: `${count} rendez-vous exclusifs${where ? ` en ${where}` : ""}`,
+      sublabel: details.length ? details.join(", ") : undefined,
+      cents: net,
+    });
+  }
+
+  if (id.aipp_cents > 0) {
+    lines.push({ label: "Visibilité IA", cents: id.aipp_cents });
+  }
+  if (id.exclusivity_cents > 0) {
+    lines.push({ label: "Exclusivité territoriale", cents: id.exclusivity_cents });
+  }
+
+  const listed = lines.reduce((s, l) => s + l.cents, 0);
+  // Le total affiché est TOUJOURS le montant réellement facturé.
+  // Tout écart de calcul interne se règle sur l'abonnement, jamais en ligne cachée.
+  const diff = id.final_price_cents - listed;
+  if (diff !== 0 && lines.length) lines[0].cents += diff;
+
+  const budget = ctx.monthly_budget_cents;
+  const guaranteed = ctx.guaranteed_appointments ?? id.target_appointments;
+  const budget_note =
+    typeof budget === "number" && budget > 0 && guaranteed > 0
+      ? `Votre budget de ${money(budget)}/mois permet ${guaranteed} rendez-vous exclusifs par mois dans votre marché.`
+      : undefined;
+
+  return {
+    lines,
+    total_cents: id.final_price_cents,
+    budget_note,
+    appointments_unavailable: unavailable,
+  };
+}

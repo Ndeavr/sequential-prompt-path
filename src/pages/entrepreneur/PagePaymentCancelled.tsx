@@ -39,7 +39,7 @@ export default function PagePaymentCancelled() {
         >
           {quoteId && (
             <Button
-              onClick={() => navigate(`/entrepreneur/plan-result?quote_id=${quoteId}`)}
+              onClick={() => navigate(`/entrepreneur/plan-personnalise/${quoteId}`)}
               className="w-full h-14 rounded-2xl text-base font-bold gap-2"
               size="lg"
             >
