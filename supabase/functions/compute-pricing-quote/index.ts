@@ -196,27 +196,96 @@ function aippFee(score: number | undefined | null): number {
   return 14900;
 }
 
+/** Rabais de volume EXPLICITE sur les rendez-vous supplémentaires (jamais un plafond caché). */
+interface VolumeTier {
+  min_appointments: number;
+  rate: number;
+}
+
+const DEFAULT_VOLUME_TIERS: VolumeTier[] = [
+  { min_appointments: 10, rate: 0.05 },
+  { min_appointments: 25, rate: 0.1 },
+  { min_appointments: 50, rate: 0.15 },
+  { min_appointments: 100, rate: 0.2 },
+];
+
+function volumeTiersFrom(w: any): VolumeTier[] {
+  const raw = Array.isArray(w?.volume_discount_tiers) ? w.volume_discount_tiers : null;
+  if (!raw?.length) return DEFAULT_VOLUME_TIERS;
+  return raw
+    .map((t: any) => ({
+      min_appointments: Math.max(1, Math.round(Number(t?.min_appointments ?? 0))),
+      rate: clamp(Number(t?.rate ?? 0), 0, 0.5),
+    }))
+    .filter((t: VolumeTier) => Number.isFinite(t.min_appointments) && t.rate > 0)
+    .sort((a: VolumeTier, b: VolumeTier) => a.min_appointments - b.min_appointments);
+}
+
+function volumeDiscountRate(appointments: number, tiers: VolumeTier[]): number {
+  let rate = 0;
+  for (const t of tiers) if (appointments >= t.min_appointments) rate = t.rate;
+  return rate;
+}
+
 /**
- * Price of ONE extra exclusive appointment for THIS contractor.
- * It is the market value of an appointment in this contractor's economics —
- * NEVER `plan price ÷ included appointments`.
+ * Prix d'UN rendez-vous exclusif supplémentaire pour CE métier / CE marché.
  *
- * value = average project value × close rate × configured appointment share.
- * Provenance is always reported: configured | inferred | calculated | unavailable.
+ * Source 1 (canonique) : `appointment_pricing_benchmarks` (métier × marché,
+ * dérivé du coût réel d'acquisition). Un rendez-vous en tonte de pelouse ne
+ * vaut pas un rendez-vous en toiture : aucun tarif universel n'est appliqué.
+ * Source 2 : moyenne du métier sur les autres marchés.
+ * Source 3 : économie déclarée (valeur moyenne × taux de fermeture × part).
+ * Sinon : indisponible — jamais un tarif inventé.
  */
-async function computeExtraAppointmentPrice(
+async function resolveAppointmentUnitPrice(
   svc: any,
   body: Input,
   close: number,
   w: any,
+  tradeSlug: string,
+  citySlug: string,
 ): Promise<{ price_cents: number | null; status: string; basis: Record<string, unknown> }> {
   const share = Number(w.appointment_value_share ?? 0.08);
   const minCents = Number(w.extra_appointment_min_cents ?? 4900);
   const maxCents = Number(w.extra_appointment_max_cents ?? 99900);
+  const basis: Record<string, unknown> = {
+    trade_slug: tradeSlug,
+    city_slug: citySlug,
+    close_rate: round2(close),
+  };
 
+  const { data: benchRows, error: benchErr } = await svc
+    .from("appointment_pricing_benchmarks")
+    .select("category_slug,market_slug,final_appointment_price_cents,data_source")
+    .eq("category_slug", tradeSlug)
+    .eq("is_active", true);
+
+  if (benchErr) {
+    basis.benchmark_error = benchErr.message;
+  } else if (Array.isArray(benchRows) && benchRows.length) {
+    const exact = benchRows.find((r: any) => r.market_slug === citySlug);
+    if (exact && Number(exact.final_appointment_price_cents) > 0) {
+      basis.benchmark = { market: exact.market_slug, source: exact.data_source };
+      return {
+        price_cents: Math.round(Number(exact.final_appointment_price_cents)),
+        status: "benchmark_trade_market",
+        basis,
+      };
+    }
+    const values = benchRows
+      .map((r: any) => Number(r.final_appointment_price_cents))
+      .filter((v: number) => Number.isFinite(v) && v > 0);
+    if (values.length) {
+      const avg = Math.round(values.reduce((a: number, b: number) => a + b, 0) / values.length);
+      basis.benchmark = { markets: benchRows.length, averaged: true };
+      return { price_cents: avg, status: "benchmark_trade", basis };
+    }
+  }
+
+  // Aucun repère métier : on retombe sur l'économie déclarée du dossier.
   let projectValue = Number(body.average_project_value ?? 0);
   let status = "calculated";
-  const basis: Record<string, unknown> = { share, close_rate: round2(close) };
+  basis.share = share;
 
   const { data: bands, error } = await svc
     .from("appointment_values")
@@ -236,7 +305,6 @@ async function computeExtraAppointmentPrice(
       status = band.value_status ?? "configured";
       basis.band = { size: band.project_size, label: band.label_fr };
     } else if (!projectValue) {
-      // No declared project value: fall back to the configured mid band.
       const mid = bands[Math.floor(bands.length / 2)];
       projectValue =
         (Number(mid.estimated_value_min ?? 0) + Number(mid.estimated_value_max ?? 0)) / 2;
