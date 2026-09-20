@@ -1192,7 +1192,7 @@ Deno.serve(async (req) => {
                 stripe_session_id: session.id,
               },
             },
-          ]);
+          ], { onConflict: "dedupe_key", ignoreDuplicates: true });
         } catch (e) {
           console.warn("[stripe-webhook] funnel events (plan) soft-fail", String(e));
         }
