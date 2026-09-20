@@ -870,12 +870,22 @@ function AuditReport({
         <div className="mx-auto w-full max-w-md sm:max-w-lg">
           <Button
             onClick={onActivate}
+            disabled={activating}
             size="lg"
             className="gold-btn h-14 w-full rounded-2xl border-0 px-3 text-[15px] font-bold leading-tight hover:text-primary-foreground"
           >
-            <span className="truncate">Compléter mon profil</span>
-            <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+            {activating ? (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            ) : (
+              <>
+                <span className="truncate">Compléter mon profil</span>
+                <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+              </>
+            )}
           </Button>
+          {activationError ? (
+            <p className="mt-2 text-center text-[12.5px] font-medium text-destructive">{activationError}</p>
+          ) : null}
         </div>
       </div>
     </div>
