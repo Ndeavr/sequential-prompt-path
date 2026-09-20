@@ -866,6 +866,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }).catch(() => undefined);
 
       if (suggestion.intent === "contractor_onboarding") {
+        trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
+        const asked = await askNextQualification({ opening: true });
+        if (asked) {
+          focusComposer();
+          return;
+        }
+        await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
         await beginTextContractorTransition(suggestion.label);
         return;
       }
@@ -876,7 +883,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setBusy(false);
       }
     },
-    [beginTextContractorTransition, busy, runOpen, send],
+    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
