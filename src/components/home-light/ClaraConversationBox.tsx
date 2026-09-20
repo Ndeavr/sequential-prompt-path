@@ -542,11 +542,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setTransitionPause(true);
     await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
     if (!mountedRef.current) return;
-    await openContractorAfterTransition(note);
+    const ok = await openContractorAfterTransition(note);
+    // Jamais de cul-de-sac : si l'ouverture échoue, la conversation redevient utilisable.
+    if (mountedRef.current) {
+      setTransitionPause(false);
+      setBusy(false);
+      contractorTransitionRef.current = false;
+      if (!ok) setMode("IDLE");
+    }
   }, [openContractorAfterTransition]);
 
   const beginTextContractorTransition = useCallback(async (note: string) => {
-    if (contractorTransitionRef.current || busy) return;
+    // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
+    // jamais bloquer la transition entrepreneur.
+    if (contractorTransitionRef.current) return;
     contractorTransitionRef.current = true;
     setBusy(true);
     setError(null);
