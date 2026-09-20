@@ -15,6 +15,8 @@ export interface ClaraDestination {
   path: string;
   /** Ce que Clara dit avant de naviguer, jamais une instruction de recherche. */
   spoken: string;
+  /** Libellé du bouton d'ouverture, identique pour Clara et pour l'utilisateur. */
+  ctaLabel?: string;
 }
 
 /**
