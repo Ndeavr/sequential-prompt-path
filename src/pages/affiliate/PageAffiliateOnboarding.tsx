@@ -527,8 +527,19 @@ export default function PageAffiliateOnboarding() {
               disabled={!terms || busy || !user}
               onClick={activate}
             >
-              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>}
+              {busy ? (
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Activation…</>
+              ) : activationError ? (
+                <><Rocket className="mr-2 h-5 w-5" /> RÉESSAYER</>
+              ) : (
+                <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>
+              )}
             </Button>
+            {activationError && (
+              <p role="alert" className="mt-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
+                {activationError}
+              </p>
+            )}
             {!user && (
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
                 <ShieldCheck className="h-4 w-4" /> Vérifiez votre numéro à l'étape 1 pour activer.
