@@ -86,6 +86,10 @@ export function sanitizeAlexText(input: string | null | undefined): SanitizeResu
   let text = input;
   let hadForbidden = false;
 
+  // Marqueur interne de réponses rapides : jamais visible pour l'utilisateur.
+  text = text.replace(CHOICE_MARKER_RE, "").trim();
+
+
   // Strip code fences entirely — Alex chat never shows code blocks
   if (CODE_FENCE_RE.test(text)) {
     hadForbidden = true;
