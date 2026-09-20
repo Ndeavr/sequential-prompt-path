@@ -151,6 +151,8 @@ export default function PageAiRecommendationAudit() {
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
+  const [activating, setActivating] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
   const auditInputRef = useRef<HTMLInputElement | null>(null);
