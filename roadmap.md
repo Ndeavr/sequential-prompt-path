@@ -31,6 +31,12 @@
 - [x] Validation automatisée 360/390/412/430 px, bureau et continuité Voice
 - [ ] Validation matérielle Chrome Android, Samsung Internet et iPhone (appareils non disponibles dans l’environnement)
 
+## Étape 6 — P0 grand chat et intentions
+- [x] Carte Clara initiale agrandie et hauteur clavier stabilisée
+- [x] Champ contrôlé, placeholder distinct et bouton d’envoi déterministe
+- [x] Intentions contextualisées → tendances vérifiées → repli fiable
+- [ ] Validation automatisée 360/390/430 px, clavier simulé et parcours réels
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 

@@ -821,6 +821,7 @@
     .home-light .home-hero-content {
       min-height: calc(100dvh - 58px);
       justify-content: center;
+      padding-inline: 0.75rem;
       padding-top: max(2.5rem, env(safe-area-inset-top));
       padding-bottom: max(2rem, env(safe-area-inset-bottom));
     }
@@ -849,10 +850,26 @@
     .home-light .home-clara-shell.is-conversation-active,
     .home-light .home-clara-shell.is-conversation-active.has-context { margin-top: 0; }
     .home-light .home-clara-glass { border-radius: 20px; }
-    .home-light .home-clara-main { max-height: min(64dvh, calc(var(--clara-visible-height, 100dvh) - 7rem)); }
+    .home-light .home-clara-shell,
+    .home-light .home-clara-shell.has-context { width: 100%; max-width: none; }
+    .home-light .home-clara-main {
+      height: clamp(440px, 60dvh, 620px);
+      min-height: 55dvh;
+      max-height: min(65dvh, calc(var(--clara-visible-height, 100dvh) - 4.5rem));
+    }
     .home-light .home-clara-shell.is-conversation-active .home-clara-main {
-      height: max(320px, calc(var(--clara-visible-height, 100dvh) - 62px));
-      max-height: calc(var(--clara-visible-height, 100dvh) - 62px);
+      height: max(420px, calc(var(--clara-visible-height, 100dvh) - 62px));
+      min-height: min(420px, calc(var(--clara-visible-height, 100dvh) - 16px));
+      max-height: calc(var(--clara-visible-height, 100dvh) - 16px);
+    }
+    .home-light .home-clara-shell[data-keyboard-open] {
+      margin-top: 0;
+    }
+    .home-light .home-clara-shell[data-keyboard-open] .home-clara-main,
+    .home-light .home-clara-shell.is-conversation-active[data-keyboard-open] .home-clara-main {
+      height: max(300px, calc(var(--clara-visible-height, 100dvh) - 12px));
+      min-height: min(300px, calc(var(--clara-visible-height, 100dvh) - 12px));
+      max-height: calc(var(--clara-visible-height, 100dvh) - 12px);
     }
     .home-light .home-clara-composer { padding: 0.6rem 0.65rem max(0.45rem, env(safe-area-inset-bottom)); }
     .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 68px; border-radius: 16px; }
@@ -867,8 +884,8 @@
     .home-light .home-clara-media-icon { width: 36px; height: 36px; border-radius: 9px; }
     .home-light .home-clara-quick { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.2rem; }
     .home-light .home-clara-quick button { flex: 0 0 auto; }
-    .home-light .home-clara-examples { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0.8rem; scrollbar-width: none; }
-    .home-light .home-clara-examples button { flex: 0 0 auto; }
+    .home-light .home-clara-examples { justify-content: flex-start; overflow-x: auto; overscroll-behavior-inline: contain; flex-wrap: nowrap; padding-bottom: 0.8rem; scrollbar-width: none; }
+    .home-light .home-clara-examples button { flex: 0 0 auto; min-height: 44px; font-size: 0.82rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {

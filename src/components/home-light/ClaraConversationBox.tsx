@@ -66,6 +66,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
+import { usePopularQuestions, type PopularQuestionItem } from "@/hooks/usePopularQuestions";
 
 const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
 import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
@@ -156,6 +157,24 @@ export function extractQuickReplies(raw: string): { text: string; options: strin
 
 type QuickReplies = { messageId: string; options: string[] };
 
+type IntentSuggestion = {
+  label: string;
+  intent: ClaraWorkflowIntent;
+  source: "default" | "trending";
+};
+
+const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
+  { label: "Je suis entrepreneur", intent: "contractor_onboarding", source: "default" },
+  { label: "Analyser 3 soumissions", intent: "quote_comparison", source: "default" },
+  { label: "Vérifier un entrepreneur", intent: "contractor_verification", source: "default" },
+];
+
+function popularQuestionIntent(item: PopularQuestionItem): ClaraWorkflowIntent {
+  if (item.intent === "comparison") return "quote_comparison";
+  if (item.intent === "contractor") return "contractor_search";
+  return "homeowner_problem";
+}
+
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
 }
@@ -165,10 +184,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const popularQuestions = usePopularQuestions(3);
 
   const copy = lang === "fr"
     ? {
-        placeholder: "Bonjour ! Que puis-je-faire pour vous?",
+        placeholder: "Que voulez-vous faire ?",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara vous écoute…",
         attach: "Ajouter une photo ou un document",
@@ -184,7 +204,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
       }
     : {
-        placeholder: "Bonjour ! Que puis-je-faire pour vous?",
+        placeholder: "Que voulez-vous faire ?",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara is listening…",
         attach: "Ajouter une photo ou un document",
@@ -206,6 +226,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
+  const [composerText, setComposerText] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
   // Le micro est un MODE de la même conversation : aucun état de session ici.
   const [voiceActive, setVoiceActive] = useState(false);
@@ -319,7 +340,16 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   // même après un remontage du composant.
   const conversationStarted = isConversationActive;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
-  const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
+  const intentSuggestions = useMemo<IntentSuggestion[]>(() => {
+    if (popularQuestions.source !== "trending" || popularQuestions.items.length < 3) {
+      return DEFAULT_INTENT_SUGGESTIONS;
+    }
+    return popularQuestions.items.slice(0, 3).map((item) => ({
+      label: item.label,
+      intent: popularQuestionIntent(item),
+      source: "trending" as const,
+    }));
+  }, [popularQuestions.items, popularQuestions.source]);
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.
@@ -362,7 +392,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
         if (keyboardOpen) {
           trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
-          window.requestAnimationFrame(() => rootRef.current?.scrollIntoView({ block: "start" }));
+          window.requestAnimationFrame(() => {
+            rootRef.current?.scrollIntoView({ block: "start" });
+            rootRef.current?.querySelector("textarea")?.scrollIntoView({ block: "nearest" });
+          });
         }
       }
     };
@@ -626,8 +659,55 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     [busy, focusComposer, runOpen, send],
   );
 
+  const chooseIntentSuggestion = useCallback(
+    async (suggestion: IntentSuggestion) => {
+      if (busy) return;
+      trackCopilotEvent("clara_quick_reply_selected", {
+        surface: "home_clara_box",
+        kind: suggestion.source,
+      });
+
+      const destination = resolveClaraDestination(suggestion.intent);
+      if (!destination) {
+        await send(suggestion.label);
+        return;
+      }
+
+      const userMessageId = uid();
+      setError(null);
+      setQuickReplies(null);
+      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: suggestion.label }]);
+      const nextMode = detectSurfaceMode(suggestion.label);
+      setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
+      lastIntentRef.current = suggestion.intent;
+      rememberClaraReferences({
+        current_intent: suggestion.intent,
+        detected_role: suggestion.intent === "contractor_onboarding" ? "CONTRACTOR" : undefined,
+      });
+      const transition = nextWorkflowState(workflowRef.current, suggestion.intent);
+      workflowRef.current = transition.state;
+      rememberWorkflow(transition.state);
+      logClaraWorkflowEvent("intent_detected", { intent: suggestion.intent });
+      void appendClaraMessage({
+        role: "user",
+        text: suggestion.label,
+        clientMessageId: userMessageId,
+      }).catch(() => undefined);
+
+      setBusy(true);
+      try {
+        await runOpen(suggestion.intent, suggestion.label);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, runOpen, send],
+  );
+
   const submit = useCallback(async (message: PromptInputMessage) => {
     if (busy) return;
+    if (!message.text.trim() && message.files.length === 0) return;
+    setComposerText("");
     if (message.files.length > 0) {
       setError(null);
       setBusy(true);
@@ -840,9 +920,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           <span /><i /><i />
         </div>
         <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
-      {messages.length > 0 && (
         <Conversation className="home-clara-conversation min-h-0">
           <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
+            {messages.length === 0 && (
+              <Message from="assistant">
+                <MessageContent className="home-clara-message leading-relaxed">
+                  <MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>
+                </MessageContent>
+              </Message>
+            )}
             {messages.map((message) => (
               <Message from={message.role} key={message.id}>
                 <MessageContent
@@ -895,7 +981,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </ConversationContent>
           <ConversationScrollButton title="Nouveau message" />
         </Conversation>
-      )}
 
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
@@ -954,6 +1039,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
             disabled={busy}
              rows={1}
+             value={composerText}
+             onChange={(event) => setComposerText(event.currentTarget.value)}
              onInput={(event) => {
                const field = event.currentTarget;
                field.style.height = "auto";
@@ -989,21 +1076,22 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 <span className="home-clara-voice-tip" role="note">{voiceTip}</span>
               )}
             </PromptInputTools>
-            <PromptInputSubmit
-              status={busy ? "submitted" : "ready"}
-              disabled={busy}
-              aria-label={copy.send}
-              data-cta-canonical="home_alex"
-              className="home-clara-submit rounded-full bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"
-            >
-              <ArrowUp className="h-5 w-5" />
-            </PromptInputSubmit>
+            <ClaraSubmitButton busy={busy} hasText={composerText.trim().length > 0} label={copy.send} />
           </PromptInputFooter>
         </PromptInput>
       </div>
-       {!isConversationActive && (
-        <div className="home-clara-examples" aria-label="Exemples">
-          {examples.map((example) => <button key={example} type="button" onClick={() => void send(example)}>{example}</button>)}
+        {!isConversationActive && (
+         <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
+           {intentSuggestions.map((suggestion) => (
+             <button
+               key={`${suggestion.source}-${suggestion.label}`}
+               type="button"
+               disabled={busy}
+               onClick={() => void chooseIntentSuggestion(suggestion)}
+             >
+               {suggestion.label}
+             </button>
+           ))}
         </div>
       )}
       </div>
@@ -1015,6 +1103,22 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         </motion.div>
       )}
     </motion.section>
+  );
+}
+
+function ClaraSubmitButton({ busy, hasText, label }: { busy: boolean; hasText: boolean; label: string }) {
+  const attachments = usePromptInputAttachments();
+  const canSubmit = hasText || attachments.files.length > 0;
+  return (
+    <PromptInputSubmit
+      status={busy ? "submitted" : "ready"}
+      disabled={busy || !canSubmit}
+      aria-label={label}
+      data-cta-canonical="home_alex"
+      className="home-clara-submit rounded-full bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"
+    >
+      <ArrowUp className="h-5 w-5" />
+    </PromptInputSubmit>
   );
 }
 
