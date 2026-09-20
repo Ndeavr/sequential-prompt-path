@@ -715,7 +715,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, [busy, createLocalPreview, enqueueMedia, lang, mode, send]);
 
   // Suggestion contextuelle de la voix : halo discret, jamais une alerte.
-  const uploadingMedia = mediaItems.some((item) => item.status === "uploading" || item.status === "pending");
+  const uploadingMedia = mediaItems.some((item) => item.status === "queued" || item.status === "analyzing");
   const lastAssistantText = useMemo(
     () => [...messages].reverse().find((m) => m.role === "assistant")?.text ?? null,
     [messages],
