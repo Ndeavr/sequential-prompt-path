@@ -481,11 +481,14 @@ Deno.serve(async (req) => {
         status: "needs_confirmation",
         label: "Confirmez votre territoire et votre spécialité pour voir les places disponibles.",
       };
-      if (city && trade) {
+      // La capacité se mesure sur un territoire réellement desservi; à défaut,
+      // sur la ville de l'entreprise.
+      const capacityCity = areas[0] ?? city;
+      if (capacityCity && trade) {
         const { data: cap } = await db
           .from("market_capacity")
           .select("city, specialty, max_contractors, active_contractors, remaining_positions, capacity_status, market_open")
-          .eq("city_slug", slug(city))
+          .eq("city_slug", slug(capacityCity))
           .eq("service_slug", slug(trade))
           .maybeSingle();
         if (cap && cap.max_contractors != null && cap.active_contractors != null) {
@@ -502,9 +505,9 @@ Deno.serve(async (req) => {
         } else {
           capacity = {
             status: "not_tracked",
-            city,
+            city: capacityCity,
             trade,
-            label: `Aucune limite de place publiée pour ${trade} à ${city}.`,
+            label: `Aucune limite de place publiée pour ${trade} à ${capacityCity}.`,
           };
         }
       }
