@@ -67,7 +67,13 @@ Deno.serve(async (req) => {
     if (!termsAccepted) return json({ error: "terms_required", message: "Vous devez accepter les conditions du programme." }, 400);
 
     // Rôle affilié — jamais admin.
-    await sb.from("user_roles").upsert({ user_id: user.id, role: "affiliate" }, { onConflict: "user_id,role" });
+    const { error: roleErr } = await sb
+      .from("user_roles")
+      .upsert({ user_id: user.id, role: "affiliate" }, { onConflict: "user_id,role" });
+    if (roleErr) {
+      console.error("[affiliate-onboarding-activate] role_upsert_failed", user.id, roleErr.message);
+      return json({ error: "activation_failed", step: "role" }, 500);
+    }
 
     // Profil public
     await sb
