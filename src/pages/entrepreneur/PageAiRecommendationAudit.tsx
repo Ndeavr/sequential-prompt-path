@@ -221,6 +221,28 @@ export default function PageAiRecommendationAudit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviteToken, trackInvite]);
 
+  /**
+   * Continuité : ce que l'entrepreneur vient de dire à Clara prépare l'audit.
+   * Rien n'est inventé — seules les réponses réellement données sont réutilisées.
+   */
+  useEffect(() => {
+    const qualification = getClaraQualification();
+    trackCopilotEvent("contractor_audit_opened", {
+      surface: "audit_ia",
+      kind: qualification.primary_trade ?? "unknown",
+    });
+    if (qualification.business_city) {
+      trackCopilotEvent("business_location_confirmed", { surface: "audit_ia" });
+    }
+    if (qualification.service_areas?.length) {
+      trackCopilotEvent("service_area_confirmed", {
+        surface: "audit_ia",
+        count: qualification.service_areas.length,
+      });
+    }
+  }, []);
+
+
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
       setCandidates([]);
