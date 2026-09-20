@@ -37,6 +37,8 @@ import { JourneySteps } from "@/components/audit-ia/JourneySteps";
 import { OperationalSections } from "@/components/audit-ia/OperationalSections";
 import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
+import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import { getClaraQualification } from "@/services/clara/claraContractorQualification";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
