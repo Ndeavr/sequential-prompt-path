@@ -177,9 +177,22 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const retryMedia = useClaraMediaQueue((state) => state.retry);
   const clearMedia = useClaraMediaQueue((state) => state.clear);
   const announcedMedia = useRef<Set<string>>(new Set());
+  const localPreviewUrls = useRef<Set<string>>(new Set());
   const activationTracked = useRef(false);
   const keyboardWasOpen = useRef(false);
 
+  const createLocalPreview = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    localPreviewUrls.current.add(url);
+    return url;
+  }, []);
+
+  const clearLocalPreviews = useCallback(() => {
+    localPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    localPreviewUrls.current.clear();
+  }, []);
+
+  useEffect(() => clearLocalPreviews, [clearLocalPreviews]);
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
@@ -218,6 +231,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       /* aucune session vocale active */
     }
     clearMedia();
+    clearLocalPreviews();
     announcedMedia.current = new Set();
     workflowRef.current = null;
     setMessages([]);
@@ -234,7 +248,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       // La conversation reste utilisable : la session sera recréée à la première écriture.
     }
     focusComposer();
-  }, [clearMedia, closeAlex, focusComposer, lang]);
+  }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang]);
 
   const handleResetClick = useCallback(() => {
     // Conversation vide : aucune confirmation inutile.
@@ -549,7 +563,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           setQuoteCount(files.length);
           const { runQuoteAnalysis } = await import("@/features/quoteAnalyzer/services/quoteAnalysisClient");
           const analysis = await runQuoteAnalysis(files.slice(0, 3));
-          setContextStatus(analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.");
+          const recommendation = analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.";
+          setContextStatus(recommendation);
+          const analysisMessageId = uid();
+          setMessages((previous) => [...previous, { id: analysisMessageId, role: "assistant", text: recommendation }]);
+          void appendClaraMessage({
+            role: "assistant",
+            text: recommendation,
+            clientMessageId: analysisMessageId,
+          }).catch(() => {});
         } else {
           const first = files[0];
           if (first) {
@@ -573,7 +595,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             : (lang === "fr" ? "Document ajouté ✓" : "Document added ✓");
         const uploadText = message.text || defaultLabel;
         const uploadAttachments: MsgAttachment[] = files.map((file) => ({
-          url: URL.createObjectURL(file),
+          url: createLocalPreview(file),
           kind: file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : "document",
           name: file.name,
         }));
@@ -598,7 +620,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       return;
     }
     await send(message.text);
-  }, [busy, copy.fallback, enqueueMedia, lang, mode, send]);
+  }, [busy, createLocalPreview, enqueueMedia, lang, mode, send]);
 
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
@@ -626,7 +648,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const messageId = uid();
       const label = first.type.startsWith("video/") ? "Vidéo ajoutée ✓" : first.type.startsWith("image/") ? "Photo ajoutée ✓" : "Document ajouté ✓";
       const attachments: MsgAttachment[] = files.map((file) => ({
-        url: URL.createObjectURL(file),
+        url: createLocalPreview(file),
         kind: file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : "document",
         name: file.name,
       }));
@@ -638,7 +660,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         clientMessageId: messageId,
       }).catch(() => {});
     },
-    [enqueueMedia],
+    [createLocalPreview, enqueueMedia],
   );
 
   return (
@@ -755,11 +777,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 )}
               </div>
               {item.status === "failed" && (
-                <button type="button" onClick={() => retryMedia(item.id)} aria-label={`Réessayer ${item.name}`}>
+                <button type="button" onClick={() => retryMedia(item.id)} aria-label="Réessayer ce fichier">
                   <RotateCcw className="h-4 w-4" />
                 </button>
               )}
-              <button type="button" onClick={() => removeMedia(item.id)} aria-label={`Retirer ${item.name}`}>
+              <button type="button" onClick={() => removeMedia(item.id)} aria-label="Retirer ce fichier">
                 <X className="h-4 w-4" />
               </button>
             </li>
