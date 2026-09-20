@@ -598,20 +598,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           ...previous,
           { id: uploadId, role: "user", text: uploadText, attachments: uploadAttachments },
         ]);
-        void appendClaraMessage({
+        await appendClaraMessage({
           role: "user",
           text: uploadText,
           messageType: "attachment",
           clientMessageId: uploadId,
-        }).catch(() => {});
+        }).catch(() => undefined);
         if (analysisContinuation) {
           const analysisMessageId = uid();
           setMessages((previous) => [...previous, { id: analysisMessageId, role: "assistant", text: analysisContinuation as string }]);
-          void appendClaraMessage({
+          await appendClaraMessage({
             role: "assistant",
             text: analysisContinuation,
             clientMessageId: analysisMessageId,
-          }).catch(() => {});
+          }).catch(() => undefined);
         }
         trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", count: files.length });
         trackCopilotEvent("clara_attachment_selected", { surface: "home_clara_box", count: files.length });
