@@ -520,6 +520,8 @@ Deno.serve(async (req) => {
         remaining_steps: remainingSteps,
         recommendable,
         review_note: reviewNote,
+        business_city: { value: city, provenance: businessCity.provenance, source: businessCity.source ?? null },
+        service_areas: areas,
         matched: {
           contractor_id: contractorId,
           prospect_id: prospectId,
