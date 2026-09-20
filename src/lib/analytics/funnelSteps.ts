@@ -10,12 +10,18 @@ import { logFunnelEvent, type FunnelEventType } from "@/lib/analytics/logFunnelE
 
 /** Ordre exact du tunnel, de la première vue au compte activé. */
 export const CONTRACTOR_FUNNEL_STEPS = [
+  "home_contractor_click",
   "audit_opened",
+  "analysis_started",
   "company_recognized",
+  "analysis_completed",
   "profile_started",
   "profile_completed",
+  "goals_completed",
   "quote_computed",
   "plan_presented",
+  "otp_requested",
+  "otp_verified",
   "checkout_created",
   "payment_succeeded",
   "account_activated",
@@ -25,12 +31,18 @@ export type ContractorFunnelStep = (typeof CONTRACTOR_FUNNEL_STEPS)[number];
 
 /** Libellés lisibles (FR) pour les rapports internes. */
 export const CONTRACTOR_FUNNEL_STEP_LABELS: Record<ContractorFunnelStep, string> = {
+  home_contractor_click: "« Je suis entrepreneur » touché",
   audit_opened: "Audit IA ouvert",
+  analysis_started: "Analyse d'entreprise commencée",
   company_recognized: "Entreprise reconnue",
+  analysis_completed: "Analyse d'entreprise terminée",
   profile_started: "Profil commencé",
   profile_completed: "Profil complété",
+  goals_completed: "Objectifs complétés",
   quote_computed: "Devis calculé",
   plan_presented: "Plan présenté",
+  otp_requested: "Code de vérification demandé",
+  otp_verified: "Code de vérification validé",
   checkout_created: "Paiement créé",
   payment_succeeded: "Paiement réussi",
   account_activated: "Compte activé",
@@ -38,12 +50,18 @@ export const CONTRACTOR_FUNNEL_STEP_LABELS: Record<ContractorFunnelStep, string>
 
 /** Type d'événement canonique écrit en base pour chaque étape. */
 const STEP_EVENT_TYPE: Record<ContractorFunnelStep, FunnelEventType> = {
+  home_contractor_click: "home_contractor_click",
   audit_opened: "ai_audit_viewed",
+  analysis_started: "contractor_analysis_started",
   company_recognized: "company_recognized",
+  analysis_completed: "contractor_analysis_completed",
   profile_started: "profile_started",
   profile_completed: "profile_completed",
+  goals_completed: "contractor_goals_completed",
   quote_computed: "plan_requested",
   plan_presented: "plans_viewed",
+  otp_requested: "otp_requested",
+  otp_verified: "otp_verified",
   checkout_created: "checkout_started",
   payment_succeeded: "payment_completed",
   account_activated: "profile_activated",
