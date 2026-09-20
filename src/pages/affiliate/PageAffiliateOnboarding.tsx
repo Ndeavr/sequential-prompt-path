@@ -122,6 +122,7 @@ export default function PageAffiliateOnboarding() {
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [busy, setBusy] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   // OTP inline
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
