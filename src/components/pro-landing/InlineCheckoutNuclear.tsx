@@ -235,7 +235,8 @@ export default function InlineCheckoutNuclear({
       <div className="mt-5 inline-flex w-full overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] p-1 text-xs md:w-auto">
         {([
           { v: "month", label: "Mensuel" },
-          { v: "year", label: "Annuel · -2 mois" },
+          // Onglet annuel affiché seulement si un prix annuel réel existe.
+          ...(anyYearly ? [{ v: "year" as const, label: "Annuel · -2 mois" }] : []),
           ...(founderPlan ? [{ v: "founder" as const, label: "Fondateur" }] : []),
         ] as Array<{ v: Mode; label: string }>).map((opt) => (
           <button
@@ -285,7 +286,7 @@ export default function InlineCheckoutNuclear({
                 )}
                 <p className="text-xs uppercase tracking-wider text-white/60">{p.name}</p>
                 <p className="mt-1 text-base font-semibold text-white">
-                  {mode === "year"
+                  {mode === "year" && p.supportsYearly
                     ? `${(p.yearlyPrice / 100).toFixed(0)} $/an`
                     : `${(p.monthlyPrice / 100).toFixed(0)} $/mois`}
                 </p>
