@@ -24,6 +24,7 @@ import {
 } from "@/services/contractorPricingQuoteService";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { buildBreakdownLines } from "@/lib/pricing/priceBreakdown";
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
@@ -435,31 +436,31 @@ export default function PageContractorPersonalizedPlan() {
           </button>
           {breakdownOpen && (
             <div className="px-5 pb-5 text-sm text-white/80 space-y-1.5 border-t border-white/5">
-              <Row label="Base plateforme" value={formatCAD(quote.base_platform_fee)} />
-              <Row
-                label={`Forfait rendez-vous (${quote.target_monthly_appointments} visés)`}
-                value={formatCAD(quote.appointment_package_fee)}
-              />
-              <Row
-                label="Optimisation visibilité IA"
-                value={formatCAD(quote.aipp_optimization_fee)}
-              />
-              <Row
-                label="Exclusivité territoriale"
-                value={formatCAD(quote.exclusivity_fee)}
-              />
-              <Row
-                label="Multiplicateur concurrence"
-                value={`×${quote.territory_competition_multiplier.toFixed(2)}`}
-              />
-              <Row
-                label="Multiplicateur saisonnier"
-                value={`×${quote.seasonality_multiplier.toFixed(2)}`}
-              />
-              <div className="border-t border-white/10 mt-3 pt-3 flex justify-between font-semibold">
-                <span>Prix mensuel personnalisé</span>
-                <span>{formatCAD(quote.recommended_monthly_price)}</span>
-              </div>
+              {buildBreakdownLines(quote as never).map((line, i) =>
+                line.kind === "total" ? (
+                  <div
+                    key={i}
+                    className="border-t border-white/10 mt-3 pt-3 flex justify-between font-semibold"
+                  >
+                    <span>{line.label}</span>
+                    <span>{formatCAD(line.cents ?? 0)}</span>
+                  </div>
+                ) : (
+                  <Row
+                    key={i}
+                    label={line.label}
+                    value={
+                      line.kind === "multiplier"
+                        ? `×${(line.multiplier ?? 1).toFixed(2)}`
+                        : `${line.kind === "adjustment" && (line.cents ?? 0) > 0 ? "+" : ""}${formatCAD(line.cents ?? 0)}`
+                    }
+                  />
+                ),
+              )}
+              <p className="pt-2 text-[11px] text-white/45">
+                Sous-total × multiplicateur marché, plus l'ajustement affiché, donne exactement le
+                prix mensuel. Les rendez-vous visés proviennent de votre dossier.
+              </p>
             </div>
           )}
         </GlassCard>
