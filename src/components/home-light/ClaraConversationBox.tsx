@@ -15,6 +15,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import {
   appendClaraMessage,
   rememberClaraReferences,
@@ -536,6 +537,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   const finishContractorTransition = useCallback(async (note?: string) => {
     if (!mountedRef.current) return;
+    // Point d'abandon mesurable no 1 : intention entrepreneur exprimée à l'accueil.
+    void trackFunnelStep("home_contractor_click", { metadata: { surface: "home_clara_box" } });
     setTransitionPause(true);
     await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
     if (!mountedRef.current) return;
