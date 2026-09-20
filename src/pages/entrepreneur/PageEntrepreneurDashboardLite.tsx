@@ -22,6 +22,10 @@ const PageEntrepreneurDashboardLite = () => {
         </motion.div>
 
         <div className="mb-6">
+          <CardMembershipRequest />
+        </div>
+
+        <div className="mb-6">
           <CardContractorCalendarSetup surface="dashboard" returnTo="/entrepreneur/dashboard" />
         </div>
 
