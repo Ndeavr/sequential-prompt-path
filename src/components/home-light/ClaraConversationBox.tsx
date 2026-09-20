@@ -185,6 +185,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const rootRef = useRef<HTMLElement>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
+  // Dernière intention avec écran réel : sert au bouton visible d'ouverture.
+  const lastIntentRef = useRef<ClaraWorkflowIntent | null>(null);
 
   // File d'attente média unique : progression réelle, reprise, rien de perdu.
   const mediaItems = useClaraMediaQueue((state) => state.items);
@@ -448,6 +450,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const classified = detectClaraWorkflowIntent(text);
       const detected = classified.intent;
       const destination = resolveClaraDestination(detected, classified.confidence);
+      if (destination) lastIntentRef.current = detected;
       logClaraWorkflowEvent("intent_detected", { intent: detected });
       const transition = nextWorkflowState(workflowRef.current, detected);
       if (transition.state !== workflowRef.current) {
