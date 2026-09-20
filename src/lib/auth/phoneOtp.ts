@@ -48,6 +48,8 @@ export async function sendPhoneOtp(raw: string): Promise<OtpResult> {
       console.error("[phoneOtp] send-otp failed", error?.message ?? data?.error);
       return { ok: false, message: SMS_FALLBACK_FR };
     }
+    // Étape mesurable : code demandé (jamais le code lui-même).
+    void trackFunnelStep("otp_requested", { once: false, metadata: { channel: "sms" } });
     return { ok: true };
   } catch (e) {
     console.error("[phoneOtp] send-otp network", e);
@@ -96,6 +98,9 @@ export async function verifyPhoneOtp(raw: string, code: string): Promise<VerifyR
       console.error("[phoneOtp] verify-otp returned no session tokens");
       return { ok: false, message: "Vérification réussie, mais la session n'a pas pu être ouverte. Réessayez." };
     }
+    void trackFunnelStep("otp_verified", {
+      metadata: { channel: "sms", is_new_user: !!data?.isNewUser },
+    });
     return { ok: true, isNewUser: !!data?.isNewUser, needsRole: !!data?.needsRole };
 
   } catch (e) {
