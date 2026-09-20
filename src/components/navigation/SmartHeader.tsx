@@ -4,7 +4,7 @@
  */
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
@@ -50,8 +50,20 @@ const SmartHeader = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [homeConversationActive, setHomeConversationActive] = useState(false);
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
+
+  useEffect(() => {
+    if (!isHome) return;
+    const sync = (event?: Event) => {
+      const detail = (event as CustomEvent<{ active?: boolean }> | undefined)?.detail;
+      setHomeConversationActive(detail?.active ?? document.documentElement.dataset.claraConversationActive === "true");
+    };
+    sync();
+    window.addEventListener("clara:conversation-active", sync);
+    return () => window.removeEventListener("clara:conversation-active", sync);
+  }, [isHome]);
 
   const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
   const handleMegaLeave = useCallback(() => setActiveMega(null), []);
@@ -72,7 +84,7 @@ const SmartHeader = () => {
   return (
     <>
       <header
-        className={`glass-nav sticky top-0 z-[60] pointer-events-auto${isHome ? " home-minimal-header" : ""}`}
+        className={`glass-nav sticky top-0 z-[60] pointer-events-auto${isHome ? " home-minimal-header" : ""}${isHome && homeConversationActive ? " is-conversation-active" : ""}`}
         style={{
           paddingTop: "max(env(safe-area-inset-top), 0px)",
           paddingLeft: "env(safe-area-inset-left)",

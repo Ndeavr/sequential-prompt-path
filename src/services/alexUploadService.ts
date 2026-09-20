@@ -178,7 +178,7 @@ export async function uploadAlexFile(
 
   if (!uploaded.ok) {
     console.error("[claraUpload] storage upload failed:", uploaded.status);
-    return { ok: true, file: guestFile() };
+    return { ok: false, error: "Cette photo n’a pas été envoyée. Réessayer." };
   }
 
   const { error: insertError } = await supabase.from("project_files").insert({

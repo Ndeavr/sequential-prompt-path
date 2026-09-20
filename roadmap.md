@@ -24,5 +24,11 @@
 - [x] ONE CLARA UI (une seule boîte extensible)
 - [ ] Nettoyage P2
 
+## Étape 5 — P0 mobile Clara
+- [ ] Mode conversation adaptatif : hero/header/carte/clavier
+- [ ] Composer compact, réponses rapides temporaires et scroll intelligent
+- [ ] Photos volumineuses optimisées avant validation, états compacts et reprise
+- [ ] Validation 360/390/412/430 px, bureau et continuité Voice
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.

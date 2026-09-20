@@ -11,12 +11,14 @@ import { create } from "zustand";
 
 import {
   uploadAlexFile,
+  kindForMime,
   validateFile,
   type ClaraMediaKind,
   type UploadedFile,
 } from "@/services/alexUploadService";
-import { compressImageFile, extractVideoKeyframes, VIDEO_ANALYSIS_DISCLOSURE } from "./claraMedia";
+import { extractVideoKeyframes, prepareImageForUpload, VIDEO_ANALYSIS_DISCLOSURE } from "./claraMedia";
 import { logClaraWorkflowEvent } from "./claraWorkflow";
+import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 export type ClaraMediaStatus = "queued" | "uploading" | "analyzing" | "done" | "failed";
 
@@ -75,7 +77,24 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
     void logClaraWorkflowEvent("media_upload_started");
 
     try {
-      const payload = item.kind === "photo" ? await compressImageFile(item.file) : item.file;
+      const prepared = item.kind === "photo"
+        ? await prepareImageForUpload(item.file)
+        : { file: item.file, compressed: false, originalBytes: item.file.size };
+      const payload = prepared.file;
+      if (prepared.compressed) {
+        trackCopilotEvent("clara_image_compressed", {
+          surface: "home_clara_box",
+          original_size_bucket: prepared.originalBytes > 10 * 1024 * 1024 ? "over_10mb" : "under_10mb",
+        });
+      }
+
+      const finalValidation = validateFile(payload);
+      if (!finalValidation.ok) {
+        patch(id, { status: "failed", error: "Ce fichier dépasse la limite permise." });
+        trackCopilotEvent("clara_attachment_failed", { surface: "home_clara_box", reason: "validation" });
+        void logClaraWorkflowEvent("media_upload_failed");
+        return;
+      }
 
       const uploadResult = await uploadAlexFile(payload, {
         onProgress: (ratio) => patch(id, { progress: Math.min(0.99, ratio) }),
@@ -87,11 +106,13 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
           error: uploadResult.error || "L’envoi n’a pas abouti. Vous pouvez réessayer.",
         });
         void logClaraWorkflowEvent("media_upload_failed");
+        trackCopilotEvent("clara_attachment_failed", { surface: "home_clara_box", reason: "upload" });
         return;
       }
 
       patch(id, { progress: 1, uploaded: uploadResult.file, status: "analyzing" });
       void logClaraWorkflowEvent("media_upload_completed");
+      trackCopilotEvent("clara_attachment_uploaded", { surface: "home_clara_box", kind: item.kind });
 
       if (item.kind === "document") {
         patch(id, {
@@ -149,7 +170,10 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
         if (existing.has(fingerprint)) continue;
         existing.add(fingerprint);
 
-        const validation = validateFile(file);
+        const kind = kindForMime(file.type);
+        const validation = kind === "photo" && file.size > 0
+          ? { ok: true, kind }
+          : validateFile(file);
         const item: ClaraMediaItem = {
           id: uid(),
           fingerprint,
