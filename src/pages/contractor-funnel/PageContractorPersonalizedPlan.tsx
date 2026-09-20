@@ -168,6 +168,9 @@ export default function PageContractorPersonalizedPlan() {
             planId: quote.recommended_plan,
             billingInterval: "month",
             quoteId: quote.id,
+            // Le montant affiché est transmis pour contrôle : le serveur refuse
+            // la transaction si elle ne correspond pas au devis, au cent près.
+            displayedPriceCents: quote.recommended_monthly_price,
             ...(promoCode && { promoCode }),
             ...(affiliateRef && { ref: affiliateRef }),
             ...(offerId && { offerId }),
