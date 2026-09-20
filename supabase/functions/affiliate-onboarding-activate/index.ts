@@ -193,6 +193,11 @@ Deno.serve(async (req) => {
       },
       { onConflict: "partner_id,role,terms_version" }
     );
+    // La preuve d'acceptation est exigée : pas d'activation silencieuse sans trace.
+    if (termsErr) {
+      console.error("[affiliate-onboarding-activate] terms_upsert_failed", row.id, termsErr.message);
+      return json({ error: "activation_failed", step: "terms" }, 500);
+    }
 
     // Rattachement sous-affilié si un parrain est en mémoire (logique existante).
     const refCode = typeof acquisition.ref === "string" ? acquisition.ref : null;
@@ -217,6 +222,7 @@ Deno.serve(async (req) => {
 
     return json({ ok: true, affiliate: { id: row.id, slug: row.slug, referral_code: row.referral_code, status: row.status } });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    console.error("[affiliate-onboarding-activate] unhandled", String(e));
+    return json({ error: "activation_failed", step: "unhandled" }, 500);
   }
 });
