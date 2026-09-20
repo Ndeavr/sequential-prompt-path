@@ -593,11 +593,8 @@ const ContractorCityPage = lazyWithRetry(() => import("@/pages/seo/ContractorCit
 const ProjectPage = lazyWithRetry(() => import("@/pages/seo/ProjectPage"));
 const PageSeoIndexHealth = lazyWithRetry(() => import("@/pages/admin/PageSeoIndexHealth"));
 
-// Entrepreneur Onboarding Flow
-const PageOnboardingImport = lazyWithRetry(() => import("@/pages/entrepreneur/PageOnboardingImport"));
-const PageOnboardingAnalyse = lazyWithRetry(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
-const PageOnboardingPlan = lazyWithRetry(() => import("@/pages/entrepreneur/PageOnboardingPlan"));
-const PageOnboardingPayment = lazyWithRetry(() => import("@/pages/entrepreneur/PageOnboardingPayment"));
+// Parcours entrepreneur — seule la page de retour après paiement reste montée ;
+// les anciennes étapes parallèles redirigent vers le chemin canonique.
 const PageOnboardingSuccess = lazyWithRetry(() => import("@/pages/entrepreneur/PageOnboardingSuccess"));
 const PageVision5Ans = lazyWithRetry(() => import("@/pages/entrepreneur/PageVision5Ans"));
 
