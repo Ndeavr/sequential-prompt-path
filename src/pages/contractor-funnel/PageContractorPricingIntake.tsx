@@ -270,6 +270,10 @@ export default function PageContractorPricingIntake() {
                 onClick={() => {
                   setManualEntry(true);
                   setBusinessConfirmed(true);
+                  void trackFunnelStep("analysis_completed", {
+                    subjectId: (d.company_name ?? "").trim() || null,
+                    metadata: { provenance: "declare_non_verifie" },
+                  });
                 }}
                 className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
               >
