@@ -382,20 +382,29 @@ export default function PageContractorPricingIntake() {
     scopeStep,
     {
       key: "objectives",
-      question: "Quels sont vos objectifs mensuels?",
-      hint: "Rendez-vous visés et valeur moyenne de projet.",
+      question: "Quel est votre objectif de contrats?",
+      hint: "Un objectif de contrats n'est pas un nombre de rendez-vous : nous le convertirons.",
       isValid: (d) =>
-        (d.target_monthly_appointments ?? 0) > 0 &&
+        ((d as GoalFields).contract_goal_value ?? 0) > 0 &&
         (d.average_project_value ?? 0) > 0,
       render: (d, set) => (
         <div className="space-y-3">
           <NumberInput
-            label="Rendez-vous visés / mois"
-            value={d.target_monthly_appointments ?? null}
-            onChange={(v) => set({ target_monthly_appointments: v ?? undefined })}
+            label="Nouveaux contrats visés"
+            value={(d as GoalFields).contract_goal_value ?? null}
+            onChange={(v) => set({ contract_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
             min={1}
-            max={100}
-            placeholder="Ex. 4"
+            max={2000}
+            placeholder="Ex. 100"
+          />
+          <ChoiceGroup
+            label="Sur quelle période"
+            value={(d as GoalFields).contract_goal_unit ?? "year"}
+            onChange={(v) => set({ contract_goal_unit: v as "month" | "year" } as Partial<PricingIntakeInput>)}
+            options={[
+              { v: "month", l: "Par mois" },
+              { v: "year", l: "Par année" },
+            ]}
           />
           <NumberInput
             label="Valeur moyenne d'un projet ($)"
@@ -421,7 +430,7 @@ export default function PageContractorPricingIntake() {
             value={d.monthly_capacity ?? null}
             onChange={(v) => set({ monthly_capacity: v ?? undefined })}
             min={1}
-            max={100}
+            max={200}
             placeholder="Ex. 6"
           />
           <NumberInput
@@ -439,6 +448,62 @@ export default function PageContractorPricingIntake() {
           />
         </div>
       ),
+    },
+    {
+      key: "appointments",
+      question: "Combien de rendez-vous exclusifs par mois?",
+      hint: "Calculé depuis votre objectif, votre taux de fermeture et votre capacité. Ajustable.",
+      isValid: (d) => (d.target_monthly_appointments ?? 0) > 0,
+      render: (d, set) => {
+        const reco = recommendAppointments(d);
+        return (
+          <div className="space-y-3">
+            {reco && (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/75">
+                <p>
+                  {reco.contractsPerMonth} contrat{reco.contractsPerMonth > 1 ? "s" : ""} par mois ÷{" "}
+                  {Math.round(reco.closeRate * 100)} % de fermeture ={" "}
+                  <strong className="text-white">{reco.needed} rendez-vous</strong> par mois.
+                </p>
+                {reco.limitedByCapacity && (
+                  <p className="mt-1 text-xs text-amber-200/90">
+                    Votre capacité déclarée ({reco.capacity} projets/mois) limite la recommandation à{" "}
+                    {reco.recommended} rendez-vous.
+                  </p>
+                )}
+              </div>
+            )}
+            <NumberInput
+              label="Rendez-vous exclusifs souhaités / mois"
+              value={d.target_monthly_appointments ?? reco?.recommended ?? null}
+              onChange={(v) => set({ target_monthly_appointments: v ?? undefined })}
+              min={1}
+              max={500}
+              placeholder={reco ? `Recommandé : ${reco.recommended}` : "Ex. 4"}
+              hint="Chaque rendez-vous est exclusif : il est facturé au tarif réel de votre métier."
+            />
+            <NumberInput
+              label="Budget mensuel maximum ($) — optionnel"
+              value={
+                typeof (d as GoalFields).monthly_budget_cents === "number"
+                  ? Math.round(((d as GoalFields).monthly_budget_cents as number) / 100)
+                  : null
+              }
+              onChange={(v) =>
+                set({
+                  monthly_budget_cents: v === null ? undefined : Math.round(v * 100),
+                  pricing_mode: v === null ? undefined : "budget",
+                } as Partial<PricingIntakeInput>)
+              }
+              min={49}
+              max={100000}
+              step={50}
+              placeholder="Laisser vide pour voir le vrai prix"
+              hint="Avec un budget, nous indiquons combien de rendez-vous exclusifs il permet réellement."
+            />
+          </div>
+        );
+      },
     },
     {
       key: "strategy",
