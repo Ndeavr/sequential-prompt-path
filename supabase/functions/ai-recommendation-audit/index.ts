@@ -450,7 +450,7 @@ Deno.serve(async (req) => {
           "Sans identité confirmée, aucune IA ne peut vous nommer.", "Votre nom devient citable par l'IA"),
         mk("trade", "Spécialité principale", 15, "high", Boolean(contractor?.specialty), trade,
           "L'IA doit savoir exactement ce que vous faites.", "Éligible aux recommandations de votre métier"),
-        mk("territory", "Territoire desservi", 15, "high", areas.length > 0, city ?? (areas[0] ?? null),
+        mk("territory", "Territoire desservi", 15, "high", areas.length > 0, areas[0] ?? null,
           "Sans territoire confirmé, aucune recommandation locale.", "+ visibilité locale"),
         mk("contact", "Canal de rendez-vous", 20, "high", Boolean(contractor?.phone || contractor?.email), phone ?? email,
           "Un rendez-vous exclusif exige un canal joignable.", "Rendez-vous activables"),
