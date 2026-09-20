@@ -867,8 +867,8 @@
     }
     .home-light .home-clara-shell[data-keyboard-open] .home-clara-main,
     .home-light .home-clara-shell.is-conversation-active[data-keyboard-open] .home-clara-main {
-      height: max(300px, calc(var(--clara-visible-height, 100dvh) - 12px));
-      min-height: min(300px, calc(var(--clara-visible-height, 100dvh) - 12px));
+      height: max(360px, calc(var(--clara-visible-height, 100dvh) - 12px));
+      min-height: min(360px, calc(var(--clara-visible-height, 100dvh) - 12px));
       max-height: calc(var(--clara-visible-height, 100dvh) - 12px);
     }
     .home-light .home-clara-composer { padding: 0.6rem 0.65rem max(0.45rem, env(safe-area-inset-bottom)); }

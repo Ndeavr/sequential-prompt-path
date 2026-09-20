@@ -9,6 +9,7 @@ const header = fs.readFileSync(path.join(root, "src/components/navigation/SmartH
 const css = fs.readFileSync(path.join(root, "src/index.css"), "utf8");
 const queue = fs.readFileSync(path.join(root, "src/services/clara/claraMediaQueue.ts"), "utf8");
 const upload = fs.readFileSync(path.join(root, "src/services/alexUploadService.ts"), "utf8");
+const popularQuestions = fs.readFileSync(path.join(root, "src/hooks/usePopularQuestions.ts"), "utf8");
 
 describe("Clara mobile — conversation compacte", () => {
   it("partage une activation locale entre Clara, le hero et le header", () => {
@@ -55,12 +56,13 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain("chooseIntentSuggestion(suggestion)");
     expect(box).not.toContain("J’ai de l’eau ici.");
     expect(box).not.toContain("J’ai trois soumissions.");
+    expect(popularQuestions).toContain('data?.source === "trending" && items.length >= 3');
   });
 
   it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
     expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(440px,\s*60dvh,\s*620px\)/);
     expect(css).toContain('.home-light .home-clara-shell[data-keyboard-open] .home-clara-main');
-    expect(css).toContain("calc(var(--clara-visible-height, 100dvh) - 12px)");
+    expect(css).toContain("max(360px, calc(var(--clara-visible-height, 100dvh) - 12px))");
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {
