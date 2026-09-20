@@ -40,6 +40,7 @@ import {
   nextWorkflowState,
   readWorkflow,
   rememberWorkflow,
+  type ClaraWorkflowIntent,
   type ClaraWorkflowState,
 } from "@/services/clara/claraWorkflow";
 
