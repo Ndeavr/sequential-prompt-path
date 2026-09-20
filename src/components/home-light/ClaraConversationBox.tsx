@@ -26,7 +26,15 @@ import {
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
-import { resolveClaraDestination, rewriteGuidance } from "@/services/clara/claraNavigation";
+import {
+  destinationCtaLabel,
+  openClaraDestination,
+  openFailureMessage,
+  openSuccessMessage,
+  resolveClaraDestination,
+  rewriteGuidance,
+  stripOpenAnnouncement,
+} from "@/services/clara/claraNavigation";
 import {
   logClaraWorkflowEvent,
   nextWorkflowState,
@@ -65,7 +73,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 type MsgAttachment = { url: string; kind: "image" | "video" | "document"; name: string };
-type Msg = { id: string; role: "user" | "assistant"; text: string; attachments?: MsgAttachment[] };
+type MsgAction = { label: string; intent: string };
+type Msg = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  attachments?: MsgAttachment[];
+  action?: MsgAction;
+};
 
 const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
 const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|construction|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
