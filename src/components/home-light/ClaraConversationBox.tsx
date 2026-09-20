@@ -784,7 +784,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         // onglet, et ne confirme qu'après le changement de route réussi.
         if (destination && detected === "contractor_onboarding") {
           setQuickReplies(null);
-          await beginTextContractorTransition(text);
+          trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
+          // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
+          const asked = await askNextQualification();
+          if (!asked) {
+            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            await beginTextContractorTransition(text);
+          }
         } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
