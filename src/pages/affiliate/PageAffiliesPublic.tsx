@@ -116,7 +116,7 @@ export default function PageAffiliesPublic() {
       {/* Header */}
       <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
         <Link to="/" aria-label="UNPRO">
-          <UnproLogo variant="primary" className="h-7 w-auto" />
+          <UnproLogo variant="primary" tone="light" className="h-7 w-auto" />
         </Link>
         <Link
           to="/affiliate/login"

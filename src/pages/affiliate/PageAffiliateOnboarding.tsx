@@ -305,7 +305,7 @@ export default function PageAffiliateOnboarding() {
 
       <header className="mx-auto flex max-w-xl items-center justify-between px-5 py-5">
         <Link to="/affilies" aria-label="Retour">
-          <UnproLogo variant="primary" className="h-7 w-auto" />
+          <UnproLogo variant="primary" tone="light" className="h-7 w-auto" />
         </Link>
         <span className="text-sm font-medium text-muted-foreground">{step} sur 4</span>
       </header>
