@@ -248,7 +248,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   // La salutation d'accueil n'est permise qu'AVANT toute interaction : texte,
   // voix ou média. Une fois la conversation démarrée, elle ne revient jamais,
   // même après un remontage du composant.
-  const conversationStarted = messages.length > 0;
+  const conversationStarted = isConversationActive;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
   const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
 

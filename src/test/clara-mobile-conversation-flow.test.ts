@@ -30,6 +30,7 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain('rows={1}');
     expect(box).toContain("Math.min(field.scrollHeight, 120)");
     expect(css).toMatch(/home-clara-textarea[^}]*min-height:\s*42px[^}]*max-height:\s*120px/);
+    expect(box).toContain("const conversationStarted = isConversationActive");
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {
