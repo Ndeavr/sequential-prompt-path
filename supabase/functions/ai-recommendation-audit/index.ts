@@ -274,10 +274,39 @@ Deno.serve(async (req) => {
         first<string>(contractor?.business_name, prospect?.business_name) ?? (rawQuery.trim() || null);
       const legalName = first<string>(contractor?.legal_name, prospect?.legal_name);
       const trade = first<string>(contractor?.specialty, prospect?.category);
-      const city = first<string>(contractor?.city, prospect?.city, String(body.city ?? "").slice(0, 120) || null);
+      /* ---- Ville de l'entreprise (siège) — JAMAIS un territoire ni une ville de campagne.
+         Ordre de confiance : registre officiel > fiche UNPRO déclarée > inconnu.
+         `body.city` (ville de la requête, du lead ou de la campagne) n'est jamais candidat. */
+      const businessCity: { value: string | null; provenance: Provenance; source?: string } = prospect?.city
+        ? { value: String(prospect.city), provenance: "verified", source: "Registre officiel" }
+        : contractor?.city
+          ? { value: String(contractor.city), provenance: "declared", source: "Fiche UNPRO" }
+          : { value: null, provenance: "pending" };
+      const city = businessCity.value;
+      /* Écart entre la fiche UNPRO et la source officielle : journalisé, jamais affiché
+         comme un second siège. */
+      const cityMismatch =
+        contractor?.city && prospect?.city && slug(contractor.city) !== slug(prospect.city)
+          ? { contractor_city: String(contractor.city), official_city: String(prospect.city) }
+          : null;
       const region = first<string>(prospect?.region);
+
+      /* ---- Territoires réellement desservis : uniquement des territoires enregistrés. */
+      let registeredAreas: string[] = [];
+      if (contractorId) {
+        const { data: areaRows } = await db
+          .from("contractor_service_areas")
+          .select("city_name, validation_status")
+          .eq("contractor_id", contractorId)
+          .limit(50);
+        registeredAreas = (areaRows ?? []).map((r: any) => String(r.city_name)).filter(Boolean);
+      }
       const areas = Array.from(
-        new Set([...(contractor?.service_areas ?? []), ...(prospect?.service_areas ?? [])].filter(Boolean).map(String))
+        new Set(
+          [...registeredAreas, ...(contractor?.service_areas ?? []), ...(prospect?.service_areas ?? [])]
+            .filter(Boolean)
+            .map(String)
+        )
       );
       const website = first<string>(contractor?.website, contractor?.normalized_website, prospect?.website_url);
       const gmb = first<string>(contractor?.google_business_url, prospect?.google_business_url);
