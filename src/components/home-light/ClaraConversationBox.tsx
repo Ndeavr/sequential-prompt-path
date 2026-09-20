@@ -653,6 +653,29 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
+
+      // Qualification entrepreneur en cours : la réponse est enregistrée tout
+      // de suite, puis Clara pose la question suivante — ou ouvre l'audit.
+      const pendingStep = qualificationStepRef.current;
+      if (pendingStep) {
+        setBusy(true);
+        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        applyAnswer(pendingStep, text);
+        qualificationStepRef.current = null;
+        try {
+          const asked = await askNextQualification();
+          if (!asked) {
+            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            await beginTextContractorTransition(text);
+            return;
+          }
+        } finally {
+          if (mountedRef.current && qualificationStepRef.current) setBusy(false);
+          focusComposer();
+        }
+        return;
+      }
+
       const nextMode = detectSurfaceMode(text);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
