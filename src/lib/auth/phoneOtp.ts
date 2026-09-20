@@ -9,6 +9,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { phoneToE164 } from "@/utils/formatPhone";
+import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 
 const SMS_FALLBACK_FR =
   "Impossible d'envoyer le code par SMS pour le moment. Réessayez ou utilisez le lien par courriel.";
