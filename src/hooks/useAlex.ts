@@ -49,14 +49,17 @@ export const useAlex = (options?: UseAlexOptions) => {
 
       const upsertAssistant = (chunk: string) => {
         assistantSoFar += chunk;
+        // Le marqueur interne de réponses rapides n'est jamais affiché ici :
+        // seule la conversation d'accueil le transforme en boutons.
+        const visible = stripChoiceMarker(assistantSoFar);
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") {
             return prev.map((m, i) =>
-              i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
+              i === prev.length - 1 ? { ...m, content: visible } : m
             );
           }
-          return [...prev, { role: "assistant", content: assistantSoFar }];
+          return [...prev, { role: "assistant", content: visible }];
         });
 
         // Stream sentences to TTS as they arrive
