@@ -3,6 +3,7 @@ import PanelContractorAdvisorAlex from "@/components/PanelContractorAdvisorAlex"
 import { useContractorProfile } from "@/hooks/useContractor";
 import { AiReadinessCard } from "@/components/contractor/AiReadinessCard";
 import CardContractorCalendarSetup from "@/components/calendar/CardContractorCalendarSetup";
+import CardMembershipRequest from "@/components/contractor/CardMembershipRequest";
 
 const PageEntrepreneurDashboardLite = () => {
   const { data: profile } = useContractorProfile();
