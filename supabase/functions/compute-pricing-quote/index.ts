@@ -380,7 +380,10 @@ Deno.serve(async (req) => {
     const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
 
-    const maxCents = cfgRow?.max_monthly_cents ?? 149900;
+    // `max_monthly_cents` reste un repère administratif : il n'est PLUS
+    // appliqué comme plafond de prix. Un volume réellement demandé se facture
+    // à son vrai prix, avec rabais de volume explicite.
+    const referenceCapCents = cfgRow?.max_monthly_cents ?? null;
 
     // ---------- Growth settings (profile fee, annual discount, caps) ----------
     const { data: growthCfg } = await svc
