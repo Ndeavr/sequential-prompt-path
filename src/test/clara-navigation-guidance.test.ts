@@ -10,8 +10,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   containsForbiddenGuidance,
+  destinationCtaLabel,
+  openFailureMessage,
   resolveClaraDestination,
   rewriteGuidance,
+  stripOpenAnnouncement,
 } from "@/services/clara/claraNavigation";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 
@@ -96,6 +99,47 @@ describe("Clara — chat contextuel et voix unique", () => {
 
   it("navigue elle-même vers l'écran réel", () => {
     expect(box).toContain("resolveClaraDestination");
-    expect(box).toContain("navigate(destination.path");
+    expect(box).toContain("openClaraDestination(navigate, destination");
+  });
+});
+
+describe("Clara — ouverture réelle avant toute confirmation", () => {
+  const nav = read("src/services/clara/claraNavigation.ts");
+
+  it("retire l'annonce d'ouverture générée par le modèle", () => {
+    expect(stripOpenAnnouncement("Je vous ai ouvert la page. Vous devriez la voir à l'écran maintenant. Dites-moi.")).toBe(
+      "Dites-moi.",
+    );
+    expect(box).toContain("stripOpenAnnouncement(rewriteGuidance(finalText, destination))");
+  });
+
+  it("confirme seulement après un changement de route vérifié", () => {
+    expect(nav).toContain("window.location.pathname === destination.path");
+    expect(nav).toContain("return { ok: arrived }");
+    expect(box).toContain("ok ? openSuccessMessage(destination) : openFailureMessage(destination)");
+  });
+
+  it("propose une action réelle quand l'ouverture échoue", () => {
+    const destination = resolveClaraDestination("affiliate_onboarding")!;
+    expect(openFailureMessage(destination)).toContain("Touchez ici pour continuer");
+    expect(destinationCtaLabel(destination)).toBe("Ouvrir le formulaire");
+    expect(box).toContain("action: ok ? undefined : { label: destinationCtaLabel(destination), intent }");
+    expect(box).toContain("void runOpen(message.action!.intent as ClaraWorkflowIntent)");
+  });
+
+  it("le bouton visible emprunte exactement la même fonction d'ouverture", () => {
+    expect(box).toContain("/^ouvrir\\b/i.test(option) && lastIntentRef.current");
+    expect(box).toContain("void runOpen(lastIntentRef.current)");
+  });
+
+  it("garde les pages UNPRO dans le même onglet", () => {
+    expect(box).not.toContain("window.open");
+    expect(nav).toMatch(/isInternalPath\(url\)\) return;[\s\S]*window\.open/);
+    expect(nav).toContain("if (!isInternalPath(destination.path)) return { ok: false }");
+  });
+
+  it("ferme le clavier et remonte en haut de la page ouverte", () => {
+    expect(nav).toContain("active?.blur?.()");
+    expect(nav).toContain("window.scrollTo({ top: 0");
   });
 });
