@@ -1268,6 +1268,18 @@ Deno.serve(async (req) => {
             .eq("status", "reserved");
         }
 
+        // Signal d'abandon prioritaire : session créée puis expirée sans paiement.
+        try {
+          const quoteId = session.metadata?.quote_id;
+          if (quoteId) {
+            await supabase.functions.invoke("contractor-relance-abandon", {
+              body: { quote_id: quoteId },
+            });
+          }
+        } catch (e) {
+          console.warn("[stripe-webhook] relance trigger soft-fail", String(e));
+        }
+
         break;
       }
 
