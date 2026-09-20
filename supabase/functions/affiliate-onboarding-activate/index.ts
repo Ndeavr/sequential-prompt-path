@@ -172,12 +172,15 @@ Deno.serve(async (req) => {
           .upsert(payload, { onConflict: "user_id" })
           .select("id, slug, referral_code, status")
           .single();
-    if (upErr) return json({ error: `affiliate_upsert_failed: ${upErr.message}` }, 500);
+    if (upErr || !row) {
+      console.error("[affiliate-onboarding-activate] affiliate_upsert_failed", user.id, upErr?.message);
+      return json({ error: "activation_failed", step: "affiliate" }, 500);
+    }
 
     // Acceptation des conditions — auditable.
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
     const ua = req.headers.get("user-agent") ?? null;
-    await sb.from("partner_terms_acceptance").upsert(
+    const { error: termsErr } = await sb.from("partner_terms_acceptance").upsert(
       {
         partner_id: row.id,
         user_id: user.id,
