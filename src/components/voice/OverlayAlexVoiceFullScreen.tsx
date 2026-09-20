@@ -39,11 +39,15 @@ import {
   beginClaraVoiceRun,
   buildVoiceFirstMessage,
   buildVoiceResumeContext,
+  CLARA_CONTRACTOR_TRANSITION_TEXT,
+  CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
+  CLARA_CONTRACTOR_VOICE_REQUEST_EVENT,
   loadClaraVoiceBrief,
   notifyClaraVoiceClosed,
   recordClaraVoiceTurn,
   type ClaraVoiceBrief,
 } from "@/services/clara/claraVoiceBridge";
+import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import { detectTerminalIntent } from "@/lib/alexTerminalIntents";
 
 // États où le transport vocal est réellement arrêté : aucun callback ne peut
@@ -118,6 +122,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const [bootNonce, setBootNonce] = useState(0);
   const armInactivityRef = useRef<(reason: string) => void>(() => {});
   const pauseVoiceRef = useRef<(reason: string) => void>(() => {});
+  const contractorTransitionRef = useRef(false);
 
   transcriptsRef.current = transcripts;
   const openChatFallback = useAlexChatFallbackStore((s) => s.open);
@@ -303,6 +308,11 @@ export default function OverlayAlexVoiceFullScreen() {
       s.addTranscript("user", text);
       // ONE CLARA : la parole devient un message utilisateur normal du chat.
       recordClaraVoiceTurn("user", text);
+
+      if (detectClaraWorkflowIntent(text).intent === "contractor_onboarding" && !contractorTransitionRef.current) {
+        contractorTransitionRef.current = true;
+        window.dispatchEvent(new CustomEvent(CLARA_CONTRACTOR_VOICE_REQUEST_EVENT, { detail: { note: text } }));
+      }
 
       setTranscripts(prev => [
         ...prev,
@@ -531,6 +541,34 @@ export default function OverlayAlexVoiceFullScreen() {
 
   armInactivityRef.current = armInactivity;
   pauseVoiceRef.current = pauseVoice;
+
+  useEffect(() => {
+    const handleContractorVoiceRequest = (event: Event) => {
+      const note = (event as CustomEvent<{ note?: string }>).detail?.note;
+      void (async () => {
+        const s = getStore();
+        if (!s.isOverlayOpen) return;
+        completeVoice("contractor_transition");
+        recordClaraVoiceTurn("assistant", CLARA_CONTRACTOR_TRANSITION_TEXT);
+
+        let closed = false;
+        const waitForClose = new Promise<void>((resolve) => {
+          const onClosed = () => {
+            closed = true;
+            resolve();
+          };
+          window.addEventListener(CLARA_VOICE_CLOSED_EVENT, onClosed, { once: true });
+        });
+        elevenlabsService.init();
+        const speech = elevenlabsService.speak(CLARA_CONTRACTOR_TRANSITION_TEXT).catch(() => undefined);
+        await Promise.race([speech, waitForClose]);
+        if (!closed) try { elevenlabsService.stop(); } catch {}
+        window.dispatchEvent(new CustomEvent(CLARA_CONTRACTOR_VOICE_FINISHED_EVENT, { detail: { note } }));
+      })();
+    };
+    window.addEventListener(CLARA_CONTRACTOR_VOICE_REQUEST_EVENT, handleContractorVoiceRequest);
+    return () => window.removeEventListener(CLARA_CONTRACTOR_VOICE_REQUEST_EVENT, handleContractorVoiceRequest);
+  }, [completeVoice]);
 
   // Un seul minuteur d'inactivité : réarmé à chaque changement d'état.
   useEffect(() => {

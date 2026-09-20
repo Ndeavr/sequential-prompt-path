@@ -539,6 +539,26 @@
     color: hsl(220 14% 38%);
     animation: clara-working-pulse 1.6s ease-in-out infinite;
   }
+  .home-light .home-clara-transition-pause {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 32px;
+    color: hsl(220 14% 38%);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .home-light .home-clara-transition-pause span { margin-right: 0.15rem; }
+  .home-light .home-clara-transition-pause i {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    animation: clara-transition-dot 800ms ease-in-out infinite alternate;
+  }
+  .home-light .home-clara-transition-pause i:nth-of-type(2) { animation-delay: 120ms; }
+  .home-light .home-clara-transition-pause i:nth-of-type(3) { animation-delay: 240ms; }
+  @keyframes clara-transition-dot { to { opacity: 0.35; transform: translateY(-2px); } }
   .home-light .home-clara-error { font-size: 0.85rem; color: hsl(0 72% 42%); }
   @keyframes clara-working-pulse {
     0%, 100% { opacity: 0.55; }
@@ -891,6 +911,7 @@
   @media (prefers-reduced-motion: reduce) {
     .home-light .home-clara-presence span,
     .home-light .home-clara-presence i { animation: none; }
+    .home-light .home-clara-transition-pause i { animation: none; }
   }
 
 
