@@ -985,14 +985,23 @@ Deno.serve(async (req) => {
       final_monthly_price: finalPrice,
       /**
        * IDENTITÉ TARIFAIRE — le détail affiché doit être vérifiable :
-       * (base + rendez-vous + exclusivité + visibilité IA) × multiplicateur
-       * + ajustement = prix mensuel final. L'ajustement porte le plafond, le
-       * plancher et les modes forfait/budget : rien n'est caché.
+       * (abonnement + rendez-vous supplémentaires − rabais de volume
+       * + exclusivité + visibilité IA) × multiplicateur + ajustement
+       * = prix mensuel final.
+       * AUCUN plafond mensuel universel : un volume élevé se facture à son
+       * vrai prix. Seuls le plancher de service, un plancher territorial
+       * validé, le budget mensuel explicitement choisi ou un forfait fixe
+       * peuvent créer un ajustement — et il est toujours affiché.
        */
       price_identity: {
         target_appointments: effectiveTarget,
         requested_appointments: Math.max(0, Math.round(body.target_monthly_appointments ?? 0)),
         base_platform_cents: base,
+        appointment_unit_price_cents: chain.appointment_unit_price_cents,
+        appointment_unit_status: extra.status,
+        extra_appointments: chain.extra_appointments,
+        volume_discount_rate: chain.volume_discount_rate,
+        volume_discount_cents: chain.volume_discount_cents,
         appointment_package_cents: apptPkg,
         exclusivity_cents: exclusivity,
         aipp_cents: aipp,
@@ -1000,7 +1009,11 @@ Deno.serve(async (req) => {
         market_multiplier: marketMultiplier,
         override_multiplier: overrideMultiplier,
         raw_price_cents: chain.raw_price_cents,
-        bounds: { min_cents: minCents, max_cents: maxCents, floor_cents: overrideFloorCents },
+        bounds: {
+          min_cents: minCents,
+          floor_cents: overrideFloorCents,
+          monthly_cap_applied: false,
+        },
         adjustment_cents: finalPrice - chain.raw_price_cents,
         adjustment_reason:
           finalPrice === chain.raw_price_cents
@@ -1009,8 +1022,8 @@ Deno.serve(async (req) => {
               ? "forfait_fixe"
               : status === "waitlisted"
                 ? "marche_indisponible"
-                : chain.raw_price_cents > maxCents
-                  ? "plafond_plan_personnalise"
+                : pricingMode === "budget"
+                  ? "budget_mensuel_choisi"
                   : chain.raw_price_cents < minCents || finalPrice === overrideFloorCents
                     ? "plancher_plan_personnalise"
                     : "ajustement_plan_personnalise",
