@@ -248,13 +248,21 @@ export default function PageAffiliateOnboarding() {
           },
         },
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).message ?? (data as any).error);
+      const code = error
+        ? await readErrorCode(error)
+        : ((data as any)?.error as string | undefined) ?? null;
+      if (code) {
+        const message = ACTIVATION_MESSAGES[code] ?? ACTIVATION_MESSAGES.default;
+        setActivationError(message);
+        toast.error(message);
+        return;
+      }
       localStorage.removeItem(DRAFT_KEY);
       toast.success("Bienvenue dans le programme!");
       nav("/affiliate", { replace: true });
-    } catch (e: any) {
-      toast.error(e.message || "Activation impossible pour le moment. Réessayez.");
+    } catch {
+      setActivationError(ACTIVATION_MESSAGES.default);
+      toast.error(ACTIVATION_MESSAGES.default);
     } finally {
       setBusy(false);
     }
