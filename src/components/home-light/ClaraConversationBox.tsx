@@ -26,12 +26,21 @@ import {
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
-import { resolveClaraDestination, rewriteGuidance } from "@/services/clara/claraNavigation";
+import {
+  destinationCtaLabel,
+  openClaraDestination,
+  openFailureMessage,
+  openSuccessMessage,
+  resolveClaraDestination,
+  rewriteGuidance,
+  stripOpenAnnouncement,
+} from "@/services/clara/claraNavigation";
 import {
   logClaraWorkflowEvent,
   nextWorkflowState,
   readWorkflow,
   rememberWorkflow,
+  type ClaraWorkflowIntent,
   type ClaraWorkflowState,
 } from "@/services/clara/claraWorkflow";
 
@@ -65,7 +74,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 type MsgAttachment = { url: string; kind: "image" | "video" | "document"; name: string };
-type Msg = { id: string; role: "user" | "assistant"; text: string; attachments?: MsgAttachment[] };
+type MsgAction = { label: string; intent: string };
+type Msg = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  attachments?: MsgAttachment[];
+  action?: MsgAction;
+};
 
 const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
 const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|construction|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
@@ -169,6 +185,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const rootRef = useRef<HTMLElement>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
+  // Dernière intention avec écran réel : sert au bouton visible d'ouverture.
+  const lastIntentRef = useRef<ClaraWorkflowIntent | null>(null);
 
   // File d'attente média unique : progression réelle, reprise, rien de perdu.
   const mediaItems = useClaraMediaQueue((state) => state.items);
@@ -384,6 +402,34 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, [mediaItems]);
 
+  /**
+   * Ouverture unique : Clara et le bouton visible passent exactement ici.
+   * Aucune confirmation n'est écrite avant que la route ait réellement changé.
+   */
+  const runOpen = useCallback(
+    async (intent: ClaraWorkflowIntent, note?: string) => {
+      const destination = resolveClaraDestination(intent);
+      if (!destination) return false;
+
+      trackCopilotEvent("clara_navigation_attempted", { surface: "home_clara_box", kind: destination.path });
+      logClaraWorkflowEvent("workflow_started", { intent, step: destination.path });
+      const { ok } = await openClaraDestination(navigate, destination, { intent, note });
+
+      const messageId = uid();
+      const text = ok ? openSuccessMessage(destination) : openFailureMessage(destination);
+      setMessages((previous) => [
+        ...previous,
+        { id: messageId, role: "assistant", text, action: ok ? undefined : { label: destinationCtaLabel(destination), intent } },
+      ]);
+      void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
+      trackCopilotEvent(ok ? "clara_navigation_succeeded" : "clara_navigation_failed", {
+        surface: "home_clara_box",
+        kind: destination.path,
+      });
+      return ok;
+    },
+    [navigate],
+  );
 
   const send = useCallback(
     async (raw: string) => {
@@ -404,6 +450,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const classified = detectClaraWorkflowIntent(text);
       const detected = classified.intent;
       const destination = resolveClaraDestination(detected, classified.confidence);
+      if (destination) lastIntentRef.current = detected;
       logClaraWorkflowEvent("intent_detected", { intent: detected });
       const transition = nextWorkflowState(workflowRef.current, detected);
       if (transition.state !== workflowRef.current) {
@@ -485,7 +532,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const parsed = extractQuickReplies(full);
         const finalText = cleanAlexText(parsed.text);
         // Clara ne renvoie jamais l'utilisateur chercher : elle prend en charge.
-        const guidedText = rewriteGuidance(finalText, destination);
+        const guidedText = stripOpenAnnouncement(rewriteGuidance(finalText, destination));
         const shownText =
           guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
@@ -498,15 +545,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           clientMessageId: assistantId,
         }).catch(() => {});
 
-        // Navigation assistée : Clara ouvre elle-même l'écran réel, en
-        // conservant la session canonique et le contexte déjà recueilli.
+        // Navigation assistée : Clara ouvre elle-même l'écran réel, dans le même
+        // onglet, et ne confirme qu'après le changement de route réussi.
         if (destination) {
-          logClaraWorkflowEvent("workflow_started", { intent: detected, step: destination.path });
-          window.setTimeout(() => {
-            navigate(destination.path, {
-              state: { fromClara: true, claraIntent: detected, claraContext: text },
-            });
-          }, 600);
+          setQuickReplies(null);
+          await runOpen(detected, text);
         }
       } catch {
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
@@ -517,7 +560,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [busy, copy.fallback, focusComposer, messages],
+    [busy, copy.fallback, focusComposer, messages, runOpen],
   );
 
   const chooseQuickReply = useCallback(
@@ -529,13 +572,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         cameraRef.current?.click();
         return;
       }
+      // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
+      if (/^ouvrir\b/i.test(option) && lastIntentRef.current) {
+        void runOpen(lastIntentRef.current);
+        return;
+      }
       if (/^autre$/i.test(option)) {
         focusComposer();
         return;
       }
       void send(option);
     },
-    [busy, focusComposer, send],
+    [busy, focusComposer, runOpen, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
@@ -732,6 +780,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     </ul>
                   )}
                   <MessageResponse>{message.text}</MessageResponse>
+                  {message.action && (
+                    <div className="home-clara-quick" role="group" aria-label="Action proposée">
+                      <button type="button" onClick={() => void runOpen(message.action!.intent as ClaraWorkflowIntent)}>
+                        {message.action.label}
+                      </button>
+                    </div>
+                  )}
                 </MessageContent>
               </Message>
             ))}

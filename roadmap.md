@@ -33,3 +33,5 @@
 
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
+
+- [x] Clara ouvre réellement les pages internes (même onglet, confirmation après succès, action de secours si échec).

@@ -52,6 +52,9 @@ export type CopilotEventName =
   | "clara_image_compressed"
   | "clara_attachment_uploaded"
   | "clara_attachment_failed"
+  | "clara_navigation_attempted"
+  | "clara_navigation_succeeded"
+  | "clara_navigation_failed"
   | "example_clicked"
   | "theme_changed"
   | "contractor_nav_clicked";
