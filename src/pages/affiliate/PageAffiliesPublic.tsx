@@ -4,7 +4,7 @@
  * Objectif : compréhension < 30 s → CTA « JE COMMENCE! » → onboarding 4 étapes.
  * Aucun taux affiché (le taux est propre à chaque affiliée) — mécanismes réels seulement.
  */
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -96,6 +96,19 @@ export default function PageAffiliesPublic() {
 
   const startHref = `/affilies/onboarding${location.search}`;
 
+  // Le CTA collant n'apparaît qu'une fois le premier bouton sorti de l'écran.
+  const heroCtaRef = useRef<HTMLAnchorElement | null>(null);
+  const [showSticky, setShowSticky] = useState(false);
+  useEffect(() => {
+    const el = heroCtaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setShowSticky(!entry.isIntersecting), {
+      threshold: 0,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <div className="landing-warm min-h-screen bg-background text-foreground">
       <Helmet>
@@ -116,7 +129,7 @@ export default function PageAffiliesPublic() {
       {/* Header */}
       <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
         <Link to="/" aria-label="UNPRO">
-          <UnproLogo variant="primary" className="h-7 w-auto" />
+          <UnproLogo variant="primary" tone="light" className="h-7 w-auto" />
         </Link>
         <Link
           to="/affiliate/login"
@@ -142,6 +155,7 @@ export default function PageAffiliesPublic() {
             Vous êtes payée sur chaque inscription.
           </p>
           <Link
+            ref={heroCtaRef}
             to={startHref}
             onClick={() => trackAffiliateFunnel("affiliate_start_clicked", { metadata: { position: "hero" } })}
             className="mt-8 inline-flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5"
@@ -263,7 +277,12 @@ export default function PageAffiliesPublic() {
       </main>
 
       {/* CTA fixe */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
+      <div
+        aria-hidden={!showSticky}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 py-3 backdrop-blur transition-opacity duration-200 ${
+          showSticky ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
         <div className="mx-auto max-w-3xl">
           <Link
             to={startHref}

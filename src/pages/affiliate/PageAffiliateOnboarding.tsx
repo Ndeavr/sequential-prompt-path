@@ -80,6 +80,31 @@ const EMPTY: Draft = {
   step: 1,
 };
 
+/** Codes serveur → message clair. Jamais d'erreur technique à l'écran. */
+const ACTIVATION_MESSAGES: Record<string, string> = {
+  unauthenticated: "Votre session a expiré. Vérifiez à nouveau votre numéro à l'étape 1.",
+  name_required: "Prénom et nom sont requis.",
+  phone_required: "Votre numéro de téléphone est requis.",
+  email_required: "Votre courriel est requis.",
+  terms_required: "Vous devez accepter les conditions du programme.",
+  activation_failed: "Activation impossible pour le moment. Réessayez dans un instant.",
+  default: "Activation impossible pour le moment. Réessayez dans un instant.",
+};
+
+/** Lit le code d'erreur renvoyé par la fonction sans exposer le texte brut. */
+async function readErrorCode(error: unknown): Promise<string> {
+  const res = (error as { context?: Response })?.context;
+  try {
+    if (res && typeof res.json === "function") {
+      const body = await res.clone().json();
+      if (typeof body?.error === "string") return body.error;
+    }
+  } catch {
+    /* corps illisible — message générique */
+  }
+  return "default";
+}
+
 function loadDraft(): Draft {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
@@ -97,6 +122,7 @@ export default function PageAffiliateOnboarding() {
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [busy, setBusy] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   // OTP inline
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -220,7 +246,8 @@ export default function PageAffiliateOnboarding() {
   }
 
   async function activate() {
-    if (!user) return;
+    if (!user || busy) return;
+    setActivationError(null);
     setBusy(true);
     try {
       const stored = getStoredAttribution();
@@ -247,13 +274,21 @@ export default function PageAffiliateOnboarding() {
           },
         },
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).message ?? (data as any).error);
+      const code = error
+        ? await readErrorCode(error)
+        : ((data as any)?.error as string | undefined) ?? null;
+      if (code) {
+        const message = ACTIVATION_MESSAGES[code] ?? ACTIVATION_MESSAGES.default;
+        setActivationError(message);
+        toast.error(message);
+        return;
+      }
       localStorage.removeItem(DRAFT_KEY);
       toast.success("Bienvenue dans le programme!");
       nav("/affiliate", { replace: true });
-    } catch (e: any) {
-      toast.error(e.message || "Activation impossible pour le moment. Réessayez.");
+    } catch {
+      setActivationError(ACTIVATION_MESSAGES.default);
+      toast.error(ACTIVATION_MESSAGES.default);
     } finally {
       setBusy(false);
     }
@@ -270,7 +305,7 @@ export default function PageAffiliateOnboarding() {
 
       <header className="mx-auto flex max-w-xl items-center justify-between px-5 py-5">
         <Link to="/affilies" aria-label="Retour">
-          <UnproLogo variant="primary" className="h-7 w-auto" />
+          <UnproLogo variant="primary" tone="light" className="h-7 w-auto" />
         </Link>
         <span className="text-sm font-medium text-muted-foreground">{step} sur 4</span>
       </header>
@@ -492,8 +527,19 @@ export default function PageAffiliateOnboarding() {
               disabled={!terms || busy || !user}
               onClick={activate}
             >
-              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>}
+              {busy ? (
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Activation…</>
+              ) : activationError ? (
+                <><Rocket className="mr-2 h-5 w-5" /> RÉESSAYER</>
+              ) : (
+                <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>
+              )}
             </Button>
+            {activationError && (
+              <p role="alert" className="mt-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
+                {activationError}
+              </p>
+            )}
             {!user && (
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
                 <ShieldCheck className="h-4 w-4" /> Vérifiez votre numéro à l'étape 1 pour activer.

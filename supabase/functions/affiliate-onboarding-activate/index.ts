@@ -67,7 +67,13 @@ Deno.serve(async (req) => {
     if (!termsAccepted) return json({ error: "terms_required", message: "Vous devez accepter les conditions du programme." }, 400);
 
     // Rôle affilié — jamais admin.
-    await sb.from("user_roles").upsert({ user_id: user.id, role: "affiliate" }, { onConflict: "user_id,role" });
+    const { error: roleErr } = await sb
+      .from("user_roles")
+      .upsert({ user_id: user.id, role: "affiliate" }, { onConflict: "user_id,role" });
+    if (roleErr) {
+      console.error("[affiliate-onboarding-activate] role_upsert_failed", user.id, roleErr.message);
+      return json({ error: "activation_failed", step: "role" }, 500);
+    }
 
     // Profil public
     await sb
@@ -166,12 +172,15 @@ Deno.serve(async (req) => {
           .upsert(payload, { onConflict: "user_id" })
           .select("id, slug, referral_code, status")
           .single();
-    if (upErr) return json({ error: `affiliate_upsert_failed: ${upErr.message}` }, 500);
+    if (upErr || !row) {
+      console.error("[affiliate-onboarding-activate] affiliate_upsert_failed", user.id, upErr?.message);
+      return json({ error: "activation_failed", step: "affiliate" }, 500);
+    }
 
     // Acceptation des conditions — auditable.
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
     const ua = req.headers.get("user-agent") ?? null;
-    await sb.from("partner_terms_acceptance").upsert(
+    const { error: termsErr } = await sb.from("partner_terms_acceptance").upsert(
       {
         partner_id: row.id,
         user_id: user.id,
@@ -184,6 +193,11 @@ Deno.serve(async (req) => {
       },
       { onConflict: "partner_id,role,terms_version" }
     );
+    // La preuve d'acceptation est exigée : pas d'activation silencieuse sans trace.
+    if (termsErr) {
+      console.error("[affiliate-onboarding-activate] terms_upsert_failed", row.id, termsErr.message);
+      return json({ error: "activation_failed", step: "terms" }, 500);
+    }
 
     // Rattachement sous-affilié si un parrain est en mémoire (logique existante).
     const refCode = typeof acquisition.ref === "string" ? acquisition.ref : null;
@@ -208,6 +222,7 @@ Deno.serve(async (req) => {
 
     return json({ ok: true, affiliate: { id: row.id, slug: row.slug, referral_code: row.referral_code, status: row.status } });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    console.error("[affiliate-onboarding-activate] unhandled", String(e));
+    return json({ error: "activation_failed", step: "unhandled" }, 500);
   }
 });
