@@ -186,6 +186,14 @@ export default function PageContractorPricingIntake() {
   const auditValid = Boolean(audit?.business_name);
   const detectedCity = audit?.city ?? data.city ?? null;
 
+  /* ---------- Points d'abandon mesurables (une seule table, dédupliqués) ---------- */
+  useEffect(() => {
+    void trackFunnelStep("analysis_started", {
+      metadata: { has_audit: Boolean(auditId), surface: "pricing_intake" },
+    });
+    void trackFunnelStep("profile_started", { metadata: { surface: "pricing_intake" } });
+  }, [auditId]);
+
   const onBusinessSelected = useCallback((r: BusinessSearchResult) => {
     setData((d) => ({
       ...d,
@@ -197,6 +205,17 @@ export default function PageContractorPricingIntake() {
     setDetected({ trade: Boolean(r.primary_category), city: Boolean(r.city) });
     setBusinessConfirmed(true);
     setManualEntry(false);
+    // Entreprise réelle reconnue : l'analyse est rattachée à une identité vérifiable.
+    void trackFunnelStep("company_recognized", {
+      subjectId: r.business_name,
+      city: r.city ?? null,
+      metadata: { source: "business_lookup", has_website: Boolean(r.website) },
+    });
+    void trackFunnelStep("analysis_completed", {
+      subjectId: r.business_name,
+      city: r.city ?? null,
+      metadata: { provenance: "verifie_source_google" },
+    });
   }, []);
 
   /* ---------- Étapes ---------- */
