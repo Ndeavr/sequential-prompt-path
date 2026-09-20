@@ -1124,6 +1124,14 @@ Deno.serve(async (req) => {
             if (quoteErr) {
               console.error("[stripe-webhook] quote paid update failed", quoteErr.message);
             }
+            // Converti : toute relance ouverte se ferme, plus aucune alerte.
+            try {
+              await supabase.functions.invoke("contractor-relance-abandon", {
+                body: { action: "close", quote_id: quoteId },
+              });
+            } catch (e) {
+              console.warn("[stripe-webhook] relance close soft-fail", String(e));
+            }
           }
         }
 
