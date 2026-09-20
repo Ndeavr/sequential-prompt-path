@@ -86,7 +86,7 @@ describe("Clara — aucune consigne de recherche", () => {
 
 describe("Clara — chat contextuel et voix unique", () => {
   it("n'affiche la salutation qu'avant la première interaction", () => {
-    expect(box).toContain("const conversationStarted = messages.length > 0");
+    expect(box).toContain("const conversationStarted = isConversationActive");
     expect(box).toContain("conversationStarted ? copy.placeholderActive : copy.placeholder");
   });
 
