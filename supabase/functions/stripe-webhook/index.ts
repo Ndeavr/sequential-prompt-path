@@ -998,6 +998,23 @@ Deno.serve(async (req) => {
 
         if (!contractorId || !planId) break;
 
+        // GUARD — l'activation payée dépend UNIQUEMENT d'un paiement confirmé
+        // par Stripe. Une session complétée mais non payée (paiement asynchrone)
+        // n'active rien : l'événement suivant (async_payment_succeeded /
+        // invoice.paid) reprendra le relais.
+        {
+          const paidVerified =
+            session.payment_status === "paid" ||
+            session.payment_status === "no_payment_required";
+          if (!paidVerified) {
+            await supabase.from("stripe_webhook_events").update({
+              processing_status: "ignored_unpaid",
+            }).eq("stripe_event_id", event.id);
+            console.log("[stripe-webhook] plan session not paid yet", session.id, session.payment_status);
+            break;
+          }
+        }
+
         const subscription = session.subscription
           ? await stripe.subscriptions.retrieve(session.subscription as string)
           : null;
