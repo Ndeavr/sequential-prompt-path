@@ -1112,6 +1112,90 @@ Deno.serve(async (req) => {
           throw new Error(`Contractor activation failed: ${activateErr.message}`);
         }
 
+        // DEVIS — le plan personnalisé payé passe à l'état « payé » (source de
+        // vérité du parcours, idempotent : rejouer l'événement ne change rien).
+        {
+          const quoteId = session.metadata?.quote_id || null;
+          if (quoteId) {
+            const { error: quoteErr } = await supabase
+              .from("contractor_pricing_quotes")
+              .update({ pricing_status: "paid", updated_at: nowIso })
+              .eq("id", quoteId);
+            if (quoteErr) {
+              console.error("[stripe-webhook] quote paid update failed", quoteErr.message);
+            }
+          }
+        }
+
+        // ATTRIBUTION AFFILIÉE — même procédure canonique que l'offre 350 $ :
+        // l'affiliée est résolue à partir des metadata de la session (code
+        // vérifié côté serveur avant le checkout). Aucune affiliée → no-op
+        // propre. Idempotent par session Stripe. Ne bloque jamais l'activation.
+        try {
+          const pretaxCents =
+            (session.amount_subtotal as number | null) ??
+            (session.amount_total as number | null) ??
+            0;
+          const affRes = await supabase.rpc("record_affiliate_payment_conversion", {
+            p_prospect_id: session.metadata?.prospect_id || null,
+            p_contractor_id: contractorId,
+            p_user_id: null,
+            p_amount_pretax_cents: pretaxCents,
+            p_stripe_session_id: session.id,
+            p_affiliate_id: (session.metadata?.affiliate_id as string) || null,
+            p_referral_code: (session.metadata?.ref as string) || null,
+            p_metadata: {
+              plan_id: planId,
+              quote_id: session.metadata?.quote_id ?? null,
+              billing_interval: billingInterval,
+            },
+          });
+          if ((affRes.data as any)?.recorded) {
+            console.log("[stripe-webhook] affiliate conversion recorded (plan)", affRes.data);
+          }
+        } catch (e) {
+          console.warn("[stripe-webhook] affiliate conversion soft-fail (plan)", String(e));
+        }
+
+        // TUNNEL — paiement confirmé + compte activé écrits côté serveur :
+        // l'autorité est l'événement Stripe, pas le retour du navigateur.
+        try {
+          await supabase.from("contractor_funnel_events").insert([
+            {
+              dedupe_key: `payment_completed:${session.id}`,
+              event_type: "payment_completed",
+              step: "payment_succeeded",
+              event_source: "stripe",
+              source: "stripe",
+              contractor_id: contractorId,
+              affiliate_code: (session.metadata?.ref as string) || null,
+              metadata: {
+                funnel_step: "payment_succeeded",
+                plan_id: planId,
+                quote_id: session.metadata?.quote_id ?? null,
+                amount_total: session.amount_total,
+                currency: session.currency,
+                stripe_session_id: session.id,
+              },
+            },
+            {
+              dedupe_key: `profile_activated:${session.id}`,
+              event_type: "profile_activated",
+              step: "account_activated",
+              event_source: "stripe",
+              source: "stripe",
+              contractor_id: contractorId,
+              affiliate_code: (session.metadata?.ref as string) || null,
+              metadata: {
+                funnel_step: "account_activated",
+                plan_id: planId,
+                stripe_session_id: session.id,
+              },
+            },
+          ]);
+        } catch (e) {
+          console.warn("[stripe-webhook] funnel events (plan) soft-fail", String(e));
+        }
 
         // Mirror plan on contractor_subscriptions already handled above.
 
