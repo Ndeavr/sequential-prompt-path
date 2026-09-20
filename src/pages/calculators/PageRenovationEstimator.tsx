@@ -297,6 +297,14 @@ export default function PageRenovationEstimator() {
 
   const persist = useCallback(async () => {
     if (savingRef.current || !category || !estimate || !def) return;
+    // Le serveur n'enregistre que les superficies dans la plage de la catégorie.
+    // On le dit clairement AVANT l'envoi, au lieu d'échouer avec un message vague.
+    if (effectiveSize < def.sizeMin || effectiveSize > def.sizeMax) {
+      setSaveError(
+        `Pour « ${def.label} », la superficie doit être entre ${def.sizeMin} et ${def.sizeMax} ${def.sizeUnit} pour enregistrer votre estimation. Ajustez la superficie puis réessayez.`,
+      );
+      return;
+    }
     const verified = isVerified(address) ? address : null;
     if (!verified || firstName.trim().length < 2) {
       setSaveError(
