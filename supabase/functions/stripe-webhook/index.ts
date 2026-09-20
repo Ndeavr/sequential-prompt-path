@@ -1160,7 +1160,7 @@ Deno.serve(async (req) => {
         // TUNNEL — paiement confirmé + compte activé écrits côté serveur :
         // l'autorité est l'événement Stripe, pas le retour du navigateur.
         try {
-          await supabase.from("contractor_funnel_events").insert([
+          await supabase.from("contractor_funnel_events").upsert([
             {
               dedupe_key: `payment_completed:${session.id}`,
               event_type: "payment_completed",
