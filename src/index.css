@@ -824,7 +824,7 @@
     }
     .home-light .home-clara-composer { padding: 0.6rem 0.65rem max(0.45rem, env(safe-area-inset-bottom)); }
     .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 68px; border-radius: 16px; }
-    .home-light .home-clara-textarea { min-height: 42px !important; height: 42px; max-height: 120px; padding: 0.62rem 1rem 2.65rem; overflow-y: auto; font-size: 1rem; }
+    .home-light .home-clara-textarea { field-sizing: fixed; box-sizing: border-box; min-height: 68px !important; height: 68px; max-height: 120px; padding: 0.62rem 1rem 2.15rem; overflow-y: auto; font-size: 1rem; }
     .home-light .home-clara-controls { right: 0.7rem; bottom: 0.6rem; left: 0.7rem; justify-content: space-between; }
     .home-light .home-clara-tool { width: 38px; height: 38px; }
     .home-light .home-clara-submit { width: 46px; height: 46px; }
