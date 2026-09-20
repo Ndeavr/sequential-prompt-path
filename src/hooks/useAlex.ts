@@ -6,6 +6,13 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const ALEX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-chat`;
 
+/**
+ * Retire le marqueur interne « [[CHOIX: …]] », y compris sa forme partielle en
+ * cours de diffusion, pour qu'aucune ligne technique n'apparaisse dans le chat.
+ */
+const stripChoiceMarker = (text: string): string =>
+  text.replace(/\[\[\s*CHOIX\s*:[^\]]*\]\]/gi, "").replace(/\[\[\s*C?H?O?I?X?\s*:?[^\]]*$/i, "").trimEnd();
+
 interface UseAlexOptions {
   onResponseComplete?: (fullText: string) => void;
   onSentenceReady?: (sentence: string) => void;
