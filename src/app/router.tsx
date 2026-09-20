@@ -426,6 +426,7 @@ const PageAlexGuidedOnboarding = lazyWithRetry(() => import("@/pages/signature/P
 // Contractor Onboarding AIPP Funnel
 const PageContractorLandingAcquisition = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorLandingAcquisition"));
 const PageContractorOnboardingStart = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorOnboardingStart"));
+const PageContractorOnboardingEntry = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorOnboardingEntry"));
 const PageContractorImportWorkspace = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorImportWorkspace"));
 const PageContractorAIPPBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIPPBuilder"));
 const PageContractorAssetsStudio = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAssetsStudio"));
@@ -1072,7 +1073,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
-        <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
+        <Route path="/entrepreneur/onboarding" element={<Suspense fallback={<LazyFallback />}><PageContractorOnboardingEntry /></Suspense>} />
         <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
         <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
         <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
