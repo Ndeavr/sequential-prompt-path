@@ -186,6 +186,14 @@ export default function PageContractorPricingIntake() {
   const auditValid = Boolean(audit?.business_name);
   const detectedCity = audit?.city ?? data.city ?? null;
 
+  /* ---------- Points d'abandon mesurables (une seule table, dédupliqués) ---------- */
+  useEffect(() => {
+    void trackFunnelStep("analysis_started", {
+      metadata: { has_audit: Boolean(auditId), surface: "pricing_intake" },
+    });
+    void trackFunnelStep("profile_started", { metadata: { surface: "pricing_intake" } });
+  }, [auditId]);
+
   const onBusinessSelected = useCallback((r: BusinessSearchResult) => {
     setData((d) => ({
       ...d,
@@ -197,6 +205,17 @@ export default function PageContractorPricingIntake() {
     setDetected({ trade: Boolean(r.primary_category), city: Boolean(r.city) });
     setBusinessConfirmed(true);
     setManualEntry(false);
+    // Entreprise réelle reconnue : l'analyse est rattachée à une identité vérifiable.
+    void trackFunnelStep("company_recognized", {
+      subjectId: r.business_name,
+      city: r.city ?? null,
+      metadata: { source: "business_lookup", has_website: Boolean(r.website) },
+    });
+    void trackFunnelStep("analysis_completed", {
+      subjectId: r.business_name,
+      city: r.city ?? null,
+      metadata: { provenance: "verifie_source_google" },
+    });
   }, []);
 
   /* ---------- Étapes ---------- */
@@ -251,6 +270,10 @@ export default function PageContractorPricingIntake() {
                 onClick={() => {
                   setManualEntry(true);
                   setBusinessConfirmed(true);
+                  void trackFunnelStep("analysis_completed", {
+                    subjectId: (d.company_name ?? "").trim() || null,
+                    metadata: { provenance: "declare_non_verifie" },
+                  });
                 }}
                 className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
               >
@@ -463,6 +486,21 @@ export default function PageContractorPricingIntake() {
 
   const submit = async () => {
     setSubmitting(true);
+    // Profil confirmé et objectifs réellement saisis avant tout calcul de plan.
+    void trackFunnelStep("profile_completed", {
+      subjectId: data.company_name ?? null,
+      city: data.city ?? null,
+      metadata: { manual_entry: manualEntry },
+    });
+    void trackFunnelStep("goals_completed", {
+      subjectId: data.company_name ?? null,
+      metadata: {
+        target_monthly_appointments: data.target_monthly_appointments ?? null,
+        monthly_capacity: data.monthly_capacity ?? null,
+        average_project_value: data.average_project_value ?? null,
+        growth_level: data.desired_growth_level ?? null,
+      },
+    });
     try {
       const quote = await computePricingQuote(data as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {

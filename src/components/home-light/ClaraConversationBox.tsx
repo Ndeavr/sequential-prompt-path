@@ -15,6 +15,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import {
   appendClaraMessage,
   rememberClaraReferences,
@@ -262,8 +263,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const contractorTransitionRef = useRef(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => {
-    mountedRef.current = false;
+  useEffect(() => {
+    // Remonté explicitement : en double montage (StrictMode), le nettoyage du
+    // premier passage laissait la carte définitivement « démontée ».
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const createLocalPreview = useCallback((file: File) => {
@@ -536,14 +542,25 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   const finishContractorTransition = useCallback(async (note?: string) => {
     if (!mountedRef.current) return;
+    // Point d'abandon mesurable no 1 : intention entrepreneur exprimée à l'accueil.
+    void trackFunnelStep("home_contractor_click", { metadata: { surface: "home_clara_box" } });
     setTransitionPause(true);
     await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
     if (!mountedRef.current) return;
-    await openContractorAfterTransition(note);
+    const ok = await openContractorAfterTransition(note);
+    // Jamais de cul-de-sac : si l'ouverture échoue, la conversation redevient utilisable.
+    if (mountedRef.current) {
+      setTransitionPause(false);
+      setBusy(false);
+      contractorTransitionRef.current = false;
+      if (!ok) setMode("IDLE");
+    }
   }, [openContractorAfterTransition]);
 
   const beginTextContractorTransition = useCallback(async (note: string) => {
-    if (contractorTransitionRef.current || busy) return;
+    // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
+    // jamais bloquer la transition entrepreneur.
+    if (contractorTransitionRef.current) return;
     contractorTransitionRef.current = true;
     setBusy(true);
     setError(null);
@@ -571,7 +588,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       clientMessageId: assistantId,
     }).catch(() => undefined);
     await finishContractorTransition(note);
-  }, [busy, finishContractorTransition]);
+  }, [finishContractorTransition]);
 
   useEffect(() => {
     const onVoiceFinished = (event: Event) => {

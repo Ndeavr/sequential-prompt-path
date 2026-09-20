@@ -79,6 +79,12 @@ export type FunnelEventType =
   | "free_year_unavailable"
   | "free_activation_started"
 
+  // Parcours entrepreneur — points d'abandon mesurables (une seule table)
+  | "home_contractor_click"
+  | "contractor_analysis_started"
+  | "contractor_analysis_completed"
+  | "contractor_goals_completed"
+
   // Calculateur de rénovation (propriétaires) — /calculateur-renovation
   | "estimator_view"
   | "estimator_category_selected"
