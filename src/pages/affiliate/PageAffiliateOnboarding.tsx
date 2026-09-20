@@ -80,6 +80,31 @@ const EMPTY: Draft = {
   step: 1,
 };
 
+/** Codes serveur → message clair. Jamais d'erreur technique à l'écran. */
+const ACTIVATION_MESSAGES: Record<string, string> = {
+  unauthenticated: "Votre session a expiré. Vérifiez à nouveau votre numéro à l'étape 1.",
+  name_required: "Prénom et nom sont requis.",
+  phone_required: "Votre numéro de téléphone est requis.",
+  email_required: "Votre courriel est requis.",
+  terms_required: "Vous devez accepter les conditions du programme.",
+  activation_failed: "Activation impossible pour le moment. Réessayez dans un instant.",
+  default: "Activation impossible pour le moment. Réessayez dans un instant.",
+};
+
+/** Lit le code d'erreur renvoyé par la fonction sans exposer le texte brut. */
+async function readErrorCode(error: unknown): Promise<string> {
+  const res = (error as { context?: Response })?.context;
+  try {
+    if (res && typeof res.json === "function") {
+      const body = await res.clone().json();
+      if (typeof body?.error === "string") return body.error;
+    }
+  } catch {
+    /* corps illisible — message générique */
+  }
+  return "default";
+}
+
 function loadDraft(): Draft {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
