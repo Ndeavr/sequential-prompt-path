@@ -33,6 +33,10 @@ export interface ClaraVoiceBrief {
 
 export const CLARA_VOICE_MESSAGE_EVENT = "clara-voice-message";
 export const CLARA_VOICE_CLOSED_EVENT = "clara-voice-closed";
+export const CLARA_CONTRACTOR_VOICE_REQUEST_EVENT = "clara-contractor-voice-request";
+export const CLARA_CONTRACTOR_VOICE_FINISHED_EVENT = "clara-contractor-voice-finished";
+export const CLARA_CONTRACTOR_TRANSITION_TEXT =
+  "Je vois, vous aimeriez obtenir plus de contrats. Commençons par analyser votre entreprise…";
 
 /**
  * Le micro est un MODE, jamais une session : la conversation canonique doit

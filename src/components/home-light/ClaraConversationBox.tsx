@@ -22,6 +22,8 @@ import {
   startOrResumeClaraSession,
 } from "@/services/clara/claraSession";
 import {
+  CLARA_CONTRACTOR_TRANSITION_TEXT,
+  CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
@@ -226,6 +228,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
+  const [transitionPause, setTransitionPause] = useState(false);
   const [composerText, setComposerText] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
   // Le micro est un MODE de la même conversation : aucun état de session ici.
@@ -256,6 +259,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const localPreviewUrls = useRef<Set<string>>(new Set());
   const activationTracked = useRef(false);
   const keyboardWasOpen = useRef(false);
+  const contractorTransitionRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
 
   const createLocalPreview = useCallback((file: File) => {
     const url = URL.createObjectURL(file);
@@ -504,6 +513,78 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     [navigate],
   );
 
+  const openContractorAfterTransition = useCallback(async (note?: string) => {
+    const destination = resolveClaraDestination("contractor_onboarding");
+    if (!destination) return false;
+    const { ok } = await openClaraDestination(navigate, destination, {
+      intent: "contractor_onboarding",
+      note,
+    });
+    if (!ok && mountedRef.current) {
+      const messageId = uid();
+      const text = openFailureMessage(destination);
+      setMessages((previous) => [...previous, {
+        id: messageId,
+        role: "assistant",
+        text,
+        action: { label: destinationCtaLabel(destination), intent: "contractor_onboarding" },
+      }]);
+      void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
+    }
+    return ok;
+  }, [navigate]);
+
+  const finishContractorTransition = useCallback(async (note?: string) => {
+    if (!mountedRef.current) return;
+    setTransitionPause(true);
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
+    if (!mountedRef.current) return;
+    await openContractorAfterTransition(note);
+  }, [openContractorAfterTransition]);
+
+  const beginTextContractorTransition = useCallback(async (note: string) => {
+    if (contractorTransitionRef.current || busy) return;
+    contractorTransitionRef.current = true;
+    setBusy(true);
+    setError(null);
+    setQuickReplies(null);
+
+    const assistantId = uid();
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? CLARA_CONTRACTOR_TRANSITION_TEXT : "" }]);
+
+    if (!reduceMotion) {
+      for (let index = 1; index <= CLARA_CONTRACTOR_TRANSITION_TEXT.length; index += 1) {
+        if (!mountedRef.current) return;
+        setMessages((previous) => previous.map((message) =>
+          message.id === assistantId
+            ? { ...message, text: CLARA_CONTRACTOR_TRANSITION_TEXT.slice(0, index) }
+            : message,
+        ));
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 14));
+      }
+    }
+
+    await appendClaraMessage({
+      role: "assistant",
+      text: CLARA_CONTRACTOR_TRANSITION_TEXT,
+      clientMessageId: assistantId,
+    }).catch(() => undefined);
+    await finishContractorTransition(note);
+  }, [busy, finishContractorTransition]);
+
+  useEffect(() => {
+    const onVoiceFinished = (event: Event) => {
+      const detail = (event as CustomEvent<{ note?: string }>).detail;
+      if (contractorTransitionRef.current) return;
+      contractorTransitionRef.current = true;
+      setBusy(true);
+      void finishContractorTransition(detail?.note);
+    };
+    window.addEventListener(CLARA_CONTRACTOR_VOICE_FINISHED_EVENT, onVoiceFinished);
+    return () => window.removeEventListener(CLARA_CONTRACTOR_VOICE_FINISHED_EVENT, onVoiceFinished);
+  }, [finishContractorTransition]);
+
   const send = useCallback(
     async (raw: string) => {
       const text = raw.trim();
@@ -620,7 +701,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
         // Navigation assistée : Clara ouvre elle-même l'écran réel, dans le même
         // onglet, et ne confirme qu'après le changement de route réussi.
-        if (destination) {
+        if (destination && detected === "contractor_onboarding") {
+          setQuickReplies(null);
+          await beginTextContractorTransition(text);
+        } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
         }
@@ -633,7 +717,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [busy, copy.fallback, focusComposer, messages, runOpen],
+    [beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen],
   );
 
   const chooseQuickReply = useCallback(
@@ -694,6 +778,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         clientMessageId: userMessageId,
       }).catch(() => undefined);
 
+      if (suggestion.intent === "contractor_onboarding") {
+        await beginTextContractorTransition(suggestion.label);
+        return;
+      }
       setBusy(true);
       try {
         await runOpen(suggestion.intent, suggestion.label);
@@ -701,7 +789,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setBusy(false);
       }
     },
-    [busy, runOpen, send],
+    [beginTextContractorTransition, busy, runOpen, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
@@ -976,7 +1064,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 ))}
               </div>
             )}
-            {busy && <p className="home-clara-working" role="status">{copy.working}</p>}
+            {transitionPause ? (
+              <div className="home-clara-transition-pause" role="status" aria-label="Clara prépare la prochaine étape">
+                <span>Clara</span><i /><i /><i />
+              </div>
+            ) : busy ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
             {error && <p role="alert" className="home-clara-error">{error}</p>}
           </ConversationContent>
           <ConversationScrollButton title="Nouveau message" />
