@@ -663,6 +663,14 @@ Deno.serve(async (req) => {
         ),
       );
 
+      // Prix brut de la chaîne AVANT plafond/plancher : conservé tel quel pour
+      // que le détail affiché soit une identité vérifiable.
+      const rawPriceCents = Math.round(subtotal * marketMultiplier * overrideMultiplier);
+      const boundedPriceCents = Math.max(
+        overrideFloorCents,
+        clamp(rawPriceCents, minCents, maxCents),
+      );
+
       return {
         target: t,
         plan: p,
@@ -674,15 +682,8 @@ Deno.serve(async (req) => {
         aipp_fee: aipp,
         subtotal,
         market_multiplier: marketMultiplier,
-        monthly_price_cents: Math.max(
-          overrideFloorCents,
-          clamp(
-            Math.round(subtotal * marketMultiplier * overrideMultiplier),
-            minCents,
-            maxCents,
-          ),
-        ),
-
+        raw_price_cents: rawPriceCents,
+        monthly_price_cents: boundedPriceCents,
       };
     }
 
