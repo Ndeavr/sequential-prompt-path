@@ -155,6 +155,7 @@ export default function PageAffiliesPublic() {
             Vous êtes payée sur chaque inscription.
           </p>
           <Link
+            ref={heroCtaRef}
             to={startHref}
             onClick={() => trackAffiliateFunnel("affiliate_start_clicked", { metadata: { position: "hero" } })}
             className="mt-8 inline-flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5"
@@ -276,7 +277,12 @@ export default function PageAffiliesPublic() {
       </main>
 
       {/* CTA fixe */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
+      <div
+        aria-hidden={!showSticky}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 py-3 backdrop-blur transition-opacity duration-200 ${
+          showSticky ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
         <div className="mx-auto max-w-3xl">
           <Link
             to={startHref}
