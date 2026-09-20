@@ -1052,10 +1052,47 @@ Deno.serve(async (req) => {
     };
 
     // Human-readable, evidence-only explanation (no invented scarcity).
+    /**
+     * OBJECTIF ≠ RENDEZ-VOUS ≠ CAPACITÉ ≠ BUDGET.
+     * Un objectif de 100 contrats par année n'est pas 100 rendez-vous par mois.
+     * On calcule le nombre de rendez-vous nécessaire pour atteindre l'objectif
+     * déclaré, borné par la capacité réelle de l'entrepreneur.
+     */
+    const contractGoalMonthly = (() => {
+      const v = Number(body.contract_goal_value ?? 0);
+      if (!Number.isFinite(v) || v <= 0) return null;
+      return body.contract_goal_unit === "year" ? v / 12 : v;
+    })();
+    const appointmentRecommendation = contractGoalMonthly
+      ? {
+          contract_goal_value: Number(body.contract_goal_value),
+          contract_goal_unit: body.contract_goal_unit ?? "month",
+          contracts_per_month: round2(contractGoalMonthly),
+          close_rate: round2(close),
+          appointments_needed: Math.ceil(contractGoalMonthly / Math.max(0.01, close)),
+          contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+          recommended_appointments: Math.max(
+            1,
+            Math.min(
+              Math.ceil(contractGoalMonthly / Math.max(0.01, close)),
+              Math.max(1, Math.round(body.monthly_capacity ?? 0)),
+            ),
+          ),
+        }
+      : null;
+
     const pricingExplanation = {
       calculation_version: CALCULATION_VERSION,
       pricing_mode: pricingMode,
       mode_outcome: modeOutcome,
+      appointment_recommendation: appointmentRecommendation,
+      appointment_unit_price_cents: chain.appointment_unit_price_cents,
+      appointment_unit_status: extra.status,
+      appointment_unit_basis: extra.basis,
+      volume_discount_rate: chain.volume_discount_rate,
+      volume_discount_cents: chain.volume_discount_cents,
+      monthly_cap_applied: false,
+      reference_cap_cents: referenceCapCents,
       monthly_budget_cents: monthlyBudgetCents,
       guaranteed_appointments: guaranteedAppointments,
       budget_solve: budgetSolve,
