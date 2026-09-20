@@ -39,7 +39,7 @@ const brief = (overrides: Partial<ClaraVoiceBrief> = {}): ClaraVoiceBrief => ({
 
 describe("Clara voice — reprise de la conversation canonique", () => {
   it("ne salue jamais quand une question est déjà affichée", () => {
-    expect(buildVoiceFirstMessage(brief())).toBe("");
+    expect(buildVoiceFirstMessage(brief())).toBe("Je vous écoute.");
   });
 
   it("poursuit sans salutation quand la conversation est en cours", () => {
@@ -58,7 +58,7 @@ describe("Clara voice — reprise de la conversation canonique", () => {
     expect(context).toContain("balcon");
     expect(context).toContain("Montréal");
     expect(context).toContain("Est-ce un balcon au rez-de-chaussée ou à l'étage ?");
-    expect(context).toMatch(/ne salue pas/i);
+    expect(context).toMatch(/ne te présente pas/i);
   });
 
   it("n'envoie aucun contexte quand il n'y a rien à reprendre", () => {

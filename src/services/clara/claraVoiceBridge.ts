@@ -11,7 +11,11 @@
  *  - écriture idempotente : aucun doublon après reconnexion ou rafraîchissement.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { appendClaraMessage, peekClaraSessionToken } from "@/services/clara/claraSession";
+import {
+  appendClaraMessage,
+  ensureClaraSession,
+  peekClaraSessionToken,
+} from "@/services/clara/claraSession";
 
 export interface ClaraVoiceBrief {
   session_id: string;
@@ -30,8 +34,17 @@ export interface ClaraVoiceBrief {
 export const CLARA_VOICE_MESSAGE_EVENT = "clara-voice-message";
 export const CLARA_VOICE_CLOSED_EVENT = "clara-voice-closed";
 
+/**
+ * Le micro est un MODE, jamais une session : la conversation canonique doit
+ * exister AVANT que la voix parle, sinon la voix repartirait de zéro.
+ */
+export async function ensureClaraVoiceSession(): Promise<void> {
+  await ensureClaraSession();
+}
+
 /** État compact de la conversation active. `null` si rien n'est disponible. */
 export async function loadClaraVoiceBrief(): Promise<ClaraVoiceBrief | null> {
+  await ensureClaraVoiceSession();
   const session_token = peekClaraSessionToken();
   if (!session_token) return null;
   try {
@@ -64,14 +77,15 @@ export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string |
 
   const lines = [
     "CONTINUITÉ — même conversation, canal vocal.",
-    "La conversation écrite est déjà en cours. Ne salue pas, ne recommence pas,",
-    "ne repose aucune question déjà répondue. Poursuis au prochain tour logique.",
+    "Tu poursuis une conversation déjà commencée. Ne te présente pas.",
+    "Ne recommence pas la conversation. Ne redemande jamais une information déjà connue.",
+    "Interprète la prochaine phrase du client comme une réponse ou une continuation.",
   ];
   if (facts.length > 0) lines.push(`État connu — ${facts.join(" · ")}`);
   if (turns) lines.push(`Derniers échanges :\n${turns}`);
   if (brief.pending_question) {
     lines.push(
-      `Question déjà posée et affichée à l'écran : « ${brief.pending_question} » — attends la réponse du client sans la reposer à voix haute.`,
+      `Question déjà posée et affichée à l'écran : « ${brief.pending_question} » — attends la réponse du client sans la reposer à voix haute, et traite sa première phrase comme la réponse à cette question.`,
     );
   }
   return lines.join("\n");
@@ -79,13 +93,15 @@ export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string |
 
 /**
  * Premier message vocal :
- *  - question déjà affichée → silence, l'orbe écoute;
+ *  - question déjà affichée → très courte relance d'écoute, jamais une salutation
+ *    ni la question répétée (une chaîne vide laisserait le message d'accueil par
+ *    défaut du fournisseur s'imposer);
  *  - conversation en cours sans question → courte relance de continuité;
  *  - aucune conversation → `null` : la salutation habituelle s'applique.
  */
 export function buildVoiceFirstMessage(brief: ClaraVoiceBrief | null): string | null {
   if (!brief || !brief.has_conversation) return null;
-  if (brief.pending_question) return "";
+  if (brief.pending_question) return "Je vous écoute.";
   return "Je vous écoute, on continue.";
 }
 

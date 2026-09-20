@@ -103,6 +103,35 @@ function uid() {
 }
 
 /**
+ * La voix est suggérée par le CONTEXTE, jamais par un minuteur : Clara vient de
+ * poser une question ouverte, le client décrit une situation, ou l'échange écrit
+ * s'allonge. Jamais pour une donnée courte (courriel, téléphone, adresse, code,
+ * montant, oui/non) ni pendant un envoi de fichier.
+ */
+const SHORT_ANSWER_PATTERN =
+  /(courriel|adresse courriel|e-?mail|téléphone|numéro|code|adresse|montant|budget exact|oui ou non|code postal)/i;
+const OPEN_QUESTION_PATTERN =
+  /(décrivez|expliquez|racontez|qu'est-ce qui|comment|pourquoi|dites-moi|parlez-moi|que se passe)/i;
+
+export function shouldSuggestVoice(input: {
+  lastAssistantText: string | null;
+  lastUserText: string | null;
+  userMessageCount: number;
+  uploading: boolean;
+  voiceActive: boolean;
+}): boolean {
+  if (input.uploading || input.voiceActive) return false;
+  const assistant = (input.lastAssistantText ?? "").trim();
+  if (!assistant) return false;
+  if (SHORT_ANSWER_PATTERN.test(assistant)) return false;
+  const isQuestion = assistant.includes("?");
+  const openQuestion = isQuestion && OPEN_QUESTION_PATTERN.test(assistant);
+  const longUserMessage = (input.lastUserText ?? "").trim().length >= 140;
+  const longConversation = input.userMessageCount >= 3 && isQuestion;
+  return openQuestion || longUserMessage || longConversation;
+}
+
+/**
  * Clara décide elle-même quand une question a des réponses fermées : elle
  * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
  * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
@@ -141,6 +170,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     ? {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
         placeholderActive: "Répondez à Clara…",
+        listening: "Clara vous écoute…",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Parler à Clara",
@@ -156,6 +186,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     : {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
         placeholderActive: "Répondez à Clara…",
+        listening: "Clara is listening…",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Talk to Clara",
@@ -176,6 +207,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Le micro est un MODE de la même conversation : aucun état de session ici.
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [voiceGlow, setVoiceGlow] = useState(false);
+  const [voiceTip, setVoiceTip] = useState<string | null>(null);
+  const voiceTipShown = useRef(false);
+  const voiceCooldownUntil = useRef(0);
 
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -366,6 +403,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     };
 
     const onVoiceClosed = () => {
+      // Retour au clavier : même conversation, simple changement de canal.
+      setVoiceActive(false);
+      trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
       void (async () => {
         try {
           const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
@@ -674,9 +714,55 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     await send(message.text);
   }, [busy, createLocalPreview, enqueueMedia, lang, mode, send]);
 
+  // Suggestion contextuelle de la voix : halo discret, jamais une alerte.
+  const uploadingMedia = mediaItems.some((item) => item.status === "queued" || item.status === "analyzing");
+  const lastAssistantText = useMemo(
+    () => [...messages].reverse().find((m) => m.role === "assistant")?.text ?? null,
+    [messages],
+  );
+  const lastUserText = useMemo(
+    () => [...messages].reverse().find((m) => m.role === "user")?.text ?? null,
+    [messages],
+  );
+  const userMessageCount = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
+
+  useEffect(() => {
+    const recommended = shouldSuggestVoice({
+      lastAssistantText,
+      lastUserText,
+      userMessageCount,
+      uploading: uploadingMedia || busy,
+      voiceActive,
+    });
+    if (!recommended) {
+      setVoiceGlow(false);
+      setVoiceTip(null);
+      return;
+    }
+    if (Date.now() < voiceCooldownUntil.current) return;
+    setVoiceGlow(true);
+    trackCopilotEvent("clara_voice_suggested", { surface: "home_clara_box" });
+    if (!voiceTipShown.current) {
+      voiceTipShown.current = true;
+      setVoiceTip(lang === "fr" ? "Plus simple à expliquer à voix haute" : "Easier to explain out loud");
+    }
+    const timer = window.setTimeout(() => {
+      setVoiceGlow(false);
+      setVoiceTip(null);
+      voiceCooldownUntil.current = Date.now() + 60_000;
+      trackCopilotEvent("clara_voice_suggestion_dismissed", { surface: "home_clara_box" });
+    }, 10_000);
+    return () => window.clearTimeout(timer);
+  }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang]);
+
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
+    // MODE, pas session : la conversation canonique reste exactement la même.
     setMode("LISTENING");
+    setVoiceActive(true);
+    setVoiceGlow(false);
+    setVoiceTip(null);
+    voiceCooldownUntil.current = Date.now() + 60_000;
     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "voice" });
     trackCopilotEvent("clara_voice_started", { surface: "home_clara_box" });
     openAlex("home_hero", "user_tapped_orb", "floating");
@@ -861,10 +947,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           onSubmit={submit}
           onError={() => setError("Impossible d’ajouter ce fichier. Choisir un autre fichier.")}
           className="home-clara-prompt"
+          data-voice-listening={voiceActive ? "true" : undefined}
         >
           <PromptInputTextarea
-            aria-label={conversationStarted ? copy.placeholderActive : copy.placeholder}
-            placeholder={conversationStarted ? copy.placeholderActive : copy.placeholder}
+            aria-label={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
+            placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
             disabled={busy}
              rows={1}
              onInput={(event) => {
@@ -887,9 +974,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
               </PromptInputButton>
-              <PromptInputButton type="button" onClick={startVoice} tooltip={copy.voice} aria-label={copy.voice} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+              <PromptInputButton
+                type="button"
+                onClick={startVoice}
+                tooltip={voiceTip ?? copy.voice}
+                aria-label={copy.voice}
+                data-voice-suggested={voiceGlow ? "true" : undefined}
+                data-voice-listening={voiceActive ? "true" : undefined}
+                className="home-clara-tool home-clara-mic rounded-full text-muted-foreground hover:text-foreground"
+              >
                 <Mic className="h-5 w-5" />
               </PromptInputButton>
+              {voiceTip && (
+                <span className="home-clara-voice-tip" role="note">{voiceTip}</span>
+              )}
             </PromptInputTools>
             <PromptInputSubmit
               status={busy ? "submitted" : "ready"}
