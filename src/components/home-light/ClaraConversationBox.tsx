@@ -56,6 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
+import { prepareImageForUpload } from "@/services/clara/claraMedia";
 
 const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
 import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
@@ -95,17 +96,26 @@ export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
 export function extractQuickReplies(raw: string): { text: string; options: string[] } {
   const match = raw.match(CHOICE_MARKER);
   if (!match) return { text: raw, options: [] };
-  const options = match[1]
+  let options = match[1]
     .split("|")
     .map((option) => option.trim())
     .filter(Boolean)
-    .slice(0, 6);
+    .slice(0, 4);
+  if (/photo|image/i.test(raw)) {
+    const wantsPhoto = options.some((option) => /photo|image|envoyer|ajouter/i.test(option));
+    const skipsPhoto = options.some((option) => /sans|continue|pas de photo/i.test(option));
+    if (wantsPhoto || skipsPhoto) options = ["📷 Ajouter une photo", "Continuer sans photo"];
+  }
   return { text: raw.replace(CHOICE_MARKER, "").trim(), options };
 }
 
 type QuickReplies = { messageId: string; options: string[] };
 
-export default function ClaraConversationBox() {
+interface ClaraConversationBoxProps {
+  onConversationActiveChange?: (active: boolean) => void;
+}
+
+export default function ClaraConversationBox({ onConversationActiveChange }: ClaraConversationBoxProps) {
   const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
@@ -167,6 +177,8 @@ export default function ClaraConversationBox() {
   const retryMedia = useClaraMediaQueue((state) => state.retry);
   const clearMedia = useClaraMediaQueue((state) => state.clear);
   const announcedMedia = useRef<Set<string>>(new Set());
+  const activationTracked = useRef(false);
+  const keyboardWasOpen = useRef(false);
 
 
   const focusComposer = useCallback(() => {
@@ -176,7 +188,21 @@ export default function ClaraConversationBox() {
       textarea.focus();
     }
   }, []);
-  const hasInteracted = messages.length > 0 || mode !== "IDLE";
+  const isConversationActive = messages.length > 0 || mode !== "IDLE";
+
+  useEffect(() => {
+    document.documentElement.dataset.claraConversationActive = String(isConversationActive);
+    window.dispatchEvent(new CustomEvent("clara:conversation-active", { detail: { active: isConversationActive } }));
+    onConversationActiveChange?.(isConversationActive);
+    if (isConversationActive && !activationTracked.current) {
+      activationTracked.current = true;
+      trackCopilotEvent("clara_conversation_activated", { surface: "home_clara_box" });
+      trackCopilotEvent("clara_hero_collapsed", { surface: "home_clara_box" });
+    }
+    return () => {
+      if (!isConversationActive) delete document.documentElement.dataset.claraConversationActive;
+    };
+  }, [isConversationActive, onConversationActiveChange]);
 
   /**
    * Nouvelle conversation : une VRAIE session canonique est créée côté serveur
@@ -200,6 +226,7 @@ export default function ClaraConversationBox() {
     setQuoteCount(0);
     setContextStatus(null);
     setMode("IDLE");
+    activationTracked.current = false;
     trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
       await startNewClaraSession({ language: lang, entrypoint: "home_clara_box" });
@@ -254,10 +281,21 @@ export default function ClaraConversationBox() {
   useEffect(() => {
     const viewport = window.visualViewport;
     const updateViewport = () => {
-      const covered = viewport
-        ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
-        : 0;
+      const visibleHeight = viewport?.height ?? window.innerHeight;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const covered = Math.max(0, window.innerHeight - visibleHeight - viewportTop);
+      rootRef.current?.style.setProperty("--clara-visible-height", `${visibleHeight}px`);
+      rootRef.current?.style.setProperty("--clara-viewport-top", `${viewportTop}px`);
       rootRef.current?.style.setProperty("--clara-keyboard-offset", `${covered}px`);
+      const keyboardOpen = covered > 120;
+      if (keyboardOpen !== keyboardWasOpen.current) {
+        keyboardWasOpen.current = keyboardOpen;
+        rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
+        if (keyboardOpen) {
+          trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
+          window.requestAnimationFrame(() => rootRef.current?.scrollIntoView({ block: "start" }));
+        }
+      }
     };
     updateViewport();
     viewport?.addEventListener("resize", updateViewport);
@@ -472,6 +510,11 @@ export default function ClaraConversationBox() {
     (option: string) => {
       if (busy) return;
       setQuickReplies(null);
+      trackCopilotEvent("clara_quick_reply_selected", { surface: "home_clara_box", kind: /photo/i.test(option) ? "photo" : "text" });
+      if (/ajouter une photo/i.test(option)) {
+        cameraRef.current?.click();
+        return;
+      }
       if (/^autre$/i.test(option)) {
         focusComposer();
         return;
@@ -496,7 +539,9 @@ export default function ClaraConversationBox() {
           const file = new File([blob], attachment.filename || "document", {
             type: attachment.mediaType || blob.type,
           });
-          files.push(file);
+          const prepared = file.type.startsWith("image/") ? await prepareImageForUpload(file) : { file, compressed: false };
+          if (prepared.compressed) trackCopilotEvent("clara_image_compressed", { surface: "home_clara_box", path: "prompt" });
+          files.push(prepared.file);
         }
         const quoteMode = mode === "QUOTE" || files.length > 1 || files.some((file) => /pdf/i.test(file.type));
         if (quoteMode) {
@@ -522,10 +567,10 @@ export default function ClaraConversationBox() {
         const uploadId = uid();
         const firstFile = files[0];
         const defaultLabel = firstFile?.type.startsWith("image/")
-          ? (lang === "fr" ? "Photo envoyée" : "Photo sent")
+          ? (lang === "fr" ? "Photo ajoutée ✓" : "Photo added ✓")
           : firstFile?.type.startsWith("video/")
             ? (lang === "fr" ? "Vidéo envoyée" : "Video sent")
-            : (lang === "fr" ? "Document joint" : "Attached document");
+            : (lang === "fr" ? "Document ajouté ✓" : "Document added ✓");
         const uploadText = message.text || defaultLabel;
         const uploadAttachments: MsgAttachment[] = files.map((file) => ({
           url: URL.createObjectURL(file),
@@ -542,11 +587,10 @@ export default function ClaraConversationBox() {
           messageType: "attachment",
           clientMessageId: uploadId,
         }).catch(() => {});
-        trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", count: files.length });
+        trackCopilotEvent("clara_attachment_selected", { surface: "home_clara_box", count: files.length });
       } catch {
         trackCopilotEvent("clara_upload_failed", { surface: "home_clara_box" });
-        setError(copy.fallback);
-        setContextStatus("Je ne peux pas confirmer ce résultat maintenant. Vous pouvez ajouter un autre fichier ou me décrire la situation.");
+        setError("Impossible d’ajouter ce fichier. Réessayer.");
       } finally {
         setBusy(false);
       }
@@ -571,13 +615,15 @@ export default function ClaraConversationBox() {
       if (files.length === 0) return;
       const first = files[0];
       setError(null);
+      setQuickReplies(null);
+      trackCopilotEvent("clara_attachment_selected", { surface: "home_clara_box", count: files.length });
       trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: first.type.startsWith("video/") ? "video" : first.type.startsWith("image/") ? "photo" : "document" });
       trackCopilotEvent("clara_upload_started", { surface: "home_clara_box", count: files.length });
       setMode(first.type.startsWith("video/") ? "VIDEO" : first.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
       enqueueMedia(files);
 
       const messageId = uid();
-      const label = first.type.startsWith("video/") ? "Vidéo envoyée" : "Photo envoyée";
+      const label = first.type.startsWith("video/") ? "Vidéo ajoutée ✓" : first.type.startsWith("image/") ? "Photo ajoutée ✓" : "Document ajouté ✓";
       const attachments: MsgAttachment[] = files.map((file) => ({
         url: URL.createObjectURL(file),
         kind: file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : "document",
@@ -600,7 +646,7 @@ export default function ClaraConversationBox() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.12 }}
-      className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}`}
+      className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
       aria-label="Conversation avec Clara"
     >
       <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
@@ -648,11 +694,11 @@ export default function ClaraConversationBox() {
                       {message.attachments.map((attachment) => (
                         <li key={attachment.url} data-kind={attachment.kind}>
                           {attachment.kind === "image" ? (
-                            <img src={attachment.url} alt={attachment.name} />
+                           <img src={attachment.url} alt="Photo ajoutée" />
                           ) : attachment.kind === "video" ? (
                             <video src={attachment.url} muted playsInline preload="metadata" aria-label={attachment.name} />
                           ) : (
-                            <span><FileText className="h-4 w-4" aria-hidden="true" /> {attachment.name}</span>
+                             <span><FileText className="h-4 w-4" aria-hidden="true" /> {attachment.name || "Document ajouté"}</span>
                           )}
                         </li>
                       ))}
@@ -679,7 +725,7 @@ export default function ClaraConversationBox() {
             {busy && <p className="home-clara-working" role="status">{copy.working}</p>}
             {error && <p role="alert" className="home-clara-error">{error}</p>}
           </ConversationContent>
-          <ConversationScrollButton />
+          <ConversationScrollButton title="Nouveau message" />
         </Conversation>
       )}
 
@@ -695,13 +741,13 @@ export default function ClaraConversationBox() {
                 <span className="home-clara-media-icon" aria-hidden="true"><FileText className="h-4 w-4" /></span>
               )}
               <div className="home-clara-media-body">
-                <p>{item.name}</p>
+                 <p>{item.kind === "photo" ? "Photo ajoutée" : item.kind === "video" ? "Vidéo ajoutée" : (item.name || "Document ajouté")}</p>
                 <span aria-live="polite">
                   {item.status === "uploading" && `Envoi ${Math.round(item.progress * 100)} %`}
                   {item.status === "analyzing" && "Analyse en cours…"}
                   {item.status === "queued" && "En attente"}
-                  {item.status === "done" && "Terminé"}
-                  {item.status === "failed" && (item.error || "Échec de l’envoi")}
+                   {item.status === "done" && "Ajouté ✓"}
+                   {item.status === "failed" && (item.error || "Impossible d’ajouter ce fichier.")}
                 </span>
                 {(item.status === "uploading" || item.status === "analyzing") && (
                   <progress max={100} value={Math.round(item.progress * 100)} />
@@ -738,9 +784,13 @@ export default function ClaraConversationBox() {
             aria-label={conversationStarted ? copy.placeholderActive : copy.placeholder}
             placeholder={conversationStarted ? copy.placeholderActive : copy.placeholder}
             disabled={busy}
-            onFocus={(event) => {
-              window.setTimeout(() => event.currentTarget.scrollIntoView({ block: "nearest", behavior: "smooth" }), 120);
-            }}
+             rows={1}
+             onInput={(event) => {
+               const field = event.currentTarget;
+               field.style.height = "auto";
+               field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
+             }}
+             onFocus={() => window.setTimeout(() => rootRef.current?.scrollIntoView({ block: "start" }), 180)}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
           <PromptInputFooter className="home-clara-controls">
@@ -771,7 +821,7 @@ export default function ClaraConversationBox() {
           </PromptInputFooter>
         </PromptInput>
       </div>
-      {!hasInteracted && (
+       {!isConversationActive && (
         <div className="home-clara-examples" aria-label="Exemples">
           {examples.map((example) => <button key={example} type="button" onClick={() => void send(example)}>{example}</button>)}
         </div>

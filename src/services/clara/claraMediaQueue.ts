@@ -63,6 +63,10 @@ function previewFor(file: File): string | undefined {
   return URL.createObjectURL(file);
 }
 
+function revokePreview(item: ClaraMediaItem | undefined) {
+  if (item?.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl);
+}
+
 export const useClaraMediaQueue = create<QueueState>((set, get) => {
   const patch = (id: string, changes: Partial<ClaraMediaItem>) =>
     set((state) => ({
@@ -201,7 +205,10 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
       return created;
     },
 
-    remove: (id) => set((state) => ({ items: state.items.filter((item) => item.id !== id) })),
+    remove: (id) => set((state) => {
+      revokePreview(state.items.find((item) => item.id === id));
+      return { items: state.items.filter((item) => item.id !== id) };
+    }),
 
     retry: (id) => {
       const item = get().items.find((entry) => entry.id === id);
@@ -210,8 +217,14 @@ export const useClaraMediaQueue = create<QueueState>((set, get) => {
     },
 
     clearFinished: () =>
-      set((state) => ({ items: state.items.filter((item) => item.status !== "done") })),
+      set((state) => {
+        state.items.filter((item) => item.status === "done").forEach(revokePreview);
+        return { items: state.items.filter((item) => item.status !== "done") };
+      }),
 
-    clear: () => set({ items: [] }),
+    clear: () => set((state) => {
+      state.items.forEach(revokePreview);
+      return { items: [] };
+    }),
   };
 });

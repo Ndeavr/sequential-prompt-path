@@ -54,6 +54,14 @@ const SmartHeader = () => {
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
 
+  const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
+  const handleMegaLeave = useCallback(() => setActiveMega(null), []);
+
+  const isGuest = !ctx;
+  const isHome = pathname === "/";
+  const logoTo = getLogoDestination(activeRole as UserRole | "guest");
+  const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
+
   useEffect(() => {
     if (!isHome) return;
     const sync = (event?: Event) => {
@@ -64,14 +72,6 @@ const SmartHeader = () => {
     window.addEventListener("clara:conversation-active", sync);
     return () => window.removeEventListener("clara:conversation-active", sync);
   }, [isHome]);
-
-  const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
-  const handleMegaLeave = useCallback(() => setActiveMega(null), []);
-
-  const isGuest = !ctx;
-  const isHome = pathname === "/";
-  const logoTo = getLogoDestination(activeRole as UserRole | "guest");
-  const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
