@@ -89,7 +89,14 @@ export default function InlineCheckoutNuclear({
     return plans.find((p) => p.code === selectedCode) ?? recommended;
   }, [mode, plans, selectedCode, recommended, founderPlan]);
 
-  const interval: BillingInterval = mode === "year" ? "year" : "month";
+  // Le mode annuel n'existe que si le plan a un vrai prix annuel au catalogue.
+  // Sans cette garde, un plan sans prix annuel affichait « 0 $/an ».
+  const yearlyAvailable = activePlan?.supportsYearly === true;
+  useEffect(() => {
+    if (mode === "year" && activePlan && !yearlyAvailable) setMode("month");
+  }, [mode, activePlan, yearlyAvailable]);
+
+  const interval: BillingInterval = mode === "year" && yearlyAvailable ? "year" : "month";
 
   const basePrice = useMemo(() => {
     if (!activePlan) return 0;
