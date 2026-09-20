@@ -587,6 +587,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           messageType: "attachment",
           clientMessageId: uploadId,
         }).catch(() => {});
+        trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", count: files.length });
         trackCopilotEvent("clara_attachment_selected", { surface: "home_clara_box", count: files.length });
       } catch {
         trackCopilotEvent("clara_upload_failed", { surface: "home_clara_box" });
