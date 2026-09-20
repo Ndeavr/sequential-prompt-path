@@ -49,7 +49,7 @@ export function usePopularQuestions(limit = 6) {
       });
       if (error) throw error;
       const items: PopularQuestionItem[] = Array.isArray(data?.items) ? data.items : [];
-      if (items.length >= 3) {
+      if (data?.source === "trending" && items.length >= 3) {
         setState({ items: items.slice(0, limit), source: "trending", isLoading: false });
         return;
       }

@@ -9,6 +9,7 @@ const header = fs.readFileSync(path.join(root, "src/components/navigation/SmartH
 const css = fs.readFileSync(path.join(root, "src/index.css"), "utf8");
 const queue = fs.readFileSync(path.join(root, "src/services/clara/claraMediaQueue.ts"), "utf8");
 const upload = fs.readFileSync(path.join(root, "src/services/alexUploadService.ts"), "utf8");
+const popularQuestions = fs.readFileSync(path.join(root, "src/hooks/usePopularQuestions.ts"), "utf8");
 
 describe("Clara mobile — conversation compacte", () => {
   it("partage une activation locale entre Clara, le hero et le header", () => {
@@ -31,6 +32,37 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain("Math.min(field.scrollHeight, 120)");
     expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*fixed[^}]*min-height:\s*68px[^}]*max-height:\s*120px/);
     expect(box).toContain("const conversationStarted = isConversationActive");
+  });
+
+  it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
+    expect(box).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(box).toContain('const [composerText, setComposerText] = useState("")');
+    expect(box).toContain("value={composerText}");
+    expect(box).toContain("setComposerText(\"\")");
+    expect(box).not.toContain('placeholder: "Bonjour ! Que puis-je-faire pour vous?"');
+  });
+
+  it("désactive l’envoi sans texte ni pièce jointe", () => {
+    expect(box).toContain("const canSubmit = hasText || attachments.files.length > 0");
+    expect(box).toContain("disabled={busy || !canSubmit}");
+    expect(box).toContain("if (!message.text.trim() && message.files.length === 0) return");
+  });
+
+  it("remplace les phrases arbitraires par des intentions réelles", () => {
+    expect(box).toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
+    expect(box).toContain('label: "Analyser 3 soumissions", intent: "quote_comparison"');
+    expect(box).toContain('label: "Vérifier un entrepreneur", intent: "contractor_verification"');
+    expect(box).toContain('popularQuestions.source !== "trending"');
+    expect(box).toContain("chooseIntentSuggestion(suggestion)");
+    expect(box).not.toContain("J’ai de l’eau ici.");
+    expect(box).not.toContain("J’ai trois soumissions.");
+    expect(popularQuestions).toContain('data?.source === "trending" && items.length >= 3');
+  });
+
+  it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
+    expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(440px,\s*60dvh,\s*620px\)/);
+    expect(css).toContain('.home-light .home-clara-shell[data-keyboard-open] .home-clara-main');
+    expect(css).toContain("max(360px, calc(var(--clara-visible-height, 100dvh) - 12px))");
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {
