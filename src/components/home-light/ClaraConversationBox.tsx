@@ -28,6 +28,14 @@ import {
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
+import {
+  applyAnswer,
+  CLARA_CONTRACTOR_ANALYSIS_NOTE,
+  CLARA_CONTRACTOR_OPENING,
+  getClaraQualification,
+  nextQualificationStep,
+  type ClaraQualificationStep,
+} from "@/services/clara/claraContractorQualification";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
   destinationCtaLabel,
