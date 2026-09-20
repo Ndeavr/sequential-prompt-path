@@ -1,38 +1,63 @@
 /**
  * UNPRO — PageContractorOnboardingStart
- * Minimal form: business name, website, phone, address, RBQ.
- * Progressive onboarding — start with minimum, import rest.
+ * Formulaire complet de demande d'adhésion entrepreneur.
+ * Enregistre la demande dans `contractor_intake_sessions` puis
+ * dirige vers le tableau de bord entrepreneur.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowRight, Building2, Globe, Phone, MapPin, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, Globe, Phone, MapPin, Shield, Sparkles, User, Mail, Hammer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { WebsiteInput } from "@/components/ui/website-input";
 import { cleanTextField } from "@/utils/cleanInput";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
+import { useContractorIntakeSession } from "@/hooks/useContractorIntakeSession";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export default function PageContractorOnboardingStart() {
-  const { state, updateState, goToStep } = useContractorFunnel();
+  const { state, updateState } = useContractorFunnel();
+  const { patch } = useContractorIntakeSession("form");
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState({
     businessName: state.businessName || "",
+    contactName: "",
+    email: "",
     website: state.website || "",
     phone: state.phone || "",
     city: state.city || "",
+    trade: "",
     rbqNumber: state.rbqNumber || "",
+    notes: "",
     googleBusinessUrl: state.googleBusinessUrl || "",
   });
 
-  const canProceed = form.businessName.trim().length >= 2;
+  const emailValid = EMAIL_RE.test(form.email.trim());
+  const phoneDigits = form.phone.replace(/\D/g, "");
+  const canProceed =
+    form.businessName.trim().length >= 2 &&
+    form.contactName.trim().length >= 2 &&
+    emailValid &&
+    phoneDigits.length >= 10 &&
+    form.city.trim().length >= 2 &&
+    form.trade.trim().length >= 2;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!canProceed || saving) return;
+    setSaving(true);
+    setSaveError(null);
+
     updateState({
       businessName: form.businessName,
       website: form.website,
@@ -40,9 +65,35 @@ export default function PageContractorOnboardingStart() {
       city: form.city,
       rbqNumber: form.rbqNumber,
       googleBusinessUrl: form.googleBusinessUrl,
-      currentStep: "import_workspace",
     });
-    goToStep("import_workspace");
+
+    const ok = await patch({
+      mode: "form",
+      company_name: cleanTextField(form.businessName),
+      website: form.website || null,
+      phone: form.phone || null,
+      rbq: form.rbqNumber || null,
+      detected_trade: cleanTextField(form.trade),
+      detected_region: cleanTextField(form.city),
+      completion_percentage: 100,
+      answers: {
+        request_type: "membership",
+        submitted_at: new Date().toISOString(),
+        contact_name: cleanTextField(form.contactName),
+        email: form.email.trim().toLowerCase(),
+        google_business_url: form.googleBusinessUrl || null,
+        notes: form.notes.trim() || null,
+      },
+    });
+
+    setSaving(false);
+
+    if (!ok) {
+      setSaveError("Nous n'avons pas pu enregistrer votre demande. Touchez à nouveau pour réessayer.");
+      return;
+    }
+
+    navigate("/entrepreneur/dashboard");
   };
 
   const updateField = (field: string, value: string) => {
@@ -52,37 +103,25 @@ export default function PageContractorOnboardingStart() {
   return (
     <>
       <Helmet>
-        <title>Démarrage — Profil AIPP | UNPRO</title>
+        <title>Demande d'adhésion entrepreneur | UNPRO</title>
       </Helmet>
 
       <FunnelLayout currentStep="onboarding_start">
         <div className="max-w-xl mx-auto">
-          {/* Header */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            className="text-center mb-8"
-          >
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 mb-4">
               <Building2 className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground mb-2">
-              Créons votre profil AIPP
+              Votre demande d'adhésion
             </h1>
             <p className="text-sm text-muted-foreground">
-              Entrez le minimum — on s'occupe du reste
+              Quelques informations vérifiables suffisent pour lancer votre analyse.
             </p>
           </motion.div>
 
-          {/* Form */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-          >
+          <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
             <CardGlass noAnimation className="space-y-5">
-              {/* Business Name - Required */}
               <motion.div variants={fadeUp}>
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
                   <Building2 className="h-3.5 w-3.5 text-primary" />
@@ -98,25 +137,42 @@ export default function PageContractorOnboardingStart() {
                 />
               </motion.div>
 
-              {/* Website */}
               <motion.div variants={fadeUp}>
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
-                  <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                  Site web
+                  <User className="h-3.5 w-3.5 text-primary" />
+                  Personne responsable *
                 </Label>
-                <WebsiteInput
-                  placeholder="www.toituresdupont.com"
-                  value={form.website}
-                  onChange={(v) => updateField("website", v)}
+                <Input
+                  placeholder="Prénom et nom"
+                  value={form.contactName}
+                  onChange={(e) => updateField("contactName", e.target.value)}
+                  onBlur={() => updateField("contactName", cleanTextField(form.contactName))}
                   className="h-12 rounded-xl bg-muted/50 border-border/50"
                 />
               </motion.div>
 
-              {/* Phone */}
               <motion.div variants={fadeUp}>
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  Téléphone
+                  <Mail className="h-3.5 w-3.5 text-primary" />
+                  Courriel *
+                </Label>
+                <Input
+                  type="email"
+                  inputMode="email"
+                  placeholder="nom@entreprise.com"
+                  value={form.email}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  className="h-12 rounded-xl bg-muted/50 border-border/50"
+                />
+                {form.email.length > 0 && !emailValid && (
+                  <p className="text-xs text-destructive mt-1">Courriel invalide.</p>
+                )}
+              </motion.div>
+
+              <motion.div variants={fadeUp}>
+                <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                  <Phone className="h-3.5 w-3.5 text-primary" />
+                  Téléphone *
                 </Label>
                 <PhoneInput
                   placeholder="(514) 555-0123"
@@ -126,11 +182,24 @@ export default function PageContractorOnboardingStart() {
                 />
               </motion.div>
 
-              {/* City */}
               <motion.div variants={fadeUp}>
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  Ville principale
+                  <Hammer className="h-3.5 w-3.5 text-primary" />
+                  Service principal *
+                </Label>
+                <Input
+                  placeholder="ex: Toiture, pavage, excavation"
+                  value={form.trade}
+                  onChange={(e) => updateField("trade", e.target.value)}
+                  onBlur={() => updateField("trade", cleanTextField(form.trade))}
+                  className="h-12 rounded-xl bg-muted/50 border-border/50"
+                />
+              </motion.div>
+
+              <motion.div variants={fadeUp}>
+                <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  Ville principale *
                 </Label>
                 <Input
                   placeholder="Montréal"
@@ -141,7 +210,20 @@ export default function PageContractorOnboardingStart() {
                 />
               </motion.div>
 
-              {/* RBQ */}
+              <motion.div variants={fadeUp}>
+                <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                  Site web
+                  <span className="text-xs text-muted-foreground">(optionnel)</span>
+                </Label>
+                <WebsiteInput
+                  placeholder="www.toituresdupont.com"
+                  value={form.website}
+                  onChange={(v) => updateField("website", v)}
+                  className="h-12 rounded-xl bg-muted/50 border-border/50"
+                />
+              </motion.div>
+
               <motion.div variants={fadeUp}>
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
                   <Shield className="h-3.5 w-3.5 text-muted-foreground" />
@@ -156,45 +238,46 @@ export default function PageContractorOnboardingStart() {
                 />
               </motion.div>
 
-              {/* Submit */}
+              <motion.div variants={fadeUp}>
+                <Label className="text-sm font-medium text-foreground mb-2 block">
+                  Précisions
+                  <span className="text-xs text-muted-foreground ml-1">(optionnel)</span>
+                </Label>
+                <Textarea
+                  placeholder="Territoires desservis, capacité actuelle, spécialités…"
+                  value={form.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                  rows={3}
+                  className="rounded-xl bg-muted/50 border-border/50"
+                />
+              </motion.div>
+
               <motion.div variants={fadeUp} className="pt-2">
                 <Button
                   className="w-full h-13 rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-[var(--shadow-glow)] disabled:opacity-40"
-                  disabled={!canProceed}
+                  disabled={!canProceed || saving}
                   onClick={handleSubmit}
                 >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Lancer l'import automatique
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enregistrement…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Envoyer ma demande
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
+                {saveError && (
+                  <p className="text-xs text-destructive text-center mt-3" role="alert">{saveError}</p>
+                )}
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  Vos données publiques seront importées automatiquement
+                  Votre demande est enregistrée, puis vous accédez à votre tableau de bord.
                 </p>
               </motion.div>
-            </CardGlass>
-
-            {/* What we'll create */}
-            <CardGlass noAnimation className="mt-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Ce qu'on va créer pour vous
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  "Profil AIPP complet",
-                  "Score de complétude",
-                  "Services détectés",
-                  "Zones desservies",
-                  "Assets visuels",
-                  "FAQ intelligente",
-                  "Aperçu public",
-                  "Recommandation de plan",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-xs text-foreground/80">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                    {item}
-                  </div>
-                ))}
-              </div>
             </CardGlass>
           </motion.div>
         </div>

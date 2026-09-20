@@ -3,6 +3,7 @@ import PanelContractorAdvisorAlex from "@/components/PanelContractorAdvisorAlex"
 import { useContractorProfile } from "@/hooks/useContractor";
 import { AiReadinessCard } from "@/components/contractor/AiReadinessCard";
 import CardContractorCalendarSetup from "@/components/calendar/CardContractorCalendarSetup";
+import CardMembershipRequest from "@/components/contractor/CardMembershipRequest";
 
 const PageEntrepreneurDashboardLite = () => {
   const { data: profile } = useContractorProfile();
@@ -19,6 +20,10 @@ const PageEntrepreneurDashboardLite = () => {
           <p className="text-sm text-muted-foreground mb-1">Tableau de bord</p>
           <h1 className="text-2xl font-bold text-foreground">{businessName}</h1>
         </motion.div>
+
+        <div className="mb-6">
+          <CardMembershipRequest />
+        </div>
 
         <div className="mb-6">
           <CardContractorCalendarSetup surface="dashboard" returnTo="/entrepreneur/dashboard" />

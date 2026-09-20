@@ -47,42 +47,50 @@ export function useContractorIntakeSession(initialMode: IntakeMode = "alex") {
   );
   const initRef = useRef(false);
 
+  const createSession = useCallback(async (): Promise<string | null> => {
+    const anon = getAnonId();
+    const { data: auth } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from("contractor_intake_sessions")
+      .insert({
+        mode: initialMode,
+        anon_session_id: anon,
+        user_id: auth.user?.id ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      console.warn("[intake] insert failed", error);
+      return null;
+    }
+    sessionStorage.setItem(SESSION_KEY, data.id);
+    setSessionId(data.id);
+    return data.id;
+  }, [initialMode]);
+
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
     if (sessionId) return;
+    void createSession();
+  }, [createSession, sessionId]);
 
-    (async () => {
-      const anon = getAnonId();
-      const { data: auth } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("contractor_intake_sessions")
-        .insert({
-          mode: initialMode,
-          anon_session_id: anon,
-          user_id: auth.user?.id ?? null,
-        })
-        .select("id")
-        .single();
-      if (error) {
-        console.warn("[intake] insert failed", error);
-        return;
-      }
-      sessionStorage.setItem(SESSION_KEY, data.id);
-      setSessionId(data.id);
-    })();
-  }, [initialMode, sessionId]);
-
+  /** Persist changes. Returns true only when the row was really updated. */
   const patch = useCallback(
-    async (changes: IntakePatch) => {
-      if (!sessionId) return;
+    async (changes: IntakePatch): Promise<boolean> => {
+      const id = sessionId ?? (await createSession());
+      if (!id) return false;
       const { error } = await supabase
         .from("contractor_intake_sessions")
         .update(changes as never)
-        .eq("id", sessionId);
-      if (error) console.warn("[intake] patch failed", error);
+        .eq("id", id);
+      if (error) {
+        console.warn("[intake] patch failed", error);
+        return false;
+      }
+      return true;
     },
-    [sessionId],
+    [createSession, sessionId],
   );
 
   return { sessionId, patch };
