@@ -50,6 +50,14 @@
 - [x] Tiroir aligné sous le header initial et compact, sans texte masqué
 - [x] Validation automatisée 360/390/430 px, actions et absence de débordement
 
+## Étape 9 — P0 relance acquisition entrepreneur
+- [ ] Identifier et réparer l’expéditeur SMS canonique et son ordonnanceur
+- [ ] Classifier les échecs historiques et verrouiller les reprises sûres
+- [ ] Valider un test réel approuvé jusqu’au callback, lien et événement d’arrivée
+- [ ] Garantir la continuité prospect → audit → profil → plan → paiement → activation
+- [ ] Exposer le funnel réel hors données de test
+- [ ] Déverrouiller un premier lot de 10 uniquement après réussite E2E
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 
