@@ -1,13 +1,8 @@
 /**
  * send-verified-batch
  *
- * Sends outreach to verified prospects using a two-channel strategy:
- *   1. If the prospect is on tier A / B / C (SMS-eligible), attempt Twilio SMS.
- *   2. If SMS is not eligible (tier D landline, or no tier) OR the Twilio send
- *      fails with a fallback-eligible error (undeliverable to this line), send
- *      the same activation message by email via `outreach-resend-send`.
- *   3. A prospect is only marked `failed` when both channels fail, or when SMS
- *      fails and there is no email address on file.
+ * Sends one compliant first-touch SMS to an eligible verified prospect.
+ * No automatic email fallback is allowed from this acquisition worker.
  *
  * The pipeline never quarantines a prospect simply because Twilio Line Type
  * Intelligence could not classify their number.
@@ -144,21 +139,6 @@ async function resolveFreeYear(
     return null;
   }
 }
-
-// Twilio error codes for which SMS should NOT be retried and email fallback is preferred.
-const FALLBACK_ELIGIBLE_TWILIO_CODES = new Set<number>([
-  21211, // Invalid 'To' number
-  21408, // Permission to send SMS not enabled
-  21610, // Recipient opted out
-  21612, // Not routable
-  21614, // 'To' number not a valid mobile
-  30003, // Unreachable destination handset
-  30004, // Message blocked
-  30005, // Unknown destination handset
-  30006, // Landline / unreachable carrier
-  30007, // Carrier violation
-  30008, // Unknown error
-]);
 
 function randToken(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 22);
@@ -695,13 +675,9 @@ Deno.serve(async (req) => {
         fallbackReason = "invalid_phone";
       }
 
-      // -------- Email fallback --------
-      const shouldTryEmail =
-        !channelUsed && !!p.email && (
-          !smsEligibleTier ||               // Tier D / no-tier: email is the primary channel
-          !hasValidPhone ||                 // No usable phone
-          (smsAttempted && (twilioErrorCode === null || FALLBACK_ELIGIBLE_TWILIO_CODES.has(twilioErrorCode ?? -1)))
-        );
+      // Email may only be selected explicitly by an authorized operator.
+      // A failed/ineligible SMS never triggers an automatic second channel.
+      const shouldTryEmail = forceEmail && !channelUsed && !!p.email;
 
       if (shouldTryEmail) {
         // Unified suppression / opt-out gate (same suppression_index the

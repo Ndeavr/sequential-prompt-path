@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { recordSmsEvent } from "../_shared/outreachEvents.ts";
+import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -224,13 +225,18 @@ Deno.serve(async (req) => {
     // Auto-enqueue retry on failure
     if (mapped === "failed" || mapped === "undelivered") {
       const { data: ev } = await supabase.from("sms_events_v2").select("id, attempt_number").eq("twilio_sid", sid).maybeSingle();
-      if (ev && (ev.attempt_number ?? 1) < 3) {
+      const retry = classifyTwilio(400, { code: errorCode, message: errorMessage });
+      if (ev && retry.retryable && (ev.attempt_number ?? 1) < 3) {
         const delays = [15 * 60_000, 24 * 60 * 60_000, 72 * 60 * 60_000];
         const next = new Date(Date.now() + delays[(ev.attempt_number ?? 1) - 1]).toISOString();
         await supabase.from("sms_retry_queue").insert({ event_id: ev.id, attempt: (ev.attempt_number ?? 1) + 1, scheduled_at: next });
         await supabase.from("sms_events_v2").update({ status: "retry_scheduled", next_retry_at: next }).eq("id", ev.id);
       } else if (ev) {
-        await supabase.from("sms_events_v2").update({ status: "contact_required" }).eq("id", ev.id);
+        await supabase.from("sms_events_v2").update({
+          status: "contact_required",
+          error_message: errorMessage ?? retry.recommended_action,
+          metadata: { ...eventMetadata, retryable: retry.retryable, recommended_action: retry.recommended_action },
+        }).eq("id", ev.id);
         try {
           await supabase.from("admin_notifications").insert({
             type: "sms_contact_required",
