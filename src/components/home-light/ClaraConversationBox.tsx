@@ -12,6 +12,7 @@ import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Sq
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
@@ -1070,6 +1071,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     voiceCooldownUntil.current = Date.now() + 60_000;
     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "voice" });
     trackCopilotEvent("clara_voice_started", { surface: "home_clara_box" });
+    const voiceStore = useAlexVoiceLockedStore.getState();
+    if (voiceStore.isOverlayOpen && (voiceStore.machineState === "paused" || voiceStore.machineState === "completed")) {
+      voiceStore.resumeVoiceSession("user_resume_from_composer");
+      return;
+    }
     openAlex("home_hero", "user_tapped_orb", "floating");
   };
 
@@ -1296,7 +1302,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             ref={textareaRef}
             aria-label={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
             placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
-            disabled={busy}
              rows={1}
              value={composerText}
              onChange={(event) => handleComposerChange(event.currentTarget.value)}

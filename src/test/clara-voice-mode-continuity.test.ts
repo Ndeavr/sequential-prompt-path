@@ -81,6 +81,7 @@ describe("Clara — la voix poursuit la conversation canonique", () => {
     expect(bridge).toContain('CLARA_VOICE_TEXT_INPUT_EVENT = "clara-voice-text-input"');
     expect(box).toContain("new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT)");
     expect(overlay).toContain('pauseVoiceRef.current("text_input")');
+    expect(box).toContain('voiceStore.resumeVoiceSession("user_resume_from_composer")');
     expect(overlay).not.toContain("startNewClaraSession");
   });
 
