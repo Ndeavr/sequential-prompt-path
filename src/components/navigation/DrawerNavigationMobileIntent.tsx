@@ -206,13 +206,6 @@ export default function DrawerNavigationMobileIntent({
               ))}
 
               <MegaMenuMobileSection lang={lang} onClose={onClose} />
-
-              {/* Login */}
-              <div className="mt-4 pt-4 border-t border-border/30">
-                <Link to="/role" onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted/40 transition-colors">
-                  {lang === "en" ? "Sign In" : "Connexion"}
-                </Link>
-              </div>
             </>
           )}
         </div>

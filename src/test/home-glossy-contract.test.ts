@@ -6,6 +6,7 @@ const clara = readFileSync("src/components/home-light/ClaraConversationBox.tsx",
 const page = readFileSync("src/pages/PageHomeLight.tsx", "utf8");
 const layout = readFileSync("src/layouts/MainLayout.tsx", "utf8");
 const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8");
+const drawer = readFileSync("src/components/navigation/DrawerNavigationMobileIntent.tsx", "utf8");
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
@@ -50,6 +51,10 @@ describe("glossy homepage contract", () => {
     expect(header).toContain("home-header-icon");
     expect(header).toContain("<UnproLogo");
     expect(header).not.toContain('className="home-language-switch"');
+    expect(drawer).toContain("<LanguageToggle");
+    expect(drawer).toContain('lang === "en" ? "My profile" : "Mon profil"');
+    expect(drawer).toContain('calc(98px + env(safe-area-inset-top))');
+    expect(drawer).toContain('calc(62px + env(safe-area-inset-top))');
   });
 
   it("contracts the canonical header with official brand assets and no scroll listener", () => {
