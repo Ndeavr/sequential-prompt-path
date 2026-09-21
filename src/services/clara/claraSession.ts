@@ -117,6 +117,8 @@ async function call<T>(action: string, payload: Record<string, unknown> = {}): P
 /** La session canonique n'est démarrée qu'une fois par onglet, même si plusieurs
  *  surfaces (chat, voix) la demandent en même temps. */
 let sessionReady: Promise<ClaraSessionState> | null = null;
+/** Dernière session confirmée par le serveur, pour éviter un démarrage inutile. */
+let lastSessionToken: string | null = null;
 
 /**
  * Crée ou reprend LA conversation : même onglet, après rafraîchissement,
@@ -126,20 +128,26 @@ export async function startOrResumeClaraSession(options: {
   language?: string;
   entrypoint?: string;
 } = {}): Promise<ClaraSessionState> {
+  // Plusieurs surfaces (chat, voix, envoi) peuvent démarrer en même temps :
+  // une seule requête part, les autres attendent la même réponse.
   if (sessionReady) return sessionReady;
 
-  sessionReady = call<ClaraSessionState>("start", {
+  const pending = call<ClaraSessionState>("start", {
     session_token: peekClaraSessionToken() ?? getClaraSessionToken(),
     language: options.language ?? "fr",
     entrypoint: options.entrypoint ?? "clara_box",
   }).then((state) => {
     rememberToken(state.session_token);
+    lastSessionToken = state.session_token;
     return state;
   }).catch(() => {
-    sessionReady = null;
     throw new Error("clara_session_unavailable");
+  }).finally(() => {
+    if (sessionReady === pending) sessionReady = null;
   });
-  return sessionReady;
+
+  sessionReady = pending;
+  return pending;
 }
 
 /**
@@ -164,11 +172,13 @@ export async function startNewClaraSession(options: {
     entrypoint: options.entrypoint ?? "clara_reset",
   }).then((state) => {
     rememberToken(state.session_token);
+    lastSessionToken = state.session_token;
     return state;
   });
   sessionReady = promise.catch(() => {
-    sessionReady = null;
     throw new Error("clara_session_unavailable");
+  }).finally(() => {
+    sessionReady = null;
   });
   return promise;
 }
@@ -177,10 +187,11 @@ export async function startNewClaraSession(options: {
 
 /** Garantit qu'une session existe côté serveur avant toute écriture. */
 export async function ensureClaraSession(): Promise<void> {
-  if (!sessionReady) {
-    sessionReady = startOrResumeClaraSession();
-  }
-  await sessionReady.catch(() => undefined);
+  const token = peekClaraSessionToken();
+  // Aucune conversation ouverte : on n'en crée pas une pour une écriture isolée.
+  if (!token) return;
+  if (lastSessionToken === token && !sessionReady) return;
+  await startOrResumeClaraSession().catch(() => undefined);
 }
 
 /** Journalise un message réel dans la conversation canonique (idempotent). */
@@ -194,7 +205,8 @@ export async function appendClaraMessage(input: {
   // Un message réel n'est jamais perdu parce que la session n'était pas encore prête.
   await ensureClaraSession();
   const token = peekClaraSessionToken();
-  if (!token) return;
+  // Fail-closed : aucune écriture tant que le serveur n'a pas confirmé la session.
+  if (!token || lastSessionToken !== token) return;
   await call("append", {
     session_token: token,
     role: input.role,

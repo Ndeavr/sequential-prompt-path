@@ -88,7 +88,8 @@ describe("Clara — la voix poursuit la conversation canonique", () => {
   it("C — chat et voix partagent la même demande de session en vol", () => {
     const session = read("src/services/clara/claraSession.ts");
     expect(session).toContain("if (sessionReady) return sessionReady");
-    expect(session).toContain("sessionReady = call<ClaraSessionState>");
+    expect(session).toContain("const pending = call<ClaraSessionState>");
+    expect(session).toContain("sessionReady = pending");
   });
 
   it("secours — aucune salutation rejouée quand une conversation est en cours", () => {
