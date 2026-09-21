@@ -39,7 +39,7 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY") ?? "";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
-const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status`;
+const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-v2`;
 const TWILIO_MESSAGE_BASE = TWILIO_ACCOUNT_SID
   ? `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages`
   : "";
@@ -50,6 +50,7 @@ export type SendSmsInput = {
   message_type: "onboarding" | "reengagement" | "outreach" | "otp" | "founder" | "test" | "other" | string;
   template_key?: string;
   lead_id?: string;
+  prospect_id?: string;
   contractor_id?: string;
   campaign_id?: string;
   metadata?: Record<string, unknown>;
@@ -114,7 +115,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
           error_code: gate.reason,
           error_message: "Envoi bloqué : interrupteur global de prospection désactivé.",
           status_callback_url: STATUS_CALLBACK_URL,
-          metadata: { ...(input.metadata ?? {}), outreach_gate: gate },
+          metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null, outreach_gate: gate },
         })
         .select("id")
         .maybeSingle();
@@ -154,7 +155,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         error_code: "OUT_OF_WINDOW",
         error_message: `Hors fenêtre — reprise prévue ${windowCheck.next_send_at}`,
         status_callback_url: STATUS_CALLBACK_URL,
-        metadata: { ...(input.metadata ?? {}), next_send_at: windowCheck.next_send_at, send_window_blocked: true },
+        metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null, next_send_at: windowCheck.next_send_at, send_window_blocked: true },
       })
       .select("id")
       .single();
@@ -181,6 +182,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         supabase,
         phone: input.to,
         lead_id: input.lead_id ?? null,
+        prospect_id: input.prospect_id ?? null,
         strict_admin_override: input.strict_admin_override === true,
       });
   const body_hash = await hashBody(input.body);
@@ -205,6 +207,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     status_callback_url: STATUS_CALLBACK_URL,
     metadata: {
       ...(input.metadata ?? {}),
+      prospect_id: input.prospect_id ?? null,
       ...(guard.ok && (guard as any).phone_type ? { phone_type: (guard as any).phone_type } : {}),
       ...(guard.ok && (guard as any).sms_guard_reason ? { sms_guard_reason: (guard as any).sms_guard_reason } : {}),
     },
@@ -247,7 +250,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "WRONG_SENDER", error_message: msg };
   }
-  if (!STATUS_CALLBACK_URL || !STATUS_CALLBACK_URL.includes("/functions/v1/twilio-status")) {
+  if (!STATUS_CALLBACK_URL || !STATUS_CALLBACK_URL.includes("/functions/v1/twilio-status-v2")) {
     const msg = "SMS delivery tracking is not configured. Fix Twilio status webhook before sending.";
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "STATUS_CALLBACK_MISSING", error_message: msg, failed_at: new Date().toISOString(),
