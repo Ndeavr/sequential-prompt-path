@@ -308,10 +308,11 @@
     inset-block-start: 0;
     inset-inline: 0;
     width: 100%;
-    background: hsl(226 63% 5% / 0.7);
-    border-bottom-color: hsl(216 55% 65% / 0.14);
-    box-shadow: 0 1px 0 hsl(216 70% 78% / 0.04);
+    background: hsl(0 0% 100% / 0.96);
+    border-bottom-color: hsl(220 24% 18% / 0.1);
+    box-shadow: 0 1px 0 hsl(220 24% 18% / 0.04);
     backdrop-filter: blur(18px) saturate(135%);
+    color: hsl(226 63% 10%);
     transition: background-color 280ms cubic-bezier(.22, 1, .36, 1),
                 border-color 280ms cubic-bezier(.22, 1, .36, 1),
                 box-shadow 280ms cubic-bezier(.22, 1, .36, 1);
@@ -324,10 +325,11 @@
     transition: height 300ms cubic-bezier(.22, 1, .36, 1);
   }
   .home-light .home-minimal-header.is-compact {
-    background: hsl(226 63% 5% / 0.9);
-    border-bottom-color: hsl(216 55% 65% / 0.2);
-    box-shadow: 0 8px 30px -22px hsl(225 80% 2% / 0.9);
+    background: hsl(0 0% 100% / 0.94);
+    border-bottom-color: hsl(220 24% 18% / 0.13);
+    box-shadow: 0 12px 28px -24px hsl(220 40% 10% / 0.45);
   }
+  .home-light .home-minimal-header .text-foreground { color: hsl(226 63% 10%); }
   .home-light .home-minimal-header.is-compact > div > div { height: 64px; }
   .home-light .home-header-layout-spacer {
     flex: 0 0 auto;
@@ -400,7 +402,7 @@
     min-width: 24px;
     height: 44px;
     padding: 0;
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 12% 38%);
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0;
