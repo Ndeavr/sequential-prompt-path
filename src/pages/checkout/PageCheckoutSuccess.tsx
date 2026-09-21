@@ -1,6 +1,6 @@
 /**
  * Module 4 — Checkout Success: "Parfait. On commence."
- * Shown after Stripe redirect. Activates plan + shows next steps.
+ * Shown after Stripe redirect. Stripe's webhook activates the plan.
  */
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -24,20 +24,10 @@ export default function PageCheckoutSuccess() {
   const [activating, setActivating] = useState(true);
   const [stepsDone, setStepsDone] = useState<string[]>([]);
 
-  // Simulate activation sequence
+  // The browser only presents a pending state; it never confirms payment.
   useEffect(() => {
-    const steps = ["payment", "plan_active"];
-    const delays = [600, 1200, 2000];
-
-    steps.forEach((step, i) => {
-      setTimeout(() => {
-        setStepsDone((prev) => [...prev, step]);
-      }, delays[i] || 600 * (i + 1));
-    });
-
-    setTimeout(() => setActivating(false), 2000);
-
-    // Stripe's signed webhook is the sole authority for payment and activation.
+    const timer = window.setTimeout(() => setActivating(false), 2000);
+    return () => window.clearTimeout(timer);
   }, [planCode]);
 
   const PLAN_NAMES: Record<string, string> = {
@@ -64,8 +54,7 @@ export default function PageCheckoutSuccess() {
           </motion.div>
           <h1 className="text-3xl font-black text-foreground">Parfait. On commence.</h1>
           <p className="text-base text-muted-foreground">
-            Votre plan <span className="font-bold text-foreground">{PLAN_NAMES[planCode] || planCode}</span> est activé.
-            Voici les prochaines étapes.
+            Votre paiement est en cours de confirmation par Stripe pour le plan <span className="font-bold text-foreground">{PLAN_NAMES[planCode] || planCode}</span>.
           </p>
         </motion.div>
 
@@ -78,7 +67,7 @@ export default function PageCheckoutSuccess() {
         >
           <p className="text-sm font-bold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            Activation en cours
+            Confirmation en cours
           </p>
           <div className="space-y-3">
             {ACTIVATION_STEPS.map((step, i) => {
