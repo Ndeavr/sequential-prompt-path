@@ -780,7 +780,7 @@ export default function PageContractorPricingIntake() {
           )}
           <button
             onClick={next}
-            disabled={submitting || !current.isValid(data)}
+            disabled={submitting || !current.isValid(withResolvedAppointments(data))}
             className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
           >
             {submitting ? (
