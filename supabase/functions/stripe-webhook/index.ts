@@ -1082,6 +1082,8 @@ Deno.serve(async (req) => {
           updated_at: nowIso,
         };
 
+        const attributedProspectId = session.metadata?.prospect_id || null;
+
         if (!existingContractor?.slug) {
           const seed =
             (existingContractor as any)?.business_name ||
@@ -1110,6 +1112,13 @@ Deno.serve(async (req) => {
             payload: { contractor_id: contractorId, plan_id: planId, error: activateErr.message },
           });
           throw new Error(`Contractor activation failed: ${activateErr.message}`);
+        }
+
+        if (attributedProspectId) {
+          await supabase
+            .from("verified_contractor_prospects")
+            .update({ outreach_status: "activated", last_action_at: nowIso })
+            .eq("id", attributedProspectId);
         }
 
         // DEVIS — le plan personnalisé payé passe à l'état « payé » (source de
@@ -1176,6 +1185,7 @@ Deno.serve(async (req) => {
               event_source: "stripe",
               source: "stripe",
               contractor_id: contractorId,
+              prospect_id: attributedProspectId,
               affiliate_code: (session.metadata?.ref as string) || null,
               metadata: {
                 funnel_step: "payment_succeeded",
@@ -1193,6 +1203,7 @@ Deno.serve(async (req) => {
               event_source: "stripe",
               source: "stripe",
               contractor_id: contractorId,
+              prospect_id: attributedProspectId,
               affiliate_code: (session.metadata?.ref as string) || null,
               metadata: {
                 funnel_step: "account_activated",

@@ -163,7 +163,6 @@ async function invoke(name: string, body: Record<string, unknown> = {}): Promise
 }
 
 export default function PageAdminAcquisitionTests() {
-  const [adminPhone, setAdminPhone] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [trackingId, setTrackingId] = useState("");
 
@@ -176,12 +175,7 @@ export default function PageAdminAcquisitionTests() {
         </p>
       </header>
 
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <label className="block">
-          <span className="text-xs text-white/50">Téléphone admin (E.164)</span>
-          <input value={adminPhone} onChange={(e) => setAdminPhone(e.target.value)} placeholder="+15145551234"
-            className="mt-1 w-full rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-sm" />
-        </label>
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
         <label className="block">
           <span className="text-xs text-white/50">Email admin</span>
           <input value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@unpro.ca"
@@ -211,11 +205,8 @@ export default function PageAdminAcquisitionTests() {
         />
         <TestCard
           title="3. Envoyer un SMS de test (Twilio)"
-          description="Envoie via Twilio avec StatusCallback configuré. Loggue 'sent', attend 'delivered' via webhook."
-          run={async () => {
-            if (!adminPhone) return { ok: false, error: "Renseigne le téléphone admin (E.164) en haut de page.", timestamp: new Date().toISOString() };
-            return invoke("acq-test-send-sms", { to: adminPhone });
-          }}
+          description="Envoie uniquement vers la destination de test configurée sur le serveur, avec callback canonique."
+          run={() => invoke("acq-test-send-sms")}
         />
         <TestCard
           title="4. Envoyer un email de test (Resend)"

@@ -225,6 +225,31 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceKey) {
+      throw new FunctionError("Backend credentials missing", 500, "missing_backend_credentials");
+    }
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!bearer) throw new FunctionError("Unauthorized", 401, "unauthorized");
+    if (bearer !== serviceKey) {
+      const authClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false },
+      });
+      const { data: authData, error: authError } = await authClient.auth.getUser(bearer);
+      if (authError || !authData.user) throw new FunctionError("Unauthorized", 401, "unauthorized");
+      const adminClient = createClient(url, serviceKey, { auth: { persistSession: false } });
+      const { data: role, error: roleError } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (roleError || !role) throw new FunctionError("Forbidden", 403, "forbidden");
+    }
+
     const body = await req.json().catch(() => ({}));
     const campaignId: string | null = typeof body.campaign_id === "string" &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.campaign_id)
@@ -268,12 +293,6 @@ Deno.serve(async (req) => {
     const messageOverrides: Record<string, string> =
       body.message_overrides && typeof body.message_overrides === "object" ? body.message_overrides : {};
 
-
-    const url = Deno.env.get("SUPABASE_URL");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !serviceKey) {
-      throw new FunctionError("Backend credentials missing", 500, "missing_backend_credentials");
-    }
 
     const supabase = createClient(url, serviceKey);
 

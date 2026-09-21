@@ -1,14 +1,12 @@
 /**
  * Module 4 — Checkout Success: "Parfait. On commence."
- * Shown after Stripe redirect. Activates plan + shows next steps.
+ * Shown after Stripe redirect. Stripe's webhook activates the plan.
  */
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle, Sparkles, Calendar, BarChart3, MessageCircle, ArrowRight, Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const ACTIVATION_STEPS = [
@@ -22,72 +20,15 @@ const ACTIVATION_STEPS = [
 export default function PageCheckoutSuccess() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { session } = useAuth();
   const planCode = params.get("plan") || "pro";
   const [activating, setActivating] = useState(true);
   const [stepsDone, setStepsDone] = useState<string[]>([]);
 
-  // Simulate activation sequence
+  // The browser only presents a pending state; it never confirms payment.
   useEffect(() => {
-    const steps = ["payment", "plan_active"];
-    const delays = [600, 1200, 2000];
-
-    steps.forEach((step, i) => {
-      setTimeout(() => {
-        setStepsDone((prev) => [...prev, step]);
-      }, delays[i] || 600 * (i + 1));
-    });
-
-    setTimeout(() => setActivating(false), 2000);
-
-    // Persist activation (best-effort)
-    (async () => {
-      try {
-        if (!session?.user?.id) return;
-        const { data: contractor } = await supabase
-          .from("contractors")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        if (!contractor) return;
-
-        await supabase.from("plan_activations").insert({
-          contractor_id: contractor.id,
-          plan_code: planCode,
-          activation_status: "active",
-          activated_at: new Date().toISOString(),
-        });
-
-        // Create activation steps
-        const stepsToInsert = ACTIVATION_STEPS.map((s, i) => ({
-          contractor_id: contractor.id,
-          step_code: s.code,
-          title: s.title,
-          status: ["payment", "plan_active"].includes(s.code) ? "done" : "pending",
-          sort_order: i,
-        }));
-        await supabase.from("activation_steps").insert(stepsToInsert);
-
-        // Send payment success email (best-effort)
-        const email = session?.user?.email;
-        if (email) {
-          const planNames: Record<string, string> = {
-            recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
-          };
-          await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "payment-success",
-              recipientEmail: email,
-              idempotencyKey: `payment-success-${contractor.id}-${planCode}`,
-              templateData: {
-                planName: planNames[planCode] || planCode,
-              },
-            },
-          });
-        }
-      } catch {}
-    })();
-  }, [session?.user?.id, planCode]);
+    const timer = window.setTimeout(() => setActivating(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [planCode]);
 
   const PLAN_NAMES: Record<string, string> = {
     recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
@@ -113,8 +54,7 @@ export default function PageCheckoutSuccess() {
           </motion.div>
           <h1 className="text-3xl font-black text-foreground">Parfait. On commence.</h1>
           <p className="text-base text-muted-foreground">
-            Votre plan <span className="font-bold text-foreground">{PLAN_NAMES[planCode] || planCode}</span> est activé.
-            Voici les prochaines étapes.
+            Votre paiement est en cours de confirmation par Stripe pour le plan <span className="font-bold text-foreground">{PLAN_NAMES[planCode] || planCode}</span>.
           </p>
         </motion.div>
 
@@ -127,7 +67,7 @@ export default function PageCheckoutSuccess() {
         >
           <p className="text-sm font-bold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            Activation en cours
+            Confirmation en cours
           </p>
           <div className="space-y-3">
             {ACTIVATION_STEPS.map((step, i) => {

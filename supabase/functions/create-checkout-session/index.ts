@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
       ref,
       offerId,
       professionCode,
+      activationToken,
 
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
@@ -74,6 +75,29 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    let verifiedProspectId: string | null = null;
+    let verifiedActivationToken: string | null = null;
+    if (typeof activationToken === "string" && activationToken.trim()) {
+      const token = activationToken.trim();
+      if (token.length > 128) {
+        return new Response(JSON.stringify({ error: "Lien d’activation invalide.", code: "invalid_activation_token" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: tokenRow, error: tokenError } = await serviceClient
+        .from("verified_prospect_tokens")
+        .select("prospect_id, expires_at")
+        .eq("token", token)
+        .maybeSingle();
+      if (tokenError || !tokenRow || (tokenRow.expires_at && new Date(tokenRow.expires_at).getTime() <= Date.now())) {
+        return new Response(JSON.stringify({ error: "Lien d’activation invalide ou expiré.", code: "invalid_activation_token" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      verifiedProspectId = tokenRow.prospect_id;
+      verifiedActivationToken = token;
+    }
 
     // ── PROFESSIONAL COMPLIANCE GATE (fail closed) ────────────────────────
     // A declared regulated profession must have an explicitly ALLOWED
@@ -329,6 +353,21 @@ Deno.serve(async (req) => {
         );
       }
       contractor = newContractor;
+    }
+
+    if (verifiedProspectId) {
+      const { data: claim, error: claimError } = await serviceClient
+        .from("contractor_prospect_claims")
+        .select("id")
+        .eq("prospect_id", verifiedProspectId)
+        .eq("user_id", userId)
+        .eq("contractor_id", contractor.id)
+        .maybeSingle();
+      if (claimError || !claim) {
+        return new Response(JSON.stringify({ error: "Ce lien n’est pas associé à ce compte.", code: "activation_token_not_owned" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // ── PROMO CODE VALIDATION ──
@@ -629,6 +668,8 @@ Deno.serve(async (req) => {
         billing_interval: interval,
         ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         ...(quoteId && { quote_id: String(quoteId) }),
+         ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+         ...(verifiedActivationToken && { activation_token: verifiedActivationToken, landing_token: verifiedActivationToken }),
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
         ...(profileFeeCents > 0 && { profile_fee_cents: String(profileFeeCents) }),
@@ -643,6 +684,8 @@ Deno.serve(async (req) => {
           plan_id: resolvedPlanCode,
           billing_interval: interval,
           ...(quoteId && { quote_id: String(quoteId) }),
+           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+           ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
         },
         ...(profileFeeCents > 0 && {
           add_invoice_items: [

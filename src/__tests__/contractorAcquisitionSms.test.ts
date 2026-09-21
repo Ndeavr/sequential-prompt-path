@@ -8,6 +8,8 @@ describe("contractor acquisition SMS — canonical production path", () => {
   const batch = read("supabase/functions/send-verified-batch/index.ts");
   const callback = read("supabase/functions/twilio-status-v2/index.ts");
   const guard = read("supabase/functions/_shared/smsGuard.ts");
+  const retry = read("supabase/functions/sms-retry-scheduler/index.ts");
+  const testSender = read("supabase/functions/acq-test-send-sms/index.ts");
 
   it("routes the verified batch through the shared sender only", () => {
     expect(batch).toContain('import { sendSms } from "../_shared/twilioSend.ts"');
@@ -38,5 +40,17 @@ describe("contractor acquisition SMS — canonical production path", () => {
   it("classifies provider failures before scheduling a retry", () => {
     expect(callback).toContain('import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts"');
     expect(callback).toContain("retry.retryable &&");
+    expect(retry).toContain("prospect_id:");
+  });
+
+  it("requires an admin and a server-configured destination for acquisition tests", () => {
+    expect(testSender).toContain('.eq("role", "admin")');
+    expect(testSender).toContain('Deno.env.get("SMS_TEST_DESTINATION_NUMBER")');
+    expect(testSender).not.toContain("body?.to");
+  });
+
+  it("requires an admin or service identity before a production batch", () => {
+    expect(batch).toContain('throw new FunctionError("Unauthorized", 401');
+    expect(batch).toContain('.eq("role", "admin")');
   });
 });

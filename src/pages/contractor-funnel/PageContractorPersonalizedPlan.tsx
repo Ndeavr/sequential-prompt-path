@@ -71,6 +71,7 @@ export default function PageContractorPersonalizedPlan() {
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
   const offerId = (searchParams.get("offer") ?? "").trim() || null;
+  const activationToken = (searchParams.get("t") ?? "").trim() || null;
   const rawObjective = searchParams.get("objective");
   const objective = isContractorObjective(rawObjective) ? rawObjective : null;
   const ctaOrigin = searchParams.get("from");
@@ -174,6 +175,7 @@ export default function PageContractorPersonalizedPlan() {
             ...(promoCode && { promoCode }),
             ...(affiliateRef && { ref: affiliateRef }),
             ...(offerId && { offerId }),
+            ...(activationToken && { activationToken }),
             successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
             cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
           },

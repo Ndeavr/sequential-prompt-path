@@ -38,12 +38,16 @@ Deno.serve(async (req) => {
       message_type: ev.message_type,
       template_key: ev.template_key ?? undefined,
       lead_id: ev.lead_id ?? undefined,
+      prospect_id: typeof (ev.metadata as Record<string, unknown> | null)?.prospect_id === "string"
+        ? String((ev.metadata as Record<string, unknown>).prospect_id)
+        : undefined,
       contractor_id: ev.contractor_id ?? undefined,
       campaign_id: ev.campaign_id ?? undefined,
       metadata: { ...(ev.metadata ?? {}), retry_of: ev.id },
       attempt_number: job.attempt,
     });
-    sent++;
+    if (["sending", "sent", "delivered"].includes(result.status)) sent++;
+    else skipped++;
     await supabase.from("sms_retry_queue").update({
       status: "done", processed_at: new Date().toISOString(), result_event_id: result.event_id,
     }).eq("id", job.id);

@@ -42,6 +42,8 @@ export default function PageCheckoutStripe() {
     } catch { return null; }
   }, []);
   const [selectedPack, setSelectedPack] = useState<PackTier | null>(initialPack);
+  const quoteId = params.get("quoteId") || params.get("quote_id");
+  const activationToken = params.get("t");
   // Get plan from URL or sessionStorage
   const planCode = params.get("plan") || (() => {
     try {
@@ -98,6 +100,8 @@ export default function PageCheckoutStripe() {
             priceId,
             planId: planCode,
             billingInterval,
+            quoteId: quoteId || undefined,
+            activationToken: activationToken || undefined,
             promoCode: promoCode || undefined,
             successUrl: `${window.location.origin}/checkout/success?plan=${planCode}`,
             cancelUrl: `${window.location.origin}/checkout?plan=${planCode}`,
