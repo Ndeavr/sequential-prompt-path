@@ -37,9 +37,13 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 // Lovable connector-gateway fallback (used when direct creds absent)
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY") ?? "";
+const SMS_STATUS_CALLBACK_SECRET = Deno.env.get("SMS_STATUS_CALLBACK_SECRET") ?? "";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-v2`;
+const SIGNED_STATUS_CALLBACK_URL = SMS_STATUS_CALLBACK_SECRET
+  ? `${STATUS_CALLBACK_URL}?token=${encodeURIComponent(SMS_STATUS_CALLBACK_SECRET)}`
+  : "";
 const TWILIO_MESSAGE_BASE = TWILIO_ACCOUNT_SID
   ? `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages`
   : "";
@@ -250,7 +254,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "WRONG_SENDER", error_message: msg };
   }
-  if (!STATUS_CALLBACK_URL || !STATUS_CALLBACK_URL.includes("/functions/v1/twilio-status-v2")) {
+  if (!SIGNED_STATUS_CALLBACK_URL || !STATUS_CALLBACK_URL.includes("/functions/v1/twilio-status-v2")) {
     const msg = "SMS delivery tracking is not configured. Fix Twilio status webhook before sending.";
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "STATUS_CALLBACK_MISSING", error_message: msg, failed_at: new Date().toISOString(),
@@ -259,8 +263,11 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "STATUS_CALLBACK_MISSING", error_message: msg };
   }
 
-  const useGateway = (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) && LOVABLE_API_KEY && TWILIO_API_KEY;
-  if (!TWILIO_ACCOUNT_SID && !useGateway) {
+  // Prefer the managed Twilio connection. Historical direct credentials caused
+  // provider authentication failures; direct credentials are fallback only.
+  const useGateway = Boolean(LOVABLE_API_KEY && TWILIO_API_KEY);
+  const hasDirectCredentials = Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN);
+  if (!useGateway && !hasDirectCredentials) {
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "config", error_message: "twilio_not_configured", failed_at: new Date().toISOString(),
       provider_response: { blocked: true, reason: "missing_twilio_credentials" },
@@ -268,7 +275,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_message: "twilio_not_configured" };
   }
 
-  const form = new URLSearchParams({ To: guard.normalized, Body: input.body, StatusCallback: STATUS_CALLBACK_URL });
+  const form = new URLSearchParams({ To: guard.normalized, Body: input.body, StatusCallback: SIGNED_STATUS_CALLBACK_URL });
   form.set("From", CANONICAL_FROM_NUMBER);
 
   const url = useGateway

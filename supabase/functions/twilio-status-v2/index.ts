@@ -14,6 +14,16 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SMS_STATUS_CALLBACK_SECRET = Deno.env.get("SMS_STATUS_CALLBACK_SECRET") ?? "";
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < left.length; index++) {
+    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return mismatch === 0;
+}
 
 const ALLOWED_STATUSES = new Set([
   "queued","accepted","scheduled","sending","sent",
@@ -31,6 +41,13 @@ function mapStatus(twilio: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const callbackToken = new URL(req.url).searchParams.get("token") ?? "";
+    if (!SMS_STATUS_CALLBACK_SECRET || !constantTimeEqual(callbackToken, SMS_STATUS_CALLBACK_SECRET)) {
+      return new Response(JSON.stringify({ error: "unauthorized_callback" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const ct = req.headers.get("content-type") ?? "";
     let params: URLSearchParams;
     if (ct.includes("application/json")) {
@@ -179,16 +196,6 @@ Deno.serve(async (req) => {
           leadUpdate.contact_method = "email";
           leadUpdate.sms_suppressed_at = now;
           leadUpdate.sms_suppressed_reason = failed >= 5 ? "permanent_suppression" : "failure_threshold";
-        }
-        // Fire email fallback (idempotent) after 2nd failure
-        if (failed >= 2) {
-          try {
-            await fetch(`${SUPABASE_URL}/functions/v1/email-fallback-dispatch`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-              body: JSON.stringify({ lead_id: leadId, reason: `sms_failures_${failed}` }),
-            }).catch(() => {});
-          } catch (_) { /* swallow */ }
         }
         if (failed >= 5) {
           try {

@@ -20,6 +20,9 @@ describe("contractor acquisition SMS — canonical production path", () => {
 
   it("uses the canonical v2 callback and preserves prospect attribution", () => {
     expect(sender).toContain("/functions/v1/twilio-status-v2");
+    expect(sender).toContain("SMS_STATUS_CALLBACK_SECRET");
+    expect(callback).toContain('searchParams.get("token")');
+    expect(callback).toContain("constantTimeEqual");
     expect(sender).toContain("prospect_id: input.prospect_id ?? null");
     expect(callback).toContain("verified_contractor_prospects");
     expect(callback).toContain("typeof eventMetadata.prospect_id");
@@ -35,12 +38,19 @@ describe("contractor acquisition SMS — canonical production path", () => {
   it("never falls back to email after an SMS failure", () => {
     expect(batch).toContain("const shouldTryEmail = forceEmail");
     expect(batch).not.toContain("FALLBACK_ELIGIBLE_TWILIO_CODES");
+    expect(callback).not.toContain("email-fallback-dispatch");
   });
 
   it("classifies provider failures before scheduling a retry", () => {
     expect(callback).toContain('import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts"');
     expect(callback).toContain("retry.retryable &&");
     expect(retry).toContain("prospect_id:");
+    expect(retry).toContain('authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`');
+  });
+
+  it("prefers the managed Twilio connection over stale direct credentials", () => {
+    expect(sender).toContain("const useGateway = Boolean(LOVABLE_API_KEY && TWILIO_API_KEY)");
+    expect(sender).toContain("const hasDirectCredentials = Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN)");
   });
 
   it("requires an admin and a server-configured destination for acquisition tests", () => {
