@@ -7,8 +7,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle, Sparkles, Calendar, BarChart3, MessageCircle, ArrowRight, Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const ACTIVATION_STEPS = [
@@ -22,7 +20,6 @@ const ACTIVATION_STEPS = [
 export default function PageCheckoutSuccess() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { session } = useAuth();
   const planCode = params.get("plan") || "pro";
   const [activating, setActivating] = useState(true);
   const [stepsDone, setStepsDone] = useState<string[]>([]);
