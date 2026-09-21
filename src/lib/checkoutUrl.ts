@@ -12,6 +12,7 @@
  */
 
 const QUOTE_ID_KEY = "unpro_active_quote_id";
+const ACTIVATION_TOKEN_KEY = "unpro_active_activation_token";
 
 export function setActiveQuoteId(quoteId: string | null | undefined) {
   if (typeof window === "undefined") return;
@@ -31,14 +32,35 @@ export function getActiveQuoteId(): string | null {
   }
 }
 
+export function setActiveActivationToken(token: string | null | undefined) {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) sessionStorage.setItem(ACTIVATION_TOKEN_KEY, token);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getActiveActivationToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(ACTIVATION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function buildCheckoutUrl(opts?: {
   plan?: string | null;
   quoteId?: string | null;
   recommendation?: string | null;
+  activationToken?: string | null;
 }): string {
   const qid = opts?.quoteId ?? getActiveQuoteId();
+  const activationToken = opts?.activationToken ?? getActiveActivationToken();
   const params = new URLSearchParams();
   if (qid) params.set("quoteId", qid);
+  if (activationToken) params.set("t", activationToken);
   if (opts?.plan) params.set("plan", opts.plan);
   if (opts?.recommendation) params.set("recommendation", opts.recommendation);
   const qs = params.toString();

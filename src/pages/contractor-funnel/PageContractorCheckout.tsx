@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { fetchPricingQuote, type PricingQuote } from "@/services/contractorPricingQuoteService";
+import { getActiveActivationToken, setActiveActivationToken } from "@/lib/checkoutUrl";
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, price: p.monthlyPrice, features: p.features }])
@@ -36,6 +37,11 @@ export default function PageContractorCheckout() {
   const [quote, setQuote] = useState<PricingQuote | null>(null);
 
   const quoteId = searchParams.get("quoteId") || searchParams.get("quote_id") || (state as any).quoteId || null;
+  const activationToken = searchParams.get("t") || getActiveActivationToken();
+
+  useEffect(() => {
+    setActiveActivationToken(activationToken);
+  }, [activationToken]);
   // No catalog or URL fallback: the persisted quote is authoritative.
   const planSlug = (quote?.recommended_plan as string) || "";
   const plan = planSlug ? PLAN_DETAILS[planSlug] : null;
@@ -67,11 +73,14 @@ export default function PageContractorCheckout() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      sessionStorage.setItem("unpro_funnel_redirect", "/entrepreneur/checkout");
+      const returnParams = new URLSearchParams();
+      if (quoteId) returnParams.set("quoteId", quoteId);
+      if (activationToken) returnParams.set("t", activationToken);
+      sessionStorage.setItem("unpro_funnel_redirect", `/entrepreneur/checkout?${returnParams.toString()}`);
       toast.info("Connectez-vous pour finaliser votre paiement");
       navigate("/login", { replace: true });
     }
-  }, [authLoading, isAuthenticated, navigate]);
+  }, [activationToken, authLoading, isAuthenticated, navigate, quoteId]);
 
   const tax = Math.round(planPrice * 0.14975 * 100) / 100;
   const total = Math.round((planPrice + tax) * 100) / 100;
@@ -101,9 +110,13 @@ export default function PageContractorCheckout() {
           planId: planSlug,
           billingInterval: "month",
           quoteId: quoteId || undefined,
+          activationToken: activationToken || undefined,
           // No displayedPriceCents: the server resolves the canonical amount.
           successUrl: `${window.location.origin}/entrepreneur/activation${quoteId ? `?quote_id=${quoteId}` : ""}`,
-          cancelUrl: `${window.location.origin}/entrepreneur/checkout${quoteId ? `?quoteId=${quoteId}` : ""}`,
+          cancelUrl: `${window.location.origin}/entrepreneur/checkout?${new URLSearchParams({
+            quoteId: quoteId || "",
+            ...(activationToken ? { t: activationToken } : {}),
+          }).toString()}`,
         },
       });
 

@@ -10,6 +10,8 @@ describe("contractor acquisition SMS — canonical production path", () => {
   const guard = read("supabase/functions/_shared/smsGuard.ts");
   const retry = read("supabase/functions/sms-retry-scheduler/index.ts");
   const testSender = read("supabase/functions/acq-test-send-sms/index.ts");
+  const canonicalCheckout = read("src/pages/contractor-funnel/PageContractorCheckout.tsx");
+  const checkoutUrl = read("src/lib/checkoutUrl.ts");
 
   it("routes the verified batch through the shared sender only", () => {
     expect(batch).toContain('import { sendSms } from "../_shared/twilioSend.ts"');
@@ -62,5 +64,11 @@ describe("contractor acquisition SMS — canonical production path", () => {
   it("requires an admin or service identity before a production batch", () => {
     expect(batch).toContain('throw new FunctionError("Unauthorized", 401');
     expect(batch).toContain('.eq("role", "admin")');
+  });
+
+  it("preserves the acquisition token through login and canonical checkout", () => {
+    expect(checkoutUrl).toContain('params.set("t", activationToken)');
+    expect(canonicalCheckout).toContain("activationToken: activationToken || undefined");
+    expect(canonicalCheckout).toContain("unpro_funnel_redirect");
   });
 });
