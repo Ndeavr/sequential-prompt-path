@@ -34,8 +34,22 @@ serve(async (req) => {
       { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { count: recentTestCount, error: recentTestError } = await admin
+    .from("sms_test_runs")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", cutoff);
+  if (recentTestError) {
+    return new Response(JSON.stringify({ ok: false, error: "test_rate_limit_check_failed" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+  if ((recentTestCount ?? 0) > 0) {
+    return new Response(JSON.stringify({ ok: false, error: "test_rate_limited" }),
+      { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
   const trackingId = `admin_sms_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
-  const destinationUrl = "https://unpro.ca/entrepreneurs/audit-ia?source=admin_sms_e2e";
+  const destinationUrl = "https://unpro.ca/entrepreneurs/audit-ia?utm_source=admin_sms_e2e&utm_medium=sms&utm_campaign=admin_sms_e2e";
   const { error: trackingError } = await admin.from("acquisition_tracking_links").insert({
     id: trackingId,
     destination_url: destinationUrl,
@@ -124,7 +138,7 @@ serve(async (req) => {
   await logAcquisitionEvent({
     channel: "sms", event_type: "sent", provider: "twilio",
     provider_event_id: result.twilio_sid ? `${result.twilio_sid}:test_send` : undefined,
-    metadata: { test: true, to: toNumber, result, phone_type, sms_guard_reason },
+    metadata: { test: true, result, phone_type, sms_guard_reason, test_run_id: testRun.id, tracking_id: trackingId },
   });
 
   return new Response(JSON.stringify({

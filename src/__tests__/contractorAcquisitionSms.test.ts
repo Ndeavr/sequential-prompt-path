@@ -63,7 +63,10 @@ describe("contractor acquisition SMS — canonical production path", () => {
     expect(testSender).toContain('channel: "sms"');
     expect(testSender).toContain("tracking_id: trackingId");
     expect(testSender).toContain('.from("sms_test_runs").insert');
+    expect(testSender).toContain('error: "test_rate_limited"');
+    expect(testSender).toContain("utm_source=admin_sms_e2e");
     expect(testSender).not.toContain("destination: toNumber");
+    expect(testSender).not.toContain("to: toNumber, result");
   });
 
   it("requires an admin or service identity before a production batch", () => {
