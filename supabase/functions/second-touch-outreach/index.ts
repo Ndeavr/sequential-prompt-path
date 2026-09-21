@@ -167,7 +167,6 @@ Deno.serve(async (req) => {
         body: message,
         status,
         provider_message_id: providerId,
-        sms_event_id: sendResult.event_id || null,
         error,
         sent_at: new Date().toISOString(),
         relance_kind: relanceKind,
