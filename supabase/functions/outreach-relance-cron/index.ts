@@ -71,6 +71,16 @@ Deno.serve(async (req) => {
     }
   } catch { /* ignore */ }
 
+  if (!dryRun) {
+    return new Response(JSON.stringify({
+      ok: true,
+      blocked: true,
+      reason: "legacy_sender_disabled",
+      sent: 0,
+      processed: 0,
+    }), { status: 423, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   const now = new Date();
   const iso = (offsetHours: number) =>
     new Date(now.getTime() - offsetHours * 3600_000).toISOString();

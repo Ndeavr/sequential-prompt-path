@@ -14,6 +14,10 @@ const RECOVERY_REGISTERED = "Votre profil est prêt. Il reste seulement l'activa
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  // Legacy queue has no authoritative verified-prospect relation. Keep this
+  // endpoint fail-closed until every row can pass the canonical SMS guard.
+  return json({ sent: 0, blocked: "legacy_sender_disabled", retryable: false }, 423);
+  /* c8 ignore start -- retained for migration reference; unreachable by design */
   try {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -58,4 +62,5 @@ Deno.serve(async (req) => {
   } catch (e: any) {
     return json({ error: String(e?.message ?? e) }, 500);
   }
+  /* c8 ignore stop */
 });

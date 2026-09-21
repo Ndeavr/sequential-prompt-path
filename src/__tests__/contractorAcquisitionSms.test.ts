@@ -12,6 +12,10 @@ describe("contractor acquisition SMS — canonical production path", () => {
   const testSender = read("supabase/functions/acq-test-send-sms/index.ts");
   const canonicalCheckout = read("src/pages/contractor-funnel/PageContractorCheckout.tsx");
   const checkoutUrl = read("src/lib/checkoutUrl.ts");
+  const secondTouch = read("supabase/functions/second-touch-outreach/index.ts");
+  const legacyRecovery = read("supabase/functions/solicitation-recovery/index.ts");
+  const legacySolicitation = read("supabase/functions/solicitation-send-sms/index.ts");
+  const legacyRelance = read("supabase/functions/outreach-relance-cron/index.ts");
 
   it("routes the verified batch through the shared sender only", () => {
     expect(batch).toContain('import { sendSms } from "../_shared/twilioSend.ts"');
@@ -78,5 +82,17 @@ describe("contractor acquisition SMS — canonical production path", () => {
     expect(checkoutUrl).toContain('params.set("t", activationToken)');
     expect(canonicalCheckout).toContain("activationToken: activationToken || undefined");
     expect(canonicalCheckout).toContain("unpro_funnel_redirect");
+  });
+
+  it("routes verified second touches through the canonical sender", () => {
+    expect(secondTouch).toContain('import { sendSms } from "../_shared/twilioSend.ts"');
+    expect(secondTouch).toContain("const sendResult = await sendSms({");
+    expect(secondTouch).not.toContain("api.twilio.com/2010-04-01/Accounts");
+  });
+
+  it("keeps incompatible legacy acquisition senders fail-closed", () => {
+    expect(legacyRecovery).toContain('blocked: "legacy_sender_disabled"');
+    expect(legacySolicitation).toContain('blocked: "legacy_sender_disabled"');
+    expect(legacyRelance).toContain('reason: "legacy_sender_disabled"');
   });
 });
