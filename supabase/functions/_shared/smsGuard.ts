@@ -182,7 +182,11 @@ export async function validateBeforeSend(opts: {
     return { ok: false, reason: "not_mobile", detail: `phone_type=${resolvedPhoneType}`, normalized: norm.normalized };
   }
 
-  return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code };
+  if (!resolvedPhoneType) {
+    return { ok: false, reason: "not_mobile", detail: "phone_type_unconfirmed", normalized: norm.normalized };
+  }
+
+  return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code, phone_type: resolvedPhoneType };
 }
 
 export function isBlockedSync(normalizedPhone: string): boolean {

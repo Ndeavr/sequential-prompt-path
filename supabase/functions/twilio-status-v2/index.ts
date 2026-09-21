@@ -65,10 +65,35 @@ Deno.serve(async (req) => {
       payload: Object.fromEntries(params.entries()),
     };
 
-    const { error } = await supabase.from("sms_events_v2").update(update).eq("twilio_sid", sid);
+    const { data: updatedEvents, error } = await supabase
+      .from("sms_events_v2")
+      .update(update)
+      .eq("twilio_sid", sid)
+      .select("id, metadata");
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
       // do not return — still record canonical funnel event below
+    }
+
+    const eventMetadata = (updatedEvents?.[0]?.metadata ?? {}) as Record<string, unknown>;
+    const prospectId = typeof eventMetadata.prospect_id === "string" ? eventMetadata.prospect_id : null;
+    if (prospectId) {
+      const prospectPatch: Record<string, unknown> = {
+        outreach_status: mapped,
+        delivery_status: mapped,
+        last_action_at: now,
+      };
+      if (mapped === "delivered") prospectPatch.outreach_delivered_at = now;
+      if (mapped === "failed" || mapped === "undelivered") {
+        prospectPatch.outreach_failure_reason = errorCode ?? errorMessage ?? mapped;
+        prospectPatch.sms_error_code = errorCode ?? null;
+        prospectPatch.sms_error_message = errorMessage ?? null;
+      }
+      await supabase.from("verified_contractor_prospects").update(prospectPatch).eq("id", prospectId);
+      await supabase.from("acq_sms_logs").update({
+        status: mapped,
+        ...((mapped === "failed" || mapped === "undelivered") ? { error: errorMessage ?? errorCode ?? mapped } : {}),
+      }).eq("provider_message_id", sid);
     }
 
     try {
@@ -113,7 +138,8 @@ Deno.serve(async (req) => {
           provider: "twilio",
           provider_message_id: sid,
           failure_reason: kind === "failed" ? (errorCode ?? errorMessage ?? mapped) : null,
-          metadata: { twilio_status: mapped, error_code: errorCode, error_message: errorMessage },
+          prospect_id: prospectId,
+          metadata: { twilio_status: mapped, error_code: errorCode, error_message: errorMessage, prospect_id: prospectId },
         });
       }
     }

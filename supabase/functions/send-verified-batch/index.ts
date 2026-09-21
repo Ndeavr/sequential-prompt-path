@@ -34,6 +34,7 @@ import { categoryName } from "../_shared/localServiceCategories.ts";
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import { sendSms } from "../_shared/twilioSend.ts";
 
 /**
  * Campagne « 12 mois gratuits » — arrêt automatique à 10 activations réelles.
@@ -593,13 +594,6 @@ Deno.serve(async (req) => {
 
 
 
-    const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM_NUMBER");
-    // Twilio creds are only strictly required if any prospect goes down the SMS path.
-    const hasTwilio = !!(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM);
-
-
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const results: Array<Record<string, unknown>> = [];
 
@@ -618,7 +612,7 @@ Deno.serve(async (req) => {
       }
       const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
       const hasValidPhone = !!p.phone_e164 && !/555\d{4}$/.test(p.phone_e164);
-      const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
+      const shouldTrySms = smsEligibleTier && hasValidPhone;
 
 
       // Build a single activation link both channels will share.
@@ -686,40 +680,29 @@ Deno.serve(async (req) => {
       // -------- SMS attempt --------
       if (shouldTrySms) {
         smsAttempted = true;
-        const message = smsBody;
-        const twResp = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-            },
-            body: new URLSearchParams({
-              To: p.phone_e164,
-              From: TWILIO_FROM!,
-              Body: message,
-              StatusCallback:
-                `${url}/functions/v1/engagement-webhook-twilio?prospect_id=${encodeURIComponent(p.id)}` +
-                (campaignId ? `&campaign_id=${encodeURIComponent(campaignId)}` : ""),
-            }),
-          },
-        );
-        const twBody = await twResp.text();
-        if (twResp.ok) {
-          try { smsSid = JSON.parse(twBody)?.sid ?? null; } catch { /* keep null */ }
+        const sendResult = await sendSms({
+          to: p.phone_e164,
+          body: smsBody,
+          message_type: "outreach",
+          template_key: FIRST_TOUCH_CAMPAIGN,
+          prospect_id: p.id,
+          campaign_id: campaignId ?? undefined,
+          attempt_number: Number(p.retry_count ?? 0) + 1,
+          metadata: { source: FUNCTION_NAME, token, attribution, test: false },
+        });
+        if (["sending", "sent", "delivered"].includes(sendResult.status) && sendResult.twilio_sid) {
+          smsSid = sendResult.twilio_sid;
           channelUsed = "sms";
         } else {
-          smsErrorBody = twBody.slice(0, 500);
-          twilioErrorCode = extractTwilioErrorCode(twBody);
-          fallbackReason = `sms_failed:${twilioErrorCode ?? twResp.status}`;
+          smsErrorBody = (sendResult.error_message ?? sendResult.status).slice(0, 500);
+          const numericError = Number(sendResult.error_code);
+          twilioErrorCode = Number.isFinite(numericError) ? numericError : null;
+          fallbackReason = `sms_failed:${sendResult.error_code ?? sendResult.status}`;
         }
       } else if (!smsEligibleTier) {
         fallbackReason = `tier_${p.sms_eligibility_tier ?? "none"}_email_only`;
       } else if (!hasValidPhone) {
         fallbackReason = "invalid_phone";
-      } else if (!hasTwilio) {
-        fallbackReason = "twilio_credentials_missing";
       }
 
       // -------- Email fallback --------
@@ -727,7 +710,6 @@ Deno.serve(async (req) => {
         !channelUsed && !!p.email && (
           !smsEligibleTier ||               // Tier D / no-tier: email is the primary channel
           !hasValidPhone ||                 // No usable phone
-          !hasTwilio ||                     // Provider not configured
           (smsAttempted && (twilioErrorCode === null || FALLBACK_ELIGIBLE_TWILIO_CODES.has(twilioErrorCode ?? -1)))
         );
 
