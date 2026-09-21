@@ -38,6 +38,12 @@
 - [x] Validation automatisée 360/390/430 px, clavier simulé et parcours réels
 - [x] Transition entrepreneur conversationnelle texte/Voice avant navigation, idempotente et accessible
 
+## Étape 7 — Header UNPRO au défilement
+- [x] Header canonique unique sur `/` et `/index`, wordmark officiel vers symbole officiel
+- [x] Contraction légère via IntersectionObserver, sans écouteur de défilement continu
+- [x] Zones tactiles 44 px et réduction des animations respectée
+- [x] Validation automatisée multi-format, menu, langue et Clara
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 
