@@ -94,5 +94,6 @@ describe("contractor acquisition SMS — canonical production path", () => {
     expect(legacyRecovery).toContain('blocked: "legacy_sender_disabled"');
     expect(legacySolicitation).toContain('blocked: "legacy_sender_disabled"');
     expect(legacyRelance).toContain('reason: "legacy_sender_disabled"');
+    expect(legacyRelance).not.toContain("api.twilio.com/2010-04-01/Accounts");
   });
 });

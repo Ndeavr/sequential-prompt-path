@@ -31,23 +31,6 @@ function newToken(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 22);
 }
 
-async function sendTwilioSms(to: string, body: string): Promise<{ sid?: string; error?: string }> {
-  const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const token = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const from = Deno.env.get("TWILIO_FROM_NUMBER") ?? Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!sid || !token || !from) return { error: "twilio_env_missing" };
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
-  const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ To: to, From: from, Body: body }).toString(),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) return { error: data?.message ?? `twilio_${res.status}` };
-  return { sid: data?.sid };
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -152,52 +135,9 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const res = await sendTwilioSms(p.telephone!, body);
-          if (res.error) {
-            await supabase.from("acq_sms_logs").insert({
-              recipient_phone: p.telephone,
-              body,
-              status: "failed",
-              error: res.error,
-              is_simulation: false,
-              prospect_id: p.id,
-              relance_kind: batch.kind,
-              invitation_token: token,
-            } as never);
-            summary.failed += 1;
-            continue;
-          }
-
-          await supabase.from("acq_sms_logs").insert({
-            recipient_phone: p.telephone,
-            body,
-            status: "sent",
-            provider_message_id: res.sid ?? null,
-            sent_at: now.toISOString(),
-            is_simulation: false,
-            prospect_id: p.id,
-            relance_kind: batch.kind,
-            invitation_token: token,
-          } as never);
-
-          await supabase
-            .from("prospects")
-            .update({
-              landing_token: token,
-              relance_count: (p.relance_count ?? 0) + 1,
-              last_relance_at: now.toISOString(),
-            } as never)
-            .eq("id", p.id);
-
-          await supabase.from("prospect_status_transitions").insert({
-            prospect_id: p.id,
-            previous_status: p.funnel_status,
-            new_status: `relance_${batch.kind}`,
-            source: "outreach-relance-cron",
-            metadata: { dry_run: false, token },
-          } as never);
-
-          summary.sent += 1;
+          // Non-dry runs return before candidate selection. The legacy direct
+          // provider path is intentionally removed, not merely hidden.
+          summary.skipped += 1;
         } catch (rowErr) {
           console.error("[relance row error]", p.id, rowErr);
           summary.failed += 1;
