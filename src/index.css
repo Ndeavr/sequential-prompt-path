@@ -423,12 +423,11 @@
   .home-light .home-minimal-header .home-language-switch button.is-active { color: hsl(226 63% 10%); }
   .home-light .home-language-switch button.is-active::after { opacity: 1; transform: scaleX(1); }
   .home-light .home-header-icon {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: transparent;
   }
-  .home-light .home-minimal-header .home-header-icon:first-of-type { border: 1px solid hsl(226 35% 24% / 0.42); }
-  .home-light .home-minimal-header .home-profile-control button { border: 1px solid hsl(226 35% 24% / 0.42); border-radius: 999px; }
+  .home-light .home-minimal-header .home-header-icon { border: 1px solid hsl(226 35% 24% / 0.24); }
 
   .home-light .home-glossy-hero {
     min-height: calc(100dvh - 68px);
@@ -915,9 +914,9 @@
     .home-light .home-minimal-header.is-compact > div > div { height: 60px; }
     .home-light .home-header-layout-spacer { height: 98px; }
     .home-light .home-header-layout-spacer.is-compact { height: 62px; }
-    .home-light .home-brand-anchor { width: 130px; }
-    .home-light .home-brand-stage { width: 130px; height: 34px; }
-    .home-light .home-brand-wordmark { width: 130px; }
+    .home-light .home-brand-anchor { width: min(130px, calc(100vw - 196px)); }
+    .home-light .home-brand-stage { width: min(130px, calc(100vw - 196px)); height: 34px; }
+    .home-light .home-brand-wordmark { width: min(130px, calc(100vw - 196px)); }
     .home-light .home-brand-symbol { width: 32px; height: 32px; }
     .home-light .home-language-switch { gap: 0.8rem; height: 38px; }
     .home-light .home-language-switch button { height: 38px; font-size: 0.72rem; }

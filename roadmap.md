@@ -44,6 +44,12 @@
 - [x] Zones tactiles 44 px et réduction des animations respectée
 - [x] Validation automatisée multi-format, menu, langue et Clara
 
+## Étape 8 — Header mobile minimal
+- [x] Barre supérieure limitée à Alertes, QR et menu hamburger
+- [x] Langue et profil/connexion accessibles dans le menu
+- [x] Tiroir aligné sous le header initial et compact, sans texte masqué
+- [x] Validation automatisée 360/390/430 px, actions et absence de débordement
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 

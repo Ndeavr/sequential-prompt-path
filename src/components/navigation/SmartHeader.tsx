@@ -9,7 +9,7 @@ import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft, UserRound } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
@@ -238,17 +238,27 @@ const SmartHeader = () => {
             <div className="flex shrink-0 items-center gap-0 sm:gap-1.5">
               {isHome ? (
                 <>
-                  <div className="home-language-switch" role="radiogroup" aria-label="Language">
-                    <button type="button" role="radio" aria-checked={lang === "fr"} onClick={() => setLang("fr")} className={lang === "fr" ? "is-active" : ""}>FR</button>
-                    <button type="button" role="radio" aria-checked={lang === "en"} onClick={() => setLang("en")} className={lang === "en" ? "is-active" : ""}>EN</button>
-                  </div>
-                  {ctx ? (
-                    <div className="home-profile-control"><ProfileMenu /></div>
-                  ) : (
-                    <Button asChild variant="ghost" size="icon" className="home-header-icon rounded-full text-foreground" aria-label={lang === "en" ? "Profile" : "Profil"}>
-                      <Link to="/role"><UserRound className="h-5 w-5" /></Link>
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="home-header-icon relative rounded-full text-foreground"
+                    onClick={() => navigate(ctx ? "/dashboard/notifications" : "/login")}
+                    aria-label={lang === "en" ? "Alerts" : "Alertes"}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {ctx && ctx.system.notificationsCount > 0 && (
+                      <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="home-header-icon rounded-full text-foreground"
+                    onClick={() => setShareOpen(true)}
+                    aria-label={lang === "en" ? "Share QR code" : "Partager par code QR"}
+                  >
+                    <QrCode className="h-5 w-5" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -366,6 +376,8 @@ const SmartHeader = () => {
             onClose={() => setMobileOpen(false)}
             ctx={ctx}
             activeRole={activeRole}
+            isHome={isHome}
+            homeHeaderCompact={isHomeHeaderCompact}
           />
         )}
       </AnimatePresence>

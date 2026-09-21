@@ -3,6 +3,7 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { UserRound } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -22,9 +23,17 @@ interface Props {
   onClose: () => void;
   ctx: any;
   activeRole: string;
+  isHome?: boolean;
+  homeHeaderCompact?: boolean;
 }
 
-export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole }: Props) {
+export default function DrawerNavigationMobileIntent({
+  onClose,
+  ctx,
+  activeRole,
+  isHome = false,
+  homeHeaderCompact = false,
+}: Props) {
   const { signOut } = useAuth();
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
@@ -33,6 +42,12 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
   const sections = getDrawerSections(activeRole as UserRole | "guest");
 
   const dashboardTo = activeRole === "contractor" ? "/pro" : "/dashboard";
+  const accountTo = activeRole === "contractor" ? "/pro/account" : "/dashboard/account";
+  const drawerTop = isHome
+    ? homeHeaderCompact
+      ? "calc(62px + env(safe-area-inset-top))"
+      : "calc(98px + env(safe-area-inset-top))"
+    : "calc(3rem + env(safe-area-inset-top))";
 
   // Page scroll stays locked while the drawer is open; only the drawer content scrolls.
   useScrollLock(true);
@@ -43,7 +58,8 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-x-0 bottom-0 z-[55] lg:hidden"
-      style={{ top: "calc(3rem + env(safe-area-inset-top))" }}
+      style={{ top: drawerTop }}
+      data-home-header-state={isHome ? (homeHeaderCompact ? "compact" : "expanded") : undefined}
     >
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />
 
@@ -59,10 +75,21 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
 
 
           {/* Mobile-only display controls — kept out of the top bar. */}
-          <div className="mb-5 flex min-h-12 items-center justify-between gap-3 border-y border-border/30 py-2">
+          <div className="mb-3 flex min-h-12 items-center justify-between gap-3 border-y border-border/30 py-2">
             <LanguageToggle lang={lang} onChange={setLang} />
             <ThemeSwitcher variant="light-dark" />
           </div>
+
+          <Link
+            to={ctx ? accountTo : "/role"}
+            onClick={onClose}
+            className="mb-5 flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+          >
+            <UserRound className="h-5 w-5 text-muted-foreground" />
+            {ctx
+              ? lang === "en" ? "My profile" : "Mon profil"
+              : lang === "en" ? "Sign in" : "Connexion"}
+          </Link>
 
           {/* Search */}
           <div className="mb-5">
@@ -179,13 +206,6 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
               ))}
 
               <MegaMenuMobileSection lang={lang} onClose={onClose} />
-
-              {/* Login */}
-              <div className="mt-4 pt-4 border-t border-border/30">
-                <Link to="/role" onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted/40 transition-colors">
-                  {lang === "en" ? "Sign In" : "Connexion"}
-                </Link>
-              </div>
             </>
           )}
         </div>
