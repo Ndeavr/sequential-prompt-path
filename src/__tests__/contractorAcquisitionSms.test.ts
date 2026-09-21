@@ -16,6 +16,8 @@ describe("contractor acquisition SMS — canonical production path", () => {
   const legacyRecovery = read("supabase/functions/solicitation-recovery/index.ts");
   const legacySolicitation = read("supabase/functions/solicitation-send-sms/index.ts");
   const legacyRelance = read("supabase/functions/outreach-relance-cron/index.ts");
+  const legacyJoinCheckout = read("src/pages/join/PageContractorJoinCheckout.tsx");
+  const legacyJoinSuccess = read("src/pages/join/PageContractorJoinSuccess.tsx");
 
   it("routes the verified batch through the shared sender only", () => {
     expect(batch).toContain('import { sendSms } from "../_shared/twilioSend.ts"');
@@ -95,5 +97,14 @@ describe("contractor acquisition SMS — canonical production path", () => {
     expect(legacySolicitation).toContain('blocked: "legacy_sender_disabled"');
     expect(legacyRelance).toContain('reason: "legacy_sender_disabled"');
     expect(legacyRelance).not.toContain("api.twilio.com/2010-04-01/Accounts");
+  });
+
+  it("redirects obsolete join payment pages to the authoritative activation flow", () => {
+    for (const page of [legacyJoinCheckout, legacyJoinSuccess]) {
+      expect(page).toContain("buildTokenActivationUrl(token)");
+      expect(page).toContain("replace: true");
+      expect(page).not.toContain("Confirmer et payer");
+      expect(page).not.toContain("maintenant activé");
+    }
   });
 });
