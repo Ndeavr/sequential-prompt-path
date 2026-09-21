@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     const prospectId = typeof eventMetadata.prospect_id === "string" ? eventMetadata.prospect_id : null;
     if (prospectId) {
       const prospectPatch: Record<string, unknown> = {
-        outreach_status: mapped,
+        outreach_status: mapped === "undelivered" ? "failed" : mapped,
         delivery_status: mapped,
         last_action_at: now,
       };

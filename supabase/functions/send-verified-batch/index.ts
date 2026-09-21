@@ -160,16 +160,6 @@ const FALLBACK_ELIGIBLE_TWILIO_CODES = new Set<number>([
   30008, // Unknown error
 ]);
 
-function extractTwilioErrorCode(twBody: string): number | null {
-  try {
-    const parsed = JSON.parse(twBody);
-    const c = parsed?.code;
-    return typeof c === "number" ? c : null;
-  } catch {
-    return null;
-  }
-}
-
 function randToken(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 22);
 }
