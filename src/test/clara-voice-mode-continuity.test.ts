@@ -74,6 +74,22 @@ describe("Clara — la voix poursuit la conversation canonique", () => {
     expect(box).not.toContain("createVoiceConversation");
   });
 
+  it("B — écrire met le transport vocal en pause sans créer une conversation", () => {
+    const box = read("src/components/home-light/ClaraConversationBox.tsx");
+    const overlay = read("src/components/voice/OverlayAlexVoiceFullScreen.tsx");
+    const bridge = read("src/services/clara/claraVoiceBridge.ts");
+    expect(bridge).toContain('CLARA_VOICE_TEXT_INPUT_EVENT = "clara-voice-text-input"');
+    expect(box).toContain("new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT)");
+    expect(overlay).toContain('pauseVoiceRef.current("text_input")');
+    expect(overlay).not.toContain("startNewClaraSession");
+  });
+
+  it("C — chat et voix partagent la même demande de session en vol", () => {
+    const session = read("src/services/clara/claraSession.ts");
+    expect(session).toContain("if (sessionReady) return sessionReady");
+    expect(session).toContain("sessionReady = call<ClaraSessionState>");
+  });
+
   it("secours — aucune salutation rejouée quand une conversation est en cours", () => {
     const overlay = read("src/components/voice/OverlayAlexVoiceFullScreen.tsx");
     expect(overlay).toContain("hasGreeted() || claraBriefRef.current?.has_conversation");

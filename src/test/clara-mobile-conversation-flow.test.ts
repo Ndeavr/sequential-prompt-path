@@ -30,8 +30,24 @@ describe("Clara mobile — conversation compacte", () => {
   it("garde le composer compact et extensible jusqu’à cinq lignes environ", () => {
     expect(box).toContain('rows={1}');
     expect(box).toContain("Math.min(field.scrollHeight, 120)");
-    expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*fixed[^}]*min-height:\s*68px[^}]*max-height:\s*120px/);
+    expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*fixed[^}]*min-height:\s*48px[^}]*max-height:\s*120px/);
     expect(box).toContain("const conversationStarted = isConversationActive");
+  });
+
+  it("sépare les actions du textarea et mesure réellement le composer", () => {
+    expect(css).toMatch(/\.home-light \.home-clara-controls\s*\{[^}]*position:\s*static/);
+    expect(css).not.toMatch(/\.home-light \.home-clara-controls\s*\{[^}]*position:\s*absolute/);
+    expect(box).toContain("const composerRef = useRef<HTMLDivElement>(null)");
+    expect(box).toContain("new ResizeObserver(publishHeight)");
+    expect(box).toContain('"--clara-composer-height"');
+  });
+
+  it("masque les suggestions au focus, pendant la saisie et quand le clavier est ouvert", () => {
+    expect(box).toContain("const showIntentSuggestions = !isConversationActive");
+    expect(box).toContain("&& !composerFocused");
+    expect(box).toContain("&& composerText.trim().length === 0");
+    expect(box).toContain("&& !keyboardOpen");
+    expect(box).toContain("{showIntentSuggestions && (");
   });
 
   it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
@@ -60,9 +76,10 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
-    expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(440px,\s*60dvh,\s*620px\)/);
+    expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(420px,\s*60dvh,\s*620px\)/);
     expect(css).toContain('.home-light .home-clara-shell[data-keyboard-open] .home-clara-main');
-    expect(css).toContain("max(360px, calc(var(--clara-visible-height, 100dvh) - 12px))");
+    expect(css).toContain("height: calc(var(--clara-visible-height, 100dvh) - 12px)");
+    expect(css).not.toContain("max(360px, calc(var(--clara-visible-height, 100dvh) - 12px))");
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {

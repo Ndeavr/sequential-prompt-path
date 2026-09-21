@@ -135,7 +135,6 @@ export async function startOrResumeClaraSession(options: {
   }).then((state) => {
     rememberToken(state.session_token);
     return state;
-  });
   }).catch(() => {
     sessionReady = null;
     throw new Error("clara_session_unavailable");

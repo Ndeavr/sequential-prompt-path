@@ -196,7 +196,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
-  const popularQuestions = usePopularQuestions(3);
+  usePopularQuestions(3);
 
   const copy = lang === "fr"
     ? {
@@ -381,15 +381,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const conversationStarted = isConversationActive;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
   const intentSuggestions = useMemo<IntentSuggestion[]>(() => {
-    if (popularQuestions.source !== "trending" || popularQuestions.items.length < 3) {
-      return DEFAULT_INTENT_SUGGESTIONS;
-    }
-    return popularQuestions.items.slice(0, 3).map((item) => ({
-      label: item.label,
-      intent: popularQuestionIntent(item),
-      source: "trending" as const,
-    }));
-  }, [popularQuestions.items, popularQuestions.source]);
+    return DEFAULT_INTENT_SUGGESTIONS;
+  }, []);
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.
@@ -1101,6 +1094,17 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     keepComposerVisible();
   }, [keepComposerVisible, voiceActive]);
 
+  const handleComposerFocus = useCallback(() => {
+    setComposerFocused(true);
+    if (voiceActive) {
+      window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
+      setVoiceActive(false);
+      setMode((current) => current === "LISTENING" ? "IDLE" : current);
+      trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
+    }
+    window.setTimeout(keepComposerVisible, 180);
+  }, [keepComposerVisible, voiceActive]);
+
   const showIntentSuggestions = !isConversationActive
     && !composerFocused
     && composerText.trim().length === 0
@@ -1313,11 +1317,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                field.style.overflowY = field.scrollHeight > 120 ? "auto" : "hidden";
                keepComposerVisible();
              }}
-             onFocus={() => {
-               setComposerFocused(true);
-               if (voiceActive) window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
-               window.setTimeout(keepComposerVisible, 180);
-             }}
+             onFocus={handleComposerFocus}
              onBlur={() => setComposerFocused(false)}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
