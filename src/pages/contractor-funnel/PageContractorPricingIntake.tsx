@@ -211,7 +211,50 @@ export default function PageContractorPricingIntake() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditId, auditToken, sessionKey]);
 
+  /* ---------- Continuité : ce que l'entrepreneur a déjà répondu ----------
+   * Les réponses du profil de compatibilité (services, territoires) et
+   * l'identité transmise par l'étape précédente ne sont jamais redemandées.
+   * Rien n'est inventé : seuls des champs réellement déclarés sont repris,
+   * et une valeur confirmée ici n'est jamais écrasée.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const qsName = searchParams.get("entreprise");
+      const qsCity = searchParams.get("ville");
+      const qsTrade = searchParams.get("metier");
+      let answers: Record<string, unknown> = {};
+      try {
+        const { data: res } = await supabase.functions.invoke("matching-profile", {
+          body: { action: "get", session_key: sessionKey },
+        });
+        const profile = (res as { profile?: { answers?: Record<string, unknown> } | null } | null)?.profile;
+        answers = profile?.answers ?? {};
+      } catch {
+        /* profil indisponible : le parcours reste utilisable */
+      }
+      if (cancelled) return;
+      const firstOf = (v: unknown): string | null =>
+        Array.isArray(v) && typeof v[0] === "string" && v[0].trim() ? String(v[0]).trim() : null;
+      const declaredTrade = qsTrade || firstOf(answers.services_wanted);
+      const declaredCity = qsCity || firstOf(answers.territories);
+      setData((d) => ({
+        ...d,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || qsName || undefined,
+        trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : d.trade_primary || declaredTrade || undefined,
+        city: confirmedFields.includes("city") ? d.city : d.city || declaredCity || undefined,
+      }));
+      if ((qsName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey]);
+
   const auditValid = Boolean(audit?.business_name);
+  /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
+  const identityKnown = Boolean(
+    businessConfirmed && data.company_name && data.trade_primary && data.city,
+  );
   const detectedCity = audit?.city ?? data.city ?? null;
   /** L'audit vient de mesurer la présence : on ne la redemande pas. */
   const auditScoreKnown = typeof audit?.readiness_score === "number";
@@ -384,7 +427,7 @@ export default function PageContractorPricingIntake() {
   };
 
   const steps: Step[] = [
-    ...(auditValid ? [] : [identityStep]),
+    ...(auditValid || identityKnown ? [] : [identityStep]),
     scopeStep,
     {
       key: "objectives",
@@ -603,28 +646,45 @@ export default function PageContractorPricingIntake() {
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
-  const submit = async () => {
+  /**
+   * La recommandation affichée dans le champ « rendez-vous » est une valeur
+   * réelle : si l'entrepreneur l'accepte sans la retaper, elle doit être
+   * enregistrée telle quelle. Aucune valeur inventée : uniquement celle
+   * calculée à partir de ses propres réponses.
+   */
+  const withResolvedAppointments = (
+    d: Partial<PricingIntakeInput>,
+  ): Partial<PricingIntakeInput> => {
+    if ((d.target_monthly_appointments ?? 0) > 0) return d;
+    const recommended = recommendAppointments(d)?.recommended;
+    return recommended && recommended > 0
+      ? { ...d, target_monthly_appointments: recommended }
+      : d;
+  };
+
+  const submit = async (override?: Partial<PricingIntakeInput>) => {
+    const payload = override ?? withResolvedAppointments(data);
     setSubmitting(true);
     // Profil confirmé et objectifs réellement saisis avant tout calcul de plan.
     void trackFunnelStep("profile_completed", {
-      subjectId: data.company_name ?? null,
-      city: data.city ?? null,
+      subjectId: payload.company_name ?? null,
+      city: payload.city ?? null,
       metadata: { manual_entry: manualEntry },
     });
     void trackFunnelStep("goals_completed", {
-      subjectId: data.company_name ?? null,
+      subjectId: payload.company_name ?? null,
       metadata: {
-        target_monthly_appointments: data.target_monthly_appointments ?? null,
-        monthly_capacity: data.monthly_capacity ?? null,
-        average_project_value: data.average_project_value ?? null,
-        growth_level: data.desired_growth_level ?? null,
+        target_monthly_appointments: payload.target_monthly_appointments ?? null,
+        monthly_capacity: payload.monthly_capacity ?? null,
+        average_project_value: payload.average_project_value ?? null,
+        growth_level: payload.desired_growth_level ?? null,
       },
     });
     try {
-      const quote = await computePricingQuote(data as PricingIntakeInput);
+      const quote = await computePricingQuote(payload as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
-        city: (data as { city?: string }).city ?? null,
+        city: (payload as { city?: string }).city ?? null,
         metadata: {
           plan_code: quote.recommended_plan ?? null,
           objective: searchParams.get("objective"),
@@ -645,11 +705,13 @@ export default function PageContractorPricingIntake() {
   };
 
   const next = () => {
-    if (!current.isValid(data)) {
+    const resolved = withResolvedAppointments(data);
+    if (!current.isValid(resolved)) {
       toast.error("Complétez les champs pour continuer.");
       return;
     }
-    if (isLast) submit();
+    if (resolved !== data) setData(resolved);
+    if (isLast) submit(resolved);
     else setStep(safeStep + 1);
   };
 
@@ -761,7 +823,7 @@ export default function PageContractorPricingIntake() {
           )}
           <button
             onClick={next}
-            disabled={submitting || !current.isValid(data)}
+            disabled={submitting || !current.isValid(withResolvedAppointments(data))}
             className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
           >
             {submitting ? (

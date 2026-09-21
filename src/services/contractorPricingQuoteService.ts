@@ -104,7 +104,17 @@ export async function fetchPricingQuote(id: string): Promise<PricingQuote | null
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data as unknown as PricingQuote) ?? null;
+  if (data) return data as unknown as PricingQuote;
+
+  // Devis calculé avant la création du compte : la RLS n'autorise aucune
+  // lecture directe. Le serveur ne renvoie que les devis sans propriétaire.
+  const { data: guest, error: guestError } = await supabase.functions.invoke(
+    "compute-pricing-quote",
+    { body: { action: "get", quote_id: id } },
+  );
+  if (guestError) return null;
+  const quote = (guest as { quote?: PricingQuote | null } | null)?.quote ?? null;
+  return quote;
 }
 
 export function formatCAD(cents: number): string {
