@@ -1,6 +1,6 @@
 /**
  * PageOutreachFunnel — /admin/outreach-funnel
- * KPIs + pipeline pour le tunnel SMS → 1 $.
+ * KPIs + pipeline canonique pour l'acquisition entrepreneur.
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -23,7 +23,7 @@ const STAGES: Array<{ key: keyof Kpis; label: string }> = [
   { key: "landing_viewed", label: "Page vue" },
   { key: "profile_started", label: "Profil édité" },
   { key: "checkout_started", label: "Checkout" },
-  { key: "paid_1_dollar", label: "Payé 350 $" },
+  { key: "paid_1_dollar", label: "Paiement confirmé" },
   { key: "activated", label: "Activé" },
   { key: "recommendable", label: "Recommandable" },
 ];
@@ -46,13 +46,27 @@ export default function PageOutreachFunnel() {
     if (!selectedStage) { setRows([]); return; }
     (async () => {
       const q = supabase
-        .from("prospects")
-        .select("id, business_name, main_city, service, telephone, funnel_status, source, updated_at, landing_token, recommendable")
+        .from("verified_contractor_prospects")
+        .select("id, business_name, city, category, phone_e164, outreach_status, source, updated_at, outreach_sent_at, outreach_delivered_at, outreach_clicked_at, verification_status, sms_eligible, sms_eligibility_tier")
         .order("updated_at", { ascending: false })
         .limit(100);
-      const query = selectedStage === "recommendable"
-        ? q.eq("recommendable", true)
-        : q.eq("funnel_status", selectedStage);
+      let query = q;
+      if (selectedStage === "ready_to_contact") {
+        query = query.eq("verification_status", "verified").eq("sms_eligible", true).in("sms_eligibility_tier", ["A", "B", "C"]).eq("outreach_status", "none");
+      } else if (selectedStage === "sms_sent") {
+        query = query.in("outreach_status", ["sent", "delivered", "clicked", "activated"]);
+      } else if (selectedStage === "sms_delivered") {
+        query = query.in("outreach_status", ["delivered", "clicked", "activated"]);
+      } else if (selectedStage === "sms_clicked" || selectedStage === "landing_viewed") {
+        query = query.not("outreach_clicked_at", "is", null);
+      } else if (selectedStage === "sms_failed") {
+        query = query.eq("outreach_status", "failed");
+      } else if (selectedStage === "activated" || selectedStage === "recommendable") {
+        query = query.eq("outreach_status", "activated");
+      } else if (selectedStage !== "scraped") {
+        setRows([]);
+        return;
+      }
       const { data } = await query;
       setRows(data ?? []);
     })();
@@ -65,11 +79,11 @@ export default function PageOutreachFunnel() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
-              <span className="text-[10px] uppercase tracking-widest text-emerald-400">TUNNEL SMS → 350 $</span>
+              <span className="text-[10px] uppercase tracking-widest text-emerald-400">ACQUISITION ENTREPRENEUR</span>
             </div>
             <h1 className="text-3xl font-bold text-readable">Outreach Funnel</h1>
             <p className="text-sm text-readable-muted mt-1">
-              Chaque étape du parcours scraping → vente 1 $ → recommandable.
+              Inventaire vérifié → SMS → audit → plan → paiement → activation.
             </p>
           </div>
           <Link
@@ -128,7 +142,7 @@ export default function PageOutreachFunnel() {
                     <th className="text-left px-4 py-2">Téléphone</th>
                     <th className="text-left px-4 py-2">Source</th>
                     <th className="text-left px-4 py-2">Statut</th>
-                    <th className="text-left px-4 py-2">Lien</th>
+                    <th className="text-left px-4 py-2">Mise à jour</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -138,17 +152,15 @@ export default function PageOutreachFunnel() {
                   {rows.map(r => (
                     <tr key={r.id} className="border-t border-white/5">
                       <td className="px-4 py-2 text-readable">{r.business_name}</td>
-                      <td className="px-4 py-2 text-readable-body">{r.main_city ?? "—"}</td>
-                      <td className="px-4 py-2 text-readable-body">{r.service ?? "—"}</td>
-                      <td className="px-4 py-2 text-readable-body">{r.telephone ?? "—"}</td>
+                      <td className="px-4 py-2 text-readable-body">{r.city ?? "—"}</td>
+                      <td className="px-4 py-2 text-readable-body">{r.category ?? "—"}</td>
+                      <td className="px-4 py-2 text-readable-body">{r.phone_e164 ? `••• ${String(r.phone_e164).slice(-4)}` : "—"}</td>
                       <td className="px-4 py-2 text-readable-body">{r.source ?? "—"}</td>
                       <td className="px-4 py-2">
-                        <span className="text-[11px] uppercase tracking-widest text-readable-muted">{r.funnel_status ?? "—"}</span>
+                          <span className="text-[11px] uppercase tracking-widest text-readable-muted">{r.outreach_status ?? "—"}</span>
                       </td>
                       <td className="px-4 py-2">
-                        {r.landing_token
-                          ? <a href={`/invitation/${r.landing_token}`} target="_blank" rel="noreferrer" className="text-emerald-300 hover:underline">/invitation</a>
-                          : <span className="text-readable-muted">—</span>}
+                        <span className="text-readable-muted">{r.updated_at ? new Date(r.updated_at).toLocaleDateString("fr-CA") : "—"}</span>
                       </td>
                     </tr>
                   ))}

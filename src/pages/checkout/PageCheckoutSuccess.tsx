@@ -40,54 +40,8 @@ export default function PageCheckoutSuccess() {
 
     setTimeout(() => setActivating(false), 2000);
 
-    // Persist activation (best-effort)
-    (async () => {
-      try {
-        if (!session?.user?.id) return;
-        const { data: contractor } = await supabase
-          .from("contractors")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        if (!contractor) return;
-
-        await supabase.from("plan_activations").insert({
-          contractor_id: contractor.id,
-          plan_code: planCode,
-          activation_status: "active",
-          activated_at: new Date().toISOString(),
-        });
-
-        // Create activation steps
-        const stepsToInsert = ACTIVATION_STEPS.map((s, i) => ({
-          contractor_id: contractor.id,
-          step_code: s.code,
-          title: s.title,
-          status: ["payment", "plan_active"].includes(s.code) ? "done" : "pending",
-          sort_order: i,
-        }));
-        await supabase.from("activation_steps").insert(stepsToInsert);
-
-        // Send payment success email (best-effort)
-        const email = session?.user?.email;
-        if (email) {
-          const planNames: Record<string, string> = {
-            recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
-          };
-          await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "payment-success",
-              recipientEmail: email,
-              idempotencyKey: `payment-success-${contractor.id}-${planCode}`,
-              templateData: {
-                planName: planNames[planCode] || planCode,
-              },
-            },
-          });
-        }
-      } catch {}
-    })();
-  }, [session?.user?.id, planCode]);
+    // Stripe's signed webhook is the sole authority for payment and activation.
+  }, [planCode]);
 
   const PLAN_NAMES: Record<string, string> = {
     recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
