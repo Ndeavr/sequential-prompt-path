@@ -42,7 +42,7 @@
 - [x] Header canonique unique sur `/` et `/index`, wordmark officiel vers symbole officiel
 - [x] Contraction légère via IntersectionObserver, sans écouteur de défilement continu
 - [x] Zones tactiles 44 px et réduction des animations respectée
-- [ ] Validation automatisée multi-format, menu, langue et Clara
+- [x] Validation automatisée multi-format, menu, langue et Clara
 
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
