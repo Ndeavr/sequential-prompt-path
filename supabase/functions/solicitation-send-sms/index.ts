@@ -28,6 +28,10 @@ Deno.serve(async (req) => {
     const batch = Math.min(Math.max(parseInt(body?.batch ?? "25"), 1), 50);
     const dryRun = body?.dry_run === true;
 
+    if (!dryRun) {
+      return json({ sent: 0, blocked: "legacy_sender_disabled", retryable: false }, 423);
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     const TWILIO_FROM = Deno.env.get("TWILIO_FROM_NUMBER");

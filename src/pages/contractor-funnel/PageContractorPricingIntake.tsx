@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import TradePickerSheet from "@/components/contractor/TradePickerSheet";
 import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
+import { setActiveActivationToken } from "@/lib/checkoutUrl";
 
 type Step = {
   key: string;
@@ -86,6 +87,7 @@ export default function PageContractorPricingIntake() {
   const [searchParams] = useSearchParams();
   const auditId = searchParams.get("audit");
   const auditToken = searchParams.get("audit_token");
+  const activationToken = searchParams.get("t");
   const sessionKey = useMemo(getSessionKey, []);
   const draftKey = `unpro_pricing_intake_draft:${auditId ?? sessionKey}`;
 
@@ -99,6 +101,10 @@ export default function PageContractorPricingIntake() {
   const [manualEntry, setManualEntry] = useState(false);
   const [searchState, setSearchState] = useState({ loading: false, count: 0, searched: false });
   const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setActiveActivationToken(activationToken);
+  }, [activationToken]);
   /**
    * Hiérarchie de confiance : confirmé par l'entrepreneur > vérifié par une
    * source > déduit. Une donnée déduite (ville d'un autre appel, catégorie

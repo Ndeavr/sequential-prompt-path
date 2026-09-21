@@ -29,12 +29,41 @@ serve(async (req) => {
   if (roleError || !role) return new Response(JSON.stringify({ ok: false, error: "forbidden" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
 
   const toNumber = (Deno.env.get("SMS_TEST_DESTINATION_NUMBER") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "").trim();
-  const message = `UNPRO test système acquisition — ${new Date().toISOString()}`;
-
   if (!toNumber) {
     return new Response(JSON.stringify({ ok: false, error: "configured admin test destination missing" }),
       { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
   }
+
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { count: recentTestCount, error: recentTestError } = await admin
+    .from("sms_test_runs")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", cutoff);
+  if (recentTestError) {
+    return new Response(JSON.stringify({ ok: false, error: "test_rate_limit_check_failed" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+  if ((recentTestCount ?? 0) > 0) {
+    return new Response(JSON.stringify({ ok: false, error: "test_rate_limited" }),
+      { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
+  const trackingId = `admin_sms_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+  const destinationUrl = "https://unpro.ca/entrepreneurs/audit-ia?utm_source=admin_sms_e2e&utm_medium=sms&utm_campaign=admin_sms_e2e";
+  const { error: trackingError } = await admin.from("acquisition_tracking_links").insert({
+    id: trackingId,
+    destination_url: destinationUrl,
+    campaign: "admin_sms_e2e",
+    channel: "sms",
+    metadata: { test: true, source: "acq-test-send-sms" },
+  });
+  if (trackingError) {
+    return new Response(JSON.stringify({ ok: false, error: "tracking_link_creation_failed" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
+  const trackingUrl = `https://unpro.ca/r/${trackingId}`;
+  const message = `UNPRO test système acquisition — ${trackingUrl}`;
 
   const recipientGuard = await assertAdminOnlySms(admin, message, toNumber);
   if (!recipientGuard.allowed) {
@@ -42,15 +71,39 @@ serve(async (req) => {
       { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
+  const { data: testRun, error: testRunError } = await admin.from("sms_test_runs").insert({
+    triggered_by: authData.user.id,
+    phone: toNumber,
+    queued_at: new Date().toISOString(),
+  }).select("id").single();
+  if (testRunError || !testRun) {
+    return new Response(JSON.stringify({ ok: false, error: "test_run_creation_failed" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
   const result = await sendSms({
     to: toNumber,
     body: message,
     message_type: "test",
     template_key: "acq_test_send_sms",
-    metadata: { source: "acq-test-send-sms", test: true, strict_admin_override: true },
+    metadata: {
+      source: "acq-test-send-sms",
+      test: true,
+      strict_admin_override: true,
+      test_run_id: testRun.id,
+      tracking_id: trackingId,
+    },
     strict_admin_override: true,
     bypass_guard: true,
   });
+  await admin.from("sms_test_runs").update({
+    event_id: result.event_id || null,
+    message_sid: result.twilio_sid,
+    sent_at: ["sending", "sent", "delivered"].includes(result.status) ? new Date().toISOString() : null,
+    failed_at: ["sending", "sent", "delivered"].includes(result.status) ? null : new Date().toISOString(),
+    error: result.error_message ?? null,
+    updated_at: new Date().toISOString(),
+  }).eq("id", testRun.id);
 
   // Pull persisted guard metadata for verification payload.
   let phone_type: string | null = null;
@@ -71,7 +124,9 @@ serve(async (req) => {
     });
     return new Response(JSON.stringify({
       ok: false,
-      destination: toNumber,
+       test_run_id: testRun.id,
+       tracking_id: trackingId,
+       tracking_url: trackingUrl,
       phone_type,
       sms_guard_reason,
       twilio_sid: result.twilio_sid,
@@ -83,12 +138,14 @@ serve(async (req) => {
   await logAcquisitionEvent({
     channel: "sms", event_type: "sent", provider: "twilio",
     provider_event_id: result.twilio_sid ? `${result.twilio_sid}:test_send` : undefined,
-    metadata: { test: true, to: toNumber, result, phone_type, sms_guard_reason },
+    metadata: { test: true, result, phone_type, sms_guard_reason, test_run_id: testRun.id, tracking_id: trackingId },
   });
 
   return new Response(JSON.stringify({
     ok: true,
-    destination: toNumber,
+     test_run_id: testRun.id,
+     tracking_id: trackingId,
+     tracking_url: trackingUrl,
     phone_type,
     sms_guard_reason,
     twilio_sid: result.twilio_sid,

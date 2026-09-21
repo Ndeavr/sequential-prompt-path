@@ -12,6 +12,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { secondTouchSms, clickRecoverySms } from "../_shared/offerCopy.ts";
+import { sendSms } from "../_shared/twilioSend.ts";
 
 const RELANCE_KIND = "second_touch";
 const CLICK_RECOVERY_KIND = "click_recovery";
@@ -129,14 +130,6 @@ Deno.serve(async (req) => {
     const batch = eligible.slice(0, limit);
 
 
-    const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const from = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM_NUMBER");
-    if (!dryRun && !(sid && authToken && from)) {
-      return json({ error: "twilio_not_configured" }, 500);
-    }
-    const auth = "Basic " + btoa(`${sid}:${authToken}`);
-
     const attempts: Array<Record<string, unknown>> = [];
 
     for (const p of batch) {
@@ -155,37 +148,17 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      let providerId: string | null = null;
-      let status = "failed";
-      let error: string | null = null;
-
-      try {
-        const statusCallback =
-          `${Deno.env.get("SUPABASE_URL")}/functions/v1/engagement-webhook-twilio` +
-          `?prospect_id=${encodeURIComponent(String(p.id))}`;
-        const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-          {
-            method: "POST",
-            headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              To: String(p.phone_e164),
-              From: from!,
-              Body: message,
-              StatusCallback: statusCallback,
-            }),
-          },
-        );
-        const payload = await res.json();
-        if (res.ok) {
-          providerId = payload.sid;
-          status = payload.status ?? "queued";
-        } else {
-          error = `${payload.code ?? res.status}: ${payload.message ?? "twilio_error"}`;
-        }
-      } catch (e) {
-        error = e instanceof Error ? e.message : String(e);
-      }
+      const sendResult = await sendSms({
+        to: String(p.phone_e164),
+        body: message,
+        message_type: "reengagement",
+        template_key: relanceKind,
+        prospect_id: String(p.id),
+        metadata: { source: "second-touch-outreach", relance_kind: relanceKind },
+      });
+      const providerId = sendResult.twilio_sid;
+      const status = sendResult.status;
+      const error = sendResult.error_message ?? null;
 
 
       await supabase.from("acq_sms_logs").insert({
