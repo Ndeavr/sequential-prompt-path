@@ -355,6 +355,21 @@ Deno.serve(async (req) => {
       contractor = newContractor;
     }
 
+    if (verifiedProspectId) {
+      const { data: claim, error: claimError } = await serviceClient
+        .from("contractor_prospect_claims")
+        .select("id")
+        .eq("prospect_id", verifiedProspectId)
+        .eq("user_id", userId)
+        .eq("contractor_id", contractor.id)
+        .maybeSingle();
+      if (claimError || !claim) {
+        return new Response(JSON.stringify({ error: "Ce lien n’est pas associé à ce compte.", code: "activation_token_not_owned" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // ── PROMO CODE VALIDATION ──
     let promoResult: any = null;
     let redemptionId: string | null = null;
