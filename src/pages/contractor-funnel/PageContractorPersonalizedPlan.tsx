@@ -24,6 +24,7 @@ import {
 } from "@/services/contractorPricingQuoteService";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { setActiveQuoteId } from "@/lib/checkoutUrl";
 import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import {
