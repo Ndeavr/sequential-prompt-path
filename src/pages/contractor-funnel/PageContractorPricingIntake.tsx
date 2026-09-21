@@ -427,7 +427,7 @@ export default function PageContractorPricingIntake() {
   };
 
   const steps: Step[] = [
-    ...(auditValid ? [] : [identityStep]),
+    ...(auditValid || identityKnown ? [] : [identityStep]),
     scopeStep,
     {
       key: "objectives",
