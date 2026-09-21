@@ -304,6 +304,10 @@
   }
 
   .home-light .home-minimal-header {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    width: 100%;
     background: hsl(226 63% 5% / 0.7);
     border-bottom-color: hsl(216 55% 65% / 0.14);
     box-shadow: 0 1px 0 hsl(216 70% 78% / 0.04);
@@ -325,6 +329,12 @@
     box-shadow: 0 8px 30px -22px hsl(225 80% 2% / 0.9);
   }
   .home-light .home-minimal-header.is-compact > div > div { height: 64px; }
+  .home-light .home-header-layout-spacer {
+    flex: 0 0 auto;
+    height: 86px;
+    transition: height 300ms cubic-bezier(.22, 1, .36, 1);
+  }
+  .home-light .home-header-layout-spacer.is-compact { height: 66px; }
   .home-header-scroll-sentinel {
     position: absolute;
     inset-block-start: 70px;
@@ -901,6 +911,8 @@
     .home-light .home-minimal-header > div { padding-inline: 1rem; }
     .home-light .home-minimal-header > div > div { height: 96px; }
     .home-light .home-minimal-header.is-compact > div > div { height: 60px; }
+    .home-light .home-header-layout-spacer { height: 98px; }
+    .home-light .home-header-layout-spacer.is-compact { height: 62px; }
     .home-light .home-brand-anchor { width: 130px; }
     .home-light .home-brand-stage { width: 130px; height: 34px; }
     .home-light .home-brand-wordmark { width: 130px; }
@@ -987,6 +999,7 @@
   @media (prefers-reduced-motion: reduce) {
     .home-light .home-minimal-header,
     .home-light .home-minimal-header > div > div,
+    .home-light .home-header-layout-spacer,
     .home-light .home-brand-wordmark,
     .home-light .home-brand-symbol {
       transition-duration: 80ms;

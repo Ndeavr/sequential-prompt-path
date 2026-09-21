@@ -352,6 +352,12 @@ const SmartHeader = () => {
           )}
         </AnimatePresence>
       </header>
+      {isHome && (
+        <div
+          className={`home-header-layout-spacer${isHomeHeaderCompact ? " is-compact" : ""}`}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Mobile drawer */}
       <AnimatePresence>

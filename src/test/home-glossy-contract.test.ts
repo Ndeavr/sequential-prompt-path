@@ -54,6 +54,7 @@ describe("glossy homepage contract", () => {
     expect(header).toContain('pathname === "/" || pathname === "/index"');
     expect(header).toContain("homeHeaderCompact");
     expect(header).toContain("home-header-scroll-sentinel");
+    expect(header).toContain("home-header-layout-spacer");
     expect(header).toContain("new IntersectionObserver");
     expect(header).toContain("home-brand-wordmark");
     expect(header).toContain("home-brand-symbol");
