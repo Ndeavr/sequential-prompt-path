@@ -420,15 +420,15 @@
     transform: scaleX(0.45);
     transition: opacity 180ms ease, transform 180ms ease;
   }
-  .home-light .home-language-switch button.is-active { color: hsl(var(--foreground)); }
+  .home-light .home-minimal-header .home-language-switch button.is-active { color: hsl(226 63% 10%); }
   .home-light .home-language-switch button.is-active::after { opacity: 1; transform: scaleX(1); }
   .home-light .home-header-icon {
     width: 40px;
     height: 40px;
     background: transparent;
   }
-  .home-light .home-header-icon:first-of-type { border: 1px solid hsl(var(--foreground) / 0.55); }
-  .home-light .home-profile-control button { border: 1px solid hsl(var(--foreground) / 0.55); border-radius: 999px; }
+  .home-light .home-minimal-header .home-header-icon:first-of-type { border: 1px solid hsl(226 35% 24% / 0.42); }
+  .home-light .home-minimal-header .home-profile-control button { border: 1px solid hsl(226 35% 24% / 0.42); border-radius: 999px; }
 
   .home-light .home-glossy-hero {
     min-height: calc(100dvh - 68px);
