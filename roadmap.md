@@ -60,6 +60,12 @@
 
 Blocage actif : sélectionner un compte administrateur autorisé et approuver l’unique SMS E2E vers le numéro de test configuré. Les anciennes voies d’envoi direct et tous les ordonnanceurs restent désactivés.
 
+## Mode d’exécution — budget crédits (demandé le 21 sept.)
+- Mode chirurgical obligatoire : une anomalie → quelques fichiers → correction minimale → test ciblé → arrêt.
+- Aucun audit global du dépôt, aucune refonte, aucune recherche déjà effectuée refaite.
+- Budget cible par run : moins de 5 crédits; prévenir en une phrase avant tout dépassement.
+- Découpage imposé en trois runs séparés : (1) test SMS réel, (2) premier lot, (3) inscription → plan → paiement.
+
 ## Blocages nécessitant approbation
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 
