@@ -37,8 +37,8 @@ export function firstTouchSms(businessName: string): string {
 export function firstTouchScoreSms(businessName: string): string {
   const name = (businessName || "votre entreprise").trim().slice(0, 40);
   return (
-    `Curieux de savoir si ${name} est recommandée par l'IA? ` +
-    `UNPRO a analysé votre présence. Découvrez gratuitement votre score actuel :`
+    `${name}, UNPRO a analysé votre visibilité auprès des propriétaires et des IA. ` +
+    `Voyez ce que nous trouvons sur votre entreprise et comment devenir admissible aux recommandations :`
   );
 }
 
