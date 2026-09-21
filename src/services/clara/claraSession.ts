@@ -126,7 +126,9 @@ export async function startOrResumeClaraSession(options: {
   language?: string;
   entrypoint?: string;
 } = {}): Promise<ClaraSessionState> {
-  const promise = call<ClaraSessionState>("start", {
+  if (sessionReady) return sessionReady;
+
+  sessionReady = call<ClaraSessionState>("start", {
     session_token: peekClaraSessionToken() ?? getClaraSessionToken(),
     language: options.language ?? "fr",
     entrypoint: options.entrypoint ?? "clara_box",
@@ -134,11 +136,11 @@ export async function startOrResumeClaraSession(options: {
     rememberToken(state.session_token);
     return state;
   });
-  sessionReady = promise.catch(() => {
+  }).catch(() => {
     sessionReady = null;
     throw new Error("clara_session_unavailable");
   });
-  return promise;
+  return sessionReady;
 }
 
 /**
