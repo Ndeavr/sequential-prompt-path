@@ -50,6 +50,16 @@ describe("glossy homepage contract", () => {
     expect(header).toContain("<UnproLogo");
   });
 
+  it("contracts the canonical header with official brand assets and no scroll listener", () => {
+    expect(header).toContain('pathname === "/" || pathname === "/index"');
+    expect(header).toContain("homeHeaderCompact");
+    expect(header).toContain("home-header-scroll-sentinel");
+    expect(header).toContain("new IntersectionObserver");
+    expect(header).toContain("home-brand-wordmark");
+    expect(header).toContain("home-brand-symbol");
+    expect(header).not.toContain('addEventListener("scroll"');
+  });
+
   it("keeps one Clara surface and defers contextual modules", () => {
     const floating = readFileSync("src/components/alex/FloatingAlexGuide.tsx", "utf8");
     expect(clara).toContain("lazy(() => import");
