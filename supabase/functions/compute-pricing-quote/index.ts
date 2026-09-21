@@ -347,7 +347,40 @@ Deno.serve(async (req) => {
     const { data: userData } = await userClient.auth.getUser();
     const user = userData?.user ?? null;
 
-    const body = (await req.json()) as Input;
+    const body = (await req.json()) as Input & { action?: string; quote_id?: string };
+
+    /**
+     * Lecture d'un devis invité. Un entrepreneur arrivé par SMS n'a pas encore
+     * de compte : sans cette lecture, son plan calculé lui est inaccessible.
+     * Fail-closed : seul un devis SANS propriétaire est renvoyé, et uniquement
+     * si l'identifiant exact (UUID non devinable) est fourni. Un devis
+     * rattaché à un compte reste protégé par la RLS.
+     */
+    if (body?.action === "get") {
+      const quoteId = typeof body.quote_id === "string" ? body.quote_id.trim() : "";
+      if (!/^[0-9a-f-]{36}$/i.test(quoteId)) {
+        return new Response(JSON.stringify({ error: "quote_id_required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: quoteRow, error: quoteError } = await svc
+        .from("contractor_pricing_quotes")
+        .select("*")
+        .eq("id", quoteId)
+        .is("user_id", null)
+        .maybeSingle();
+      if (quoteError) {
+        return new Response(JSON.stringify({ error: "quote_lookup_failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ quote: quoteRow ?? null }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (
       !body?.trade_primary ||
