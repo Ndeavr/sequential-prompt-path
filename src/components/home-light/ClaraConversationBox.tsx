@@ -12,6 +12,7 @@ import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Sq
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
@@ -27,6 +28,7 @@ import {
   CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
+  CLARA_VOICE_TEXT_INPUT_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import {
   applyAnswer,
@@ -77,7 +79,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
-import { usePopularQuestions, type PopularQuestionItem } from "@/hooks/usePopularQuestions";
 
 const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
 import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
@@ -180,12 +181,6 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
   { label: "Vérifier un entrepreneur", intent: "contractor_verification", source: "default" },
 ];
 
-function popularQuestionIntent(item: PopularQuestionItem): ClaraWorkflowIntent {
-  if (item.intent === "comparison") return "quote_comparison";
-  if (item.intent === "contractor") return "contractor_search";
-  return "homeowner_problem";
-}
-
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
 }
@@ -195,7 +190,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
-  const popularQuestions = usePopularQuestions(3);
 
   const copy = lang === "fr"
     ? {
@@ -239,6 +233,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const [transitionPause, setTransitionPause] = useState(false);
   const [composerText, setComposerText] = useState("");
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [confirmReset, setConfirmReset] = useState(false);
   // Le micro est un MODE de la même conversation : aucun état de session ici.
   const [voiceActive, setVoiceActive] = useState(false);
@@ -253,6 +250,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const photoLibraryRef = useRef<HTMLInputElement>(null);
   const videoLibraryRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
   // Dernière intention avec écran réel : sert au bouton visible d'ouverture.
@@ -296,11 +296,19 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   useEffect(() => clearLocalPreviews, [clearLocalPreviews]);
 
   const focusComposer = useCallback(() => {
-    const textarea = rootRef.current?.querySelector("textarea");
+    const textarea = textareaRef.current ?? rootRef.current?.querySelector("textarea");
     if (textarea instanceof HTMLTextAreaElement) {
       textarea.disabled = false;
-      textarea.focus();
+      textarea.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => textarea.scrollIntoView({ block: "nearest" }));
     }
+  }, []);
+
+  const keepComposerVisible = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      bottomAnchorRef.current?.scrollIntoView({ block: "end" });
+      textareaRef.current?.scrollIntoView({ block: "nearest" });
+    });
   }, []);
   const isConversationActive = messages.length > 0 || mode !== "IDLE";
 
@@ -365,16 +373,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   // même après un remontage du composant.
   const conversationStarted = isConversationActive;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
-  const intentSuggestions = useMemo<IntentSuggestion[]>(() => {
-    if (popularQuestions.source !== "trending" || popularQuestions.items.length < 3) {
-      return DEFAULT_INTENT_SUGGESTIONS;
-    }
-    return popularQuestions.items.slice(0, 3).map((item) => ({
-      label: item.label,
-      intent: popularQuestionIntent(item),
-      source: "trending" as const,
-    }));
-  }, [popularQuestions.items, popularQuestions.source]);
+  const intentSuggestions = DEFAULT_INTENT_SUGGESTIONS;
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.
@@ -414,12 +413,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const keyboardOpen = covered > 120;
       if (keyboardOpen !== keyboardWasOpen.current) {
         keyboardWasOpen.current = keyboardOpen;
+        setKeyboardOpen(keyboardOpen);
         rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
         if (keyboardOpen) {
           trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
           window.requestAnimationFrame(() => {
             rootRef.current?.scrollIntoView({ block: "start" });
-            rootRef.current?.querySelector("textarea")?.scrollIntoView({ block: "nearest" });
+            textareaRef.current?.scrollIntoView({ block: "nearest" });
           });
         }
       }
@@ -432,6 +432,35 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       viewport?.removeEventListener("scroll", updateViewport);
     };
   }, []);
+
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+    const publishHeight = () => {
+      rootRef.current?.style.setProperty("--clara-composer-height", `${composer.getBoundingClientRect().height}px`);
+      keepComposerVisible();
+    };
+    publishHeight();
+    const observer = new ResizeObserver(publishHeight);
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, [keepComposerVisible]);
+
+  useEffect(() => {
+    const updateOnline = () => {
+      const next = navigator.onLine;
+      setOnline(next);
+      if (next) setError((current) => current === "Connexion interrompue. Votre message reste ici." ? null : current);
+    };
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
+
+  useEffect(() => keepComposerVisible(), [messages, busy, composerText, keepComposerVisible]);
 
   useEffect(() => {
     trackCopilotEvent("clara_chat_opened", { surface: "home_clara_box" });
@@ -889,6 +918,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const submit = useCallback(async (message: PromptInputMessage) => {
     if (busy) return;
     if (!message.text.trim() && message.files.length === 0) return;
+    if (!navigator.onLine) {
+      setError("Connexion interrompue. Votre message reste ici.");
+      focusComposer();
+      return;
+    }
     setComposerText("");
     if (message.files.length > 0) {
       setError(null);
@@ -970,11 +1004,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setError("Impossible d’ajouter ce fichier. Réessayer.");
       } finally {
         setBusy(false);
+        focusComposer();
+        keepComposerVisible();
       }
       return;
     }
     await send(message.text);
-  }, [busy, createLocalPreview, enqueueMedia, lang, mode, send]);
+    focusComposer();
+    keepComposerVisible();
+  }, [busy, createLocalPreview, enqueueMedia, focusComposer, keepComposerVisible, lang, mode, send]);
 
   // Suggestion contextuelle de la voix : halo discret, jamais une alerte.
   const uploadingMedia = mediaItems.some((item) => item.status === "queued" || item.status === "analyzing");
@@ -1017,8 +1055,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     return () => window.clearTimeout(timer);
   }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang]);
 
-  const startVoice = () => {
+  const startVoice = async () => {
     useAlexStore.getState().markUserEngaged();
+    try {
+      await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
+    } catch {
+      setError("Clara reste disponible ici. Réessayer le micro dans un instant.");
+      return;
+    }
     // MODE, pas session : la conversation canonique reste exactement la même.
     setMode("LISTENING");
     setVoiceActive(true);
@@ -1027,8 +1071,40 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     voiceCooldownUntil.current = Date.now() + 60_000;
     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "voice" });
     trackCopilotEvent("clara_voice_started", { surface: "home_clara_box" });
+    const voiceStore = useAlexVoiceLockedStore.getState();
+    if (voiceStore.isOverlayOpen && (voiceStore.machineState === "paused" || voiceStore.machineState === "completed")) {
+      voiceStore.resumeVoiceSession("user_resume_from_composer");
+      return;
+    }
     openAlex("home_hero", "user_tapped_orb", "floating");
   };
+
+  const handleComposerChange = useCallback((value: string) => {
+    setComposerText(value);
+    if (voiceActive) {
+      window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
+      setVoiceActive(false);
+      setMode((current) => current === "LISTENING" ? "IDLE" : current);
+      trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
+    }
+    keepComposerVisible();
+  }, [keepComposerVisible, voiceActive]);
+
+  const handleComposerFocus = useCallback(() => {
+    setComposerFocused(true);
+    if (voiceActive) {
+      window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
+      setVoiceActive(false);
+      setMode((current) => current === "LISTENING" ? "IDLE" : current);
+      trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
+    }
+    window.setTimeout(keepComposerVisible, 180);
+  }, [keepComposerVisible, voiceActive]);
+
+  const showIntentSuggestions = !isConversationActive
+    && !composerFocused
+    && composerText.trim().length === 0
+    && !keyboardOpen;
 
   // Capture directe (appareil photo, caméra, galerie) : le fichier entre
   // immédiatement dans la file d'attente, sans passer par un aperçu factice.
@@ -1164,6 +1240,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               </div>
             ) : busy ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
             {error && <p role="alert" className="home-clara-error">{error}</p>}
+            {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
+            <div ref={bottomAnchorRef} className="home-clara-bottom-anchor" aria-hidden="true" />
           </ConversationContent>
           <ConversationScrollButton title="Nouveau message" />
         </Conversation>
@@ -1205,7 +1283,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         </ul>
       )}
 
-      <div className="home-clara-composer">
+      <div ref={composerRef} className="home-clara-composer">
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" className="hidden" aria-label="Prendre une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={photoLibraryRef} type="file" accept="image/*" multiple className="hidden" aria-label="Choisir une photo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
@@ -1221,18 +1299,21 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           data-voice-listening={voiceActive ? "true" : undefined}
         >
           <PromptInputTextarea
+            ref={textareaRef}
             aria-label={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
             placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
-            disabled={busy}
              rows={1}
              value={composerText}
-             onChange={(event) => setComposerText(event.currentTarget.value)}
+             onChange={(event) => handleComposerChange(event.currentTarget.value)}
              onInput={(event) => {
                const field = event.currentTarget;
                field.style.height = "auto";
                field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
+               field.style.overflowY = field.scrollHeight > 120 ? "auto" : "hidden";
+               keepComposerVisible();
              }}
-             onFocus={() => window.setTimeout(() => rootRef.current?.scrollIntoView({ block: "start" }), 180)}
+             onFocus={handleComposerFocus}
+             onBlur={() => setComposerFocused(false)}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
           <PromptInputFooter className="home-clara-controls">
@@ -1249,7 +1330,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               </PromptInputButton>
               <PromptInputButton
                 type="button"
-                onClick={startVoice}
+                onClick={() => void startVoice()}
                 tooltip={voiceTip ?? copy.voice}
                 aria-label={copy.voice}
                 data-voice-suggested={voiceGlow ? "true" : undefined}
@@ -1266,7 +1347,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </PromptInputFooter>
         </PromptInput>
       </div>
-        {!isConversationActive && (
+        {showIntentSuggestions && (
          <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
            {intentSuggestions.map((suggestion) => (
              <button

@@ -33,6 +33,8 @@ export interface ClaraVoiceBrief {
 
 export const CLARA_VOICE_MESSAGE_EVENT = "clara-voice-message";
 export const CLARA_VOICE_CLOSED_EVENT = "clara-voice-closed";
+/** La saisie écrite met le transport vocal en pause, sans fermer la conversation. */
+export const CLARA_VOICE_TEXT_INPUT_EVENT = "clara-voice-text-input";
 export const CLARA_CONTRACTOR_VOICE_REQUEST_EVENT = "clara-contractor-voice-request";
 export const CLARA_CONTRACTOR_VOICE_FINISHED_EVENT = "clara-contractor-voice-finished";
 export const CLARA_CONTRACTOR_TRANSITION_TEXT =

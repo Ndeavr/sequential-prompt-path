@@ -43,6 +43,7 @@ import {
   CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
   CLARA_CONTRACTOR_VOICE_REQUEST_EVENT,
   CLARA_VOICE_CLOSED_EVENT,
+  CLARA_VOICE_TEXT_INPUT_EVENT,
   loadClaraVoiceBrief,
   notifyClaraVoiceClosed,
   recordClaraVoiceTurn,
@@ -542,6 +543,12 @@ export default function OverlayAlexVoiceFullScreen() {
 
   armInactivityRef.current = armInactivity;
   pauseVoiceRef.current = pauseVoice;
+
+  useEffect(() => {
+    const handleTextInput = () => pauseVoiceRef.current("text_input");
+    window.addEventListener(CLARA_VOICE_TEXT_INPUT_EVENT, handleTextInput);
+    return () => window.removeEventListener(CLARA_VOICE_TEXT_INPUT_EVENT, handleTextInput);
+  }, []);
 
   useEffect(() => {
     const handleContractorVoiceRequest = (event: Event) => {
