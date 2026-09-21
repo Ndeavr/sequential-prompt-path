@@ -45,9 +45,11 @@ describe("glossy homepage contract", () => {
   });
 
   it("uses the compact public header controls", () => {
-    expect(header).toContain("home-language-switch");
+    expect(header).toContain('aria-label={lang === "en" ? "Alerts" : "Alertes"}');
+    expect(header).toContain('aria-label={lang === "en" ? "Share QR code" : "Partager par code QR"}');
     expect(header).toContain("home-header-icon");
     expect(header).toContain("<UnproLogo");
+    expect(header).not.toContain('className="home-language-switch"');
   });
 
   it("contracts the canonical header with official brand assets and no scroll listener", () => {
