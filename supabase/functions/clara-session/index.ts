@@ -559,23 +559,46 @@ Deno.serve(async (req) => {
         });
       }
 
-      const newToken = sessionToken ?? crypto.randomUUID();
-      const { data: created, error } = await admin
-        .from("alex_sessions")
-        .insert({
-          session_token: newToken,
-          user_id: userId,
-          session_type: str(body.entrypoint, 40) ?? "chat",
-          language: str(body.language, 10) ?? "fr",
-          auth_state: userId ? "authenticated" : "guest",
-          current_step: "listening",
-          context_json: {},
-        })
-        .select(SESSION_COLUMNS)
-        .single();
+      // `session_token` est UNIQUE : un jeton déjà pris (force_new, ou session
+      // appartenant à un autre compte) ferait échouer l'insertion. On réessaie
+      // alors avec un jeton neuf plutôt que de renvoyer une erreur au visiteur.
+      const insertPayload = {
+        user_id: userId,
+        session_type: str(body.entrypoint, 40) ?? "chat",
+        language: str(body.language, 10) ?? "fr",
+        auth_state: userId ? "authenticated" : "guest",
+        current_step: "listening",
+        context_json: {},
+      };
 
-      if (error || !created) return json({ error: "session_start_failed" }, 500);
-      return json({ ...serialize(created as SessionRow), resumed: false, messages: [] });
+      const candidates = [
+        ...(sessionToken && !forceNew ? [sessionToken] : []),
+        crypto.randomUUID(),
+        crypto.randomUUID(),
+      ];
+
+      let created: SessionRow | null = null;
+      let lastError: unknown = null;
+      for (const candidate of candidates) {
+        const { data, error } = await admin
+          .from("alex_sessions")
+          .insert({ ...insertPayload, session_token: candidate })
+          .select(SESSION_COLUMNS)
+          .single();
+        if (data) {
+          created = data as SessionRow;
+          break;
+        }
+        lastError = error;
+        // 23505 = violation d'unicité sur session_token : on retente.
+        if ((error as { code?: string } | null)?.code !== "23505") break;
+      }
+
+      if (!created) {
+        console.error("clara-session start failed", lastError);
+        return json({ error: "session_start_failed" }, 500);
+      }
+      return json({ ...serialize(created), resumed: false, messages: [] });
     }
 
     if (!sessionToken) return json({ error: "session_token_required" }, 400);
