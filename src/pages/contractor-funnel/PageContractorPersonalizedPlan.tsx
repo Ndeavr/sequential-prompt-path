@@ -162,6 +162,16 @@ export default function PageContractorPersonalizedPlan() {
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
+      // Un entrepreneur arrivé par SMS n'a pas encore de compte : on l'amène
+      // se connecter et il revient exactement sur son plan, sans rien reperdre.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setActiveQuoteId(quote.id);
+        const next = `${window.location.pathname}${window.location.search}`;
+        setCheckoutLoading(false);
+        navigate(`/auth?next=${encodeURIComponent(next)}`);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
