@@ -78,7 +78,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
-import { usePopularQuestions, type PopularQuestionItem } from "@/hooks/usePopularQuestions";
 
 const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
 import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
@@ -181,12 +180,6 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
   { label: "Vérifier un entrepreneur", intent: "contractor_verification", source: "default" },
 ];
 
-function popularQuestionIntent(item: PopularQuestionItem): ClaraWorkflowIntent {
-  if (item.intent === "comparison") return "quote_comparison";
-  if (item.intent === "contractor") return "contractor_search";
-  return "homeowner_problem";
-}
-
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
 }
@@ -196,7 +189,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
-  usePopularQuestions(3);
 
   const copy = lang === "fr"
     ? {
@@ -380,9 +372,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   // même après un remontage du composant.
   const conversationStarted = isConversationActive;
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
-  const intentSuggestions = useMemo<IntentSuggestion[]>(() => {
-    return DEFAULT_INTENT_SUGGESTIONS;
-  }, []);
+  const intentSuggestions = DEFAULT_INTENT_SUGGESTIONS;
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.

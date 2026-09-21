@@ -9,7 +9,6 @@ const header = fs.readFileSync(path.join(root, "src/components/navigation/SmartH
 const css = fs.readFileSync(path.join(root, "src/index.css"), "utf8");
 const queue = fs.readFileSync(path.join(root, "src/services/clara/claraMediaQueue.ts"), "utf8");
 const upload = fs.readFileSync(path.join(root, "src/services/alexUploadService.ts"), "utf8");
-const popularQuestions = fs.readFileSync(path.join(root, "src/hooks/usePopularQuestions.ts"), "utf8");
 
 describe("Clara mobile — conversation compacte", () => {
   it("partage une activation locale entre Clara, le hero et le header", () => {
@@ -68,11 +67,9 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
     expect(box).toContain('label: "Analyser 3 soumissions", intent: "quote_comparison"');
     expect(box).toContain('label: "Vérifier un entrepreneur", intent: "contractor_verification"');
-    expect(box).toContain('popularQuestions.source !== "trending"');
     expect(box).toContain("chooseIntentSuggestion(suggestion)");
     expect(box).not.toContain("J’ai de l’eau ici.");
     expect(box).not.toContain("J’ai trois soumissions.");
-    expect(popularQuestions).toContain('data?.source === "trending" && items.length >= 3');
   });
 
   it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
