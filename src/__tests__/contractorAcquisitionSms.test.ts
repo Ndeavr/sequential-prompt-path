@@ -59,6 +59,11 @@ describe("contractor acquisition SMS — canonical production path", () => {
     expect(testSender).toContain('.eq("role", "admin")');
     expect(testSender).toContain('Deno.env.get("SMS_TEST_DESTINATION_NUMBER")');
     expect(testSender).not.toContain("body?.to");
+    expect(testSender).toContain('destination_url: destinationUrl');
+    expect(testSender).toContain('channel: "sms"');
+    expect(testSender).toContain("tracking_id: trackingId");
+    expect(testSender).toContain('.from("sms_test_runs").insert');
+    expect(testSender).not.toContain("destination: toNumber");
   });
 
   it("requires an admin or service identity before a production batch", () => {
