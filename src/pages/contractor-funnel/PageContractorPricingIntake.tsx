@@ -211,7 +211,50 @@ export default function PageContractorPricingIntake() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditId, auditToken, sessionKey]);
 
+  /* ---------- Continuité : ce que l'entrepreneur a déjà répondu ----------
+   * Les réponses du profil de compatibilité (services, territoires) et
+   * l'identité transmise par l'étape précédente ne sont jamais redemandées.
+   * Rien n'est inventé : seuls des champs réellement déclarés sont repris,
+   * et une valeur confirmée ici n'est jamais écrasée.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const qsName = searchParams.get("entreprise");
+      const qsCity = searchParams.get("ville");
+      const qsTrade = searchParams.get("metier");
+      let answers: Record<string, unknown> = {};
+      try {
+        const { data: res } = await supabase.functions.invoke("matching-profile", {
+          body: { action: "get", session_key: sessionKey },
+        });
+        const profile = (res as { profile?: { answers?: Record<string, unknown> } | null } | null)?.profile;
+        answers = profile?.answers ?? {};
+      } catch {
+        /* profil indisponible : le parcours reste utilisable */
+      }
+      if (cancelled) return;
+      const firstOf = (v: unknown): string | null =>
+        Array.isArray(v) && typeof v[0] === "string" && v[0].trim() ? String(v[0]).trim() : null;
+      const declaredTrade = qsTrade || firstOf(answers.services_wanted);
+      const declaredCity = qsCity || firstOf(answers.territories);
+      setData((d) => ({
+        ...d,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || qsName || undefined,
+        trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : d.trade_primary || declaredTrade || undefined,
+        city: confirmedFields.includes("city") ? d.city : d.city || declaredCity || undefined,
+      }));
+      if ((qsName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey]);
+
   const auditValid = Boolean(audit?.business_name);
+  /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
+  const identityKnown = Boolean(
+    businessConfirmed && data.company_name && data.trade_primary && data.city,
+  );
   const detectedCity = audit?.city ?? data.city ?? null;
   /** L'audit vient de mesurer la présence : on ne la redemande pas. */
   const auditScoreKnown = typeof audit?.readiness_score === "number";
