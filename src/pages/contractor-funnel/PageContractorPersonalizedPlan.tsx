@@ -236,6 +236,32 @@ export default function PageContractorPersonalizedPlan() {
     );
   }
 
+  /**
+   * Un plan à 0 $ n'existe pas : quand le budget mensuel choisi ne couvre
+   * même pas un rendez-vous exclusif, on le dit clairement au lieu
+   * d'afficher un prix faux.
+   */
+  if (!quote.recommended_monthly_price || quote.recommended_monthly_price <= 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="text-2xl font-semibold">Votre budget ne couvre pas encore un rendez-vous exclusif.</h1>
+          <p className="text-white/70">
+            Chaque rendez-vous UNPRO est exclusif : il n'est jamais partagé. Ajustez votre budget
+            mensuel ou le nombre de rendez-vous souhaités, et nous recalculons votre plan.
+          </p>
+          <button
+            onClick={() => navigate("/entrepreneur/devis-personnalise")}
+            className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold"
+          >
+            Ajuster mon plan
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
       <Helmet>
