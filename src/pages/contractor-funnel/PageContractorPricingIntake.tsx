@@ -603,28 +603,45 @@ export default function PageContractorPricingIntake() {
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
-  const submit = async () => {
+  /**
+   * La recommandation affichée dans le champ « rendez-vous » est une valeur
+   * réelle : si l'entrepreneur l'accepte sans la retaper, elle doit être
+   * enregistrée telle quelle. Aucune valeur inventée : uniquement celle
+   * calculée à partir de ses propres réponses.
+   */
+  const withResolvedAppointments = (
+    d: Partial<PricingIntakeInput>,
+  ): Partial<PricingIntakeInput> => {
+    if ((d.target_monthly_appointments ?? 0) > 0) return d;
+    const recommended = recommendAppointments(d)?.recommended;
+    return recommended && recommended > 0
+      ? { ...d, target_monthly_appointments: recommended }
+      : d;
+  };
+
+  const submit = async (override?: Partial<PricingIntakeInput>) => {
+    const payload = override ?? withResolvedAppointments(data);
     setSubmitting(true);
     // Profil confirmé et objectifs réellement saisis avant tout calcul de plan.
     void trackFunnelStep("profile_completed", {
-      subjectId: data.company_name ?? null,
-      city: data.city ?? null,
+      subjectId: payload.company_name ?? null,
+      city: payload.city ?? null,
       metadata: { manual_entry: manualEntry },
     });
     void trackFunnelStep("goals_completed", {
-      subjectId: data.company_name ?? null,
+      subjectId: payload.company_name ?? null,
       metadata: {
-        target_monthly_appointments: data.target_monthly_appointments ?? null,
-        monthly_capacity: data.monthly_capacity ?? null,
-        average_project_value: data.average_project_value ?? null,
-        growth_level: data.desired_growth_level ?? null,
+        target_monthly_appointments: payload.target_monthly_appointments ?? null,
+        monthly_capacity: payload.monthly_capacity ?? null,
+        average_project_value: payload.average_project_value ?? null,
+        growth_level: payload.desired_growth_level ?? null,
       },
     });
     try {
-      const quote = await computePricingQuote(data as PricingIntakeInput);
+      const quote = await computePricingQuote(payload as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
-        city: (data as { city?: string }).city ?? null,
+        city: (payload as { city?: string }).city ?? null,
         metadata: {
           plan_code: quote.recommended_plan ?? null,
           objective: searchParams.get("objective"),
@@ -645,11 +662,13 @@ export default function PageContractorPricingIntake() {
   };
 
   const next = () => {
-    if (!current.isValid(data)) {
+    const resolved = withResolvedAppointments(data);
+    if (!current.isValid(resolved)) {
       toast.error("Complétez les champs pour continuer.");
       return;
     }
-    if (isLast) submit();
+    if (resolved !== data) setData(resolved);
+    if (isLast) submit(resolved);
     else setStep(safeStep + 1);
   };
 
