@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { recordSmsEvent } from "../_shared/outreachEvents.ts";
+import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,10 +66,35 @@ Deno.serve(async (req) => {
       payload: Object.fromEntries(params.entries()),
     };
 
-    const { error } = await supabase.from("sms_events_v2").update(update).eq("twilio_sid", sid);
+    const { data: updatedEvents, error } = await supabase
+      .from("sms_events_v2")
+      .update(update)
+      .eq("twilio_sid", sid)
+      .select("id, metadata");
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
       // do not return — still record canonical funnel event below
+    }
+
+    const eventMetadata = (updatedEvents?.[0]?.metadata ?? {}) as Record<string, unknown>;
+    const prospectId = typeof eventMetadata.prospect_id === "string" ? eventMetadata.prospect_id : null;
+    if (prospectId) {
+      const prospectPatch: Record<string, unknown> = {
+        outreach_status: mapped === "undelivered" ? "failed" : mapped,
+        delivery_status: mapped,
+        last_action_at: now,
+      };
+      if (mapped === "delivered") prospectPatch.outreach_delivered_at = now;
+      if (mapped === "failed" || mapped === "undelivered") {
+        prospectPatch.outreach_failure_reason = errorCode ?? errorMessage ?? mapped;
+        prospectPatch.sms_error_code = errorCode ?? null;
+        prospectPatch.sms_error_message = errorMessage ?? null;
+      }
+      await supabase.from("verified_contractor_prospects").update(prospectPatch).eq("id", prospectId);
+      await supabase.from("acq_sms_logs").update({
+        status: mapped,
+        ...((mapped === "failed" || mapped === "undelivered") ? { error: errorMessage ?? errorCode ?? mapped } : {}),
+      }).eq("provider_message_id", sid);
     }
 
     try {
@@ -113,7 +139,8 @@ Deno.serve(async (req) => {
           provider: "twilio",
           provider_message_id: sid,
           failure_reason: kind === "failed" ? (errorCode ?? errorMessage ?? mapped) : null,
-          metadata: { twilio_status: mapped, error_code: errorCode, error_message: errorMessage },
+          prospect_id: prospectId,
+          metadata: { twilio_status: mapped, error_code: errorCode, error_message: errorMessage, prospect_id: prospectId },
         });
       }
     }
@@ -198,13 +225,18 @@ Deno.serve(async (req) => {
     // Auto-enqueue retry on failure
     if (mapped === "failed" || mapped === "undelivered") {
       const { data: ev } = await supabase.from("sms_events_v2").select("id, attempt_number").eq("twilio_sid", sid).maybeSingle();
-      if (ev && (ev.attempt_number ?? 1) < 3) {
+      const retry = classifyTwilio(400, { code: errorCode, message: errorMessage });
+      if (ev && retry.retryable && (ev.attempt_number ?? 1) < 3) {
         const delays = [15 * 60_000, 24 * 60 * 60_000, 72 * 60 * 60_000];
         const next = new Date(Date.now() + delays[(ev.attempt_number ?? 1) - 1]).toISOString();
         await supabase.from("sms_retry_queue").insert({ event_id: ev.id, attempt: (ev.attempt_number ?? 1) + 1, scheduled_at: next });
         await supabase.from("sms_events_v2").update({ status: "retry_scheduled", next_retry_at: next }).eq("id", ev.id);
       } else if (ev) {
-        await supabase.from("sms_events_v2").update({ status: "contact_required" }).eq("id", ev.id);
+        await supabase.from("sms_events_v2").update({
+          status: "contact_required",
+          error_message: errorMessage ?? retry.recommended_action,
+          metadata: { ...eventMetadata, retryable: retry.retryable, recommended_action: retry.recommended_action },
+        }).eq("id", ev.id);
         try {
           await supabase.from("admin_notifications").insert({
             type: "sms_contact_required",

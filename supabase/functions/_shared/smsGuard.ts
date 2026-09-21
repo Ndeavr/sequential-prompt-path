@@ -36,6 +36,7 @@ export async function validateBeforeSend(opts: {
   supabase: ReturnType<typeof createClient>;
   phone: string | null | undefined;
   lead_id?: string | null;
+  prospect_id?: string | null;
   /**
    * Strict admin override flag. When true AND the destination is in ADMIN_SMS_ALLOWLIST,
    * the mobile-enforcement Lookup gate is bypassed and the guard returns
@@ -68,6 +69,15 @@ export async function validateBeforeSend(opts: {
     .maybeSingle();
   if (opt) {
     return { ok: false, reason: "opted_out", detail: "in sms_opt_outs", normalized: norm.normalized };
+  }
+
+  const { data: suppressed, error: suppressionError } = await opts.supabase
+    .rpc("is_phone_suppressed", { p_phone: norm.normalized });
+  if (suppressionError) {
+    return { ok: false, reason: "blocked", detail: "suppression_check_unreadable", normalized: norm.normalized };
+  }
+  if (suppressed === true) {
+    return { ok: false, reason: "blocked", detail: "in unified suppression index", normalized: norm.normalized };
   }
 
   // Strict admin override: bypass mobile-enforcement Lookup. Opt-out + blocked-pattern
@@ -120,6 +130,31 @@ export async function validateBeforeSend(opts: {
     }
   }
 
+  if (opts.prospect_id) {
+    const { data: prospect, error: prospectError } = await opts.supabase
+      .from("verified_contractor_prospects")
+      .select("phone_e164, phone_line_type, sms_eligible, sms_eligibility_tier, outreach_status")
+      .eq("id", opts.prospect_id)
+      .maybeSingle();
+    if (prospectError || !prospect) {
+      return { ok: false, reason: "blocked", detail: "prospect_eligibility_unreadable", normalized: norm.normalized };
+    }
+    if (prospect.phone_e164 && prospect.phone_e164 !== norm.normalized) {
+      return { ok: false, reason: "blocked", detail: "prospect_phone_mismatch", normalized: norm.normalized };
+    }
+    if (prospect.sms_eligible !== true || !["A", "B", "C"].includes(prospect.sms_eligibility_tier ?? "")) {
+      return { ok: false, reason: "not_mobile", detail: `sms_tier=${prospect.sms_eligibility_tier ?? "none"}`, normalized: norm.normalized };
+    }
+    const lineType = String(prospect.phone_line_type ?? "").toLowerCase();
+    if (lineType && lineType !== "mobile") {
+      return { ok: false, reason: "not_mobile", detail: `phone_type=${lineType}`, normalized: norm.normalized };
+    }
+    if (["sent", "delivered", "clicked", "activated", "opted_out"].includes(prospect.outreach_status ?? "")) {
+      return { ok: false, reason: "blocked", detail: `already_${prospect.outreach_status}`, normalized: norm.normalized };
+    }
+    resolvedPhoneType = lineType || "mobile";
+  }
+
   // If phone_type unknown/missing, attempt inline Twilio Lookup (cached 90d).
   if (!resolvedPhoneType || resolvedPhoneType === "unknown") {
     const looked = await lookupPhoneTypeCached(opts.supabase, norm.normalized);
@@ -147,7 +182,11 @@ export async function validateBeforeSend(opts: {
     return { ok: false, reason: "not_mobile", detail: `phone_type=${resolvedPhoneType}`, normalized: norm.normalized };
   }
 
-  return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code };
+  if (!resolvedPhoneType) {
+    return { ok: false, reason: "not_mobile", detail: "phone_type_unconfirmed", normalized: norm.normalized };
+  }
+
+  return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code, phone_type: resolvedPhoneType };
 }
 
 export function isBlockedSync(normalizedPhone: string): boolean {
