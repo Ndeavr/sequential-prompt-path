@@ -1,8 +1,10 @@
 // UNPRO — Send admin test SMS via Twilio + log canonical sent event.
 // Uses strict_admin_override so ADMIN_SMS_ALLOWLIST numbers bypass Lookup gate.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logAcquisitionEvent } from "../_shared/acquisitionEvents.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
+import { assertAdminOnlySms } from "../_shared/adminSmsGuard.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -12,13 +14,32 @@ const cors = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const body = await req.json().catch(() => ({}));
-  const toNumber = body?.to || Deno.env.get("ADMIN_TEST_PHONE");
-  const message = body?.message || `UNPRO acquisition test — ${new Date().toISOString()}`;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!bearer) return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+    global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
+  });
+  const { data: authData, error: authError } = await authClient.auth.getUser(bearer);
+  if (authError || !authData.user) return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data: role, error: roleError } = await admin.from("user_roles").select("role").eq("user_id", authData.user.id).eq("role", "admin").maybeSingle();
+  if (roleError || !role) return new Response(JSON.stringify({ ok: false, error: "forbidden" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
+
+  const toNumber = (Deno.env.get("SMS_TEST_DESTINATION_NUMBER") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "").trim();
+  const message = `UNPRO test système acquisition — ${new Date().toISOString()}`;
 
   if (!toNumber) {
-    return new Response(JSON.stringify({ ok: false, error: "to phone number required (pass { to } or set ADMIN_TEST_PHONE)" }),
+    return new Response(JSON.stringify({ ok: false, error: "configured admin test destination missing" }),
       { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
+  const recipientGuard = await assertAdminOnlySms(admin, message, toNumber);
+  if (!recipientGuard.allowed) {
+    return new Response(JSON.stringify({ ok: false, error: "admin_test_destination_blocked", reason: recipientGuard.reason }),
+      { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
   const result = await sendSms({
@@ -28,14 +49,14 @@ serve(async (req) => {
     template_key: "acq_test_send_sms",
     metadata: { source: "acq-test-send-sms", test: true, strict_admin_override: true },
     strict_admin_override: true,
+    bypass_guard: true,
   });
 
   // Pull persisted guard metadata for verification payload.
   let phone_type: string | null = null;
   let sms_guard_reason: string | null = null;
   try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.49.1");
-    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const supa = admin;
     if (result.event_id) {
       const { data } = await supa.from("sms_events_v2").select("metadata,status,twilio_sid").eq("id", result.event_id).maybeSingle();
       phone_type = (data?.metadata as any)?.phone_type ?? null;
