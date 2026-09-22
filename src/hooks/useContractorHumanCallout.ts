@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CONTRACTOR_HUMAN_CALLOUT, isContractorSurface } from "@/config/contractorHumanCallout";
+import { CONTRACTOR_HUMAN_CALLOUT, HUMAN_CALLOUT_DISABLED, isContractorSurface } from "@/config/contractorHumanCallout";
 
 const INPUT_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 const INPUT_IDLE_MS = 8000;
