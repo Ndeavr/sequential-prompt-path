@@ -1,3 +1,7 @@
+// Kill switch — pop-up d'appel humain retiré temporairement (2026-09-22).
+// Repasser à false pour réactiver le modal ContractorHumanCalloutModal.
+export const HUMAN_CALLOUT_DISABLED = true;
+
 export const CONTRACTOR_HUMAN_CALLOUT = {
   phoneDisplay: "(514) 249-9522",
   phoneTel: "+15142499522",
