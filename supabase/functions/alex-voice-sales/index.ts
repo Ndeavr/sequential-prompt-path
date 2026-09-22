@@ -101,9 +101,12 @@ serve(async (req) => {
       .eq("audience", "contractor")
       .order("tier_rank");
 
-    const planContext = plans?.map(p =>
-      `${p.name} (${Math.round((p.monthly_price ?? 0) / 100)}$/mois, ${p.appointments_included ?? 0} RDV inclus)`
-    ).join("\n") || "";
+    const planContext = plans?.map(p => {
+      const g = buildAppointmentGuarantee(p.appointments_included);
+      return `${p.name} (${Math.round((p.monthly_price ?? 0) / 100)}$/mois — ${
+        g.status === "known" ? `${g.cadenceLabel}, ${g.guaranteeLabel}` : "cadence à confirmer"
+      })`;
+    }).join("\n") || "";
 
     // Log event if session exists
     if (session_id) {
@@ -114,22 +117,30 @@ serve(async (req) => {
       });
     }
 
-    const enrichedSystem = `${SALES_SYSTEM_PROMPT}\n\n## PLANS DISPONIBLES\n${planContext}`;
-
     // Determine plan recommendation if we have qualification data
     let recommendationHint = "";
+    let recommendedCadence: number | null = null;
     if (qualification_data?.close_rate && qualification_data?.monthly_revenue_goal) {
       const avgJob = qualification_data.average_job_value || 5000;
       const closeRate = qualification_data.close_rate / 100;
       const rdvNeeded = Math.ceil((qualification_data.monthly_revenue_goal / avgJob) / closeRate);
-      
+
       const matchedPlan = plans?.find(p => (p.appointments_included ?? 0) >= rdvNeeded)
         || plans?.[(plans?.length ?? 1) - 1];
 
       if (matchedPlan) {
-        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${Math.round((matchedPlan.monthly_price ?? 0) / 100)}$/mois).`;
+        recommendedCadence = matchedPlan.appointments_included ?? null;
+        const g = buildAppointmentGuarantee(recommendedCadence);
+        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${Math.round((matchedPlan.monthly_price ?? 0) / 100)}$/mois). Promesse à citer: ${
+          g.status === "known" ? `${g.cadenceLabel} — ${g.guaranteeLabel}` : "cadence non confirmée, ne cite aucun chiffre"
+        }.`;
       }
     }
+
+    const enrichedSystem = `${SALES_SYSTEM_PROMPT}\n\n## PLANS DISPONIBLES\n${planContext}\n\n${
+      buildGuaranteePromptBlock(buildAppointmentGuarantee(recommendedCadence))
+    }`;
+
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
