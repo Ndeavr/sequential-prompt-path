@@ -4,6 +4,7 @@ import {
   buildAppointmentGuarantee,
   buildGuaranteePromptBlock,
 } from "../_shared/appointmentGuarantee.ts";
+import { buildFallbackCreditPromptBlock } from "../_shared/fallbackCredit350.ts";
 
 
 const corsHeaders = {
@@ -138,7 +139,7 @@ serve(async (req) => {
     }
 
     const enrichedSystem = `${SALES_SYSTEM_PROMPT}\n\n## PLANS DISPONIBLES\n${planContext}\n\n${
-      buildGuaranteePromptBlock(buildAppointmentGuarantee(recommendedCadence))
+      buildGuaranteePromptBlock(buildAppointmentGuarantee(recommendedCadence)) + "\n\n" + buildFallbackCreditPromptBlock()
     }`;
 
 

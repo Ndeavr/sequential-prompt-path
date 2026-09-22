@@ -8,7 +8,8 @@ export type ObjectionType =
   | "spam_fear"
   | "commitment_fear"
   | "time_waste_fear"
-  | "comparison_need";
+  | "comparison_need"
+  | "not_ready_for_plan";
 
 interface ObjectionPattern {
   type: ObjectionType;
@@ -69,6 +70,24 @@ const PATTERNS: ObjectionPattern[] = [
       "Je comprends. Je vous montre les autres options aussi.",
       "Mais celui-ci reste le plus adapté pour vous.",
       "Je peux vous montrer pourquoi je le recommande en premier.",
+    ],
+  },
+  {
+    type: "not_ready_for_plan",
+    keywords: [
+      "je vais attendre",
+      "je préfère attendre",
+      "pas maintenant",
+      "plus tard",
+      "y penser",
+      "trop cher",
+      "trop élevé",
+      "pas prêt",
+      "essayer avant",
+      "commencer plus petit",
+    ],
+    responses: [
+      "Je comprends, vous préférez attendre. Au minimum, vous pouvez sécuriser votre présence pour 350 $ — ce montant devient un crédit UNPRO applicable à vos futurs achats admissibles.",
     ],
   },
 ];

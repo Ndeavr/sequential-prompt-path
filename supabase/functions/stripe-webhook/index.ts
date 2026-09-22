@@ -305,6 +305,130 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── OFFRE DE REPLI — CRÉDIT UNPRO 350 $ ──────────────────────────
+        // Seule source d'octroi du crédit. Idempotent : un index unique sur
+        // metadata->>'stripe_session_id' empêche tout double crédit.
+        if (session.metadata?.offer === "fallback_credit_350") {
+          const creditContractorId = session.metadata?.contractor_id ?? null;
+          const paid = session.payment_status === "paid" || session.status === "complete";
+
+          if (creditContractorId && paid) {
+            const { data: existingCredit } = await supabase
+              .from("pricing_transactions")
+              .select("id")
+              .eq("transaction_type", "fallback_credit_350")
+              .eq("metadata->>stripe_session_id", session.id)
+              .maybeSingle();
+
+            if (!existingCredit) {
+              const { data: wallet } = await supabase
+                .from("contractor_wallet")
+                .select("id, balance_cents, lifetime_credited_cents")
+                .eq("contractor_id", creditContractorId)
+                .maybeSingle();
+
+              const previousBalance = Number(wallet?.balance_cents ?? 0);
+              const newBalance = previousBalance + 35000;
+
+              let walletId = wallet?.id ?? null;
+              if (walletId) {
+                await supabase
+                  .from("contractor_wallet")
+                  .update({
+                    balance_cents: newBalance,
+                    lifetime_credited_cents:
+                      Number(wallet?.lifetime_credited_cents ?? 0) + 35000,
+                    last_top_up_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", walletId);
+              } else {
+                const { data: createdWallet } = await supabase
+                  .from("contractor_wallet")
+                  .insert({
+                    contractor_id: creditContractorId,
+                    balance_cents: newBalance,
+                    lifetime_credited_cents: 35000,
+                    last_top_up_at: new Date().toISOString(),
+                  })
+                  .select("id")
+                  .single();
+                walletId = createdWallet?.id ?? null;
+              }
+
+              const { error: creditErr } = await supabase
+                .from("pricing_transactions")
+                .insert({
+                  contractor_id: creditContractorId,
+                  wallet_id: walletId,
+                  amount_cents: 35000,
+                  transaction_type: "fallback_credit_350",
+                  description_fr:
+                    "Crédit UNPRO — sécurisation de présence (offre de repli 350 $)",
+                  balance_after_cents: newBalance,
+                  metadata: {
+                    stripe_session_id: session.id,
+                    stripe_event_id: event.id,
+                    stripe_payment_intent: session.payment_intent
+                      ? String(session.payment_intent)
+                      : null,
+                    origin: "fallback_credit_350",
+                    quote_id: session.metadata?.quote_id ?? null,
+                    prospect_id: session.metadata?.prospect_id ?? null,
+                    ref: session.metadata?.ref ?? null,
+                  },
+                });
+
+              // Un doublon concurrent est rattrapé par l'index unique : le solde
+              // est alors remis à sa valeur précédente pour rester exact.
+              if (creditErr) {
+                console.error("[stripe-webhook][fallback_credit_350] insert failed:", creditErr.message);
+                await supabase
+                  .from("contractor_wallet")
+                  .update({ balance_cents: previousBalance, updated_at: new Date().toISOString() })
+                  .eq("contractor_id", creditContractorId)
+                  .eq("balance_cents", newBalance);
+              } else {
+                await supabase.from("contractor_activation_ledger").insert({
+                  contractor_id: creditContractorId,
+                  action: "fallback_credit_350_granted",
+                  source: "stripe_webhook",
+                  before_state: { balance_cents: previousBalance },
+                  after_state: { balance_cents: newBalance },
+                  metadata: {
+                    stripe_session_id: session.id,
+                    stripe_event_id: event.id,
+                    amount_cents: 35000,
+                  },
+                });
+
+                await supabase.from("contractor_funnel_events").insert({
+                  contractor_id: creditContractorId,
+                  event_type: "fallback_350_payment_success",
+                  metadata: {
+                    stripe_session_id: session.id,
+                    amount_cents: 35000,
+                    quote_id: session.metadata?.quote_id ?? null,
+                  },
+                });
+
+                // Clôture du lead d'abandon lié au devis (sans doublon).
+                if (session.metadata?.quote_id) {
+                  await supabase
+                    .from("contractor_leads")
+                    .update({
+                      lead_status: "fallback_350_paid",
+                      payment_status: "paid",
+                      paid_at: new Date().toISOString(),
+                      next_follow_up_at: null,
+                    })
+                    .eq("metadata_json->>quote_id", String(session.metadata.quote_id));
+                }
+              }
+            }
+          }
+        }
+
         // HOMEOWNER PLANS: activate entitlements immediately after payment.
         // Idempotent — replaying the event just re-affirms the active row.
         if (session.metadata?.plan_type === "homeowner") {

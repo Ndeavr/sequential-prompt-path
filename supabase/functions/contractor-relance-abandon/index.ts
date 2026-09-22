@@ -81,6 +81,106 @@ Deno.serve(async (req) => {
       return json({ ok: true, closed: closed?.length ?? 0 });
     }
 
+    /* ---------- Suivi de l'offre de repli 350 $ (aucun doublon) ---------- */
+    if (action === "fallback_status") {
+      const quoteId = str(body.quote_id);
+      const status = str(body.status);
+      const ALLOWED = [
+        "plan_offered",
+        "plan_declined",
+        "fallback_350_offered",
+        "fallback_350_checkout_started",
+        "fallback_350_declined",
+        "followup_required",
+      ];
+      if (!quoteId) return json({ error: "quote_id requis" }, 400);
+      if (!status || !ALLOWED.includes(status)) return json({ error: "status invalide" }, 400);
+
+      const { data: lead } = await supabase
+        .from("contractor_leads")
+        .select("id, metadata_json")
+        .eq("source_type", "checkout_abandon")
+        .filter("metadata_json->>quote_id", "eq", quoteId)
+        .limit(1)
+        .maybeSingle();
+
+      const stamp = new Date().toISOString();
+
+      if (lead?.id) {
+        const meta = (lead.metadata_json ?? {}) as Record<string, unknown>;
+        const { error: upErr } = await supabase
+          .from("contractor_leads")
+          .update({
+            lead_status: status,
+            next_follow_up_at: status === "fallback_350_declined" ? stamp : undefined,
+            metadata_json: { ...meta, fallback_350_status: status, fallback_350_updated_at: stamp },
+          })
+          .eq("id", lead.id);
+        if (upErr) return json({ error: upErr.message }, 500);
+        return json({ ok: true, lead_id: lead.id, created: false });
+      }
+
+      // Aucun lead encore créé : on réutilise la détection d'abandon existante
+      // pour ce devis précis, puis on applique le statut.
+      const { data: quoteRow } = await supabase
+        .from("contractor_pricing_quotes")
+        .select("id, contractor_id, company_name, city, trade_primary, recommended_plan, recommended_monthly_price, input_payload, source, updated_at")
+        .eq("id", quoteId)
+        .maybeSingle();
+      if (!quoteRow) return json({ error: "devis introuvable" }, 404);
+
+      const qInput = (quoteRow.input_payload ?? {}) as Record<string, unknown>;
+      const qAttr = (qInput.attribution ?? {}) as Record<string, unknown>;
+      const qRef = str(qInput.ref) ?? str(qAttr.ref) ?? null;
+      let qAffiliateId: string | null = null;
+      if (qRef) {
+        const { data: aff } = await supabase
+          .from("affiliates")
+          .select("id")
+          .eq("referral_code", qRef.toUpperCase())
+          .maybeSingle();
+        qAffiliateId = (aff as { id?: string } | null)?.id ?? null;
+      }
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("contractor_leads")
+        .insert({
+          source_type: "checkout_abandon",
+          source_label: "Offre de repli 350 $",
+          company_name: quoteRow.company_name,
+          business_name: quoteRow.company_name,
+          city: quoteRow.city,
+          category_primary: quoteRow.trade_primary,
+          trade: quoteRow.trade_primary,
+          email: str(qInput.email),
+          phone: str(qInput.phone),
+          contractor_id: quoteRow.contractor_id,
+          assigned_affiliate_id: qAffiliateId,
+          lead_status: status,
+          contact_status: "a_contacter",
+          payment_status: "abandoned",
+          recommended_plan_slug: quoteRow.recommended_plan,
+          payment_started_at: quoteRow.updated_at,
+          next_follow_up_at: stamp,
+          metadata_json: {
+            quote_id: quoteRow.id,
+            plan: quoteRow.recommended_plan,
+            plan_price_monthly: quoteRow.recommended_monthly_price,
+            abandon_step: "offre_repli_350",
+            fallback_350_status: status,
+            fallback_350_updated_at: stamp,
+            resume_url: `${SITE}/entrepreneur/plan-personnalise/${quoteRow.id}`,
+            ref: qRef,
+            source: quoteRow.source ?? str(qAttr.utm_source),
+            utm: qAttr,
+          },
+        })
+        .select("id")
+        .maybeSingle();
+      if (insErr) return json({ error: insErr.message }, 500);
+      return json({ ok: true, lead_id: inserted?.id ?? null, created: true });
+    }
+
     /* ---------- Détection des abandons ---------- */
     const cutoff = new Date(Date.now() - ABANDON_AFTER_MINUTES * 60_000).toISOString();
     const explicitQuoteId = str(body.quote_id);
