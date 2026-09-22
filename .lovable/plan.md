@@ -1,31 +1,84 @@
-# Promesse « rendez-vous garantis » — une seule vérité, partout
+# Offre de repli 350 $ — crédit UNPRO
 
-## Ce qui ne va pas aujourd'hui
+Quand un entrepreneur refuse ou reporte son forfait personnalisé, Clara propose une seule fois de sécuriser sa présence pour 350 $. Ce montant devient un crédit UNPRO applicable à tout achat admissible (rendez-vous, forfait, options), jamais des frais perdus.
 
-- La promesse est écrite différemment selon l'écran : cartes de forfaits, plan personnalisé, checkout, FAQ, offre d'entrée et scripts de vente calculent ou récrivent chacun leur version.
-- Les volumes annoncés se contredisent : le moteur de recommandation de Clara promet 5 / 10 / 25 / 50 rendez-vous par mois, alors que le catalogue de vente actif en prévoit d'autres.
-- Aucun écran n'exprime l'engagement réel : la garantie est annuelle (12 mois), mais tout est formulé comme un quota mensuel fixe.
-- Clara n'a pas de réponse cadrée à l'objection « je peux acheter des leads à 35 $ », et les chiffres qu'elle cite sont écrits en dur dans ses instructions.
+## Ce qui existe déjà et sera réutilisé
 
-## Ce que je vais faire
+- Le devis personnalisé et la page de plan personnalisé (offre principale, inchangée).
+- Le paiement Stripe existant du tunnel entrepreneur et son webhook, qui détecte déjà les événements dupliqués.
+- Le portefeuille entrepreneur (solde en compte) et le journal de transactions déjà en base.
+- La file de suivi des abandons (leads entrepreneurs) et l'alerte admin unique par dossier.
+- Le détecteur d'objections de Clara et les événements du tunnel entrepreneur.
 
-1. **Une seule source de vérité pour la promesse.** Un module unique calcule, à partir des données réelles du forfait choisi : la cadence mensuelle indicative, la garantie annuelle (cadence × 12), le texte de saisonnalité et le texte d'objection prix. Aucun écran ne recalcule ni ne réécrit ces phrases.
-2. **Formulation standardisée partout** : « Jusqu'à X rendez-vous par mois » + « Y rendez-vous qualifiés garantis sur 12 mois », suivi de : « La garantie est calculée sur une base annuelle. La distribution peut varier selon la saison, votre territoire et la demande réelle. » Plus aucune surface ne promet « X rendez-vous garantis chaque mois ».
-3. **Checkout : l'engagement annuel d'abord.** « Y rendez-vous garantis / 12 mois » en principal, « cadence pouvant aller jusqu'à X/mois selon la demande » en secondaire. Chiffres issus du forfait réel, jamais dupliqués en dur.
-4. **Alignement des volumes.** Le moteur de recommandation de Clara cesse d'utiliser sa propre liste de forfaits et lit le catalogue canonique. Les anciens codes de forfait sont résolus vers les codes actuels.
-5. **Clara répond à l'objection prix.** Réponse canonique ajoutée aux instructions de Clara texte et voix : lead partagé vs rendez-vous exclusif préqualifié, puis rappel de la garantie annuelle avec les chiffres du forfait réellement affiché. Aucun chiffre en dur ; si le forfait n'est pas connu, Clara explique la différence sans citer de nombre.
-6. **Aucune promesse inventée.** Si la donnée de garantie est absente ou incohérente, l'écran affiche un libellé neutre et l'anomalie est journalisée dans le mécanisme d'audit existant — jamais un chiffre inventé, jamais « ultra qualifié » sans preuve au dossier.
-7. **Mobile.** Vérification que les libellés tiennent dans les cartes de forfaits, le checkout et le chat sans texte coupé.
+Aucune nouvelle table de crédit, aucun second système Stripe.
 
-## Vérification
+## Décisions retenues
 
-Tests automatisés sur le calcul de la promesse (cadence, garantie annuelle, absence de donnée), sur l'absence de la formule « garantis par mois » dans les surfaces publiques, et sur l'alignement des volumes entre le moteur de Clara et le catalogue. Parcours réel en aperçu : audit IA entrepreneur → plan personnalisé → carte de prix → checkout, plus l'objection prix dans Clara texte, avec deux forfaits de cadences différentes, en 390 px et en bureau. Aucun vrai prospect contacté.
+- L'ancienne offre d'entrée « jusqu'à 5 rendez-vous pour 350 $ » est retirée du parcours entrepreneur; son code reste en place pour les liens déjà envoyés.
+- Le crédit s'applique à tout achat UNPRO admissible, selon des règles validées côté serveur.
+- Test de bout en bout en mode Stripe TEST seulement.
+
+## Parcours
+
+1. Plan personnalisé recommandé (inchangé, toujours en premier).
+2. Clara répond à l'objection (prix, hésitation, saisonnalité, leads partagés).
+3. Si l'entrepreneur reste non prêt : offre de repli 350 $, une seule tentative.
+4. « Pas maintenant » : décision respectée, dossier enregistré pour suivi.
+5. Suivi admin / affilié à partir de la file existante.
+
+Clara déclenche l'offre sur une vraie intention détectée (« je vais attendre », « c'est trop cher », « je veux commencer plus petit », « pas maintenant », « je vais y penser »…) ou sur un refus explicite du plan — jamais avant la présentation du plan, jamais deux fois.
+
+## Bloc affiché
+
+Carte premium, mobile d'abord, sous le plan et dans le fil Clara :
+
+```text
+Pas prêt pour un plan complet ?
+Sécurisez votre présence UNPRO — 350 $
+✓ Aucun crédit perdu
+✓ 350 $ disponibles pour vos futurs rendez-vous
+✓ Votre profil demeure actif
+✓ Commencez à bâtir votre historique UNPRO
+[ Sécuriser ma présence — 350 $ ]   Pas maintenant
+```
+
+Aucun compte à rebours, aucune fausse rareté, aucun rabais fictif. CTA secondaire discret. Le bloc ne masque pas Clara et ne déborde pas sur petit écran.
+
+## Après paiement
+
+Le crédit est accordé uniquement par le serveur, à la confirmation Stripe : solde +350 $, transaction enregistrée avec l'identifiant de paiement, l'origine et la trace d'audit. Un webhook reçu deux fois ne crédite qu'une fois. Un paiement échoué n'accorde rien et laisse le bouton disponible pour réessayer. Le solde apparaît immédiatement dans le compte entrepreneur avec la mention « Votre crédit sera appliqué automatiquement à vos futurs achats admissibles. »
 
 ## Détails techniques
 
-- Nouveau module unique `src/lib/pricing/appointmentGuarantee.ts` : `buildGuaranteePromise(plan)` → `{ monthlyCadence, annualGuarantee, cadenceLabel, guaranteeLabel, seasonalityNote, priceObjectionCopy, status: 'known' | 'unknown' }`. Entrée = données réelles du forfait (`plans.appointments_included` / devis personnalisé `guaranteed_appointments`).
-- Consommateurs mis à jour (suppression des chaînes locales) : `CardPlanRegular`, `CardPlanFounders`, `PageContractorPersonalizedPlan`, `PageCheckoutStripe`, `AppointmentUpsellCard`, `PageActivationStart`, `PageCheckoutSuccess`, `SmartFAQ`/`faqs.ts`, `TrialActivationCard`/`offer350`, `PageProLandingNuclearClose` (`buildRecapScript`).
-- `src/services/alexEntrepreneurGuidanceEngine.ts` : suppression de la constante `PLANS` codée en dur, lecture du catalogue canonique (`usePlanCatalog` / `plans`), résolution des codes legacy via `canonical_plan_code`.
-- Clara : injection de la promesse et de la réponse objection dans `supabase/functions/alex-chat`, `_shared/alex-french-voice.ts` et `alex-voice-sales` à partir du même calcul serveur (`_shared/pricingModes.ts` + `plans`), en retirant les mentions « 5 rendez-vous » écrites en dur du prompt de vente.
-- Anomalie de garantie → journalisation via le mécanisme d'audit existant, pas de nouveau canal de logs.
-- Tests : nouveaux cas Vitest pour `appointmentGuarantee`, extension de `src/test/contractor-plan-catalog.test.ts` (cohérence moteur/catalogue), garde texte anti-« garantis par mois » ; puis `npm test` ciblé, `npm run typecheck`, `npm run lint:critical`, `npm run build`.
+**Base de données (une migration)**
+- Index unique partiel sur le journal de transactions pour la clé `stripe_session_id` des crédits de repli → idempotence stricte.
+- Contrainte : montant de crédit de repli = 35000 cents exactement; aucun montant inférieur possible.
+- Correction de sécurité : la politique « Contractors manage own wallet » (actuellement ALL) est réduite à la lecture seule; toute écriture passe par le service role. Lecture des transactions limitée à l'entrepreneur propriétaire; admins via `has_role`.
+
+**Paiement**
+- `create-checkout-session` reçoit un mode `fallback_credit_350` : session Stripe unique de 350 $ CAD, métadonnées `offer=fallback_credit_350`, `contractor_id`, `quote_id`, `prospect_id`, affilié/UTM. Le montant est fixé côté serveur, jamais transmis par le frontend.
+- `stripe-webhook` : nouveau cas dans `checkout.session.completed` pour cette offre → création/mise à jour du portefeuille (+35000), insertion de la transaction avec `balance_after_cents`, écriture au journal d'activation, fermeture du lead d'abandon lié au devis.
+
+**Clara (texte + voix)**
+- Nouveau type d'objection « pas prêt / trop cher / plus tard » dans le détecteur existant.
+- Bloc de prompt partagé côté serveur (même fichier partagé que la promesse de rendez-vous) injecté dans Clara texte et Clara voix : règle du minimum 350 $, formulation du crédit, une seule tentative, respect du refus. Session partagée : aucune question déjà répondue n'est reposée.
+
+**Suivi et analytics**
+- Statuts portés dans la file de leads existante : `plan_offered`, `plan_declined`, `fallback_350_offered`, `fallback_350_checkout_started`, `fallback_350_paid`, `fallback_350_declined`, `followup_required` — sans doublon de prospect.
+- Événements du tunnel : `fallback_350_shown`, `_clicked`, `_checkout_created`, `_payment_success`, `_payment_failed`, `_declined`, avec devis, entrepreneur, affilié et source.
+- Vue admin : refus de plan, taux d'exposition, clic, paiement, revenu récupéré, crédits consommés ensuite, passage ultérieur à un forfait.
+
+**Retrait de l'ancienne offre d'entrée**
+- Les surfaces du tunnel entrepreneur qui affichent « jusqu'à 5 rendez-vous pour 350 $ » cessent de la proposer; les pages accessibles par lien direct restent fonctionnelles.
+
+## Tests
+
+1. Plan accepté → comportement actuel intact, aucune offre de repli.
+2. « Je préfère attendre » → Clara reconnaît, propose 350 $, paiement test, webhook, crédit +350 $, solde visible.
+3. Paiement échoué → aucun crédit, message clair, nouvelle tentative possible.
+4. Webhook envoyé deux fois → un seul crédit de 350 $.
+5. Refus du 350 $ → données conservées, lead visible admin/affilié, aucune relance agressive.
+6. Texte puis voix → contexte conservé, aucune répétition, une seule tentative de repli.
+7. Mobile 390 px et petit Android → carte, CTA, chat et confirmation utilisables sans coupure.
+
+Plus tests automatisés : minimum 350 $ inviolable, idempotence du crédit, aucune écriture de solde depuis le frontend.
