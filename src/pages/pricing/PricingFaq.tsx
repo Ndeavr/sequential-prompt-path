@@ -3,11 +3,14 @@ import { motion } from "framer-motion";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { SEASONALITY_NOTE } from "@/lib/pricing/appointmentGuarantee";
+
 const FAQS = [
   {
     q: "Combien de revenus puis-je espérer générer ?",
-    a: "Avec un panier moyen de 4 000 $ et un taux de fermeture de 30 %, 10 rendez-vous (Premium) génèrent en moyenne 12 000 $ de contrats par mois. Élite ouvre l'accès aux projets XL/XXL — souvent 25 000 $+ par mois.",
+    a: "Le calcul dépend de votre panier moyen, de votre taux de fermeture et de la cadence de rendez-vous de votre forfait. Votre plan personnalisé affiche l'estimation établie à partir de vos propres chiffres, jamais d'une moyenne générique.",
   },
+
   {
     q: "Vendez-vous des leads partagés ?",
     a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. Pas de guerre de prix, pas de course aux soumissions, pas de leads recyclés.",
@@ -22,8 +25,17 @@ const FAQS = [
   },
   {
     q: "Les rendez-vous sont-ils inclus dans le prix ?",
-    a: "Oui — 5 dans Pro, 10 dans Premium et 25 dans Élite chaque mois. Vous pouvez aussi acheter des rendez-vous supplémentaires à l'unité ou en bloc.",
+    a: "Oui. Chaque forfait inclut une cadence mensuelle indicative et une garantie calculée sur 12 mois — par exemple, une cadence de 5 rendez-vous par mois correspond à 60 rendez-vous qualifiés garantis sur 12 mois. Le nombre exact de votre forfait est affiché avant le paiement. Vous pouvez aussi acheter des rendez-vous supplémentaires à l'unité ou en bloc.",
   },
+  {
+    q: "La garantie est-elle mensuelle ou annuelle ?",
+    a: SEASONALITY_NOTE,
+  },
+  {
+    q: "Pourquoi payer plus qu'un lead partagé à environ 35 $ ?",
+    a: "Un lead à 35 $ est souvent partagé : plusieurs entrepreneurs reçoivent le même client et vous devez le joindre, le relancer et compétitionner. Un rendez-vous UNPRO est exclusif, jamais partagé, et préqualifié selon le projet, le territoire, le service recherché et l'échéancier. Vous ne payez pas un nom et un numéro, mais un rendez-vous beaucoup plus près d'une décision.",
+  },
+
   {
     q: "Que se passe-t-il si ma zone est complète ?",
     a: "Certaines combinaisons spécialité + ville sont limitées pour préserver la qualité. Le plan Signature donne accès à une priorité territoriale et à des options d'exclusivité par zone.",

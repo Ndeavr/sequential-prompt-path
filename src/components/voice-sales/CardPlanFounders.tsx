@@ -2,6 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Crown, Sparkles } from "lucide-react";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 interface Props {
   plan: any;
@@ -35,11 +37,21 @@ export default function CardPlanFounders({ plan, foundersPrice, onSelect }: Prop
           <span className="text-sm text-muted-foreground">/mois</span>
         </div>
 
-        {plan.appointments_range_min && (
-          <Badge variant="outline" className="text-xs">
-            {plan.appointments_range_min}–{plan.appointments_range_max} rendez-vous/mois
-          </Badge>
-        )}
+        {(() => {
+          const guarantee = buildAppointmentGuarantee(
+            plan.appointments_range_min ?? plan.appointments_included ?? null,
+          );
+          if (guarantee.status !== "known") return null;
+          return (
+            <div className="space-y-1">
+              <Badge variant="outline" className="text-xs">
+                {guarantee.guaranteeLabel}
+              </Badge>
+              <p className="text-[11px] text-muted-foreground">{guarantee.cadenceLabel}</p>
+            </div>
+          );
+        })()}
+
 
         <ul className="space-y-1.5 text-sm">
           <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Territoire prioritaire IA</li>
