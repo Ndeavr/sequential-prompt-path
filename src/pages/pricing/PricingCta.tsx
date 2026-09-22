@@ -18,7 +18,7 @@ export default function PricingCta() {
                 Prêt à remplir votre calendrier ?
               </h2>
               <p className="text-muted-foreground text-lg mb-2 max-w-md mx-auto">
-                Activez Premium aujourd'hui. Premiers rendez-vous exclusifs dès cette semaine.
+                Activez votre forfait aujourd'hui. Rendez-vous exclusifs, garantie calculée sur 12 mois.
               </p>
               <p className="text-xs text-warning/90 font-semibold mb-7">
                 ⚡ Places limitées par ville — verrouillez la vôtre maintenant.
@@ -26,7 +26,7 @@ export default function PricingCta() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow font-semibold">
                   <a href="#plans">
-                    Activer Premium <ArrowRight className="h-4 w-4 ml-2" />
+                    Voir mon forfait <ArrowRight className="h-4 w-4 ml-2" />
                   </a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
