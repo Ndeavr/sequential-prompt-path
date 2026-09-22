@@ -26,6 +26,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { setActiveQuoteId } from "@/lib/checkoutUrl";
 import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
@@ -398,6 +400,29 @@ export default function PageContractorPersonalizedPlan() {
             votre territoire.
           </p>
         </GlassCard>
+
+        {/* Promesse de rendez-vous — garantie annuelle, source unique */}
+        {(() => {
+          const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
+          return (
+            <GlassCard className="p-6 mb-5">
+              <div className="flex items-center gap-2 mb-2 text-emerald-300">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="text-xs uppercase tracking-wider">
+                  Engagement rendez-vous
+                </span>
+              </div>
+              <div className="text-2xl font-semibold tracking-[-0.03em]">
+                {guarantee.checkoutPrimaryLabel}
+              </div>
+              <p className="text-sm text-white/70 mt-1">{guarantee.checkoutSecondaryLabel}</p>
+              <p className="text-xs text-white/55 mt-3 leading-relaxed">
+                {guarantee.seasonalityNote}
+              </p>
+            </GlassCard>
+          );
+        })()}
+
 
         {/* Potential revenue */}
         <GlassCard className="p-6 mb-5">

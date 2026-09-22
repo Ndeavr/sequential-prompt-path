@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Check, Crown, ChevronRight, Sparkles, Shield, TrendingUp, Zap, Star, Award, Loader2 } from "lucide-react";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import { supabase } from "@/integrations/supabase/client";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 interface PlanRow {
   code: string;
