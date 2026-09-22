@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  buildAppointmentGuarantee,
+  buildGuaranteePromptBlock,
+} from "../_shared/appointmentGuarantee.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,10 +52,11 @@ Calcule et recommande le plan basé sur :
 - Revenus visés / valeur moyenne de projet = rendez-vous nécessaires
 - Ajusté par taux de fermeture
 - Plans UNPRO (mensuel): Présence(49$), Local(79$), Croissance(149$), Pro(299$), Premium(599$), Domination(1499$)
-- Offre d'entrée: 350 $ (paiement unique) — jusqu'à 5 rendez-vous exclusifs garantis. Le nombre exact est calculé avant le paiement selon le domaine, le territoire et la capacité. Ne jamais promettre 5 sans calcul.
+- Offre d'entrée: 350 $ (paiement unique). Le nombre de rendez-vous exclusifs est calculé avant le paiement selon le domaine, le territoire et la capacité. Ne jamais annoncer un nombre sans calcul.
 - Si le besoin est atypique (territoire, exclusivité, capacité), propose le plan personnalisé calculé par UNPRO
 
-Dis clairement : "Je vous recommande le plan [X]. Vous recevez [Y] rendez-vous qualifiés par mois."
+Dis clairement : "Je vous recommande le plan [X]." Puis exprime toujours la promesse comme une cadence indicative par mois ET une garantie sur 12 mois, en utilisant uniquement les chiffres du plan réel fournis plus bas.
+
 
 ### PHASE 5 — UPSELL FOUNDERS (si Élite ou Signature)
 - "J'ai une offre spéciale. Le programme Fondateurs vous donne un prix gelé à vie."
@@ -95,9 +101,12 @@ serve(async (req) => {
       .eq("audience", "contractor")
       .order("tier_rank");
 
-    const planContext = plans?.map(p =>
-      `${p.name} (${Math.round((p.monthly_price ?? 0) / 100)}$/mois, ${p.appointments_included ?? 0} RDV inclus)`
-    ).join("\n") || "";
+    const planContext = plans?.map(p => {
+      const g = buildAppointmentGuarantee(p.appointments_included);
+      return `${p.name} (${Math.round((p.monthly_price ?? 0) / 100)}$/mois — ${
+        g.status === "known" ? `${g.cadenceLabel}, ${g.guaranteeLabel}` : "cadence à confirmer"
+      })`;
+    }).join("\n") || "";
 
     // Log event if session exists
     if (session_id) {
@@ -108,22 +117,30 @@ serve(async (req) => {
       });
     }
 
-    const enrichedSystem = `${SALES_SYSTEM_PROMPT}\n\n## PLANS DISPONIBLES\n${planContext}`;
-
     // Determine plan recommendation if we have qualification data
     let recommendationHint = "";
+    let recommendedCadence: number | null = null;
     if (qualification_data?.close_rate && qualification_data?.monthly_revenue_goal) {
       const avgJob = qualification_data.average_job_value || 5000;
       const closeRate = qualification_data.close_rate / 100;
       const rdvNeeded = Math.ceil((qualification_data.monthly_revenue_goal / avgJob) / closeRate);
-      
+
       const matchedPlan = plans?.find(p => (p.appointments_included ?? 0) >= rdvNeeded)
         || plans?.[(plans?.length ?? 1) - 1];
 
       if (matchedPlan) {
-        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${Math.round((matchedPlan.monthly_price ?? 0) / 100)}$/mois).`;
+        recommendedCadence = matchedPlan.appointments_included ?? null;
+        const g = buildAppointmentGuarantee(recommendedCadence);
+        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${Math.round((matchedPlan.monthly_price ?? 0) / 100)}$/mois). Promesse à citer: ${
+          g.status === "known" ? `${g.cadenceLabel} — ${g.guaranteeLabel}` : "cadence non confirmée, ne cite aucun chiffre"
+        }.`;
       }
     }
+
+    const enrichedSystem = `${SALES_SYSTEM_PROMPT}\n\n## PLANS DISPONIBLES\n${planContext}\n\n${
+      buildGuaranteePromptBlock(buildAppointmentGuarantee(recommendedCadence))
+    }`;
+
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

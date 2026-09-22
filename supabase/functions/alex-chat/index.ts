@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  buildAppointmentGuarantee,
+  buildGuaranteePromptBlock,
+} from "../_shared/appointmentGuarantee.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -646,6 +651,17 @@ serve(async (req) => {
     systemPrompt += isVoiceMode ? VOICE_MODE_RULES : TEXT_MODE_RULES;
     systemPrompt += getFrustrationPrompt(frustrationLevel);
     systemPrompt += getUrgencyPrompt(lastUserMessage);
+    // Promesse de rendez-vous : source unique. Les chiffres viennent du plan réel
+    // transmis dans le contexte ; sans plan connu, Clara ne cite aucun nombre.
+    systemPrompt +=
+      "\n\n" +
+      buildGuaranteePromptBlock(
+        buildAppointmentGuarantee(
+          (context as { planAppointmentsIncluded?: number } | undefined)
+            ?.planAppointmentsIncluded ?? null,
+        ),
+      );
+
 
     // ===== BUILD CONTEXT MESSAGES =====
     const contextMessages: Array<{ role: string; content: string }> = [

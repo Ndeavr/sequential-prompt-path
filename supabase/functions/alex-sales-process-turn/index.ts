@@ -19,10 +19,11 @@ const MICROCOPY = {
     ask_capacity: "Combien de projets supplémentaires pouvez-vous accepter par mois ?",
     projection_intro: "Très bien. Voici ce que je vois pour vous.",
     plan_recommendation: "Pour votre situation, voici le plan le plus adapté.",
-    objection_price: "Je comprends. L'objectif est justement d'éviter de payer pour du bruit.",
+    objection_price: "Un lead à 35 $ est souvent partagé : plusieurs entrepreneurs le reçoivent et vous devez compétitionner. Ici, le rendez-vous est exclusif et préqualifié, et la garantie se calcule sur 12 mois.",
     objection_think: "Bien sûr. Vous pouvez avancer sans tout finaliser immédiatement.",
     objection_trust: "C'est normal d'avoir des questions. UNPRO mise sur la transparence et les résultats mesurables.",
-    objection_compare: "Je vous encourage à comparer. La différence, c'est la qualité des rendez-vous.",
+    objection_compare: "Je vous encourage à comparer. La différence, c'est l'exclusivité et la préqualification du rendez-vous.",
+
     checkout_ready: "Je peux préparer votre activation dès maintenant.",
     activation_done: "Parfait. Votre compte est activé. Voici les prochaines étapes.",
   },

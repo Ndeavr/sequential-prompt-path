@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Check, Crown, ChevronRight, Sparkles, Shield, TrendingUp, Zap, Star, Award, Loader2 } from "lucide-react";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import { supabase } from "@/integrations/supabase/client";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 interface PlanRow {
   code: string;
@@ -132,7 +134,13 @@ export default function StepPlanRecommendation({
             <p className="text-xs text-muted-foreground leading-relaxed">
               <span className="text-foreground font-semibold">Pourquoi {recommendedPlan.name} ?</span>{" "}
               {recommendationReason ||
-                `${recommendedPlan.appointments_included ?? 0} rendez-vous garantis par mois, ajustés à votre territoire et à votre capacité.`}
+                (() => {
+                  const g = buildAppointmentGuarantee(recommendedPlan.appointments_included);
+                  return g.status === "known"
+                    ? `${g.guaranteeLabel} (${g.cadenceLabel.toLowerCase()}), ajustés à votre territoire et à votre capacité.`
+                    : "Cadence et garantie établies avec vous à partir de votre territoire et de votre capacité.";
+                })()}
+
               {typeof personalizedPriceCents === "number" && (
                 <>
                   {" "}Prix personnalisé :{" "}
@@ -210,9 +218,10 @@ export default function StepPlanRecommendation({
                       <span className="text-base font-bold text-foreground">{plan.name}</span>
                       {(plan.appointments_included ?? 0) > 0 && (
                         <span className="text-[10px] text-muted-foreground/60 font-medium">
-                          {plan.appointments_included} rendez-vous/mois
+                          {buildAppointmentGuarantee(plan.appointments_included).guaranteeLabel}
                         </span>
                       )}
+
                     </div>
                     {plan.description && (
                       <p className="text-[11px] text-muted-foreground/70">{plan.description}</p>

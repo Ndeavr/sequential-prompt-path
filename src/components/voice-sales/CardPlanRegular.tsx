@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 interface Props {
   plan: any;
@@ -24,14 +26,24 @@ export default function CardPlanRegular({ plan, recommended, onSelect }: Props) 
           {plan.tagline && <p className="text-xs text-muted-foreground">{plan.tagline}</p>}
         </div>
 
-        {plan.appointments_range_min && (
-          <div className="space-y-0.5">
-            <p className="text-2xl font-black text-foreground leading-none">
-              {plan.appointments_range_min}{plan.appointments_range_max && plan.appointments_range_max !== plan.appointments_range_min ? `–${plan.appointments_range_max}` : ""}
-            </p>
-            <p className="text-xs font-medium text-muted-foreground">rendez-vous qualifiés inclus / mois</p>
-          </div>
-        )}
+        {(() => {
+          const guarantee = buildAppointmentGuarantee(
+            plan.appointments_range_min ?? plan.appointments_included ?? null,
+          );
+          if (guarantee.status !== "known") return null;
+          return (
+            <div className="space-y-0.5">
+              <p className="text-2xl font-black text-foreground leading-none">
+                {guarantee.annualGuarantee}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">
+                rendez-vous qualifiés garantis sur 12 mois
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">{guarantee.cadenceLabel}</p>
+            </div>
+          );
+        })()}
+
 
         <div className="flex items-baseline gap-1">
           <span className="text-xl font-bold">{formatPrice((plan.monthly_price ?? 0) / 100)}</span>

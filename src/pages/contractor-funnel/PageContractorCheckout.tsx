@@ -22,6 +22,8 @@ import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { fetchPricingQuote, type PricingQuote } from "@/services/contractorPricingQuoteService";
 import { getActiveActivationToken, setActiveActivationToken } from "@/lib/checkoutUrl";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, price: p.monthlyPrice, features: p.features }])
@@ -170,6 +172,22 @@ export default function PageContractorCheckout() {
             <motion.div variants={fadeUp}>
               <CardGlass noAnimation elevated>
                 <h3 className="text-sm font-semibold text-foreground mb-3">Récapitulatif — Plan {planName}</h3>
+                {(() => {
+                  const guarantee = buildAppointmentGuarantee(quote?.guaranteed_appointments ?? null);
+                  return (
+                    <div className="mb-4 rounded-xl border border-border/50 bg-muted/20 p-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        {guarantee.checkoutPrimaryLabel}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {guarantee.checkoutSecondaryLabel}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/80 mt-2 leading-relaxed">
+                        {guarantee.seasonalityNote}
+                      </p>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-2 mb-4">
                   {plan?.features.map((f) => (
                     <div key={f} className="flex items-center gap-2">
@@ -178,6 +196,7 @@ export default function PageContractorCheckout() {
                     </div>
                   ))}
                 </div>
+
 
                 <div className="border-t border-border/50 pt-3 space-y-2">
                   <div className="flex justify-between text-sm">
