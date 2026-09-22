@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Zap } from "lucide-react";
 import PanelPlanCapacityProjection from "@/components/go-live/PanelPlanCapacityProjection";
 import GrowthPlanCards from "@/components/plans/GrowthPlanCards";
-import TrialActivationCard from "@/components/trial/TrialActivationCard";
 import { useAlexCheckoutState } from "@/stores/alexCheckoutState";
 import type { ContractorPlanSlug } from "@/config/contractorPlans";
-import { toast } from "sonner";
-import { OFFER_350 } from "@/lib/copy/offer350";
+
 
 export default function PageOnboardingPlan() {
   const navigate = useNavigate();
@@ -26,11 +24,6 @@ export default function PageOnboardingPlan() {
     navigate(`/entrepreneur/onboarding/payment?plan=${selectedPlan}`);
   };
 
-  const handleTrial = () => {
-    setStage("trial_offer");
-    toast.info(`${OFFER_350.title} — ${OFFER_350.paymentNote}`);
-  };
-
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 max-w-2xl mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-3">
@@ -45,14 +38,6 @@ export default function PageOnboardingPlan() {
           <p className="text-xs text-muted-foreground">Étape 3/5 — Activez votre croissance</p>
         </div>
       </div>
-
-      <TrialActivationCard
-        onActivateTrial={handleTrial}
-        onSkipToStandard={() => {
-          const el = document.getElementById("growth-plans");
-          el?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-      />
 
       <PanelPlanCapacityProjection />
 

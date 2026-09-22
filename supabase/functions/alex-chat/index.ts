@@ -4,6 +4,7 @@ import {
   buildAppointmentGuarantee,
   buildGuaranteePromptBlock,
 } from "../_shared/appointmentGuarantee.ts";
+import { buildFallbackCreditPromptBlock } from "../_shared/fallbackCredit350.ts";
 
 
 const corsHeaders = {
@@ -661,6 +662,9 @@ serve(async (req) => {
             ?.planAppointmentsIncluded ?? null,
         ),
       );
+
+    // Offre de repli 350 $ : jamais avant le plan, une seule tentative.
+    systemPrompt += "\n\n" + buildFallbackCreditPromptBlock();
 
 
     // ===== BUILD CONTEXT MESSAGES =====

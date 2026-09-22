@@ -104,6 +104,13 @@ export type FunnelEventType =
   | "plan_requested"
   // Entrée affiliée /:slug — échec de lecture (jamais silencieux)
   | "affiliate_entry_lookup_failed"
+  // Offre de repli — crédit UNPRO 350 $
+  | "fallback_350_shown"
+  | "fallback_350_clicked"
+  | "fallback_350_checkout_created"
+  | "fallback_350_payment_success"
+  | "fallback_350_payment_failed"
+  | "fallback_350_declined"
   | "paid";
 
 export type FunnelEventSource =

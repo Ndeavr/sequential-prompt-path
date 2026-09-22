@@ -4,6 +4,12 @@ import {
   assertCompensationAllowed,
   complianceErrorPayload,
 } from "../_shared/professionCompliance.ts";
+import {
+  FALLBACK_CREDIT_AMOUNT_CENTS,
+  FALLBACK_CREDIT_OFFER_KEY,
+  FALLBACK_CREDIT_PRODUCT_NAME,
+  assertFallbackCreditAmount,
+} from "../_shared/fallbackCredit350.ts";
 
 
 const corsHeaders = {
@@ -67,6 +73,7 @@ Deno.serve(async (req) => {
       offerId,
       professionCode,
       activationToken,
+      fallbackCredit,
 
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
@@ -97,6 +104,113 @@ Deno.serve(async (req) => {
       }
       verifiedProspectId = tokenRow.prospect_id;
       verifiedActivationToken = token;
+    }
+
+    // ── OFFRE DE REPLI — CRÉDIT UNPRO 350 $ ───────────────────────────────
+    // Paiement unique, montant fixé côté serveur. Le crédit n'est JAMAIS
+    // accordé ici : seul le webhook Stripe crédite, après confirmation.
+    if (fallbackCredit === true) {
+      const stripeFallback = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+      let { data: fbContractor } = await serviceClient
+        .from("contractors")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!fbContractor) {
+        const { data: created, error: createErr } = await serviceClient
+          .from("contractors")
+          .insert({ user_id: userId, business_name: userEmail })
+          .select("id")
+          .single();
+        if (createErr || !created) {
+          return new Response(
+            JSON.stringify({ error: "Impossible de préparer votre compte entrepreneur." }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        fbContractor = created;
+      }
+
+      const amountCents = assertFallbackCreditAmount(FALLBACK_CREDIT_AMOUNT_CENTS);
+      const origin = req.headers.get("origin") ?? "https://unpro.ca";
+      const isEmbeddedFallback = uiMode === "embedded";
+
+      const fallbackConfig: Record<string, unknown> = {
+        mode: "payment",
+        locale: "fr",
+        customer_email: userEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: "cad",
+              unit_amount: amountCents,
+              product_data: {
+                name: FALLBACK_CREDIT_PRODUCT_NAME,
+                description:
+                  "Crédit UNPRO applicable à vos futurs achats admissibles.",
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          offer: FALLBACK_CREDIT_OFFER_KEY,
+          contractor_id: fbContractor.id,
+          user_id: userId,
+          credit_amount_cents: String(amountCents),
+          ...(quoteId && { quote_id: String(quoteId) }),
+          ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+          ...(typeof ref === "string" && ref.trim() && { ref: ref.trim() }),
+        },
+      };
+
+      if (isEmbeddedFallback) {
+        fallbackConfig.ui_mode = "embedded";
+        fallbackConfig.return_url =
+          returnUrl || `${origin}/pro/billing?credit=success&session_id={CHECKOUT_SESSION_ID}`;
+      } else {
+        fallbackConfig.success_url =
+          successUrl || `${origin}/pro/billing?credit=success&session_id={CHECKOUT_SESSION_ID}`;
+        fallbackConfig.cancel_url = cancelUrl || `${origin}/pro/billing?credit=canceled`;
+      }
+
+      const fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never);
+
+      console.info("[checkout:fallback_credit_350:created]", {
+        user_id: userId,
+        contractor_id: fbContractor.id,
+        amount_cents: amountCents,
+        quote_id: quoteId ?? null,
+        checkout_session_id: fbSession.id,
+      });
+
+      await serviceClient.from("contractor_funnel_events").insert({
+        contractor_id: fbContractor.id,
+        event_type: "fallback_350_checkout_created",
+        metadata: {
+          checkout_session_id: fbSession.id,
+          amount_cents: amountCents,
+          quote_id: quoteId ?? null,
+        },
+      });
+
+      if (isEmbeddedFallback) {
+        if (!fbSession.client_secret) {
+          return new Response(
+            JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
+            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify({ clientSecret: fbSession.client_secret }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ url: fbSession.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ── PROFESSIONAL COMPLIANCE GATE (fail closed) ────────────────────────

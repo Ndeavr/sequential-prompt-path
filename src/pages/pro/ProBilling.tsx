@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { UnproCreditBalance } from "@/components/entrepreneur/UnproCreditBalance";
 import {
   useContractorSubscription,
   useCreateBillingPortal,
@@ -281,6 +282,12 @@ const ProBilling = () => {
         title="Facturation"
         description="Gérez votre abonnement et votre plan"
       />
+
+      <div className="mb-6">
+        <UnproCreditBalance />
+      </div>
+
+
 
       {/* Current plan summary */}
       {isActive && currentPlan && (

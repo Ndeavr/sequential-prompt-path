@@ -29,6 +29,7 @@ import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
 import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
+import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
   isContractorObjective,
@@ -85,6 +86,8 @@ export default function PageContractorPersonalizedPlan() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [fallbackVisible, setFallbackVisible] = useState(false);
+  const [fallbackDeclined, setFallbackDeclined] = useState(false);
 
   // Aucune offre n'est affichée sans preuve serveur : un entrepreneur organique
   // non attribué ne voit jamais l'offre affilié.
@@ -540,6 +543,45 @@ export default function PageContractorPersonalizedPlan() {
           })()}
         </GlassCard>
 
+        {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
+        {!waitlisted && !fallbackDeclined && (
+          <div className="mt-8">
+            {fallbackVisible ? (
+              <FallbackCredit350Card
+                quoteId={quote.id}
+                contractorId={quote.contractor_id ?? null}
+                affiliateRef={affiliateRef ?? null}
+                onDecline={() => {
+                  setFallbackDeclined(true);
+                  void supabase.functions.invoke("contractor-relance-abandon", {
+                    body: { action: "fallback_status", quote_id: quote.id, status: "fallback_350_declined" },
+                  });
+                }}
+                returnPath={`/entrepreneur/plan-personnalise/${quote.id}`}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setFallbackVisible(true);
+                  void supabase.functions.invoke("contractor-relance-abandon", {
+                    body: { action: "fallback_status", quote_id: quote.id, status: "fallback_350_offered" },
+                  });
+                }}
+                className="w-full text-center text-sm text-white/50 underline-offset-4 hover:underline"
+              >
+                Je ne suis pas prêt à choisir un forfait aujourd'hui
+              </button>
+            )}
+          </div>
+        )}
+
+        {fallbackDeclined && (
+          <p className="mt-8 text-center text-sm text-white/50">
+            C'est noté. Votre dossier est conservé, vous pourrez reprendre quand vous
+            serez prêt.
+          </p>
+        )}
 
         <div className="text-center text-xs text-white/40 mt-8">
           Devis #{quote.id.slice(0, 8)} · Valide 30 jours.
