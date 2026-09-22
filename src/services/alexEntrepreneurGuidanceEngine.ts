@@ -4,6 +4,13 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  CONTRACTOR_PLANS,
+  RETIRED_CONTRACTOR_PLANS,
+  resolvePlanSlug,
+} from "@/config/contractorPlans";
+import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+
 
 // ─── Types ───
 
@@ -38,14 +45,47 @@ export interface PlanRecommendation {
 }
 
 // ─── Plan definitions ───
+// AUCUN chiffre codé en dur : prix, cadence et garantie viennent du catalogue
+// canonique (src/config/contractorPlans.ts), aligné sur public.plans.
 
-const PLANS: Record<PlanTier, { price: number; label: string; features: string[]; maxRdvMonth: number }> = {
-  recrue:    { price: 149,  label: "Recrue",    features: ["Profil UNPRO", "Présence dans l'écosystème IA", "Réception de demandes de base"], maxRdvMonth: 0 },
-  pro:       { price: 349,  label: "Pro",       features: ["5 rendez-vous inclus", "Demandes qualifiées", "Profil optimisé (AIPP)", "Statistiques de base"], maxRdvMonth: 5 },
-  premium:   { price: 599,  label: "Premium",   features: ["10 rendez-vous inclus", "Rendez-vous directs à l'agenda", "Synchronisation Google Calendar", "Notifications instantanées"], maxRdvMonth: 10 },
-  elite:     { price: 999,  label: "Élite",     features: ["25 rendez-vous inclus", "Optimisation des routes", "Buffers automatiques", "Priorité sur les plages rentables"], maxRdvMonth: 25 },
-  signature: { price: 1799, label: "Signature", features: ["50 rendez-vous inclus", "Optimisation avancée en temps réel", "Exclusivité territoriale", "Visibilité maximale IA"], maxRdvMonth: 50 },
+const TIER_TO_SLUG: Record<PlanTier, string> = {
+  recrue: "recrue",
+  pro: "pro",
+  premium: "premium",
+  elite: "elite",
+  signature: "signature",
 };
+
+function planFromCatalog(tier: PlanTier) {
+  const slug = resolvePlanSlug(TIER_TO_SLUG[tier]);
+  const entry =
+    CONTRACTOR_PLANS.find((p) => p.slug === slug) ??
+    RETIRED_CONTRACTOR_PLANS.find((p) => p.slug === slug) ??
+    null;
+  const cadence = entry?.appointmentsIncluded ?? 0;
+  const guarantee = buildAppointmentGuarantee(cadence);
+  const baseFeatures = entry?.features ?? [];
+  const features =
+    guarantee.status === "known"
+      ? [guarantee.guaranteeLabel, guarantee.cadenceLabel, ...baseFeatures]
+      : baseFeatures;
+  return {
+    price: entry?.monthlyPrice ?? 0,
+    label: entry?.name ?? tier,
+    features,
+    maxRdvMonth: cadence,
+    guarantee,
+  };
+}
+
+const PLANS: Record<PlanTier, ReturnType<typeof planFromCatalog>> = {
+  recrue: planFromCatalog("recrue"),
+  pro: planFromCatalog("pro"),
+  premium: planFromCatalog("premium"),
+  elite: planFromCatalog("elite"),
+  signature: planFromCatalog("signature"),
+};
+
 
 // ─── Revenue projection ───
 
