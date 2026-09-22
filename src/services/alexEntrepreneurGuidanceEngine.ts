@@ -118,11 +118,12 @@ function estimateAvgProjectValue(serviceType: string): number {
 function recommendPlanFromRdv(rdvMonthly: number, situation: EntrepreneurSituation): PlanTier {
   if (situation === "saturation") return "elite";
   if (rdvMonthly <= 0) return "recrue";
-  if (rdvMonthly <= 5) return "pro";
-  if (rdvMonthly <= 10) return "premium";
-  if (rdvMonthly <= 25) return "elite";
-  return "signature";
+  // Seuils dérivés du catalogue réel, jamais codés en dur.
+  const ordered: PlanTier[] = ["pro", "premium", "elite", "signature"];
+  const match = ordered.find((tier) => PLANS[tier].maxRdvMonth >= rdvMonthly);
+  return match ?? "signature";
 }
+
 
 // ─── Plan recommendation ───
 
