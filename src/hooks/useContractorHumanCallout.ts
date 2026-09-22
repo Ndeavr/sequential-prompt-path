@@ -41,6 +41,7 @@ export function useContractorHumanCallout() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (HUMAN_CALLOUT_DISABLED) return;
     try {
       if (sessionStorage.getItem(CONTRACTOR_HUMAN_CALLOUT.storageKey)) return;
     } catch {}
