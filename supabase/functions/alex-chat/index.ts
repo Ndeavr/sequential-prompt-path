@@ -646,6 +646,17 @@ serve(async (req) => {
     systemPrompt += isVoiceMode ? VOICE_MODE_RULES : TEXT_MODE_RULES;
     systemPrompt += getFrustrationPrompt(frustrationLevel);
     systemPrompt += getUrgencyPrompt(lastUserMessage);
+    // Promesse de rendez-vous : source unique. Les chiffres viennent du plan réel
+    // transmis dans le contexte ; sans plan connu, Clara ne cite aucun nombre.
+    systemPrompt +=
+      "\n\n" +
+      buildGuaranteePromptBlock(
+        buildAppointmentGuarantee(
+          (context as { planAppointmentsIncluded?: number } | undefined)
+            ?.planAppointmentsIncluded ?? null,
+        ),
+      );
+
 
     // ===== BUILD CONTEXT MESSAGES =====
     const contextMessages: Array<{ role: string; content: string }> = [
