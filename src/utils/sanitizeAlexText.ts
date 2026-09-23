@@ -131,6 +131,15 @@ export function sanitizeAlexText(input: string | null | undefined): SanitizeResu
   // Marqueur interne de réponses rapides : jamais visible pour l'utilisateur.
   text = text.replace(CHOICE_MARKER_RE, "").trim();
 
+  // Appels d'action internes : exécutés par l'application, jamais affichés.
+  INTERNAL_ACTION_CALL_RE.lastIndex = 0;
+  if (INTERNAL_ACTION_CALL_RE.test(text)) {
+    hadForbidden = true;
+    INTERNAL_ACTION_CALL_RE.lastIndex = 0;
+    text = text.replace(INTERNAL_ACTION_CALL_RE, "").trim();
+  }
+
+
 
   // Strip code fences entirely — Alex chat never shows code blocks
   if (CODE_FENCE_RE.test(text)) {
