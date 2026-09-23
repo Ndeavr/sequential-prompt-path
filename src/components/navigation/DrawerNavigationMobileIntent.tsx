@@ -24,7 +24,6 @@ interface Props {
   ctx: any;
   activeRole: string;
   isHome?: boolean;
-  homeHeaderCompact?: boolean;
 }
 
 export default function DrawerNavigationMobileIntent({
@@ -32,7 +31,6 @@ export default function DrawerNavigationMobileIntent({
   ctx,
   activeRole,
   isHome = false,
-  homeHeaderCompact = false,
 }: Props) {
   const { signOut } = useAuth();
   const { lang, setLang } = useLanguage();
@@ -44,9 +42,7 @@ export default function DrawerNavigationMobileIntent({
   const dashboardTo = activeRole === "contractor" ? "/pro" : "/dashboard";
   const accountTo = activeRole === "contractor" ? "/pro/account" : "/dashboard/account";
   const drawerTop = isHome
-    ? homeHeaderCompact
-      ? "calc(62px + env(safe-area-inset-top))"
-      : "calc(98px + env(safe-area-inset-top))"
+    ? "calc(66px + env(safe-area-inset-top))"
     : "calc(3rem + env(safe-area-inset-top))";
 
   // Page scroll stays locked while the drawer is open; only the drawer content scrolls.
@@ -59,7 +55,6 @@ export default function DrawerNavigationMobileIntent({
       exit={{ opacity: 0 }}
       className="fixed inset-x-0 bottom-0 z-[55] lg:hidden"
       style={{ top: drawerTop }}
-      data-home-header-state={isHome ? (homeHeaderCompact ? "compact" : "expanded") : undefined}
     >
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />
 

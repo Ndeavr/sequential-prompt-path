@@ -441,42 +441,30 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, [lang]);
 
   // Android Chrome et Safari ne traitent pas tous le clavier de la même façon.
-  // On mesure uniquement l'espace réellement masqué, puis on laisse la page
-  // conserver son scroll natif et le fil de messages son propre scroll.
+  // Une seule mesure pilote la hauteur du chat. Aucun scroll du document n'est
+  // déclenché ici : le navigateur redimensionne le viewport, le fil absorbe le reste.
   useEffect(() => {
     const viewport = window.visualViewport;
     const updateViewport = () => {
       const visibleHeight = viewport?.height ?? window.innerHeight;
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const covered = Math.max(0, window.innerHeight - visibleHeight - viewportTop);
       rootRef.current?.style.setProperty("--clara-visible-height", `${visibleHeight}px`);
-      rootRef.current?.style.setProperty("--clara-viewport-top", `${viewportTop}px`);
-      rootRef.current?.style.setProperty("--clara-keyboard-offset", `${covered}px`);
-      const keyboardOpen = covered > 120;
+      const keyboardOpen = window.innerHeight - visibleHeight > 120;
       if (keyboardOpen !== keyboardWasOpen.current) {
         keyboardWasOpen.current = keyboardOpen;
         setKeyboardOpen(keyboardOpen);
-        rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
         if (keyboardOpen) {
           trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
-          // Le clavier ne doit jamais projeter la page à un endroit arbitraire :
-          // on aligne la surface de Clara, puis on garde la dernière ligne
-          // visible uniquement si l'utilisateur lisait déjà le bas du fil.
-          window.requestAnimationFrame(() => {
-            rootRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
-            keepComposerVisible();
-          });
         }
       }
     };
     updateViewport();
     viewport?.addEventListener("resize", updateViewport);
-    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
     return () => {
       viewport?.removeEventListener("resize", updateViewport);
-      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
     };
-  }, [keepComposerVisible]);
+  }, []);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -1223,11 +1211,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   );
 
   return (
-    <motion.section
+    <section
       ref={rootRef}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.12 }}
       className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
       aria-label="Conversation avec Clara"
     >
@@ -1464,7 +1449,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </Suspense>
         </motion.div>
       )}
-    </motion.section>
+    </section>
   );
 }
 

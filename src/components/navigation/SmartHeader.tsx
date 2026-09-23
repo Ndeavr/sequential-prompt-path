@@ -4,7 +4,7 @@
  */
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
@@ -22,7 +22,6 @@ import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
 import UnproLogo from "@/components/brand/UnproLogo";
-import UnproIcon from "@/components/brand/UnproIcon";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -50,9 +49,6 @@ const SmartHeader = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [homeConversationActive, setHomeConversationActive] = useState(false);
-  const [homeHeaderCompact, setHomeHeaderCompact] = useState(false);
-  const homeScrollSentinelRef = useRef<HTMLDivElement>(null);
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
 
@@ -64,36 +60,6 @@ const SmartHeader = () => {
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
-  useEffect(() => {
-    if (!isHome) return;
-    const sync = (event?: Event) => {
-      const detail = (event as CustomEvent<{ active?: boolean }> | undefined)?.detail;
-      setHomeConversationActive(detail?.active ?? document.documentElement.dataset.claraConversationActive === "true");
-    };
-    sync();
-    window.addEventListener("clara:conversation-active", sync);
-    return () => window.removeEventListener("clara:conversation-active", sync);
-  }, [isHome]);
-
-  useEffect(() => {
-    if (!isHome) {
-      setHomeHeaderCompact(false);
-      return;
-    }
-
-    const sentinel = homeScrollSentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setHomeHeaderCompact(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [isHome]);
-
-  const isHomeHeaderCompact = isHome && (homeHeaderCompact || homeConversationActive);
-
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
       ? ctx.contractor.businessName
@@ -104,16 +70,8 @@ const SmartHeader = () => {
 
   return (
     <>
-      {isHome && (
-        <div
-          ref={homeScrollSentinelRef}
-          className="home-header-scroll-sentinel"
-          aria-hidden="true"
-        />
-      )}
       <header
-        className={`glass-nav sticky top-0 z-[60] pointer-events-auto${isHome ? " home-minimal-header" : ""}${isHomeHeaderCompact ? " is-compact" : ""}${isHome && homeConversationActive ? " is-conversation-active" : ""}`}
-        data-home-header-state={isHome ? (isHomeHeaderCompact ? "compact" : "expanded") : undefined}
+        className={`glass-nav sticky top-0 z-[60] pointer-events-auto${isHome ? " home-minimal-header" : ""}`}
         style={{
           paddingTop: "max(env(safe-area-inset-top), 0px)",
           paddingLeft: "env(safe-area-inset-left)",
@@ -145,19 +103,11 @@ const SmartHeader = () => {
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className={`flex items-center shrink-0 group p-0 m-0${isHome ? " home-brand-anchor" : ""}`} style={{ minWidth: "fit-content" }} aria-label="UNPRO">
               {isHome ? (
-                <span className="home-brand-stage" aria-hidden="true">
-                  <UnproLogo
-                    unsized
-                    tone="gradient"
-                    className="home-brand-wordmark"
-                  />
-                  <UnproIcon
-                    unsized
-                    shape="bare"
-                    tone="auto"
-                    className="home-brand-symbol"
-                  />
-                </span>
+                <UnproLogo
+                  unsized
+                  tone="gradient"
+                  className="home-brand-wordmark"
+                />
               ) : (
                 <>
                   <UnproLogo
@@ -364,7 +314,7 @@ const SmartHeader = () => {
       </header>
       {isHome && (
         <div
-          className={`home-header-layout-spacer${isHomeHeaderCompact ? " is-compact" : ""}`}
+          className="home-header-layout-spacer"
           aria-hidden="true"
         />
       )}
@@ -377,7 +327,6 @@ const SmartHeader = () => {
             ctx={ctx}
             activeRole={activeRole}
             isHome={isHome}
-            homeHeaderCompact={isHomeHeaderCompact}
           />
         )}
       </AnimatePresence>
