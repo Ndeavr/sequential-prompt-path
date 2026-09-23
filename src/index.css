@@ -710,11 +710,9 @@
     height: 5px;
     border-radius: 999px;
     background: hsl(var(--primary));
-    animation: clara-transition-dot 800ms ease-in-out infinite alternate;
+    animation: clara-transition-pulse 600ms ease-in-out 3 both;
   }
-  .home-light .home-clara-transition-pause i:nth-of-type(2) { animation-delay: 120ms; }
-  .home-light .home-clara-transition-pause i:nth-of-type(3) { animation-delay: 240ms; }
-  @keyframes clara-transition-dot { to { opacity: 0.35; transform: translateY(-2px); } }
+  @keyframes clara-transition-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
   .home-light .home-clara-error { font-size: 0.85rem; color: hsl(0 72% 42%); }
   @keyframes clara-working-pulse {
     0%, 100% { opacity: 0.55; }

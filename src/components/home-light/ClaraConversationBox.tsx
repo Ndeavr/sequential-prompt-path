@@ -40,6 +40,7 @@ import {
   getClaraQualification,
   nextQualificationStep,
   type ClaraQualificationStep,
+  saveClaraQualification,
 } from "@/services/clara/claraContractorQualification";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
@@ -190,6 +191,23 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
   { label: "Vérifier un entrepreneur", intent: "contractor_verification", source: "default" },
 ];
 
+/** Public détecté par Clara : il détermine seul les choix proposés. */
+type ClaraAudience = "homeowner" | "contractor";
+type ContractorChoice = "score" | "contracts" | "profile";
+const CONTRACTOR_SUGGESTIONS: { label: string; choice: ContractorChoice }[] = [
+  { label: "Vérifier mon score IA", choice: "score" },
+  { label: "Obtenir plus de contrats", choice: "contracts" },
+  { label: "Compléter mon profil", choice: "profile" },
+];
+const CLARA_CONTRACTOR_WELCOME =
+  "Parfait. Je vais regarder ce qu’UNPRO comprend déjà de votre entreprise et voir comment les IA pourraient mieux vous recommander.";
+const CLARA_CONTRACTOR_SCORE_TEXT =
+  "Je regarde votre présence en ligne, ce que les IA comprennent de votre entreprise et ce qui pourrait vous empêcher d’être recommandé.";
+/** Lecture après la fin complète du texte, puis exactement 3 pulsations. */
+const TRANSITION_READ_MS = 1400;
+const TRANSITION_PULSE_MS = 600;
+const TRANSITION_PULSES = 3;
+
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
 }
@@ -241,6 +259,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const [transitionPause, setTransitionPause] = useState(false);
+  const [audience, setAudience] = useState<ClaraAudience>("homeowner");
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
@@ -397,6 +416,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setQuoteCount(0);
     setContextStatus(null);
     setMode("IDLE");
+    setAudience("homeowner");
+    qualificationStepRef.current = null;
     activationTracked.current = false;
     trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
@@ -638,8 +659,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (!mountedRef.current) return;
     // Point d'abandon mesurable no 1 : intention entrepreneur exprimée à l'accueil.
     void trackFunnelStep("home_contractor_click", { metadata: { surface: "home_clara_box" } });
+    // Le texte est déjà entièrement affiché : pause de lecture, puis 3 pulsations.
+    await new Promise<void>((resolve) => window.setTimeout(resolve, TRANSITION_READ_MS));
+    if (!mountedRef.current) return;
     setTransitionPause(true);
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 900));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, TRANSITION_PULSE_MS * TRANSITION_PULSES + 80));
     if (!mountedRef.current) return;
     const ok = await openContractorAfterTransition(note);
     // Jamais de cul-de-sac : si l'ouverture échoue, la conversation redevient utilisable.
@@ -682,7 +706,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   );
 
 
-  const beginTextContractorTransition = useCallback(async (note: string) => {
+  const beginTextContractorTransition = useCallback(async (note: string, transitionText: string = CLARA_CONTRACTOR_TRANSITION_TEXT) => {
     // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
     // jamais bloquer la transition entrepreneur.
     if (contractorTransitionRef.current) return;
@@ -693,14 +717,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
     const assistantId = uid();
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? CLARA_CONTRACTOR_TRANSITION_TEXT : "" }]);
+    setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? transitionText : "" }]);
 
     if (!reduceMotion) {
-      for (let index = 1; index <= CLARA_CONTRACTOR_TRANSITION_TEXT.length; index += 1) {
+      for (let index = 1; index <= transitionText.length; index += 1) {
         if (!mountedRef.current) return;
         setMessages((previous) => previous.map((message) =>
           message.id === assistantId
-            ? { ...message, text: CLARA_CONTRACTOR_TRANSITION_TEXT.slice(0, index) }
+            ? { ...message, text: transitionText.slice(0, index) }
             : message,
         ));
         await new Promise<void>((resolve) => window.setTimeout(resolve, 14));
@@ -709,7 +733,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
     await appendClaraMessage({
       role: "assistant",
-      text: CLARA_CONTRACTOR_TRANSITION_TEXT,
+      text: transitionText,
       clientMessageId: assistantId,
     }).catch(() => undefined);
     await finishContractorTransition(note);
@@ -890,6 +914,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         // onglet, et ne confirme qu'après le changement de route réussi.
         if (destination && detected === "contractor_onboarding") {
           setQuickReplies(null);
+          setAudience("contractor");
           trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
           // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
           const asked = await askNextQualification();
@@ -973,13 +998,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
       if (suggestion.intent === "contractor_onboarding") {
         trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
-        const asked = await askNextQualification({ opening: true });
-        if (asked) {
-          focusComposer();
-          return;
-        }
-        await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
-        await beginTextContractorTransition(suggestion.label);
+        // Les choix deviennent immédiatement des choix entrepreneur.
+        setAudience("contractor");
+        await sayClara(CLARA_CONTRACTOR_WELCOME);
+        focusComposer();
         return;
       }
       setBusy(true);
@@ -990,6 +1012,37 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }
     },
     [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send],
+  );
+
+  /** Choix entrepreneur : l'audit ne s'ouvre qu'après texte complet + 3 pulsations. */
+  const chooseContractorSuggestion = useCallback(
+    async (label: string, choice: ContractorChoice) => {
+      if (busy || contractorTransitionRef.current) return;
+      trackCopilotEvent("clara_quick_reply_selected", { surface: "home_clara_box", kind: `contractor_${choice}` });
+      const userMessageId = uid();
+      setError(null);
+      setQuickReplies(null);
+      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: label }]);
+      void appendClaraMessage({ role: "user", text: label, clientMessageId: userMessageId }).catch(() => undefined);
+      scrollToLatest("smooth");
+      if (choice === "score") {
+        await beginTextContractorTransition(label, CLARA_CONTRACTOR_SCORE_TEXT);
+        return;
+      }
+      if (choice === "contracts") saveClaraQualification({ goals: ["Plus de contrats"] });
+      setBusy(true);
+      try {
+        const asked = await askNextQualification();
+        if (!asked) {
+          await beginTextContractorTransition(label, CLARA_CONTRACTOR_ANALYSIS_NOTE);
+          return;
+        }
+      } finally {
+        if (mountedRef.current && !contractorTransitionRef.current) setBusy(false);
+        focusComposer();
+      }
+    },
+    [askNextQualification, beginTextContractorTransition, busy, focusComposer, scrollToLatest],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
@@ -1178,7 +1231,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     window.setTimeout(keepComposerVisible, 180);
   }, [keepComposerVisible, voiceActive]);
 
-  const showIntentSuggestions = !isConversationActive
+  const showIntentSuggestions = audience === "homeowner"
+    && !isConversationActive
     && !composerFocused
     && composerText.trim().length === 0;
 
@@ -1368,8 +1422,17 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 ))}
               </div>
             )}
+            {audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
+              <div className="home-clara-quick" role="group" aria-label="Choix entrepreneur" data-audience="contractor">
+                {CONTRACTOR_SUGGESTIONS.map((option) => (
+                  <button key={option.choice} type="button" onClick={() => void chooseContractorSuggestion(option.label, option.choice)}>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
             {transitionPause ? (
-              <div className="home-clara-transition-pause" role="status" aria-label="Clara prépare la prochaine étape">
+              <div className="home-clara-transition-pause" data-pulses={TRANSITION_PULSES} role="status" aria-label="Clara prépare la prochaine étape">
                 <span>Clara</span><i /><i /><i />
               </div>
             ) : busy ? <p className="home-clara-working" role="status">{copy.working}</p> : null}

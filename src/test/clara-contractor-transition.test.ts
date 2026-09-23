@@ -18,7 +18,7 @@ describe("Clara — transition entrepreneur", () => {
   it("respecte le mouvement réduit et garde la pause Clara", () => {
     expect(box).toContain('(prefers-reduced-motion: reduce)');
     expect(box).toContain("setTransitionPause(true)");
-    expect(box).toContain("window.setTimeout(resolve, 900)");
+    expect(box).toContain("window.setTimeout(resolve, TRANSITION_READ_MS)");
   });
 
   it("attend la fin ou l'annulation réelle de la voix avant la navigation", () => {
@@ -26,5 +26,15 @@ describe("Clara — transition entrepreneur", () => {
     expect(voice).toContain('recordClaraVoiceTurn("assistant", CLARA_CONTRACTOR_TRANSITION_TEXT)');
     expect(voice).toContain("CLARA_CONTRACTOR_VOICE_FINISHED_EVENT");
     expect(box).toContain("CLARA_CONTRACTOR_VOICE_FINISHED_EVENT");
+  });
+});
+describe("Clara — choix entrepreneur pilotés par l'audience", () => {
+  it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
+    expect(box).toContain('useState<ClaraAudience>("homeowner")');
+    expect(box).toContain("Vérifier mon score IA");
+    expect(box).toContain("Obtenir plus de contrats");
+    expect(box).toContain("Compléter mon profil");
+    expect(box).toContain("TRANSITION_PULSE_MS * TRANSITION_PULSES");
+    expect(box.indexOf("TRANSITION_READ_MS));")).toBeLessThan(box.indexOf("setTransitionPause(true)"));
   });
 });

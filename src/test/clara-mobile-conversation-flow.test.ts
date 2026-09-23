@@ -46,7 +46,8 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("masque les suggestions au focus et pendant la saisie", () => {
-    expect(box).toContain("const showIntentSuggestions = !isConversationActive");
+    expect(box).toContain("&& !isConversationActive");
+    expect(box).toContain("const showIntentSuggestions = audience === \"homeowner\"");
     expect(box).toContain("&& !composerFocused");
     expect(box).toContain("&& composerText.trim().length === 0");
     expect(box).toContain("{showIntentSuggestions && (");
