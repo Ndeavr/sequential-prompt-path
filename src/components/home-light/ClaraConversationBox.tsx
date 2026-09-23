@@ -1257,6 +1257,39 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         >
           <Home className="h-4 w-4" aria-hidden="true" />
         </button>
+        <button
+          type="button"
+          onClick={() => (historyOpen ? setHistoryOpen(false) : void openHistory())}
+          className="home-clara-history-open"
+          title="Conversations"
+          aria-label="Voir mes conversations"
+          aria-expanded={historyOpen}
+        >
+          <History className="h-4 w-4" aria-hidden="true" />
+        </button>
+        {historyOpen && (
+          <div className="home-clara-history" role="dialog" aria-label="Mes conversations">
+            <p className="home-clara-history-title">Mes conversations</p>
+            {historyLoading && <p className="home-clara-history-empty">Chargement…</p>}
+            {historyError && <p className="home-clara-history-empty" role="alert">{historyError}</p>}
+            {!historyLoading && !historyError && historyItems.length === 0 && (
+              <p className="home-clara-history-empty">Aucune conversation précédente.</p>
+            )}
+            <ul>
+              {historyItems.map((entry) => (
+                <li key={entry.session_id}>
+                  <button type="button" onClick={() => void resumeConversation(entry)} data-current={entry.current ? "true" : undefined}>
+                    <span>{entry.title || "Conversation sans message"}</span>
+                    {entry.current && <em>En cours</em>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="home-clara-history-close" onClick={() => setHistoryOpen(false)}>
+              Fermer
+            </button>
+          </div>
+        )}
         <DossierMaisonSheet open={dossierOpen} onOpenChange={setDossierOpen} />
         {confirmReset && (
           <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
