@@ -458,7 +458,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       viewport?.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("scroll", updateViewport);
     };
-  }, []);
+  }, [keepComposerVisible]);
 
   useEffect(() => {
     const composer = composerRef.current;
