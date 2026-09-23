@@ -566,7 +566,13 @@
   .home-light .home-clara-conversation {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
+    color: hsl(222 49% 9%);
+    border-bottom: 1px solid hsl(222 30% 20% / 0.08);
+  }
+  .home-light .home-clara-conversation > div {
+    height: 100%;
+    overflow-y: auto !important;
     overflow-x: hidden;
     /* Conteneur de défilement UNIQUE : le geste vertical fonctionne partout
        sur la surface de conversation, sans défilement imbriqué. */
@@ -574,8 +580,6 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     scrollbar-gutter: stable;
-    color: hsl(222 49% 9%);
-    border-bottom: 1px solid hsl(222 30% 20% / 0.08);
   }
   .home-light .home-clara-conversation .home-clara-message,
   .home-light .home-clara-conversation .home-clara-message * {

@@ -25,6 +25,11 @@ describe("Clara mobile — conversation compacte", () => {
     expect(css).toContain("100dvh");
   });
 
+  it("cible le seul élément réellement défilable rendu par la conversation", () => {
+    expect(box).toContain('querySelector<HTMLElement>(".home-clara-conversation > div")');
+    expect(css).toMatch(/\.home-light \.home-clara-conversation > div \{[\s\S]*?overflow-y: auto/);
+  });
+
   it("garde le composer compact et extensible jusqu’à cinq lignes environ", () => {
     expect(box).toContain('rows={1}');
     expect(box).toContain("Math.min(field.scrollHeight, 120)");

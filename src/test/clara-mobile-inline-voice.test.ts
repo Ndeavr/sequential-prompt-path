@@ -25,7 +25,8 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
 
   it("rend seulement l’historique défilable et conserve le composer dans la colonne", () => {
     expect(css).toMatch(/\.home-light \.home-clara-main \{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;[\s\S]*?min-height: 0;/);
-    expect(css).toMatch(/\.home-light \.home-clara-conversation \{[\s\S]*?min-height: 0;[\s\S]*?overflow-y: auto;/);
+    expect(css).toMatch(/\.home-light \.home-clara-conversation \{[\s\S]*?min-height: 0;[\s\S]*?overflow: hidden;/);
+    expect(css).toMatch(/\.home-light \.home-clara-conversation > div \{[\s\S]*?overflow-y: auto/);
     expect(css).toMatch(/\.home-light \.home-clara-composer \{[\s\S]*?flex: 0 0 auto;/);
     expect(box).not.toContain("max-h-[38vh]");
   });

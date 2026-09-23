@@ -327,7 +327,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
    */
   const NEAR_BOTTOM_PX = 140;
   const getScroller = useCallback(
-    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation") ?? null,
+    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation > div") ?? null,
     [],
   );
   const isNearBottom = useCallback(() => {
