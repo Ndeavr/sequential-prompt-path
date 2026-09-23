@@ -1003,7 +1003,8 @@
     .home-light .home-clara-media-item img,
     .home-light .home-clara-media-item video,
     .home-light .home-clara-media-icon { width: 36px; height: 36px; border-radius: 9px; }
-    .home-light .home-clara-quick { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.2rem; }
+    /* Les choix reviennent à la ligne : jamais de défilement horizontal. */
+    .home-light .home-clara-quick { flex-wrap: wrap; overflow-x: visible; padding-bottom: 0.2rem; }
     .home-light .home-clara-quick button { flex: 0 0 auto; }
     .home-light .home-clara-examples { justify-content: flex-start; overflow-x: auto; overscroll-behavior-inline: contain; flex-wrap: nowrap; padding-bottom: 0.8rem; scrollbar-width: none; }
     .home-light .home-clara-examples button { flex: 0 0 auto; min-height: 44px; font-size: 0.82rem; }
