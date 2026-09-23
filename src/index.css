@@ -591,11 +591,23 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow-x: hidden;
+    /* Conteneur de défilement UNIQUE : le geste vertical fonctionne partout
+       sur la surface de conversation, sans défilement imbriqué. */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     scrollbar-gutter: stable;
     color: hsl(222 49% 9%);
     border-bottom: 1px solid hsl(222 30% 20% / 0.08);
   }
+  .home-light .home-clara-conversation .home-clara-message,
+  .home-light .home-clara-conversation .home-clara-message * {
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  /* L'indicateur d'analyse occupe une hauteur stable : aucun saut de mise en page. */
+  .home-light .home-clara-working { display: block; min-height: 22px; }
   .home-light .home-clara-conversation [class*="text-foreground"] { color: hsl(222 49% 9%); }
   .home-light .home-clara-conversation .is-user [class*="text-primary-foreground"] { color: hsl(var(--primary-foreground)); }
   .home-light .home-clara-conversation [class*="text-muted-foreground"] { color: hsl(220 14% 38%); }
