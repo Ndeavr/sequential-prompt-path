@@ -25,15 +25,17 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
 
   it("rend seulement l’historique défilable et conserve le composer dans la colonne", () => {
     expect(css).toMatch(/\.home-light \.home-clara-main \{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;[\s\S]*?min-height: 0;/);
-    expect(css).toMatch(/\.home-light \.home-clara-conversation \{[\s\S]*?min-height: 0;[\s\S]*?overflow-y: auto;/);
+    expect(css).toMatch(/\.home-light \.home-clara-conversation \{[\s\S]*?min-height: 0;[\s\S]*?overflow: hidden;/);
+    expect(css).toMatch(/\.home-light \.home-clara-conversation > div \{[\s\S]*?overflow-y: auto/);
     expect(css).toMatch(/\.home-light \.home-clara-composer \{[\s\S]*?flex: 0 0 auto;/);
     expect(box).not.toContain("max-h-[38vh]");
   });
 
-  it("suit le clavier mobile et laisse le document défiler", () => {
-    expect(box).toContain("window.visualViewport");
-    expect(box).toContain("--clara-keyboard-offset");
+  it("suit le clavier mobile avec le viewport dynamique sans déplacer le document", () => {
+    expect(box).not.toContain("window.visualViewport");
+    expect(box).not.toContain("scrollIntoView({ block: \"start\"");
     expect(css).toContain("100dvh");
+    expect(css).toContain('html[data-clara-conversation-active="true"] body');
     expect(hero).not.toContain("overflow-hidden");
   });
 

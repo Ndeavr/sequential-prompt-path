@@ -240,7 +240,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [transitionPause, setTransitionPause] = useState(false);
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [confirmReset, setConfirmReset] = useState(false);
   // Le micro est un MODE de la même conversation : aucun état de session ici.
@@ -278,7 +277,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const announcedMedia = useRef<Set<string>>(new Set());
   const localPreviewUrls = useRef<Set<string>>(new Set());
   const activationTracked = useRef(false);
-  const keyboardWasOpen = useRef(false);
   const contractorTransitionRef = useRef(false);
   /** Question de qualification en attente de réponse (une seule à la fois). */
   const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
@@ -329,7 +327,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
    */
   const NEAR_BOTTOM_PX = 140;
   const getScroller = useCallback(
-    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation") ?? null,
+    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation > div") ?? null,
     [],
   );
   const isNearBottom = useCallback(() => {
@@ -439,44 +437,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }
     })();
   }, [lang]);
-
-  // Android Chrome et Safari ne traitent pas tous le clavier de la même façon.
-  // On mesure uniquement l'espace réellement masqué, puis on laisse la page
-  // conserver son scroll natif et le fil de messages son propre scroll.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    const updateViewport = () => {
-      const visibleHeight = viewport?.height ?? window.innerHeight;
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const covered = Math.max(0, window.innerHeight - visibleHeight - viewportTop);
-      rootRef.current?.style.setProperty("--clara-visible-height", `${visibleHeight}px`);
-      rootRef.current?.style.setProperty("--clara-viewport-top", `${viewportTop}px`);
-      rootRef.current?.style.setProperty("--clara-keyboard-offset", `${covered}px`);
-      const keyboardOpen = covered > 120;
-      if (keyboardOpen !== keyboardWasOpen.current) {
-        keyboardWasOpen.current = keyboardOpen;
-        setKeyboardOpen(keyboardOpen);
-        rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
-        if (keyboardOpen) {
-          trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
-          // Le clavier ne doit jamais projeter la page à un endroit arbitraire :
-          // on aligne la surface de Clara, puis on garde la dernière ligne
-          // visible uniquement si l'utilisateur lisait déjà le bas du fil.
-          window.requestAnimationFrame(() => {
-            rootRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
-            keepComposerVisible();
-          });
-        }
-      }
-    };
-    updateViewport();
-    viewport?.addEventListener("resize", updateViewport);
-    viewport?.addEventListener("scroll", updateViewport);
-    return () => {
-      viewport?.removeEventListener("resize", updateViewport);
-      viewport?.removeEventListener("scroll", updateViewport);
-    };
-  }, [keepComposerVisible]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -1170,8 +1130,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   const showIntentSuggestions = !isConversationActive
     && !composerFocused
-    && composerText.trim().length === 0
-    && !keyboardOpen;
+    && composerText.trim().length === 0;
 
   // Capture directe (appareil photo, caméra, galerie) : le fichier entre
   // immédiatement dans la file d'attente, sans passer par un aperçu factice.
@@ -1223,11 +1182,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   );
 
   return (
-    <motion.section
+    <section
       ref={rootRef}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.12 }}
       className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
       aria-label="Conversation avec Clara"
     >
@@ -1464,7 +1420,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </Suspense>
         </motion.div>
       )}
-    </motion.section>
+    </section>
   );
 }
 
