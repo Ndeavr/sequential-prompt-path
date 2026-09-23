@@ -304,12 +304,36 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, []);
 
+  /**
+   * Le fil de discussion a UN seul conteneur de défilement. On ne ramène
+   * jamais l'utilisateur en bas de force : on ne suit la conversation que
+   * s'il s'y trouvait déjà (seuil natif d'environ 140 px).
+   */
+  const NEAR_BOTTOM_PX = 140;
+  const getScroller = useCallback(
+    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation") ?? null,
+    [],
+  );
+  const isNearBottom = useCallback(() => {
+    const scroller = getScroller();
+    if (!scroller) return true;
+    return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= NEAR_BOTTOM_PX;
+  }, [getScroller]);
+  const scrollToLatest = useCallback(
+    (behavior: ScrollBehavior = "smooth") => {
+      window.requestAnimationFrame(() => {
+        const scroller = getScroller();
+        if (!scroller) return;
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior });
+      });
+    },
+    [getScroller],
+  );
   const keepComposerVisible = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-      textareaRef.current?.scrollIntoView({ block: "nearest" });
-    });
-  }, []);
+    // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
+    if (!isNearBottom()) return;
+    scrollToLatest("auto");
+  }, [isNearBottom, scrollToLatest]);
   const isConversationActive = messages.length > 0 || mode !== "IDLE";
 
   useEffect(() => {
@@ -417,9 +441,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
         if (keyboardOpen) {
           trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
+          // Le clavier ne doit jamais projeter la page à un endroit arbitraire :
+          // on aligne la surface de Clara, puis on garde la dernière ligne
+          // visible uniquement si l'utilisateur lisait déjà le bas du fil.
           window.requestAnimationFrame(() => {
-            rootRef.current?.scrollIntoView({ block: "start" });
-            textareaRef.current?.scrollIntoView({ block: "nearest" });
+            rootRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+            keepComposerVisible();
           });
         }
       }
@@ -431,7 +458,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       viewport?.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("scroll", updateViewport);
     };
-  }, []);
+  }, [keepComposerVisible]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -682,6 +709,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
+      // Envoi utilisateur : on descend toujours au dernier message, en douceur.
+      scrollToLatest("smooth");
 
       // Qualification entrepreneur en cours : la réponse est enregistrée tout
       // de suite, puis Clara pose la question suivante — ou ouvre l'audit.
@@ -833,7 +862,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [askNextQualification, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara],
+    [askNextQualification, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
   );
 
   const chooseQuickReply = useCallback(
@@ -1179,7 +1208,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         </div>
         <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
         <Conversation className="home-clara-conversation min-h-0">
-          <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
+          {/* Les messages s'appuient sur le bas : aucune grande zone vide
+              entre la conversation et le champ de saisie. */}
+          <ConversationContent className="flex min-h-full flex-col justify-end gap-3 px-5 py-4 sm:px-6">
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
