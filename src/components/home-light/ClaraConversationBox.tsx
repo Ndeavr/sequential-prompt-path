@@ -1442,8 +1442,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
              onInput={(event) => {
                const field = event.currentTarget;
                field.style.height = "auto";
-               field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
-               field.style.overflowY = field.scrollHeight > 120 ? "auto" : "hidden";
+              field.style.height = `${Math.min(field.scrollHeight, 140)}px`;
+              field.style.overflowY = field.scrollHeight > 140 ? "auto" : "hidden";
                keepComposerVisible();
              }}
              onFocus={handleComposerFocus}
