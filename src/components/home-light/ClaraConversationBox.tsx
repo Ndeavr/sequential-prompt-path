@@ -19,9 +19,12 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import {
   appendClaraMessage,
+  listClaraConversations,
   rememberClaraReferences,
+  resumeClaraConversation,
   startNewClaraSession,
   startOrResumeClaraSession,
+  type ClaraHistoryEntry,
 } from "@/services/clara/claraSession";
 import {
   CLARA_CONTRACTOR_TRANSITION_TEXT,
