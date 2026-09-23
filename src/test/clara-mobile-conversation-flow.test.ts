@@ -32,7 +32,7 @@ describe("Clara mobile — conversation compacte", () => {
 
   it("garde le composer compact et extensible jusqu’à cinq lignes environ", () => {
     expect(box).toContain('rows={1}');
-    expect(box).toContain("Math.min(field.scrollHeight, 120)");
+    expect(box).toContain("Math.min(field.scrollHeight, 140)");
     expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*content[^}]*min-height:\s*48px[^}]*max-height:\s*120px/);
     expect(box).toContain("const conversationStarted = isConversationActive");
   });
