@@ -1208,7 +1208,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         </div>
         <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
         <Conversation className="home-clara-conversation min-h-0">
-          <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
+          {/* Les messages s'appuient sur le bas : aucune grande zone vide
+              entre la conversation et le champ de saisie. */}
+          <ConversationContent className="flex min-h-full flex-col justify-end gap-3 px-5 py-4 sm:px-6">
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
