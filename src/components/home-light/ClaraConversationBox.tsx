@@ -304,12 +304,36 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
   }, []);
 
+  /**
+   * Le fil de discussion a UN seul conteneur de défilement. On ne ramène
+   * jamais l'utilisateur en bas de force : on ne suit la conversation que
+   * s'il s'y trouvait déjà (seuil natif d'environ 140 px).
+   */
+  const NEAR_BOTTOM_PX = 140;
+  const getScroller = useCallback(
+    () => rootRef.current?.querySelector<HTMLElement>(".home-clara-conversation") ?? null,
+    [],
+  );
+  const isNearBottom = useCallback(() => {
+    const scroller = getScroller();
+    if (!scroller) return true;
+    return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= NEAR_BOTTOM_PX;
+  }, [getScroller]);
+  const scrollToLatest = useCallback(
+    (behavior: ScrollBehavior = "smooth") => {
+      window.requestAnimationFrame(() => {
+        const scroller = getScroller();
+        if (!scroller) return;
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior });
+      });
+    },
+    [getScroller],
+  );
   const keepComposerVisible = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      bottomAnchorRef.current?.scrollIntoView({ block: "end" });
-      textareaRef.current?.scrollIntoView({ block: "nearest" });
-    });
-  }, []);
+    // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
+    if (!isNearBottom()) return;
+    scrollToLatest("auto");
+  }, [isNearBottom, scrollToLatest]);
   const isConversationActive = messages.length > 0 || mode !== "IDLE";
 
   useEffect(() => {
