@@ -53,17 +53,16 @@ describe("glossy homepage contract", () => {
     expect(header).not.toContain('className="home-language-switch"');
     expect(drawer).toContain("<LanguageToggle");
     expect(drawer).toContain('lang === "en" ? "My profile" : "Mon profil"');
-    expect(drawer).toContain('calc(98px + env(safe-area-inset-top))');
-    expect(drawer).toContain('calc(62px + env(safe-area-inset-top))');
+    expect(drawer).toContain('calc(66px + env(safe-area-inset-top))');
   });
 
-  it("contracts the canonical header with official brand assets and no scroll listener", () => {
+  it("keeps the canonical header and official wordmark stable", () => {
     expect(header).toContain('pathname === "/" || pathname === "/index"');
-    expect(header).toContain("homeHeaderCompact");
-    expect(header).toContain("home-header-scroll-sentinel");
     expect(header).toContain("home-header-layout-spacer");
-    expect(header).toContain("new IntersectionObserver");
     expect(header).toContain("home-brand-wordmark");
+    expect(header).not.toContain("homeHeaderCompact");
+    expect(header).not.toContain("home-header-scroll-sentinel");
+    expect(header).not.toContain("new IntersectionObserver");
     expect(header).toContain("home-brand-symbol");
     expect(header).not.toContain('addEventListener("scroll"');
   });

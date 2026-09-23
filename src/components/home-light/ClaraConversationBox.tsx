@@ -240,7 +240,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [transitionPause, setTransitionPause] = useState(false);
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [confirmReset, setConfirmReset] = useState(false);
   // Le micro est un MODE de la même conversation : aucun état de session ici.
@@ -278,7 +277,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const announcedMedia = useRef<Set<string>>(new Set());
   const localPreviewUrls = useRef<Set<string>>(new Set());
   const activationTracked = useRef(false);
-  const keyboardWasOpen = useRef(false);
   const contractorTransitionRef = useRef(false);
   /** Question de qualification en attente de réponse (une seule à la fois). */
   const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
@@ -439,32 +437,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }
     })();
   }, [lang]);
-
-  // Android Chrome et Safari ne traitent pas tous le clavier de la même façon.
-  // Une seule mesure pilote la hauteur du chat. Aucun scroll du document n'est
-  // déclenché ici : le navigateur redimensionne le viewport, le fil absorbe le reste.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    const updateViewport = () => {
-      const visibleHeight = viewport?.height ?? window.innerHeight;
-      rootRef.current?.style.setProperty("--clara-visible-height", `${visibleHeight}px`);
-      const keyboardOpen = window.innerHeight - visibleHeight > 120;
-      if (keyboardOpen !== keyboardWasOpen.current) {
-        keyboardWasOpen.current = keyboardOpen;
-        setKeyboardOpen(keyboardOpen);
-        if (keyboardOpen) {
-          trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
-        }
-      }
-    };
-    updateViewport();
-    viewport?.addEventListener("resize", updateViewport);
-    window.addEventListener("resize", updateViewport);
-    return () => {
-      viewport?.removeEventListener("resize", updateViewport);
-      window.removeEventListener("resize", updateViewport);
-    };
-  }, []);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -1158,8 +1130,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   const showIntentSuggestions = !isConversationActive
     && !composerFocused
-    && composerText.trim().length === 0
-    && !keyboardOpen;
+    && composerText.trim().length === 0;
 
   // Capture directe (appareil photo, caméra, galerie) : le fichier entre
   // immédiatement dans la file d'attente, sans passer par un aperçu factice.

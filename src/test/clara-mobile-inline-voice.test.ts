@@ -30,10 +30,11 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
     expect(box).not.toContain("max-h-[38vh]");
   });
 
-  it("suit le clavier mobile et laisse le document défiler", () => {
-    expect(box).toContain("window.visualViewport");
-    expect(box).toContain("--clara-keyboard-offset");
+  it("suit le clavier mobile avec le viewport dynamique sans déplacer le document", () => {
+    expect(box).not.toContain("window.visualViewport");
+    expect(box).not.toContain("scrollIntoView({ block: \"start\"");
     expect(css).toContain("100dvh");
+    expect(css).toContain('html[data-clara-conversation-active="true"] body');
     expect(hero).not.toContain("overflow-hidden");
   });
 

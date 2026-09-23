@@ -11,19 +11,18 @@ const queue = fs.readFileSync(path.join(root, "src/services/clara/claraMediaQueu
 const upload = fs.readFileSync(path.join(root, "src/services/alexUploadService.ts"), "utf8");
 
 describe("Clara mobile — conversation compacte", () => {
-  it("partage une activation locale entre Clara, le hero et le header", () => {
+  it("partage une activation locale entre Clara et le hero sans redimensionner le header", () => {
     expect(box).toContain("clara:conversation-active");
     expect(box).toContain("clara_conversation_activated");
     expect(hero).toContain("onConversationActiveChange={setIsConversationActive}");
-    expect(header).toContain("homeConversationActive");
+    expect(header).not.toContain("homeConversationActive");
   });
 
-  it("mesure visualViewport resize et scroll avec nettoyage", () => {
-    expect(box).toContain("window.visualViewport");
-    expect(box).toContain('viewport?.addEventListener("resize", updateViewport)');
-    expect(box).toContain('viewport?.addEventListener("scroll", updateViewport)');
-    expect(box).toContain('viewport?.removeEventListener("resize", updateViewport)');
-    expect(css).toContain("--clara-visible-height");
+  it("laisse 100dvh absorber le clavier sans gestionnaire de repositionnement", () => {
+    expect(box).not.toContain("window.visualViewport");
+    expect(box).not.toContain('addEventListener("resize", updateViewport)');
+    expect(box).not.toContain('addEventListener("scroll", updateViewport)');
+    expect(css).toContain("100dvh");
   });
 
   it("garde le composer compact et extensible jusqu’à cinq lignes environ", () => {
@@ -41,11 +40,10 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain('"--clara-composer-height"');
   });
 
-  it("masque les suggestions au focus, pendant la saisie et quand le clavier est ouvert", () => {
+  it("masque les suggestions au focus et pendant la saisie", () => {
     expect(box).toContain("const showIntentSuggestions = !isConversationActive");
     expect(box).toContain("&& !composerFocused");
     expect(box).toContain("&& composerText.trim().length === 0");
-    expect(box).toContain("&& !keyboardOpen");
     expect(box).toContain("{showIntentSuggestions && (");
   });
 
@@ -74,9 +72,9 @@ describe("Clara mobile — conversation compacte", () => {
 
   it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
     expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(420px,\s*60dvh,\s*620px\)/);
-    expect(css).toContain('.home-light .home-clara-shell[data-keyboard-open] .home-clara-main');
-    expect(css).toContain("height: calc(var(--clara-visible-height, 100dvh) - 12px)");
-    expect(css).not.toContain("max(360px, calc(var(--clara-visible-height, 100dvh) - 12px))");
+    expect(css).toContain('html[data-clara-conversation-active="true"] body');
+    expect(css).toMatch(/\.home-light \.home-clara-shell\.is-conversation-active \.home-clara-main \{[\s\S]*?height: 100%;[\s\S]*?min-height: 0;/);
+    expect(css).not.toContain("data-keyboard-open");
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {
