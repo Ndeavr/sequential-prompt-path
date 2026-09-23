@@ -763,12 +763,31 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await admin
+      // Idempotence explicite : une même information n'est jamais dupliquée
+      // dans le dossier (l'index unique est partiel, donc pas d'upsert natif).
+      const DOSSIER_COLUMNS = "id,category,entry_key,label,detail,provenance,source,updated_at";
+      const { data: existing } = await admin
         .from("property_dossier_entries")
-        .upsert(payload, { onConflict: "session_id,category,entry_key" })
-        .select("id,category,entry_key,label,detail,provenance,source,updated_at")
+        .select("id")
+        .eq("session_id", session.id)
+        .eq("category", category)
+        .eq("entry_key", entryKey)
         .maybeSingle();
 
+      const write = existing?.id
+        ? admin
+            .from("property_dossier_entries")
+            .update(payload)
+            .eq("id", existing.id)
+            .select(DOSSIER_COLUMNS)
+            .maybeSingle()
+        : admin
+            .from("property_dossier_entries")
+            .insert(payload)
+            .select(DOSSIER_COLUMNS)
+            .maybeSingle();
+
+      const { data, error } = await write;
       if (error || !data) {
         console.error("clara-session dossier_add failed", error);
         return json({ error: "dossier_write_failed" }, 500);
