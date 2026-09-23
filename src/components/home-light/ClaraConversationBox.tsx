@@ -8,7 +8,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -19,9 +19,12 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import {
   appendClaraMessage,
+  listClaraConversations,
   rememberClaraReferences,
+  resumeClaraConversation,
   startNewClaraSession,
   startOrResumeClaraSession,
+  type ClaraHistoryEntry,
 } from "@/services/clara/claraSession";
 import {
   CLARA_CONTRACTOR_TRANSITION_TEXT,
@@ -252,6 +255,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [dossierOpen, setDossierOpen] = useState(false);
   /** Le dossier ne s'ouvre de lui-même qu'une fois : ensuite, le bouton suffit. */
   const dossierAutoOpened = useRef(false);
+  // Conversations passées : liste réelle, jamais reconstruite localement.
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyItems, setHistoryItems] = useState<ClaraHistoryEntry[]>([]);
 
 
   const hydrated = useRef(false);
@@ -398,6 +406,48 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }
     focusComposer();
   }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang]);
+
+  /** Conversations passées : la liste vient du serveur, jamais d'une copie locale. */
+  const openHistory = useCallback(async () => {
+    setHistoryOpen(true);
+    setHistoryError(null);
+    setHistoryLoading(true);
+    try {
+      setHistoryItems(await listClaraConversations());
+    } catch {
+      setHistoryError("Impossible d’afficher vos conversations pour le moment.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  /** Reprise d'une conversation existante : même fil, aucun message inventé. */
+  const resumeConversation = useCallback(
+    async (entry: ClaraHistoryEntry) => {
+      setHistoryOpen(false);
+      if (entry.current) return;
+      setHistoryError(null);
+      try {
+        closeAlex();
+      } catch {
+        /* aucune session vocale active */
+      }
+      try {
+        const state = await resumeClaraConversation(entry.session_token);
+        setMessages(state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })));
+        setQuickReplies(null);
+        setError(null);
+        setMode("IDLE");
+        trackCopilotEvent("clara_conversation_resumed", { surface: "home_clara_box" });
+        scrollToLatest("auto");
+        focusComposer();
+      } catch {
+        setError("Impossible de rouvrir cette conversation. Réessayez dans un instant.");
+      }
+    },
+    [closeAlex, focusComposer, scrollToLatest],
+  );
+
 
   const handleResetClick = useCallback(() => {
     // Conversation vide : aucune confirmation inutile.
@@ -1207,6 +1257,39 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         >
           <Home className="h-4 w-4" aria-hidden="true" />
         </button>
+        <button
+          type="button"
+          onClick={() => (historyOpen ? setHistoryOpen(false) : void openHistory())}
+          className="home-clara-history-open"
+          title="Conversations"
+          aria-label="Voir mes conversations"
+          aria-expanded={historyOpen}
+        >
+          <History className="h-4 w-4" aria-hidden="true" />
+        </button>
+        {historyOpen && (
+          <div className="home-clara-history" role="dialog" aria-label="Mes conversations">
+            <p className="home-clara-history-title">Mes conversations</p>
+            {historyLoading && <p className="home-clara-history-empty">Chargement…</p>}
+            {historyError && <p className="home-clara-history-empty" role="alert">{historyError}</p>}
+            {!historyLoading && !historyError && historyItems.length === 0 && (
+              <p className="home-clara-history-empty">Aucune conversation précédente.</p>
+            )}
+            <ul>
+              {historyItems.map((entry) => (
+                <li key={entry.session_id}>
+                  <button type="button" onClick={() => void resumeConversation(entry)} data-current={entry.current ? "true" : undefined}>
+                    <span>{entry.title || "Conversation sans message"}</span>
+                    {entry.current && <em>En cours</em>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="home-clara-history-close" onClick={() => setHistoryOpen(false)}>
+              Fermer
+            </button>
+          </div>
+        )}
         <DossierMaisonSheet open={dossierOpen} onOpenChange={setDossierOpen} />
         {confirmReset && (
           <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
@@ -1359,8 +1442,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
              onInput={(event) => {
                const field = event.currentTarget;
                field.style.height = "auto";
-               field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
-               field.style.overflowY = field.scrollHeight > 120 ? "auto" : "hidden";
+              field.style.height = `${Math.min(field.scrollHeight, 140)}px`;
+              field.style.overflowY = field.scrollHeight > 140 ? "auto" : "hidden";
                keepComposerVisible();
              }}
              onFocus={handleComposerFocus}
