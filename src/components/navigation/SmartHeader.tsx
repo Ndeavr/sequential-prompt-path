@@ -22,6 +22,7 @@ import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
 import UnproLogo from "@/components/brand/UnproLogo";
+import UnproIcon from "@/components/brand/UnproIcon";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
