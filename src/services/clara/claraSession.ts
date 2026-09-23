@@ -166,6 +166,7 @@ export async function startNewClaraSession(options: {
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `clara_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  archiveToken(peekClaraSessionToken());
   safeSet(TOKEN_KEY, freshToken);
   const promise = call<ClaraSessionState>("start", {
     session_token: freshToken,
@@ -184,6 +185,57 @@ export async function startNewClaraSession(options: {
   });
   return promise;
 }
+
+/** Conversations passées de ce navigateur : uniquement des jetons locaux. */
+function readArchivedTokens(): string[] {
+  const raw = safeGet(TOKEN_ARCHIVE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((t) => typeof t === "string").slice(0, 25) : [];
+  } catch {
+    return [];
+  }
+}
+
+function archiveToken(token: string | null) {
+  if (!token) return;
+  const tokens = readArchivedTokens().filter((t) => t !== token);
+  tokens.unshift(token);
+  safeSet(TOKEN_ARCHIVE_KEY, JSON.stringify(tokens.slice(0, 25)));
+}
+
+export interface ClaraHistoryEntry {
+  session_id: string;
+  session_token: string;
+  title: string;
+  started_at: string | null;
+  current: boolean;
+}
+
+/** Liste des conversations réellement détenues par ce navigateur ou ce compte. */
+export async function listClaraConversations(): Promise<ClaraHistoryEntry[]> {
+  const response = await call<{ sessions?: ClaraHistoryEntry[] }>("history", {
+    session_token: peekClaraSessionToken(),
+    tokens: readArchivedTokens(),
+  });
+  return response.sessions ?? [];
+}
+
+/** Rouvre une conversation passée : même fil, aucun nouvel échange créé. */
+export async function resumeClaraConversation(targetToken: string): Promise<ClaraSessionState> {
+  const state = await call<ClaraSessionState>("resume", {
+    session_token: peekClaraSessionToken(),
+    target_token: targetToken,
+  });
+  archiveToken(peekClaraSessionToken());
+  rememberToken(state.session_token);
+  lastSessionToken = state.session_token;
+  sessionReady = null;
+  return state;
+}
+
+
 
 
 
