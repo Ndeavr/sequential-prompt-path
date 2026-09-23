@@ -46,6 +46,7 @@ export type CopilotEventName =
   | "clara_upload_completed"
   | "clara_upload_failed"
   | "clara_new_conversation"
+  | "clara_conversation_resumed"
   | "clara_conversation_activated"
   | "clara_hero_collapsed"
   | "clara_keyboard_viewport_adjusted"
