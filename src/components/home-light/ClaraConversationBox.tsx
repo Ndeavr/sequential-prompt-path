@@ -441,9 +441,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         rootRef.current?.toggleAttribute("data-keyboard-open", keyboardOpen);
         if (keyboardOpen) {
           trackCopilotEvent("clara_keyboard_viewport_adjusted", { surface: "home_clara_box" });
+          // Le clavier ne doit jamais projeter la page à un endroit arbitraire :
+          // on aligne la surface de Clara, puis on garde la dernière ligne
+          // visible uniquement si l'utilisateur lisait déjà le bas du fil.
           window.requestAnimationFrame(() => {
-            rootRef.current?.scrollIntoView({ block: "start" });
-            textareaRef.current?.scrollIntoView({ block: "nearest" });
+            rootRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+            keepComposerVisible();
           });
         }
       }
