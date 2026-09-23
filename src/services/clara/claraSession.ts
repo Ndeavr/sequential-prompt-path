@@ -13,6 +13,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const TOKEN_KEY = "unpro_clara_session_token";
+/** Jetons des conversations passées DE CE NAVIGATEUR (historique invité). */
+const TOKEN_ARCHIVE_KEY = "unpro_clara_session_tokens";
 
 export interface ClaraMessage {
   id: string;
