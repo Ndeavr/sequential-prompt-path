@@ -528,6 +528,30 @@
     background: hsl(0 0% 100% / 0.92);
   }
   .home-light .home-clara-reset:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+  /* Dossier maison : accès permanent, sans quitter la conversation. */
+  .home-light .home-clara-dossier-open {
+    position: absolute;
+    top: 10px;
+    right: 52px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(0 0% 100% / 0.72);
+    color: hsl(220 14% 38%);
+    backdrop-filter: blur(12px);
+    transition: transform 420ms cubic-bezier(.22,1,.36,1), color 200ms ease, background 200ms ease;
+  }
+  .home-light .home-clara-dossier-open:hover {
+    transform: translateY(-2px);
+    color: hsl(222 49% 9%);
+    background: hsl(0 0% 100% / 0.92);
+  }
+  .home-light .home-clara-dossier-open:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
   .home-light .home-clara-reset-confirm {
     position: absolute;
     top: 52px;

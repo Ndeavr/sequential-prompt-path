@@ -8,7 +8,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, FileText, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -56,6 +56,12 @@ import {
   type ClaraWorkflowIntent,
   type ClaraWorkflowState,
 } from "@/services/clara/claraWorkflow";
+import {
+  DOSSIER_OPEN_EVENT,
+  mentionsDossier,
+  rememberInDossier,
+} from "@/services/clara/claraDossier";
+import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
@@ -243,6 +249,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [voiceTip, setVoiceTip] = useState<string | null>(null);
   const voiceTipShown = useRef(false);
   const voiceCooldownUntil = useRef(0);
+  // Dossier maison : s'ouvre PAR-DESSUS la conversation, jamais en navigation.
+  const [dossierOpen, setDossierOpen] = useState(false);
+  /** Le dossier ne s'ouvre de lui-même qu'une fois : ensuite, le bouton suffit. */
+  const dossierAutoOpened = useRef(false);
+
 
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -280,6 +291,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     return () => {
       mountedRef.current = false;
     };
+  }, []);
+
+  // Clara ouvre elle-même le Dossier maison, dans la même conversation.
+  useEffect(() => {
+    const onOpen = () => setDossierOpen(true);
+    window.addEventListener(DOSSIER_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(DOSSIER_OPEN_EVENT, onOpen);
   }, []);
 
   const createLocalPreview = useCallback((file: File) => {
@@ -738,6 +756,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
 
+      // Dossier maison : ce que le propriétaire vient de déclarer est conservé
+      // tel quel, avec sa provenance. Aucune interprétation n'est enregistrée.
+      if (nextMode === "PROJECT") {
+        rememberInDossier({
+          category: "project",
+          label: text.slice(0, 160),
+          detail: "Décrit par le propriétaire pendant la conversation.",
+          provenance: "declared",
+        });
+      }
+
+
       // Routeur unique : l'intention ouvre, suspend ou reprend un parcours réel,
       // sans jamais être montrée à l'utilisateur ni perdre l'étape en cours.
       const classified = detectClaraWorkflowIntent(text);
@@ -837,6 +867,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           text: shownText,
           clientMessageId: assistantId,
         }).catch(() => {});
+
+        // « Je l'ajoute à votre dossier maison » : le dossier s'ouvre vraiment,
+        // par-dessus la conversation, sans quitter l'échange en cours.
+        if (mentionsDossier(shownText) && !dossierAutoOpened.current) {
+          dossierAutoOpened.current = true;
+          setDossierOpen(true);
+        }
+
 
         // Navigation assistée : Clara ouvre elle-même l'écran réel, dans le même
         // onglet, et ne confirme qu'après le changement de route réussi.
@@ -1164,6 +1202,22 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         messageType: "attachment",
         clientMessageId: messageId,
       }).catch(() => {});
+
+      // Une pièce réellement transmise entre au Dossier maison, sans analyse
+      // présumée : ce qui est confirmé, c'est la réception du fichier.
+      for (const file of files) {
+        rememberInDossier({
+          category: "document",
+          label: file.name || label,
+          entryKey: `${file.name || label}-${file.size}`,
+          detail: file.type.startsWith("video/")
+            ? "Vidéo transmise par le propriétaire."
+            : file.type.startsWith("image/")
+              ? "Photo transmise par le propriétaire."
+              : "Document transmis par le propriétaire.",
+          provenance: "declared",
+        });
+      }
     },
     [createLocalPreview, enqueueMedia],
   );
@@ -1188,6 +1242,16 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         >
           <SquarePen className="h-4 w-4" aria-hidden="true" />
         </button>
+        <button
+          type="button"
+          onClick={() => setDossierOpen(true)}
+          className="home-clara-dossier-open"
+          title="Dossier maison"
+          aria-label="Ouvrir mon dossier maison"
+        >
+          <Home className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <DossierMaisonSheet open={dossierOpen} onOpenChange={setDossierOpen} />
         {confirmReset && (
           <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
             <p>{copy.resetConfirm}</p>

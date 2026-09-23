@@ -75226,6 +75226,62 @@ export type Database = {
           },
         ]
       }
+      property_dossier_entries: {
+        Row: {
+          category: string
+          created_at: string
+          detail: string | null
+          entry_key: string
+          id: string
+          label: string
+          metadata: Json
+          property_id: string | null
+          provenance: string
+          session_id: string | null
+          source: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          detail?: string | null
+          entry_key: string
+          id?: string
+          label: string
+          metadata?: Json
+          property_id?: string | null
+          provenance?: string
+          session_id?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          entry_key?: string
+          id?: string
+          label?: string
+          metadata?: Json
+          property_id?: string | null
+          provenance?: string
+          session_id?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_dossier_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_events: {
         Row: {
           contractor_id: string | null
