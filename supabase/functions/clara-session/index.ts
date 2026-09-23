@@ -72,6 +72,18 @@ const CONTEXT_LIST_KEYS = [
  * (intention active, étape, éléments obtenus/manquants, workflows suspendus).
  */
 const WORKFLOW_KEY = "workflow";
+
+/** Dossier maison : catégories et niveaux de vérité autorisés. */
+const DOSSIER_CATEGORIES = new Set([
+  "property",
+  "project",
+  "document",
+  "contractor",
+  "quote",
+  "appointment",
+  "note",
+]);
+const DOSSIER_PROVENANCE = new Set(["verified", "declared", "inferred", "pending"]);
 const WORKFLOW_TEXT_RE = /^[\p{L}\p{N}_\-. :/']{1,80}$/u;
 const MAX_SUSPENDED = 5;
 const MAX_WORKFLOW_ITEMS = 20;
@@ -699,6 +711,72 @@ Deno.serve(async (req) => {
       });
       return json({ ok: true });
     }
+
+    // ── dossier_list : Dossier maison de cette conversation (et du compte) ──
+    // Aucune donnée inventée : uniquement ce qui a réellement été enregistré,
+    // avec sa provenance (verified / declared / inferred / pending).
+    if (action === "dossier_list") {
+      let query = admin
+        .from("property_dossier_entries")
+        .select("id,category,entry_key,label,detail,provenance,source,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(200);
+
+      query = session.user_id
+        ? query.or(`user_id.eq.${session.user_id},session_id.eq.${session.id}`)
+        : query.eq("session_id", session.id);
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("clara-session dossier_list failed", error);
+        return json({ error: "dossier_unavailable" }, 500);
+      }
+      return json({ ok: true, entries: data ?? [] });
+    }
+
+    // ── dossier_add : Clara ajoute réellement ce qu'elle vient d'apprendre ──
+    if (action === "dossier_add") {
+      const category = str(body.category, 20) ?? "note";
+      const provenance = str(body.provenance, 12) ?? "declared";
+      const label = str(body.label, 160);
+      const entryKey = (str(body.entry_key, 80) ?? label ?? "").toLowerCase().slice(0, 80);
+      if (!label || !entryKey) return json({ error: "label_required" }, 400);
+      if (!DOSSIER_CATEGORIES.has(category)) return json({ error: "unknown_category" }, 400);
+      if (!DOSSIER_PROVENANCE.has(provenance)) return json({ error: "unknown_provenance" }, 400);
+
+      const context = (session.context_json ?? {}) as Record<string, unknown>;
+      const propertyId =
+        typeof context.active_property_id === "string" && UUID_RE.test(context.active_property_id)
+          ? context.active_property_id
+          : null;
+
+      const payload = {
+        session_id: session.id,
+        user_id: session.user_id ?? null,
+        property_id: propertyId,
+        category,
+        entry_key: entryKey,
+        label,
+        detail: str(body.detail, 400) ?? null,
+        provenance,
+        source: str(body.source, 60) ?? "clara_conversation",
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await admin
+        .from("property_dossier_entries")
+        .upsert(payload, { onConflict: "session_id,category,entry_key" })
+        .select("id,category,entry_key,label,detail,provenance,source,updated_at")
+        .maybeSingle();
+
+      if (error || !data) {
+        console.error("clara-session dossier_add failed", error);
+        return json({ error: "dossier_write_failed" }, 500);
+      }
+      return json({ ok: true, entry: data });
+    }
+
+
 
 
 
