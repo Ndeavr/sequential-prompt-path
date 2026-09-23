@@ -709,6 +709,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
+      // Envoi utilisateur : on descend toujours au dernier message, en douceur.
+      scrollToLatest("smooth");
 
       // Qualification entrepreneur en cours : la réponse est enregistrée tout
       // de suite, puis Clara pose la question suivante — ou ouvre l'audit.
