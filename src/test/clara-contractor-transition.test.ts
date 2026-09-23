@@ -28,3 +28,13 @@ describe("Clara — transition entrepreneur", () => {
     expect(box).toContain("CLARA_CONTRACTOR_VOICE_FINISHED_EVENT");
   });
 });
+describe("Clara — choix entrepreneur pilotés par l'audience", () => {
+  it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
+    expect(box).toContain('useState<ClaraAudience>("homeowner")');
+    expect(box).toContain("Vérifier mon score IA");
+    expect(box).toContain("Obtenir plus de contrats");
+    expect(box).toContain("Compléter mon profil");
+    expect(box).toContain("TRANSITION_PULSE_MS * TRANSITION_PULSES");
+    expect(box.indexOf("TRANSITION_READ_MS));")).toBeLessThan(box.indexOf("setTransitionPause(true)"));
+  });
+});
