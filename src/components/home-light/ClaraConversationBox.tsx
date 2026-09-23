@@ -8,7 +8,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
