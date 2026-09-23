@@ -18,6 +18,39 @@ const FORBIDDEN_TOKENS = [
 ];
 
 const TOOL_LINE_RE = /^\s*(action|tool|function|event)\s*[:=]\s*\S+/i;
+
+/**
+ * Appels d'action internes écrits par le modèle, par exemple :
+ *   open_modal(type: "property_onboarding", context: { ... })
+ * Ils doivent être exécutés par l'application, JAMAIS affichés.
+ * La parenthèse peut contenir des accolades, des guillemets et des retours de ligne.
+ */
+const INTERNAL_ACTION_NAMES = [
+  "open_page",
+  "open_modal",
+  "open_form",
+  "open_upload",
+  "open_calendar",
+  "open_support_panel",
+  "open_camera",
+  "open_voice",
+  "open_chat",
+  "scroll_to",
+  "highlight",
+  "circle",
+  "pulse",
+  "focus_input",
+  "prefill_field",
+  "show_property_selector",
+  "save_profile",
+  "match_pro",
+  "trigger_upload",
+  "show_upload_button",
+];
+const INTERNAL_ACTION_CALL_RE = new RegExp(
+  `\\b(?:${INTERNAL_ACTION_NAMES.join("|")})\\s*\\((?:[^()]|\\([^()]*\\))*\\)?`,
+  "gi",
+);
 const FUNCTION_TAG_RE = /<\/?function[\w-]*[^>]*>/gi;
 const JSON_BLOCK_RE = /\{[^{}]*?"(?:tool|action|function|name|args|arguments)"\s*:[^{}]*?\}/g;
 const CODE_FENCE_RE = /```[\s\S]*?```/g;
