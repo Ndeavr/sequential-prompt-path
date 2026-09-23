@@ -40,6 +40,7 @@ import {
   getClaraQualification,
   nextQualificationStep,
   type ClaraQualificationStep,
+  saveClaraQualification,
 } from "@/services/clara/claraContractorQualification";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
@@ -191,16 +192,16 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
 ];
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
-export type ClaraAudience = "homeowner" | "contractor";
+type ClaraAudience = "homeowner" | "contractor";
 type ContractorChoice = "score" | "contracts" | "profile";
 const CONTRACTOR_SUGGESTIONS: { label: string; choice: ContractorChoice }[] = [
   { label: "Vérifier mon score IA", choice: "score" },
   { label: "Obtenir plus de contrats", choice: "contracts" },
   { label: "Compléter mon profil", choice: "profile" },
 ];
-export const CLARA_CONTRACTOR_WELCOME =
+const CLARA_CONTRACTOR_WELCOME =
   "Parfait. Je vais regarder ce qu’UNPRO comprend déjà de votre entreprise et voir comment les IA pourraient mieux vous recommander.";
-export const CLARA_CONTRACTOR_SCORE_TEXT =
+const CLARA_CONTRACTOR_SCORE_TEXT =
   "Je regarde votre présence en ligne, ce que les IA comprennent de votre entreprise et ce qui pourrait vous empêcher d’être recommandé.";
 /** Lecture après la fin complète du texte, puis exactement 3 pulsations. */
 const TRANSITION_READ_MS = 1400;

@@ -18,7 +18,7 @@ describe("Clara — transition entrepreneur", () => {
   it("respecte le mouvement réduit et garde la pause Clara", () => {
     expect(box).toContain('(prefers-reduced-motion: reduce)');
     expect(box).toContain("setTransitionPause(true)");
-    expect(box).toContain("window.setTimeout(resolve, 900)");
+    expect(box).toContain("window.setTimeout(resolve, TRANSITION_READ_MS)");
   });
 
   it("attend la fin ou l'annulation réelle de la voix avant la navigation", () => {
