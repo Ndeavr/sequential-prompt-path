@@ -252,6 +252,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [dossierOpen, setDossierOpen] = useState(false);
   /** Le dossier ne s'ouvre de lui-même qu'une fois : ensuite, le bouton suffit. */
   const dossierAutoOpened = useRef(false);
+  // Conversations passées : liste réelle, jamais reconstruite localement.
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyItems, setHistoryItems] = useState<ClaraHistoryEntry[]>([]);
 
 
   const hydrated = useRef(false);
