@@ -63,7 +63,7 @@ describe("glossy homepage contract", () => {
     expect(header).not.toContain("homeHeaderCompact");
     expect(header).not.toContain("home-header-scroll-sentinel");
     expect(header).not.toContain("new IntersectionObserver");
-    expect(header).toContain("home-brand-symbol");
+    expect(header).not.toContain("home-brand-symbol");
     expect(header).not.toContain('addEventListener("scroll"');
   });
 
