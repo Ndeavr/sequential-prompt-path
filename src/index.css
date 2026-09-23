@@ -1006,7 +1006,7 @@
     /* Les choix reviennent à la ligne : jamais de défilement horizontal. */
     .home-light .home-clara-quick { flex-wrap: wrap; overflow-x: visible; padding-bottom: 0.2rem; }
     .home-light .home-clara-quick button { flex: 0 0 auto; }
-    .home-light .home-clara-examples { justify-content: flex-start; overflow-x: auto; overscroll-behavior-inline: contain; flex-wrap: nowrap; padding-bottom: 0.8rem; scrollbar-width: none; }
+    .home-light .home-clara-examples { justify-content: flex-start; overflow-x: visible; flex-wrap: wrap; padding-bottom: 0.8rem; }
     .home-light .home-clara-examples button { flex: 0 0 auto; min-height: 44px; font-size: 0.82rem; }
   }
 
