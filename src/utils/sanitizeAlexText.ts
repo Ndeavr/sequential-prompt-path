@@ -15,6 +15,15 @@ const FORBIDDEN_TOKENS = [
   "match_pro",
   "trigger_upload",
   "show_upload_button",
+  "open_modal",
+  "open_page",
+  "open_form",
+  "open_calendar",
+  "open_support_panel",
+  "show_property_selector",
+  "focus_input",
+  "prefill_field",
+  "scroll_to",
 ];
 
 const TOOL_LINE_RE = /^\s*(action|tool|function|event)\s*[:=]\s*\S+/i;
