@@ -407,6 +407,48 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     focusComposer();
   }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang]);
 
+  /** Conversations passées : la liste vient du serveur, jamais d'une copie locale. */
+  const openHistory = useCallback(async () => {
+    setHistoryOpen(true);
+    setHistoryError(null);
+    setHistoryLoading(true);
+    try {
+      setHistoryItems(await listClaraConversations());
+    } catch {
+      setHistoryError("Impossible d’afficher vos conversations pour le moment.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  /** Reprise d'une conversation existante : même fil, aucun message inventé. */
+  const resumeConversation = useCallback(
+    async (entry: ClaraHistoryEntry) => {
+      setHistoryOpen(false);
+      if (entry.current) return;
+      setHistoryError(null);
+      try {
+        closeAlex();
+      } catch {
+        /* aucune session vocale active */
+      }
+      try {
+        const state = await resumeClaraConversation(entry.session_token);
+        setMessages(state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })));
+        setQuickReplies(null);
+        setError(null);
+        setMode("IDLE");
+        trackCopilotEvent("clara_conversation_resumed", { surface: "home_clara_box" });
+        scrollToLatest("auto");
+        focusComposer();
+      } catch {
+        setError("Impossible de rouvrir cette conversation. Réessayez dans un instant.");
+      }
+    },
+    [closeAlex, focusComposer, scrollToLatest],
+  );
+
+
   const handleResetClick = useCallback(() => {
     // Conversation vide : aucune confirmation inutile.
     if (messages.length === 0 && mediaItems.length === 0) {
