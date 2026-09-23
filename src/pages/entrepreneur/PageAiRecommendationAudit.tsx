@@ -152,6 +152,16 @@ export default function PageAiRecommendationAudit() {
   const [touched, setTouched] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
   const [activating, setActivating] = useState(false);
+  // Réponses réellement données à Clara : affichées, jamais redemandées.
+  const [claraKnown] = useState<[string, string][]>(() => {
+    const q = getClaraQualification();
+    return ([
+      ["Métier", q.primary_trade],
+      ["Ville de l’entreprise", q.business_city],
+      ["Villes desservies", q.service_areas?.join(", ")],
+      ["Objectifs", q.goals?.join(", ")],
+    ] as [string, string | null | undefined][]).filter((row): row is [string, string] => !!row[1]);
+  });
   const [activationError, setActivationError] = useState<string | null>(null);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
@@ -455,7 +465,16 @@ export default function PageAiRecommendationAudit() {
               </button>
               <span className="text-[12.5px] text-muted-foreground">Gratuit · environ 60 secondes · aucun engagement</span>
             </div>
-
+            {claraKnown.length > 0 && (
+              <div className="mt-5 rounded-2xl border border-border bg-card p-4" data-testid="clara-known-context" aria-label="Ce que Clara sait déjà">
+                <p className="text-[13px] font-semibold text-foreground">Ce que vous avez dit à Clara</p>
+                <ul className="mt-2 space-y-1 text-[13.5px] text-foreground">
+                  {claraKnown.map(([label, value]) => (
+                    <li key={label}><span className="text-muted-foreground">{label} :</span> {value} <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">· Déclaré</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </section>
 
