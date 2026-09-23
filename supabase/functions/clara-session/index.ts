@@ -613,6 +613,90 @@ Deno.serve(async (req) => {
       return json({ ...serialize(created), resumed: false, messages: [] });
     }
 
+    // ── history : conversations passées réellement détenues par l'appelant ──
+    // Un invité ne voit que les jetons conservés par SON navigateur ; un compte
+    // voit ses propres sessions. Aucune donnée d'un autre visiteur n'est exposée.
+    if (action === "history") {
+      const rawTokens = Array.isArray(body.tokens) ? body.tokens : [];
+      const tokens = [
+        ...new Set(
+          [...(sessionToken ? [sessionToken] : []), ...rawTokens]
+            .filter((t): t is string => typeof t === "string" && t.length > 0 && t.length <= 120)
+            .slice(0, 25),
+        ),
+      ];
+
+      const rows: SessionRow[] = [];
+      if (userId) {
+        const { data } = await admin
+          .from("alex_sessions")
+          .select(SESSION_COLUMNS)
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(20);
+        if (data) rows.push(...(data as SessionRow[]));
+      }
+      if (tokens.length) {
+        const { data } = await admin
+          .from("alex_sessions")
+          .select(SESSION_COLUMNS)
+          .in("session_token", tokens)
+          .order("updated_at", { ascending: false })
+          .limit(25);
+        if (data) rows.push(...(data as SessionRow[]).filter((s) => ownedByCaller(s)));
+      }
+
+      const unique = new Map<string, SessionRow>();
+      for (const r of rows) if (!unique.has(r.id)) unique.set(r.id, r);
+      const sessions = [...unique.values()].slice(0, 12);
+
+      const titles = new Map<string, { title: string; at: string }>();
+      if (sessions.length) {
+        const { data } = await admin
+          .from("alex_messages")
+          .select("session_id,sender,message,created_at")
+          .in("session_id", sessions.map((s) => s.id))
+          .order("created_at", { ascending: true })
+          .limit(400);
+        for (const m of (data ?? []) as Record<string, unknown>[]) {
+          const sid = m.session_id as string;
+          if (m.sender !== "user") continue;
+          if (!titles.has(sid)) {
+            titles.set(sid, {
+              title: String(m.message ?? "").slice(0, 90),
+              at: m.created_at as string,
+            });
+          }
+        }
+      }
+
+      return json({
+        sessions: sessions
+          .filter((s) => titles.has(s.id) || s.session_token === sessionToken)
+          .map((s) => ({
+            session_id: s.id,
+            session_token: s.session_token,
+            title: titles.get(s.id)?.title ?? "",
+            started_at: titles.get(s.id)?.at ?? null,
+            current: s.session_token === sessionToken,
+          })),
+      });
+    }
+
+    // ── resume : rouvrir une conversation passée de l'appelant ──
+    if (action === "resume") {
+      const target = str(body.target_token, 120);
+      if (!target) return json({ error: "target_token_required" }, 400);
+      const previous = await loadByToken(target);
+      if (!previous) return json({ error: "session_not_found" }, 404);
+      if (!ownedByCaller(previous)) return json({ error: "not_your_session" }, 403);
+      return json({
+        ...serialize(previous),
+        resumed: true,
+        messages: await loadMessages(previous.id),
+      });
+    }
+
     if (!sessionToken) return json({ error: "session_token_required" }, 400);
     const session = await loadByToken(sessionToken);
     if (!session) return json({ error: "session_not_found" }, 404);
