@@ -14,6 +14,8 @@ describe("glossy homepage contract", () => {
     expect(hero).toContain("rénover");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
+    expect(hero).not.toContain("AnimatePresence");
+    expect(hero).not.toContain("motion.");
   });
 
   it("keeps Clara text, voice and attachment actions real", () => {

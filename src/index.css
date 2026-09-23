@@ -314,6 +314,7 @@
     backdrop-filter: blur(14px) saturate(120%);
     -webkit-backdrop-filter: blur(14px) saturate(120%);
     color: hsl(var(--foreground));
+    transition: none !important;
   }
 
   .home-light .home-minimal-header > div { max-width: 1280px; padding-inline: clamp(1.25rem, 4vw, 3.5rem); }
@@ -337,6 +338,10 @@
     height: auto;
     object-fit: contain;
     object-position: left center;
+    opacity: 1;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
   }
   .home-light .home-language-switch {
     display: inline-flex;
