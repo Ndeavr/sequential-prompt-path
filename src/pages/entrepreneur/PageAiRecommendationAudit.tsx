@@ -39,6 +39,9 @@ import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { getClaraQualification } from "@/services/clara/claraContractorQualification";
+import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+
+const FALLBACK_AUDIT_DISMISSED_KEY = "unpro_audit_fallback_350_dismissed";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
@@ -148,6 +151,23 @@ export default function PageAiRecommendationAudit() {
   const [searching, setSearching] = useState(false);
   const [auditing, setAuditing] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
+  // Offre de repli 350 $ : visible seulement après le score, une fois par session.
+  const [fallbackDismissed, setFallbackDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(FALLBACK_AUDIT_DISMISSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const showFallback = Boolean(result) && !fallbackDismissed;
+  const dismissFallback = useCallback(() => {
+    try {
+      sessionStorage.setItem(FALLBACK_AUDIT_DISMISSED_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setFallbackDismissed(true);
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
@@ -574,13 +594,29 @@ export default function PageAiRecommendationAudit() {
               </div>
             </section>
           ) : (
-            <AuditReport
-              result={result}
-              onActivate={activate}
-              activating={activating}
-              activationError={activationError}
-              onRestart={() => setResult(null)}
-            />
+            <>
+              <AuditReport
+                result={result}
+                onActivate={activate}
+                activating={activating}
+                activationError={activationError}
+                onRestart={() => setResult(null)}
+              />
+              {showFallback && (
+                <div className="mt-6" data-testid="audit-fallback-350">
+                  {sp.get("credit") === "canceled" && (
+                    <p className="mb-3 text-sm text-readable-secondary">
+                      Paiement annulé. Votre dossier est conservé tel quel.
+                    </p>
+                  )}
+                  <FallbackCredit350Card
+                    affiliateRef={sp.get("ref")}
+                    returnPath="/entrepreneurs/audit-ia"
+                    onDecline={dismissFallback}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
 

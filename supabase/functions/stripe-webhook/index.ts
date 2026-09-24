@@ -402,6 +402,27 @@ Deno.serve(async (req) => {
                   },
                 });
 
+                // Activation du compte (idempotent : ne rétrograde jamais un compte déjà activé).
+                await supabase
+                  .from("contractors")
+                  .update({ account_status: "active", activation_status: "activated" })
+                  .eq("id", creditContractorId)
+                  .neq("activation_status", "activated");
+
+                // Notification admin interne (aucun SMS/courriel automatique).
+                await supabase.from("admin_notifications").insert({
+                  type: "fallback_credit_350_paid",
+                  severity: "info",
+                  contractor_id: creditContractorId,
+                  title: "Crédit UNPRO 350 $ payé",
+                  body: "Un entrepreneur a sécurisé sa présence (crédit de 350 $ ajouté).",
+                  payload_json: {
+                    stripe_session_id: session.id,
+                    ref: session.metadata?.ref ?? null,
+                    quote_id: session.metadata?.quote_id ?? null,
+                  },
+                });
+
                 await supabase.from("contractor_funnel_events").insert({
                   contractor_id: creditContractorId,
                   event_type: "fallback_350_payment_success",
