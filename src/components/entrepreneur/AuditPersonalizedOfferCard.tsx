@@ -13,7 +13,6 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
-import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
   PUBLIC_CONTRACTOR_PLANS,
   formatPrice,
