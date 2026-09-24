@@ -13,7 +13,6 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
-import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
   PUBLIC_CONTRACTOR_PLANS,
   formatPrice,
@@ -101,14 +100,10 @@ export function AuditPersonalizedOfferCard({
     setLoading(true);
     setError(null);
     void logFunnelEvent({
-      event_type: "audit_offer_checkout_clicked",
-      metadata: { audit_id: auditId, plan_id: plan.slug, score },
+      event_type: "stripe_checkout_started",
+      metadata: { audit_id: auditId, plan_id: plan.slug, score, surface: "audit_ia" },
     });
-    trackCopilotEvent("contractor_plan_checkout_clicked", {
-      surface: "audit_ia",
-      kind: plan.slug,
-    });
-    try {
+        try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         window.location.assign(`/auth?next=${encodeURIComponent(returnPath)}`);
@@ -158,10 +153,11 @@ export function AuditPersonalizedOfferCard({
       window.setTimeout(() => setLoading(false), 2500);
     } catch (e) {
       void logFunnelEvent({
-        event_type: "audit_offer_checkout_failed",
+        event_type: "stripe_payment_failed",
         metadata: {
           audit_id: auditId,
           plan_id: plan.slug,
+          surface: "audit_ia",
           reason: e instanceof Error ? e.message : String(e),
         },
       });
