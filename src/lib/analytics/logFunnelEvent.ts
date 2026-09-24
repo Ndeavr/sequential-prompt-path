@@ -167,6 +167,10 @@ export function clearFunnelEventFailures(): void {
 
 const ATTRIBUTION_KEY = "unpro_funnel_attribution";
 
+/** Une colonne uuid n'accepte qu'un uuid : toute autre référence part en métadonnées. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Attribution première-touche : capturée une fois, conservée pour toute la session. */
 export function getFunnelAttribution(): Record<string, string> {
   try {
@@ -290,9 +294,17 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
 
     const attribution = getFunnelAttribution();
 
+    // `prospect_id` est une colonne uuid : une référence non-uuid (lien SMS
+    // raccourci, identifiant partenaire) ne doit JAMAIS faire échouer
+    // l'événement — elle est conservée dans les métadonnées.
+    const rawProspect =
+      input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null;
+    const prospectId = rawProspect && UUID_RE.test(rawProspect) ? rawProspect : null;
+    const prospectRef = rawProspect && !prospectId ? rawProspect : null;
+
     const { error } = await supabase.from("contractor_funnel_events").insert({
       dedupe_key: input.dedupe_key ?? null,
-      prospect_id: input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null,
+      prospect_id: prospectId,
       token: input.token ?? attribution.token ?? attribution.t ?? null,
 
       affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
@@ -310,7 +322,9 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       event_source: input.event_source ?? "app",
       step: input.step ?? input.event_type,
       current_path: currentPath,
-      metadata: input.metadata ?? {},
+      metadata: prospectRef
+        ? { ...(input.metadata ?? {}), prospect_ref: prospectRef }
+        : (input.metadata ?? {}),
       source: input.event_source ?? "app",
       device: getDevice(),
     } as never);
