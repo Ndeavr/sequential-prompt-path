@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
     );
     // La preuve d'acceptation est exigée : pas d'activation silencieuse sans trace.
     if (termsErr) {
-      console.error("[affiliate-onboarding-activate] terms_upsert_failed", row.id, termsErr.message);
+      console.error("[affiliate-onboarding-activate] terms_upsert_failed", row.id, termsErr.code, termsErr.message);
       return json({ error: "activation_failed", step: "terms" }, 500);
     }
 

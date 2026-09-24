@@ -105,3 +105,11 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain('role: "assistant"');
   });
 });
+describe("Clara — verrou de page libéré à la navigation", () => {
+  it("retire toujours data-clara-conversation-active au démontage", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync("src/components/home-light/ClaraConversationBox.tsx", "utf8");
+    expect(src).not.toContain("if (!isConversationActive) delete document.documentElement.dataset.claraConversationActive");
+    expect(src).toContain("delete document.documentElement.dataset.claraConversationActive;");
+  });
+});
