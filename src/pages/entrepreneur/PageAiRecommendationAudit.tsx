@@ -151,6 +151,23 @@ export default function PageAiRecommendationAudit() {
   const [searching, setSearching] = useState(false);
   const [auditing, setAuditing] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
+  // Offre de repli 350 $ : visible seulement après le score, une fois par session.
+  const [fallbackDismissed, setFallbackDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(FALLBACK_AUDIT_DISMISSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const showFallback = Boolean(result) && !fallbackDismissed;
+  const dismissFallback = useCallback(() => {
+    try {
+      sessionStorage.setItem(FALLBACK_AUDIT_DISMISSED_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setFallbackDismissed(true);
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
