@@ -290,9 +290,17 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
 
     const attribution = getFunnelAttribution();
 
+    // `prospect_id` est une colonne uuid : une référence non-uuid (lien SMS
+    // raccourci, identifiant partenaire) ne doit JAMAIS faire échouer
+    // l'événement — elle est conservée dans les métadonnées.
+    const rawProspect =
+      input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null;
+    const prospectId = rawProspect && UUID_RE.test(rawProspect) ? rawProspect : null;
+    const prospectRef = rawProspect && !prospectId ? rawProspect : null;
+
     const { error } = await supabase.from("contractor_funnel_events").insert({
       dedupe_key: input.dedupe_key ?? null,
-      prospect_id: input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null,
+      prospect_id: prospectId,
       token: input.token ?? attribution.token ?? attribution.t ?? null,
 
       affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
