@@ -46,7 +46,7 @@ export default function AlexVoiceDiagnosticsPanel() {
   if (!enabled) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[10001] w-[280px] rounded-xl border border-border/50 bg-background/95 backdrop-blur px-3 py-2 shadow-lg pointer-events-auto">
+    <div className="fixed bottom-4 right-4 z-[10001] w-[280px] rounded-xl border border-border/50 bg-background/95 backdrop-blur px-3 py-2 shadow-lg pointer-events-none select-none">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
         Clara Voice Diagnostics
       </div>
