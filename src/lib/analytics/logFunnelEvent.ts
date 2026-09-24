@@ -167,6 +167,10 @@ export function clearFunnelEventFailures(): void {
 
 const ATTRIBUTION_KEY = "unpro_funnel_attribution";
 
+/** Une colonne uuid n'accepte qu'un uuid : toute autre référence part en métadonnées. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Attribution première-touche : capturée une fois, conservée pour toute la session. */
 export function getFunnelAttribution(): Record<string, string> {
   try {
