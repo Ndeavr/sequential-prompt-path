@@ -39,6 +39,9 @@ import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { getClaraQualification } from "@/services/clara/claraContractorQualification";
+import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+
+const FALLBACK_AUDIT_DISMISSED_KEY = "unpro_audit_fallback_350_dismissed";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
@@ -574,13 +577,29 @@ export default function PageAiRecommendationAudit() {
               </div>
             </section>
           ) : (
-            <AuditReport
-              result={result}
-              onActivate={activate}
-              activating={activating}
-              activationError={activationError}
-              onRestart={() => setResult(null)}
-            />
+            <>
+              <AuditReport
+                result={result}
+                onActivate={activate}
+                activating={activating}
+                activationError={activationError}
+                onRestart={() => setResult(null)}
+              />
+              {showFallback && (
+                <div className="mt-6" data-testid="audit-fallback-350">
+                  {sp.get("credit") === "canceled" && (
+                    <p className="mb-3 text-sm text-readable-secondary">
+                      Paiement annulé. Votre dossier est conservé tel quel.
+                    </p>
+                  )}
+                  <FallbackCredit350Card
+                    affiliateRef={sp.get("ref")}
+                    returnPath="/entrepreneurs/audit-ia"
+                    onDecline={dismissFallback}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
 
