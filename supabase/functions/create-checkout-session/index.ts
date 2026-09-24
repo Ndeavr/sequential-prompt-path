@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ url: fbSession.url }), {
+      return new Response(JSON.stringify({ url: fbSession.url, sessionId: fbSession.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -922,7 +922,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
