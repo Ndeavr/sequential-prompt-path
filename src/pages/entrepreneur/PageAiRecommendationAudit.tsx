@@ -40,6 +40,8 @@ import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { getClaraQualification } from "@/services/clara/claraContractorQualification";
 import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+import { AuditPersonalizedOfferCard } from "@/components/entrepreneur/AuditPersonalizedOfferCard";
+
 
 const FALLBACK_AUDIT_DISMISSED_KEY = "unpro_audit_fallback_350_dismissed";
 
@@ -602,13 +604,33 @@ export default function PageAiRecommendationAudit() {
                 activationError={activationError}
                 onRestart={() => setResult(null)}
               />
+              <div className="mt-6">
+                <AuditPersonalizedOfferCard
+                  auditId={result.audit_id}
+                  score={result.readiness_score}
+                  businessName={result.business_name}
+                  city={result.city}
+                  trade={result.trade}
+                  returnPath="/entrepreneurs/audit-ia"
+                  attribution={{
+                    ref: sp.get("ref"),
+                    prospectId: sp.get("prospect") ?? sp.get("prospect_id"),
+                    campaign: sp.get("utm_campaign") ?? sp.get("campaign"),
+                    source: sp.get("utm_source") ?? sp.get("source"),
+                    activationToken,
+                  }}
+                />
+              </div>
               {showFallback && (
                 <div className="mt-6" data-testid="audit-fallback-350">
-                  {sp.get("credit") === "canceled" && (
-                    <p className="mb-3 text-sm text-readable-secondary">
+                  {(sp.get("credit") === "canceled" || sp.get("checkout") === "canceled") && (
+                    <p className="mb-3 text-sm text-muted-foreground">
                       Paiement annulé. Votre dossier est conservé tel quel.
                     </p>
                   )}
+                  <p className="mb-3 text-[13.5px] text-muted-foreground">
+                    Pas prêt pour un forfait complet&nbsp;? Sécurisez d'abord votre présence UNPRO.
+                  </p>
                   <FallbackCredit350Card
                     affiliateRef={sp.get("ref")}
                     returnPath="/entrepreneurs/audit-ia"
@@ -616,6 +638,7 @@ export default function PageAiRecommendationAudit() {
                   />
                 </div>
               )}
+
             </>
           )}
         </div>
