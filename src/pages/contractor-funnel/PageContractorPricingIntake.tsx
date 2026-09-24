@@ -393,9 +393,20 @@ export default function PageContractorPricingIntake() {
       ? `${detectedCity} détecté — confirmez vos territoires desservis.`
       : "Jusqu'où vous déplacez-vous?",
     hint: "Rayon de service et second métier (optionnel).",
-    isValid: () => true,
+    isValid: (d) => Boolean(d.trade_primary && d.city),
     render: (d, set) => (
       <div className="space-y-3">
+        {!d.trade_primary && (
+          <TradePickerSheet
+            label="Métier principal"
+            sheetTitle="Votre métier principal"
+            placeholder="Choisir mon métier"
+            value={tradeSlugOf(d.trade_primary)}
+            fallbackLabel={d.trade_primary ?? null}
+            onChange={(trade) => { confirm("trade_primary"); set({ trade_primary: trade.label }); }}
+            testId="trade-primary-picker-scope"
+          />
+        )}
         <TextInput
           label="Ville principale desservie"
           value={d.city ?? ""}

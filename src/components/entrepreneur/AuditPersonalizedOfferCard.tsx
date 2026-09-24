@@ -33,6 +33,10 @@ export interface AuditOfferAttribution {
 
 interface Props {
   auditId: string;
+  /** Jeton de l'audit — transmis au devis pour éviter toute re-saisie. */
+  auditToken?: string | null;
+  /** Devis personnalisé déjà calculé, s'il existe. */
+  quoteId?: string | null;
   score: number;
   businessName: string | null;
   city: string | null;
@@ -70,6 +74,8 @@ export function recommendationReason(score: number, city: string | null): string
 
 export function AuditPersonalizedOfferCard({
   auditId,
+  auditToken,
+  quoteId,
   score,
   businessName,
   city,
@@ -108,11 +114,33 @@ export function AuditPersonalizedOfferCard({
         window.location.assign(`/auth?next=${encodeURIComponent(returnPath)}`);
         return;
       }
+      // Le serveur exige un devis personnalisé persistant avant tout abonnement.
+      // Sans devis, on ouvre l'étape canonique de confirmation de capacité :
+      // l'entrepreneur y confirme ses chiffres réels, puis paie au prix exact.
+      if (!quoteId) {
+        const params = new URLSearchParams();
+        params.set("audit", auditId);
+        if (auditToken) params.set("audit_token", auditToken);
+        if (businessName) params.set("entreprise", businessName);
+        if (city) params.set("ville", city);
+        if (trade) params.set("metier", trade);
+        params.set("plan", plan.slug);
+        params.set("from", "audit_ia");
+        if (attribution?.ref) params.set("ref", attribution.ref);
+        if (attribution?.activationToken) params.set("t", attribution.activationToken);
+        if (attribution?.prospectId) params.set("prospect", attribution.prospectId);
+        if (attribution?.campaign) params.set("utm_campaign", attribution.campaign);
+        if (attribution?.source) params.set("utm_source", attribution.source);
+        window.location.assign(`/entrepreneur/devis-personnalise?${params.toString()}`);
+        return;
+      }
+
       const origin = window.location.origin;
       const { data, error: fnError } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           planId: plan.slug,
           billingInterval: "month",
+          quoteId,
           auditId,
           ...(attribution?.ref && { ref: attribution.ref }),
           ...(attribution?.activationToken && { activationToken: attribution.activationToken }),
@@ -234,6 +262,10 @@ export function AuditPersonalizedOfferCard({
         )}
       </button>
       <p className="mt-3 text-[12.5px] text-muted-foreground">
+        Prochaine étape : confirmation de votre capacité réelle (moins d'une minute), puis paiement
+        sécurisé au prix exact de votre plan.
+      </p>
+      <p className="mt-2 text-[12.5px] text-muted-foreground">
         Rendez-vous exclusifs, jamais partagés avec un autre entrepreneur. Annulable selon les
         conditions de votre entente.
       </p>
