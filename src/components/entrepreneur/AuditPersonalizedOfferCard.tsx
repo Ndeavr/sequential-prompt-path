@@ -101,14 +101,10 @@ export function AuditPersonalizedOfferCard({
     setLoading(true);
     setError(null);
     void logFunnelEvent({
-      event_type: "audit_offer_checkout_clicked",
-      metadata: { audit_id: auditId, plan_id: plan.slug, score },
+      event_type: "plan_selected",
+      metadata: { audit_id: auditId, plan_id: plan.slug, score, surface: "audit_ia" },
     });
-    trackCopilotEvent("contractor_plan_checkout_clicked", {
-      surface: "audit_ia",
-      kind: plan.slug,
-    });
-    try {
+        try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         window.location.assign(`/auth?next=${encodeURIComponent(returnPath)}`);
@@ -158,10 +154,11 @@ export function AuditPersonalizedOfferCard({
       window.setTimeout(() => setLoading(false), 2500);
     } catch (e) {
       void logFunnelEvent({
-        event_type: "audit_offer_checkout_failed",
+        event_type: "dropoff",
         metadata: {
           audit_id: auditId,
           plan_id: plan.slug,
+          surface: "audit_ia",
           reason: e instanceof Error ? e.message : String(e),
         },
       });
