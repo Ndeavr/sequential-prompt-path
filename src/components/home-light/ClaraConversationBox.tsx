@@ -388,8 +388,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       trackCopilotEvent("clara_conversation_activated", { surface: "home_clara_box" });
       trackCopilotEvent("clara_hero_collapsed", { surface: "home_clara_box" });
     }
+    // Toujours retirer le verrou : au changement d'état l'effet le repose,
+    // au démontage (navigation Clara) la page de destination défile nativement.
     return () => {
-      if (!isConversationActive) delete document.documentElement.dataset.claraConversationActive;
+      delete document.documentElement.dataset.claraConversationActive;
     };
   }, [isConversationActive, onConversationActiveChange]);
 
