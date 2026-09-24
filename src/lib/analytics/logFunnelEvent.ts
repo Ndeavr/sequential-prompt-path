@@ -318,7 +318,9 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       event_source: input.event_source ?? "app",
       step: input.step ?? input.event_type,
       current_path: currentPath,
-      metadata: input.metadata ?? {},
+      metadata: prospectRef
+        ? { ...(input.metadata ?? {}), prospect_ref: prospectRef }
+        : (input.metadata ?? {}),
       source: input.event_source ?? "app",
       device: getDevice(),
     } as never);
