@@ -607,6 +607,7 @@ export default function PageAiRecommendationAudit() {
               <div className="mt-6">
                 <AuditPersonalizedOfferCard
                   auditId={result.audit_id}
+                  auditToken={result.token}
                   score={result.readiness_score}
                   businessName={result.business_name}
                   city={result.city}
