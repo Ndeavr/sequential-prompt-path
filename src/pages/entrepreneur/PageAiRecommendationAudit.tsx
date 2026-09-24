@@ -152,7 +152,33 @@ export default function PageAiRecommendationAudit() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searching, setSearching] = useState(false);
   const [auditing, setAuditing] = useState(false);
-  const [result, setResult] = useState<AuditResult | null>(null);
+  // Résultat conservé pour survivre à l'aller-retour connexion / Stripe.
+  const [result, setResultState] = useState<AuditResult | null>(() => {
+    try {
+      const raw = sessionStorage.getItem("unpro_audit_ia_result");
+      return raw ? (JSON.parse(raw) as AuditResult) : null;
+    } catch {
+      return null;
+    }
+  });
+  const setResult = (r: AuditResult | null) => {
+    setResultState(r);
+    try {
+      if (r) sessionStorage.setItem("unpro_audit_ia_result", JSON.stringify(r));
+      else sessionStorage.removeItem("unpro_audit_ia_result");
+    } catch {
+      /* ignore */
+    }
+  };
+  // Chemin de retour conservant ref / t / prospect / utm_* (sans marqueurs de paiement).
+  const auditReturnPath = (() => {
+    const q = new URLSearchParams(sp);
+    q.delete("checkout");
+    q.delete("credit");
+    q.delete("session_id");
+    const qs = q.toString();
+    return `/entrepreneurs/audit-ia${qs ? `?${qs}` : ""}`;
+  })();
   // Offre de repli 350 $ : visible seulement après le score, une fois par session.
   const [fallbackDismissed, setFallbackDismissed] = useState<boolean>(() => {
     try {
@@ -612,7 +638,7 @@ export default function PageAiRecommendationAudit() {
                   businessName={result.business_name}
                   city={result.city}
                   trade={result.trade}
-                  returnPath="/entrepreneurs/audit-ia"
+                  returnPath={auditReturnPath}
                   attribution={{
                     ref: sp.get("ref"),
                     prospectId: sp.get("prospect") ?? sp.get("prospect_id"),
@@ -634,7 +660,7 @@ export default function PageAiRecommendationAudit() {
                   </p>
                   <FallbackCredit350Card
                     affiliateRef={sp.get("ref")}
-                    returnPath="/entrepreneurs/audit-ia"
+                    returnPath={auditReturnPath}
                     onDecline={dismissFallback}
                   />
                 </div>

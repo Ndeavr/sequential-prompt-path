@@ -331,7 +331,18 @@ Deno.serve(async (req) => {
   let userId: string | null = null;
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (token && token !== anonKey) {
+  // Ne valider comme jeton utilisateur que les JWT portant un « sub » (évite 403 sur clé publique).
+  let looksLikeUserJwt = false;
+  try {
+    const part = token.split(".")[1];
+    if (part) {
+      const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+      looksLikeUserJwt = typeof payload?.sub === "string" && payload.sub.length > 0;
+    }
+  } catch {
+    looksLikeUserJwt = false;
+  }
+  if (token && token !== anonKey && looksLikeUserJwt) {
     const { data } = await createClient(url, anonKey).auth.getUser(token);
     userId = data?.user?.id ?? null;
   }
@@ -731,7 +742,10 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
 
-      if (error || !inserted) return json({ error: "append_failed" }, 500);
+      if (error || !inserted) {
+        console.error("clara-session append failed", error);
+        return json({ error: "append_failed" }, 500);
+      }
 
       await admin
         .from("alex_sessions")
@@ -907,7 +921,10 @@ Deno.serve(async (req) => {
         .eq("id", session.id)
         .select(SESSION_COLUMNS)
         .maybeSingle();
-      if (error || !updated) return json({ error: "context_update_failed" }, 500);
+      if (error || !updated) {
+        console.error("clara-session context update failed", error);
+        return json({ error: "context_update_failed" }, 500);
+      }
       return json({
         ok: true,
         context: (updated as SessionRow).context_json ?? {},
