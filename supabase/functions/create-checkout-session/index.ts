@@ -74,8 +74,18 @@ Deno.serve(async (req) => {
       professionCode,
       activationToken,
       fallbackCredit,
+      auditId,
+      campaign,
+      source,
 
     } = await req.json();
+
+    // Attribution transmise à Stripe : identifiants courts, jamais de PII.
+    const safeMeta = (v: unknown): string | null =>
+      typeof v === "string" && v.trim() ? v.trim().slice(0, 120) : null;
+    const auditIdMeta = safeMeta(auditId);
+    const campaignMeta = safeMeta(campaign);
+    const sourceMeta = safeMeta(source);
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
@@ -163,6 +173,9 @@ Deno.serve(async (req) => {
           ...(quoteId && { quote_id: String(quoteId) }),
           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
           ...(typeof ref === "string" && ref.trim() && { ref: ref.trim() }),
+          ...(auditIdMeta && { audit_id: auditIdMeta }),
+          ...(campaignMeta && { campaign: campaignMeta }),
+          ...(sourceMeta && { source: sourceMeta }),
         },
       };
 
@@ -791,6 +804,9 @@ Deno.serve(async (req) => {
           appointment_pack_size: String(appointmentPack.size),
           appointment_pack_total_cents: String(appointmentPack.totalPriceCents),
         }),
+        ...(auditIdMeta && { audit_id: auditIdMeta }),
+        ...(campaignMeta && { campaign: campaignMeta }),
+        ...(sourceMeta && { source: sourceMeta }),
       },
       subscription_data: {
         metadata: {
@@ -800,6 +816,9 @@ Deno.serve(async (req) => {
           ...(quoteId && { quote_id: String(quoteId) }),
            ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
            ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
+          ...(auditIdMeta && { audit_id: auditIdMeta }),
+          ...(campaignMeta && { campaign: campaignMeta }),
+          ...(sourceMeta && { source: sourceMeta }),
         },
         ...(profileFeeCents > 0 && {
           add_invoice_items: [
