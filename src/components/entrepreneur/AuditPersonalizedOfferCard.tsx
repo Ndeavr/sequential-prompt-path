@@ -100,7 +100,7 @@ export function AuditPersonalizedOfferCard({
     setLoading(true);
     setError(null);
     void logFunnelEvent({
-      event_type: "plan_selected",
+      event_type: "stripe_checkout_started",
       metadata: { audit_id: auditId, plan_id: plan.slug, score, surface: "audit_ia" },
     });
         try {
@@ -153,7 +153,7 @@ export function AuditPersonalizedOfferCard({
       window.setTimeout(() => setLoading(false), 2500);
     } catch (e) {
       void logFunnelEvent({
-        event_type: "dropoff",
+        event_type: "stripe_payment_failed",
         metadata: {
           audit_id: auditId,
           plan_id: plan.slug,
