@@ -46,16 +46,16 @@ const req = (token?: string, body: unknown = {}) =>
 const USERS = { contractor: "11111111-1111-1111-1111-111111111111", homeowner: "22222222-2222-2222-2222-222222222222", admin: "33333333-3333-3333-3333-333333333333" };
 const ROLES = { [USERS.contractor]: ["contractor"], [USERS.homeowner]: ["homeowner"], [USERS.admin]: ["admin"] };
 
-Deno.test("401 — no token", async () => {
+Deno.test({ name: "401 — no token", sanitizeOps: false, sanitizeResources: false, fn: async () => {
   const restore = stub(ROLES, Object.values(USERS));
   try {
     const r = await requireAdminCaller(req(), cors);
     assertEquals(r.ok, false);
     if (!r.ok) { assertEquals(r.response.status, 401); await r.response.text(); }
   } finally { restore(); }
-});
+}});
 
-Deno.test("401 — anon key / anon JWT / invalid user", async () => {
+Deno.test({ name: "401 — anon key / anon JWT / invalid user", sanitizeOps: false, sanitizeResources: false, fn: async () => {
   const restore = stub(ROLES, Object.values(USERS));
   try {
     for (const t of ["anon-key-stub", jwt("anon", "x"), jwt("authenticated", "99999999-9999-9999-9999-999999999999")]) {
@@ -64,10 +64,10 @@ Deno.test("401 — anon key / anon JWT / invalid user", async () => {
       if (!r.ok) { assertEquals(r.response.status, 401); await r.response.text(); }
     }
   } finally { restore(); }
-});
+}});
 
 for (const kind of ["contractor", "homeowner"] as const) {
-  Deno.test(`403 — valid ${kind} (non-admin) JWT`, async () => {
+  Deno.test({ name: `403 — valid ${kind} (non-admin) JWT`, sanitizeOps: false, sanitizeResources: false, fn: async () => {
     const restore = stub(ROLES, Object.values(USERS));
     try {
       const r = await requireAdminCaller(req(jwt("authenticated", USERS[kind])), cors, "test");
@@ -77,10 +77,10 @@ for (const kind of ["contractor", "homeowner"] as const) {
         assertEquals((await r.response.json()).error, "forbidden");
       }
     } finally { restore(); }
-  });
+  }});
 }
 
-Deno.test("authorized — admin JWT, validate_only stops before any send", async () => {
+Deno.test({ name: "authorized — admin JWT, validate_only stops before any send", sanitizeOps: false, sanitizeResources: false, fn: async () => {
   const restore = stub(ROLES, Object.values(USERS));
   try {
     const r = await requireAdminCaller(req(jwt("authenticated", USERS.admin)), cors);
@@ -93,13 +93,13 @@ Deno.test("authorized — admin JWT, validate_only stops before any send", async
       assertEquals(await validateOnlyResponse(req("x", { phone: "+1" }), cors, r, "fn"), null);
     }
   } finally { restore(); }
-});
+}});
 
-Deno.test("authorized — service role key", async () => {
+Deno.test({ name: "authorized — service role key", sanitizeOps: false, sanitizeResources: false, fn: async () => {
   const restore = stub(ROLES, Object.values(USERS));
   try {
     const r = await requireAdminCaller(req("service-key-stub"), cors);
     assertEquals(r.ok, true);
     if (r.ok) assertEquals(r.kind, "service");
   } finally { restore(); }
-});
+}});
