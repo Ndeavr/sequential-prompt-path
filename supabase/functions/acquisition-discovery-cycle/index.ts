@@ -22,6 +22,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory, categoryName } from "../_shared/localServiceCategories.ts";
 import { freeCampaignStatus } from "../_shared/freeCampaign.ts";
 import { isFlagEnabled } from "../_shared/killSwitch.ts";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,6 +94,20 @@ Deno.serve(async (req) => {
   );
   const perSearchLimit = Math.min(Math.max(Number((body as any).limit ?? 20), 1), 20);
 
+  // Ciblage explicite (ville + requêtes) : réservé à l'admin / au serveur.
+  // Le cycle planifié (sans ciblage) reste inchangé.
+  const targetCity = typeof (body as any).city === "string" ? String((body as any).city).trim().slice(0, 60) : "";
+  const targetQueries: Array<{ slug: string; trade: string }> = Array.isArray((body as any).queries)
+    ? ((body as any).queries as any[])
+      .filter((q) => q && typeof q.trade === "string" && typeof q.slug === "string")
+      .slice(0, MAX_SEARCHES_PER_CYCLE)
+      .map((q) => ({ slug: String(q.slug).slice(0, 60), trade: String(q.trade).slice(0, 80) }))
+    : [];
+  if (targetCity || targetQueries.length > 0) {
+    const caller = await requireAdminCaller(req, corsHeaders, "acquisition-discovery-cycle");
+    if (!caller.ok) return caller.response;
+  }
+
   // 1. Fail-closed : le drapeau doit exister et être vrai.
   let discoveryEnabled = false;
   try {
@@ -153,7 +168,13 @@ Deno.serve(async (req) => {
       pairs.push({ slug, trade, city });
     }
   }
-  const selected = pairs.slice(0, maxSearches);
+  let selected = pairs.slice(0, maxSearches);
+  if (targetCity) {
+    selected = targetQueries.length > 0
+      ? targetQueries.map((q) => ({ ...q, city: targetCity })).filter((p) => !fresh.has(`${norm(p.trade)}|${norm(p.city)}`))
+      : pairs.filter((p) => norm(p.city) === norm(targetCity)).slice(0, maxSearches);
+    selected = selected.slice(0, maxSearches);
+  }
 
   if (dryRun) {
     return json({
@@ -251,7 +272,7 @@ Deno.serve(async (req) => {
 
       const rows = (discovered ?? [])
         .filter((p: any) => p.phone || p.email)
-        .filter((p: any) => normalizeServiceCategory(p.trade ?? pair.trade) !== null)
+        .filter((p: any) => normalizeServiceCategory(p.trade ?? pair.trade) !== null || normalizeServiceCategory(pair.slug.replace(/-/g, " ")) !== null)
         .map((p: any) => ({
           company: p.business_name,
           phone: p.phone,
@@ -264,6 +285,7 @@ Deno.serve(async (req) => {
             (p.google_place_id ? `https://www.google.com/maps/place/?q=place_id:${p.google_place_id}` : null),
           source_type: "google_business_profile",
           source_publisher: "Google Places",
+          google_place_id: p.google_place_id ?? null,
           region: pair.city,
         }))
         .filter((r: any) => !!r.company && !!r.source_url);
