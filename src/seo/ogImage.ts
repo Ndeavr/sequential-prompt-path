@@ -10,7 +10,7 @@
  * (`/og-image.jpg`, `/og-default.png`).
  */
 export const DEFAULT_OG_IMAGE =
-  "https://unpro.ca/og/og-unpro-fin-3-soumissions-v3.jpg?v=20260816b";
+  "https://unpro.ca/og/og-unpro-fin-3-soumissions-v4.jpg?v=20260925";
 
 export const DEFAULT_OG_IMAGE_WIDTH = 1200;
 export const DEFAULT_OG_IMAGE_HEIGHT = 630;

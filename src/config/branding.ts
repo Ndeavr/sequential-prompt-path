@@ -3,69 +3,50 @@
  * All UI must reference BRAND.* — never import per-variant assets directly.
  * Never recolor, filter, stretch, crop or compose these files.
  */
-import wordmarkWhiteAsset from "@/assets/brand/unpro-wordmark-white.asset.json";
-import wordmarkBlueWhiteAsset from "@/assets/brand/unpro-wordmark-blue-white.asset.json";
-import wordmarkBlueAsset from "@/assets/brand/unpro-wordmark-blue.asset.json";
-import wordmarkNavyAsset from "@/assets/brand/unpro-wordmark-navy.asset.json";
-import wordmarkWhiteBlueWhiteAsset from "@/assets/brand/unpro-wordmark-white-blue-white.asset.json";
-import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.asset.json";
-import wordmarkHomeLightAsset from "@/assets/brand/unpro-wordmark-home-light.asset.json";
-import wordmarkGradientAsset from "@/assets/brand/unpro-wordmark-gradient.asset.json";
-import wordmark3dAsset from "@/assets/brand/unpro-wordmark-3d.asset.json";
-import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
-import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
-import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
-import iconBlueAsset from "@/assets/brand/unpro-icon-blue.asset.json";
 import iconPassportAsset from "@/assets/brand/unpro-icon-passport.asset.json";
 
 const absolute = (path: string) => `https://unpro.ca${path}`;
 const assetUrl = (path: string) => absolute(path);
+/** Simplified 2026-09 identity — flat house/bubble symbol + large UNPRO. */
+const LOGO_DARK = "/brand/unpro-logo-dark.png?v=20260925";
+const LOGO_LIGHT = "/brand/unpro-logo-light.png?v=20260925";
+const SYMBOL = "/brand/unpro-symbol.svg?v=20260925";
 
 export const BRAND = {
-  /** Default blue lockup — white and light surfaces. */
-  logo: assetUrl(wordmarkBlueAsset.url),
-  /** Full blue lockup — white and very light surfaces. */
-  logoWordmarkBlue: assetUrl(wordmarkBlueAsset.url),
-  /** Blue symbol with white wordmark — dark and UNPRO-blue surfaces. */
-  logoWordmarkOnDark: assetUrl(wordmarkBlueWhiteAsset.url),
-  /** Fully white lockup — black, photographic and very dark surfaces. */
-  logoWordmarkWhite: assetUrl(wordmarkWhiteAsset.url),
-  /** Navy lockup — white and very light editorial surfaces. */
-  logoWordmarkNavy: assetUrl(wordmarkNavyAsset.url),
-  /** Blue symbol with white fill — approved alternate. */
-  logoWordmarkWhiteBlueWhite: assetUrl(wordmarkWhiteBlueWhiteAsset.url),
-  /** Blue filled symbol and blue wordmark — approved alternate. */
-  logoWordmarkBlueFilled: assetUrl(wordmarkBlueFilledAsset.url),
-  /** Official home light lockup — top-of-page hero and header on light surfaces. */
-  logoHomeLight: assetUrl(wordmarkHomeLightAsset.url),
-  /** Official gradient lockup — legacy alternate. */
-  logoWordmarkGradient: assetUrl(wordmarkGradientAsset.url),
-  /** Official 3D metallic lockup — homepage header only. */
-  logoWordmark3D: assetUrl(wordmark3dAsset.url),
-  /** Cream lockup — approved warm-dark alternate. */
-  logoWordmarkCream: assetUrl(wordmarkCreamAsset.url),
-  /** Navy symbol with blue fill — approved alternate. */
-  logoWordmarkNavyBlue: assetUrl(wordmarkNavyBlueAsset.url),
-  /** Navy filled lockup — approved alternate. */
-  logoWordmarkNavyFilled: assetUrl(wordmarkNavyFilledAsset.url),
-  /** Official house/chat icon — compact and square contexts only. */
-  logoIconBlue: assetUrl(iconBlueAsset.url),
+  /** Light-surface lockup (navy text). */
+  logo: LOGO_LIGHT,
+  logoWordmarkBlue: LOGO_LIGHT,
+  /** Dark-surface lockup (cold-silver text). */
+  logoWordmarkOnDark: LOGO_DARK,
+  logoWordmarkWhite: LOGO_DARK,
+  logoWordmarkNavy: LOGO_LIGHT,
+  logoWordmarkWhiteBlueWhite: LOGO_DARK,
+  logoWordmarkBlueFilled: LOGO_LIGHT,
+  logoHomeLight: LOGO_LIGHT,
+  logoWordmarkGradient: LOGO_DARK,
+  /** Homepage header — now the simplified dark lockup. */
+  logoWordmark3D: LOGO_DARK,
+  logoWordmarkCream: LOGO_DARK,
+  logoWordmarkNavyBlue: LOGO_LIGHT,
+  logoWordmarkNavyFilled: LOGO_LIGHT,
+  /** Symbol only — compact and square contexts. */
+  logoIconBlue: SYMBOL,
   /** Official house + fleur-de-lys mark — Passeport Maison sections. */
   logoIconPassport: assetUrl(iconPassportAsset.url),
-  logoIconWhite: assetUrl(iconBlueAsset.url),
-  logoRound: assetUrl(iconBlueAsset.url),
-  logoSquare: assetUrl(iconBlueAsset.url),
+  logoIconWhite: SYMBOL,
+  logoRound: SYMBOL,
+  logoSquare: SYMBOL,
   /** Kept for API compatibility. */
-  logoAsset: assetUrl(wordmarkBlueAsset.url),
-  logoStatic: assetUrl(wordmarkBlueAsset.url),
+  logoAsset: LOGO_LIGHT,
+  logoStatic: LOGO_LIGHT,
   /** Absolute URL for schema.org / crawlers. */
-  logoAbsolute: absolute(wordmarkBlueAsset.url),
-  logoEmailAbsolute: absolute(wordmarkBlueAsset.url),
+  logoAbsolute: absolute("/brand/unpro-logo-light.png"),
+  logoEmailAbsolute: absolute("/brand/unpro-logo-light.png"),
   /** Intrinsic dimensions of every supplied wordmark canvas (1920 x 501). */
   wordmarkRatio: 1920 / 501,
   /** Intrinsic dimensions of the gradient wordmark canvas (1920 x 494). */
   wordmarkGradientRatio: 1920 / 494,
   /** Intrinsic dimensions of the 3D metallic lockup canvas (1634 x 510). */
-  wordmark3DRatio: 1634 / 510,
+  wordmark3DRatio: 1920 / 501,
   name: "UNPRO",
 } as const;
