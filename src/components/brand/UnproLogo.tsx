@@ -45,7 +45,7 @@ export default function UnproLogo({
 
   useEffect(() => subscribeTheme((_m, next) => setResolved(next)), []);
 
-  const ratio = tone === "gradient" ? BRAND.wordmarkGradientRatio : WORDMARK_RATIO;
+  const ratio = tone === "gradient" ? BRAND.wordmark3DRatio : WORDMARK_RATIO;
   const height = showWordmark ? Math.round(size / ratio) : size;
 
   // Last resort: clean wordmark text, never an initial badge.
@@ -78,7 +78,7 @@ export default function UnproLogo({
 
   const src =
     tone === "gradient" && showWordmark
-      ? BRAND.logoWordmarkGradient
+      ? BRAND.logoWordmark3D
       : tone === "light"
         ? lightSrc
         : tone === "blue" && showWordmark

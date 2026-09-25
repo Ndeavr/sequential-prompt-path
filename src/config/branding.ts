@@ -11,6 +11,7 @@ import wordmarkWhiteBlueWhiteAsset from "@/assets/brand/unpro-wordmark-white-blu
 import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.asset.json";
 import wordmarkHomeLightAsset from "@/assets/brand/unpro-wordmark-home-light.asset.json";
 import wordmarkGradientAsset from "@/assets/brand/unpro-wordmark-gradient.asset.json";
+import wordmark3dAsset from "@/assets/brand/unpro-wordmark-3d.asset.json";
 import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
@@ -37,8 +38,10 @@ export const BRAND = {
   logoWordmarkBlueFilled: assetUrl(wordmarkBlueFilledAsset.url),
   /** Official home light lockup — top-of-page hero and header on light surfaces. */
   logoHomeLight: assetUrl(wordmarkHomeLightAsset.url),
-  /** Official gradient lockup — homepage header only. */
+  /** Official gradient lockup — legacy alternate. */
   logoWordmarkGradient: assetUrl(wordmarkGradientAsset.url),
+  /** Official 3D metallic lockup — homepage header only. */
+  logoWordmark3D: assetUrl(wordmark3dAsset.url),
   /** Cream lockup — approved warm-dark alternate. */
   logoWordmarkCream: assetUrl(wordmarkCreamAsset.url),
   /** Navy symbol with blue fill — approved alternate. */
@@ -62,5 +65,7 @@ export const BRAND = {
   wordmarkRatio: 1920 / 501,
   /** Intrinsic dimensions of the gradient wordmark canvas (1920 x 494). */
   wordmarkGradientRatio: 1920 / 494,
+  /** Intrinsic dimensions of the 3D metallic lockup canvas (1634 x 510). */
+  wordmark3DRatio: 1634 / 510,
   name: "UNPRO",
 } as const;
