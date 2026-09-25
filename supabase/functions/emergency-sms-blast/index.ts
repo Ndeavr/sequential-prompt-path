@@ -4,6 +4,7 @@
 //
 // POST body: { dry_run?: boolean = true, batch?: number = 25, force_first_to?: string }
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
 
 const cors = {
@@ -27,6 +28,9 @@ function firstName(business: string | null): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "method_not_allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
+  const __caller = await requireAdminCaller(req, cors, "emergency-sms-blast");
+  if (!__caller.ok) return __caller.response;
   try {
     const body = await req.json().catch(() => ({}));
     const dryRun = body.dry_run !== false; // default TRUE

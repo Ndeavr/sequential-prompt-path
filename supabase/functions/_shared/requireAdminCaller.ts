@@ -22,8 +22,12 @@ function decodeRole(token: string): string | null {
   }
 }
 
-export async function requireAdminCaller(req: Request, cors: Record<string, string>): Promise<AdminCaller> {
-  const deny = (status: number, error: string): AdminCaller => ({
+export async function requireAdminCaller(req: Request, cors: Record<string, string>, fn?: string): Promise<AdminCaller> {
+  const deny = (status: number, error: string): AdminCaller => {
+    if (fn) logAccess(fn, "blocked", { http_status: status, reason: error });
+    return denyRaw(status, error);
+  };
+  const denyRaw = (status: number, error: string): AdminCaller => ({
     ok: false,
     response: new Response(JSON.stringify({ ok: false, error }), {
       status,
@@ -40,7 +44,10 @@ export async function requireAdminCaller(req: Request, cors: Record<string, stri
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
   // Internal server-to-server call.
-  if (serviceKey && token === serviceKey) return { ok: true, kind: "service", userId: null };
+  if (serviceKey && token === serviceKey) {
+    if (fn) logAccess(fn, "pending", { caller_kind: "service" });
+    return { ok: true, kind: "service", userId: null };
+  }
 
   // Anon key alone is never enough.
   if (token === anonKey || decodeRole(token) === "anon") return deny(401, "unauthorized");
@@ -61,6 +68,7 @@ export async function requireAdminCaller(req: Request, cors: Record<string, stri
     .maybeSingle();
   if (roleErr) return deny(500, "role_check_failed");
   if (!role) return deny(403, "forbidden");
+  if (fn) logAccess(fn, "pending", { caller_kind: "admin", user_id: data.user.id });
   return { ok: true, kind: "admin", userId: data.user.id };
 }
 
@@ -68,4 +76,19 @@ export function maskPhone(p: string | null | undefined): string {
   const s = String(p ?? "").replace(/\s+/g, "");
   if (s.length < 6) return "***";
   return `${s.slice(0, 3)}•••••${s.slice(-4)}`;
+}
+
+/** Fire-and-forget access audit into platform_operation_outcomes (existing diagnostics table). */
+function logAccess(fn: string, outcome: "blocked" | "pending", payload: Record<string, unknown>) {
+  try {
+    const sb = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", { auth: { persistSession: false } });
+    sb.from("platform_operation_outcomes").insert({
+      operation: `access.${fn}`,
+      intent: "sensitive_endpoint_access",
+      business_outcome: outcome,
+      block_reason: outcome === "blocked" ? String(payload.reason ?? "denied") : null,
+      service: "edge_auth",
+      payload,
+    }).then(({ error }: any) => { if (error) console.error("[requireAdminCaller] audit insert failed", error.message); });
+  } catch (e) { console.error("[requireAdminCaller] audit failed", e); }
 }

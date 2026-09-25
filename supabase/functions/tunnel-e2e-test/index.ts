@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
   // SEND — create exactly one test prospect + one Twilio SMS
   // ==================================================================
   if (action === "send") {
-    const caller = await requireAdminCaller(req, corsHeaders);
+    const caller = await requireAdminCaller(req, corsHeaders, "tunnel-e2e-test");
     if (!caller.ok) return caller.response;
     const rawPhone: string = (body?.phone ?? "").toString().trim();
     const phone = normalizePhone(rawPhone);
