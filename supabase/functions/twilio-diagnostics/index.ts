@@ -3,6 +3,7 @@
 // POST → sends a smoke-test SMS through the canonical sender and returns the Twilio SID/API response/status trace.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
 
 const cors = {
@@ -236,6 +237,8 @@ function diagnose(args: {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const __caller = await requireAdminCaller(req, cors, "twilio-diagnostics");
+  if (!__caller.ok) return __caller.response;
   const sb = createClient(SUPABASE_URL, SRK, { auth: { autoRefreshToken: false, persistSession: false } });
 
   try {
