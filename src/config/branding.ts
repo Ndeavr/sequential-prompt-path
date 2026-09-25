@@ -38,8 +38,10 @@ export const BRAND = {
   logoWordmarkBlueFilled: assetUrl(wordmarkBlueFilledAsset.url),
   /** Official home light lockup — top-of-page hero and header on light surfaces. */
   logoHomeLight: assetUrl(wordmarkHomeLightAsset.url),
-  /** Official gradient lockup — homepage header only. */
+  /** Official gradient lockup — legacy alternate. */
   logoWordmarkGradient: assetUrl(wordmarkGradientAsset.url),
+  /** Official 3D metallic lockup — homepage header only. */
+  logoWordmark3D: assetUrl(wordmark3dAsset.url),
   /** Cream lockup — approved warm-dark alternate. */
   logoWordmarkCream: assetUrl(wordmarkCreamAsset.url),
   /** Navy symbol with blue fill — approved alternate. */
