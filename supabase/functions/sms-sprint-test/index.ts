@@ -24,6 +24,12 @@ Deno.serve(async (req) => {
   if (!__caller.ok) return __caller.response;
   try {
     const body = await req.json().catch(() => ({}));
+    // Validation-only: proves authorization, touches no campaign, sends nothing.
+    if (body?.dry_run === true || body?.validate_only === true) {
+      return new Response(JSON.stringify({ ok: true, dry_run: true, sent: 0, authorized: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const campaign_id = body.campaign_id ?? null;
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
