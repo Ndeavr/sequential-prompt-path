@@ -75,3 +75,5 @@ Treat every Supabase project as live infrastructure.
 - Treat [docs/UNPRO_CONTEXT.md](docs/UNPRO_CONTEXT.md) as durable product context, not as proof of current runtime state.
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
+
+- Prospect import (`import-contractors`) never overwrites an existing prospect: dedupe by google_place_id → E.164 → email → domain → name+city, admin/service only, `auto_send` defaults to false. Why: re-imports were resetting contacted prospects and could trigger sends.
