@@ -1,11 +1,14 @@
 // Sends an SMS via the unified twilioSend pipeline (logs to sms_events_v2 + acq_sms_logs).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+  const caller = await requireAdminCaller(req, cors);
+  if (!caller.ok) return caller.response;
   try {
     const { contractor_id, body, phone } = await req.json();
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);

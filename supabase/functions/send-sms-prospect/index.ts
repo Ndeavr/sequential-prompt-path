@@ -4,6 +4,7 @@
  * test-number guard, opt-out check, normalization, and webhook-driven status.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
 
 const corsHeaders = {
@@ -19,6 +20,8 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const caller = await requireAdminCaller(req, corsHeaders);
+  if (!caller.ok) return caller.response;
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
