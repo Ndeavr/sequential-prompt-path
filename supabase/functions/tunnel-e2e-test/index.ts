@@ -8,6 +8,7 @@
 //   • Always marks prospect & sms log as is_test_e2e=true → excluded from production KPIs.
 //   • Never touches the relance queue.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -84,6 +85,8 @@ Deno.serve(async (req) => {
   // SEND — create exactly one test prospect + one Twilio SMS
   // ==================================================================
   if (action === "send") {
+    const caller = await requireAdminCaller(req, corsHeaders);
+    if (!caller.ok) return caller.response;
     const rawPhone: string = (body?.phone ?? "").toString().trim();
     const phone = normalizePhone(rawPhone);
     if (!phone) return json({ ok: false, error: "invalid_phone" }, 400);
