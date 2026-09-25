@@ -7,7 +7,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
-  const caller = await requireAdminCaller(req, cors);
+  const caller = await requireAdminCaller(req, cors, "acq-sms-send");
   if (!caller.ok) return caller.response;
   try {
     const { contractor_id, body, phone } = await req.json();

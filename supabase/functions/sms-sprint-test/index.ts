@@ -1,6 +1,7 @@
 // Sends the internal founder test SMS to 5142499522 with a real tracking slug.
 // Blocks contractor sends until this is delivered + link clicked.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
 
 const corsHeaders = {
@@ -18,6 +19,9 @@ function makeSlug(): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "method_not_allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const __caller = await requireAdminCaller(req, corsHeaders, "sms-sprint-test");
+  if (!__caller.ok) return __caller.response;
   try {
     const body = await req.json().catch(() => ({}));
     const campaign_id = body.campaign_id ?? null;

@@ -20,7 +20,7 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  const caller = await requireAdminCaller(req, corsHeaders);
+  const caller = await requireAdminCaller(req, corsHeaders, "send-sms-prospect");
   if (!caller.ok) return caller.response;
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
