@@ -18,7 +18,7 @@ describe("official UNPRO brand contract", () => {
       BRAND.logoWordmarkWhite,
       BRAND.logoIconBlue,
     ]) {
-      expect(url).toMatch(/^https:\/\/unpro\.ca\/__l5e\/assets-v1\/[0-9a-f-]+\/unpro-/);
+      expect(url).toMatch(/^\/brand\/unpro-(logo-(dark|light)\.png|symbol\.svg)\?v=\d+$/);
     }
   });
 
