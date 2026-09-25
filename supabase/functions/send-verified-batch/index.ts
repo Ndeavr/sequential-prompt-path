@@ -534,6 +534,8 @@ Deno.serve(async (req) => {
           duplicate_guard: dup,
           channel_planned: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
           skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
+          // Exact first-touch body; the real token is minted only at send time.
+          sms_preview: dup ? null : safeFirstTouchBody(p.business_name, typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim() ? messageOverrides[p.id].trim() : null, "https://unpro.ca/unpro/audit/<jeton>"),
         };
       });
       const dupCount = previews.filter((p) => p.duplicate_guard).length;
