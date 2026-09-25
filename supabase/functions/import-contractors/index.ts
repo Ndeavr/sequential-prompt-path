@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://esm.sh/zod@3.25.76";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +11,7 @@ const FUNCTION_NAME = "import-contractors";
 
 const BodySchema = z.object({
   rows: z.array(z.record(z.any())).min(1).max(500),
-  auto_send: z.boolean().default(true),
+  auto_send: z.boolean().default(false),
   /** Segment d'acquisition (ex. "debarras-ramassage") — traçabilité uniquement. */
   segment: z.string().max(80).optional(),
   /** Provenance publique par défaut, surchargeable ligne par ligne. */
@@ -39,9 +40,11 @@ function get(row: Record<string, unknown>, keys: string[]) {
 function normalizePhone(raw: string | null) {
   if (!raw) return null;
   const d = raw.replace(/\D/g, "");
-  if (d.length === 10) return `+1${d}`;
-  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
-  return raw.startsWith("+") ? raw : null;
+  const ten = d.length === 11 && d.startsWith("1") ? d.slice(1) : d;
+  if (ten.length !== 10) return null;
+  // NANP : indicatif et central commencent par 2-9 (ex. +1 169… est invalide).
+  if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(ten)) return null;
+  return `+1${ten}`;
 }
 
 function normalizeWebsite(raw: string | null) {
@@ -56,6 +59,8 @@ function qualityScore(input: { website: boolean; phone: boolean; email: boolean;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const caller = await requireAdminCaller(req, corsHeaders, FUNCTION_NAME);
+  if (!caller.ok) return caller.response;
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -99,6 +104,9 @@ Deno.serve(async (req) => {
     const sourceType = get(raw, ["source_type"]) ?? defaultSourceType;
     const sourcePublisher = get(raw, ["source_publisher"]) ?? defaultSourcePublisher;
     const region = get(raw, ["region", "région"]);
+    const googlePlaceId = get(raw, ["google_place_id", "place_id"]);
+    const googleBusinessUrl = get(raw, ["google_business_url"])
+      ?? (sourceUrl && /google\.[a-z.]+\/maps|maps\.google\./i.test(sourceUrl) ? sourceUrl : null);
     // Catégorie canonique du segment « services résidentiels » : requise pour
     // que l'offre 12 mois gratuits puisse être résolue côté serveur.
     const serviceCategorySlug = normalizeServiceCategory(category ?? null);
@@ -120,6 +128,8 @@ Deno.serve(async (req) => {
       category,
       website_url: websiteUrl,
       phone_source_url: sourceUrl,
+      google_place_id: googlePlaceId,
+      google_business_url: googleBusinessUrl,
       service_category_slug: serviceCategorySlug,
       region,
       phone_primary: phoneE164 ?? phone,
@@ -150,18 +160,32 @@ Deno.serve(async (req) => {
       outreach_status: "none",
     };
 
-    // Déduplication : téléphone E.164 d'abord, puis courriel (une entreprise
-    // déjà connue n'est jamais dupliquée par un import manuel).
-    let existing: any = { data: null };
-    if (phoneE164) {
-      existing = await supabase.from("verified_contractor_prospects").select("id").eq("phone_e164", phoneE164).maybeSingle();
+    // Déduplication stricte : google_place_id → téléphone E.164 → courriel →
+    // domaine → nom + ville. Une entreprise déjà connue n'est JAMAIS écrasée
+    // (son historique de contact, son statut et sa provenance sont préservés).
+    const findOne = async (col: string, op: "eq" | "ilike", val: string) => {
+      const q = supabase.from("verified_contractor_prospects").select("id").limit(1);
+      const r = op === "eq" ? await q.eq(col, val) : await q.ilike(col, val);
+      return r.data?.[0]?.id ?? null;
+    };
+    const domain = websiteUrl ? websiteUrl.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[/?#]/)[0].toLowerCase() : null;
+    let dupId: string | null = null;
+    let dupBy: string | null = null;
+    if (!dupId && googlePlaceId) { dupId = await findOne("google_place_id", "eq", googlePlaceId); dupBy = "google_place_id"; }
+    if (!dupId && phoneE164) { dupId = await findOne("phone_e164", "eq", phoneE164); dupBy = "phone_e164"; }
+    if (!dupId && email) { dupId = await findOne("email", "eq", email.toLowerCase()); dupBy = "email"; }
+    if (!dupId && domain) { dupId = await findOne("website_url", "ilike", `%${domain}%`); dupBy = "domain"; }
+    if (!dupId && city) {
+      const { data: byName } = await supabase.from("verified_contractor_prospects").select("id")
+        .ilike("business_name", company).ilike("city", `${city}%`).limit(1);
+      dupId = byName?.[0]?.id ?? null; dupBy = "name_city";
     }
-    if (!existing.data?.id && email) {
-      existing = await supabase.from("verified_contractor_prospects").select("id").eq("email", email.toLowerCase()).maybeSingle();
+    if (dupId) {
+      await supabase.from("acquisition_manual_import_rows").insert({ ...rowBase, prospect_id: dupId, status: "duplicate", error: `duplicate_${dupBy}` });
+      results.push({ row: i + 1, status: "duplicate", duplicate_by: dupBy, prospect_id: dupId });
+      continue;
     }
-    const write = existing.data?.id
-      ? await supabase.from("verified_contractor_prospects").update(prospectPayload).eq("id", existing.data.id).select("id,business_name,city,category,source,verification_status").single()
-      : await supabase.from("verified_contractor_prospects").insert(prospectPayload).select("id,business_name,city,category,source,verification_status").single();
+    const write = await supabase.from("verified_contractor_prospects").insert(prospectPayload).select("id,business_name,city,category,source,verification_status").single();
 
     if (write.error || !write.data) {
       errors += 1;
