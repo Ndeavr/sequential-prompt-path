@@ -1,7 +1,7 @@
 // sniper-queue-send — REAL sends via Resend (email) + Twilio (SMS)
 // Drains sniper_targets with outreach_status='message_ready' and a selected variant.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { requireAdminCaller, validateOnlyResponse } from "../_shared/requireAdminCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "method_not_allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const __caller = await requireAdminCaller(req, corsHeaders, "sniper-queue-send");
   if (!__caller.ok) return __caller.response;
+  const __safe = await validateOnlyResponse(req, corsHeaders, __caller, "sniper-queue-send");
+  if (__safe) return __safe;
 
   try {
     const supabase = createClient(
