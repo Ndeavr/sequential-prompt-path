@@ -1,6 +1,7 @@
 // UNPRO — Generate test tracking link
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,8 @@ function shortId(): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const __caller = await requireAdminCaller(req, cors, "acq-test-tracking-link");
+  if (!__caller.ok) return __caller.response;
   const body = await req.json().catch(() => ({}));
   const destination = body?.destination_url || "https://unpro.ca";
 

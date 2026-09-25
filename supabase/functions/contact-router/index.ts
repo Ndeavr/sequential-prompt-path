@@ -1,7 +1,7 @@
 // UNPRO Smart Contact Router — picks SMS vs email, falls back, logs everything.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { requireAdminCaller, validateOnlyResponse } from "../_shared/requireAdminCaller.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +43,8 @@ serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "method_not_allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
   const __caller = await requireAdminCaller(req, cors, "contact-router");
   if (!__caller.ok) return __caller.response;
+  const __safe = await validateOnlyResponse(req, cors, __caller, "contact-router");
+  if (__safe) return __safe;
   try {
     const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
     const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

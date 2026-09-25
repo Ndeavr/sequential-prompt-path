@@ -2,7 +2,7 @@
 // insert a full outreach_delivery_logs row for EVERY attempt (success or failure),
 // update queue status, and flip first-dollar milestone on first successful send.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { requireAdminCaller, validateOnlyResponse } from "../_shared/requireAdminCaller.ts";
 import { classifyTwilio, classifyNetworkError } from "../_shared/outreachRetryPolicy.ts";
 import { normalizePhone } from "../_shared/normalizePhone.ts";
 import { isOutreachEnabled } from "../_shared/killSwitch.ts";
@@ -27,6 +27,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "method_not_allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
   const __caller = await requireAdminCaller(req, cors, "solicitation-send-sms");
   if (!__caller.ok) return __caller.response;
+  const __safe = await validateOnlyResponse(req, cors, __caller, "solicitation-send-sms");
+  if (__safe) return __safe;
   try {
     const body = await req.json().catch(() => ({}));
     const batch = Math.min(Math.max(parseInt(body?.batch ?? "25"), 1), 50);

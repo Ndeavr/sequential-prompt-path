@@ -92,3 +92,23 @@ function logAccess(fn: string, outcome: "blocked" | "pending", payload: Record<s
     }).then(({ error }: any) => { if (error) console.error("[requireAdminCaller] audit insert failed", error.message); });
   } catch (e) { console.error("[requireAdminCaller] audit failed", e); }
 }
+
+/**
+ * Uniform safe mode for sensitive senders. Call right AFTER requireAdminCaller.
+ * `validate_only: true` proves authorization and stops: no campaign, no
+ * prospect, no queue write, never a provider call.
+ */
+export async function validateOnlyResponse(
+  req: Request,
+  cors: Record<string, string>,
+  caller: Extract<AdminCaller, { ok: true }>,
+  fn: string,
+): Promise<Response | null> {
+  let body: any = null;
+  try { body = await req.clone().json(); } catch { return null; }
+  if (body?.validate_only !== true) return null;
+  return new Response(
+    JSON.stringify({ ok: true, authorized: true, dry_run: true, validate_only: true, sent: 0, function: fn, caller_kind: caller.kind }),
+    { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
+  );
+}
