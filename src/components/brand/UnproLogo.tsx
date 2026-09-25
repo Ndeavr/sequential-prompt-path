@@ -78,7 +78,7 @@ export default function UnproLogo({
 
   const src =
     tone === "gradient" && showWordmark
-      ? BRAND.logoWordmarkGradient
+      ? BRAND.logoWordmark3D
       : tone === "light"
         ? lightSrc
         : tone === "blue" && showWordmark
