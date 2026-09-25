@@ -65,5 +65,7 @@ export const BRAND = {
   wordmarkRatio: 1920 / 501,
   /** Intrinsic dimensions of the gradient wordmark canvas (1920 x 494). */
   wordmarkGradientRatio: 1920 / 494,
+  /** Intrinsic dimensions of the 3D metallic lockup canvas (1634 x 510). */
+  wordmark3DRatio: 1634 / 510,
   name: "UNPRO",
 } as const;
