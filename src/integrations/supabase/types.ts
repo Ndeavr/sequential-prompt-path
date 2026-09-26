@@ -44922,6 +44922,7 @@ export type Database = {
           portfolio_urls: string[] | null
           postal_code: string | null
           province: string | null
+          public_status: string | null
           published_at: string | null
           rating: number | null
           rbq_compliance_status: Database["public"]["Enums"]["contractor_rbq_status"]
@@ -45000,6 +45001,7 @@ export type Database = {
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
+          public_status?: string | null
           published_at?: string | null
           rating?: number | null
           rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
@@ -45078,6 +45080,7 @@ export type Database = {
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
+          public_status?: string | null
           published_at?: string | null
           rating?: number | null
           rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
