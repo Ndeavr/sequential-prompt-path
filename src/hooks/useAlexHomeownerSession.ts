@@ -39,6 +39,8 @@ export function useAlexHomeownerSession() {
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [hasMatches, setHasMatches] = useState(false);
   const startedRef = useRef(false);
 
   const getToken = useCallback(async () => {
