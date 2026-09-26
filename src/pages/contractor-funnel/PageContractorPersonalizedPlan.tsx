@@ -35,6 +35,7 @@ import {
   isContractorObjective,
 } from "@/lib/routing/contractorPlanRoute";
 import { toast } from "sonner";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const PLAN_LABEL: Record<string, string> = {
   presence: "Présence",
@@ -80,6 +81,7 @@ export default function PageContractorPersonalizedPlan() {
   const objective = isContractorObjective(rawObjective) ? rawObjective : null;
   const ctaOrigin = searchParams.get("from");
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -625,7 +627,7 @@ export default function PageContractorPersonalizedPlan() {
             </button>
           )}
           <button
-            onClick={() => navigate("/entrepreneur/onboarding?focus=alex")}
+            onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")}
             className="h-14 px-4 rounded-[18px] bg-white/[0.06] border border-white/10 text-white text-sm"
           >
             Parler à Clara

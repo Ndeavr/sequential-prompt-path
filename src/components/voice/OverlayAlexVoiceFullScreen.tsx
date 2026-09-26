@@ -51,6 +51,8 @@ import {
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import { detectTerminalIntent } from "@/lib/alexTerminalIntents";
+// Floating panel styles must load wherever Clara opens (plan page, audit…), not only on the home page.
+import "@/styles/unicorn-theme.css";
 
 // États où le transport vocal est réellement arrêté : aucun callback ne peut
 // relancer une parole, une salutation ou un minuteur d'inactivité.

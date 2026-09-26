@@ -803,7 +803,19 @@ function AuditReport({
 
   const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
   const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
-  const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
+  // Real facts only, deduplicated, and never repeating what the header already shows.
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const shownInHeader = new Set([norm(result.business_name), norm(result.trade), norm(result.city)]);
+  const seenFacts = new Set<string>();
+  const detectedFacts = baseline.facts.filter((f) => {
+    if (f.provenance !== "verified" && f.provenance !== "inferred") return false;
+    const v = norm(f.value);
+    // Bare status words ("Détectée", "Oui") say nothing on their own.
+    if (/^(d[ée]tect[ée]e?s?|oui|pr[ée]sente?s?|trouv[ée]e?s?|confirm[ée]e?s?|v[ée]rifi[ée]e?s?)$/i.test(v)) return false;
+    if (!v || shownInHeader.has(v) || seenFacts.has(v)) return false;
+    seenFacts.add(v);
+    return true;
+  });
   // Only the 1–3 highest-impact missing items, in priority order.
   const priorityMissing = missions
     .filter((m) => m.status !== "confirmed")
@@ -841,7 +853,9 @@ function AuditReport({
           Votre entreprise est déjà trouvée par UNPRO
         </p>
         <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">
-          mais votre profil n'est pas encore assez complet pour être pleinement recommandable.
+          {baseline.recommendable
+            ? "et votre profil peut déjà être recommandé. Complétez-le pour renforcer votre présence."
+            : "mais votre profil n'est pas encore assez complet pour être pleinement recommandable."}
         </p>
 
         <div className="mt-4 flex items-center gap-4 border-t border-border pt-4">
