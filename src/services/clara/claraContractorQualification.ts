@@ -15,7 +15,7 @@
  */
 import { rememberClaraReferences } from "@/services/clara/claraSession";
 
-export type ClaraQualificationField = "primary_trade" | "business_city" | "service_areas" | "goals";
+export type ClaraQualificationField = "primary_trade" | "business_city" | "service_areas" | "goals" | "business_name";
 
 export interface ClaraContractorQualification {
   /** Métier principal déclaré par l'entrepreneur. */
@@ -24,6 +24,8 @@ export interface ClaraContractorQualification {
   business_city?: string | null;
   /** Villes ou régions réellement desservies. */
   service_areas?: string[];
+  /** Nom de l'entreprise ou site Web déclaré. */
+  business_name?: string | null;
   /** Objectifs déclarés (plusieurs possibles). */
   goals?: string[];
   /** Provenance : tout ce qui vient de la conversation est « déclaré ». */
@@ -65,6 +67,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   const next: ClaraContractorQualification = { ...current };
   if (patch.primary_trade) next.primary_trade = patch.primary_trade;
   if (patch.business_city) next.business_city = patch.business_city;
+  if (patch.business_name) next.business_name = patch.business_name;
   if (patch.service_areas?.length) {
     next.service_areas = Array.from(new Set([...(current.service_areas ?? []), ...patch.service_areas]));
   }
@@ -74,7 +77,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      (["primary_trade", "business_city", "service_areas", "goals"] as ClaraQualificationField[])
+      (["primary_trade", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
         .filter((k) => (patch as Record<string, unknown>)[k])
         .map((k) => [k, "declared" as const]),
     ),
@@ -110,27 +113,27 @@ export const CLARA_CONTRACTOR_OPENING =
 
 /** Phrase de transition, dite seulement une fois la qualification terminée. */
 export const CLARA_CONTRACTOR_ANALYSIS_NOTE =
-  "Parfait. Je regarde ce qu'UNPRO comprend déjà de votre entreprise…";
+  "Parfait. J’ai ce qu’il me faut pour commencer. Je vais vérifier ce qu’UNPRO comprend déjà de votre entreprise.";
 
 const ALL_STEPS: ClaraQualificationStep[] = [
-  { field: "primary_trade", question: "Dans quel domaine œuvrez-vous principalement ?" },
-  { field: "business_city", question: "Dans quelle ville votre entreprise est-elle établie ?" },
+  { field: "primary_trade", question: "Parfait. Quel est votre métier principal ?" },
   {
     field: "service_areas",
-    question: "Et quelles villes ou régions desservez-vous principalement ?",
+    question: "Dans quelle(s) ville(s) travaillez-vous surtout ?",
     multi: true,
   },
   {
     field: "goals",
-    question: "Qu'est-ce qui compte le plus pour vous en ce moment ?",
+    question:
+      "Votre priorité en ce moment, c’est plutôt obtenir plus de contrats, éviter les soumissions inutiles, améliorer votre visibilité IA, ou autre chose ?",
     quickReplies: [
       "Plus de contrats",
-      "De meilleurs projets",
-      "Remplir mon calendrier",
-      "Être visible dans l'IA",
+      "Éviter les soumissions inutiles",
+      "Visibilité IA",
+      "Autre",
     ],
-    multi: true,
   },
+  { field: "business_name", question: "Quel est le nom de votre entreprise ou votre site Web ?" },
 ];
 
 /** Prochaine question réellement utile, ou `null` quand tout est connu. */
