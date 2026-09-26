@@ -104,7 +104,7 @@ export default function PublicBookingPage() {
     (async () => {
       const { data: c } = await supabase
         .from("contractors")
-        .select("id, business_name, specialty, city, logo_url, rating, review_count, aipp_score, admin_verified, slug, phone")
+        .select("id, business_name, specialty, city, logo_url, rating, review_count, aipp_score, public_status, slug, phone")
         .eq("slug", slug)
         .single();
 

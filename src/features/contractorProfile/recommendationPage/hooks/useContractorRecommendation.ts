@@ -32,7 +32,9 @@ export function useContractorRecommendation(slug: string | undefined) {
 
       const { data: direct } = await supabase
         .from("contractors")
-        .select("*")
+        .select(
+          "id, slug, business_name, legal_name, specialty, description, city, province, logo_url, portfolio_urls, rating, review_count, aipp_score, years_experience, website, phone, license_number, rbq_number, neq, rbq_compliance_status, service_areas, services_structured, mission, approach, values_text, compatibility, travel_radius_km, availability_estimate, public_status, is_published, is_discoverable, is_accepting_appointments, booking_enabled, booking_mode, published_at, created_at",
+        )
         .eq("slug", slug!)
         .eq("is_published", true)
         .maybeSingle();
