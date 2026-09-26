@@ -1,5 +1,5 @@
 /**
- * send-verified-batch
+ * send-verified-batch (rev. 2026-09-26: unclassified-carrier SMS guard)
  *
  * Sends one compliant first-touch SMS to an eligible verified prospect.
  * No automatic email fallback is allowed from this acquisition worker.
