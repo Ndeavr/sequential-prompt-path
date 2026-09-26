@@ -34,6 +34,7 @@ type ActivationState = {
   currency: string;
   subscriptionActive: boolean;
   published: boolean;
+  verified: boolean;
   creditCents: number;
 };
 
@@ -46,6 +47,7 @@ const INITIAL: ActivationState = {
   currency: "CAD",
   subscriptionActive: false,
   published: false,
+  verified: false,
   creditCents: 0,
 };
 
@@ -72,7 +74,7 @@ export default function PageContractorActivationSuccess() {
 
       const { data: contractor } = await supabase
         .from("contractors")
-        .select("id, business_name, is_published, activation_status, account_status")
+        .select("id, business_name, is_published, public_status, activation_status, account_status")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -107,6 +109,7 @@ export default function PageContractorActivationSuccess() {
         currency: String((sub as any)?.currency ?? "CAD"),
         subscriptionActive: ["active", "trialing"].includes(String((sub as any)?.status ?? "")),
         published: Boolean((contractor as any).is_published),
+        verified: (contractor as any).public_status === "verified_active",
         creditCents: Number((wallet as any)?.balance_cents ?? 0),
       });
     };
@@ -145,9 +148,16 @@ export default function PageContractorActivationSuccess() {
     {
       key: "published",
       label: state.published
-        ? "Profil public visible sur UNPRO"
-        : "Publication du profil en cours de validation",
+        ? "Profil public en ligne sur UNPRO"
+        : "Mise en ligne du profil en cours",
       done: state.published,
+    },
+    {
+      key: "verified",
+      label: state.verified
+        ? "Vérifié par UNPRO — admissible aux recommandations Clara"
+        : "Vérification RBQ/assurance en cours",
+      done: state.verified,
     },
   ];
 
@@ -194,23 +204,35 @@ export default function PageContractorActivationSuccess() {
 
               {!state.loading && (
                 <p className="text-sm text-muted-foreground">
-                  {state.published
-                    ? `${businessName} est maintenant visible sur UNPRO.`
-                    : activated
-                      ? `${businessName} est activée. La mise en ligne publique du profil est en cours de validation.`
-                      : `Dès que le paiement est confirmé, ${businessName} sera activée automatiquement.`}
+                  {state.verified
+                    ? `${businessName} est publiée et vérifiée par UNPRO.`
+                    : state.published
+                      ? "Votre profil est publié. Vérification RBQ/assurance en cours."
+                      : activated
+                        ? `${businessName} est activée. La mise en ligne du profil est en cours.`
+                        : `Dès que le paiement est confirmé, ${businessName} sera activée automatiquement.`}
                 </p>
               )}
 
               {!state.loading && (
-                <div className="mt-3 flex items-center justify-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                   {(state.paid || state.creditCents > 0) && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Plan payé
                     </span>
                   )}
-                  {activated ? (
+                  {state.verified ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Vérifié par UNPRO
+                    </span>
+                  ) : state.published ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      Profil publié — vérification en cours
+                    </span>
+                  ) : activated ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
                       <Sparkles className="h-3.5 w-3.5" />
                       Entrepreneur activé
