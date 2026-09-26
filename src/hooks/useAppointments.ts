@@ -13,6 +13,7 @@ export const useAppointments = () => {
         .from("appointments")
         .select("*, contractors(business_name, city, specialty), properties(address, city)")
         .eq("homeowner_user_id", user!.id)
+        .neq("status", "archived_test" as any)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
