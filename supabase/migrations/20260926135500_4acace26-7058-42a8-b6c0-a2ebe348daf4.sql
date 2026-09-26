@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.contractor_invitation_queue(text, integer) FROM PUBLIC, anon;
