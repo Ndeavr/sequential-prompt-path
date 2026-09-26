@@ -262,7 +262,7 @@ async function analyzeTraffic(supabase: any) {
   metrics.push({ type: "design_projects_total", value: designProjects ?? 0 });
 
   const { count: appointments } = await supabase
-    .from("appointments").select("id", { count: "exact", head: true });
+    .from("appointments").select("id", { count: "exact", head: true }).neq("status", "archived_test");
   metrics.push({ type: "appointments_total", value: appointments ?? 0 });
 
   // Upsert all metrics

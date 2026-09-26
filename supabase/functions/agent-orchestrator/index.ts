@@ -464,7 +464,7 @@ const TASK_HANDLERS: Record<string, TaskHandler> = {
 
     // Count conversion metrics
     const { count: totalUsers } = await supabase.from("profiles").select("id", { count: "exact", head: true });
-    const { count: totalAppts } = await supabase.from("appointments").select("id", { count: "exact", head: true });
+    const { count: totalAppts } = await supabase.from("appointments").select("id", { count: "exact", head: true }).neq("status", "archived_test");
     const convRate = (totalUsers ?? 0) > 0 ? ((totalAppts ?? 0) / (totalUsers ?? 1)) * 100 : 0;
 
     return {
@@ -928,7 +928,7 @@ serve(async (req) => {
         supabase.from("quotes").select("id", { count: "exact", head: true }),
         supabase.from("quotes").select("id", { count: "exact", head: true }).eq("status", "analyzed"),
         supabase.from("quotes").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("appointments").select("id", { count: "exact", head: true }),
+        supabase.from("appointments").select("id", { count: "exact", head: true }).neq("status", "archived_test"),
         supabase.from("appointments").select("id", { count: "exact", head: true }).eq("status", "requested"),
         supabase.from("contractor_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("lead_qualifications").select("id", { count: "exact", head: true }),

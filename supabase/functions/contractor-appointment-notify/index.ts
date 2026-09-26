@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
       .select("id, contractor_id, project_category, problem_summary, preferred_date, preferred_time_window, status")
       .eq("id", p.appointment_id).maybeSingle();
     if (!appt) { recipients.push({ ...p, eligible: false, reason: "appointment_not_found" }); continue; }
+    if (appt.status === "archived_test") { recipients.push({ ...p, eligible: false, reason: "qa_test_archived" }); continue; }
     const cid = p.contractor_id ?? appt.contractor_id;
     if (!cid) { recipients.push({ ...p, eligible: false, reason: "no_contractor" }); continue; }
     const { data: c } = await svc.from("contractors")
