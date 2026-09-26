@@ -1018,7 +1018,11 @@ function AuditReport({
           </Button>
           {activationError ? (
             <p className="mt-2 text-center text-[12.5px] font-medium text-destructive">{activationError}</p>
-          ) : null}
+          ) : (
+            <p className="mt-1.5 text-center text-[12px] text-muted-foreground">
+              Prochaine étape&nbsp;: compléter mon profil
+            </p>
+          )}
         </div>
       </div>
     </div>
