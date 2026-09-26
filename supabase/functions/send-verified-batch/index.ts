@@ -1,5 +1,5 @@
 /**
- * send-verified-batch
+ * send-verified-batch (rev. 2026-09-26: unclassified-carrier SMS guard)
  *
  * Sends one compliant first-touch SMS to an eligible verified prospect.
  * No automatic email fallback is allowed from this acquisition worker.
@@ -220,8 +220,11 @@ async function sendEmailViaResend(
   }
 }
 
+const BUILD_REV = "2026-09-26-unclassified-carrier";
+
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
+  console.log(JSON.stringify({ scope: "send-verified-batch", build_rev: BUILD_REV }));
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
