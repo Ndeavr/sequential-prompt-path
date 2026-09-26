@@ -77,8 +77,34 @@ Deno.serve(async (req) => {
       auditId,
       campaign,
       source,
+      testMode,
 
     } = await req.json();
+
+    // ── MODE TEST STRIPE (validation E2E uniquement) ──────────────────────
+    // Réutilise exactement ce parcours : seule la clé Stripe change. Réservé
+    // aux comptes admin ou aux comptes de test e2e+…@unpro.ca. Jamais par défaut.
+    const stripeTestKey = Deno.env.get("STRIPE_TEST_SECRET_KEY") || "";
+    let useTestMode = false;
+    if (testMode === true && stripeTestKey) {
+      const isE2eAccount = /^e2e\+[^@]+@unpro\.ca$/i.test(userEmail || "");
+      let isAdmin = false;
+      if (!isE2eAccount) {
+        const { data: adminOk } = await supabase.rpc("has_role", {
+          _user_id: userId,
+          _role: "admin",
+        });
+        isAdmin = adminOk === true;
+      }
+      useTestMode = isE2eAccount || isAdmin;
+      if (!useTestMode) {
+        return new Response(
+          JSON.stringify({ error: "Mode test non autorisé.", code: "test_mode_forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+    const activeStripeKey = useTestMode ? stripeTestKey : stripeKey;
 
     // Attribution transmise à Stripe : identifiants courts, jamais de PII.
     const safeMeta = (v: unknown): string | null =>
