@@ -891,9 +891,9 @@ Deno.serve(async (req) => {
 
     };
 
+    const checkoutOrigin = req.headers.get("origin") ?? "https://unpro.ca";
     if (isEmbedded) {
       checkoutConfig.ui_mode = "embedded";
-      const checkoutOrigin = req.headers.get("origin") ?? "https://unpro.ca";
       checkoutConfig.return_url = returnUrl || `${checkoutOrigin}/pro/onboarding?plan=${resolvedPlanCode}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
     } else {
       checkoutConfig.success_url = successUrl || `${checkoutOrigin}/pro/billing?success=true`;
