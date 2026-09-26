@@ -113,6 +113,11 @@ export default function PageContractorCheckout() {
           billingInterval: "month",
           quoteId: quoteId || undefined,
           activationToken: activationToken || undefined,
+          // Validation interne uniquement : le serveur refuse ce drapeau
+          // pour tout compte non autorisé.
+          ...(new URLSearchParams(window.location.search).get("stripe_test") === "1"
+            ? { testMode: true }
+            : {}),
           // No displayedPriceCents: the server resolves the canonical amount.
           successUrl: `${window.location.origin}/entrepreneur/activation${quoteId ? `?quote_id=${quoteId}` : ""}`,
           cancelUrl: `${window.location.origin}/entrepreneur/checkout?${new URLSearchParams({
