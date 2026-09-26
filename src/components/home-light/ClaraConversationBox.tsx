@@ -309,6 +309,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   /** Question de qualification en attente de réponse (une seule à la fois). */
   const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
   const mountedRef = useRef(true);
+  const askNextRef = useRef<(() => Promise<boolean>) | null>(null);
+  const transitionRef = useRef<((note: string) => Promise<void>) | null>(null);
 
   useEffect(() => {
     // Remonté explicitement : en double montage (StrictMode), le nettoyage du
@@ -568,6 +570,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         if (qualificationStepRef.current) {
           applyAnswer(qualificationStepRef.current, detail.text);
           qualificationStepRef.current = null;
+          // Même machine d’états que le texte : question suivante ou transition.
+          void askNextRef.current?.().then((asked) => {
+            if (!asked) void transitionRef.current?.(detail.text);
+          });
         }
         const nextMode = detectSurfaceMode(detail.text);
         if (nextMode !== "IDLE") setMode(nextMode);
@@ -699,8 +705,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     // L’enregistrement se fait en arrière-plan : aucun « Analyse en cours… » après une question.
-    await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
     setClaraTyping(false);
+    void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
   }, []);
 
   /**
@@ -767,6 +773,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     }).catch(() => undefined);
     await finishContractorTransition(note);
   }, [finishContractorTransition]);
+
+  askNextRef.current = () => askNextQualification();
+  transitionRef.current = (note: string) => beginTextContractorTransition(note, CLARA_CONTRACTOR_ANALYSIS_NOTE);
 
   useEffect(() => {
     const onVoiceFinished = (event: Event) => {

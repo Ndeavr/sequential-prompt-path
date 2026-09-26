@@ -13,7 +13,19 @@
  * champ `workflow.contractor_qualification`) avec un miroir local qui permet le
  * préremplissage immédiat après un changement d'écran ou un rafraîchissement.
  */
-import { rememberClaraReferences } from "@/services/clara/claraSession";
+import { saveClaraContext } from "@/services/clara/claraSession";
+
+/** Synchronisation bornée : la copie locale reste la référence en cas d’échec. */
+function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
+  void saveClaraContext({ workflow: { contractor_qualification: value } } as never).catch(() => {
+    if (attempt >= 3 || typeof window === "undefined") return;
+    window.setTimeout(() => {
+      const latest = read();
+      if ((latest.updated_at ?? "") > (value.updated_at ?? "")) return; // une sauvegarde plus récente prend le relais
+      syncWithRetry(latest, attempt + 1);
+    }, [2000, 8000, 30000][attempt]);
+  });
+}
 
 export type ClaraQualificationField = "primary_trade" | "business_city" | "service_areas" | "goals" | "business_name";
 
@@ -85,7 +97,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   next.updated_at = new Date().toISOString();
   write(next);
   // Continuité canonique : la conversation garde l'avancement, jamais une copie métier.
-  rememberClaraReferences({ workflow: { contractor_qualification: next } });
+  syncWithRetry(next);
   return next;
 }
 
