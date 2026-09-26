@@ -25,6 +25,7 @@ import { template as formAdminNotification } from './form-admin-notification.tsx
 import { template as routerSmokeTest } from './router-smoke-test.tsx'
 import { template as contractorFallbackAnalysis } from './contractor-fallback-analysis.tsx'
 import { template as contractorAbandonAdminAlert } from './contractor-abandon-admin-alert.tsx'
+import { template as contractorAppointmentRequest } from './contractor-appointment-request.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'form-user-confirmation': formUserConfirmation,
@@ -43,4 +44,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'router-smoke-test': routerSmokeTest,
   'contractor-fallback-analysis': contractorFallbackAnalysis,
   'contractor-abandon-admin-alert': contractorAbandonAdminAlert,
+  'contractor-appointment-request': contractorAppointmentRequest,
 }
