@@ -106,6 +106,11 @@ export async function validateBeforeSend(opts: {
   // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
   // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
   let resolvedPhoneType: string | null = null;
+  // Set when the destination belongs to a verified prospect that the eligibility
+  // engine already scored SMS-eligible (tier A/B/C). Used only to decide what to
+  // do when Twilio Lookup CANNOT classify the carrier (Canadian CLNPC/NPAC
+  // restriction, error 60601) — never to override an explicit landline/VoIP.
+  let prospectSmsEligible = false;
   if (opts.lead_id) {
     const { data: lead } = await opts.supabase
       .from("contractor_leads")
