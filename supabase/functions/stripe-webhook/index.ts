@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const testWebhookSecret = Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
+    let stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
     const body = await req.text();
 
     // Replay mode: internal reprocessing bypasses Stripe signature check.
@@ -79,6 +79,15 @@ Deno.serve(async (req) => {
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }
+
+    // A test-mode event must be read back with the test key, otherwise every
+    // subscription/payment lookup below fails with "no such subscription".
+    if (event.livemode === false) {
+      const testKey = Deno.env.get("STRIPE_TEST_SECRET_KEY");
+      if (testKey) stripe = new Stripe(testKey, { apiVersion: "2025-04-30.basil" });
+    }
+
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

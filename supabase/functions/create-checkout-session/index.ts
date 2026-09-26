@@ -77,8 +77,34 @@ Deno.serve(async (req) => {
       auditId,
       campaign,
       source,
+      testMode,
 
     } = await req.json();
+
+    // ── MODE TEST STRIPE (validation E2E uniquement) ──────────────────────
+    // Réutilise exactement ce parcours : seule la clé Stripe change. Réservé
+    // aux comptes admin ou aux comptes de test e2e+…@unpro.ca. Jamais par défaut.
+    const stripeTestKey = Deno.env.get("STRIPE_TEST_SECRET_KEY") || "";
+    let useTestMode = false;
+    if (testMode === true && stripeTestKey) {
+      const isE2eAccount = /^e2e\+[^@]+@unpro\.ca$/i.test(userEmail || "");
+      let isAdmin = false;
+      if (!isE2eAccount) {
+        const { data: adminOk } = await supabase.rpc("has_role", {
+          _user_id: userId,
+          _role: "admin",
+        });
+        isAdmin = adminOk === true;
+      }
+      useTestMode = isE2eAccount || isAdmin;
+      if (!useTestMode) {
+        return new Response(
+          JSON.stringify({ error: "Mode test non autorisé.", code: "test_mode_forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+    const activeStripeKey = useTestMode ? stripeTestKey : stripeKey;
 
     // Attribution transmise à Stripe : identifiants courts, jamais de PII.
     const safeMeta = (v: unknown): string | null =>
@@ -120,7 +146,7 @@ Deno.serve(async (req) => {
     // Paiement unique, montant fixé côté serveur. Le crédit n'est JAMAIS
     // accordé ici : seul le webhook Stripe crédite, après confirmation.
     if (fallbackCredit === true) {
-      const stripeFallback = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
       let { data: fbContractor } = await serviceClient
         .from("contractors")
@@ -738,7 +764,7 @@ Deno.serve(async (req) => {
     }
 
     // ── STRIPE CHECKOUT (paid flow) ──
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripe = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get or create Stripe customer
     const { data: existingSub } = await serviceClient
@@ -747,7 +773,8 @@ Deno.serve(async (req) => {
       .eq("contractor_id", contractor.id)
       .maybeSingle();
 
-    let customerId = existingSub?.stripe_customer_id;
+    // Un client Stripe live n'existe pas en mode test : ne jamais le réutiliser.
+    let customerId = useTestMode ? null : existingSub?.stripe_customer_id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -831,6 +858,7 @@ Deno.serve(async (req) => {
         ...(auditIdMeta && { audit_id: auditIdMeta }),
         ...(campaignMeta && { campaign: campaignMeta }),
         ...(sourceMeta && { source: sourceMeta }),
+        ...(useTestMode && { test_mode: "true" }),
       },
       subscription_data: {
         metadata: {
@@ -843,6 +871,7 @@ Deno.serve(async (req) => {
           ...(auditIdMeta && { audit_id: auditIdMeta }),
           ...(campaignMeta && { campaign: campaignMeta }),
           ...(sourceMeta && { source: sourceMeta }),
+          ...(useTestMode && { test_mode: "true" }),
         },
         ...(profileFeeCents > 0 && {
           add_invoice_items: [
