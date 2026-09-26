@@ -394,7 +394,11 @@ export default function PageAiRecommendationAudit() {
           },
         });
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Le résultat doit être immédiatement visible : on cadre la carte d'audit, pas le haut de page.
+      requestAnimationFrame(() => {
+        if (auditCardRef.current) auditCardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     } catch {
       setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
     } finally {
@@ -680,13 +684,13 @@ export default function PageAiRecommendationAudit() {
 }
 
 /* ------------------------------------------------------------------ Ring */
-function ScoreRing({ score, level }: { score: number; level: string }) {
+function ScoreRing({ score, level, compact }: { score: number; level: string; compact?: boolean }) {
   const r = 52;
   const c = 2 * Math.PI * r;
   const dash = (Math.max(0, Math.min(100, score)) / 100) * c;
   return (
-    <div>
-      <div className="relative mx-auto h-[132px] w-[132px]">
+    <div className={compact ? "shrink-0" : undefined}>
+      <div className={`relative ${compact ? "h-[92px] w-[92px]" : "mx-auto h-[132px] w-[132px]"}`}>
         <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
           <circle cx="66" cy="66" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="10" />
           <circle
@@ -708,11 +712,15 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[34px] font-bold leading-none tabular-nums text-foreground">{score}</span>
-          <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
+          <span
+            className={`font-bold leading-none tabular-nums text-foreground ${compact ? "text-[26px]" : "text-[34px]"}`}
+          >
+            {score}
+          </span>
+          <span className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
         </div>
       </div>
-      <p className="mt-3 text-center text-[13px] font-semibold text-primary">{level}</p>
+      {!compact && <p className="mt-3 text-center text-[13px] font-semibold text-primary">{level}</p>}
     </div>
   );
 }
@@ -764,21 +772,6 @@ function MissionRow({ m }: { m: Mission }) {
   );
 }
 
-
-/** Qualitative state derived from the deterministic score + real missions. */
-function qualitativeState(
-  score: number,
-  recommendable: boolean,
-  missions: Mission[],
-): { label: string; cls: string } {
-  if (recommendable && score >= 85)
-    return { label: "Bien compris", cls: "border-success/35 bg-[hsl(152_69%_31%/0.08)] text-success" };
-  if (missions.some((m) => m.status !== "confirmed" && m.impact === "high"))
-    return { label: "À améliorer en priorité", cls: "border-primary/40 bg-secondary text-secondary-foreground" };
-
-  return { label: "À compléter", cls: "border-primary/35 bg-secondary text-secondary-foreground" };
-}
-
 function AuditReport({
   result,
   onActivate,
@@ -810,7 +803,6 @@ function AuditReport({
 
   const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
   const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
-  const state = qualitativeState(result.readiness_score, baseline.recommendable, missions);
   const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
   // Only the 1–3 highest-impact missing items, in priority order.
   const priorityMissing = missions
@@ -833,50 +825,67 @@ function AuditReport({
         ← Analyser une autre entreprise
       </button>
 
-      {/* Étape 2 — résultat */}
-      <section className="rounded-[24px] border border-border bg-card p-5 shadow-sm sm:p-7">
-        <div className="flex items-start gap-3">
-          <span className="gold-btn mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold tabular-nums">
-            2
-          </span>
+      {/* Résultat — carte compacte, lisible en 3 secondes */}
+      <section className="rounded-[24px] border border-border bg-card p-4 shadow-sm sm:p-6">
+        <h1
+          className="break-words text-[22px] font-bold leading-tight text-foreground sm:text-[26px]"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          {result.business_name ?? "Votre entreprise"}
+        </h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
+          {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+        </p>
+
+        <p className="mt-3 text-[15px] font-semibold leading-snug text-foreground">
+          Votre entreprise est déjà trouvée par UNPRO
+        </p>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">
+          mais votre profil n'est pas encore assez complet pour être pleinement recommandable.
+        </p>
+
+        <div className="mt-4 flex items-center gap-4 border-t border-border pt-4">
+          <ScoreRing score={result.readiness_score} level={level} compact />
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Votre résultat d'audit</p>
-            <h1
-              className="mt-1 break-words text-[24px] font-bold leading-tight text-foreground sm:text-[28px]"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              {result.business_name ?? "Votre entreprise"}
-            </h1>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+              Préparation IA UNPRO
             </p>
-            <p className="mt-1 text-[11.5px] text-muted-foreground">
-              Généré le {generatedAt.toLocaleString("fr-CA")}
+            <p className="mt-1 text-[15px] font-semibold text-foreground">
+              {baseline.recommendable ? "Recommandable" : "Partiellement recommandable"}
             </p>
-            <span
-              className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${state.cls}`}
-            >
-              {state.label}
-            </span>
+            <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+              {remaining === 0
+                ? "Toutes les informations clés sont confirmées."
+                : `${remaining} étape${remaining > 1 ? "s" : ""} pour améliorer votre présence.`}
+            </p>
           </div>
         </div>
 
-        <div className="mt-5 border-t border-border pt-5">
-          <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-            Préparation du profil IA UNPRO
-          </p>
-          <ScoreRing score={result.readiness_score} level={level} />
-          <p className="mt-4 text-center text-[13.5px] leading-relaxed text-muted-foreground">
-            {remaining === 0
-              ? "Toutes les informations clés sont confirmées."
-              : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
-          </p>
-          <p className="mt-1 text-center text-[11px] text-muted-foreground">
-            Résultat basé sur les informations réellement disponibles sur votre entreprise. Indicateur
-            UNPRO de préparation du profil — ce n'est pas un score officiel de ChatGPT ou d'OpenAI.
-          </p>
+        {detectedFacts.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Déjà détecté
+            </p>
+            <ul className="mt-2 space-y-1">
+              {detectedFacts.slice(0, 3).map((f) => (
+                <li key={f.key} className="flex items-start gap-2 text-[13px] text-foreground/90">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
+                  <span className="truncate" title={f.value}>
+                    {f.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+          Indicateur UNPRO de préparation du profil, basé sur les informations réellement disponibles
+          sur votre entreprise. Ce n'est pas un score officiel de ChatGPT ou d'OpenAI.
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Généré le {generatedAt.toLocaleString("fr-CA")}
+        </p>
       </section>
 
       {/* Ce que l'IA peut déjà dire de vous */}
@@ -903,9 +912,12 @@ function AuditReport({
       {/* Éléments manquants prioritaires (1–3, réels uniquement) */}
       {priorityMissing.length > 0 && (
         <section className="rounded-2xl border border-primary/35 bg-secondary/50 p-4 shadow-sm sm:p-5">
-          <h2 className="text-sm font-semibold text-foreground">
-            Ce qui mérite votre attention en priorité
-          </h2>
+          <h2 className="text-sm font-semibold text-foreground">À compléter en priorité</h2>
+          {remaining > 0 && (
+            <p className="mt-1 text-[12.5px] text-muted-foreground">
+              {remaining} étape{remaining > 1 ? "s" : ""} pour améliorer votre présence
+            </p>
+          )}
 
           <ul className="mt-3 space-y-2">
             {priorityMissing.map((m) => (
@@ -1007,14 +1019,18 @@ function AuditReport({
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
             ) : (
               <>
-                <span className="truncate">Compléter mon profil</span>
+                <span className="truncate">Améliorer ma présence IA</span>
                 <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
               </>
             )}
           </Button>
           {activationError ? (
             <p className="mt-2 text-center text-[12.5px] font-medium text-destructive">{activationError}</p>
-          ) : null}
+          ) : (
+            <p className="mt-1.5 text-center text-[12px] text-muted-foreground">
+              Prochaine étape&nbsp;: compléter mon profil
+            </p>
+          )}
         </div>
       </div>
     </div>
