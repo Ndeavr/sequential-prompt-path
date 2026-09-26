@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
     // Paiement unique, montant fixé côté serveur. Le crédit n'est JAMAIS
     // accordé ici : seul le webhook Stripe crédite, après confirmation.
     if (fallbackCredit === true) {
-      const stripeFallback = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
       let { data: fbContractor } = await serviceClient
         .from("contractors")
@@ -764,7 +764,7 @@ Deno.serve(async (req) => {
     }
 
     // ── STRIPE CHECKOUT (paid flow) ──
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripe = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get or create Stripe customer
     const { data: existingSub } = await serviceClient
@@ -773,7 +773,8 @@ Deno.serve(async (req) => {
       .eq("contractor_id", contractor.id)
       .maybeSingle();
 
-    let customerId = existingSub?.stripe_customer_id;
+    // Un client Stripe live n'existe pas en mode test : ne jamais le réutiliser.
+    let customerId = useTestMode ? null : existingSub?.stripe_customer_id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
