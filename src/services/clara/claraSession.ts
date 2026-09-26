@@ -285,8 +285,8 @@ export async function saveClaraContext(patch: ClaraContextPatch): Promise<void> 
   if (!token) return;
   try {
     await call("context", { session_token: token, patch, client_ts: Date.now() });
-  } catch (e) {
-    if (!String((e as Error)?.message).includes("session_not_found")) throw e;
+  } catch {
+    // Session expirée ou inconnue du serveur : une seule reprise, jamais en boucle.
     lastSessionToken = null;
     await startOrResumeClaraSession();
     await call("context", { session_token: peekClaraSessionToken(), patch, client_ts: Date.now() });
