@@ -257,12 +257,24 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Qualified → return summary (matching call left to existing services for now)
+    // Qualified → créer le dossier réel via le point d'entrée canonique.
+    const dossier = await createDossier(graph, session, authHeader, supabase);
+
+    const summary_fr = dossier.project_id
+      ? "Votre dossier est créé. Je cherche maintenant le professionnel qui correspond le mieux à votre situation."
+      : dossier.error === "auth_required"
+        ? "J'ai tout ce qu'il me faut. Connectez-vous pour que je crée votre dossier et lance la recherche."
+        : "J'ai tout ce qu'il me faut. La création de votre dossier n'a pas abouti ; je réessaie dès que possible.";
+
     return new Response(JSON.stringify({
       status: "qualified",
       score: breakdown.total,
       ready_for_match: true,
-      summary_fr: "Après analyse de votre projet, je vais maintenant chercher le professionnel qui correspond le mieux à votre situation.",
+      summary_fr,
+      project_id: dossier.project_id,
+      lead_id: dossier.lead_id,
+      has_matches: dossier.has_matches,
+      dossier_error: dossier.error,
       graph: {
         category: graph.problem.category,
         sub_type: graph.problem.sub_type,
@@ -273,7 +285,9 @@ Deno.serve(async (req) => {
         has_photos: graph.photos.uploaded_ids.length > 0,
         budget: graph.budget,
       },
-      recommendation_headline_fr: "Après analyse de votre projet, voici le professionnel qui correspond le mieux à votre situation.",
+      recommendation_headline_fr: dossier.has_matches
+        ? "Après analyse de votre projet, voici le professionnel qui correspond le mieux à votre situation."
+        : "Après analyse de votre projet, je n'ai pas encore de professionnel vérifié disponible pour cette demande.",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("[alex-qualify-turn] fatal", err);
@@ -282,3 +296,129 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// --- Création du dossier réel (propriété + projet + demande) ---------------
+// Aucune donnée inventée : seules les valeurs confirmées du graph sont
+// transmises, et le point d'entrée canonique `create-project-unified` reste
+// la seule voie de création. Échec fermé : aucun succès annoncé sans dossier.
+
+const PROPERTY_TYPE_MAP: Record<string, string> = {
+  house: "maison",
+  condo: "condo",
+  duplex: "plex",
+  multiplex: "plex",
+  cottage: "autre",
+};
+
+const URGENCY_MAP: Record<string, string> = {
+  urgent: "urgent",
+  "30d": "normal",
+  "3m": "normal",
+  year: "flexible",
+  planning: "flexible",
+};
+
+const BUDGET_MAP: Record<string, [number, number]> = {
+  "<5k": [0, 5000],
+  "5-15k": [5000, 15000],
+  "15-50k": [15000, 50000],
+  "50k+": [50000, 250000],
+};
+
+interface DossierResult {
+  project_id: string | null;
+  lead_id: string | null;
+  has_matches: boolean;
+  error: string | null;
+}
+
+async function createDossier(
+  graph: Graph,
+  // deno-lint-ignore no-explicit-any
+  session: any,
+  authHeader: string,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+): Promise<DossierResult> {
+  const existing = (graph.project_context as Record<string, unknown>)?.project_id;
+  if (typeof existing === "string" && existing) {
+    return {
+      project_id: existing,
+      lead_id: ((graph.project_context as Record<string, unknown>)?.lead_id as string) ?? null,
+      has_matches: !!(graph.project_context as Record<string, unknown>)?.has_matches,
+      error: null,
+    };
+  }
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return { project_id: null, lead_id: null, has_matches: false, error: "auth_required" };
+  }
+  if (!graph.property.address) {
+    return { project_id: null, lead_id: null, has_matches: false, error: "verified_address_required" };
+  }
+
+  const [budgetMin, budgetMax] = graph.budget && BUDGET_MAP[graph.budget]
+    ? BUDGET_MAP[graph.budget]
+    : [0, 0];
+
+  const body = {
+    source: "alex_chat",
+    idempotency_key: `alex-qualify-${session.id}`,
+    category: graph.problem.category,
+    category_label: graph.problem.sub_type ?? graph.problem.category ?? "Projet",
+    description: graph.problem.description ?? graph.problem.sub_type ?? null,
+    address: graph.property.address,
+    city: graph.property.city,
+    postal_code: graph.property.postal_code,
+    property_type: graph.property.type ? PROPERTY_TYPE_MAP[graph.property.type] ?? "autre" : null,
+    urgency: graph.urgency ? URGENCY_MAP[graph.urgency] ?? "normal" : "normal",
+    budget_min: budgetMin,
+    budget_max: budgetMax,
+    source_page: "clara_qualification",
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-project-unified`, {
+      method: "POST",
+      headers: { Authorization: authHeader, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const out = await res.json().catch(() => null) as
+      | { projectId?: string; leadId?: string; hasMatches?: boolean; error?: string }
+      | null;
+
+    if (!res.ok || !out?.projectId) {
+      console.error("[alex-qualify-turn] dossier failed", res.status, out?.error);
+      return {
+        project_id: null,
+        lead_id: null,
+        has_matches: false,
+        error: out?.error ?? `http_${res.status}`,
+      };
+    }
+
+    const nextGraph = {
+      ...graph,
+      project_context: {
+        ...(graph.project_context ?? {}),
+        project_id: out.projectId,
+        lead_id: out.leadId ?? null,
+        has_matches: out.hasMatches === true,
+      },
+    };
+    await supabase
+      .from("alex_qualification_sessions")
+      .update({ graph: nextGraph })
+      .eq("id", session.id);
+
+    return {
+      project_id: out.projectId,
+      lead_id: out.leadId ?? null,
+      has_matches: out.hasMatches === true,
+      error: null,
+    };
+  } catch (e) {
+    console.error("[alex-qualify-turn] dossier error", String(e));
+    return { project_id: null, lead_id: null, has_matches: false, error: "network_error" };
+  }
+}

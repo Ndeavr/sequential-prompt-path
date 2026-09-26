@@ -289,6 +289,9 @@ Deno.serve(async (req) => {
       .eq("is_accepting_appointments", true)
       .eq("verification_status", "verified")
       .eq("rbq_compliance_status", "verified")
+      // Même gate public que Clara : un profil publié en attente de
+      // vérification reste visible mais jamais recommandé.
+      .eq("public_status", "verified_active")
       .not("rbq_number", "is", null)
       .not("rbq_verified_at", "is", null);
     const poolRaw = assertQueryOk<any[]>("contractors_pool_read", poolRes);

@@ -39,6 +39,8 @@ export function useAlexHomeownerSession() {
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [hasMatches, setHasMatches] = useState(false);
   const startedRef = useRef(false);
 
   const getToken = useCallback(async () => {
@@ -103,40 +105,45 @@ export function useAlexHomeownerSession() {
         body: JSON.stringify(payload),
       });
 
-      const data = await resp.json();
+      const data = await resp.json().catch(() => null);
+
+      // La conversation ne reste jamais muette : toute réponse vide ou en
+      // échec produit une relance utilisable, sans exposer d'erreur technique.
+      if (!resp.ok || !data) {
+        throw new Error(`turn_failed_${resp.status}`);
+      }
 
       if (useV3) {
         const alexText = data.status === "qualified"
           ? (data.summary_fr ?? data.recommendation_headline_fr ?? "")
           : (data.next_question?.q ?? "");
-        if (alexText) {
-          setMessages((prev) => [...prev, {
-            id: crypto.randomUUID(),
-            sender: "alex",
-            text: alexText,
-            timestamp: new Date(),
-            metadata: {
-              status: data.status,
-              score: data.score,
-              next_question: data.next_question,
-              graph_summary: data.graph_summary ?? data.graph,
-              ready_for_match: data.ready_for_match,
-              recommendation_headline_fr: data.recommendation_headline_fr,
-            },
-          }]);
-        }
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(),
+          sender: "alex",
+          text: alexText || "Pouvez-vous m'en dire un peu plus sur votre projet ?",
+          timestamp: new Date(),
+          metadata: {
+            status: data.status,
+            score: data.score,
+            next_question: data.next_question,
+            graph_summary: data.graph_summary ?? data.graph,
+            ready_for_match: data.ready_for_match,
+            recommendation_headline_fr: data.recommendation_headline_fr,
+            project_id: data.project_id ?? null,
+          },
+        }]);
+        if (data.project_id) setProjectId(data.project_id);
+        if (typeof data.has_matches === "boolean") setHasMatches(data.has_matches);
         if (data.status === "qualified") setCurrentStep("matching");
       } else {
-        if (data.alex_response_chunks?.length) {
-          const alexMsg: HomeownerMessage = {
-            id: crypto.randomUUID(),
-            sender: "alex",
-            text: data.alex_response_chunks[0].text,
-            timestamp: new Date(),
-            metadata: { next_action: data.next_action, scores: data.scores },
-          };
-          setMessages((prev) => [...prev, alexMsg]);
-        }
+        const chunk = data.alex_response_chunks?.[0]?.text;
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(),
+          sender: "alex",
+          text: chunk || "Pouvez-vous m'en dire un peu plus sur votre projet ?",
+          timestamp: new Date(),
+          metadata: { next_action: data.next_action, scores: data.scores },
+        }]);
         if (data.diagnosis) setDiagnosis(data.diagnosis);
         if (data.next_action) setNextAction(data.next_action);
         if (data.language) setLanguage(data.language);
@@ -148,7 +155,9 @@ export function useAlexHomeownerSession() {
         {
           id: crypto.randomUUID(),
           sender: "alex",
-          text: language === "fr" ? "Désolé, une erreur s'est produite. Réessayez." : "Sorry, something went wrong. Please try again.",
+          text: language === "fr"
+            ? "Je n'ai pas pu traiter votre dernier message. Reformulez-le et je continue."
+            : "I couldn't process your last message. Rephrase it and I'll continue.",
           timestamp: new Date(),
         },
       ]);
@@ -166,6 +175,8 @@ export function useAlexHomeownerSession() {
     nextAction,
     language,
     sessionStarted,
+    projectId,
+    hasMatches,
     startSession,
     sendMessage,
   };
