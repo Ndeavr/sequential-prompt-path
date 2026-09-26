@@ -1,0 +1,1 @@
+UPDATE public.system_flags SET value = true, updated_at = now() WHERE key = 'OUTREACH_ENABLED';
