@@ -415,6 +415,7 @@ export default function PageContractorPricingIntake() {
         <TextInput
           label="Ville principale desservie"
           value={d.city ?? ""}
+          placeholder="Ex. Laval, Montréal, Terrebonne"
           onChange={(v) => { confirm("city"); set({ city: v }); }}
         />
         <NumberInput
