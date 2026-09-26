@@ -50,10 +50,11 @@ describe("public contractor surfaces expose no internal fields", () => {
   for (const file of PUBLIC_SURFACES) {
     it(`${file} selects only public-safe columns`, () => {
       const source = readFileSync(file, "utf8");
-      const selects = selectLiterals(source);
+      const selects = contractorSelectLiterals(source);
 
       // A blanket select("*") would return every internal column.
-      expect(selects, `${file} must not use select("*")`).not.toContain("*");
+      expect(selects.length, `${file} has no contractors query`).toBeGreaterThan(0);
+      expect(selects, `${file} must not use select("*") on contractors`).not.toContain("*");
 
       for (const literal of selects) {
         const columns = literal.split(",").map((c) => c.trim());
