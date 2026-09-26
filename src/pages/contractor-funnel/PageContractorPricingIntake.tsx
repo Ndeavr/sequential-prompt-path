@@ -312,7 +312,7 @@ export default function PageContractorPricingIntake() {
           source="unpro"
 
           label="Nom de l'entreprise"
-          placeholder="Tapez le nom de votre entreprise"
+          placeholder="Ex. Isolation Solution Royal"
           value={d.company_name ?? ""}
           minChars={2}
           debounceMs={300}
