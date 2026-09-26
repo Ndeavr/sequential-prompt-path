@@ -1275,6 +1275,15 @@ Deno.serve(async (req) => {
               .from("contractor_pricing_quotes")
               .update({ pricing_status: "paid", updated_at: nowIso })
               .eq("id", quoteId);
+            // Filet : un devis payé n'est jamais orphelin (jamais réassigné).
+            const metaContractor = session.metadata?.contractor_id || null;
+            if (metaContractor) {
+              await supabase
+                .from("contractor_pricing_quotes")
+                .update({ contractor_id: metaContractor })
+                .eq("id", quoteId)
+                .is("contractor_id", null);
+            }
             if (quoteErr) {
               console.error("[stripe-webhook] quote paid update failed", quoteErr.message);
             }

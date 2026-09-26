@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       if (!fbContractor) {
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, business_name: userEmail })
+          .insert({ user_id: userId, business_name: quoteRow?.company_name || userEmail })
           .select("id")
           .single();
         if (createErr || !created) {
@@ -351,7 +351,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, user_id, contractor_id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
+        .select("id, user_id, contractor_id, company_name, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -494,6 +494,30 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: "Ce lien n’est pas associé à ce compte.", code: "activation_token_not_owned" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+    }
+
+    // ── DEVIS ↔ ENTREPRISE : même identité canonique jusqu'au paiement ──
+    if (quoteRow) {
+      if (quoteRow.contractor_id && quoteRow.contractor_id !== contractor.id) {
+        return new Response(JSON.stringify({ error: "Ce plan appartient à une autre entreprise.", code: "quote_wrong_company" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!quoteRow.contractor_id || !quoteRow.user_id) {
+        const { error: linkErr } = await serviceClient
+          .from("contractor_pricing_quotes")
+          .update({ contractor_id: contractor.id, user_id: userId, updated_at: new Date().toISOString() })
+          .eq("id", quoteRow.id)
+          .or(`contractor_id.is.null,contractor_id.eq.${contractor.id}`);
+        if (linkErr) {
+          console.error("[create-checkout-session] quote link failed", linkErr.message);
+          return new Response(JSON.stringify({ error: "Impossible de rattacher ce plan à votre entreprise.", code: "quote_link_failed" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        quoteRow.contractor_id = contractor.id;
+        quoteRow.user_id = userId;
       }
     }
 

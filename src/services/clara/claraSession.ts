@@ -277,9 +277,20 @@ export async function appendClaraMessage(input: {
  * d'un second appareil : aucun contexte récent n'est écrasé silencieusement.
  */
 export async function saveClaraContext(patch: ClaraContextPatch): Promise<void> {
+  if (!peekClaraSessionToken()) return;
+  // Page ouverte directement (plan, audit) : la session est reprise d'abord,
+  // sinon le serveur répond « session_not_found » et le contexte est perdu.
+  await ensureClaraSession();
   const token = peekClaraSessionToken();
   if (!token) return;
-  await call("context", { session_token: token, patch, client_ts: Date.now() });
+  try {
+    await call("context", { session_token: token, patch, client_ts: Date.now() });
+  } catch {
+    // Session expirée ou inconnue du serveur : une seule reprise, jamais en boucle.
+    lastSessionToken = null;
+    await startOrResumeClaraSession();
+    await call("context", { session_token: peekClaraSessionToken(), patch, client_ts: Date.now() });
+  }
 }
 
 /** Version tolérante : la continuité ne doit jamais bloquer un parcours métier. */

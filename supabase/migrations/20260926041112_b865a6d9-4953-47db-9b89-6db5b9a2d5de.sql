@@ -1,0 +1,2 @@
+DELETE FROM public.pricing_audit_log WHERE quote_id='12a35ef0-64bf-4dc9-825d-8e1cd91379dc';
+DELETE FROM public.contractor_pricing_quotes WHERE id='12a35ef0-64bf-4dc9-825d-8e1cd91379dc' AND source='e2e_test';
