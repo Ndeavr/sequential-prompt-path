@@ -42,6 +42,7 @@ import {
   type ClaraQualificationStep,
   saveClaraQualification,
 } from "@/services/clara/claraContractorQualification";
+import { playTyping } from "@/services/clara/claraTyping";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
   destinationCtaLabel,
@@ -204,8 +205,8 @@ const CLARA_CONTRACTOR_WELCOME =
 const CLARA_CONTRACTOR_SCORE_TEXT =
   "Je regarde votre présence en ligne, ce que les IA comprennent de votre entreprise et ce qui pourrait vous empêcher d’être recommandé.";
 /** Lecture après la fin complète du texte, puis exactement 3 pulsations. */
-const TRANSITION_READ_MS = 1400;
-const TRANSITION_PULSE_MS = 600;
+const TRANSITION_READ_MS = 900;
+const TRANSITION_PULSE_MS = 550;
 const TRANSITION_PULSES = 3;
 
 interface ClaraConversationBoxProps {
@@ -485,7 +486,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   // voix ou média. Une fois la conversation démarrée, elle ne revient jamais,
   // même après un remontage du composant.
   const conversationStarted = isConversationActive;
-  const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
+  // Entrepreneur : Clara pose les questions dans le chat, aucun formulaire dessous.
+  const contextVisible = !["IDLE", "LISTENING", "ANALYZING", "CONTRACTOR"].includes(mode);
   const intentSuggestions = DEFAULT_INTENT_SUGGESTIONS;
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
@@ -562,6 +564,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       });
       if (detail.role === "user") {
         setQuickReplies(null);
+        // Réponse vocale à la question en cours : même enregistrement que le texte.
+        if (qualificationStepRef.current) {
+          applyAnswer(qualificationStepRef.current, detail.text);
+          qualificationStepRef.current = null;
+        }
         const nextMode = detectSurfaceMode(detail.text);
         if (nextMode !== "IDLE") setMode(nextMode);
       }
@@ -681,7 +688,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const sayClara = useCallback(async (text: string, quick?: string[]) => {
     if (!mountedRef.current) return;
     const messageId = uid();
-    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text }]);
+    setQuickReplies(null);
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "" }]);
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    // Affichage progressif seulement : le texte enregistré reste exact.
+    await playTyping(text, (value) => {
+      setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value } : m)));
+    }, { reducedMotion, isAlive: () => mountedRef.current });
+    if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
   }, []);
@@ -693,6 +707,17 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
    */
   const askNextQualification = useCallback(
     async (options: { opening?: boolean } = {}) => {
+      // Entreprise déjà identifiée (audit précédent) : jamais redemandée.
+      const known = getClaraQualification();
+      if (!known.business_name) {
+        try {
+          const raw = window.sessionStorage.getItem("unpro_audit_ia_result");
+          const name = raw ? (JSON.parse(raw) as { business_name?: string | null }).business_name : null;
+          if (name) saveClaraQualification({ business_name: name });
+        } catch {
+          /* rien de connu */
+        }
+      }
       const step = nextQualificationStep(getClaraQualification());
       qualificationStepRef.current = step;
       if (!step) return false;
@@ -722,15 +747,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? transitionText : "" }]);
 
     if (!reduceMotion) {
-      for (let index = 1; index <= transitionText.length; index += 1) {
-        if (!mountedRef.current) return;
+      await playTyping(transitionText, (value) => {
         setMessages((previous) => previous.map((message) =>
-          message.id === assistantId
-            ? { ...message, text: transitionText.slice(0, index) }
-            : message,
+          message.id === assistantId ? { ...message, text: value } : message,
         ));
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 14));
-      }
+      }, { isAlive: () => mountedRef.current });
+      if (!mountedRef.current) return;
     }
 
     await appendClaraMessage({
@@ -777,8 +799,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         try {
           const asked = await askNextQualification();
           if (!asked) {
-            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
-            await beginTextContractorTransition(text);
+            await beginTextContractorTransition(text, CLARA_CONTRACTOR_ANALYSIS_NOTE);
             return;
           }
         } finally {
@@ -825,6 +846,24 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
       setBusy(true);
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
+
+      // Entrepreneur : Clara qualifie directement dans le chat, sans longue réponse.
+      if (destination && detected === "contractor_onboarding") {
+        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        setAudience("contractor");
+        trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
+        try {
+          const asked = await askNextQualification();
+          if (!asked) {
+            await beginTextContractorTransition(text, CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            return;
+          }
+        } finally {
+          if (mountedRef.current && !contractorTransitionRef.current) setBusy(false);
+          focusComposer();
+        }
+        return;
+      }
       void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
 
       const assistantId = uid();
@@ -920,10 +959,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
           // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
           const asked = await askNextQualification();
-          if (!asked) {
-            await sayClara(CLARA_CONTRACTOR_ANALYSIS_NOTE);
-            await beginTextContractorTransition(text);
-          }
+          if (!asked) await beginTextContractorTransition(text, CLARA_CONTRACTOR_ANALYSIS_NOTE);
         } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
@@ -1002,8 +1038,19 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
         // Les choix deviennent immédiatement des choix entrepreneur.
         setAudience("contractor");
-        await sayClara(CLARA_CONTRACTOR_WELCOME);
-        focusComposer();
+        setMode("CONTRACTOR");
+        // Clara parle d'abord et pose UNE question à la fois, dans le chat.
+        setBusy(true);
+        try {
+          const asked = await askNextQualification();
+          if (!asked) {
+            await beginTextContractorTransition(suggestion.label, CLARA_CONTRACTOR_ANALYSIS_NOTE);
+            return;
+          }
+        } finally {
+          if (mountedRef.current && !contractorTransitionRef.current) setBusy(false);
+          focusComposer();
+        }
         return;
       }
       setBusy(true);
