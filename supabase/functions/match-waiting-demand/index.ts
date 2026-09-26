@@ -34,20 +34,22 @@ Deno.serve(async (req) => {
         .limit(200);
 
       for (const s of signals ?? []) {
-        await sb.from("notifications").insert({
+        const { error: nErr } = await sb.from("notifications").insert({
           user_id: s.homeowner_id,
           type: "demand_matched",
           title: "Une recommandation est prête",
           body: `Un entrepreneur compatible est maintenant disponible pour votre projet ${s.category} à ${s.city}.`,
           metadata: { signal_id: s.id, contractor_id, project_id: s.project_id },
-        }).catch(() => {});
+        });
+        if (nErr) console.error("match-waiting-demand notify failed", s.id, nErr.message);
       }
     }
 
-    await sb.from("acquisition_events").insert({
+    const { error: evErr } = await sb.from("acquisition_events").insert({
       event_type: "demand_signal.matched",
       payload: { contractor_id, matched_count: matched, segments, duration_ms: Date.now() - start },
-    }).catch(() => {});
+    });
+    if (evErr) console.error("match-waiting-demand event log failed", evErr.message);
 
     return json({ ok: true, matched_count: matched, segments, duration_ms: Date.now() - start });
   } catch (e) {
