@@ -375,11 +375,27 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     },
     [getScroller],
   );
+  /**
+   * Clavier mobile : le champ de saisie doit rester au-dessus du clavier.
+   * On ne déplace la page que si la zone de saisie déborde réellement de la
+   * fenêtre visible — jamais de recentrage automatique intempestif.
+   */
+  const bringComposerIntoView = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const composer = composerRef.current;
+      if (!composer) return;
+      const rect = composer.getBoundingClientRect();
+      const overflow = rect.bottom - window.innerHeight + 8;
+      if (overflow > 1) window.scrollBy({ top: overflow, behavior: "auto" });
+      else if (rect.top < 0) window.scrollBy({ top: rect.top - 8, behavior: "auto" });
+    });
+  }, []);
   const keepComposerVisible = useCallback(() => {
+    bringComposerIntoView();
     // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
     if (!isNearBottom()) return;
     scrollToLatest("auto");
-  }, [isNearBottom, scrollToLatest]);
+  }, [bringComposerIntoView, isNearBottom, scrollToLatest]);
   const isConversationActive = messages.length > 0 || mode !== "IDLE";
 
   useEffect(() => {
