@@ -16293,6 +16293,47 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_action_tokens: {
+        Row: {
+          action: string
+          clicked_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          notification_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          clicked_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          notification_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          clicked_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          notification_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_action_tokens_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_contractor_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_billing_events: {
         Row: {
           amount_delta: number
@@ -16392,6 +16433,146 @@ export type Database = {
           },
           {
             foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      appointment_contractor_notifications: {
+        Row: {
+          appointment_id: string
+          batch_id: string | null
+          channel: string
+          click_count: number
+          contractor_id: string
+          created_at: string
+          decline_reason: string | null
+          delivered_at: string | null
+          error_message: string | null
+          first_clicked_at: string | null
+          id: string
+          proposed_slots: Json | null
+          provider_ref: string | null
+          recipient_masked: string | null
+          responded_at: string | null
+          response: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          batch_id?: string | null
+          channel: string
+          click_count?: number
+          contractor_id: string
+          created_at?: string
+          decline_reason?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          first_clicked_at?: string | null
+          id?: string
+          proposed_slots?: Json | null
+          provider_ref?: string | null
+          recipient_masked?: string | null
+          responded_at?: string | null
+          response?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          batch_id?: string | null
+          channel?: string
+          click_count?: number
+          contractor_id?: string
+          created_at?: string
+          decline_reason?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          first_clicked_at?: string | null
+          id?: string
+          proposed_slots?: Json | null
+          provider_ref?: string | null
+          recipient_masked?: string | null
+          responded_at?: string | null
+          response?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_contractor_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_contractor_notifications_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_free_service_registrations_canonical"

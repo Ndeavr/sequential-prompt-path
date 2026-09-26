@@ -13,6 +13,7 @@ import { RevenueTimelinePanel } from "@/components/admin/acquisition/RevenueTime
 import { AutonomousRecruitmentPanel } from "@/components/admin/acquisition/AutonomousRecruitmentPanel";
 import { DiscoveryHealthPanel } from "@/components/admin/acquisition/DiscoveryHealthPanel";
 import { SupplySourceMixPanel } from "@/components/admin/acquisition/SupplySourceMixPanel";
+import { AppointmentNotificationsPanel } from "@/components/admin/acquisition/AppointmentNotificationsPanel";
 
 import {
   useAcquisitionSourceHealth,
@@ -867,6 +868,7 @@ export default function PageAdminAcquisitionPipeline() {
 
         <SupplySourceMixPanel />
 
+        <AppointmentNotificationsPanel />
         <AutonomousRecruitmentPanel />
 
         <FirstDollarMini tracker={firstDollar.data} />
