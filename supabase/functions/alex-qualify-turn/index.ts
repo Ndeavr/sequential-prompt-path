@@ -257,12 +257,24 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Qualified → return summary (matching call left to existing services for now)
+    // Qualified → créer le dossier réel via le point d'entrée canonique.
+    const dossier = await createDossier(graph, session, authHeader, supabase);
+
+    const summary_fr = dossier.project_id
+      ? "Votre dossier est créé. Je cherche maintenant le professionnel qui correspond le mieux à votre situation."
+      : dossier.error === "auth_required"
+        ? "J'ai tout ce qu'il me faut. Connectez-vous pour que je crée votre dossier et lance la recherche."
+        : "J'ai tout ce qu'il me faut. La création de votre dossier n'a pas abouti ; je réessaie dès que possible.";
+
     return new Response(JSON.stringify({
       status: "qualified",
       score: breakdown.total,
       ready_for_match: true,
-      summary_fr: "Après analyse de votre projet, je vais maintenant chercher le professionnel qui correspond le mieux à votre situation.",
+      summary_fr,
+      project_id: dossier.project_id,
+      lead_id: dossier.lead_id,
+      has_matches: dossier.has_matches,
+      dossier_error: dossier.error,
       graph: {
         category: graph.problem.category,
         sub_type: graph.problem.sub_type,
@@ -273,7 +285,9 @@ Deno.serve(async (req) => {
         has_photos: graph.photos.uploaded_ids.length > 0,
         budget: graph.budget,
       },
-      recommendation_headline_fr: "Après analyse de votre projet, voici le professionnel qui correspond le mieux à votre situation.",
+      recommendation_headline_fr: dossier.has_matches
+        ? "Après analyse de votre projet, voici le professionnel qui correspond le mieux à votre situation."
+        : "Après analyse de votre projet, je n'ai pas encore de professionnel vérifié disponible pour cette demande.",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("[alex-qualify-turn] fatal", err);
