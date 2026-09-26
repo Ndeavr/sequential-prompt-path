@@ -170,7 +170,8 @@ export function applyAnswer(
       .slice(0, 8);
     return saveClaraQualification({ [step.field]: list } as ClaraContractorQualification);
   }
-  return saveClaraQualification({ [step.field]: clean.slice(0, 80) } as ClaraContractorQualification);
+  if (step.field === "goals") return saveClaraQualification({ goals: [clean.slice(0, 80)] });
+  return saveClaraQualification({ [step.field]: clean.slice(0, 120) } as ClaraContractorQualification);
 }
 
 /** Confirmation plutôt que question quand UNPRO connaît déjà l'entreprise. */
