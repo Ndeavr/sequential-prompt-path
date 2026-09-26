@@ -705,8 +705,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     // L’enregistrement se fait en arrière-plan : aucun « Analyse en cours… » après une question.
-    await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
     setClaraTyping(false);
+    void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
   }, []);
 
   /**
