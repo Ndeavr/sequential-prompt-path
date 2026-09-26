@@ -764,21 +764,6 @@ function MissionRow({ m }: { m: Mission }) {
   );
 }
 
-
-/** Qualitative state derived from the deterministic score + real missions. */
-function qualitativeState(
-  score: number,
-  recommendable: boolean,
-  missions: Mission[],
-): { label: string; cls: string } {
-  if (recommendable && score >= 85)
-    return { label: "Bien compris", cls: "border-success/35 bg-[hsl(152_69%_31%/0.08)] text-success" };
-  if (missions.some((m) => m.status !== "confirmed" && m.impact === "high"))
-    return { label: "À améliorer en priorité", cls: "border-primary/40 bg-secondary text-secondary-foreground" };
-
-  return { label: "À compléter", cls: "border-primary/35 bg-secondary text-secondary-foreground" };
-}
-
 function AuditReport({
   result,
   onActivate,
