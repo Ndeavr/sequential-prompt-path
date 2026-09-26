@@ -50,12 +50,12 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
       // Build enriched object manually
       const [services, areas, media, credentials, aiProfile, publicPage, problemLinks, comparables] =
         await Promise.all([
-          supabase.from("contractor_services").select("*").eq("contractor_id", contractor.id).eq("is_active", true),
-          supabase.from("contractor_service_areas").select("*").eq("contractor_id", contractor.id),
-          supabase.from("contractor_media").select("*").eq("contractor_id", contractor.id).eq("is_approved", true).order("display_order"),
-          supabase.from("contractor_credentials").select("*").eq("contractor_id", contractor.id).eq("verification_status", "verified"),
-          supabase.from("contractor_ai_profiles").select("*").eq("contractor_id", contractor.id).eq("is_current", true).maybeSingle(),
-          supabase.from("contractor_public_pages").select("*").eq("contractor_id", contractor.id).maybeSingle(),
+          supabase.from("contractor_services").select("id, contractor_id, service_name_fr, service_name_en, category, is_primary, description_fr, description_en, price_range_low, price_range_high, price_unit, display_order, is_active").eq("contractor_id", contractor.id).eq("is_active", true),
+          supabase.from("contractor_service_areas").select("id, contractor_id, city_name, city_slug, province, is_primary, radius_km").eq("contractor_id", contractor.id),
+          supabase.from("contractor_media").select("id, contractor_id, media_type, public_url, title, alt_text, is_featured, display_order").eq("contractor_id", contractor.id).eq("is_approved", true).order("display_order"),
+          supabase.from("contractor_credentials").select("id, contractor_id, credential_type, credential_value, issuer, issued_at, expires_at, verification_status, credential_status").eq("contractor_id", contractor.id).eq("verification_status", "verified"),
+          supabase.from("contractor_ai_profiles").select("id, contractor_id, summary_fr, summary_en, best_for, not_ideal_for, recommendation_reasons, considerations, personality_tags, confidence, is_current").eq("contractor_id", contractor.id).eq("is_current", true).maybeSingle(),
+          supabase.from("contractor_public_pages").select("id, contractor_id, slug, is_published, published_at, seo_title, seo_description, canonical_url, json_ld, og_image_url, faq, custom_sections").eq("contractor_id", contractor.id).maybeSingle(),
           supabase.from("contractor_problem_links").select("problem_id, relevance_score").eq("contractor_id", contractor.id),
           supabase.from("contractor_comparables").select("comparable_contractor_id, similarity_score").eq("contractor_id", contractor.id).order("similarity_score", { ascending: false }).limit(5),
         ]);
@@ -106,7 +106,7 @@ export const useContractorAIPPBreakdown = (contractorId: string | undefined) => 
       if (!contractorId) return null;
       const { data, error } = await supabase
         .from("contractor_aipp_scores")
-        .select("*")
+        .select("id, contractor_id, total_score, tier, score_confidence, identity_score, trust_score, visibility_score, conversion_score, ai_seo_readiness_score, is_current")
         .eq("contractor_id", contractorId)
         .eq("is_current", true)
         .maybeSingle();

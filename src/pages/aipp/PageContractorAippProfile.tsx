@@ -27,9 +27,9 @@ export default function PageContractorAippProfile() {
       if (!c) { setLoading(false); return; }
       setContractor(c);
       const [{ data: s }, { data: a }, { data: r }, { data: gp }] = await Promise.all([
-        supabase.from("contractor_aipp_scores").select("*").eq("contractor_id", c.id).eq("is_current", true).maybeSingle(),
-        supabase.from("contractor_ai_profiles").select("*").eq("contractor_id", c.id).eq("is_current", true).maybeSingle(),
-        supabase.from("contractor_reviews_snapshot").select("*").eq("contractor_id", c.id).limit(5),
+        supabase.from("contractor_aipp_scores").select("id, contractor_id, total_score, tier, score_confidence, identity_score, trust_score, visibility_score, conversion_score, ai_seo_readiness_score, is_current").eq("contractor_id", c.id).eq("is_current", true).maybeSingle(),
+        supabase.from("contractor_ai_profiles").select("id, contractor_id, summary_fr, summary_en, best_for, not_ideal_for, recommendation_reasons, considerations, personality_tags, confidence, is_current").eq("contractor_id", c.id).eq("is_current", true).maybeSingle(),
+        supabase.from("contractor_reviews_snapshot").select("id, contractor_id, review_count, rating, google_present, facebook_present, bbb_present, created_at").eq("contractor_id", c.id).limit(5),
         supabase.from("aipp_geo_pages").select("slug,city,service,title").eq("contractor_id", c.id).limit(8),
       ]);
       setScore(s); setAi(a); setReviews(r ?? []); setGeoPages(gp ?? []);
