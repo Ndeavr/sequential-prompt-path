@@ -236,15 +236,18 @@ export default function PageContractorPricingIntake() {
       if (cancelled) return;
       const firstOf = (v: unknown): string | null =>
         Array.isArray(v) && typeof v[0] === "string" && v[0].trim() ? String(v[0]).trim() : null;
-      const declaredTrade = qsTrade || firstOf(answers.services_wanted);
-      const declaredCity = qsCity || firstOf(answers.territories);
+      // Ce que l'entrepreneur a déjà déclaré ailleurs (Clara, brouillon, tunnel).
+      const known = getKnownContractorContext();
+      const declaredName = qsName || known.businessName;
+      const declaredTrade = qsTrade || firstOf(answers.services_wanted) || known.trade;
+      const declaredCity = qsCity || firstOf(answers.territories) || known.city;
       setData((d) => ({
         ...d,
-        company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || qsName || undefined,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || declaredName || undefined,
         trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : d.trade_primary || declaredTrade || undefined,
         city: confirmedFields.includes("city") ? d.city : d.city || declaredCity || undefined,
       }));
-      if ((qsName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
+      if ((declaredName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

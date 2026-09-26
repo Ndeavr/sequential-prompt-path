@@ -23,6 +23,7 @@ import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
 import { supabase } from "@/integrations/supabase/client";
+import ActivationConfetti from "@/components/unpro/ActivationConfetti";
 
 type ActivationState = {
   loading: boolean;
@@ -155,6 +156,12 @@ export default function PageContractorActivationSuccess() {
       <Helmet>
         <title>Activation — {businessName}</title>
       </Helmet>
+
+      {/* Confettis réservés à cette page de succès, une seule fois par activation. */}
+      <ActivationConfetti
+        active={!state.loading && activated}
+        runKey={`${state.businessName ?? "contractor"}:${state.planCode ?? "plan"}`}
+      />
 
       <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -2,7 +2,7 @@
  * UNPRO — PageContractorFAQBuilder
  * AI FAQ generation, edit, sort, assign to services.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Sparkles, MessageSquare, ChevronDown, ChevronUp, Pencil, Trash2, Plus } from "lucide-react";
@@ -14,24 +14,48 @@ import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import type { ContractorFAQ } from "@/types/contractorFunnel";
+import { buildTradeFaqs, resolveTradeDomain, type TradeFaqSeed } from "@/data/contractorFaqTemplates";
+import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 
-const MOCK_FAQS: ContractorFAQ[] = [
-  { id: "1", category: "services", question: "Quels types de toitures installez-vous?", answer: "Nous installons tous les types de toitures résidentielles : bardeaux d'asphalte, toiture métallique, membrane TPO et toiture verte.", isPublished: true, sortOrder: 0, sourceType: "ai_generated" },
-  { id: "2", category: "prix", question: "Comment sont calculés vos prix?", answer: "Nos prix sont basés sur la superficie, le type de matériaux choisis et la complexité du projet. Nous offrons des estimations gratuites.", isPublished: true, sortOrder: 1, sourceType: "ai_generated" },
-  { id: "3", category: "garanties", question: "Offrez-vous une garantie sur vos travaux?", answer: "Oui, nous offrons une garantie de 10 ans sur la main-d'œuvre et les matériaux sont couverts par la garantie du fabricant.", isPublished: true, sortOrder: 2, sourceType: "ai_generated" },
-  { id: "4", category: "délais", question: "Quel est le délai moyen pour une réfection de toiture?", answer: "La plupart des projets résidentiels sont complétés en 1 à 3 jours, selon la taille et la complexité.", isPublished: true, sortOrder: 3, sourceType: "ai_generated" },
-  { id: "5", category: "urgences", question: "Offrez-vous un service d'urgence?", answer: "Oui, nous offrons un service d'urgence 24/7 pour les fuites et les dommages causés par les intempéries.", isPublished: true, sortOrder: 4, sourceType: "ai_generated" },
-];
+let faqSeq = 0;
+const toFaq = (seed: TradeFaqSeed, sortOrder: number): ContractorFAQ => ({
+  id: `faq_${(faqSeq += 1)}`,
+  category: seed.category,
+  question: seed.question,
+  answer: seed.draft,
+  isPublished: false,
+  sortOrder,
+  sourceType: "ai_generated",
+});
 
 export default function PageContractorFAQBuilder() {
   const { state, goToStep } = useContractorFunnel();
-  const [faqs, setFaqs] = useState<ContractorFAQ[]>(MOCK_FAQS);
+  const known = useMemo(getKnownContractorContext, []);
+  const trade = known.trade;
+  const domain = useMemo(() => resolveTradeDomain(trade), [trade]);
+  const domainLabel = domain?.label ?? trade;
+
+  const [faqs, setFaqs] = useState<ContractorFAQ[]>(() =>
+    buildTradeFaqs(trade, { limit: 5 }).map(toFaq),
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [exhausted, setExhausted] = useState(false);
 
   const handleGenerate = () => {
+    if (isGenerating) return;
     setIsGenerating(true);
-    setTimeout(() => setIsGenerating(false), 2000);
+    setTimeout(() => {
+      setFaqs((prev) => {
+        const next = buildTradeFaqs(trade, {
+          exclude: prev.map((f) => f.question),
+          limit: 3,
+        }).map((seed, i) => toFaq(seed, prev.length + i));
+        setExhausted(next.length === 0);
+        return [...prev, ...next];
+      });
+      setIsGenerating(false);
+    }, 900);
   };
 
   const toggleExpand = (id: string) => {
@@ -64,21 +88,36 @@ export default function PageContractorFAQBuilder() {
               FAQ intelligente
             </h1>
             <p className="text-sm text-muted-foreground">
-              Questions générées par IA — éditez et publiez
+              Questions générées selon votre domaine — modifiez et publiez
             </p>
+            {domainLabel && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <Sparkles className="h-3 w-3" />
+                Domaine : {domainLabel}
+              </p>
+            )}
           </motion.div>
 
           {/* Generate button */}
           <motion.div initial="hidden" animate="visible" variants={fadeUp} className="mb-6">
             <Button
               variant="outline"
-              className="w-full h-12 rounded-xl border-dashed border-primary/30 text-primary hover:bg-primary/5"
+              className="w-full h-12 rounded-xl border-dashed border-primary/30 text-primary hover:bg-primary/5 whitespace-normal leading-tight px-3"
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || exhausted || !trade}
             >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {isGenerating ? "Génération en cours..." : "Générer plus de FAQ avec l'IA"}
+              <Sparkles className="mr-2 h-4 w-4 shrink-0" />
+              {isGenerating
+                ? "Génération en cours..."
+                : exhausted
+                  ? "Toutes les questions de votre domaine sont ajoutées"
+                  : "Générer plus de FAQ reliées à mon domaine"}
             </Button>
+            {!trade && (
+              <p className="mt-2 text-xs text-muted-foreground text-center">
+                Indiquez votre métier principal pour générer des questions reliées à votre domaine.
+              </p>
+            )}
           </motion.div>
 
           {/* FAQ List */}
