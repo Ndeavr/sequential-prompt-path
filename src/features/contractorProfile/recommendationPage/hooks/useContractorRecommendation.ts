@@ -11,7 +11,7 @@ import { buildAIReference, type AIReferencePayload } from "../logic/aiReferenceB
 export interface PublicSource { label: string; url: string }
 
 export interface ContractorRecommendationData {
-  contractor: Tables<"contractors"> & { service_areas: string[]; services_structured: string[] };
+  contractor: Partial<Tables<"contractors">> & { service_areas: string[]; services_structured: string[] };
   projects: Tables<"contractor_projects">[];
   services: Pick<Tables<"contractor_services">, "service_name_fr" | "category" | "display_order" | "is_active">[];
   serviceAreas: Pick<Tables<"contractor_service_areas">, "city_name" | "is_primary">[];
