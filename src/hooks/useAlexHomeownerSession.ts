@@ -155,7 +155,9 @@ export function useAlexHomeownerSession() {
         {
           id: crypto.randomUUID(),
           sender: "alex",
-          text: language === "fr" ? "Désolé, une erreur s'est produite. Réessayez." : "Sorry, something went wrong. Please try again.",
+          text: language === "fr"
+            ? "Je n'ai pas pu traiter votre dernier message. Reformulez-le et je continue."
+            : "I couldn't process your last message. Rephrase it and I'll continue.",
           timestamp: new Date(),
         },
       ]);
@@ -173,6 +175,8 @@ export function useAlexHomeownerSession() {
     nextAction,
     language,
     sessionStarted,
+    projectId,
+    hasMatches,
     startSession,
     sendMessage,
   };
