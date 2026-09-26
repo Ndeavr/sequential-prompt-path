@@ -803,7 +803,17 @@ function AuditReport({
 
   const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
   const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
-  const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
+  // Real facts only, deduplicated, and never repeating what the header already shows.
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const shownInHeader = new Set([norm(result.business_name), norm(result.trade), norm(result.city)]);
+  const seenFacts = new Set<string>();
+  const detectedFacts = baseline.facts.filter((f) => {
+    if (f.provenance !== "verified" && f.provenance !== "inferred") return false;
+    const v = norm(f.value);
+    if (!v || shownInHeader.has(v) || seenFacts.has(v)) return false;
+    seenFacts.add(v);
+    return true;
+  });
   // Only the 1–3 highest-impact missing items, in priority order.
   const priorityMissing = missions
     .filter((m) => m.status !== "confirmed")
