@@ -904,9 +904,12 @@ function AuditReport({
       {/* Éléments manquants prioritaires (1–3, réels uniquement) */}
       {priorityMissing.length > 0 && (
         <section className="rounded-2xl border border-primary/35 bg-secondary/50 p-4 shadow-sm sm:p-5">
-          <h2 className="text-sm font-semibold text-foreground">
-            Ce qui mérite votre attention en priorité
-          </h2>
+          <h2 className="text-sm font-semibold text-foreground">À compléter en priorité</h2>
+          {remaining > 0 && (
+            <p className="mt-1 text-[12.5px] text-muted-foreground">
+              {remaining} étape{remaining > 1 ? "s" : ""} pour améliorer votre présence
+            </p>
+          )}
 
           <ul className="mt-3 space-y-2">
             {priorityMissing.map((m) => (
