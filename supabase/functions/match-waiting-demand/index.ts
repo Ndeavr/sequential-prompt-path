@@ -1,59 +1,139 @@
 // UNPRO Demand Intelligence — Match waiting demand when a contractor activates
-// Triggered by activation webhook or admin "Re-run matching".
+// Triggered by the Stripe webhook (service role) or an admin "Re-run matching".
+// Access: service role key, admin user, or a member of the target contractor.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const start = Date.now();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
+
+  // Non-blocking journey logger — a failed log must never break matching.
+  const logJourney = async (
+    contractorId: string | null,
+    eventType: string,
+    metadata: Record<string, unknown>,
+  ) => {
+    try {
+      const { error } = await sb.from("contractor_funnel_events").insert({
+        contractor_id: contractorId,
+        event_type: eventType,
+        step: "matching",
+        event_source: "match-waiting-demand",
+        metadata,
+      });
+      if (error) console.error("[match-waiting-demand] journey log failed", eventType, error.message);
+    } catch (e) {
+      console.error("[match-waiting-demand] journey log threw", eventType, String(e));
+    }
+  };
+
   try {
-    const { contractor_id } = await req.json();
-    if (!contractor_id) return json({ ok: false, error: "contractor_id required" }, 400);
+    // ── AUTH ────────────────────────────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return json({ ok: false, error: "Authentification requise.", code: "unauthenticated" }, 401);
 
-    const sb = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    let actorId: string | null = null;
+    let isService = token === serviceKey;
 
-    const { data, error } = await sb.rpc("fn_match_waiting_demand", { _contractor_id: contractor_id });
-    if (error) throw error;
+    if (!isService) {
+      const { data: userData, error: userErr } = await sb.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return json({ ok: false, error: "Session invalide.", code: "unauthenticated" }, 401);
+      }
+      actorId = userData.user.id;
+    }
+
+    let body: Record<string, unknown> = {};
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, error: "Corps de requête invalide.", code: "bad_request" }, 400);
+    }
+    const contractorId = typeof body.contractor_id === "string" ? body.contractor_id.trim() : "";
+    if (!contractorId || !UUID_RE.test(contractorId)) {
+      return json({ ok: false, error: "contractor_id requis.", code: "bad_request" }, 400);
+    }
+
+    if (!isService) {
+      const { data: isAdmin } = await sb.rpc("has_role", { _user_id: actorId, _role: "admin" });
+      if (!isAdmin) {
+        const [{ data: member }, { data: owned }] = await Promise.all([
+          sb.from("contractor_members").select("contractor_id").eq("contractor_id", contractorId)
+            .eq("user_id", actorId!).maybeSingle(),
+          sb.from("contractors").select("id").eq("id", contractorId).eq("user_id", actorId!).maybeSingle(),
+        ]);
+        if (!member && !owned) {
+          return json({ ok: false, error: "Accès refusé.", code: "forbidden" }, 403);
+        }
+      }
+    }
+
+    // ── MATCHING ────────────────────────────────────────────────────────────
+    await logJourney(contractorId, "matching_attempted", {
+      actor: isService ? "service_role" : actorId,
+    });
+
+    const { data, error } = await sb.rpc("fn_match_waiting_demand", { _contractor_id: contractorId });
+    if (error) {
+      await logJourney(contractorId, "matching_failed", { reason: error.message });
+      return json({ ok: false, error: error.message, code: "matching_failed" }, 500);
+    }
 
     const row = Array.isArray(data) ? data[0] : data;
     const matched = row?.matched_count ?? 0;
     const segments = row?.segments ?? [];
 
-    // Notify each newly matched homeowner — best-effort
+    // Notify each newly matched homeowner — best-effort, never blocking.
     if (matched > 0) {
       const { data: signals } = await sb
         .from("demand_signals")
-        .select("id, homeowner_id, city, category, project_id, notify_channels")
-        .eq("matched_contractor_id", contractor_id)
+        .select("id, homeowner_id, city, category, project_id")
+        .eq("matched_contractor_id", contractorId)
         .eq("status", "matched")
         .order("updated_at", { ascending: false })
         .limit(200);
 
       for (const s of signals ?? []) {
         const { error: nErr } = await sb.from("notifications").insert({
-          user_id: s.homeowner_id,
+          profile_id: s.homeowner_id,
           type: "demand_matched",
+          channel: "in_app",
           title: "Une recommandation est prête",
           body: `Un entrepreneur compatible est maintenant disponible pour votre projet ${s.category} à ${s.city}.`,
-          metadata: { signal_id: s.id, contractor_id, project_id: s.project_id },
+          entity_type: "demand_signal",
+          entity_id: s.id,
+          metadata: { signal_id: s.id, contractor_id: contractorId, project_id: s.project_id },
         });
-        if (nErr) console.error("match-waiting-demand notify failed", s.id, nErr.message);
+        if (nErr) console.error("[match-waiting-demand] notify failed", s.id, nErr.message);
       }
     }
 
-    const { error: evErr } = await sb.from("acquisition_events").insert({
-      event_type: "demand_signal.matched",
-      payload: { contractor_id, matched_count: matched, segments, duration_ms: Date.now() - start },
+    await logJourney(contractorId, matched > 0 ? "matching_succeeded" : "matching_no_result", {
+      matched_count: matched,
+      segments,
+      reason: matched > 0 ? null : "Aucune demande propriétaire en attente compatible",
+      duration_ms: Date.now() - start,
     });
-    if (evErr) console.error("match-waiting-demand event log failed", evErr.message);
+
+    const { error: evErr } = await sb.from("acquisition_events").insert({
+      contractor_id: contractorId,
+      channel: "system",
+      event_type: "demand_signal.matched",
+      source_table: "demand_signals",
+      metadata: { contractor_id: contractorId, matched_count: matched, segments, duration_ms: Date.now() - start },
+    });
+    if (evErr) console.error("[match-waiting-demand] event log failed", evErr.message);
 
     return json({ ok: true, matched_count: matched, segments, duration_ms: Date.now() - start });
   } catch (e) {
-    console.error("match-waiting-demand error", e);
+    console.error("[match-waiting-demand] error", e);
     return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
   }
 });
