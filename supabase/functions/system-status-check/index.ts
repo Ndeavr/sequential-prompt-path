@@ -119,13 +119,13 @@ Deno.serve(async (req) => {
 
   // 8/9. Rendez-vous réels
   const { data: appts, count: apptCount } = await svc.from("appointments").select("id,status,created_at,homeowner_user_id,contractor_id", { count: "exact" })
-    .neq("status", "archived_test").or("source_page.is.null,source_page.neq.qa_test").not("homeowner_user_id", "is", null).order("created_at", { ascending: false }).limit(1);
+    .neq("status", "archived_test").or("source_page.is.null,source_page.neq.qa_test").not("homeowner_user_id", "is", null).gte("created_at", ago(30)).order("created_at", { ascending: false }).limit(1);
   const lastAppt = appts?.[0] ?? null;
   rows.push({
     check_key: "appointment_created", label: "Rendez-vous créé",
     status: lastAppt ? "ok" : "untested",
     evidence: { real_appointments: apptCount ?? 0, last: lastAppt },
-    component: "appointments", test_performed: "Rendez-vous avec propriétaire réel, hors archives de test",
+    component: "appointments", test_performed: "Rendez-vous avec propriétaire rattaché, 30 derniers jours, hors archives de test (les anciens rendez-vous démo sont exclus)",
     next_blocker: lastAppt ? null : "Aucun rendez-vous réel propriétaire → entrepreneur encore",
   });
   const { count: notifCount } = await svc.from("appointment_contractor_notifications").select("id", { count: "exact", head: true });
