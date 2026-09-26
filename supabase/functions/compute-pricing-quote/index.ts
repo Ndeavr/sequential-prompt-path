@@ -1254,9 +1254,25 @@ Deno.serve(async (req) => {
 
 
 
+    // IDENTITÉ CANONIQUE : le devis porte l'entreprise du compte connecté.
+    // Un contractor_id fourni par le client n'est jamais cru sur parole : il
+    // doit appartenir à l'appelant. Aucun repli vers une autre entreprise.
+    let resolvedContractorId: string | null = null;
+    if (user) {
+      const { data: owned } = await svc
+        .from("contractors").select("id").eq("user_id", user.id)
+        .order("created_at", { ascending: true }).limit(1).maybeSingle();
+      resolvedContractorId = (owned?.id as string | undefined) ?? null;
+      if (body.contractor_id && body.contractor_id !== resolvedContractorId) {
+        console.warn("[compute-pricing-quote] contractor_id client refusé (non détenu)");
+      }
+    }
+    // Invité : le devis reste sans entreprise et sera rattaché au paiement,
+    // quand le compte et son entreprise sont confirmés côté serveur.
+
     const quotePayload: Record<string, unknown> = {
       user_id: user?.id ?? null,
-      contractor_id: body.contractor_id ?? null,
+      contractor_id: resolvedContractorId,
       company_name: body.company_name ?? null,
       trade_primary: body.trade_primary,
       city: body.city,
@@ -1340,7 +1356,7 @@ Deno.serve(async (req) => {
             : "quote_computed",
       actor_id: user?.id ?? null,
       actor_role: user ? "contractor" : "guest",
-      contractor_id: body.contractor_id ?? null,
+      contractor_id: resolvedContractorId,
       quote_id: saved.id,
       service_slug: tradeSlug,
       city_slug: citySlug,

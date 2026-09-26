@@ -497,6 +497,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── DEVIS ↔ ENTREPRISE : même identité canonique jusqu'au paiement ──
+    if (quoteRow) {
+      if (quoteRow.contractor_id && quoteRow.contractor_id !== contractor.id) {
+        return new Response(JSON.stringify({ error: "Ce plan appartient à une autre entreprise.", code: "quote_wrong_company" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!quoteRow.contractor_id || !quoteRow.user_id) {
+        const { error: linkErr } = await serviceClient
+          .from("contractor_pricing_quotes")
+          .update({ contractor_id: contractor.id, user_id: userId, updated_at: new Date().toISOString() })
+          .eq("id", quoteRow.id)
+          .or(`contractor_id.is.null,contractor_id.eq.${contractor.id}`);
+        if (linkErr) {
+          console.error("[create-checkout-session] quote link failed", linkErr.message);
+          return new Response(JSON.stringify({ error: "Impossible de rattacher ce plan à votre entreprise.", code: "quote_link_failed" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        quoteRow.contractor_id = contractor.id;
+        quoteRow.user_id = userId;
+      }
+    }
+
     // ── PROMO CODE VALIDATION ──
     let promoResult: any = null;
     let redemptionId: string | null = null;
