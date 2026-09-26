@@ -30,9 +30,12 @@ serve(async (req) => {
     // silencieux hors métier ou hors territoire.
     let query = sb
       .from("contractors")
-      .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable")
+      .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable, public_status")
       .eq("is_published", true)
-      .eq("is_discoverable", true);
+      .eq("is_discoverable", true)
+      // Profils publiés en attente de vérification RBQ/assurance : visibles
+      // publiquement, mais jamais recommandés officiellement par Clara.
+      .eq("public_status", "verified_active");
 
     if (city) query = query.ilike("city", `%${city}%`);
     if (recommended_trade) query = query.ilike("specialty", `%${recommended_trade}%`);
