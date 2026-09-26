@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       if (!fbContractor) {
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, business_name: quoteRow?.company_name || userEmail })
+          .insert({ user_id: userId, business_name: userEmail })
           .select("id")
           .single();
         if (createErr || !created) {
@@ -893,10 +893,11 @@ Deno.serve(async (req) => {
 
     if (isEmbedded) {
       checkoutConfig.ui_mode = "embedded";
-      checkoutConfig.return_url = returnUrl || `${req.headers.get("origin")}/pro/onboarding?plan=${resolvedPlanCode}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      const checkoutOrigin = req.headers.get("origin") ?? "https://unpro.ca";
+      checkoutConfig.return_url = returnUrl || `${checkoutOrigin}/pro/onboarding?plan=${resolvedPlanCode}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
     } else {
-      checkoutConfig.success_url = successUrl || `${req.headers.get("origin")}/pro/billing?success=true`;
-      checkoutConfig.cancel_url = cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`;
+      checkoutConfig.success_url = successUrl || `${checkoutOrigin}/pro/billing?success=true`;
+      checkoutConfig.cancel_url = cancelUrl || `${checkoutOrigin}/pro/billing?canceled=true`;
     }
 
     // Add Stripe coupon for promo (if partial discount, not zero-total)
