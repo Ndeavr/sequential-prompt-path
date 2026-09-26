@@ -16,8 +16,9 @@ interface ContractorCardProps {
     city: string | null;
     province: string | null;
     description: string | null;
-    verification_status: string | null;
+    verification_status?: string | null;
     admin_verified?: boolean;
+    public_status?: string | null;
     aipp_score: number | null;
     rating: number | null;
     review_count: number | null;
@@ -27,7 +28,7 @@ interface ContractorCardProps {
 }
 
 const ContractorCard = ({ contractor }: ContractorCardProps) => {
-  const isAdminVerified = contractor.admin_verified === true;
+  const isAdminVerified = contractor.admin_verified === true || contractor.public_status === "verified_active";
   const isVerified = isAdminVerified || contractor.verification_status === "verified";
   const hasScore = contractor.aipp_score != null && contractor.aipp_score > 0;
   const hasRating = contractor.rating != null && contractor.rating > 0;
@@ -123,7 +124,7 @@ const ContractorCard = ({ contractor }: ContractorCardProps) => {
             variant="inline"
             contractor={{
               admin_verified: isAdminVerified,
-              verification_status: contractor.verification_status,
+              verification_status: contractor.verification_status ?? null,
               rating: contractor.rating,
               review_count: contractor.review_count,
               years_experience: yearsExp,

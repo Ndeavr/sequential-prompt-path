@@ -76,7 +76,7 @@ export default function ContractorRecommendationPage() {
     legal_name: c.legal_name || c.business_name,
     logo: {
       url: c.logo_url ?? null,
-      verified: !!c.admin_verified,
+      verified: c.public_status === "verified_active" || !!c.admin_verified,
       monogram: { initials: (c.business_name || "?").slice(0, 2).toUpperCase(), bg: "#0F1A2E", fg: "#F5C542" },
     },
     hero: {
