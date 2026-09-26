@@ -258,6 +258,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const [transitionPause, setTransitionPause] = useState(false);
+  /** Clara écrit : l’écriture elle-même tient lieu d’indicateur. */
+  const [claraTyping, setClaraTyping] = useState(false);
   const [audience, setAudience] = useState<ClaraAudience>("homeowner");
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
@@ -690,9 +692,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "" }]);
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     // Affichage progressif seulement : le texte enregistré reste exact.
+    setClaraTyping(true);
     await playTyping(text, (value) => {
       setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value } : m)));
     }, { reducedMotion, isAlive: () => mountedRef.current });
+    setClaraTyping(false);
     if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
@@ -745,11 +749,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? transitionText : "" }]);
 
     if (!reduceMotion) {
+      setClaraTyping(true);
       await playTyping(transitionText, (value) => {
         setMessages((previous) => previous.map((message) =>
           message.id === assistantId ? { ...message, text: value } : message,
         ));
       }, { isAlive: () => mountedRef.current });
+      setClaraTyping(false);
       if (!mountedRef.current) return;
     }
 
@@ -1482,7 +1488,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               <div className="home-clara-transition-pause" data-pulses={TRANSITION_PULSES} role="status" aria-label="Clara prépare la prochaine étape">
                 <span>Clara</span><i /><i /><i />
               </div>
-            ) : busy ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
+            ) : busy && !claraTyping ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
             {error && <p role="alert" className="home-clara-error">{error}</p>}
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
             <div ref={bottomAnchorRef} className="home-clara-bottom-anchor" aria-hidden="true" />
