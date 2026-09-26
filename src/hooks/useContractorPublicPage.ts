@@ -35,12 +35,16 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
 
       if (rpcData && isPublicProfilePayload(rpcData)) return rpcData;
 
-      // Fallback: direct query by ID
+      // Fallback: direct query by ID — public-safe columns only (anonymous visitors
+      // have column-level grants limited to this allowlist).
       const { data: contractor, error } = await supabase
         .from("contractors")
-        .select("*")
+        .select(
+          "id, slug, business_name, legal_name, specialty, description, city, province, logo_url, portfolio_urls, rating, review_count, aipp_score, years_experience, website, phone, license_number, rbq_number, neq, service_areas, services_structured, mission, approach, values_text, public_status, is_published, is_accepting_appointments, booking_enabled, published_at, created_at",
+        )
         .eq("id", slugOrId)
         .maybeSingle();
+
       if (error || !contractor) return null;
 
       // Build enriched object manually
