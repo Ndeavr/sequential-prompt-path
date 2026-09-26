@@ -795,7 +795,6 @@ function AuditReport({
 
   const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
   const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
-  const state = qualitativeState(result.readiness_score, baseline.recommendable, missions);
   const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
   // Only the 1–3 highest-impact missing items, in priority order.
   const priorityMissing = missions
