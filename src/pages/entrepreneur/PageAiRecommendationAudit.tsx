@@ -708,11 +708,15 @@ function ScoreRing({ score, level, compact }: { score: number; level: string; co
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[34px] font-bold leading-none tabular-nums text-foreground">{score}</span>
-          <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
+          <span
+            className={`font-bold leading-none tabular-nums text-foreground ${compact ? "text-[26px]" : "text-[34px]"}`}
+          >
+            {score}
+          </span>
+          <span className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
         </div>
       </div>
-      <p className="mt-3 text-center text-[13px] font-semibold text-primary">{level}</p>
+      {!compact && <p className="mt-3 text-center text-[13px] font-semibold text-primary">{level}</p>}
     </div>
   );
 }
