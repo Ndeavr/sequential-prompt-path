@@ -296,3 +296,129 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// --- Création du dossier réel (propriété + projet + demande) ---------------
+// Aucune donnée inventée : seules les valeurs confirmées du graph sont
+// transmises, et le point d'entrée canonique `create-project-unified` reste
+// la seule voie de création. Échec fermé : aucun succès annoncé sans dossier.
+
+const PROPERTY_TYPE_MAP: Record<string, string> = {
+  house: "maison",
+  condo: "condo",
+  duplex: "plex",
+  multiplex: "plex",
+  cottage: "autre",
+};
+
+const URGENCY_MAP: Record<string, string> = {
+  urgent: "urgent",
+  "30d": "normal",
+  "3m": "normal",
+  year: "flexible",
+  planning: "flexible",
+};
+
+const BUDGET_MAP: Record<string, [number, number]> = {
+  "<5k": [0, 5000],
+  "5-15k": [5000, 15000],
+  "15-50k": [15000, 50000],
+  "50k+": [50000, 250000],
+};
+
+interface DossierResult {
+  project_id: string | null;
+  lead_id: string | null;
+  has_matches: boolean;
+  error: string | null;
+}
+
+async function createDossier(
+  graph: Graph,
+  // deno-lint-ignore no-explicit-any
+  session: any,
+  authHeader: string,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+): Promise<DossierResult> {
+  const existing = (graph.project_context as Record<string, unknown>)?.project_id;
+  if (typeof existing === "string" && existing) {
+    return {
+      project_id: existing,
+      lead_id: ((graph.project_context as Record<string, unknown>)?.lead_id as string) ?? null,
+      has_matches: !!(graph.project_context as Record<string, unknown>)?.has_matches,
+      error: null,
+    };
+  }
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return { project_id: null, lead_id: null, has_matches: false, error: "auth_required" };
+  }
+  if (!graph.property.address) {
+    return { project_id: null, lead_id: null, has_matches: false, error: "verified_address_required" };
+  }
+
+  const [budgetMin, budgetMax] = graph.budget && BUDGET_MAP[graph.budget]
+    ? BUDGET_MAP[graph.budget]
+    : [0, 0];
+
+  const body = {
+    source: "alex_chat",
+    idempotency_key: `alex-qualify-${session.id}`,
+    category: graph.problem.category,
+    category_label: graph.problem.sub_type ?? graph.problem.category ?? "Projet",
+    description: graph.problem.description ?? graph.problem.sub_type ?? null,
+    address: graph.property.address,
+    city: graph.property.city,
+    postal_code: graph.property.postal_code,
+    property_type: graph.property.type ? PROPERTY_TYPE_MAP[graph.property.type] ?? "autre" : null,
+    urgency: graph.urgency ? URGENCY_MAP[graph.urgency] ?? "normal" : "normal",
+    budget_min: budgetMin,
+    budget_max: budgetMax,
+    source_page: "clara_qualification",
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-project-unified`, {
+      method: "POST",
+      headers: { Authorization: authHeader, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const out = await res.json().catch(() => null) as
+      | { projectId?: string; leadId?: string; hasMatches?: boolean; error?: string }
+      | null;
+
+    if (!res.ok || !out?.projectId) {
+      console.error("[alex-qualify-turn] dossier failed", res.status, out?.error);
+      return {
+        project_id: null,
+        lead_id: null,
+        has_matches: false,
+        error: out?.error ?? `http_${res.status}`,
+      };
+    }
+
+    const nextGraph = {
+      ...graph,
+      project_context: {
+        ...(graph.project_context ?? {}),
+        project_id: out.projectId,
+        lead_id: out.leadId ?? null,
+        has_matches: out.hasMatches === true,
+      },
+    };
+    await supabase
+      .from("alex_qualification_sessions")
+      .update({ graph: nextGraph })
+      .eq("id", session.id);
+
+    return {
+      project_id: out.projectId,
+      lead_id: out.leadId ?? null,
+      has_matches: out.hasMatches === true,
+      error: null,
+    };
+  } catch (e) {
+    console.error("[alex-qualify-turn] dossier error", String(e));
+    return { project_id: null, lead_id: null, has_matches: false, error: "network_error" };
+  }
+}
