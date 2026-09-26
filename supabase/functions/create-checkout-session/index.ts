@@ -858,6 +858,7 @@ Deno.serve(async (req) => {
         ...(auditIdMeta && { audit_id: auditIdMeta }),
         ...(campaignMeta && { campaign: campaignMeta }),
         ...(sourceMeta && { source: sourceMeta }),
+        ...(useTestMode && { test_mode: "true" }),
       },
       subscription_data: {
         metadata: {
@@ -870,6 +871,7 @@ Deno.serve(async (req) => {
           ...(auditIdMeta && { audit_id: auditIdMeta }),
           ...(campaignMeta && { campaign: campaignMeta }),
           ...(sourceMeta && { source: sourceMeta }),
+          ...(useTestMode && { test_mode: "true" }),
         },
         ...(profileFeeCents > 0 && {
           add_invoice_items: [
