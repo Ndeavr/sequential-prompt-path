@@ -71,14 +71,16 @@ export function getContractorTrustLabel(contractor: {
  */
 export function computeTrustBoost(contractor: {
   admin_verified?: boolean;
+  public_status?: string | null;
   aipp_score?: number | null;
   rating?: number | null;
   review_count?: number | null;
 }): number {
   let boost = 0;
 
-  // Admin verified: strongest signal (+8)
-  if (contractor.admin_verified === true) boost += 8;
+  // Verified by UNPRO: strongest signal (+8)
+  if (contractor.admin_verified === true || contractor.public_status === "verified_active") boost += 8;
+
 
   // Strong AIPP score: moderate signal (+0 to +4)
   const aipp = contractor.aipp_score ?? 0;
