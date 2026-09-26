@@ -6,29 +6,11 @@ import { useContractorAppointments } from "@/hooks/useAppointments";
 import AppointmentActions from "@/components/appointments/AppointmentActions";
 import OnTheWayButton from "@/components/contractor/OnTheWayButton";
 
-const statusLabels: Record<string, string> = {
-  requested: "Demandé",
-  under_review: "En révision",
-  accepted: "Accepté",
-  declined: "Refusé",
-  scheduled: "Planifié",
-  confirmed: "Confirmé",
-  reschedule_requested: "Replanification demandée",
-  completed: "Terminé",
-  cancelled: "Annulé",
-};
+import {
+  APPOINTMENT_STATUS_LABELS as statusLabels,
+  APPOINTMENT_STATUS_VARIANTS as statusVariants,
+} from "@/types/appointment";
 
-const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  requested: "secondary",
-  under_review: "outline",
-  accepted: "default",
-  declined: "destructive",
-  scheduled: "default",
-  confirmed: "default",
-  reschedule_requested: "outline",
-  completed: "default",
-  cancelled: "destructive",
-};
 
 const ProAppointments = () => {
   const { data: appointments, isLoading, refetch } = useContractorAppointments();

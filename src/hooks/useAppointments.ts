@@ -178,6 +178,7 @@ export const useContractorAppointments = () => {
         .from("appointments")
         .select("*, properties(address, city)")
         .eq("contractor_id", contractor.id)
+        .neq("status", "archived_test" as any)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -205,17 +206,22 @@ export const useUpdateAppointmentStatus = () => {
   });
 };
 
-/* ── Admin: list all appointments ── */
-export const useAdminAppointments = () =>
+/* ── Admin: list all appointments (archives de test exclues par défaut) ── */
+export const useAdminAppointments = (includeArchivedTest = false) =>
   useQuery({
-    queryKey: ["admin-appointments"],
+    queryKey: ["admin-appointments", includeArchivedTest],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("appointments")
         .select("*, contractors(business_name), properties(address, city)")
         .order("created_at", { ascending: false })
         .limit(200);
+      if (!includeArchivedTest) {
+        query = query.neq("status", "archived_test" as any);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
+

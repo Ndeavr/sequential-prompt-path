@@ -101127,6 +101127,11 @@ export type Database = {
         | "confirmed"
         | "reschedule_requested"
         | "archived_test"
+        | "paid"
+        | "activated"
+        | "out_of_area"
+        | "bad_match"
+        | "callback_needed"
       compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
       contractor_rbq_status:
         | "verified"
@@ -101449,6 +101454,11 @@ export const Constants = {
         "confirmed",
         "reschedule_requested",
         "archived_test",
+        "paid",
+        "activated",
+        "out_of_area",
+        "bad_match",
+        "callback_needed",
       ],
       compatibility_result: ["compatible", "partial", "verify", "incompatible"],
       contractor_rbq_status: [

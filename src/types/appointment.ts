@@ -11,7 +11,74 @@ export type AppointmentStatus =
   | "confirmed"
   | "reschedule_requested"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "paid"
+  | "activated"
+  | "out_of_area"
+  | "bad_match"
+  | "callback_needed"
+  | "archived_test";
+
+/** Libellés francophones canoniques des statuts de rendez-vous. */
+export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
+  requested: "Demandé",
+  under_review: "En révision",
+  accepted: "Accepté",
+  declined: "Refusé",
+  scheduled: "Planifié",
+  confirmed: "Confirmé",
+  reschedule_requested: "Report demandé",
+  completed: "Terminé",
+  cancelled: "Annulé",
+  paid: "Payé",
+  activated: "Activé",
+  out_of_area: "Hors secteur",
+  bad_match: "Mauvais match",
+  callback_needed: "À rappeler",
+  archived_test: "Archive de test",
+};
+
+export const APPOINTMENT_STATUS_VARIANTS: Record<
+  AppointmentStatus,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  requested: "secondary",
+  under_review: "outline",
+  accepted: "default",
+  declined: "destructive",
+  scheduled: "default",
+  confirmed: "default",
+  reschedule_requested: "outline",
+  completed: "default",
+  cancelled: "destructive",
+  paid: "default",
+  activated: "default",
+  out_of_area: "outline",
+  bad_match: "outline",
+  callback_needed: "secondary",
+  archived_test: "outline",
+};
+
+/** Statuts que l'admin peut appliquer manuellement depuis le tableau des rendez-vous. */
+export const ADMIN_ASSIGNABLE_STATUSES: AppointmentStatus[] = [
+  "requested",
+  "under_review",
+  "accepted",
+  "declined",
+  "scheduled",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "paid",
+  "activated",
+  "out_of_area",
+  "bad_match",
+  "callback_needed",
+];
+
+/** Statuts exclus des tableaux opérationnels et des statistiques. */
+export const NON_OPERATIONAL_STATUSES: AppointmentStatus[] = ["archived_test"];
+
 
 export interface Appointment {
   id: string;
