@@ -40566,6 +40566,54 @@ export type Database = {
           },
         ]
       }
+      contractor_publication_audit: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          db_role: string | null
+          id: string
+          jwt_role: string | null
+          jwt_sub: string | null
+          new_account_status: string | null
+          new_discoverable: boolean | null
+          new_published: boolean | null
+          old_account_status: string | null
+          old_discoverable: boolean | null
+          old_published: boolean | null
+          query_excerpt: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          db_role?: string | null
+          id?: string
+          jwt_role?: string | null
+          jwt_sub?: string | null
+          new_account_status?: string | null
+          new_discoverable?: boolean | null
+          new_published?: boolean | null
+          old_account_status?: string | null
+          old_discoverable?: boolean | null
+          old_published?: boolean | null
+          query_excerpt?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          db_role?: string | null
+          id?: string
+          jwt_role?: string | null
+          jwt_sub?: string | null
+          new_account_status?: string | null
+          new_discoverable?: boolean | null
+          new_published?: boolean | null
+          old_account_status?: string | null
+          old_discoverable?: boolean | null
+          old_published?: boolean | null
+          query_excerpt?: string | null
+        }
+        Relationships: []
+      }
       contractor_recommendation_gaps: {
         Row: {
           ai_confidence_impact: number | null
