@@ -88,12 +88,15 @@ Deno.serve(async (req) => {
         .gte("created_at", startOf14d.toISOString()),
       sb.from("appointments")
         .select("id", { count: "exact", head: true })
+        .neq("status", "archived_test")
         .gte("created_at", startOfDay.toISOString()),
       sb.from("appointments")
         .select("id, created_at, status")
+        .neq("status", "archived_test")
         .gte("created_at", startOf7d.toISOString()),
       sb.from("appointments")
-        .select("id", { count: "exact", head: true }),
+        .select("id", { count: "exact", head: true })
+        .neq("status", "archived_test"),
       sb.from("automation_blockers")
         .select("id", { count: "exact", head: true })
         .eq("status", "open")

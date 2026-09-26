@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
       .from("appointments")
       .select("*, leads(owner_profile_id)")
       .eq("id", appointmentId)
+      .neq("status", "archived_test")
       .single();
 
     if (!appointment) {

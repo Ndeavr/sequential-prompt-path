@@ -69,8 +69,8 @@ export const fetchGrowthMetrics = async () => {
     supabase.from("contractors").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
     supabase.from("quotes").select("id", { count: "exact", head: true }),
     supabase.from("quotes").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
-    supabase.from("appointments").select("id", { count: "exact", head: true }),
-    supabase.from("appointments").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+    supabase.from("appointments").select("id", { count: "exact", head: true }).neq("status", "archived_test" as any),
+    supabase.from("appointments").select("id", { count: "exact", head: true }).neq("status", "archived_test" as any).gte("created_at", thirtyDaysAgo),
     supabase.from("contractor_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
     supabase.from("lead_qualifications").select("id", { count: "exact", head: true }),
   ]);

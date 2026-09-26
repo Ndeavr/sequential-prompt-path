@@ -73,6 +73,7 @@ export const useWeeklyAppointmentStats = () => {
         .from("appointments")
         .select("id, status, created_at, completed_at")
         .eq("contractor_id", profile!.id)
+        .neq("status", "archived_test" as any)
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
