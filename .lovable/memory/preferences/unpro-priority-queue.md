@@ -20,3 +20,5 @@ Toute demande est classée automatiquement selon son impact sur le revenu, l'act
 10. **Cosmétique** — logo, couleurs, confettis, animations, icônes, micro-ajustements. Toujours au bas de la liste, sauf si le défaut rend une page de paiement non crédible.
 
 Règle de garde: avant tout travail de niveau 9 ou 10, vérifier qu'aucun item de 1 à 5 n'est bloqué ou non testé.
+
+Règle de sélection: ne jamais demander de choisir entre deux niveaux. Toujours exécuter le plus haut niveau non terminé; ne passer au suivant que lorsqu'il est vérifié ou bloqué par un blocage externe clair.
