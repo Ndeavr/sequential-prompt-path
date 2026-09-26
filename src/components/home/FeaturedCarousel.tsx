@@ -185,7 +185,7 @@ const FeaturedCarousel = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-display text-section font-bold text-foreground truncate">{c.business_name}</h3>
-                        {c.verification_status === "verified" && (
+                        {c.public_status === "verified_active" && (
                           <ShieldCheck className="h-4 w-4 text-success shrink-0" />
                         )}
                       </div>

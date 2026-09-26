@@ -28,7 +28,8 @@ export function useContractorRecommendation(slug: string | undefined) {
     queryKey: ["contractor-recommendation", slug],
     enabled: !!slug,
     queryFn: async (): Promise<ContractorRecommendationData | null> => {
-      let c: Tables<"contractors"> | null = null;
+      // Public-safe subset of the contractors row (anon has column-level grants only).
+      let c: Partial<Tables<"contractors">> | null = null;
 
       const { data: direct } = await supabase
         .from("contractors")
@@ -49,7 +50,7 @@ export function useContractorRecommendation(slug: string | undefined) {
         const payload = rpcData ? asRecord(rpcData) : null;
         const candidate = payload?.contractor;
         if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
-          c = candidate as Tables<"contractors">;
+          c = candidate as Partial<Tables<"contractors">>;
         }
       }
 
