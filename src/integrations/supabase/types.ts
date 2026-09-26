@@ -100270,6 +100270,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      ensure_contractor_public_slug: {
+        Args: { _contractor_id: string }
+        Returns: string
+      }
       evaluate_outreach_gate: { Args: never; Returns: undefined }
       evaluate_profession_compliance: {
         Args: {
