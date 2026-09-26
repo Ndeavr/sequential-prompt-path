@@ -680,13 +680,13 @@ export default function PageAiRecommendationAudit() {
 }
 
 /* ------------------------------------------------------------------ Ring */
-function ScoreRing({ score, level }: { score: number; level: string }) {
+function ScoreRing({ score, level, compact }: { score: number; level: string; compact?: boolean }) {
   const r = 52;
   const c = 2 * Math.PI * r;
   const dash = (Math.max(0, Math.min(100, score)) / 100) * c;
   return (
-    <div>
-      <div className="relative mx-auto h-[132px] w-[132px]">
+    <div className={compact ? "shrink-0" : undefined}>
+      <div className={`relative ${compact ? "h-[92px] w-[92px]" : "mx-auto h-[132px] w-[132px]"}`}>
         <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
           <circle cx="66" cy="66" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="10" />
           <circle
