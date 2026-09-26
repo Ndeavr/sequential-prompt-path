@@ -1195,6 +1195,12 @@ Deno.serve(async (req) => {
               plan_id: planId,
               billing_interval: billingInterval,
               status: subscription.status,
+              // Vérité de paiement issue de Stripe uniquement.
+              payment_status:
+                session.payment_status === "paid" ? "paid" : session.payment_status || "unpaid",
+              amount_paid_cents: session.amount_total ?? 0,
+              currency: (session.currency || "cad").toUpperCase(),
+              ...(session.metadata?.quote_id ? { quote_id: session.metadata.quote_id } : {}),
               current_period_start: period.start,
               current_period_end: period.end,
               cancel_at_period_end: subscription.cancel_at_period_end,
