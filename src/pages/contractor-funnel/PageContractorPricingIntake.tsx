@@ -23,6 +23,7 @@ import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import TradePickerSheet from "@/components/contractor/TradePickerSheet";
 import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 import { setActiveActivationToken } from "@/lib/checkoutUrl";
+import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 
 type Step = {
   key: string;
