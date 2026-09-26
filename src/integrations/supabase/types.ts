@@ -99926,6 +99926,10 @@ export type Database = {
         Args: { p_affiliate_id: string }
         Returns: Json
       }
+      admin_get_contractor_account_origin: {
+        Args: { _contractor_id: string }
+        Returns: Json
+      }
       admin_reassign_affiliate_parent: {
         Args: {
           p_affiliate_id: string
