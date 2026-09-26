@@ -1011,7 +1011,7 @@ function AuditReport({
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
             ) : (
               <>
-                <span className="truncate">Compléter mon profil</span>
+                <span className="truncate">Améliorer ma présence IA</span>
                 <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
               </>
             )}
