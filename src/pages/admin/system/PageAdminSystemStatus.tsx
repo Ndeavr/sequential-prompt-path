@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import CommunicationsLogPanel from "@/components/admin/system/CommunicationsLogPanel";
+
 
 type Row = {
   check_key: string; label: string; status: "ok" | "problem" | "untested"; evidence: Record<string, unknown>;
@@ -64,6 +66,8 @@ export default function PageAdminSystemStatus() {
             </section>
           ))}
         </div>
+        <CommunicationsLogPanel />
+
       </div>
     </main>
   );
