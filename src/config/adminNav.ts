@@ -88,6 +88,7 @@ export const adminSections: AdminSection[] = [
       { to: "/admin/users", label: "Prospects", icon: Users },
       { to: "/admin/verification", label: "Qualification", icon: SearchCheck },
       { to: "/admin/acquisition-pipeline", label: "Santé acquisition", icon: Activity },
+      { to: "/admin/system-status", label: "System Status", icon: Activity },
       { to: "/admin/import-contractors", label: "Import", icon: Upload },
       { to: "/admin/recruitment", label: "Recrutement", icon: UserPlus },
       { to: "/admin/outbound", label: "Campagnes", icon: Send },

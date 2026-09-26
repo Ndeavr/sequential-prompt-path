@@ -91587,6 +91587,48 @@ export type Database = {
         }
         Relationships: []
       }
+      system_status_checks: {
+        Row: {
+          check_key: string
+          checked_at: string
+          component: string | null
+          evidence: Json
+          fix_applied: string | null
+          label: string
+          next_blocker: string | null
+          probable_cause: string | null
+          sort_order: number
+          status: string
+          test_performed: string | null
+        }
+        Insert: {
+          check_key: string
+          checked_at?: string
+          component?: string | null
+          evidence?: Json
+          fix_applied?: string | null
+          label: string
+          next_blocker?: string | null
+          probable_cause?: string | null
+          sort_order?: number
+          status?: string
+          test_performed?: string | null
+        }
+        Update: {
+          check_key?: string
+          checked_at?: string
+          component?: string | null
+          evidence?: Json
+          fix_applied?: string | null
+          label?: string
+          next_blocker?: string | null
+          probable_cause?: string | null
+          sort_order?: number
+          status?: string
+          test_performed?: string | null
+        }
+        Relationships: []
+      }
       tax_rules: {
         Row: {
           country_code: string
