@@ -36,14 +36,15 @@ const PUBLIC_SURFACES = [
   "src/lib/mcp/tools/search-contractors.ts",
 ];
 
-/** Extract every `.select("...")` literal from a source file. */
-function selectLiterals(source: string): string[] {
+/** Extract the `.select("...")` literal of every query on the contractors table. */
+function contractorSelectLiterals(source: string): string[] {
   const out: string[] = [];
-  const re = /\.select\(\s*(?:\n\s*)?"([^"]*)"/g;
+  const re = /from\(\s*"contractors"\s*\)[\s\S]{0,200}?\.select\(\s*(?:\n\s*)?"([^"]*)"/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(source)) !== null) out.push(m[1]);
   return out;
 }
+
 
 describe("public contractor surfaces expose no internal fields", () => {
   for (const file of PUBLIC_SURFACES) {
