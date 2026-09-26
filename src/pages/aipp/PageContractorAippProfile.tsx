@@ -15,7 +15,15 @@ export default function PageContractorAippProfile() {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      const { data: c } = await supabase.from("contractors").select("*").eq("slug", slug).single();
+      // Public-safe columns only — anonymous visitors cannot read internal fields.
+      const { data: c } = await supabase
+        .from("contractors")
+        .select(
+          "id, slug, business_name, legal_name, specialty, description, city, province, logo_url, rating, review_count, aipp_score, years_experience, website, phone, rbq_number, neq, public_status",
+        )
+        .eq("slug", slug)
+        .maybeSingle();
+
       if (!c) { setLoading(false); return; }
       setContractor(c);
       const [{ data: s }, { data: a }, { data: r }, { data: gp }] = await Promise.all([
