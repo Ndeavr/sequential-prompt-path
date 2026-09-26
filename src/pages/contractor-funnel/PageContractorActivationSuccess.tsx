@@ -23,6 +23,7 @@ import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
 import { supabase } from "@/integrations/supabase/client";
+import ActivationConfetti from "@/components/unpro/ActivationConfetti";
 
 type ActivationState = {
   loading: boolean;
