@@ -143,6 +143,9 @@ const AdminContractorDetail = () => {
           </Button>
         </div>
 
+        {/* Origine du compte */}
+        <ContractorAccountOriginCard contractorId={contractor.id} />
+
         {/* Profile info */}
         <Card>
           <CardHeader><CardTitle className="text-base">Profil de l'entreprise</CardTitle></CardHeader>
