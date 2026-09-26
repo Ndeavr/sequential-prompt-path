@@ -696,10 +696,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     await playTyping(text, (value) => {
       setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value } : m)));
     }, { reducedMotion, isAlive: () => mountedRef.current });
-    setClaraTyping(false);
     if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
+    // L’enregistrement se fait en arrière-plan : aucun « Analyse en cours… » après une question.
     await appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
+    setClaraTyping(false);
   }, []);
 
   /**
