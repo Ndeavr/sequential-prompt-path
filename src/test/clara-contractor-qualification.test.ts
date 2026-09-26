@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 
 vi.mock("@/services/clara/claraSession", () => ({
   rememberClaraReferences: vi.fn(),
+  saveClaraContext: vi.fn(() => Promise.resolve()),
 }));
 
 import {
