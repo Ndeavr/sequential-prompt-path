@@ -200,8 +200,6 @@ const CONTRACTOR_SUGGESTIONS: { label: string; choice: ContractorChoice }[] = [
   { label: "Obtenir plus de contrats", choice: "contracts" },
   { label: "Compléter mon profil", choice: "profile" },
 ];
-const CLARA_CONTRACTOR_WELCOME =
-  "Parfait. Je vais regarder ce qu’UNPRO comprend déjà de votre entreprise et voir comment les IA pourraient mieux vous recommander.";
 const CLARA_CONTRACTOR_SCORE_TEXT =
   "Je regarde votre présence en ligne, ce que les IA comprennent de votre entreprise et ce qui pourrait vous empêcher d’être recommandé.";
 /** Lecture après la fin complète du texte, puis exactement 3 pulsations. */

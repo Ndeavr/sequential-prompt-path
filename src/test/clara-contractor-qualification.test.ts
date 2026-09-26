@@ -32,9 +32,11 @@ describe("Clara — qualification entrepreneur", () => {
 
   it("ne repose jamais une question déjà répondue", () => {
     saveClaraQualification({ primary_trade: "Isolation" });
-    expect(nextQualificationStep()?.field).toBe("business_city");
-    saveClaraQualification({ business_city: "Terrebonne" });
     expect(nextQualificationStep()?.field).toBe("service_areas");
+    saveClaraQualification({ service_areas: ["Laval"] });
+    expect(nextQualificationStep()?.field).toBe("goals");
+    saveClaraQualification({ goals: ["Plus de contrats"] });
+    expect(nextQualificationStep()?.field).toBe("business_name");
   });
 
   it("garde la ville de l'entreprise séparée des territoires desservis", () => {
@@ -65,6 +67,7 @@ describe("Clara — qualification entrepreneur", () => {
       business_city: "Terrebonne",
       service_areas: ["Laval"],
       goals: ["Plus de contrats"],
+      business_name: "Toitures Test",
     });
     expect(isQualificationComplete()).toBe(true);
   });

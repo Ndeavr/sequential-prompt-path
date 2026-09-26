@@ -148,7 +148,8 @@ function ProvenanceTag({ provenance, source }: { provenance: Provenance; source?
 export default function PageAiRecommendationAudit() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
-  const [query, setQuery] = useState(sp.get("q") ?? "");
+  // Entreprise déjà donnée à Clara : préremplie, jamais redemandée.
+  const [query, setQuery] = useState(() => sp.get("q") ?? getClaraQualification().business_name ?? "");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searching, setSearching] = useState(false);
   const [auditing, setAuditing] = useState(false);
@@ -204,6 +205,7 @@ export default function PageAiRecommendationAudit() {
   const [claraKnown] = useState<[string, string][]>(() => {
     const q = getClaraQualification();
     return ([
+      ["Entreprise", q.business_name],
       ["Métier", q.primary_trade],
       ["Ville de l’entreprise", q.business_city],
       ["Villes desservies", q.service_areas?.join(", ")],
