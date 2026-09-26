@@ -44,10 +44,13 @@ export default function ContractorRecommendationPage() {
   const { contractor: c, projects, aiReference } = data;
   const cityName = city || c.city || c.service_areas?.[0] || "Québec";
 
-  const title = `${c.business_name}${c.specialty ? ` — ${c.specialty}` : ""} à ${cityName} | Recommandation UNPRO`;
+  const verified = (c as { public_status?: string }).public_status === "verified_active";
+  const title = `${c.business_name}${c.specialty ? ` — ${c.specialty}` : ""} à ${cityName} | ${verified ? "Recommandation UNPRO" : "Profil UNPRO"}`;
   const description = (
     c.description ||
-    `Pourquoi Clara recommande ${c.business_name} à ${cityName}. Vérifications UNPRO, zone desservie, compatibilité, disponibilité.`
+    (verified
+      ? `Pourquoi Clara recommande ${c.business_name} à ${cityName}. Vérifications UNPRO, zone desservie, compatibilité, disponibilité.`
+      : `Profil de ${c.business_name} à ${cityName} sur UNPRO. Vérification RBQ et assurance en cours.`)
   ).slice(0, 155);
 
   const breadcrumbs = [

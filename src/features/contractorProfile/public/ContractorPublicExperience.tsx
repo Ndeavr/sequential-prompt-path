@@ -31,6 +31,7 @@ type ContractorRecord = {
   specialty?: string | null;
   city?: string | null;
   admin_verified?: boolean | null;
+  public_status?: string | null;
   logo_url?: string | null;
   portfolio_urls?: string[] | null;
   profession_code?: string | null;
@@ -140,7 +141,11 @@ export default function ContractorPublicExperience({ profileData, compact = fals
                 {contractor.specialty && <p className="mt-1 text-sm text-text-secondary">{contractor.specialty}</p>}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-text-muted-2">
                   {contractor.city && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{contractor.city}</span>}
-                  {contractor.admin_verified && <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" />Entreprise vérifiée</span>}
+                  {contractor.public_status === "verified_active" ? (
+                    <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" />Vérifié par UNPRO</span>
+                  ) : contractor.public_status === "published_pending_verification" ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-text-secondary">Profil publié — vérification en cours</span>
+                  ) : null}
                 </div>
               </div>
             </div>
