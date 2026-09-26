@@ -396,6 +396,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (!isNearBottom()) return;
     scrollToLatest("auto");
   }, [bringComposerIntoView, isNearBottom, scrollToLatest]);
+  // Ouverture/fermeture du clavier : la fenêtre change de hauteur, on replace
+  // la zone de saisie au-dessus du clavier sans toucher au reste de la page.
+  useEffect(() => {
+    if (!composerFocused) return;
+    const onResize = () => bringComposerIntoView();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [bringComposerIntoView, composerFocused]);
+
   const isConversationActive = messages.length > 0 || mode !== "IDLE";
 
   useEffect(() => {
