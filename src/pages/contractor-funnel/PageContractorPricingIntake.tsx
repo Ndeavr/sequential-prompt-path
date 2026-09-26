@@ -23,6 +23,7 @@ import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import TradePickerSheet from "@/components/contractor/TradePickerSheet";
 import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 import { setActiveActivationToken } from "@/lib/checkoutUrl";
+import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 
 type Step = {
   key: string;
@@ -311,7 +312,7 @@ export default function PageContractorPricingIntake() {
           source="unpro"
 
           label="Nom de l'entreprise"
-          placeholder="Tapez le nom de votre entreprise"
+          placeholder="Ex. Isolation Solution Royal"
           value={d.company_name ?? ""}
           minChars={2}
           debounceMs={300}
@@ -382,6 +383,7 @@ export default function PageContractorPricingIntake() {
             <TextInput
               label={`Ville desservie${detected.city ? " · Détecté — à confirmer" : ""}`}
               value={d.city ?? ""}
+              placeholder="Ex. Laval, Montréal, Terrebonne"
               onChange={(v) => { confirm("city"); set({ city: v }); }}
             />
           </>
@@ -413,6 +415,7 @@ export default function PageContractorPricingIntake() {
         <TextInput
           label="Ville principale desservie"
           value={d.city ?? ""}
+          placeholder="Ex. Laval, Montréal, Terrebonne"
           onChange={(v) => { confirm("city"); set({ city: v }); }}
         />
         <NumberInput
