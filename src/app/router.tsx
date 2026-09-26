@@ -69,6 +69,7 @@ const PageAdminCoverageCityDomain = lazyWithRetry(() => import("@/pages/admin/Pa
 // QA Simulation
 const PageAdminQASimulation = lazyWithRetry(() => import("@/pages/admin/PageAdminQASimulation"));
 const PageSystemModeControlCenter = lazyWithRetry(() => import("@/pages/admin/system/PageSystemModeControlCenter"));
+const PageAdminSystemStatus = lazyWithRetry(() => import("@/pages/admin/system/PageAdminSystemStatus"));
 const PageAdminQASimulationRun = lazyWithRetry(() => import("@/pages/admin/PageAdminQASimulationRun"));
 const PageAdminQASimulationTemplates = lazyWithRetry(() => import("@/pages/admin/PageAdminQASimulationTemplates"));
 
@@ -1586,6 +1587,7 @@ export const AppRouter = () => (
         <Route path="/admin/pricing-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/unpro-stripe-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminUnproStripeHealth /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/system-mode" element={<AdminProtectedRoute><PageSystemModeControlCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/system-status" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSystemStatus /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/verification" element={<AdminProtectedRoute><AdminVerificationRuns /></AdminProtectedRoute>} />
         <Route path="/admin/verification/:id" element={<AdminProtectedRoute><AdminVerificationRunDetail /></AdminProtectedRoute>} />
         <Route path="/admin/alerts" element={<AdminProtectedRoute><AdminAlerts /></AdminProtectedRoute>} />
