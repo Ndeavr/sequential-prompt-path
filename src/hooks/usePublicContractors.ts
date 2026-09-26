@@ -121,7 +121,8 @@ export const usePublicFilterOptions = () => {
       const { data, error } = await supabase
         .from("contractors")
         .select("city, specialty")
-        .eq("verification_status", "verified");
+        .in("public_status", PUBLIC_STATUSES as unknown as string[]);
+
       if (error) throw error;
 
       const cities = [...new Set((data ?? []).map((c) => c.city).filter(Boolean))] as string[];
