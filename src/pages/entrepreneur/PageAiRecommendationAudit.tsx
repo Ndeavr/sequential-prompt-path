@@ -394,7 +394,11 @@ export default function PageAiRecommendationAudit() {
           },
         });
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Le résultat doit être immédiatement visible : on cadre la carte d'audit, pas le haut de page.
+      requestAnimationFrame(() => {
+        if (auditCardRef.current) auditCardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     } catch {
       setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
     } finally {
