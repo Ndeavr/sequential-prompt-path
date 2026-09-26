@@ -88,21 +88,36 @@ export default function PageContractorFAQBuilder() {
               FAQ intelligente
             </h1>
             <p className="text-sm text-muted-foreground">
-              Questions générées par IA — éditez et publiez
+              Questions générées selon votre domaine — modifiez et publiez
             </p>
+            {domainLabel && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <Sparkles className="h-3 w-3" />
+                Domaine : {domainLabel}
+              </p>
+            )}
           </motion.div>
 
           {/* Generate button */}
           <motion.div initial="hidden" animate="visible" variants={fadeUp} className="mb-6">
             <Button
               variant="outline"
-              className="w-full h-12 rounded-xl border-dashed border-primary/30 text-primary hover:bg-primary/5"
+              className="w-full h-12 rounded-xl border-dashed border-primary/30 text-primary hover:bg-primary/5 whitespace-normal leading-tight px-3"
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || exhausted || !trade}
             >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {isGenerating ? "Génération en cours..." : "Générer plus de FAQ avec l'IA"}
+              <Sparkles className="mr-2 h-4 w-4 shrink-0" />
+              {isGenerating
+                ? "Génération en cours..."
+                : exhausted
+                  ? "Toutes les questions de votre domaine sont ajoutées"
+                  : "Générer plus de FAQ reliées à mon domaine"}
             </Button>
+            {!trade && (
+              <p className="mt-2 text-xs text-muted-foreground text-center">
+                Indiquez votre métier principal pour générer des questions reliées à votre domaine.
+              </p>
+            )}
           </motion.div>
 
           {/* FAQ List */}
