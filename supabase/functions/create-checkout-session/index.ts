@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       if (!fbContractor) {
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, business_name: userEmail })
+          .insert({ user_id: userId, business_name: quoteRow?.company_name || userEmail })
           .select("id")
           .single();
         if (createErr || !created) {
@@ -351,7 +351,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, user_id, contractor_id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
+        .select("id, user_id, contractor_id, company_name, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
