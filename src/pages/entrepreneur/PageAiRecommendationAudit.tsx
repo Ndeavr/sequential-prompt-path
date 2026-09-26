@@ -833,50 +833,67 @@ function AuditReport({
         ← Analyser une autre entreprise
       </button>
 
-      {/* Étape 2 — résultat */}
-      <section className="rounded-[24px] border border-border bg-card p-5 shadow-sm sm:p-7">
-        <div className="flex items-start gap-3">
-          <span className="gold-btn mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold tabular-nums">
-            2
-          </span>
+      {/* Résultat — carte compacte, lisible en 3 secondes */}
+      <section className="rounded-[24px] border border-border bg-card p-4 shadow-sm sm:p-6">
+        <h1
+          className="break-words text-[22px] font-bold leading-tight text-foreground sm:text-[26px]"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          {result.business_name ?? "Votre entreprise"}
+        </h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
+          {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+        </p>
+
+        <p className="mt-3 text-[15px] font-semibold leading-snug text-foreground">
+          Votre entreprise est déjà trouvée par UNPRO
+        </p>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">
+          mais votre profil n'est pas encore assez complet pour être pleinement recommandable.
+        </p>
+
+        <div className="mt-4 flex items-center gap-4 border-t border-border pt-4">
+          <ScoreRing score={result.readiness_score} level={level} compact />
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Votre résultat d'audit</p>
-            <h1
-              className="mt-1 break-words text-[24px] font-bold leading-tight text-foreground sm:text-[28px]"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              {result.business_name ?? "Votre entreprise"}
-            </h1>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+              Préparation IA UNPRO
             </p>
-            <p className="mt-1 text-[11.5px] text-muted-foreground">
-              Généré le {generatedAt.toLocaleString("fr-CA")}
+            <p className="mt-1 text-[15px] font-semibold text-foreground">
+              {baseline.recommendable ? "Recommandable" : "Partiellement recommandable"}
             </p>
-            <span
-              className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${state.cls}`}
-            >
-              {state.label}
-            </span>
+            <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+              {remaining === 0
+                ? "Toutes les informations clés sont confirmées."
+                : `${remaining} étape${remaining > 1 ? "s" : ""} pour améliorer votre présence.`}
+            </p>
           </div>
         </div>
 
-        <div className="mt-5 border-t border-border pt-5">
-          <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-            Préparation du profil IA UNPRO
-          </p>
-          <ScoreRing score={result.readiness_score} level={level} />
-          <p className="mt-4 text-center text-[13.5px] leading-relaxed text-muted-foreground">
-            {remaining === 0
-              ? "Toutes les informations clés sont confirmées."
-              : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
-          </p>
-          <p className="mt-1 text-center text-[11px] text-muted-foreground">
-            Résultat basé sur les informations réellement disponibles sur votre entreprise. Indicateur
-            UNPRO de préparation du profil — ce n'est pas un score officiel de ChatGPT ou d'OpenAI.
-          </p>
+        {detectedFacts.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Déjà détecté
+            </p>
+            <ul className="mt-2 space-y-1">
+              {detectedFacts.slice(0, 3).map((f) => (
+                <li key={f.key} className="flex items-start gap-2 text-[13px] text-foreground/90">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
+                  <span className="truncate" title={f.value}>
+                    {f.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+          Indicateur UNPRO de préparation du profil, basé sur les informations réellement disponibles
+          sur votre entreprise. Ce n'est pas un score officiel de ChatGPT ou d'OpenAI.
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Généré le {generatedAt.toLocaleString("fr-CA")}
+        </p>
       </section>
 
       {/* Ce que l'IA peut déjà dire de vous */}
