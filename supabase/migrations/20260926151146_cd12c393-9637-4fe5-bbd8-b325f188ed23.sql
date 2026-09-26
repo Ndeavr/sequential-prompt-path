@@ -1,0 +1,1 @@
+CREATE POLICY "No client access to action tokens" ON public.appointment_action_tokens FOR SELECT TO authenticated USING (false);
