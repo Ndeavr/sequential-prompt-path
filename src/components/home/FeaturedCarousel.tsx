@@ -25,11 +25,11 @@ const FALLBACK_IMAGES: Record<string, string> = {
 
 /* Fallback data when no contractors in DB yet */
 const fallbackContractors = [
-  { id: "1", business_name: "TOITURE EXPERT", specialty: "Toiture & Couverture", city: "Montréal", province: "QC", aipp_score: 92, rating: 4.9, review_count: 47, years_experience: 18, verification_status: "verified", description: null, logo_url: null },
-  { id: "2", business_name: "PLOMBERIE PRO", specialty: "Plomberie", city: "Laval", province: "QC", aipp_score: 88, rating: 4.8, review_count: 34, years_experience: 12, verification_status: "verified", description: null, logo_url: null },
-  { id: "3", business_name: "RÉNO MAÎTRE", specialty: "Rénovation générale", city: "Québec", province: "QC", aipp_score: 85, rating: 4.7, review_count: 29, years_experience: 15, verification_status: "verified", description: null, logo_url: null },
-  { id: "4", business_name: "ÉLECTRO PLUS", specialty: "Électricité", city: "Gatineau", province: "QC", aipp_score: 90, rating: 4.9, review_count: 52, years_experience: 20, verification_status: "verified", description: null, logo_url: null },
-  { id: "5", business_name: "CUISINE DESIGN", specialty: "Ébénisterie", city: "Sherbrooke", province: "QC", aipp_score: 87, rating: 4.6, review_count: 23, years_experience: 10, verification_status: "verified", description: null, logo_url: null },
+  { id: "1", business_name: "TOITURE EXPERT", specialty: "Toiture & Couverture", city: "Montréal", province: "QC", aipp_score: 92, rating: 4.9, review_count: 47, years_experience: 18, public_status: "verified_active", description: null, logo_url: null },
+  { id: "2", business_name: "PLOMBERIE PRO", specialty: "Plomberie", city: "Laval", province: "QC", aipp_score: 88, rating: 4.8, review_count: 34, years_experience: 12, public_status: "verified_active", description: null, logo_url: null },
+  { id: "3", business_name: "RÉNO MAÎTRE", specialty: "Rénovation générale", city: "Québec", province: "QC", aipp_score: 85, rating: 4.7, review_count: 29, years_experience: 15, public_status: "verified_active", description: null, logo_url: null },
+  { id: "4", business_name: "ÉLECTRO PLUS", specialty: "Électricité", city: "Gatineau", province: "QC", aipp_score: 90, rating: 4.9, review_count: 52, years_experience: 20, public_status: "verified_active", description: null, logo_url: null },
+  { id: "5", business_name: "CUISINE DESIGN", specialty: "Ébénisterie", city: "Sherbrooke", province: "QC", aipp_score: 87, rating: 4.6, review_count: 23, years_experience: 10, public_status: "verified_active", description: null, logo_url: null },
 ];
 
 const AUTOPLAY_MS = 6500;
@@ -185,7 +185,7 @@ const FeaturedCarousel = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-display text-section font-bold text-foreground truncate">{c.business_name}</h3>
-                        {c.verification_status === "verified" && (
+                        {c.public_status === "verified_active" && (
                           <ShieldCheck className="h-4 w-4 text-success shrink-0" />
                         )}
                       </div>

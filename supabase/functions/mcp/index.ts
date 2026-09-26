@@ -36,7 +36,7 @@ var search_contractors_default = defineTool({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, city, specialty, limit }) => {
     const supa = client();
-    let q = supa.from("contractors").select("id, slug, business_name, specialty, city, province, aipp_score, rating, review_count, verification_status").order("aipp_score", { ascending: false, nullsFirst: false }).limit(limit ?? 10);
+    let q = supa.from("contractors").select("id, slug, business_name, specialty, city, province, aipp_score, rating, review_count, public_status").order("aipp_score", { ascending: false, nullsFirst: false }).limit(limit ?? 10);
     if (query) q = q.ilike("business_name", `%${query}%`);
     if (city) q = q.ilike("city", `%${city}%`);
     if (specialty) q = q.ilike("specialty", `%${specialty}%`);
@@ -71,7 +71,7 @@ var get_contractor_default = defineTool2({
   handler: async ({ slug }) => {
     const supa = client2();
     const { data, error } = await supa.from("contractors").select(
-      "id, slug, business_name, legal_name, specialty, description, city, province, postal_code, website, aipp_score, rating, review_count, years_experience, rbq_number, neq, verification_status, logo_url"
+      "id, slug, business_name, legal_name, specialty, description, city, province, website, aipp_score, rating, review_count, years_experience, rbq_number, neq, public_status, logo_url"
     ).eq("slug", slug).maybeSingle();
     if (error) return { content: [{ type: "text", text: `Erreur: ${error.message}` }], isError: true };
     if (!data) return { content: [{ type: "text", text: `Aucun entrepreneur trouv\xE9 pour '${slug}'.` }], isError: true };

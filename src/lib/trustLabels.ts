@@ -34,16 +34,21 @@ export function getTrustBand(score: number | null | undefined): TrustLabel | nul
 export function getContractorTrustLabel(contractor: {
   admin_verified?: boolean;
   verification_status?: string | null;
+  public_status?: string | null;
   aipp_score?: number | null;
   rating?: number | null;
   review_count?: number | null;
 }): { text: string; variant: TrustBand } | null {
-  if (contractor.admin_verified === true) {
+  // public_status is the public-safe projection of verification state.
+  const isVerified = contractor.admin_verified === true || contractor.public_status === "verified_active";
+  const isPublished = contractor.public_status === "published_pending_verification";
+
+  if (isVerified) {
     return { text: "Profil validé", variant: "solide" };
   }
 
   // Strong public signals: verified status + decent score + some reviews
-  const hasVerifiedStatus = contractor.verification_status === "verified";
+  const hasVerifiedStatus = contractor.verification_status === "verified" || isPublished;
   const hasDecentScore = (contractor.aipp_score ?? 0) >= 60;
   const hasReviews = (contractor.review_count ?? 0) >= 3;
 
@@ -58,6 +63,7 @@ export function getContractorTrustLabel(contractor: {
   return null;
 }
 
+
 /**
  * Compute a trust-based ranking boost for search sorting.
  * Returns a value 0–15 that can be added to sort priority.
@@ -65,14 +71,16 @@ export function getContractorTrustLabel(contractor: {
  */
 export function computeTrustBoost(contractor: {
   admin_verified?: boolean;
+  public_status?: string | null;
   aipp_score?: number | null;
   rating?: number | null;
   review_count?: number | null;
 }): number {
   let boost = 0;
 
-  // Admin verified: strongest signal (+8)
-  if (contractor.admin_verified === true) boost += 8;
+  // Verified by UNPRO: strongest signal (+8)
+  if (contractor.admin_verified === true || contractor.public_status === "verified_active") boost += 8;
+
 
   // Strong AIPP score: moderate signal (+0 to +4)
   const aipp = contractor.aipp_score ?? 0;

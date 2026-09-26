@@ -23,7 +23,7 @@ export default defineTool({
     const { data, error } = await supa
       .from("contractors")
       .select(
-        "id, slug, business_name, legal_name, specialty, description, city, province, postal_code, website, aipp_score, rating, review_count, years_experience, rbq_number, neq, verification_status, logo_url",
+        "id, slug, business_name, legal_name, specialty, description, city, province, website, aipp_score, rating, review_count, years_experience, rbq_number, neq, public_status, logo_url",
       )
       .eq("slug", slug)
       .maybeSingle();

@@ -46,7 +46,7 @@ interface ContractorInfo {
   rating: number | null;
   review_count: number | null;
   aipp_score: number | null;
-  admin_verified: boolean | null;
+  public_status: string | null;
   slug: string | null;
   phone: string | null;
 }
@@ -104,7 +104,7 @@ export default function PublicBookingPage() {
     (async () => {
       const { data: c } = await supabase
         .from("contractors")
-        .select("id, business_name, specialty, city, logo_url, rating, review_count, aipp_score, admin_verified, slug, phone")
+        .select("id, business_name, specialty, city, logo_url, rating, review_count, aipp_score, public_status, slug, phone")
         .eq("slug", slug)
         .single();
 
@@ -347,7 +347,7 @@ export default function PublicBookingPage() {
                 rating={contractor.rating ?? undefined}
                 reviewCount={contractor.review_count ?? undefined}
                 aippScore={contractor.aipp_score ? Number(contractor.aipp_score) : undefined}
-                isVerified={contractor.admin_verified ?? false}
+                isVerified={contractor.public_status === "verified_active"}
               />
               <TrustStrip />
             </motion.div>

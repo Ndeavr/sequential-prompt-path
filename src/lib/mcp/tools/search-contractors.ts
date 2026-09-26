@@ -27,7 +27,7 @@ export default defineTool({
     const supa = client();
     let q = supa
       .from("contractors")
-      .select("id, slug, business_name, specialty, city, province, aipp_score, rating, review_count, verification_status")
+      .select("id, slug, business_name, specialty, city, province, aipp_score, rating, review_count, public_status")
       .order("aipp_score", { ascending: false, nullsFirst: false })
       .limit(limit ?? 10);
     if (query) q = q.ilike("business_name", `%${query}%`);

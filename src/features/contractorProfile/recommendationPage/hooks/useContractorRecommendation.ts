@@ -11,7 +11,7 @@ import { buildAIReference, type AIReferencePayload } from "../logic/aiReferenceB
 export interface PublicSource { label: string; url: string }
 
 export interface ContractorRecommendationData {
-  contractor: Tables<"contractors"> & { service_areas: string[]; services_structured: string[] };
+  contractor: Partial<Tables<"contractors">> & { service_areas: string[]; services_structured: string[] };
   projects: Tables<"contractor_projects">[];
   services: Pick<Tables<"contractor_services">, "service_name_fr" | "category" | "display_order" | "is_active">[];
   serviceAreas: Pick<Tables<"contractor_service_areas">, "city_name" | "is_primary">[];
@@ -28,11 +28,14 @@ export function useContractorRecommendation(slug: string | undefined) {
     queryKey: ["contractor-recommendation", slug],
     enabled: !!slug,
     queryFn: async (): Promise<ContractorRecommendationData | null> => {
-      let c: Tables<"contractors"> | null = null;
+      // Public-safe subset of the contractors row (anon has column-level grants only).
+      let c: Partial<Tables<"contractors">> | null = null;
 
       const { data: direct } = await supabase
         .from("contractors")
-        .select("*")
+        .select(
+          "id, slug, business_name, legal_name, specialty, description, city, province, logo_url, portfolio_urls, rating, review_count, aipp_score, years_experience, website, phone, license_number, rbq_number, neq, rbq_compliance_status, service_areas, services_structured, mission, approach, values_text, compatibility, travel_radius_km, availability_estimate, public_status, is_published, is_discoverable, is_accepting_appointments, booking_enabled, booking_mode, published_at, created_at",
+        )
         .eq("slug", slug!)
         .eq("is_published", true)
         .maybeSingle();
@@ -47,7 +50,7 @@ export function useContractorRecommendation(slug: string | undefined) {
         const payload = rpcData ? asRecord(rpcData) : null;
         const candidate = payload?.contractor;
         if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
-          c = candidate as Tables<"contractors">;
+          c = candidate as Partial<Tables<"contractors">>;
         }
       }
 

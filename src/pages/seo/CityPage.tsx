@@ -24,7 +24,7 @@ const CityPage = () => {
       const { count, error } = await supabase
         .from("contractors")
         .select("id", { count: "exact", head: true })
-        .eq("verification_status", "verified")
+        .in("public_status", ["published_pending_verification", "verified_active"])
         .ilike("city", `%${city?.name || ""}%`);
       if (error) return 0;
       return count || 0;
