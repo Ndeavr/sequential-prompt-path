@@ -20,7 +20,7 @@ export default function HeroRecommendation({ contractor: c }: Props) {
   const yearJoined = c.created_at ? new Date(c.created_at).getFullYear() : null;
   const reviewCount = c.review_count ?? 0;
   const rating = reviewCount > 0 && c.rating ? c.rating : null;
-  const isVerified = !!c.admin_verified;
+  const isVerified = (c as { public_status?: string }).public_status === "verified_active";
   const areas: string[] = c.service_areas ?? [];
 
   return (
@@ -55,9 +55,13 @@ export default function HeroRecommendation({ contractor: c }: Props) {
                 </span>
               </div>
             )}
-            {isVerified ? (
+            {(c as { public_status?: string }).public_status === "verified_active" ? (
               <Badge variant="secondary" className="gap-1">
-                <ShieldCheck className="w-3 h-3" /> Entreprise vérifiée UNPRO
+                <ShieldCheck className="w-3 h-3" /> Vérifié par UNPRO
+              </Badge>
+            ) : (c as { public_status?: string }).public_status === "published_pending_verification" ? (
+              <Badge variant="outline" className="gap-1">
+                Profil publié — vérification en cours
               </Badge>
             ) : (
               <Badge variant="outline" className="gap-1">
