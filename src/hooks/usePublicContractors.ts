@@ -15,7 +15,15 @@ export interface PublicContractorFilters {
   sort?: "newest" | "aipp" | "reviews" | "trust" | "default";
 }
 
-const PUBLIC_FIELDS = "id, business_name, specialty, city, province, description, verification_status, admin_verified, aipp_score, rating, review_count, years_experience, logo_url, created_at, phone, email, website, postal_code, license_number, portfolio_urls, address, insurance_info" as const;
+/**
+ * PUBLIC-SAFE ALLOWLIST — anonymous visitors only have column-level grants for these.
+ * Never add internal columns here (email, address, postal_code, insurance_info,
+ * admin_note, verification_notes, internal_verified_*, booking_base_lat/lng, user_id).
+ */
+const PUBLIC_FIELDS = "id, slug, business_name, specialty, city, province, description, public_status, aipp_score, rating, review_count, years_experience, logo_url, created_at, phone, website, license_number, rbq_number, portfolio_urls" as const;
+
+/** Publicly listable profiles: published, with or without completed verification. */
+const PUBLIC_STATUSES = ["published_pending_verification", "verified_active"] as const;
 
 export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
   return useQuery({
@@ -24,7 +32,8 @@ export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
       let query = supabase
         .from("contractors")
         .select(PUBLIC_FIELDS)
-        .eq("verification_status", "verified");
+        .in("public_status", PUBLIC_STATUSES as unknown as string[]);
+
 
       if (filters.q) {
         query = query.ilike("business_name", `%${filters.q}%`);
