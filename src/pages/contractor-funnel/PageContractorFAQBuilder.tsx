@@ -2,7 +2,7 @@
  * UNPRO — PageContractorFAQBuilder
  * AI FAQ generation, edit, sort, assign to services.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Sparkles, MessageSquare, ChevronDown, ChevronUp, Pencil, Trash2, Plus } from "lucide-react";
