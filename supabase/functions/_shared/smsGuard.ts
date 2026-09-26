@@ -151,13 +151,16 @@ export async function validateBeforeSend(opts: {
       return { ok: false, reason: "not_mobile", detail: `sms_tier=${prospect.sms_eligibility_tier ?? "none"}`, normalized: norm.normalized };
     }
     const lineType = String(prospect.phone_line_type ?? "").toLowerCase();
-    if (lineType && lineType !== "mobile") {
+    // Explicit non-mobile classifications remain a hard block. "unknown" /
+    // empty is NOT a classification — it falls through to Lookup below.
+    if (lineType && lineType !== "mobile" && lineType !== "unknown") {
       return { ok: false, reason: "not_mobile", detail: `phone_type=${lineType}`, normalized: norm.normalized };
     }
     if (["sent", "delivered", "clicked", "activated", "opted_out"].includes(prospect.outreach_status ?? "")) {
       return { ok: false, reason: "blocked", detail: `already_${prospect.outreach_status}`, normalized: norm.normalized };
     }
-    resolvedPhoneType = lineType || "mobile";
+    prospectSmsEligible = true;
+    resolvedPhoneType = lineType === "mobile" ? "mobile" : null;
   }
 
   // If phone_type unknown/missing, attempt inline Twilio Lookup (cached 90d).
@@ -183,11 +186,35 @@ export async function validateBeforeSend(opts: {
     }
   }
 
-  if (resolvedPhoneType && resolvedPhoneType !== "mobile") {
+  if (resolvedPhoneType && resolvedPhoneType !== "mobile" && resolvedPhoneType !== "unknown") {
     return { ok: false, reason: "not_mobile", detail: `phone_type=${resolvedPhoneType}`, normalized: norm.normalized };
   }
 
-  if (!resolvedPhoneType) {
+  if (!resolvedPhoneType || resolvedPhoneType === "unknown") {
+    // Carrier could not be classified. For a verified prospect already scored
+    // SMS-eligible (tier A/B/C) on a syntactically valid E.164 backed by a
+    // public business source, a single controlled first touch is allowed with
+    // an explicit, auditable "unknown carrier" marker. The line type is NEVER
+    // rewritten to "mobile".
+    if (prospectSmsEligible) {
+      try {
+        console.log(JSON.stringify({
+          scope: "smsGuard",
+          sms_guard_reason: "unclassified_carrier_tier_eligible",
+          phone: norm.normalized,
+          prospect_id: opts.prospect_id ?? null,
+          phone_type: "unknown_carrier",
+        }));
+      } catch { /* noop */ }
+      return {
+        ok: true,
+        normalized: norm.normalized,
+        area_code: norm.area_code,
+        country_code: norm.country_code,
+        phone_type: "unknown_carrier",
+        sms_guard_reason: "unclassified_carrier_tier_eligible",
+      };
+    }
     return { ok: false, reason: "not_mobile", detail: "phone_type_unconfirmed", normalized: norm.normalized };
   }
 
