@@ -77,3 +77,5 @@ Treat every Supabase project as live infrastructure.
 - Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
 
 - Prospect import (`import-contractors`) never overwrites an existing prospect: dedupe by google_place_id → E.164 → email → domain → name+city, admin/service only, `auto_send` defaults to false. Why: re-imports were resetting contacted prospects and could trigger sends.
+
+- Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
