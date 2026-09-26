@@ -304,6 +304,10 @@ export function rememberClaraReferences(patch: ClaraContextPatch): void {
  * déjà à un autre compte.
  */
 export async function promoteClaraSession(): Promise<ClaraSessionState | null> {
+  if (!peekClaraSessionToken()) return null;
+  // Le jeton local peut précéder la session serveur (page ouverte directement) :
+  // on confirme d'abord la session, sinon le serveur répond « session_not_found ».
+  await ensureClaraSession();
   const token = peekClaraSessionToken();
   if (!token) return null;
   const state = await call<ClaraSessionState>("promote", { session_token: token });
