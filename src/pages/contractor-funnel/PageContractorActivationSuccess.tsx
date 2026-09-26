@@ -157,6 +157,12 @@ export default function PageContractorActivationSuccess() {
         <title>Activation — {businessName}</title>
       </Helmet>
 
+      {/* Confettis réservés à cette page de succès, une seule fois par activation. */}
+      <ActivationConfetti
+        active={!state.loading && activated}
+        runKey={`${state.businessName ?? "contractor"}:${state.planCode ?? "plan"}`}
+      />
+
       <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-success/5 blur-[120px]" />
