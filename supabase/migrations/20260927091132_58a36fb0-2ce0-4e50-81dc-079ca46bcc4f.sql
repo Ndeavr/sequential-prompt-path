@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.adopt_orphan_contractor_for_claim(uuid, text, text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.adopt_orphan_contractor_for_claim(uuid, text, text, text) TO service_role;
