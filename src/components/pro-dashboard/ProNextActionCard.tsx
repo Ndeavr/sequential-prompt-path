@@ -23,7 +23,7 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
     if (!profile?.id) return;
     void (async () => {
       const { count } = await supabase
-        .from("contractor_availability" as any)
+        .from("booking_availability")
         .select("id", { count: "exact", head: true })
         .eq("contractor_id", profile.id)
         .eq("is_active", true);
