@@ -184,41 +184,18 @@ Deno.serve(async (req) => {
     // qu'une correspondance forte et sans propriétaire.
     let adopted = false;
     if (!contractorId) {
-      const digits = (prospect.phone_e164 ?? "").replace(/\D/g, "").slice(-10);
-      const candidates: Array<{ id: string; user_id: string | null }> = [];
-      if (digits.length === 10) {
-        const { data: byPhone } = await admin
-          .from("contractors")
-          .select("id, user_id, normalized_phone, phone")
-          .is("user_id", null)
-          .or(`normalized_phone.ilike.%${digits},phone.ilike.%${digits}`)
-          .limit(2);
-        if (byPhone) candidates.push(...byPhone);
-      }
-      if (candidates.length === 0 && prospect.business_name && prospect.city) {
-        const { data: byName } = await admin
-          .from("contractors")
-          .select("id, user_id")
-          .is("user_id", null)
-          .ilike("business_name", prospect.business_name.trim())
-          .ilike("city", prospect.city.trim())
-          .limit(2);
-        if (byName) candidates.push(...byName);
-      }
-      if (candidates.length === 1) {
-        const { data: claimedRow } = await admin
-          .from("contractors")
-          .update({ user_id: user.id, activation_status: "activated", onboarding_status: "in_progress" })
-          .eq("id", candidates[0].id)
-          .is("user_id", null)
-          .select("id")
-          .maybeSingle();
-        if (claimedRow) {
-          contractorId = claimedRow.id;
-          adopted = true;
-        }
+      const { data: adoptedId } = await admin.rpc("adopt_orphan_contractor_for_claim", {
+        p_user_id: user.id,
+        p_phone: prospect.phone_e164 ?? null,
+        p_business_name: prospect.business_name ?? prospect.legal_name ?? null,
+        p_city: prospect.city ?? null,
+      });
+      if (adoptedId) {
+        contractorId = adoptedId as string;
+        adopted = true;
       }
     }
+
 
     if (!contractorId) {
       const businessName = (prospect.business_name ?? prospect.legal_name ?? "").trim();
