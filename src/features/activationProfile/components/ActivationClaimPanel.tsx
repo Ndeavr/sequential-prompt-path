@@ -19,11 +19,12 @@ type Phase = "idle" | "verify" | "claiming" | "done" | "failed";
 
 const CLAIM_ERRORS: Record<string, string> = {
   not_authenticated: "Votre session s'est terminée. Recommencez la vérification ci-dessous.",
-  token_not_found: "Ce lien n'est plus reconnu. Écrivez-nous et nous réactiverons votre accès.",
-  token_expired: "Ce lien a expiré. Écrivez-nous et nous vous en enverrons un nouveau.",
+  token_not_found: "Ce lien est invalide ou expiré. Écrivez-nous et nous réactiverons votre accès.",
+  token_expired: "Ce lien est invalide ou expiré. Écrivez-nous et nous vous en enverrons un nouveau.",
   token_revoked: "Ce lien a été désactivé. Écrivez-nous et nous vous en enverrons un nouveau.",
   prospect_not_found: "Nous ne retrouvons plus cette entreprise. Écrivez-nous, nous corrigeons.",
-  already_claimed: "Ce profil a déjà été activé par un autre compte. Écrivez-nous pour en reprendre l'accès.",
+  already_claimed:
+    "Ce lien est déjà rattaché à un autre compte. Écrivez-nous pour en reprendre l'accès.",
   missing_business_name: "Le nom de l'entreprise est manquant. Écrivez-nous, nous le corrigeons.",
   contractor_insert_failed: "L'activation n'a pas pu être enregistrée. Réessayez dans un instant.",
   claim_write_failed: "L'activation n'a pas pu être enregistrée. Réessayez dans un instant.",
