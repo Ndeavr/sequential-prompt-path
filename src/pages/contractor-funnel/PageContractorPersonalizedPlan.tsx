@@ -178,7 +178,7 @@ export default function PageContractorPersonalizedPlan() {
           const q = await fetchPricingQuote(quoteId);
           if (q?.pricing_status === "paid") {
             if (!cancelled) setPaymentConfirm("paid");
-            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 2500);
+            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
             return;
           }
         } catch { /* on réessaie */ }
