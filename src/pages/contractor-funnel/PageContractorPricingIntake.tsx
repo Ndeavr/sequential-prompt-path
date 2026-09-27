@@ -24,6 +24,7 @@ import TradePickerSheet from "@/components/contractor/TradePickerSheet";
 import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 import { setActiveActivationToken } from "@/lib/checkoutUrl";
 import { getKnownContractorContext } from "@/lib/contractorKnownContext";
+import { avgTicketFor, closeRateFor } from "@/config/scanCapacityTickets";
 
 type Step = {
   key: string;
@@ -254,6 +255,43 @@ export default function PageContractorPricingIntake() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey]);
 
+  /* ---------- Fiche entrepreneur rattachée au compte : source prioritaire ---------- */
+  const [linked, setLinked] = useState<{ id: string; business_name: string | null; address: string | null } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { data: c } = await supabase
+        .from("contractors")
+        .select("id,business_name,specialty,city,address,travel_radius_km")
+        .eq("user_id", auth.user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !c) return;
+      const { data: areas } = await supabase
+        .from("contractor_service_areas" as never)
+        .select("city_name,radius_km")
+        .eq("contractor_id", (c as { id: string }).id)
+        .limit(1);
+      if (cancelled) return;
+      const row = c as { id: string; business_name: string | null; specialty: string | null; city: string | null; address: string | null; travel_radius_km: number | null };
+      const area = (areas as unknown as Array<{ city_name: string | null; radius_km: number | null }> | null)?.[0];
+      setLinked({ id: row.id, business_name: row.business_name, address: row.address });
+      setData((d) => ({
+        ...d,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : row.business_name || d.company_name,
+        trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : row.specialty || d.trade_primary,
+        city: confirmedFields.includes("city") ? d.city : area?.city_name || row.city || d.city,
+        service_radius_km: area?.radius_km ?? row.travel_radius_km ?? d.service_radius_km,
+      }));
+      if (row.business_name) setBusinessConfirmed(true);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const auditValid = Boolean(audit?.business_name);
   /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
   const identityKnown = Boolean(
@@ -443,272 +481,164 @@ export default function PageContractorPricingIntake() {
     ),
   };
 
-  const steps: Step[] = [
-    ...(auditValid || identityKnown ? [] : [identityStep]),
-    scopeStep,
-    {
-      key: "objectives",
-      question: "Quel est votre objectif de contrats?",
-      hint: "Un objectif de contrats n'est pas un nombre de rendez-vous : nous le convertirons.",
-      isValid: (d) =>
-        ((d as GoalFields).contract_goal_value ?? 0) > 0 &&
-        (d.average_project_value ?? 0) > 0,
-      render: (d, set) => (
+  /* Étape 1 — domaine, territoire et capacité sur un seul écran. */
+  const profileStep: Step = {
+    key: "profile",
+    question: identityKnown
+      ? "Confirmez votre domaine, votre territoire et votre capacité."
+      : "Commençons. Quelle est votre entreprise?",
+    hint: identityKnown
+      ? "Nous avons prérempli ce que nous savons déjà. Complétez seulement ce qui manque."
+      : "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
+    isValid: (d) =>
+      Boolean(d.company_name && d.trade_primary && d.city && (d.monthly_capacity ?? 0) > 0),
+    render: (d, set) => (
+      <div className="space-y-3">
+        {!identityKnown ? (
+          identityStep.render(d, set)
+        ) : (
+          <>
+            <TradePickerSheet
+              label="Domaine principal"
+              sheetTitle="Votre domaine principal"
+              placeholder="Choisir mon domaine"
+              value={tradeSlugOf(d.trade_primary)}
+              fallbackLabel={d.trade_primary ?? null}
+              onChange={(trade) => { confirm("trade_primary"); set({ trade_primary: trade.label }); }}
+              testId="trade-primary-picker-scope"
+            />
+            <TextInput
+              label="Ville principale desservie"
+              value={d.city ?? ""}
+              placeholder="Ex. Laval, Montréal, Terrebonne"
+              onChange={(v) => { confirm("city"); set({ city: v }); }}
+            />
+          </>
+        )}
+        <NumberInput
+          label="Rayon desservi autour de cette ville (km)"
+          value={d.service_radius_km ?? null}
+          onChange={(v) => set({ service_radius_km: v ?? undefined })}
+          min={5}
+          max={300}
+          placeholder="Ex. 40"
+        />
+        <NumberInput
+          label="Capacité mensuelle (nouveaux projets)"
+          value={d.monthly_capacity ?? null}
+          onChange={(v) => set({ monthly_capacity: v ?? undefined })}
+          min={1}
+          max={200}
+          placeholder="Ex. 6"
+        />
+      </div>
+    ),
+  };
+
+  /* Étape 2 — un seul objectif : contrats OU chiffre d'affaires. */
+  const objectiveStep: Step = {
+    key: "objective",
+    question: "Combien de nouveaux contrats ou quel chiffre d'affaires supplémentaire souhaitez-vous obtenir?",
+    hint: "Choisissez une seule mesure. Nous la convertissons en rendez-vous exclusifs.",
+    isValid: (d) => Boolean(objectiveToPayload(d)),
+    render: (d, set) => {
+      const g = d as GoalFields;
+      const mode = g.objective_mode ?? "contracts";
+      const calc = objectiveToPayload(d);
+      return (
         <div className="space-y-3">
-          <NumberInput
-            label="Nouveaux contrats visés"
-            value={(d as GoalFields).contract_goal_value ?? null}
-            onChange={(v) => set({ contract_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
-            min={1}
-            max={2000}
-            placeholder="Ex. 100"
-          />
           <ChoiceGroup
-            label="Sur quelle période"
-            value={(d as GoalFields).contract_goal_unit ?? "year"}
+            label="Mon objectif"
+            value={mode}
+            onChange={(v) => set({ objective_mode: v as "contracts" | "revenue" } as Partial<PricingIntakeInput>)}
+            options={[
+              { v: "contracts", l: "Contrats" },
+              { v: "revenue", l: "Chiffre d'affaires" },
+            ]}
+          />
+          {mode === "contracts" ? (
+            <NumberInput
+              label="Nouveaux contrats visés"
+              value={g.contract_goal_value ?? null}
+              onChange={(v) => set({ contract_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
+              min={1}
+              max={2000}
+              placeholder="Ex. 5"
+            />
+          ) : (
+            <NumberInput
+              label="Chiffre d'affaires supplémentaire ($)"
+              value={g.revenue_goal_value ?? null}
+              onChange={(v) => set({ revenue_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
+              min={500}
+              max={10000000}
+              step={1000}
+              placeholder="Ex. 50000"
+            />
+          )}
+          <ChoiceGroup
+            label="Période"
+            value={g.contract_goal_unit ?? "month"}
             onChange={(v) => set({ contract_goal_unit: v as "month" | "year" } as Partial<PricingIntakeInput>)}
             options={[
               { v: "month", l: "Par mois" },
               { v: "year", l: "Par année" },
             ]}
           />
-          <NumberInput
-            label="Valeur moyenne d'un projet ($)"
-            value={d.average_project_value ?? null}
-            onChange={(v) => set({ average_project_value: v ?? undefined })}
-            min={1}
-            max={500000}
-            step={500}
-            placeholder="Ex. 3000"
-          />
-        </div>
-      ),
-    },
-    {
-      key: "capacity",
-      question: "Et votre capacité réelle?",
-      hint: "Combien de projets pouvez-vous livrer et avec quel taux de fermeture?",
-      isValid: (d) => (d.monthly_capacity ?? 0) > 0,
-      render: (d, set) => (
-        <div className="space-y-3">
-          <NumberInput
-            label="Capacité mensuelle (projets)"
-            value={d.monthly_capacity ?? null}
-            onChange={(v) => set({ monthly_capacity: v ?? undefined })}
-            min={1}
-            max={200}
-            placeholder="Ex. 6"
-          />
-          <NumberInput
-            label="Taux de fermeture estimé (%)"
-            value={
-              typeof d.close_rate_estimate === "number"
-                ? Math.round(d.close_rate_estimate * 100)
-                : null
-            }
-            onChange={(v) => set({ close_rate_estimate: v === null ? undefined : v / 100 })}
-            min={5}
-            max={95}
-            step={5}
-            placeholder="Ex. 40"
-          />
-        </div>
-      ),
-    },
-    {
-      key: "appointments",
-      question: "Combien de rendez-vous exclusifs par mois?",
-      hint: "Calculé depuis votre objectif, votre taux de fermeture et votre capacité. Ajustable.",
-      isValid: (d) => (d.target_monthly_appointments ?? 0) > 0,
-      render: (d, set) => {
-        const reco = recommendAppointments(d);
-        return (
-          <div className="space-y-3">
-            {reco && (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/75">
-                <p>
-                  {reco.contractsPerMonth} contrat{reco.contractsPerMonth > 1 ? "s" : ""} par mois ÷{" "}
-                  {Math.round(reco.closeRate * 100)} % de fermeture ={" "}
-                  <strong className="text-white">{reco.needed} rendez-vous</strong> par mois.
-                </p>
-                {reco.limitedByCapacity && (
-                  <p className="mt-1 text-xs text-amber-200/90">
-                    Votre capacité déclarée ({reco.capacity} projets/mois) limite la recommandation à{" "}
-                    {reco.recommended} rendez-vous.
-                  </p>
-                )}
-              </div>
-            )}
-            <NumberInput
-              label="Rendez-vous exclusifs souhaités / mois"
-              value={d.target_monthly_appointments ?? reco?.recommended ?? null}
-              onChange={(v) => set({ target_monthly_appointments: v ?? undefined })}
-              min={1}
-              max={500}
-              placeholder={reco ? `Recommandé : ${reco.recommended}` : "Ex. 4"}
-              hint="Chaque rendez-vous est exclusif : il est facturé au tarif réel de votre métier."
-            />
-            <NumberInput
-              label="Budget mensuel maximum ($) — optionnel"
-              value={
-                typeof (d as GoalFields).monthly_budget_cents === "number"
-                  ? Math.round(((d as GoalFields).monthly_budget_cents as number) / 100)
-                  : null
-              }
-              onChange={(v) =>
-                set({
-                  monthly_budget_cents: v === null ? undefined : Math.round(v * 100),
-                  pricing_mode: v === null ? undefined : "budget",
-                } as Partial<PricingIntakeInput>)
-              }
-              min={49}
-              max={100000}
-              step={50}
-              placeholder="Laisser vide pour voir le vrai prix"
-              hint="Avec un budget, nous indiquons combien de rendez-vous exclusifs il permet réellement."
-            />
-          </div>
-        );
-      },
-    },
-    {
-      key: "strategy",
-      question: "Votre stratégie de croissance?",
-      isValid: () => true,
-      render: (d, set) => (
-        <div className="space-y-3">
-          <ChoiceGroup
-            label="Niveau de croissance souhaité"
-            value={d.desired_growth_level ?? "growth"}
-            onChange={(v) => set({ desired_growth_level: v as any })}
-            options={[
-              { v: "steady", l: "Stable" },
-              { v: "growth", l: "Croissance" },
-              { v: "aggressive", l: "Agressive" },
-            ]}
-          />
-          <ChoiceGroup
-            label="Priorité saisonnière"
-            value={d.seasonal_priority ?? "all"}
-            onChange={(v) => set({ seasonal_priority: v as any })}
-            options={SEASONS}
-          />
-          <Toggle
-            label="Exclusivité territoriale souhaitée"
-            value={!!d.wants_exclusivity}
-            onChange={(v) => set({ wants_exclusivity: v })}
-          />
-        </div>
-      ),
-    },
-    // Présence actuelle : si l'audit vient de la mesurer, on l'affiche avec sa
-    // provenance au lieu de la redemander. Sinon, champs libres avec « Non
-    // déterminé » possible — jamais de valeur inventée.
-    ...(auditScoreKnown
-      ? []
-      : [{
-          key: "visibility",
-          question: "Votre présence actuelle?",
-          hint: "Laissez vide si vous ne le savez pas : nous inscrirons « Non déterminé ».",
-          isValid: () => true,
-          render: (d: Partial<PricingIntakeInput>, set: (p: Partial<PricingIntakeInput>) => void) => (
-            <div className="space-y-3">
-              <NumberInput
-                label="Score Google Business actuel (0-100)"
-                value={d.current_google_presence ?? null}
-                onChange={(v) => set({ current_google_presence: v ?? undefined })}
-                min={0}
-                max={100}
-                step={5}
-                placeholder="Non déterminé"
-              />
-              <NumberInput
-                label="Score visibilité IA actuel (0-100)"
-                value={d.current_ai_visibility_score ?? null}
-                onChange={(v) => set({ current_ai_visibility_score: v ?? undefined })}
-                min={0}
-                max={100}
-                step={5}
-                placeholder="Non déterminé"
-              />
+          {calc && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/75" data-testid="objective-assumptions">
+              <p>
+                ≈ <strong className="text-white">{calc.contractsPerMonth} contrat{calc.contractsPerMonth > 1 ? "s" : ""}/mois</strong>{" "}
+                → <strong className="text-white">{calc.appointments} rendez-vous exclusifs/mois</strong>.
+              </p>
+              {calc.limitedByCapacity && (
+                <p className="mt-1 text-xs text-amber-200/90">Limité par votre capacité déclarée.</p>
+              )}
+              <p className="mt-2 text-[11px] text-white/50">
+                Hypothèses UNPRO, pas vos réponses : valeur moyenne d'un projet ≈{" "}
+                {calc.avgTicket.toLocaleString("fr-CA")} $ et {Math.round(calc.closeRate * 100)} % des
+                rendez-vous convertis en contrat. Vous pourrez les préciser plus tard.
+              </p>
             </div>
-          ),
-        } satisfies Step]),
-    {
-      key: "credentials",
-      question: "Finalisons votre profil.",
-      hint: "RBQ et site web (optionnels mais recommandés).",
-      isValid: () => true,
-      render: (d, set) => (
-        <div className="space-y-3">
-          <TextInput
-            label="Numéro RBQ"
-            value={d.rbq_number ?? ""}
-            onChange={(v) => set({ rbq_number: v })}
-            placeholder="0000-0000-00"
-          />
-          <TextInput
-            label="Site web"
-            value={d.website_url ?? ""}
-            onChange={(v) => set({ website_url: v })}
-            placeholder="https://"
-          />
+          )}
         </div>
-      ),
+      );
     },
-  ];
+  };
+
+  const steps: Step[] = [profileStep, objectiveStep];
 
   const total = steps.length;
   const safeStep = Math.min(step, total - 1);
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
-  /**
-   * La recommandation affichée dans le champ « rendez-vous » est une valeur
-   * réelle : si l'entrepreneur l'accepte sans la retaper, elle doit être
-   * enregistrée telle quelle. Aucune valeur inventée : uniquement celle
-   * calculée à partir de ses propres réponses.
-   */
-  const withResolvedAppointments = (
-    d: Partial<PricingIntakeInput>,
-  ): Partial<PricingIntakeInput> => {
-    if ((d.target_monthly_appointments ?? 0) > 0) return d;
-    const recommended = recommendAppointments(d)?.recommended;
-    return recommended && recommended > 0
-      ? { ...d, target_monthly_appointments: recommended }
-      : d;
-  };
-
-  const submit = async (override?: Partial<PricingIntakeInput>) => {
-    const payload = override ?? withResolvedAppointments(data);
+  const submit = async () => {
+    const calc = objectiveToPayload(data);
+    if (!calc) return;
+    const payload = calc.payload;
     setSubmitting(true);
-    // Profil confirmé et objectifs réellement saisis avant tout calcul de plan.
     void trackFunnelStep("profile_completed", {
       subjectId: payload.company_name ?? null,
       city: payload.city ?? null,
-      metadata: { manual_entry: manualEntry },
+      metadata: { manual_entry: manualEntry, linked_contractor: linked?.id ?? null },
     });
     void trackFunnelStep("goals_completed", {
       subjectId: payload.company_name ?? null,
       metadata: {
+        objective_mode: (data as GoalFields).objective_mode ?? "contracts",
         target_monthly_appointments: payload.target_monthly_appointments ?? null,
         monthly_capacity: payload.monthly_capacity ?? null,
-        average_project_value: payload.average_project_value ?? null,
-        growth_level: payload.desired_growth_level ?? null,
+        assumptions: "sector_defaults",
       },
     });
     try {
       const quote = await computePricingQuote(payload as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
-        city: (payload as { city?: string }).city ?? null,
-        metadata: {
-          plan_code: quote.recommended_plan ?? null,
-          objective: searchParams.get("objective"),
-          from: searchParams.get("from"),
-        },
+        city: payload.city ?? null,
+        metadata: { plan_code: quote.recommended_plan ?? null, from: searchParams.get("from") },
       });
-      try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
       const carry = new URLSearchParams();
       for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t", "objective", "from"]) {
         const value = searchParams.get(key);
@@ -716,19 +646,17 @@ export default function PageContractorPricingIntake() {
       }
       navigate(`/entrepreneur/plan-personnalise/${quote.id}${carry.size ? `?${carry}` : ""}`);
     } catch (e: any) {
-      toast.error(e?.message ?? "Impossible de calculer votre plan.");
+      toast.error(e?.message ?? "Impossible de calculer votre forfait.");
       setSubmitting(false);
     }
   };
 
   const next = () => {
-    const resolved = withResolvedAppointments(data);
-    if (!current.isValid(resolved)) {
+    if (!current.isValid(data)) {
       toast.error("Complétez les champs pour continuer.");
       return;
     }
-    if (resolved !== data) setData(resolved);
-    if (isLast) submit(resolved);
+    if (isLast) void submit();
     else setStep(safeStep + 1);
   };
 
@@ -755,38 +683,24 @@ export default function PageContractorPricingIntake() {
       </div>
 
       <div className="relative max-w-xl mx-auto px-5 pt-10">
-        {/* Entreprise réellement analysée — résolue côté serveur */}
-        {auditValid ? (
+        {/* Fiche rattachée / entreprise analysée — jamais de détour vers l'audit. */}
+        {(linked || auditValid) && (
           <div
             data-testid="audit-identity-banner"
             className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] px-4 py-3"
           >
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-amber-300/90">
-              <ShieldCheck className="w-3.5 h-3.5" /> Entreprise analysée
+              <ShieldCheck className="w-3.5 h-3.5" /> {linked ? "Fiche rattachée à votre compte" : "Entreprise analysée"}
             </div>
-            <p className="mt-1 text-sm font-semibold text-white">{audit?.business_name}</p>
-            <p className="text-xs text-white/60">
-              {[audit?.city, audit?.trade].filter(Boolean).join(" · ")}
-              {typeof audit?.readiness_score === "number" ? ` · Score ${audit.readiness_score}/100` : ""}
-            </p>
-          </div>
-        ) : (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-            <p className="text-sm text-white/80">Aucune analyse rattachée à ce parcours.</p>
-            <button
-              type="button"
-              onClick={() => navigate("/entrepreneurs/audit-ia")}
-              className="mt-2 text-sm font-medium text-amber-300 underline underline-offset-4"
-            >
-              Commencer un audit gratuit
-            </button>
+            <p className="mt-1 text-sm font-semibold text-white">{linked?.business_name ?? audit?.business_name}</p>
+            {linked?.address && <p className="text-xs text-white/60">Siège : {linked.address}</p>}
           </div>
         )}
 
-        {/* Progress */}
+        {/* Progression stable : 4 étapes (profil, objectif, forfait, paiement) */}
         <div className="mb-8">
           <div className="flex items-center gap-1.5">
-            {steps.map((_, i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
@@ -795,8 +709,8 @@ export default function PageContractorPricingIntake() {
               />
             ))}
           </div>
-          <p className="text-xs text-white/50 mt-3 tracking-wider uppercase">
-            Étape {safeStep + 1} sur {total}
+          <p className="text-xs text-white/50 mt-3 tracking-wider uppercase" data-testid="intake-step-label">
+            Étape {safeStep + 1} sur 4
           </p>
         </div>
 
@@ -826,8 +740,8 @@ export default function PageContractorPricingIntake() {
         </AnimatePresence>
       </div>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-[#050816] via-[#050816]/95 to-transparent pt-6 pb-5 px-5">
+      {/* CTA dans le flux : ne masque jamais un champ ni une condition. */}
+      <div className="relative px-5 pt-6 pb-10">
         <div className="max-w-xl mx-auto flex gap-2">
           {safeStep > 0 && (
             <button
@@ -840,14 +754,15 @@ export default function PageContractorPricingIntake() {
           )}
           <button
             onClick={next}
-            disabled={submitting || !current.isValid(withResolvedAppointments(data))}
+            disabled={submitting || !current.isValid(data)}
+            data-testid="intake-next"
             className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
           >
             {submitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                {isLast ? "Calculer mon plan" : "Continuer"}
+                {isLast ? "Voir mon forfait" : "Continuer"}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -1052,7 +967,54 @@ export type GoalFields = {
   contract_goal_unit?: "month" | "year";
   monthly_budget_cents?: number;
   pricing_mode?: "goal" | "budget";
+  /** Objectif exprimé par l'entrepreneur : contrats OU chiffre d'affaires. */
+  objective_mode?: "contracts" | "revenue";
+  revenue_goal_value?: number;
 };
+
+/**
+ * Hypothèses sectorielles (jamais présentées comme réponses de l'entrepreneur)
+ * : valeur moyenne d'un projet et taux de conversion rendez-vous → contrat.
+ */
+export function objectiveToPayload(d: Partial<PricingIntakeInput>): {
+  payload: Partial<PricingIntakeInput>;
+  avgTicket: number;
+  closeRate: number;
+  contractsPerMonth: number;
+  appointments: number;
+  limitedByCapacity: boolean;
+} | null {
+  const g = d as GoalFields;
+  const unit = g.contract_goal_unit ?? "month";
+  const avgTicket = avgTicketFor(d.trade_primary);
+  const closeRate = closeRateFor(d.trade_primary);
+  const mode = g.objective_mode ?? "contracts";
+  const raw = mode === "revenue" ? (g.revenue_goal_value ?? 0) / avgTicket : g.contract_goal_value ?? 0;
+  if (!raw || raw <= 0) return null;
+  const perMonth = unit === "year" ? raw / 12 : raw;
+  const contractsPerMonth = Math.max(1, Math.ceil(perMonth));
+  const needed = Math.max(1, Math.ceil(contractsPerMonth / closeRate));
+  const cap = d.monthly_capacity ?? 0;
+  const capAppts = cap > 0 ? Math.max(1, Math.ceil(cap / closeRate)) : needed;
+  const appointments = Math.min(needed, capAppts);
+  return {
+    avgTicket,
+    closeRate,
+    contractsPerMonth,
+    appointments,
+    limitedByCapacity: appointments < needed,
+    payload: {
+      ...d,
+      contract_goal_value: Math.max(1, Math.round(raw)),
+      contract_goal_unit: unit,
+      average_project_value: avgTicket,
+      close_rate_estimate: closeRate,
+      target_monthly_appointments: appointments,
+      pricing_mode: "goal",
+      monthly_budget_cents: undefined,
+    } as Partial<PricingIntakeInput>,
+  };
+}
 
 /**
  * Convertit un objectif de contrats en nombre de rendez-vous exclusifs.

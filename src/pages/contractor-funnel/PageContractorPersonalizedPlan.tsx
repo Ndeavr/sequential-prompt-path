@@ -87,7 +87,7 @@ export default function PageContractorPersonalizedPlan() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(true);
   const [fallbackVisible, setFallbackVisible] = useState(false);
   const [fallbackDeclined, setFallbackDeclined] = useState(false);
 
@@ -165,6 +165,30 @@ export default function PageContractorPersonalizedPlan() {
     }
   }, [quote, checkoutOutcome]);
 
+  /* Étape 4 : activation payante affichée SEULEMENT après confirmation serveur
+     (webhook Stripe → pricing_status = "paid"). Le retour Stripe seul ne suffit pas. */
+  const [paymentConfirm, setPaymentConfirm] = useState<"idle" | "waiting" | "paid" | "timeout">("idle");
+  useEffect(() => {
+    if (checkoutOutcome !== "success" || !quoteId) return;
+    let cancelled = false;
+    setPaymentConfirm("waiting");
+    void (async () => {
+      for (let i = 0; i < 30 && !cancelled; i++) {
+        try {
+          const q = await fetchPricingQuote(quoteId);
+          if (q?.pricing_status === "paid") {
+            if (!cancelled) setPaymentConfirm("paid");
+            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 2500);
+            return;
+          }
+        } catch { /* on réessaie */ }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      if (!cancelled) setPaymentConfirm("timeout");
+    })();
+    return () => { cancelled = true; };
+  }, [checkoutOutcome, quoteId, navigate]);
+
   const handleActivate = async () => {
     if (!quote) return;
     setCheckoutLoading(true);
@@ -230,6 +254,46 @@ export default function PageContractorPersonalizedPlan() {
     }
   };
 
+  if (paymentConfirm !== "idle") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
+        <div className="max-w-md text-center space-y-4" data-testid="payment-confirmation">
+          <p className="text-xs uppercase tracking-wider text-white/60">Étape 4 sur 4 · Paiement et activation</p>
+          {paymentConfirm === "waiting" && (
+            <>
+              <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-70" />
+              <h1 className="text-2xl font-semibold">Confirmation du paiement en cours…</h1>
+              <p className="text-white/70">Votre forfait sera activé dès que le paiement est confirmé.</p>
+            </>
+          )}
+          {paymentConfirm === "paid" && (
+            <>
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+              <h1 className="text-2xl font-semibold">Paiement confirmé. Forfait activé.</h1>
+              <ul className="text-sm text-white/75 space-y-1">
+                <li>Compte connecté ✓</li>
+                <li>Fiche rattachée{quote?.company_name ? ` : ${quote.company_name}` : ""} ✓</li>
+                <li>Forfait {planLabel} activé ✓</li>
+              </ul>
+              <button onClick={() => navigate("/pro", { replace: true })} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Ouvrir mon espace entrepreneur
+              </button>
+            </>
+          )}
+          {paymentConfirm === "timeout" && (
+            <>
+              <h1 className="text-2xl font-semibold">Paiement reçu, confirmation en attente.</h1>
+              <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
+              <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Vérifier à nouveau
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
@@ -244,7 +308,7 @@ export default function PageContractorPersonalizedPlan() {
         <div>
           <p className="text-lg mb-4">Aucun devis trouvé.</p>
           <button
-            onClick={() => navigate("/entrepreneur/onboarding")}
+            onClick={() => navigate("/entrepreneur/devis-personnalise")}
             className="rounded-full px-5 py-3 bg-amber-500 text-black font-semibold"
           >
             Repartir avec Clara
@@ -281,7 +345,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
+    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-8">
       <Helmet>
         <title>Votre plan recommandé · UNPRO</title>
         <meta
@@ -304,8 +368,8 @@ export default function PageContractorPersonalizedPlan() {
           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8"
         >
-          <p className="text-sm text-white/60 tracking-wide uppercase">
-            Tarification personnalisée
+          <p className="text-sm text-white/60 tracking-wide uppercase" data-testid="plan-step-label">
+            Étape 3 sur 4 · Votre forfait
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2 tracking-[-0.04em]">
             {quote.company_name
@@ -328,7 +392,7 @@ export default function PageContractorPersonalizedPlan() {
             }}
             className="mt-3 block text-xs text-white/60 underline underline-offset-4 hover:text-white"
           >
-            Modifier mes préférences avant de payer
+            Ajuster mon forfait
           </button>
         </motion.div>
 
@@ -385,24 +449,15 @@ export default function PageContractorPersonalizedPlan() {
         )}
 
 
-        {/* Hero plan card */}
-
-        <GlassCard className="p-7 mb-5">
-          <div className="flex items-center gap-2 mb-3">
+        {/* 1. Pertinence pour son activité */}
+        <GlassCard className="p-5 mb-5" >
+          <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-xs uppercase tracking-wider text-amber-300/80">
-              Plan {planLabel} · {quote.city} · {quote.trade_primary}
-            </span>
+            <span className="text-xs uppercase tracking-wider text-amber-300/80">Forfait recommandé : {planLabel}</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-5xl font-semibold tracking-[-0.04em]">
-              {formatCAD(quote.recommended_monthly_price)}
-            </div>
-            <div className="text-white/60">/ mois</div>
-          </div>
-          <p className="text-white/70 mt-3 text-sm">
-            Calibré sur vos objectifs réels, votre capacité et la demande dans
-            votre territoire.
+          <p className="text-sm text-white/80" data-testid="plan-relevance">
+            Pour {quote.trade_primary} à {quote.city}, avec une capacité de {quote.contractor_capacity ?? "—"} projets par mois
+            et un objectif de {quote.target_monthly_appointments} rendez-vous exclusifs par mois.
           </p>
         </GlassCard>
 
@@ -428,28 +483,6 @@ export default function PageContractorPersonalizedPlan() {
           );
         })()}
 
-
-        {/* Potential revenue */}
-        <GlassCard className="p-6 mb-5">
-          <div className="flex items-center gap-2 mb-2 text-cyan-300">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wider">
-              Potentiel mensuel estimé
-            </span>
-          </div>
-          <div className="text-3xl font-semibold tracking-[-0.03em]">
-            {formatCADFromDollars(quote.estimated_monthly_revenue_potential)}
-          </div>
-          <p className="text-sm text-white/60 mt-2">
-            ROI estimé{" "}
-            <span className="text-white font-medium">
-              ×{Math.max(1, Math.round(quote.roi_estimate))}
-            </span>{" "}
-            sur la base de {quote.target_monthly_appointments} rendez-vous /
-            mois × {Math.round(quote.estimated_close_rate * 100)} % de fermeture
-            × {formatCADFromDollars(quote.average_project_value)}.
-          </p>
-        </GlassCard>
 
         {/* Territory */}
         <GlassCard className="p-5 mb-5 flex items-start gap-3">
@@ -545,6 +578,48 @@ export default function PageContractorPersonalizedPlan() {
           })()}
         </GlassCard>
 
+        {/* 3. Prix, périodicité et engagement */}
+
+        <GlassCard className="p-7 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="text-xs uppercase tracking-wider text-amber-300/80">
+              Plan {planLabel} · {quote.city} · {quote.trade_primary}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <div className="text-5xl font-semibold tracking-[-0.04em]">
+              {formatCAD(quote.recommended_monthly_price)}
+            </div>
+            <div className="text-white/60">/ mois</div>
+          </div>
+          <p className="text-white/70 mt-3 text-sm">
+            Facturé chaque mois. Sans engagement annuel.
+          </p>
+        </GlassCard>
+
+        {/* Potential revenue */}
+        <GlassCard className="p-6 mb-5">
+          <div className="flex items-center gap-2 mb-2 text-cyan-300">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-xs uppercase tracking-wider">
+              Potentiel mensuel estimé (hypothèses UNPRO)
+            </span>
+          </div>
+          <div className="text-3xl font-semibold tracking-[-0.03em]">
+            {formatCADFromDollars(quote.estimated_monthly_revenue_potential)}
+          </div>
+          <p className="text-sm text-white/60 mt-2">
+            ROI estimé{" "}
+            <span className="text-white font-medium">
+              ×{Math.max(1, Math.round(quote.roi_estimate))}
+            </span>{" "}
+            sur la base de {quote.target_monthly_appointments} rendez-vous /
+            mois × {Math.round(quote.estimated_close_rate * 100)} % de fermeture
+            × {formatCADFromDollars(quote.average_project_value)}.
+          </p>
+        </GlassCard>
+
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
         {!waitlisted && !fallbackDeclined && (
           <div className="mt-8">
@@ -591,7 +666,7 @@ export default function PageContractorPersonalizedPlan() {
       </div>
 
       {/* Sticky footer CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-[#050816] via-[#050816]/95 to-transparent pt-6 pb-5 px-5">
+      <div className="relative px-5 pt-2 pb-10">
         {checkoutError && (
           <div
             role="alert"
@@ -622,7 +697,7 @@ export default function PageContractorPersonalizedPlan() {
               {checkoutLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Activer mes rendez-vous"
+                "Continuer vers le paiement"
               )}
             </button>
           )}
