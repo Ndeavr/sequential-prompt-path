@@ -10,6 +10,7 @@
 //  - l'activation est enregistrée immédiatement, l'enrichissement vient après.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
+import { logInviteEvent } from "../_shared/inviteAudit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,24 +89,33 @@ Deno.serve(async (req) => {
     // ------------------------------------------------------------ jeton → prospect
     let { data: tk } = await admin
       .from("verified_prospect_tokens")
-      .select("token, prospect_id, expires_at")
+      .select("token, prospect_id, expires_at, revoked_at, revoked_reason")
       .eq("token", token)
       .maybeSingle();
 
-    if (!tk && token.length >= 10) {
+    if (!tk && token.length >= 16) {
       const { data: candidates } = await admin
         .from("verified_prospect_tokens")
-        .select("token, prospect_id, expires_at")
+        .select("token, prospect_id, expires_at, revoked_at, revoked_reason")
         .like("token", `${token}%`)
         .limit(2);
       if (candidates && candidates.length === 1) tk = candidates[0];
     }
     if (!tk) {
       await logEvent("activation_error", { step_failed: "token", code: "token_not_found" }, { user_id: user.id, token_hash: tokenHash });
+      await logInviteEvent(admin, "token_invalid", { token_hash: tokenHash, user_id: user.id, outcome: "blocked", reason: "token_not_found" });
       return json({ ok: false, reason: "token_not_found" }, 404);
+    }
+    if (tk.revoked_at) {
+      await logInviteEvent(admin, "token_revoked", {
+        token_hash: tokenHash, user_id: user.id, prospect_id: tk.prospect_id,
+        outcome: "blocked", reason: tk.revoked_reason ?? "revoked",
+      });
+      return json({ ok: false, reason: "token_revoked" }, 410);
     }
     if (tk.expires_at && new Date(tk.expires_at).getTime() <= Date.now()) {
       await logEvent("activation_error", { step_failed: "token", code: "token_expired" }, { user_id: user.id, token_hash: tokenHash });
+      await logInviteEvent(admin, "token_expired", { token_hash: tokenHash, user_id: user.id, prospect_id: tk.prospect_id, outcome: "blocked", reason: "token_expired" });
       return json({ ok: false, reason: "token_expired" }, 410);
     }
 
@@ -129,6 +139,10 @@ Deno.serve(async (req) => {
     if (existingClaim && existingClaim.user_id !== user.id) {
       await logEvent("activation_error", { step_failed: "claim", code: "already_claimed_by_other" }, {
         prospect_id: prospect.id, user_id: user.id, token_hash: tokenHash,
+      });
+      await logInviteEvent(admin, "already_claimed_by_other", {
+        token_hash: tokenHash, user_id: user.id, prospect_id: prospect.id,
+        contractor_id: existingClaim.contractor_id, outcome: "blocked", reason: "already_claimed",
       });
       return json({ ok: false, reason: "already_claimed" }, 409);
     }
@@ -163,6 +177,47 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       contractorId = mine?.id ?? null;
+    }
+
+    // Anti-doublon : une fiche entreprise déjà importée (scraping/admin) et
+    // non rattachée à un compte est REPRISE, jamais recréée. On n'accepte
+    // qu'une correspondance forte et sans propriétaire.
+    let adopted = false;
+    if (!contractorId) {
+      const digits = (prospect.phone_e164 ?? "").replace(/\D/g, "").slice(-10);
+      const candidates: Array<{ id: string; user_id: string | null }> = [];
+      if (digits.length === 10) {
+        const { data: byPhone } = await admin
+          .from("contractors")
+          .select("id, user_id, normalized_phone, phone")
+          .is("user_id", null)
+          .or(`normalized_phone.ilike.%${digits},phone.ilike.%${digits}`)
+          .limit(2);
+        if (byPhone) candidates.push(...byPhone);
+      }
+      if (candidates.length === 0 && prospect.business_name && prospect.city) {
+        const { data: byName } = await admin
+          .from("contractors")
+          .select("id, user_id")
+          .is("user_id", null)
+          .ilike("business_name", prospect.business_name.trim())
+          .ilike("city", prospect.city.trim())
+          .limit(2);
+        if (byName) candidates.push(...byName);
+      }
+      if (candidates.length === 1) {
+        const { data: claimedRow } = await admin
+          .from("contractors")
+          .update({ user_id: user.id, activation_status: "activated", onboarding_status: "in_progress" })
+          .eq("id", candidates[0].id)
+          .is("user_id", null)
+          .select("id")
+          .maybeSingle();
+        if (claimedRow) {
+          contractorId = claimedRow.id;
+          adopted = true;
+        }
+      }
     }
 
     if (!contractorId) {
@@ -274,6 +329,29 @@ Deno.serve(async (req) => {
         category_slug: freeYear.category_slug ?? null,
       }, ids);
     }
+    try {
+      await admin
+        .from("verified_prospect_tokens")
+        .update({ claimed_at: new Date().toISOString(), claimed_by: user.id })
+        .eq("token", tk.token);
+    } catch (_e) { /* journalisation du jeton non bloquante */ }
+
+    await logInviteEvent(admin, "account_linked", {
+      token_hash: tokenHash, user_id: user.id, prospect_id: prospect.id, contractor_id: contractorId,
+      metadata: { already_claimed: Boolean(existingClaim), created, adopted },
+    });
+    if (created) {
+      await logInviteEvent(admin, "contractor_created", {
+        token_hash: tokenHash, user_id: user.id, prospect_id: prospect.id, contractor_id: contractorId,
+      });
+    }
+    if (adopted) {
+      await logInviteEvent(admin, "contractor_adopted", {
+        token_hash: tokenHash, user_id: user.id, prospect_id: prospect.id, contractor_id: contractorId,
+        metadata: { source: "existing_unclaimed_record" },
+      });
+    }
+
     if (created) await logEvent("contractor_profile_created", { source: "activation_link" }, ids);
     await logEvent("profile_claimed", { already: Boolean(existingClaim) }, ids);
     await logEvent("profile_activated", { already: Boolean(existingClaim) }, ids);
@@ -287,6 +365,7 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("[activation-claim] fatal", String(e));
+    await logInviteEvent(admin, "claim_error", { token_hash: tokenHash, outcome: "error", reason: "internal_error" });
     return json({ ok: false, reason: "internal_error" }, 500);
   }
 });
