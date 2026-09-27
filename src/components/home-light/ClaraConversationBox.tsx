@@ -260,6 +260,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [transitionPause, setTransitionPause] = useState(false);
   /** Clara écrit : l’écriture elle-même tient lieu d’indicateur. */
   const [claraTyping, setClaraTyping] = useState(false);
+  /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
+  const [claraBreathing, setClaraBreathing] = useState(false);
+
   const [audience, setAudience] = useState<ClaraAudience>("homeowner");
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
