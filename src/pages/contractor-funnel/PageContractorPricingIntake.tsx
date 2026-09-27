@@ -481,126 +481,157 @@ export default function PageContractorPricingIntake() {
     ),
   };
 
-  /* Étape 1 — domaine, territoire et capacité sur un seul écran. */
+  /* Étape 1 — Votre entreprise : résumé prérempli, modifiable, confirmé une fois. */
+  const summaryReady = Boolean(identityKnown && data.company_name && data.trade_primary && data.city);
   const profileStep: Step = {
     key: "profile",
-    question: identityKnown
-      ? "Confirmez votre domaine, votre territoire et votre capacité."
-      : "Commençons. Quelle est votre entreprise?",
-    hint: identityKnown
-      ? "Nous avons prérempli ce que nous savons déjà. Complétez seulement ce qui manque."
-      : "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
-    isValid: (d) =>
-      Boolean(d.company_name && d.trade_primary && d.city && (d.monthly_capacity ?? 0) > 0),
+    question: summaryReady && !editingProfile
+      ? "Voici ce que nous avons trouvé sur votre entreprise. Est-ce exact?"
+      : identityKnown ? "Complétez votre entreprise." : "Commençons. Quelle est votre entreprise?",
+    hint: summaryReady && !editingProfile
+      ? "Corrigez au besoin. Vos corrections ne seront jamais remplacées par une donnée trouvée en ligne."
+      : identityKnown
+        ? "Complétez seulement ce qui manque."
+        : "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
+    isValid: (d) => Boolean(d.company_name && d.trade_primary && d.city),
     render: (d, set) => (
-      <div className="space-y-3">
-        {!identityKnown ? (
-          identityStep.render(d, set)
-        ) : (
-          <>
-            <TradePickerSheet
-              label="Domaine principal"
-              sheetTitle="Votre domaine principal"
-              placeholder="Choisir mon domaine"
-              value={tradeSlugOf(d.trade_primary)}
-              fallbackLabel={d.trade_primary ?? null}
-              onChange={(trade) => { confirm("trade_primary"); set({ trade_primary: trade.label }); }}
-              testId="trade-primary-picker-scope"
-            />
-            <TextInput
-              label="Ville principale desservie"
-              value={d.city ?? ""}
-              placeholder="Ex. Laval, Montréal, Terrebonne"
-              onChange={(v) => { confirm("city"); set({ city: v }); }}
-            />
-          </>
-        )}
-        <NumberInput
-          label="Rayon desservi autour de cette ville (km)"
-          value={d.service_radius_km ?? null}
-          onChange={(v) => set({ service_radius_km: v ?? undefined })}
-          min={5}
-          max={300}
-          placeholder="Ex. 40"
-        />
-        <NumberInput
-          label="Capacité mensuelle (nouveaux projets)"
-          value={d.monthly_capacity ?? null}
-          onChange={(v) => set({ monthly_capacity: v ?? undefined })}
-          min={1}
-          max={200}
-          placeholder="Ex. 6"
-        />
-      </div>
+      summaryReady && !editingProfile ? (
+        <div className="space-y-2 text-sm" data-testid="company-summary">
+          {[
+            ["Entreprise", d.company_name],
+            ["Métier principal", d.trade_primary],
+            ["Territoire", `${d.city}${d.service_radius_km ? ` · ${d.service_radius_km} km` : ""}`],
+            ["Capacité de travaux", d.monthly_capacity ? `${d.monthly_capacity} projets/mois` : "Non indiquée"],
+          ].map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-3 border-b border-white/5 pb-2">
+              <span className="text-white/55">{k}</span>
+              <span className="text-white text-right">{v}</span>
+            </div>
+          ))}
+          <button type="button" onClick={() => setEditingProfile(true)} className="pt-2 text-xs text-white/60 underline underline-offset-4">
+            Modifier
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {!identityKnown ? (
+            identityStep.render(d, set)
+          ) : (
+            <>
+              <TradePickerSheet
+                label="Métier principal"
+                sheetTitle="Votre métier principal"
+                placeholder="Choisir mon métier"
+                value={tradeSlugOf(d.trade_primary)}
+                fallbackLabel={d.trade_primary ?? null}
+                onChange={(trade) => { confirm("trade_primary"); set({ trade_primary: trade.label }); }}
+                testId="trade-primary-picker-scope"
+              />
+              <TextInput
+                label="Ville principale desservie"
+                value={d.city ?? ""}
+                placeholder="Ex. Laval, Montréal, Terrebonne"
+                onChange={(v) => { confirm("city"); set({ city: v }); }}
+              />
+            </>
+          )}
+          <NumberInput
+            label="Rayon desservi autour de cette ville (km)"
+            value={d.service_radius_km ?? null}
+            onChange={(v) => set({ service_radius_km: v ?? undefined })}
+            min={5}
+            max={300}
+            placeholder="Ex. 40"
+          />
+          <NumberInput
+            label="Capacité de travaux (projets réalisables par mois, optionnel)"
+            value={d.monthly_capacity ?? null}
+            onChange={(v) => set({ monthly_capacity: v ?? undefined })}
+            min={1}
+            max={200}
+            placeholder="Ex. 6"
+          />
+        </div>
+      )
     ),
   };
 
-  /* Étape 2 — un seul objectif : contrats OU chiffre d'affaires. */
+  /* Étape 2 — Votre objectif financier, calcul transparent, capacité du mois prochain. */
   const objectiveStep: Step = {
     key: "objective",
-    question: "Combien de nouveaux contrats ou quel chiffre d'affaires supplémentaire souhaitez-vous obtenir?",
-    hint: "Choisissez une seule mesure. Nous la convertissons en rendez-vous exclusifs.",
+    question: "Combien d'argent aimeriez-vous faire de plus cette année avec votre entreprise?",
+    hint: "Un montant suffit. Nous le traduisons en rendez-vous, avec des hypothèses que vous pouvez corriger.",
     isValid: (d) => Boolean(objectiveToPayload(d)),
     render: (d, set) => {
       const g = d as GoalFields;
-      const mode = g.objective_mode ?? "contracts";
-      const calc = objectiveToPayload(d);
+      const kind = g.goal_kind ?? "sales";
+      const calc = objectiveToPayload({ ...d, next_month_appointments: g.next_month_appointments || 1 } as Partial<PricingIntakeInput>);
+      const setG = (p: Partial<GoalFields>) => set(p as Partial<PricingIntakeInput>);
+      const months = (g.horizon ?? "12m") === "year_end" ? monthsToYearEnd() : 12;
       return (
         <div className="space-y-3">
+          <NumberInput
+            label="Montant supplémentaire ($)"
+            value={g.goal_amount ?? null}
+            onChange={(v) => setG({ goal_amount: v ?? undefined })}
+            min={500}
+            max={10000000}
+            step={1000}
+            placeholder="Ex. 30000"
+          />
           <ChoiceGroup
-            label="Mon objectif"
-            value={mode}
-            onChange={(v) => set({ objective_mode: v as "contracts" | "revenue" } as Partial<PricingIntakeInput>)}
+            label="Il s'agit de"
+            value={kind}
+            onChange={(v) => setG({ goal_kind: v as "sales" | "profit" })}
             options={[
-              { v: "contracts", l: "Contrats" },
-              { v: "revenue", l: "Chiffre d'affaires" },
+              { v: "sales", l: "Ventes supplémentaires" },
+              { v: "profit", l: "Profit supplémentaire" },
             ]}
           />
-          {mode === "contracts" ? (
-            <NumberInput
-              label="Nouveaux contrats visés"
-              value={g.contract_goal_value ?? null}
-              onChange={(v) => set({ contract_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
-              min={1}
-              max={2000}
-              placeholder="Ex. 5"
-            />
-          ) : (
-            <NumberInput
-              label="Chiffre d'affaires supplémentaire ($)"
-              value={g.revenue_goal_value ?? null}
-              onChange={(v) => set({ revenue_goal_value: v ?? undefined } as Partial<PricingIntakeInput>)}
-              min={500}
-              max={10000000}
-              step={1000}
-              placeholder="Ex. 50000"
-            />
-          )}
           <ChoiceGroup
-            label="Période"
-            value={g.contract_goal_unit ?? "month"}
-            onChange={(v) => set({ contract_goal_unit: v as "month" | "year" } as Partial<PricingIntakeInput>)}
+            label="Horizon"
+            value={g.horizon ?? "12m"}
+            onChange={(v) => setG({ horizon: v as "year_end" | "12m" })}
             options={[
-              { v: "month", l: "Par mois" },
-              { v: "year", l: "Par année" },
+              { v: "12m", l: "12 prochains mois" },
+              { v: "year_end", l: "D'ici la fin de l'année" },
             ]}
           />
           {calc && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/75" data-testid="objective-assumptions">
-              <p>
-                ≈ <strong className="text-white">{calc.contractsPerMonth} contrat{calc.contractsPerMonth > 1 ? "s" : ""}/mois</strong>{" "}
-                → <strong className="text-white">{calc.appointments} rendez-vous exclusifs/mois</strong>.
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 space-y-3" data-testid="objective-assumptions">
+              <p className="text-[11px] uppercase tracking-wider text-white/50">
+                Hypothèses {calc.assumptionsConfirmed ? "(modifiées par vous)" : "à confirmer — estimations UNPRO, non sourcées"}
               </p>
-              {calc.limitedByCapacity && (
-                <p className="mt-1 text-xs text-amber-200/90">Limité par votre capacité déclarée.</p>
-              )}
-              <p className="mt-2 text-[11px] text-white/50">
-                Hypothèses UNPRO, pas vos réponses : valeur moyenne d'un projet ≈{" "}
-                {calc.avgTicket.toLocaleString("fr-CA")} $ et {Math.round(calc.closeRate * 100)} % des
-                rendez-vous convertis en contrat. Vous pourrez les préciser plus tard.
+              <div className="grid grid-cols-2 gap-2">
+                <NumberInput label="Vente moyenne ($)" value={g.avg_sale ?? calc.avgSale} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
+                <NumberInput label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(calc.conversion * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={95} />
+                {kind === "profit" && (
+                  <NumberInput label="Marge (%)" value={g.margin_pct ?? Math.round(calc.margin * 100)} onChange={(v) => setG({ margin_pct: v ?? undefined })} min={1} max={95} />
+                )}
+              </div>
+              <p data-testid="objective-calc">
+                {kind === "profit" && <>{calc.contribution.toLocaleString("fr-CA")} $ de contribution par contrat → </>}
+                <strong className="text-white">{calc.contracts} contrats</strong> →{" "}
+                <strong className="text-white">{calc.appointmentsTotal} rendez-vous</strong> sur {months} mois
+                (≈ {calc.cadence}/mois).
+              </p>
+              <p className="text-[11px] text-white/55">
+                Estimation avant le coût d'UNPRO, qui dépend entièrement de ces hypothèses.
+                {kind === "profit" && " Une contribution estimée n'est pas un bénéfice net garanti."}
               </p>
             </div>
           )}
+          <NumberInput
+            label="Pour commencer, combien de rendez-vous pourriez-vous accueillir le mois prochain?"
+            value={g.next_month_appointments ?? null}
+            onChange={(v) => setG({ next_month_appointments: v ?? undefined })}
+            min={1}
+            max={200}
+            placeholder={calc ? `Ex. ${calc.cadence}` : "Ex. 4"}
+          />
+          <p className="text-[11px] text-white/50">
+            Ce sont des rencontres avec des clients, pas des chantiers. Votre entente de départ se base sur ce nombre.
+          </p>
         </div>
       );
     },
@@ -697,10 +728,10 @@ export default function PageContractorPricingIntake() {
           </div>
         )}
 
-        {/* Progression stable : 4 étapes (profil, objectif, forfait, paiement) */}
+        {/* Progression stable : 3 étapes (entreprise, objectif, entente) puis confirmation */}
         <div className="mb-8">
           <div className="flex items-center gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
@@ -710,7 +741,7 @@ export default function PageContractorPricingIntake() {
             ))}
           </div>
           <p className="text-xs text-white/50 mt-3 tracking-wider uppercase" data-testid="intake-step-label">
-            Étape {safeStep + 1} sur 4
+            Étape {safeStep + 1} sur 3
           </p>
         </div>
 
@@ -967,49 +998,68 @@ export type GoalFields = {
   contract_goal_unit?: "month" | "year";
   monthly_budget_cents?: number;
   pricing_mode?: "goal" | "budget";
-  /** Objectif exprimé par l'entrepreneur : contrats OU chiffre d'affaires. */
-  objective_mode?: "contracts" | "revenue";
-  revenue_goal_value?: number;
+  /** Objectif financier annuel : ventes OU profit supplémentaire. */
+  goal_kind?: "sales" | "profit";
+  goal_amount?: number;
+  horizon?: "year_end" | "12m";
+  /** Hypothèses modifiables (confirmées par l'entrepreneur si modifiées). */
+  avg_sale?: number;
+  margin_pct?: number;
+  conversion_pct?: number;
+  /** Rendez-vous que l'entrepreneur peut accueillir le mois prochain. */
+  next_month_appointments?: number;
 };
 
+/** Mois restants d'ici la fin de l'année (mois courant exclu, minimum 1). */
+export function monthsToYearEnd(now = new Date()): number {
+  return Math.max(1, 11 - now.getMonth());
+}
+
 /**
- * Hypothèses sectorielles (jamais présentées comme réponses de l'entrepreneur)
- * : valeur moyenne d'un projet et taux de conversion rendez-vous → contrat.
+ * Calcul transparent : ventes → contrats = ⌈objectif / vente moyenne⌉ ;
+ * profit → contrats = ⌈objectif / (vente moyenne × marge)⌉ ;
+ * rendez-vous = ⌈contrats / conversion⌉. Estimation avant le coût d'UNPRO.
+ * L'entente de départ se base sur la capacité du mois prochain, pas sur l'objectif annuel.
  */
-export function objectiveToPayload(d: Partial<PricingIntakeInput>): {
+export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Date()): {
   payload: Partial<PricingIntakeInput>;
-  avgTicket: number;
-  closeRate: number;
-  contractsPerMonth: number;
-  appointments: number;
-  limitedByCapacity: boolean;
+  avgSale: number;
+  margin: number;
+  conversion: number;
+  contribution: number;
+  contracts: number;
+  appointmentsTotal: number;
+  months: number;
+  cadence: number;
+  startAppointments: number;
+  assumptionsConfirmed: boolean;
 } | null {
   const g = d as GoalFields;
-  const unit = g.contract_goal_unit ?? "month";
-  const avgTicket = avgTicketFor(d.trade_primary);
-  const closeRate = closeRateFor(d.trade_primary);
-  const mode = g.objective_mode ?? "contracts";
-  const raw = mode === "revenue" ? (g.revenue_goal_value ?? 0) / avgTicket : g.contract_goal_value ?? 0;
-  if (!raw || raw <= 0) return null;
-  const perMonth = unit === "year" ? raw / 12 : raw;
-  const contractsPerMonth = Math.max(1, Math.ceil(perMonth));
-  const needed = Math.max(1, Math.ceil(contractsPerMonth / closeRate));
-  const cap = d.monthly_capacity ?? 0;
-  const capAppts = cap > 0 ? Math.max(1, Math.ceil(cap / closeRate)) : needed;
-  const appointments = Math.min(needed, capAppts);
+  const kind = g.goal_kind ?? "sales";
+  const amount = g.goal_amount ?? 0;
+  if (!amount || amount <= 0) return null;
+  const avgSale = g.avg_sale && g.avg_sale > 0 ? g.avg_sale : avgTicketFor(d.trade_primary);
+  const margin = Math.min(0.95, Math.max(0.01, (g.margin_pct ?? 30) / 100));
+  const conversion = Math.min(0.95, Math.max(0.01, (g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)) / 100));
+  const contribution = kind === "profit" ? avgSale * margin : avgSale;
+  const contracts = Math.max(1, Math.ceil(amount / contribution));
+  const appointmentsTotal = Math.max(1, Math.ceil(contracts / conversion));
+  const months = (g.horizon ?? "12m") === "year_end" ? monthsToYearEnd(now) : 12;
+  const cadence = Math.max(1, Math.ceil(appointmentsTotal / months));
+  const next = g.next_month_appointments ?? 0;
+  if (!next || next <= 0) return null;
+  const startAppointments = Math.min(cadence, next);
   return {
-    avgTicket,
-    closeRate,
-    contractsPerMonth,
-    appointments,
-    limitedByCapacity: appointments < needed,
+    avgSale, margin, conversion, contribution, contracts, appointmentsTotal, months, cadence,
+    startAppointments,
+    assumptionsConfirmed: Boolean(g.avg_sale || g.conversion_pct || (kind === "profit" && g.margin_pct)),
     payload: {
       ...d,
-      contract_goal_value: Math.max(1, Math.round(raw)),
-      contract_goal_unit: unit,
-      average_project_value: avgTicket,
-      close_rate_estimate: closeRate,
-      target_monthly_appointments: appointments,
+      contract_goal_value: contracts,
+      contract_goal_unit: "year",
+      average_project_value: avgSale,
+      close_rate_estimate: conversion,
+      target_monthly_appointments: startAppointments,
       pricing_mode: "goal",
       monthly_budget_cents: undefined,
     } as Partial<PricingIntakeInput>,
