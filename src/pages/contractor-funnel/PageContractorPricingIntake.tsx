@@ -797,7 +797,7 @@ export default function PageContractorPricingIntake() {
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                {isLast ? "Voir mon entente de départ" : summaryReady && !editingProfile ? "Confirmer et continuer" : "Continuer"}
+                {isLast ? "Voir ma proposition" : summaryReady && !editingProfile ? "Confirmer et continuer" : "Continuer"}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
