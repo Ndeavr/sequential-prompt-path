@@ -720,13 +720,21 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (!mountedRef.current) return;
     const messageId = uid();
     setQuickReplies(null);
-    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "" }]);
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    // Courte respiration avant la réponse : « Clara écrit… » reste dans le fil.
+    if (!reducedMotion) {
+      setClaraBreathing(true);
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 400 + Math.round(Math.random() * 300)));
+      if (!mountedRef.current) return;
+      setClaraBreathing(false);
+    }
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "" }]);
     // Affichage progressif seulement : le texte enregistré reste exact.
     setClaraTyping(true);
     await playTyping(text, (value) => {
       setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value } : m)));
     }, { reducedMotion, isAlive: () => mountedRef.current });
+
     if (!mountedRef.current) return;
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     // L’enregistrement se fait en arrière-plan : aucun « Analyse en cours… » après une question.
