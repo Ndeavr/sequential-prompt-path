@@ -28,6 +28,8 @@ import DashObjective from "@/components/pro-dashboard/DashObjective";
 import DashWaitlistStatus from "@/components/pro-dashboard/DashWaitlistStatus";
 import DashRevenueChart from "@/components/pro-dashboard/DashRevenueChart";
 import DashResponseTime from "@/components/pro-dashboard/DashResponseTime";
+import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
+import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
 import { motion } from "framer-motion";
 
 const ProDashboard = () => {
@@ -49,9 +51,25 @@ const ProDashboard = () => {
   const completedAppts = appts.filter(a => a.status === "completed").length;
   const currentPlan = planId ?? "recrue";
 
+  // Activation confirmée côté serveur uniquement : tant qu'elle n'est pas
+  // acquise, l'entrepreneur voit un seul écran avec une seule prochaine action.
+  const isActivated =
+    profile?.activation_status === "activated" || profile?.account_status === "active";
+
+  if (!isActivated) {
+    return (
+      <ContractorLayout>
+        <div className="dark pb-24">
+          <ProActivationCompact profile={profile} />
+        </div>
+      </ContractorLayout>
+    );
+  }
+
   return (
     <ContractorLayout>
       <div className="dark max-w-4xl mx-auto space-y-5 pb-24">
+        <ProNextActionCard profile={profile} appointments={appts} />
         <DashHero profile={profile} completeness={completeness} aipp={aipp} />
         <CardCalendarConnectionRole role="contractor" surface="dashboard_pro" />
         <CompatibilityEntryCard contractorId={profile?.id} />
@@ -90,16 +108,6 @@ const ProDashboard = () => {
           <p className="text-xs text-muted-foreground">Des rendez-vous exclusifs. Pas des leads partagés.</p>
         </motion.div>
 
-        {/* Mobile sticky CTA */}
-        <div className="md:hidden fixed bottom-16 left-0 right-0 z-30 px-4 pb-2">
-          <motion.button
-            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm shadow-[var(--shadow-glow)]"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          >
-            Activer ma visibilité IA
-          </motion.button>
-        </div>
       </div>
     </ContractorLayout>
   );

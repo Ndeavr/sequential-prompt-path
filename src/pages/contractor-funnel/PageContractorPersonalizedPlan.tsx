@@ -131,6 +131,13 @@ export default function PageContractorPersonalizedPlan() {
   const waitlisted = quote?.pricing_status === "waitlisted";
   const planLabel = PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
 
+  // Taxes du Québec affichées avant paiement : TPS 5 % + TVQ 9,975 %.
+  // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
+  const baseCents = quote?.recommended_monthly_price ?? 0;
+  const gstCents = Math.round(baseCents * 0.05);
+  const qstCents = Math.round(baseCents * 0.09975);
+  const totalWithTaxCents = baseCents + gstCents + qstCents;
+
   // Étape « plan présenté » : écrite une seule fois par session et par devis.
   useEffect(() => {
     if (!quote) return;
@@ -444,12 +451,17 @@ export default function PageContractorPersonalizedPlan() {
                 <div className="mt-6 border-t border-white/10 pt-5" data-testid="price-block">
                   <div className="flex items-baseline gap-2">
                     <div className="text-4xl font-semibold tracking-[-0.04em]" data-testid="plan-price">{formatCAD(quote.recommended_monthly_price)}</div>
-                    <div className="text-white/60">/ mois</div>
+                    <div className="text-white/60">/ mois, avant taxes</div>
                   </div>
-                  <p className="text-sm text-white/70 mt-2">
-                    Montant dû aujourd'hui : <strong className="text-white">{formatCAD(quote.recommended_monthly_price)}</strong>, puis le même montant chaque mois.
-                  </p>
-                  <p className="text-[11px] text-white/50 mt-1">Aucuns frais d'ouverture. Les taxes applicables sont indiquées sur la page de paiement sécurisée avant confirmation.</p>
+                  <div className="mt-3 space-y-1 text-sm text-white/75" data-testid="tax-breakdown">
+                    <div className="flex justify-between"><span>Abonnement mensuel</span><span>{formatCAD(quote.recommended_monthly_price)}</span></div>
+                    <div className="flex justify-between"><span>TPS (5 %)</span><span>{formatCAD(gstCents)}</span></div>
+                    <div className="flex justify-between"><span>TVQ (9,975 %)</span><span>{formatCAD(qstCents)}</span></div>
+                    <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
+                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCAD(totalWithTaxCents)}</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-white/50 mt-2">Aucuns frais d'ouverture. Le même montant, taxes incluses, est facturé chaque mois.</p>
                 </div>
 
                 {checkoutError && (

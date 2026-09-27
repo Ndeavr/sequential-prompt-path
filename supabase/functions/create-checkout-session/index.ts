@@ -20,6 +20,48 @@ const corsHeaders = {
 
 // Stripe price IDs are now fetched from plan_catalog table (no hardcoded map)
 
+// ── Taxes du Québec : TPS 5 % + TVQ 9,975 % ──
+// Source de vérité serveur. Les taux Stripe sont créés une seule fois par clé
+// (test ou live) puis retrouvés par leur metadata unpro_tax.
+const QUEBEC_TAX_DEFS = [
+  { key: "gst_5", display_name: "TPS", percentage: 5, jurisdiction: "CA" },
+  { key: "qst_9975", display_name: "TVQ", percentage: 9.975, jurisdiction: "CA-QC" },
+] as const;
+
+const quebecTaxRateCache = new Map<string, string[]>();
+
+async function ensureQuebecTaxRates(stripe: Stripe): Promise<string[]> {
+  const cacheKey = "quebec";
+  const cached = quebecTaxRateCache.get(cacheKey);
+  if (cached) return cached;
+
+  const existing = await stripe.taxRates.list({ active: true, limit: 100 });
+  const ids: string[] = [];
+
+  for (const def of QUEBEC_TAX_DEFS) {
+    const found = existing.data.find(
+      (r) => r.metadata?.unpro_tax === def.key && r.inclusive === false,
+    );
+    if (found) {
+      ids.push(found.id);
+      continue;
+    }
+    const created = await stripe.taxRates.create({
+      display_name: def.display_name,
+      description: `${def.display_name} (${def.percentage} %)`,
+      percentage: def.percentage,
+      inclusive: false,
+      country: "CA",
+      state: def.jurisdiction === "CA-QC" ? "QC" : undefined,
+      metadata: { unpro_tax: def.key },
+    });
+    ids.push(created.id);
+  }
+
+  quebecTaxRateCache.set(cacheKey, ids);
+  return ids;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -833,6 +875,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Taxes du Québec (TPS 5 % + TVQ 9,975 %) ──
+    // Les taux sont créés une seule fois puis réutilisés (repérés par metadata).
+    const quebecTaxRateIds = await ensureQuebecTaxRates(stripe);
+    for (const li of lineItems) {
+      li.tax_rates = quebecTaxRateIds;
+    }
+
     // Build checkout config
     const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
@@ -884,6 +933,7 @@ Deno.serve(async (req) => {
                 },
               },
               quantity: 1,
+              tax_rates: quebecTaxRateIds,
             },
           ],
         }),
