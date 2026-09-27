@@ -86,9 +86,17 @@ export default function PageUnproActivate() {
         });
         if (cancelled) return;
         if (error || !data?.ok) {
-          const serverReason =
-            (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
-          console.error("[ACTIVATION_RESOLVE_FAILED]", { reason: serverReason, error });
+          // Le corps JSON d'une réponse non-2xx n'arrive pas dans `data` :
+          // il faut lire `error.context`. Sans ça, l'UI affichait
+          // "network_error" alors que le serveur avait répondu 409/410/404.
+          const extracted = await extractEdgeReason(error, data);
+          if (cancelled) return;
+          const serverReason = extracted ?? (error ? "network_error" : "unknown");
+          console.error("[ACTIVATION_RESOLVE_FAILED]", {
+            reason: serverReason,
+            status: extractEdgeStatus(error),
+            error,
+          });
           setReason(serverReason);
           setState(
             serverReason === "lookup_failed" ||
