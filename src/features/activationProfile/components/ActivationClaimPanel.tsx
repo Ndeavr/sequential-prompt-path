@@ -73,6 +73,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         return;
       }
       setAlreadyClaimed(Boolean(data.already_claimed));
+      setContractorId((data as { contractor_id?: string | null }).contractor_id ?? null);
       const fy = (data as { free_year?: { ok?: boolean; slot_number?: number; founder_end?: string } | null }).free_year;
       setGrantedYear(fy?.ok ? { slot_number: fy.slot_number, founder_end: fy.founder_end } : null);
       setPhase("done");
