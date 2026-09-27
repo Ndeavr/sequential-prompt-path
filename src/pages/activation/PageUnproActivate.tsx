@@ -22,6 +22,27 @@ import ActivationClaimPanel from "@/features/activationProfile/components/Activa
 import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { extractEdgeReason, extractEdgeStatus } from "@/lib/edgeFunctionError";
+
+/** Messages d'échec du jeton, alignés sur les `reason` du serveur. */
+const RESOLVE_ERRORS: Record<string, { title: string; body: string }> = {
+  already_claimed: {
+    title: "Ce lien est déjà rattaché à un autre compte",
+    body: "Écrivez-nous et nous vous redonnerons l'accès à votre profil.",
+  },
+  token_revoked: {
+    title: "Ce lien a été désactivé",
+    body: "Votre place reste réservée. Vous pouvez activer votre profil directement ici.",
+  },
+  token_not_found: {
+    title: "Ce lien est invalide ou expiré",
+    body: "Le lien a peut-être été tronqué par votre messagerie. Vous pouvez activer votre profil directement.",
+  },
+  token_expired: {
+    title: "Ce lien est invalide ou expiré",
+    body: "Écrivez-nous et nous vous en enverrons un nouveau, ou activez votre profil directement.",
+  },
+};
 
 const BENEFITS = [
   "Votre profil publié et optimisé pour les IA et les propriétaires",
