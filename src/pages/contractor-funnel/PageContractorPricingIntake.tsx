@@ -96,6 +96,7 @@ export default function PageContractorPricingIntake() {
   const [booting, setBooting] = useState<boolean>(Boolean(auditId && auditToken));
   const [audit, setAudit] = useState<AuditContext | null>(null);
   const [step, setStep] = useState(0);
+  const [editingProfile, setEditingProfile] = useState(false);
   const [data, setData] = useState<Partial<PricingIntakeInput>>(BASE_DEFAULTS);
   const [submitting, setSubmitting] = useState(false);
   const [detected, setDetected] = useState<{ trade: boolean; city: boolean }>({ trade: false, city: false });
@@ -657,10 +658,13 @@ export default function PageContractorPricingIntake() {
     void trackFunnelStep("goals_completed", {
       subjectId: payload.company_name ?? null,
       metadata: {
-        objective_mode: (data as GoalFields).objective_mode ?? "contracts",
+        goal_kind: (data as GoalFields).goal_kind ?? "sales",
+        horizon: (data as GoalFields).horizon ?? "12m",
+        average_project_value: payload.average_project_value ?? null,
+        close_rate_estimate: payload.close_rate_estimate ?? null,
         target_monthly_appointments: payload.target_monthly_appointments ?? null,
         monthly_capacity: payload.monthly_capacity ?? null,
-        assumptions: "sector_defaults",
+        assumptions_confirmed: objectiveToPayload(data)?.assumptionsConfirmed ?? false,
       },
     });
     try {
@@ -1060,6 +1064,7 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
       average_project_value: avgSale,
       close_rate_estimate: conversion,
       target_monthly_appointments: startAppointments,
+      monthly_capacity: d.monthly_capacity ?? next,
       pricing_mode: "goal",
       monthly_budget_cents: undefined,
     } as Partial<PricingIntakeInput>,
