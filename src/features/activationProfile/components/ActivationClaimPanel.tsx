@@ -62,7 +62,13 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         body: { token },
       });
       if (fnError || !data?.ok) {
-        const reason = (data as { reason?: string } | null)?.reason ?? "network_error";
+        // Réponse non-2xx : le `reason` structuré vit dans `fnError.context`,
+        // pas dans `data`. Sans cette lecture on affichait "network_error".
+        const reason = (await extractEdgeReason(fnError, data)) ?? "network_error";
+        console.error("[ACTIVATION_CLAIM_FAILED]", {
+          reason,
+          status: extractEdgeStatus(fnError),
+        });
         setError(CLAIM_ERRORS[reason] ?? CLAIM_ERRORS.network_error);
         setPhase("failed");
         void logFunnelEvent({
