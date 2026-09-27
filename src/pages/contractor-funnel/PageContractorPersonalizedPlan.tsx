@@ -436,7 +436,7 @@ export default function PageContractorPersonalizedPlan() {
                 <div className="mt-5 space-y-1 text-xs text-white/60 leading-relaxed">
                   <p className="text-xs uppercase tracking-wider text-white/50">Conditions</p>
                   <p>{guarantee.checkoutSecondaryLabel}</p>
-                  <p>Abonnement mensuel, résiliable en tout temps. L'engagement de rendez-vous se calcule sur 12 mois d'abonnement actif : si vous résiliez avant, il s'applique au prorata des mois payés.</p>
+                  <p>Facturation mensuelle, sans engagement annuel. L'engagement de rendez-vous indiqué ci-dessus est calculé sur 12 mois d'abonnement actif; une résiliation avant 12 mois met fin à l'engagement pour les mois non payés.</p>
                   <p>Avant de recevoir des mandats, votre licence RBQ et votre fiche doivent être vérifiées par UNPRO. Le paiement ne remplace pas cette vérification.</p>
                   {waitlisted && <p className="text-amber-200/90">Votre métier est en forte demande dans ce territoire : une place d'attente vous est proposée.</p>}
                 </div>
