@@ -35132,6 +35132,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_invite_events: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          outcome: string
+          prospect_id: string | null
+          reason: string | null
+          token_hash: string | null
+          token_prefix: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          outcome?: string
+          prospect_id?: string | null
+          reason?: string | null
+          token_hash?: string | null
+          token_prefix?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          outcome?: string
+          prospect_id?: string | null
+          reason?: string | null
+          token_hash?: string | null
+          token_prefix?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contractor_lead_compliance_notes: {
         Row: {
           contractor_lead_id: string
@@ -94757,15 +94799,22 @@ export type Database = {
           ai_metadata: Json
           attribution_key: string | null
           campaign_id: string | null
+          claimed_at: string | null
+          claimed_by: string | null
           click_count: number
           clicked_at: string | null
           created_at: string
           expires_at: string
+          first_opened_at: string | null
           first_touch_source: string | null
           human_unpro_touches: number
+          last_opened_at: string | null
           last_touch_source: string | null
+          open_count: number
           outreach_variant: string | null
           prospect_id: string
+          revoked_at: string | null
+          revoked_reason: string | null
           sms_log_id: string | null
           token: string
         }
@@ -94778,15 +94827,22 @@ export type Database = {
           ai_metadata?: Json
           attribution_key?: string | null
           campaign_id?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
           expires_at?: string
+          first_opened_at?: string | null
           first_touch_source?: string | null
           human_unpro_touches?: number
+          last_opened_at?: string | null
           last_touch_source?: string | null
+          open_count?: number
           outreach_variant?: string | null
           prospect_id: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
           sms_log_id?: string | null
           token: string
         }
@@ -94799,15 +94855,22 @@ export type Database = {
           ai_metadata?: Json
           attribution_key?: string | null
           campaign_id?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
           expires_at?: string
+          first_opened_at?: string | null
           first_touch_source?: string | null
           human_unpro_touches?: number
+          last_opened_at?: string | null
           last_touch_source?: string | null
+          open_count?: number
           outreach_variant?: string | null
           prospect_id?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
           sms_log_id?: string | null
           token?: string
         }
