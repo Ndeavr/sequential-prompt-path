@@ -117,7 +117,9 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------- resolve
-    const cols = "token, prospect_id, created_at, expires_at, clicked_at, click_count, campaign_id";
+    const cols =
+      "token, prospect_id, created_at, expires_at, clicked_at, click_count, campaign_id, " +
+      "revoked_at, revoked_reason, open_count";
     const { data: row, error } = await supabase
       .from("verified_prospect_tokens")
       .select(cols)
@@ -130,8 +132,10 @@ Deno.serve(async (req) => {
     }
 
     // Messaging apps sometimes truncate the link — unambiguous prefix fallback.
+    // Le préfixe minimal est volontairement long : un préfixe court ouvrirait
+    // la porte à l'énumération de jetons.
     let resolved = row;
-    if (!resolved && token.length >= 10) {
+    if (!resolved && token.length >= 16) {
       const { data: candidates, error: prefixError } = await supabase
         .from("verified_prospect_tokens")
         .select(cols)
@@ -142,13 +146,52 @@ Deno.serve(async (req) => {
       } else if (candidates && candidates.length === 1) {
         resolved = candidates[0];
       } else if (candidates && candidates.length > 1) {
+        await logInviteEvent(supabase, "token_ambiguous", { token, outcome: "blocked" });
         return json({ ok: false, reason: "token_ambiguous" }, 404);
       }
     }
-    if (!resolved) return json({ ok: false, reason: "token_not_found" }, 404);
+    if (!resolved) {
+      await logInviteEvent(supabase, "token_invalid", { token, outcome: "blocked", reason: "token_not_found" });
+      return json({ ok: false, reason: "token_not_found" }, 404);
+    }
+    if (resolved.revoked_at) {
+      await logInviteEvent(supabase, "token_revoked", {
+        token,
+        prospect_id: resolved.prospect_id,
+        outcome: "blocked",
+        reason: resolved.revoked_reason ?? "revoked",
+      });
+      return json({ ok: false, reason: "token_revoked" }, 410);
+    }
     if (resolved.expires_at && new Date(resolved.expires_at).getTime() <= Date.now()) {
+      await logInviteEvent(supabase, "token_expired", {
+        token,
+        prospect_id: resolved.prospect_id,
+        outcome: "blocked",
+        reason: "token_expired",
+      });
       return json({ ok: false, reason: "token_expired" }, 410);
     }
+
+    // Compteur d'ouvertures réel (jamais en mode aperçu QA).
+    if (!preview) {
+      const nowIso = new Date().toISOString();
+      try {
+        await supabase
+          .from("verified_prospect_tokens")
+          .update({
+            open_count: (resolved.open_count ?? 0) + 1,
+            first_opened_at: resolved.first_opened_at ?? nowIso,
+            last_opened_at: nowIso,
+          })
+          .eq("token", resolved.token);
+      } catch (e) {
+        console.error("[activation-token-resolve] open_count_failed", String(e));
+      }
+      await logInviteEvent(supabase, "link_opened", { token: resolved.token, prospect_id: resolved.prospect_id });
+      await logInviteEvent(supabase, "token_validated", { token: resolved.token, prospect_id: resolved.prospect_id });
+    }
+
 
     const { data: prospect } = await supabase
       .from("verified_contractor_prospects")
