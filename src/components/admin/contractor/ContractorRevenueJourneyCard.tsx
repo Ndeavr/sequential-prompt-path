@@ -35,7 +35,7 @@ export function useContractorRevenueJourney(contractorId?: string) {
           .limit(20),
         supabase
           .from("contractor_subscriptions")
-          .select("id, status, plan_code, current_period_end, created_at")
+          .select("id, status, plan_id, current_period_end, created_at")
           .eq("contractor_id", contractorId!)
           .order("created_at", { ascending: false })
           .limit(5),
@@ -84,7 +84,7 @@ export function useContractorRevenueJourney(contractorId?: string) {
           detail: paidQuote
             ? `Devis payé ${paidQuote.id.slice(0, 8)} · ${fmt(paidQuote.accepted_at ?? paidQuote.created_at)}`
             : activeSub
-              ? `Abonnement actif ${activeSub.plan_code ?? ""} · ${fmt(activeSub.created_at)}`
+              ? `Abonnement actif ${activeSub.plan_id ?? ""} · ${fmt(activeSub.created_at)}`
               : "Aucun paiement ni crédit confirmé",
         },
         {
