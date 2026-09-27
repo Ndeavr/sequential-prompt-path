@@ -8,15 +8,17 @@
 export type TypingFrame = { text: string; delay: number };
 
 const NEARBY = "azertyuiopqsdfghjklmwxcvbn";
-/** Probabilité qu'un message contienne une autocorrection visible. */
-export const CLARA_TYPO_CHANCE = 0.35;
+/** Aucune faute artificielle : la révélation est propre par défaut. */
+export const CLARA_TYPO_CHANCE = 0;
 
 function charDelay(char: string, rand: () => number): number {
-  const base = 25 + Math.round(rand() * 40); // 25–65 ms
-  if (/[.!?…]/.test(char)) return base + 260 + Math.round(rand() * 160);
-  if (/[,;:—]/.test(char)) return base + 120 + Math.round(rand() * 80);
+  // Cadence lisible : ~20–28 ms par caractère (35–50 caractères/seconde).
+  const base = 20 + Math.round(rand() * 8);
+  if (/[.!?…]/.test(char)) return base + 220 + Math.round(rand() * 120);
+  if (/[,;:—]/.test(char)) return base + 90 + Math.round(rand() * 60);
   return base;
 }
+
 
 /**
  * Construit la séquence d'images d'écriture. Au plus une autocorrection
