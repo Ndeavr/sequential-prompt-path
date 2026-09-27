@@ -933,6 +933,7 @@ Deno.serve(async (req) => {
                 },
               },
               quantity: 1,
+              tax_rates: quebecTaxRateIds,
             },
           ],
         }),
