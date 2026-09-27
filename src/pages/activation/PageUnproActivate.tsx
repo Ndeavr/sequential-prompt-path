@@ -310,6 +310,8 @@ export default function PageUnproActivate() {
                   maskedContact={contact?.masked ?? null}
                   freeYear={freeYear}
                   preview={preview}
+                  trade={profile?.trade ?? prospect.category ?? null}
+                  city={profile?.city ?? prospect.city ?? null}
                 />
               </div>
             )}
