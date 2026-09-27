@@ -833,6 +833,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Taxes du Québec (TPS 5 % + TVQ 9,975 %) ──
+    // Les taux sont créés une seule fois puis réutilisés (repérés par metadata).
+    const quebecTaxRateIds = await ensureQuebecTaxRates(stripe);
+    for (const li of lineItems) {
+      li.tax_rates = quebecTaxRateIds;
+    }
+
     // Build checkout config
     const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
