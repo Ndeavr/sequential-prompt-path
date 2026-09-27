@@ -131,6 +131,13 @@ export default function PageContractorPersonalizedPlan() {
   const waitlisted = quote?.pricing_status === "waitlisted";
   const planLabel = PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
 
+  // Taxes du Québec affichées avant paiement : TPS 5 % + TVQ 9,975 %.
+  // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
+  const baseCents = quote?.recommended_monthly_price ?? 0;
+  const gstCents = Math.round(baseCents * 0.05);
+  const qstCents = Math.round(baseCents * 0.09975);
+  const totalWithTaxCents = baseCents + gstCents + qstCents;
+
   // Étape « plan présenté » : écrite une seule fois par session et par devis.
   useEffect(() => {
     if (!quote) return;
