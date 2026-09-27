@@ -24,6 +24,7 @@ import TradePickerSheet from "@/components/contractor/TradePickerSheet";
 import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 import { setActiveActivationToken } from "@/lib/checkoutUrl";
 import { getKnownContractorContext } from "@/lib/contractorKnownContext";
+import { avgTicketFor, closeRateFor } from "@/config/scanCapacityTickets";
 
 type Step = {
   key: string;
@@ -253,6 +254,43 @@ export default function PageContractorPricingIntake() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey]);
+
+  /* ---------- Fiche entrepreneur rattachée au compte : source prioritaire ---------- */
+  const [linked, setLinked] = useState<{ id: string; business_name: string | null; address: string | null } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { data: c } = await supabase
+        .from("contractors")
+        .select("id,business_name,specialty,city,address,travel_radius_km")
+        .eq("user_id", auth.user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !c) return;
+      const { data: areas } = await supabase
+        .from("contractor_service_areas" as never)
+        .select("city_name,radius_km")
+        .eq("contractor_id", (c as { id: string }).id)
+        .limit(1);
+      if (cancelled) return;
+      const row = c as { id: string; business_name: string | null; specialty: string | null; city: string | null; address: string | null; travel_radius_km: number | null };
+      const area = (areas as unknown as Array<{ city_name: string | null; radius_km: number | null }> | null)?.[0];
+      setLinked({ id: row.id, business_name: row.business_name, address: row.address });
+      setData((d) => ({
+        ...d,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : row.business_name || d.company_name,
+        trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : row.specialty || d.trade_primary,
+        city: confirmedFields.includes("city") ? d.city : area?.city_name || row.city || d.city,
+        service_radius_km: area?.radius_km ?? row.travel_radius_km ?? d.service_radius_km,
+      }));
+      if (row.business_name) setBusinessConfirmed(true);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const auditValid = Boolean(audit?.business_name);
   /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
