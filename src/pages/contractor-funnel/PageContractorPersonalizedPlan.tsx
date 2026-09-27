@@ -165,6 +165,30 @@ export default function PageContractorPersonalizedPlan() {
     }
   }, [quote, checkoutOutcome]);
 
+  /* Étape 4 : activation payante affichée SEULEMENT après confirmation serveur
+     (webhook Stripe → pricing_status = "paid"). Le retour Stripe seul ne suffit pas. */
+  const [paymentConfirm, setPaymentConfirm] = useState<"idle" | "waiting" | "paid" | "timeout">("idle");
+  useEffect(() => {
+    if (checkoutOutcome !== "success" || !quoteId) return;
+    let cancelled = false;
+    setPaymentConfirm("waiting");
+    void (async () => {
+      for (let i = 0; i < 30 && !cancelled; i++) {
+        try {
+          const q = await fetchPricingQuote(quoteId);
+          if (q?.pricing_status === "paid") {
+            if (!cancelled) setPaymentConfirm("paid");
+            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 2500);
+            return;
+          }
+        } catch { /* on réessaie */ }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      if (!cancelled) setPaymentConfirm("timeout");
+    })();
+    return () => { cancelled = true; };
+  }, [checkoutOutcome, quoteId, navigate]);
+
   const handleActivate = async () => {
     if (!quote) return;
     setCheckoutLoading(true);
@@ -230,6 +254,46 @@ export default function PageContractorPersonalizedPlan() {
     }
   };
 
+  if (paymentConfirm !== "idle") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
+        <div className="max-w-md text-center space-y-4" data-testid="payment-confirmation">
+          <p className="text-xs uppercase tracking-wider text-white/60">Étape 4 sur 4 · Paiement et activation</p>
+          {paymentConfirm === "waiting" && (
+            <>
+              <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-70" />
+              <h1 className="text-2xl font-semibold">Confirmation du paiement en cours…</h1>
+              <p className="text-white/70">Votre forfait sera activé dès que le paiement est confirmé.</p>
+            </>
+          )}
+          {paymentConfirm === "paid" && (
+            <>
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+              <h1 className="text-2xl font-semibold">Paiement confirmé. Forfait activé.</h1>
+              <ul className="text-sm text-white/75 space-y-1">
+                <li>Compte connecté ✓</li>
+                <li>Fiche rattachée{quote?.company_name ? ` : ${quote.company_name}` : ""} ✓</li>
+                <li>Forfait {planLabel} activé ✓</li>
+              </ul>
+              <button onClick={() => navigate("/pro", { replace: true })} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Ouvrir mon espace entrepreneur
+              </button>
+            </>
+          )}
+          {paymentConfirm === "timeout" && (
+            <>
+              <h1 className="text-2xl font-semibold">Paiement reçu, confirmation en attente.</h1>
+              <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
+              <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Vérifier à nouveau
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
@@ -244,7 +308,7 @@ export default function PageContractorPersonalizedPlan() {
         <div>
           <p className="text-lg mb-4">Aucun devis trouvé.</p>
           <button
-            onClick={() => navigate("/entrepreneur/onboarding")}
+            onClick={() => navigate("/entrepreneur/devis-personnalise")}
             className="rounded-full px-5 py-3 bg-amber-500 text-black font-semibold"
           >
             Repartir avec Clara
