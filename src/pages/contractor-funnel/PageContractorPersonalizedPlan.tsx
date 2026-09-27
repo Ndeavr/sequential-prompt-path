@@ -473,7 +473,7 @@ export default function PageContractorPersonalizedPlan() {
                   data-testid="activate-offer"
                   className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : "Activer mon entente"}
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? "Continuer vers le paiement" : "Activer mon offre gratuite"}
                 </button>
                 {checkoutOutcome === "canceled" && (
                   <p className="mt-2 text-xs text-white/60 text-center">Paiement annulé. Votre offre est conservée : vous pouvez reprendre ici.</p>
