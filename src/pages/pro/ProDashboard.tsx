@@ -106,16 +106,6 @@ const ProDashboard = () => {
           <p className="text-xs text-muted-foreground">Des rendez-vous exclusifs. Pas des leads partagés.</p>
         </motion.div>
 
-        {/* Mobile sticky CTA */}
-        <div className="md:hidden fixed bottom-16 left-0 right-0 z-30 px-4 pb-2">
-          <motion.button
-            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm shadow-[var(--shadow-glow)]"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          >
-            Activer ma visibilité IA
-          </motion.button>
-        </div>
       </div>
     </ContractorLayout>
   );
