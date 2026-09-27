@@ -14,6 +14,7 @@ import ContractorExpressSetup from "./ContractorExpressSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import type { FreeYearOffer } from "@/pages/activation/PageUnproActivate";
+import { extractEdgeReason, extractEdgeStatus } from "@/lib/edgeFunctionError";
 
 type Phase = "idle" | "verify" | "claiming" | "done" | "failed";
 
