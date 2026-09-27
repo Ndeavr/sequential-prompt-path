@@ -178,7 +178,7 @@ export default function PageContractorPersonalizedPlan() {
           const q = await fetchPricingQuote(quoteId);
           if (q?.pricing_status === "paid") {
             if (!cancelled) setPaymentConfirm("paid");
-            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 2500);
+            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
             return;
           }
         } catch { /* on réessaie */ }
@@ -258,23 +258,27 @@ export default function PageContractorPersonalizedPlan() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
         <div className="max-w-md text-center space-y-4" data-testid="payment-confirmation">
-          <p className="text-xs uppercase tracking-wider text-white/60">Étape 4 sur 4 · Paiement et activation</p>
+          <p className="text-xs uppercase tracking-wider text-white/60">Confirmation</p>
           {paymentConfirm === "waiting" && (
             <>
               <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-70" />
               <h1 className="text-2xl font-semibold">Confirmation du paiement en cours…</h1>
-              <p className="text-white/70">Votre forfait sera activé dès que le paiement est confirmé.</p>
+              <p className="text-white/70">Votre entente sera activée dès que le paiement est confirmé.</p>
             </>
           )}
           {paymentConfirm === "paid" && (
             <>
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-              <h1 className="text-2xl font-semibold">Paiement confirmé. Forfait activé.</h1>
+              <h1 className="text-2xl font-semibold">Votre entente est activée.</h1>
               <ul className="text-sm text-white/75 space-y-1">
                 <li>Compte connecté ✓</li>
                 <li>Fiche rattachée{quote?.company_name ? ` : ${quote.company_name}` : ""} ✓</li>
                 <li>Forfait {planLabel} activé ✓</li>
               </ul>
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] p-3 text-left text-xs text-white/80">
+                <p className="font-semibold text-amber-200">Avant de recevoir des mandats</p>
+                <p className="mt-1">UNPRO doit encore vérifier votre licence RBQ et votre fiche. Le paiement ne remplace pas cette vérification.</p>
+              </div>
               <button onClick={() => navigate("/pro", { replace: true })} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Ouvrir mon espace entrepreneur
               </button>
@@ -361,267 +365,127 @@ export default function PageContractorPersonalizedPlan() {
       </div>
 
       <div className="relative max-w-2xl mx-auto px-5 pt-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-8"
-        >
+        {/* En-tête — étape 3 sur 3 */}
+        <div className="mb-6">
           <p className="text-sm text-white/60 tracking-wide uppercase" data-testid="plan-step-label">
-            Étape 3 sur 4 · Votre forfait
+            Étape 3 sur 3 · Votre entente de départ
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2 tracking-[-0.04em]">
-            {quote.company_name
-              ? `Bonjour ${quote.company_name}.`
-              : "Voici votre plan."}
-            <br />
-            <span className="text-white/80">Votre plan recommandé.</span>
+            Pour commencer{quote.company_name ? `, ${quote.company_name}` : ""}.
           </h1>
-          {objective && (
-            <p className="mt-3 inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/75">
-              Objectif : {CONTRACTOR_OBJECTIVE_CTA[objective]}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              const carry = new URLSearchParams(searchParams);
-              const qs = carry.toString();
-              navigate(`/entrepreneur/devis-personnalise${qs ? `?${qs}` : ""}`);
-            }}
-            className="mt-3 block text-xs text-white/60 underline underline-offset-4 hover:text-white"
-          >
-            Ajuster mon forfait
-          </button>
-        </motion.div>
+        </div>
 
-        {/* Offre affilié — état EXACT vérifié en base. Aucune promesse non prouvée. */}
-        {offerState && (offerState.promo_valid || offerState.offer_exists) && (
+        {/* Compte déjà actif : aucune nouvelle invitation à payer. */}
+        {quote.pricing_status === "paid" && (
+          <GlassCard className="p-6 mb-5 border-emerald-400/30" >
+            <div data-testid="already-active">
+              <p className="text-lg font-semibold">Votre entente est déjà activée.</p>
+              <p className="text-sm text-white/70 mt-1">Aucun nouveau paiement n'est requis.</p>
+              <button onClick={() => navigate("/pro", { replace: true })} className="mt-4 rounded-full px-5 py-3 bg-amber-500 text-black font-semibold">
+                Ouvrir mon espace entrepreneur
+              </button>
+            </div>
+          </GlassCard>
+        )}
+
+        {/* Offre affilié — état EXACT vérifié en base. */}
+        {offerState && (offerState.promo_valid || (offerState.offer_exists && ["granted", "accepted", "offered"].includes(offerState.status ?? ""))) && (
           <GlassCard className="p-5 mb-5 border-emerald-400/30">
             <div className="flex items-center gap-2 mb-2 text-emerald-300">
               <CheckCircle2 className="w-4 h-4" />
-              <span className="text-xs uppercase tracking-wider">
-                Offre vérifiée
-              </span>
+              <span className="text-xs uppercase tracking-wider">Offre vérifiée</span>
             </div>
             {offerState.offer_exists && offerState.status === "granted" && (
-              <p className="text-sm text-white/80">
-                {offerState.remaining_appointments} rendez-vous qualifiés offerts
-                disponibles sur {offerState.granted_appointments} accordés.
-              </p>
+              <p className="text-sm text-white/80">{offerState.remaining_appointments} rendez-vous offerts disponibles sur {offerState.granted_appointments}.</p>
             )}
-            {offerState.offer_exists && offerState.status === "accepted" && (
-              <p className="text-sm text-white/80">
-                Offre acceptée : {offerState.offered_appointments} rendez-vous
-                qualifiés seront accordés dès l'activation de votre profil.
-              </p>
+            {offerState.offer_exists && (offerState.status === "accepted" || offerState.status === "offered") && (
+              <p className="text-sm text-white/80">{offerState.offered_appointments} rendez-vous offerts, accordés à l'activation.</p>
             )}
-            {offerState.offer_exists && offerState.status === "offered" && (
-              <p className="text-sm text-white/80">
-                {offerState.offered_appointments} rendez-vous qualifiés vous sont
-                proposés. Ils sont accordés une fois votre profil activé.
-              </p>
-            )}
-            {offerState.offer_exists && offerState.status === "consumed" && (
-              <p className="text-sm text-white/80">
-                Vos {offerState.consumed_appointments} rendez-vous offerts ont été
-                utilisés.
-              </p>
-            )}
-            {offerState.offer_exists &&
-              (offerState.status === "expired" || offerState.status === "revoked") && (
-                <p className="text-sm text-white/70">
-                  Cette offre de rendez-vous n'est plus active.
-                </p>
-              )}
             {offerState.promo_valid && (
-              <p className="mt-2 text-sm text-white/80">
-                Code{" "}
-                <span className="font-semibold text-white">
-                  {offerState.promo_code}
-                </span>{" "}
-                : {offerState.discount_percent ?? 50} % sur le premier mois payé —
-                une seule fois.
+              <p className="mt-1 text-sm text-white/80">
+                Code <span className="font-semibold text-white">{offerState.promo_code}</span> : {offerState.discount_percent ?? 50} % sur le premier mois payé, une seule fois.
               </p>
             )}
           </GlassCard>
         )}
 
-
-        {/* 1. Pertinence pour son activité */}
-        <GlassCard className="p-5 mb-5" >
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-xs uppercase tracking-wider text-amber-300/80">Forfait recommandé : {planLabel}</span>
-          </div>
-          <p className="text-sm text-white/80" data-testid="plan-relevance">
-            Pour {quote.trade_primary} à {quote.city}, avec une capacité de {quote.contractor_capacity ?? "—"} projets par mois
-            et un objectif de {quote.target_monthly_appointments} rendez-vous exclusifs par mois.
-          </p>
-        </GlassCard>
-
-        {/* Promesse de rendez-vous — garantie annuelle, source unique */}
-        {(() => {
+        {/* Une seule carte : offre → prestations → conditions → prix → action */}
+        {quote.pricing_status !== "paid" && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
+          const included = quote.guaranteed_appointments ?? quote.target_monthly_appointments;
           return (
-            <GlassCard className="p-6 mb-5">
-              <div className="flex items-center gap-2 mb-2 text-emerald-300">
-                <ShieldCheck className="w-4 h-4" />
-                <span className="text-xs uppercase tracking-wider">
-                  Engagement rendez-vous
-                </span>
+            <GlassCard className="p-6 mb-4">
+              <div data-testid="starter-offer-card">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs uppercase tracking-wider text-amber-300/80">Offre recommandée pour commencer</span>
+                </div>
+                <p className="text-2xl font-semibold tracking-[-0.03em]">Forfait {planLabel}</p>
+                <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
+                  La plus petite offre qui couvre ce que vous pouvez accueillir le mois prochain
+                  ({quote.target_monthly_appointments} rendez-vous) pour {quote.trade_primary} à {quote.city}.
+                </p>
+
+                <div className="mt-5 space-y-2 text-sm text-white/85">
+                  <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
+                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{guarantee.checkoutPrimaryLabel}</p>
+                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Rendez-vous exclusifs, jamais partagés avec d'autres entrepreneurs</p>
+                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil public UNPRO pour {quote.trade_primary}</p>
+                </div>
+
+                <div className="mt-5 space-y-1 text-xs text-white/60 leading-relaxed">
+                  <p className="text-xs uppercase tracking-wider text-white/50">Conditions</p>
+                  <p>{guarantee.checkoutSecondaryLabel}</p>
+                  <p>Facturation mensuelle, sans engagement annuel. L'engagement de rendez-vous indiqué ci-dessus est calculé sur 12 mois d'abonnement actif; une résiliation avant 12 mois met fin à l'engagement pour les mois non payés.</p>
+                  <p>Avant de recevoir des mandats, votre licence RBQ et votre fiche doivent être vérifiées par UNPRO. Le paiement ne remplace pas cette vérification.</p>
+                  {waitlisted && <p className="text-amber-200/90">Votre métier est en forte demande dans ce territoire : une place d'attente vous est proposée.</p>}
+                </div>
+
+                <div className="mt-6 border-t border-white/10 pt-5" data-testid="price-block">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-4xl font-semibold tracking-[-0.04em]" data-testid="plan-price">{formatCAD(quote.recommended_monthly_price)}</div>
+                    <div className="text-white/60">/ mois</div>
+                  </div>
+                  <p className="text-sm text-white/70 mt-2">
+                    Montant dû aujourd'hui : <strong className="text-white">{formatCAD(quote.recommended_monthly_price)}</strong>, puis le même montant chaque mois.
+                  </p>
+                  <p className="text-[11px] text-white/50 mt-1">Aucuns frais d'ouverture. Les taxes applicables sont indiquées sur la page de paiement sécurisée avant confirmation.</p>
+                </div>
+
+                {checkoutError && (
+                  <div role="alert" className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">{checkoutError}</div>
+                )}
+                <button
+                  onClick={() => (waitlisted ? navigate("/entrepreneur/devis-personnalise?status=waitlisted") : handleActivate())}
+                  disabled={checkoutLoading}
+                  data-testid="activate-offer"
+                  className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
+                >
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : "Activer mon entente"}
+                </button>
+                {checkoutOutcome === "canceled" && (
+                  <p className="mt-2 text-xs text-white/60 text-center">Paiement annulé. Votre offre est conservée : vous pouvez reprendre ici.</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const carry = new URLSearchParams(searchParams);
+                    carry.delete("checkout");
+                    const qs = carry.toString();
+                    navigate(`/entrepreneur/devis-personnalise${qs ? `?${qs}` : ""}`);
+                  }}
+                  className="mt-3 block mx-auto text-xs text-white/55 underline underline-offset-4 hover:text-white"
+                >
+                  Ajuster mon offre
+                </button>
               </div>
-              <div className="text-2xl font-semibold tracking-[-0.03em]">
-                {guarantee.checkoutPrimaryLabel}
-              </div>
-              <p className="text-sm text-white/70 mt-1">{guarantee.checkoutSecondaryLabel}</p>
-              <p className="text-xs text-white/55 mt-3 leading-relaxed">
-                {guarantee.seasonalityNote}
-              </p>
             </GlassCard>
           );
         })()}
 
 
-        {/* Territory */}
-        <GlassCard className="p-5 mb-5 flex items-start gap-3">
-          <MapPin
-            className={`w-5 h-5 mt-0.5 ${
-              waitlisted ? "text-amber-400" : "text-emerald-400"
-            }`}
-          />
-          <div>
-            <div className="text-sm font-semibold">
-              {waitlisted
-                ? "Territoire en forte demande"
-                : "Territoire disponible"}
-            </div>
-            <div className="text-xs text-white/60 mt-1">
-              {waitlisted
-                ? "Un plan d'attente vous est proposé. Réservez votre place avant qu'un slot ne s'ouvre."
-                : "Une place est disponible pour votre métier dans cette zone."}
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* Guarantees */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {[
-            "Rendez-vous garantis",
-            "Pas de leads partagés",
-            "RBQ vérifié",
-            "Sans engagement annuel",
-          ].map((g) => (
-            <div
-              key={g}
-              className="flex items-center gap-2 text-xs text-white/80 bg-white/[0.04] border border-white/10 rounded-2xl px-3 py-2"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              {g}
-            </div>
-          ))}
-        </div>
-
-        {/* Détail commercial — uniquement ce qui est compréhensible */}
-        <GlassCard className="p-0 mb-6 overflow-hidden">
-          <button
-            onClick={() => setBreakdownOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left"
-          >
-            <div className="flex items-center gap-2 text-sm">
-              <ShieldCheck className="w-4 h-4 text-white/60" />
-              Ce qui est inclus dans votre plan
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-white/60 transition-transform ${
-                breakdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-          {breakdownOpen && (() => {
-            const summary = buildCommercialLines(quote as never, {
-              trade: quote.trade_primary,
-              city: quote.city,
-              plan_label: planLabel,
-              monthly_budget_cents: quote.monthly_budget ?? null,
-              guaranteed_appointments: quote.guaranteed_appointments ?? null,
-            });
-            return (
-              <div className="px-5 pb-5 text-sm text-white/80 space-y-1.5 border-t border-white/5">
-                {summary.budget_note && (
-                  <p className="pt-3 text-[13px] text-cyan-200/90">{summary.budget_note}</p>
-                )}
-                {summary.lines.map((line, i) => (
-                  <div key={i} className="pt-1">
-                    <Row label={line.label} value={formatCAD(line.cents)} />
-                    {line.sublabel && (
-                      <p className="text-[11px] text-white/45 -mt-0.5">{line.sublabel}</p>
-                    )}
-                  </div>
-                ))}
-                <div className="border-t border-white/10 mt-3 pt-3 flex justify-between font-semibold">
-                  <span>Total mensuel</span>
-                  <span>{formatCAD(summary.total_cents)}</span>
-                </div>
-                {summary.appointments_unavailable && (
-                  <p className="pt-2 text-[11px] text-white/45">
-                    Aucun volume de rendez-vous n'est vendu tant que nous n'avons pas de référence
-                    fiable pour votre métier dans ce marché.
-                  </p>
-                )}
-                <p className="pt-2 text-[11px] text-white/45">
-                  C'est exactement le montant facturé au paiement. Aucun frais additionnel.
-                </p>
-              </div>
-            );
-          })()}
-        </GlassCard>
-
-        {/* 3. Prix, périodicité et engagement */}
-
-        <GlassCard className="p-7 mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-xs uppercase tracking-wider text-amber-300/80">
-              Plan {planLabel} · {quote.city} · {quote.trade_primary}
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-5xl font-semibold tracking-[-0.04em]">
-              {formatCAD(quote.recommended_monthly_price)}
-            </div>
-            <div className="text-white/60">/ mois</div>
-          </div>
-          <p className="text-white/70 mt-3 text-sm">
-            Facturé chaque mois. Sans engagement annuel.
-          </p>
-        </GlassCard>
-
-        {/* Potential revenue */}
-        <GlassCard className="p-6 mb-5">
-          <div className="flex items-center gap-2 mb-2 text-cyan-300">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wider">
-              Potentiel mensuel estimé (hypothèses UNPRO)
-            </span>
-          </div>
-          <div className="text-3xl font-semibold tracking-[-0.03em]">
-            {formatCADFromDollars(quote.estimated_monthly_revenue_potential)}
-          </div>
-          <p className="text-sm text-white/60 mt-2">
-            ROI estimé{" "}
-            <span className="text-white font-medium">
-              ×{Math.max(1, Math.round(quote.roi_estimate))}
-            </span>{" "}
-            sur la base de {quote.target_monthly_appointments} rendez-vous /
-            mois × {Math.round(quote.estimated_close_rate * 100)} % de fermeture
-            × {formatCADFromDollars(quote.average_project_value)}.
-          </p>
-        </GlassCard>
-
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!waitlisted && !fallbackDeclined && (
+        {!waitlisted && !fallbackDeclined && quote.pricing_status !== "paid" && (
           <div className="mt-8">
             {fallbackVisible ? (
               <FallbackCredit350Card
@@ -665,49 +529,13 @@ export default function PageContractorPersonalizedPlan() {
         </div>
       </div>
 
-      {/* Sticky footer CTA */}
-      <div className="relative px-5 pt-2 pb-10">
-        {checkoutError && (
-          <div
-            role="alert"
-            className="max-w-2xl mx-auto mb-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
-          >
-            {checkoutError}
-          </div>
-        )}
-        <div className="max-w-2xl mx-auto flex gap-2">
-          {waitlisted ? (
-            <button
-              onClick={() => navigate("/entrepreneur/devis-personnalise?status=waitlisted")}
-              disabled={checkoutLoading}
-              className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Modifier mes objectifs"
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => handleActivate()}
-              disabled={checkoutLoading}
-              className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Continuer vers le paiement"
-              )}
-            </button>
-          )}
-          <button
-            onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")}
-            className="h-14 px-4 rounded-[18px] bg-white/[0.06] border border-white/10 text-white text-sm"
-          >
-            Parler à Clara
-          </button>
-        </div>
+      <div className="relative px-5 pb-10 text-center">
+        <button
+          onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")}
+          className="text-xs text-white/55 underline underline-offset-4"
+        >
+          Une question? Parler à Clara
+        </button>
       </div>
     </div>
   );
