@@ -38,13 +38,17 @@ interface Props {
   preview?: boolean;
   /** Capacité réelle calculée en base ; jamais de rareté affichée sans elle. */
   freeYear?: FreeYearOffer | null;
+  /** Métier et ville importés : préremplissage de l'écran express. */
+  trade?: string | null;
+  city?: string | null;
 }
 
-export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview, freeYear }: Props) {
+export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview, freeYear, trade, city }: Props) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
+  const [contractorId, setContractorId] = useState<string | null>(null);
   const [grantedYear, setGrantedYear] = useState<{ slot_number?: number; founder_end?: string } | null>(null);
 
   const attribution = { prospect_id: prospectId, token, is_test: preview };
