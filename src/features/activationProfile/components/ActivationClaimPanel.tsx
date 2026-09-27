@@ -105,7 +105,11 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, prospectId, preview]);
 
-  /** Un entrepreneur déjà connecté n'a rien à revérifier. */
+  /**
+   * Règle P0 : une fiche n'est rattachée QU'APRÈS vérification par code SMS.
+   * Une session ouverte ne prouve rien tant qu'elle n'est pas déjà rattachée
+   * à cette fiche. Seul le cas « déjà rattaché à ce compte » saute le code.
+   */
   const start = useCallback(async () => {
     setError(null);
     void logFunnelEvent({ event_type: "activation_cta_clicked", step: "activate", ...attribution });
@@ -117,8 +121,31 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
     });
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      void claim();
-      return;
+      try {
+        const { data: probe, error: probeError } = await supabase.functions.invoke("activation-claim", {
+          body: { token, probe: true },
+        });
+        if (probeError || !probe?.ok) {
+          const reason = (await extractEdgeReason(probeError, probe)) ?? "network_error";
+          if (reason === "already_claimed") {
+            setError(CLAIM_ERRORS.already_claimed);
+            setPhase("failed");
+            void logFunnelEvent({
+              event_type: "activation_error",
+              step: "claim",
+              metadata: { code: reason },
+              ...attribution,
+            });
+            return;
+          }
+        } else if (probe.linked_to_me === true) {
+          // Déjà rattaché à ce compte : reprise idempotente, sans nouveau code.
+          void claim();
+          return;
+        }
+      } catch {
+        /* la sonde ne doit jamais bloquer : on retombe sur la vérification */
+      }
     }
     void logFunnelEvent({ event_type: "auth_started", step: "activate", ...attribution });
     setPhase("verify");
@@ -150,11 +177,13 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
             </p>
           )}
           <p className="mt-2 text-[14px] leading-relaxed text-white/75">
-            Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes.
+            {alreadyClaimed
+              ? "Votre espace entrepreneur vous attend."
+              : "Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes."}
           </p>
         </div>
 
-        {contractorId ? (
+        {contractorId && !alreadyClaimed ? (
           <ContractorExpressSetup
             contractorId={contractorId}
             defaultTrade={trade}
@@ -168,18 +197,18 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
                 metadata: { trade: savedTrade, cities_count: cities.length },
                 ...attribution,
               });
-              navigate("/entrepreneur/onboarding");
+              navigate("/pro");
             }}
           />
         ) : (
           <Button
             onClick={() => {
               void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
-              navigate("/entrepreneur/onboarding");
+              navigate("/pro");
             }}
             className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
+            {alreadyClaimed ? "Aller à mon espace" : "Compléter mon profil"} <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         )}
       </div>

@@ -72,6 +72,10 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const token = String((body as { token?: string })?.token ?? "").trim();
+    // Mode sonde : lecture seule. Sert à savoir si la session courante est
+    // DÉJÀ rattachée à cette fiche. Sans lui, l'UI rattachait en silence
+    // n'importe quelle session ouverte, sans vérification par code SMS.
+    const probe = (body as { probe?: boolean })?.probe === true;
     if (!token || token.length > 128) return json({ ok: false, reason: "invalid_token" }, 400);
     tokenHash = await sha256(token);
 
@@ -146,6 +150,19 @@ Deno.serve(async (req) => {
       });
       return json({ ok: false, reason: "already_claimed" }, 409);
     }
+
+    // Sonde : aucune écriture. L'UI décide si elle doit exiger le code SMS.
+    if (probe) {
+      return json({
+        ok: true,
+        probe: true,
+        linked_to_me: Boolean(existingClaim && existingClaim.user_id === user.id),
+        contractor_id: existingClaim?.contractor_id ?? null,
+        business_name: prospect.business_name ?? prospect.legal_name ?? null,
+      });
+    }
+
+
 
     // --------------------------------------------------------- rôle entrepreneur
     try {
