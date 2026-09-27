@@ -22,6 +22,27 @@ import ActivationClaimPanel from "@/features/activationProfile/components/Activa
 import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { extractEdgeReason, extractEdgeStatus } from "@/lib/edgeFunctionError";
+
+/** Messages d'échec du jeton, alignés sur les `reason` du serveur. */
+const RESOLVE_ERRORS: Record<string, { title: string; body: string }> = {
+  already_claimed: {
+    title: "Ce lien est déjà rattaché à un autre compte",
+    body: "Écrivez-nous et nous vous redonnerons l'accès à votre profil.",
+  },
+  token_revoked: {
+    title: "Ce lien a été désactivé",
+    body: "Votre place reste réservée. Vous pouvez activer votre profil directement ici.",
+  },
+  token_not_found: {
+    title: "Ce lien est invalide ou expiré",
+    body: "Le lien a peut-être été tronqué par votre messagerie. Vous pouvez activer votre profil directement.",
+  },
+  token_expired: {
+    title: "Ce lien est invalide ou expiré",
+    body: "Écrivez-nous et nous vous en enverrons un nouveau, ou activez votre profil directement.",
+  },
+};
 
 const BENEFITS = [
   "Votre profil publié et optimisé pour les IA et les propriétaires",
@@ -86,9 +107,17 @@ export default function PageUnproActivate() {
         });
         if (cancelled) return;
         if (error || !data?.ok) {
-          const serverReason =
-            (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
-          console.error("[ACTIVATION_RESOLVE_FAILED]", { reason: serverReason, error });
+          // Le corps JSON d'une réponse non-2xx n'arrive pas dans `data` :
+          // il faut lire `error.context`. Sans ça, l'UI affichait
+          // "network_error" alors que le serveur avait répondu 409/410/404.
+          const extracted = await extractEdgeReason(error, data);
+          if (cancelled) return;
+          const serverReason = extracted ?? (error ? "network_error" : "unknown");
+          console.error("[ACTIVATION_RESOLVE_FAILED]", {
+            reason: serverReason,
+            status: extractEdgeStatus(error),
+            error,
+          });
           setReason(serverReason);
           setState(
             serverReason === "lookup_failed" ||
@@ -194,13 +223,12 @@ export default function PageUnproActivate() {
 
         {state === "invalid" && (
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur">
-            <h1 className="mb-3 text-2xl font-semibold text-white">
-              {reason === "token_revoked" ? "Ce lien a été désactivé" : "Ce lien d'activation n'est plus valide"}
+            <h1 className="mb-3 text-2xl font-semibold text-white" data-testid="activation-invalid-title">
+              {(reason && RESOLVE_ERRORS[reason]?.title) ?? "Ce lien est invalide ou expiré"}
             </h1>
             <p className="mb-6 text-sm text-white/70">
-              {reason === "token_revoked"
-                ? "Votre place reste réservée. Vous pouvez activer votre profil directement ici."
-                : "Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre profil directement."}
+              {(reason && RESOLVE_ERRORS[reason]?.body) ??
+                "Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre profil directement."}
             </p>
             <Link
               to="/pro/activate"
