@@ -1,13 +1,39 @@
 /** ONE CLARA — minimal, conversation-first homepage. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 
+/**
+ * Clavier mobile : `dvh` ne rétrécit pas toujours à l'ouverture du clavier.
+ * On publie la hauteur réellement visible dans `--clara-visible-height`
+ * (sans jamais déplacer la page) pour que la zone de saisie reste au-dessus
+ * du clavier. Les écouteurs sont retirés au démontage.
+ */
+function useVisibleViewportHeight() {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    const apply = () => {
+      root.style.setProperty("--clara-visible-height", `${Math.round(vv.height)}px`);
+    };
+    apply();
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    return () => {
+      vv.removeEventListener("resize", apply);
+      vv.removeEventListener("scroll", apply);
+      root.style.removeProperty("--clara-visible-height");
+    };
+  }, []);
+}
+
 export default function HeroHomeownerLight() {
   const [isConversationActive, setIsConversationActive] = useState(false);
+  useVisibleViewportHeight();
   const copy = {
     title: "Discutons.",
-    subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",
+    subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",
   };
 
   return (
