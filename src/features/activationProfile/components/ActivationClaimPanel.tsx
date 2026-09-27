@@ -119,33 +119,55 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
 
   if (phase === "done") {
     return (
-      <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
-        <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
-        <h2 className="text-xl font-semibold text-white">
-          {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
-        </h2>
-        {grantedYear && (
-          <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
-            Votre première année est gratuite
-            {grantedYear.slot_number ? ` (place ${grantedYear.slot_number})` : ""}
-            {grantedYear.founder_end
-              ? `, jusqu'au ${new Date(grantedYear.founder_end).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`
-              : ""}
-            . Aucun paiement, aucun renouvellement automatique.
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
+          <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
+          <h2 className="text-xl font-semibold text-white">
+            {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
+          </h2>
+          {grantedYear && (
+            <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
+              Votre première année est gratuite
+              {grantedYear.slot_number ? ` (place ${grantedYear.slot_number})` : ""}
+              {grantedYear.founder_end
+                ? `, jusqu'au ${new Date(grantedYear.founder_end).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`
+                : ""}
+              . Aucun paiement, aucun renouvellement automatique.
+            </p>
+          )}
+          <p className="mt-2 text-[14px] leading-relaxed text-white/75">
+            Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes.
           </p>
+        </div>
+
+        {contractorId ? (
+          <ContractorExpressSetup
+            contractorId={contractorId}
+            defaultTrade={trade}
+            defaultCity={city}
+            ctaLabel="Continuer"
+            onDone={({ trade: savedTrade, cities }) => {
+              void logFunnelEvent({
+                event_type: "onboarding_started",
+                step: "post_activation",
+                contractor_id: contractorId,
+                metadata: { trade: savedTrade, cities_count: cities.length },
+                ...attribution,
+              });
+              navigate("/entrepreneur/onboarding");
+            }}
+          />
+        ) : (
+          <Button
+            onClick={() => {
+              void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
+              navigate("/entrepreneur/onboarding");
+            }}
+            className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+          >
+            Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
         )}
-        <p className="mt-2 text-[14px] leading-relaxed text-white/75">
-          Complétez maintenant votre profil pour recevoir des rendez-vous exclusifs dans votre territoire.
-        </p>
-        <Button
-          onClick={() => {
-            void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
-            navigate("/entrepreneur/onboarding");
-          }}
-          className="mt-5 h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
-        >
-          Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
       </div>
     );
   }
