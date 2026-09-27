@@ -49,9 +49,25 @@ const ProDashboard = () => {
   const completedAppts = appts.filter(a => a.status === "completed").length;
   const currentPlan = planId ?? "recrue";
 
+  // Activation confirmée côté serveur uniquement : tant qu'elle n'est pas
+  // acquise, l'entrepreneur voit un seul écran avec une seule prochaine action.
+  const isActivated =
+    profile?.activation_status === "activated" || profile?.account_status === "active";
+
+  if (!isActivated) {
+    return (
+      <ContractorLayout>
+        <div className="dark pb-24">
+          <ProActivationCompact profile={profile} />
+        </div>
+      </ContractorLayout>
+    );
+  }
+
   return (
     <ContractorLayout>
       <div className="dark max-w-4xl mx-auto space-y-5 pb-24">
+        <ProNextActionCard profile={profile} appointments={appts} />
         <DashHero profile={profile} completeness={completeness} aipp={aipp} />
         <CardCalendarConnectionRole role="contractor" surface="dashboard_pro" />
         <CompatibilityEntryCard contractorId={profile?.id} />
