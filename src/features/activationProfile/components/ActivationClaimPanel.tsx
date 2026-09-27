@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
+import ContractorExpressSetup from "./ContractorExpressSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import type { FreeYearOffer } from "@/pages/activation/PageUnproActivate";
