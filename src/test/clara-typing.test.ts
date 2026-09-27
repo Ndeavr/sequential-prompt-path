@@ -16,10 +16,10 @@ describe("Clara — écriture progressive", () => {
     expect(wrong.length).toBeGreaterThan(0);
     expect(wrong.length).toBeLessThanOrEqual(6);
   });
-  it("délais 25–65 ms par lettre", () => {
+  it("délais 20–28 ms par lettre", () => {
     const frames = buildTypingFrames("abcdefghij", { typoChance: 0 });
-    frames.forEach((f) => expect(f.delay).toBeGreaterThanOrEqual(25));
-    frames.forEach((f) => expect(f.delay).toBeLessThanOrEqual(65));
+    frames.forEach((f) => expect(f.delay).toBeGreaterThanOrEqual(20));
+    frames.forEach((f) => expect(f.delay).toBeLessThanOrEqual(28));
   });
   it("mouvement réduit : aucune fausse correction", () => {
     const frames = buildTypingFrames(text, { reducedMotion: true });
