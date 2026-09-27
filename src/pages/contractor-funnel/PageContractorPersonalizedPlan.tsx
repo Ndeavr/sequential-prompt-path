@@ -87,7 +87,7 @@ export default function PageContractorPersonalizedPlan() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(true);
   const [fallbackVisible, setFallbackVisible] = useState(false);
   const [fallbackDeclined, setFallbackDeclined] = useState(false);
 
@@ -281,7 +281,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
+    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-8">
       <Helmet>
         <title>Votre plan recommandé · UNPRO</title>
         <meta
@@ -304,8 +304,8 @@ export default function PageContractorPersonalizedPlan() {
           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8"
         >
-          <p className="text-sm text-white/60 tracking-wide uppercase">
-            Tarification personnalisée
+          <p className="text-sm text-white/60 tracking-wide uppercase" data-testid="plan-step-label">
+            Étape 3 sur 4 · Votre forfait
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2 tracking-[-0.04em]">
             {quote.company_name
@@ -328,7 +328,7 @@ export default function PageContractorPersonalizedPlan() {
             }}
             className="mt-3 block text-xs text-white/60 underline underline-offset-4 hover:text-white"
           >
-            Modifier mes préférences avant de payer
+            Ajuster mon forfait
           </button>
         </motion.div>
 
@@ -385,24 +385,15 @@ export default function PageContractorPersonalizedPlan() {
         )}
 
 
-        {/* Hero plan card */}
-
-        <GlassCard className="p-7 mb-5">
-          <div className="flex items-center gap-2 mb-3">
+        {/* 1. Pertinence pour son activité */}
+        <GlassCard className="p-5 mb-5" >
+          <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-xs uppercase tracking-wider text-amber-300/80">
-              Plan {planLabel} · {quote.city} · {quote.trade_primary}
-            </span>
+            <span className="text-xs uppercase tracking-wider text-amber-300/80">Forfait recommandé : {planLabel}</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-5xl font-semibold tracking-[-0.04em]">
-              {formatCAD(quote.recommended_monthly_price)}
-            </div>
-            <div className="text-white/60">/ mois</div>
-          </div>
-          <p className="text-white/70 mt-3 text-sm">
-            Calibré sur vos objectifs réels, votre capacité et la demande dans
-            votre territoire.
+          <p className="text-sm text-white/80" data-testid="plan-relevance">
+            Pour {quote.trade_primary} à {quote.city}, avec une capacité de {quote.contractor_capacity ?? "—"} projets par mois
+            et un objectif de {quote.target_monthly_appointments} rendez-vous exclusifs par mois.
           </p>
         </GlassCard>
 
@@ -545,6 +536,26 @@ export default function PageContractorPersonalizedPlan() {
           })()}
         </GlassCard>
 
+        {/* 3. Prix, périodicité et engagement */}
+
+        <GlassCard className="p-7 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="text-xs uppercase tracking-wider text-amber-300/80">
+              Plan {planLabel} · {quote.city} · {quote.trade_primary}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <div className="text-5xl font-semibold tracking-[-0.04em]">
+              {formatCAD(quote.recommended_monthly_price)}
+            </div>
+            <div className="text-white/60">/ mois</div>
+          </div>
+          <p className="text-white/70 mt-3 text-sm">
+            Facturé chaque mois. Sans engagement annuel.
+          </p>
+        </GlassCard>
+
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
         {!waitlisted && !fallbackDeclined && (
           <div className="mt-8">
@@ -591,7 +602,7 @@ export default function PageContractorPersonalizedPlan() {
       </div>
 
       {/* Sticky footer CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-[#050816] via-[#050816]/95 to-transparent pt-6 pb-5 px-5">
+      <div className="relative px-5 pt-2 pb-10">
         {checkoutError && (
           <div
             role="alert"
@@ -622,7 +633,7 @@ export default function PageContractorPersonalizedPlan() {
               {checkoutLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Activer mes rendez-vous"
+                "Continuer vers le paiement"
               )}
             </button>
           )}
