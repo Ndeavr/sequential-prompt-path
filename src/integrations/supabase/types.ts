@@ -100001,6 +100001,15 @@ export type Database = {
         }
         Returns: Json
       }
+      adopt_orphan_contractor_for_claim: {
+        Args: {
+          p_business_name: string
+          p_city: string
+          p_phone: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       advance_onboarding_status: {
         Args: { p_new_status: string; p_patch?: Json; p_session_id: string }
         Returns: {
