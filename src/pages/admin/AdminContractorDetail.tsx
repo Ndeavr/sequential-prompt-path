@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
 import ContractorCommsTimeline from "@/components/contractor/ContractorCommsTimeline";
 import ContractorAccountOriginCard from "@/components/admin/contractor/ContractorAccountOriginCard";
+import ContractorRevenueJourneyCard from "@/components/admin/contractor/ContractorRevenueJourneyCard";
 import CompatibilityAdminPanel from "@/components/contractor-compatibility/CompatibilityAdminPanel";
 
 const statusLabels: Record<string, string> = {
@@ -145,6 +146,9 @@ const AdminContractorDetail = () => {
 
         {/* Origine du compte */}
         <ContractorAccountOriginCard contractorId={contractor.id} />
+
+        {/* Parcours revenu */}
+        <ContractorRevenueJourneyCard contractorId={contractor.id} />
 
         {/* Profile info */}
         <Card>

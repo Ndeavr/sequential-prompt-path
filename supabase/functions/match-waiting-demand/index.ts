@@ -122,16 +122,56 @@ Deno.serve(async (req) => {
       duration_ms: Date.now() - start,
     });
 
-    const { error: evErr } = await sb.from("acquisition_events").insert({
-      contractor_id: contractorId,
-      channel: "system",
-      event_type: "demand_signal.matched",
-      source_table: "demand_signals",
-      metadata: { contractor_id: contractorId, matched_count: matched, segments, duration_ms: Date.now() - start },
-    });
-    if (evErr) console.error("[match-waiting-demand] event log failed", evErr.message);
+    // Canonical, readable audit trail: demand(s), contractor, result, reason, timestamp.
+    const { data: matchedRows } = await sb
+      .from("demand_signals")
+      .select("id, city, category, project_id, updated_at")
+      .eq("matched_contractor_id", contractorId)
+      .eq("status", "matched")
+      .order("updated_at", { ascending: false })
+      .limit(50);
 
-    return json({ ok: true, matched_count: matched, segments, duration_ms: Date.now() - start });
+    const { error: outcomeErr } = await sb.from("platform_operation_outcomes").insert({
+      operation: "demand_matching",
+      intent: "match_waiting_demand_after_activation",
+      business_outcome: matched > 0 ? "achieved" : "blocked",
+      block_reason: matched > 0 ? null : "no_compatible_waiting_demand",
+      affected_record: `contractors:${contractorId}`,
+      service: "match-waiting-demand",
+      next_action: matched > 0
+        ? "Notifier l'entrepreneur et planifier le rendez-vous"
+        : "Ajouter territoires/services ou attendre une nouvelle demande",
+      payload: {
+        contractor_id: contractorId,
+        matched_count: matched,
+        segments,
+        demands: (matchedRows ?? []).map((d) => ({
+          demand_id: d.id,
+          city: d.city,
+          category: d.category,
+          project_id: d.project_id,
+          matched_at: d.updated_at,
+        })),
+        reason: matched > 0
+          ? "Territoire et service compatibles avec une demande en attente"
+          : "Aucune demande propriétaire en attente compatible",
+        duration_ms: Date.now() - start,
+        logged_at: new Date().toISOString(),
+      },
+    });
+    if (outcomeErr) {
+      console.error("[match-waiting-demand] outcome log failed", outcomeErr.message);
+    }
+
+    return json({
+      ok: true,
+      matched_count: matched,
+      segments,
+      matched_demands: (matchedRows ?? []).map((d) => d.id),
+      outcome_logged: !outcomeErr,
+      outcome_log_error: outcomeErr?.message ?? null,
+      duration_ms: Date.now() - start,
+    });
   } catch (e) {
     console.error("[match-waiting-demand] error", e);
     return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
