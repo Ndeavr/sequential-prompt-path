@@ -72,6 +72,10 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const token = String((body as { token?: string })?.token ?? "").trim();
+    // Mode sonde : lecture seule. Sert à savoir si la session courante est
+    // DÉJÀ rattachée à cette fiche. Sans lui, l'UI rattachait en silence
+    // n'importe quelle session ouverte, sans vérification par code SMS.
+    const probe = (body as { probe?: boolean })?.probe === true;
     if (!token || token.length > 128) return json({ ok: false, reason: "invalid_token" }, 400);
     tokenHash = await sha256(token);
 
