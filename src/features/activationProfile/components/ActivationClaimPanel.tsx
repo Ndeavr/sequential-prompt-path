@@ -105,7 +105,11 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, prospectId, preview]);
 
-  /** Un entrepreneur déjà connecté n'a rien à revérifier. */
+  /**
+   * Règle P0 : une fiche n'est rattachée QU'APRÈS vérification par code SMS.
+   * Une session ouverte ne prouve rien tant qu'elle n'est pas déjà rattachée
+   * à cette fiche. Seul le cas « déjà rattaché à ce compte » saute le code.
+   */
   const start = useCallback(async () => {
     setError(null);
     void logFunnelEvent({ event_type: "activation_cta_clicked", step: "activate", ...attribution });
@@ -117,8 +121,31 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
     });
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      void claim();
-      return;
+      try {
+        const { data: probe, error: probeError } = await supabase.functions.invoke("activation-claim", {
+          body: { token, probe: true },
+        });
+        if (probeError || !probe?.ok) {
+          const reason = (await extractEdgeReason(probeError, probe)) ?? "network_error";
+          if (reason === "already_claimed") {
+            setError(CLAIM_ERRORS.already_claimed);
+            setPhase("failed");
+            void logFunnelEvent({
+              event_type: "activation_error",
+              step: "claim",
+              metadata: { code: reason },
+              ...attribution,
+            });
+            return;
+          }
+        } else if (probe.linked_to_me === true) {
+          // Déjà rattaché à ce compte : reprise idempotente, sans nouveau code.
+          void claim();
+          return;
+        }
+      } catch {
+        /* la sonde ne doit jamais bloquer : on retombe sur la vérification */
+      }
     }
     void logFunnelEvent({ event_type: "auth_started", step: "activate", ...attribution });
     setPhase("verify");
