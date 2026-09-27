@@ -2,54 +2,21 @@
  * UNPRO — Dashboard Entrepreneur v2
  * Recevez des rendez-vous exclusifs. Pas des leads partagés.
  */
+import { Link } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { LoadingState } from "@/components/shared";
-import { useContractorProfile, useContractorReviews } from "@/hooks/useContractor";
+import { useContractorProfile } from "@/hooks/useContractor";
 import { useAppointments } from "@/hooks/useAppointments";
-import { useHasActiveSubscription } from "@/hooks/useSubscription";
-import DashHero from "@/components/pro-dashboard/DashHero";
-import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
-import CompatibilityEntryCard from "@/components/contractor-compatibility/CompatibilityEntryCard";
-import DashKpiRow from "@/components/pro-dashboard/DashKpiRow";
-import DashProbability from "@/components/pro-dashboard/DashProbability";
-import DashChecklist from "@/components/pro-dashboard/DashChecklist";
-import DashPipeline from "@/components/pro-dashboard/DashPipeline";
-import DashAippScore from "@/components/pro-dashboard/DashAippScore";
-import DashAutoAccept from "@/components/pro-dashboard/DashAutoAccept";
-import DashAiRecommendations from "@/components/pro-dashboard/DashAiRecommendations";
-import DashMatchActivity from "@/components/pro-dashboard/DashMatchActivity";
-import CoachPanel from "@/components/pro-dashboard/CoachPanel";
-import CoachNudges from "@/components/pro-dashboard/CoachNudges";
-import DashUpsell from "@/components/pro-dashboard/DashUpsell";
-import AlexSalesPanel from "@/components/pro-dashboard/AlexSalesPanel";
-import DashNotifications from "@/components/pro-dashboard/DashNotifications";
-import DashPerformance from "@/components/pro-dashboard/DashPerformance";
-import DashObjective from "@/components/pro-dashboard/DashObjective";
-import DashWaitlistStatus from "@/components/pro-dashboard/DashWaitlistStatus";
-import DashRevenueChart from "@/components/pro-dashboard/DashRevenueChart";
-import DashResponseTime from "@/components/pro-dashboard/DashResponseTime";
 import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
 import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
-import { motion } from "framer-motion";
 
 const ProDashboard = () => {
   const { data: profile, isLoading: pL } = useContractorProfile();
-  const { data: reviews, isLoading: rL } = useContractorReviews();
   const { data: appointments, isLoading: aL } = useAppointments();
-  const { planId, isLoading: sL } = useHasActiveSubscription();
 
-  if (pL || rL || aL || sL) return <ContractorLayout><LoadingState /></ContractorLayout>;
+  if (pL || aL) return <ContractorLayout><LoadingState /></ContractorLayout>;
 
-  const fields = [profile?.business_name, profile?.specialty, profile?.description, profile?.phone, profile?.email, profile?.city, profile?.license_number, profile?.insurance_info, profile?.logo_url, profile?.website];
-  const completeness = Math.round((fields.filter(Boolean).length / fields.length) * 100);
-  const aipp = profile?.aipp_score ?? 42;
-  const reviewCount = reviews?.length ?? 0;
-  const avgRating = profile?.rating ?? 0;
   const appts = appointments ?? [];
-  const newAppts = appts.filter(a => a.status === "requested" || a.status === "under_review").length;
-  const acceptedAppts = appts.filter(a => a.status === "accepted" || a.status === "scheduled").length;
-  const completedAppts = appts.filter(a => a.status === "completed").length;
-  const currentPlan = planId ?? "recrue";
 
   // Activation confirmée côté serveur uniquement : tant qu'elle n'est pas
   // acquise, l'entrepreneur voit un seul écran avec une seule prochaine action.
