@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
+import ContractorExpressSetup from "./ContractorExpressSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import type { FreeYearOffer } from "@/pages/activation/PageUnproActivate";
@@ -37,13 +38,17 @@ interface Props {
   preview?: boolean;
   /** Capacité réelle calculée en base ; jamais de rareté affichée sans elle. */
   freeYear?: FreeYearOffer | null;
+  /** Métier et ville importés : préremplissage de l'écran express. */
+  trade?: string | null;
+  city?: string | null;
 }
 
-export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview, freeYear }: Props) {
+export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview, freeYear, trade, city }: Props) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
+  const [contractorId, setContractorId] = useState<string | null>(null);
   const [grantedYear, setGrantedYear] = useState<{ slot_number?: number; founder_end?: string } | null>(null);
 
   const attribution = { prospect_id: prospectId, token, is_test: preview };
@@ -68,6 +73,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         return;
       }
       setAlreadyClaimed(Boolean(data.already_claimed));
+      setContractorId((data as { contractor_id?: string | null }).contractor_id ?? null);
       const fy = (data as { free_year?: { ok?: boolean; slot_number?: number; founder_end?: string } | null }).free_year;
       setGrantedYear(fy?.ok ? { slot_number: fy.slot_number, founder_end: fy.founder_end } : null);
       setPhase("done");
@@ -119,33 +125,55 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
 
   if (phase === "done") {
     return (
-      <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
-        <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
-        <h2 className="text-xl font-semibold text-white">
-          {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
-        </h2>
-        {grantedYear && (
-          <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
-            Votre première année est gratuite
-            {grantedYear.slot_number ? ` (place ${grantedYear.slot_number})` : ""}
-            {grantedYear.founder_end
-              ? `, jusqu'au ${new Date(grantedYear.founder_end).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`
-              : ""}
-            . Aucun paiement, aucun renouvellement automatique.
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
+          <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
+          <h2 className="text-xl font-semibold text-white">
+            {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
+          </h2>
+          {grantedYear && (
+            <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
+              Votre première année est gratuite
+              {grantedYear.slot_number ? ` (place ${grantedYear.slot_number})` : ""}
+              {grantedYear.founder_end
+                ? `, jusqu'au ${new Date(grantedYear.founder_end).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`
+                : ""}
+              . Aucun paiement, aucun renouvellement automatique.
+            </p>
+          )}
+          <p className="mt-2 text-[14px] leading-relaxed text-white/75">
+            Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes.
           </p>
+        </div>
+
+        {contractorId ? (
+          <ContractorExpressSetup
+            contractorId={contractorId}
+            defaultTrade={trade}
+            defaultCity={city}
+            ctaLabel="Continuer"
+            onDone={({ trade: savedTrade, cities }) => {
+              void logFunnelEvent({
+                event_type: "onboarding_started",
+                step: "post_activation",
+                contractor_id: contractorId,
+                metadata: { trade: savedTrade, cities_count: cities.length },
+                ...attribution,
+              });
+              navigate("/entrepreneur/onboarding");
+            }}
+          />
+        ) : (
+          <Button
+            onClick={() => {
+              void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
+              navigate("/entrepreneur/onboarding");
+            }}
+            className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+          >
+            Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
         )}
-        <p className="mt-2 text-[14px] leading-relaxed text-white/75">
-          Complétez maintenant votre profil pour recevoir des rendez-vous exclusifs dans votre territoire.
-        </p>
-        <Button
-          onClick={() => {
-            void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
-            navigate("/entrepreneur/onboarding");
-          }}
-          className="mt-5 h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
-        >
-          Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
       </div>
     );
   }
