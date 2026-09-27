@@ -10,6 +10,7 @@
 // engagement store via public.record_engagement_event.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
+import { logInviteEvent } from "../_shared/inviteAudit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- resolve
     const cols =
       "token, prospect_id, created_at, expires_at, clicked_at, click_count, campaign_id, " +
-      "revoked_at, revoked_reason, open_count";
+      "revoked_at, revoked_reason, open_count, first_opened_at";
     const { data: row, error } = await supabase
       .from("verified_prospect_tokens")
       .select(cols)
