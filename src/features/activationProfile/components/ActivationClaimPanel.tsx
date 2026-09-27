@@ -177,11 +177,13 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
             </p>
           )}
           <p className="mt-2 text-[14px] leading-relaxed text-white/75">
-            Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes.
+            {alreadyClaimed
+              ? "Votre espace entrepreneur vous attend."
+              : "Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes."}
           </p>
         </div>
 
-        {contractorId ? (
+        {contractorId && !alreadyClaimed ? (
           <ContractorExpressSetup
             contractorId={contractorId}
             defaultTrade={trade}
@@ -195,18 +197,18 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
                 metadata: { trade: savedTrade, cities_count: cities.length },
                 ...attribution,
               });
-              navigate("/entrepreneur/onboarding");
+              navigate("/pro");
             }}
           />
         ) : (
           <Button
             onClick={() => {
               void logFunnelEvent({ event_type: "onboarding_started", step: "post_activation", ...attribution });
-              navigate("/entrepreneur/onboarding");
+              navigate("/pro");
             }}
             className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            Compléter mon profil <ArrowRight className="ml-1 h-4 w-4" />
+            {alreadyClaimed ? "Aller à mon espace" : "Compléter mon profil"} <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         )}
       </div>
