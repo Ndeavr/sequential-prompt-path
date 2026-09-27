@@ -622,13 +622,12 @@
     border-color: transparent;
   }
   .home-light .home-clara-presence {
-
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    height: 42px;
-    padding-top: 16px;
+    height: 30px;
+    padding-top: 8px;
   }
   .home-light .home-clara-presence span,
   .home-light .home-clara-presence i {
