@@ -28,6 +28,8 @@ import DashObjective from "@/components/pro-dashboard/DashObjective";
 import DashWaitlistStatus from "@/components/pro-dashboard/DashWaitlistStatus";
 import DashRevenueChart from "@/components/pro-dashboard/DashRevenueChart";
 import DashResponseTime from "@/components/pro-dashboard/DashResponseTime";
+import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
+import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
 import { motion } from "framer-motion";
 
 const ProDashboard = () => {
