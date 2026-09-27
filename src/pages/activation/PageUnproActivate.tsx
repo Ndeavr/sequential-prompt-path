@@ -194,10 +194,13 @@ export default function PageUnproActivate() {
 
         {state === "invalid" && (
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur">
-            <h1 className="mb-3 text-2xl font-semibold text-white">Ce lien d'activation n'est plus valide</h1>
+            <h1 className="mb-3 text-2xl font-semibold text-white">
+              {reason === "token_revoked" ? "Ce lien a été désactivé" : "Ce lien d'activation n'est plus valide"}
+            </h1>
             <p className="mb-6 text-sm text-white/70">
-              Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre
-              profil directement.
+              {reason === "token_revoked"
+                ? "Votre place reste réservée. Vous pouvez activer votre profil directement ici."
+                : "Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre profil directement."}
             </p>
             <Link
               to="/pro/activate"
