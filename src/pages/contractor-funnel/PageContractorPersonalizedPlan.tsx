@@ -484,28 +484,6 @@ export default function PageContractorPersonalizedPlan() {
         })()}
 
 
-        {/* Potential revenue */}
-        <GlassCard className="p-6 mb-5">
-          <div className="flex items-center gap-2 mb-2 text-cyan-300">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wider">
-              Potentiel mensuel estimé
-            </span>
-          </div>
-          <div className="text-3xl font-semibold tracking-[-0.03em]">
-            {formatCADFromDollars(quote.estimated_monthly_revenue_potential)}
-          </div>
-          <p className="text-sm text-white/60 mt-2">
-            ROI estimé{" "}
-            <span className="text-white font-medium">
-              ×{Math.max(1, Math.round(quote.roi_estimate))}
-            </span>{" "}
-            sur la base de {quote.target_monthly_appointments} rendez-vous /
-            mois × {Math.round(quote.estimated_close_rate * 100)} % de fermeture
-            × {formatCADFromDollars(quote.average_project_value)}.
-          </p>
-        </GlassCard>
-
         {/* Territory */}
         <GlassCard className="p-5 mb-5 flex items-start gap-3">
           <MapPin
@@ -617,6 +595,28 @@ export default function PageContractorPersonalizedPlan() {
           </div>
           <p className="text-white/70 mt-3 text-sm">
             Facturé chaque mois. Sans engagement annuel.
+          </p>
+        </GlassCard>
+
+        {/* Potential revenue */}
+        <GlassCard className="p-6 mb-5">
+          <div className="flex items-center gap-2 mb-2 text-cyan-300">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-xs uppercase tracking-wider">
+              Potentiel mensuel estimé (hypothèses UNPRO)
+            </span>
+          </div>
+          <div className="text-3xl font-semibold tracking-[-0.03em]">
+            {formatCADFromDollars(quote.estimated_monthly_revenue_potential)}
+          </div>
+          <p className="text-sm text-white/60 mt-2">
+            ROI estimé{" "}
+            <span className="text-white font-medium">
+              ×{Math.max(1, Math.round(quote.roi_estimate))}
+            </span>{" "}
+            sur la base de {quote.target_monthly_appointments} rendez-vous /
+            mois × {Math.round(quote.estimated_close_rate * 100)} % de fermeture
+            × {formatCADFromDollars(quote.average_project_value)}.
           </p>
         </GlassCard>
 
