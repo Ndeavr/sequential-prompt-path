@@ -258,23 +258,27 @@ export default function PageContractorPersonalizedPlan() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
         <div className="max-w-md text-center space-y-4" data-testid="payment-confirmation">
-          <p className="text-xs uppercase tracking-wider text-white/60">Étape 4 sur 4 · Paiement et activation</p>
+          <p className="text-xs uppercase tracking-wider text-white/60">Confirmation</p>
           {paymentConfirm === "waiting" && (
             <>
               <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-70" />
               <h1 className="text-2xl font-semibold">Confirmation du paiement en cours…</h1>
-              <p className="text-white/70">Votre forfait sera activé dès que le paiement est confirmé.</p>
+              <p className="text-white/70">Votre entente sera activée dès que le paiement est confirmé.</p>
             </>
           )}
           {paymentConfirm === "paid" && (
             <>
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-              <h1 className="text-2xl font-semibold">Paiement confirmé. Forfait activé.</h1>
+              <h1 className="text-2xl font-semibold">Votre entente est activée.</h1>
               <ul className="text-sm text-white/75 space-y-1">
                 <li>Compte connecté ✓</li>
                 <li>Fiche rattachée{quote?.company_name ? ` : ${quote.company_name}` : ""} ✓</li>
                 <li>Forfait {planLabel} activé ✓</li>
               </ul>
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] p-3 text-left text-xs text-white/80">
+                <p className="font-semibold text-amber-200">Avant de recevoir des mandats</p>
+                <p className="mt-1">UNPRO doit encore vérifier votre licence RBQ et votre fiche. Le paiement ne remplace pas cette vérification.</p>
+              </div>
               <button onClick={() => navigate("/pro", { replace: true })} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Ouvrir mon espace entrepreneur
               </button>
@@ -481,7 +485,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!waitlisted && !fallbackDeclined && (
+        {!waitlisted && !fallbackDeclined && quote.pricing_status !== "paid" && (
           <div className="mt-8">
             {fallbackVisible ? (
               <FallbackCredit350Card
@@ -525,49 +529,13 @@ export default function PageContractorPersonalizedPlan() {
         </div>
       </div>
 
-      {/* Sticky footer CTA */}
-      <div className="relative px-5 pt-2 pb-10">
-        {checkoutError && (
-          <div
-            role="alert"
-            className="max-w-2xl mx-auto mb-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
-          >
-            {checkoutError}
-          </div>
-        )}
-        <div className="max-w-2xl mx-auto flex gap-2">
-          {waitlisted ? (
-            <button
-              onClick={() => navigate("/entrepreneur/devis-personnalise?status=waitlisted")}
-              disabled={checkoutLoading}
-              className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Modifier mes objectifs"
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => handleActivate()}
-              disabled={checkoutLoading}
-              className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Continuer vers le paiement"
-              )}
-            </button>
-          )}
-          <button
-            onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")}
-            className="h-14 px-4 rounded-[18px] bg-white/[0.06] border border-white/10 text-white text-sm"
-          >
-            Parler à Clara
-          </button>
-        </div>
+      <div className="relative px-5 pb-10 text-center">
+        <button
+          onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")}
+          className="text-xs text-white/55 underline underline-offset-4"
+        >
+          Une question? Parler à Clara
+        </button>
       </div>
     </div>
   );
