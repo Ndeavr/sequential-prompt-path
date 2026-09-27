@@ -1007,7 +1007,9 @@
       overscroll-behavior: none;
     }
     .home-light .home-glossy-hero.is-conversation-active {
-      height: calc(100dvh - 64px);
+      /* Hauteur réellement visible : le clavier mobile ne recouvre jamais
+         la zone de saisie, et aucun double décompte du header. */
+      height: calc(var(--clara-visible-height, 100dvh) - 64px);
       min-height: 0;
       overflow: hidden;
     }
