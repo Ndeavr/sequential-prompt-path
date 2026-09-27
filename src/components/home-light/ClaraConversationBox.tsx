@@ -1534,7 +1534,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               <div className="home-clara-transition-pause" data-pulses={TRANSITION_PULSES} role="status" aria-label="Clara prépare la prochaine étape">
                 <span>Clara</span><i /><i /><i />
               </div>
+            ) : claraBreathing ? (
+              <p className="home-clara-working" role="status">Clara écrit…</p>
             ) : busy && !claraTyping ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
+
             {error && <p role="alert" className="home-clara-error">{error}</p>}
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
             <div ref={bottomAnchorRef} className="home-clara-bottom-anchor" aria-hidden="true" />
