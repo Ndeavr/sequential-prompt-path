@@ -197,13 +197,17 @@ export default function PageAffiliateOnboarding() {
 
   async function sendPhoneOtp() {
     setBusy(true);
+    setOtpError(null);
     try {
       const res = await sendOtpSms(draft.phone);
       if (!res.ok) {
-        toast.error(res.message ?? "Impossible d'envoyer le code par SMS pour le moment.");
+        const msg = res.message ?? "Impossible d'envoyer le code par SMS pour le moment.";
+        setOtpError(msg);
+        toast.error(msg);
         return;
       }
       setOtpSent(true);
+      setOtpCode("");
       toast.success("Code envoyé par SMS.");
     } finally {
       setBusy(false);
@@ -213,17 +217,108 @@ export default function PageAffiliateOnboarding() {
   async function verifyOtp() {
     if (busy) return; // anti double-soumission
     setBusy(true);
+    setOtpError(null);
     try {
+      // La session n'est ouverte que si le serveur a validé le code (verify-otp).
       const res = await verifyOtpSms(draft.phone, otpCode);
       if (!res.ok) {
-        toast.error(res.message ?? "Code invalide. Réessayez.");
+        const msg = res.message ?? "Code invalide. Réessayez.";
+        setOtpError(msg);
+        toast.error(msg);
         return;
       }
       toast.success("Numéro vérifié.");
-      goTo(2);
+      setOtpSent(false);
+      setOtpCode("");
+      // À l'étape 1 on avance ; ailleurs (ex. étape 4) on reste sur place,
+      // réponses et conditions conservées.
+      if (draft.step === 1) goTo(2);
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Bloc de vérification SMS réutilisé à l'étape 1 et, si besoin, à l'étape 4. */
+  function verifyBlock(sendLabel: string, verifyLabel: string) {
+    const phoneOk = draft.phone.replace(/\D/g, "").length >= 10;
+    if (!otpSent && !emailLinkSent) {
+      return (
+        <div className="mt-8 space-y-3">
+          <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={!phoneOk || busy} onClick={sendPhoneOtp}>
+            {busy ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Envoi du code…</> : <>{sendLabel} <ArrowRight className="ml-2 h-5 w-5" /></>}
+          </Button>
+          {otpError && <p role="alert" className="text-center text-sm text-destructive">{otpError}</p>}
+          {draft.step === 1 && (
+            <button
+              type="button"
+              className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+              disabled={!step1Valid || busy}
+              onClick={sendEmailLink}
+            >
+              Plutôt un lien par courriel ?
+            </button>
+          )}
+        </div>
+      );
+    }
+    if (emailLinkSent) {
+      return (
+        <div className="mt-8 rounded-2xl bg-muted p-5 text-center">
+          <p className="text-sm leading-relaxed">
+            Un lien de connexion a été envoyé à <strong>{draft.email}</strong>. Cliquez-le, puis revenez ici —
+            votre formulaire est conservé.
+          </p>
+          <button type="button" className="mt-3 text-sm font-medium text-primary underline-offset-4 hover:underline" onClick={() => { setEmailLinkSent(false); }}>
+            Utiliser le SMS à la place
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="mt-8 space-y-4">
+        <div>
+          <Label htmlFor="otp">Code reçu par SMS au {draft.phone}</Label>
+          <Input
+            id="otp"
+            className="mt-1 h-14 text-center text-2xl tracking-[0.4em]"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={otpCode}
+            onChange={(e) => { setOtpError(null); setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); }}
+          />
+          {otpAuto.pending && !otpAuto.reducedMotion && (
+            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+              />
+            </div>
+          )}
+          <p aria-live="polite" className="sr-only">
+            {otpAuto.pending ? "Vérification en cours" : ""}
+          </p>
+        </div>
+        {otpError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">{otpError}</p>}
+        <Button
+          className="h-14 w-full rounded-full text-lg font-bold"
+          disabled={otpCode.length < 6 || busy}
+          onClick={otpAuto.submitNow}
+        >
+          {busy || otpAuto.pending ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Vérification…
+            </>
+          ) : (
+            verifyLabel
+          )}
+        </Button>
+
+        <button type="button" className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline" disabled={busy} onClick={sendPhoneOtp}>
+          Renvoyer le code
+        </button>
+      </div>
+    );
   }
 
 
