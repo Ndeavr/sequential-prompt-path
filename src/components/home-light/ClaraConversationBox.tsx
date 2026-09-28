@@ -83,12 +83,6 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
 
@@ -1689,13 +1683,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 onTakeVideo={() => videoCameraRef.current?.click()}
                 onChooseVideo={() => videoLibraryRef.current?.click()}
               />
-              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} aria-label={copy.camera} title={copy.camera} className="home-clara-tool touch-manipulation rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
               </PromptInputButton>
               <PromptInputButton
                 type="button"
                 onClick={() => void startVoice()}
-                tooltip={voiceTip ?? copy.voice}
+                title={copy.voice}
                 aria-label={copy.voice}
                 data-voice-suggested={voiceGlow ? "true" : undefined}
                 data-voice-listening={voiceActive ? "true" : undefined}
