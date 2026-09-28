@@ -263,7 +263,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudience] = useState<ClaraAudience>("homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>("homeowner");
+  /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
+  const audienceRef = useRef<ClaraAudience>("homeowner");
+  const setAudience = useCallback((next: ClaraAudience) => {
+    audienceRef.current = next;
+    setAudienceState(next);
+  }, []);
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
