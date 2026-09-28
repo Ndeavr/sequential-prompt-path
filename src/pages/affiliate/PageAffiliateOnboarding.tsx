@@ -82,7 +82,7 @@ const EMPTY: Draft = {
 
 /** Codes serveur → message clair. Jamais d'erreur technique à l'écran. */
 const ACTIVATION_MESSAGES: Record<string, string> = {
-  unauthenticated: "Votre session a expiré. Vérifiez à nouveau votre numéro à l'étape 1.",
+  unauthenticated: "Votre session a expiré. Reconnectez-vous par SMS pour activer, vos réponses sont conservées.",
   name_required: "Prénom et nom sont requis.",
   phone_required: "Votre numéro de téléphone est requis.",
   email_required: "Votre courriel est requis.",
