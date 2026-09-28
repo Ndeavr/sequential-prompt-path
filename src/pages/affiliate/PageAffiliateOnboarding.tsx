@@ -354,73 +354,8 @@ export default function PageAffiliateOnboarding() {
               <Button className="mt-8 h-14 w-full rounded-full text-lg font-bold" disabled={!step1Valid} onClick={() => goTo(2)}>
                 Continuer <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            ) : !otpSent && !emailLinkSent ? (
-              <div className="mt-8 space-y-3">
-                <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={!step1Valid || busy} onClick={sendPhoneOtp}>
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Recevoir mon code par SMS <ArrowRight className="ml-2 h-5 w-5" /></>}
-                </Button>
-                <button
-                  type="button"
-                  className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
-                  disabled={!step1Valid || busy}
-                  onClick={sendEmailLink}
-                >
-                  Plutôt un lien par courriel ?
-                </button>
-              </div>
-            ) : emailLinkSent ? (
-              <div className="mt-8 rounded-2xl bg-muted p-5 text-center">
-                <p className="text-sm leading-relaxed">
-                  Un lien de connexion a été envoyé à <strong>{draft.email}</strong>. Cliquez-le, puis revenez ici —
-                  votre formulaire est conservé.
-                </p>
-                <button type="button" className="mt-3 text-sm font-medium text-primary underline-offset-4 hover:underline" onClick={() => { setEmailLinkSent(false); }}>
-                  Utiliser le SMS à la place
-                </button>
-              </div>
             ) : (
-              <div className="mt-8 space-y-4">
-                <div>
-                  <Label htmlFor="otp">Code reçu par SMS</Label>
-                  <Input
-                    id="otp"
-                    className="mt-1 h-14 text-center text-2xl tracking-[0.4em]"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  />
-                  {otpAuto.pending && !otpAuto.reducedMotion && (
-                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
-                      />
-                    </div>
-                  )}
-                  <p aria-live="polite" className="sr-only">
-                    {otpAuto.pending ? "Vérification en cours" : ""}
-                  </p>
-                </div>
-                <Button
-                  className="h-14 w-full rounded-full text-lg font-bold"
-                  disabled={otpCode.length < 6 || busy}
-                  onClick={otpAuto.submitNow}
-                >
-                  {busy || otpAuto.pending ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Vérification…
-                    </>
-                  ) : (
-                    "Vérifier et continuer"
-                  )}
-                </Button>
-
-                <button type="button" className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline" disabled={busy} onClick={sendPhoneOtp}>
-                  Renvoyer le code
-                </button>
-              </div>
+              verifyBlock("Recevoir mon code par SMS", "Vérifier et continuer")
             )}
           </section>
         )}
