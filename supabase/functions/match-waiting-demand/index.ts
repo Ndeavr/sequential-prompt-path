@@ -116,13 +116,32 @@ Deno.serve(async (req) => {
     // ── NOTIFICATIONS ──────────────────────────────────────────────────────
     // Résultat distinct du rapprochement. Un doublon (index unique) compte
     // comme déjà notifié; un échec réel reste reprenable par une relance.
+    // demand_signals.homeowner_id = auth user id; notifications.profile_id = profiles.id.
     let notificationsSent = 0;
     let notificationsAlreadySent = 0;
     const notificationFailures: { demand_id: string; reason: string }[] = [];
 
+    const ownerUserIds = [...new Set(rows.map((r) => r.homeowner_id).filter(Boolean))];
+    const profileByUserId = new Map<string, string>();
+    if (ownerUserIds.length > 0) {
+      const { data: profileRows } = await sb
+        .from("profiles")
+        .select("id, user_id")
+        .in("user_id", ownerUserIds);
+      for (const p of profileRows ?? []) {
+        if (p.user_id) profileByUserId.set(p.user_id, p.id);
+      }
+    }
+
     for (const s of rows) {
+      const profileId = profileByUserId.get(s.homeowner_id);
+      if (!profileId) {
+        notificationFailures.push({ demand_id: s.id, reason: "profile_not_found" });
+        console.error("[match-waiting-demand] notify skipped, no profile", s.id);
+        continue;
+      }
       const { error: nErr } = await sb.from("notifications").insert({
-        profile_id: s.homeowner_id,
+        profile_id: profileId,
         type: "demand_matched",
         channel: "in_app",
         title: "Une recommandation est prête",
