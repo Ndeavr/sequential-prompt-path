@@ -86,6 +86,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   const current = read();
   const next: ClaraContractorQualification = { ...current };
   if (patch.primary_trade) next.primary_trade = patch.primary_trade;
+  if (patch.customer_type) next.customer_type = patch.customer_type;
   if (patch.business_city) next.business_city = patch.business_city;
   if (patch.business_name) next.business_name = patch.business_name;
   if (patch.service_areas?.length) {
