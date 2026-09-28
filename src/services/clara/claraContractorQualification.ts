@@ -139,19 +139,23 @@ export const CLARA_CONTRACTOR_ANALYSIS_NOTE =
 const ALL_STEPS: ClaraQualificationStep[] = [
   { field: "primary_trade", question: "Parfait. Quel est votre métier principal ?" },
   {
+    field: "customer_type",
+    question: "Travaillez-vous surtout au résidentiel, au commercial, ou les deux ?",
+    quickReplies: ["Résidentiel", "Commercial", "Les deux"],
+  },
+  {
     field: "service_areas",
     question: "Dans quelle(s) ville(s) travaillez-vous surtout ?",
     multi: true,
   },
   {
     field: "goals",
-    question:
-      "Votre priorité en ce moment, c’est plutôt obtenir plus de contrats, éviter les soumissions inutiles, améliorer votre visibilité IA, ou autre chose ?",
+    question: "Qu’aimeriez-vous améliorer pour votre entreprise ?",
     quickReplies: [
-      "Plus de contrats",
-      "Éviter les soumissions inutiles",
-      "Visibilité IA",
-      "Autre",
+      "Être plus visible sur Google et les moteurs d’IA",
+      "Obtenir plus de contrats",
+      "Recevoir des demandes mieux adaptées à mes services",
+      "Réduire le temps consacré à trouver des clients",
     ],
   },
   { field: "business_name", question: "Quel est le nom de votre entreprise ou votre site Web ?" },
