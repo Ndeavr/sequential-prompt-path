@@ -553,28 +553,42 @@ export default function PageAffiliateOnboarding() {
               </span>
             </label>
 
-            <Button
-              className="mt-6 h-14 w-full rounded-full text-lg font-bold"
-              disabled={!terms || busy || !user}
-              onClick={activate}
-            >
-              {busy ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Activation…</>
-              ) : activationError ? (
-                <><Rocket className="mr-2 h-5 w-5" /> RÉESSAYER</>
-              ) : (
-                <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>
-              )}
-            </Button>
-            {activationError && (
-              <p role="alert" className="mt-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
-                {activationError}
-              </p>
-            )}
-            {!user && (
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
-                <ShieldCheck className="h-4 w-4" /> Vérifiez votre numéro à l'étape 1 pour activer.
-              </p>
+            {authLoading ? (
+              <div className="mt-6 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            ) : !user ? (
+              <div className="mt-6 rounded-3xl border border-border bg-card p-5">
+                <p className="flex items-center gap-2 text-sm font-semibold">
+                  <ShieldCheck className="h-4 w-4 text-primary" /> Une dernière vérification de votre numéro
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Vos réponses et votre acceptation des conditions sont conservées.
+                </p>
+                <div className="-mt-4">{verifyBlock("Vérifier mon numéro", "Valider le code")}</div>
+              </div>
+            ) : (
+              <>
+                <Button
+                  className="mt-6 h-14 w-full rounded-full text-lg font-bold"
+                  disabled={!terms || busy}
+                  onClick={activate}
+                >
+                  {busy ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Activation…</>
+                  ) : activationError ? (
+                    <><Rocket className="mr-2 h-5 w-5" /> RÉESSAYER</>
+                  ) : (
+                    <><Rocket className="mr-2 h-5 w-5" /> VOIR MON PREMIER PROSPECT</>
+                  )}
+                </Button>
+                {!terms && (
+                  <p className="mt-3 text-center text-sm text-muted-foreground">Cochez les conditions pour activer.</p>
+                )}
+                {activationError && (
+                  <p role="alert" className="mt-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
+                    {activationError}
+                  </p>
+                )}
+              </>
             )}
             <button
               type="button"
