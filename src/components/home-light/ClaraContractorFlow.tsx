@@ -33,7 +33,7 @@ type Candidate = {
   rating?: number;
   review_count?: number;
   category_label?: string;
-  primary_type_label?: string;
+  primary_category?: string;
   categories?: string[];
 };
 
@@ -186,7 +186,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   /* ---------------------------------------------------- 3. Confirmation */
   const confirmCandidate = useCallback(async (c: Candidate) => {
     addUser(`Oui, c’est ${c.business_name}.`);
-    const trade = c.primary_type_label || c.category_label || null;
+    const trade = c.primary_category || null;
     const prov: Partial<Record<string, ClaraProvenance>> = {
       business_name: "public", business_city: "public", website: "public", phone: "public",
       google_place_id: "public", primary_trade: "inferred",
@@ -391,7 +391,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
         {candidates.map((c) => (
           <article key={c.place_id} className="home-clara-card">
             <p className="home-clara-card-title">{c.business_name}</p>
-            {c.primary_type_label || c.category_label ? <p className="home-clara-card-meta">{c.primary_type_label || c.category_label}</p> : null}
+            {c.primary_category ? <p className="home-clara-card-meta">{c.primary_category}</p> : null}
             <p className="home-clara-card-meta"><MapPin aria-hidden="true" /> {c.address}</p>
             {c.phone && <p className="home-clara-card-meta"><Phone aria-hidden="true" /> {c.phone}</p>}
             {c.website && <p className="home-clara-card-meta"><ExternalLink aria-hidden="true" /> {c.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</p>}
