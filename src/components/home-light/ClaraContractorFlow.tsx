@@ -444,7 +444,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   };
 
   const auditCard = audit && ["audit_done", "trade", "customer", "areas", "goal_detail", "goal_detail2", "appointments", "avg_value", "quoting", "proposal"].includes(step) ? (
-    <AuditCard audit={audit} />
+    <AuditCard audit={audit} known={known} />
   ) : null;
 
   return (
@@ -471,7 +471,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   );
 });
 
-function AuditCard({ audit }: { audit: AuditResult }) {
+function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typeof getClaraQualification> }) {
+  const isPublic = known.provenance?.business_name === "public";
   const partial = !audit.baseline.matched.merged_sources.length;
   const priorities = [...audit.gaps].sort((a, b) => (a.impact === "high" ? -1 : 0) - (b.impact === "high" ? -1 : 0)).slice(0, 3);
   const clear = audit.baseline.missions.filter((m) => m.status === "confirmed");
@@ -485,6 +486,11 @@ function AuditCard({ audit }: { audit: AuditResult }) {
           ? "Votre entreprise n’est pas encore dans les registres UNPRO : aucun score n’est calculé."
           : `${audit.baseline.level}. Méthode : 7 critères UNPRO (identité, métier, territoire, contact, site, RBQ, avis).`}
       </p>
+      {isPublic && (
+        <p className="home-clara-card-meta">
+          Trouvé publiquement (Google) : {[known.business_name, known.business_city, known.phone && "téléphone", known.website && "site Web"].filter(Boolean).join(", ")}
+        </p>
+      )}
       {clear.length > 0 && (
         <p className="home-clara-card-meta"><CheckCircle2 aria-hidden="true" /> Clair : {clear.map((m) => m.label).join(", ")}</p>
       )}
@@ -511,7 +517,6 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
   const p = known.provenance ?? {};
   const row = (label: string, value: string | null | undefined, key: string) =>
     value ? <li key={key}><span>{label}</span> <strong>{value}</strong> <em>{PROVENANCE_LABEL[p[key] ?? "declared"]}</em></li> : null;
-  const included = quote.guaranteed_appointments ?? quote.target_monthly_appointments;
   const PLAN: Record<string, string> = { presence: "Présence", depart: "Départ", local: "Départ", croissance_v2: "Croissance", croissance: "Croissance", pro_v2: "Pro", pro: "Pro", elite_v2: "Élite", signature_v2: "Signature" };
   return (
     <article className="home-clara-card" aria-label="Résumé et proposition">
@@ -527,7 +532,7 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
         <li><span>Taux de conclusion</span> <strong>40 %</strong> <em>Estimation UNPRO</em></li>
       </ul>
       <p className="home-clara-card-title">Entente de départ : {PLAN[quote.recommended_plan] ?? quote.recommended_plan}</p>
-      <p className="home-clara-card-meta">{included} rendez-vous exclusifs par mois, jamais partagés.</p>
+      <p className="home-clara-card-meta">Jusqu’à {quote.target_monthly_appointments} rendez-vous exclusifs par mois selon la demande, jamais partagés.</p>
       <p className="home-clara-card-price">{formatCAD(quote.recommended_monthly_price)} / mois <small>+ TPS 5 % et TVQ 9,975 %</small></p>
       <p className="home-clara-card-meta">Conditions : le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
       <button type="button" className="home-clara-card-primary" onClick={onActivate}>Activer mon profil</button>
