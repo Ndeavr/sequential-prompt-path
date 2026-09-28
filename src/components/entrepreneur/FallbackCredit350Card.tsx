@@ -136,6 +136,8 @@ export function FallbackCredit350Card({
           <span className="inline-flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Ouverture du paiement…
           </span>
+        ) : error ? (
+          "Réessayer"
         ) : (
           FALLBACK_CREDIT_COPY.ctaPrimary
         )}
