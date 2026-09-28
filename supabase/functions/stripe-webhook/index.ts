@@ -330,6 +330,18 @@ Deno.serve(async (req) => {
           const paid = session.payment_status === "paid" || session.status === "complete";
 
           if (creditContractorId && paid) {
+            // Paiement confirmé → accès à l'espace entrepreneur (idempotent, même
+            // mécanisme que le provisionnement). Sans ce rôle, le retour /pro
+            // renvoyait vers l'espace propriétaire.
+            const { data: ownerRow } = await supabase
+              .from("contractors")
+              .select("user_id")
+              .eq("id", creditContractorId)
+              .maybeSingle();
+            if (ownerRow?.user_id) {
+              await supabase.from("user_roles")
+                .upsert({ user_id: ownerRow.user_id, role: "contractor" }, { onConflict: "user_id,role" });
+            }
             const { data: existingCredit } = await supabase
               .from("pricing_transactions")
               .select("id")
