@@ -98,7 +98,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      (["primary_trade", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
+      (["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
         .filter((k) => (patch as Record<string, unknown>)[k])
         .map((k) => [k, "declared" as const]),
     ),
