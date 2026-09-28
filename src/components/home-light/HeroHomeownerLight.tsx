@@ -32,7 +32,7 @@ export default function HeroHomeownerLight() {
   const [isConversationActive, setIsConversationActive] = useState(false);
   useVisibleViewportHeight();
   const copy = {
-    title: "Discutons.",
+    title: "Discutons de votre projet.",
     subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",
   };
 
