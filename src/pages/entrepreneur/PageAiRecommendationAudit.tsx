@@ -207,6 +207,7 @@ export default function PageAiRecommendationAudit() {
     return ([
       ["Entreprise", q.business_name],
       ["Métier", q.primary_trade],
+      ["Clientèle", q.customer_type],
       ["Ville de l’entreprise", q.business_city],
       ["Villes desservies", q.service_areas?.join(", ")],
       ["Objectifs", q.goals?.join(", ")],

@@ -27,11 +27,19 @@ function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
   });
 }
 
-export type ClaraQualificationField = "primary_trade" | "business_city" | "service_areas" | "goals" | "business_name";
+export type ClaraQualificationField =
+  | "primary_trade"
+  | "customer_type"
+  | "business_city"
+  | "service_areas"
+  | "goals"
+  | "business_name";
 
 export interface ClaraContractorQualification {
   /** Métier principal déclaré par l'entrepreneur. */
   primary_trade?: string | null;
+  /** Clientèle desservie (résidentiel, commercial, les deux) — jamais un rôle. */
+  customer_type?: string | null;
   /** Ville où l'entreprise est établie (siège) — jamais un territoire. */
   business_city?: string | null;
   /** Villes ou régions réellement desservies. */
@@ -78,6 +86,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   const current = read();
   const next: ClaraContractorQualification = { ...current };
   if (patch.primary_trade) next.primary_trade = patch.primary_trade;
+  if (patch.customer_type) next.customer_type = patch.customer_type;
   if (patch.business_city) next.business_city = patch.business_city;
   if (patch.business_name) next.business_name = patch.business_name;
   if (patch.service_areas?.length) {
@@ -89,7 +98,7 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      (["primary_trade", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
+      (["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
         .filter((k) => (patch as Record<string, unknown>)[k])
         .map((k) => [k, "declared" as const]),
     ),
@@ -130,19 +139,23 @@ export const CLARA_CONTRACTOR_ANALYSIS_NOTE =
 const ALL_STEPS: ClaraQualificationStep[] = [
   { field: "primary_trade", question: "Parfait. Quel est votre métier principal ?" },
   {
+    field: "customer_type",
+    question: "Travaillez-vous surtout au résidentiel, au commercial, ou les deux ?",
+    quickReplies: ["Résidentiel", "Commercial", "Les deux"],
+  },
+  {
     field: "service_areas",
     question: "Dans quelle(s) ville(s) travaillez-vous surtout ?",
     multi: true,
   },
   {
     field: "goals",
-    question:
-      "Votre priorité en ce moment, c’est plutôt obtenir plus de contrats, éviter les soumissions inutiles, améliorer votre visibilité IA, ou autre chose ?",
+    question: "Qu’aimeriez-vous améliorer pour votre entreprise ?",
     quickReplies: [
-      "Plus de contrats",
-      "Éviter les soumissions inutiles",
-      "Visibilité IA",
-      "Autre",
+      "Être plus visible sur Google et les moteurs d’IA",
+      "Obtenir plus de contrats",
+      "Recevoir des demandes mieux adaptées à mes services",
+      "Réduire le temps consacré à trouver des clients",
     ],
   },
   { field: "business_name", question: "Quel est le nom de votre entreprise ou votre site Web ?" },

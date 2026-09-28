@@ -194,6 +194,16 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
 type ClaraAudience = "homeowner" | "contractor";
+
+/**
+ * Clara ne dit jamais qu'elle ouvre l'inscription sans que l'écran s'ouvre :
+ * cette formule déclenche l'ouverture réelle du parcours entrepreneur.
+ */
+const ANNOUNCES_CONTRACTOR_FORM =
+  /(formulaire d['’]inscription|ouvre (?:votre |le )?(?:formulaire|dossier|inscription)|votre inscription)/i;
+
+/** Un choix cliquable d'ouverture : il agit, il n'est jamais renvoyé comme texte. */
+const OPEN_CHOICE = /^ouvrir\b|inscription|activer mon profil/i;
 type ContractorChoice = "score" | "contracts" | "profile";
 const CONTRACTOR_SUGGESTIONS: { label: string; choice: ContractorChoice }[] = [
   { label: "Vérifier mon score IA", choice: "score" },
@@ -263,7 +273,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudience] = useState<ClaraAudience>("homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>("homeowner");
+  /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
+  const audienceRef = useRef<ClaraAudience>("homeowner");
+  const setAudience = useCallback((next: ClaraAudience) => {
+    audienceRef.current = next;
+    setAudienceState(next);
+  }, []);
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
@@ -865,7 +881,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
       // Dossier maison : ce que le propriétaire vient de déclarer est conservé
       // tel quel, avec sa provenance. Aucune interprétation n'est enregistrée.
-      if (nextMode === "PROJECT") {
+      // Le dossier maison appartient au parcours propriétaire uniquement.
+      if (nextMode === "PROJECT" && audienceRef.current === "homeowner") {
         rememberInDossier({
           category: "project",
           label: text.slice(0, 160),
@@ -994,8 +1011,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         }).catch(() => {});
 
         // « Je l'ajoute à votre dossier maison » : le dossier s'ouvre vraiment,
-        // par-dessus la conversation, sans quitter l'échange en cours.
-        if (mentionsDossier(shownText) && !dossierAutoOpened.current) {
+        // par-dessus la conversation — jamais dans un parcours entrepreneur.
+        if (
+          audienceRef.current === "homeowner"
+          && mentionsDossier(shownText)
+          && !dossierAutoOpened.current
+        ) {
           dossierAutoOpened.current = true;
           setDossierOpen(true);
         }
@@ -1010,6 +1031,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
           const asked = await askNextQualification();
           if (!asked) await beginTextContractorTransition(text, CLARA_CONTRACTOR_ANALYSIS_NOTE);
+        } else if (audienceRef.current === "contractor" && ANNOUNCES_CONTRACTOR_FORM.test(shownText)) {
+          // Clara vient d'annoncer l'inscription : l'écran s'ouvre réellement.
+          setQuickReplies(null);
+          await runOpen("contractor_onboarding", text);
         } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
@@ -1036,9 +1061,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         return;
       }
       // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
-      if (/^ouvrir\b/i.test(option) && lastIntentRef.current) {
-        void runOpen(lastIntentRef.current);
-        return;
+      // En parcours entrepreneur, la destination est connue même sans intention détectée.
+      if (OPEN_CHOICE.test(option)) {
+        const intent: ClaraWorkflowIntent | null =
+          audienceRef.current === "contractor" ? "contractor_onboarding" : lastIntentRef.current;
+        if (intent) {
+          void runOpen(intent);
+          return;
+        }
       }
       if (/^autre$/i.test(option)) {
         focusComposer();

@@ -33,11 +33,19 @@ describe("Clara — qualification entrepreneur", () => {
 
   it("ne repose jamais une question déjà répondue", () => {
     saveClaraQualification({ primary_trade: "Isolation" });
+    expect(nextQualificationStep()?.field).toBe("customer_type");
+    saveClaraQualification({ customer_type: "Résidentiel" });
     expect(nextQualificationStep()?.field).toBe("service_areas");
     saveClaraQualification({ service_areas: ["Laval"] });
     expect(nextQualificationStep()?.field).toBe("goals");
     saveClaraQualification({ goals: ["Plus de contrats"] });
     expect(nextQualificationStep()?.field).toBe("business_name");
+  });
+
+  it("garde la clientèle desservie sans changer le rôle entrepreneur", () => {
+    saveClaraQualification({ primary_trade: "Design intérieur", customer_type: "Résidentiel" });
+    expect(getClaraQualification().customer_type).toBe("Résidentiel");
+    expect(getClaraQualification().provenance?.customer_type).toBe("declared");
   });
 
   it("garde la ville de l'entreprise séparée des territoires desservis", () => {
@@ -55,16 +63,17 @@ describe("Clara — qualification entrepreneur", () => {
   });
 
   it("découpe une réponse multiple en plusieurs territoires", () => {
-    saveClaraQualification({ primary_trade: "Isolation", business_city: "Terrebonne" });
+    saveClaraQualification({ primary_trade: "Isolation", customer_type: "Résidentiel", business_city: "Terrebonne" });
     const step = nextQualificationStep();
     expect(step?.field).toBe("service_areas");
     applyAnswer(step!, "Laval, Montréal et Repentigny");
     expect(getClaraQualification().service_areas).toEqual(["Laval", "Montréal", "Repentigny"]);
   });
 
-  it("termine la qualification une fois les 4 réponses obtenues", () => {
+  it("termine la qualification une fois toutes les réponses obtenues", () => {
     saveClaraQualification({
       primary_trade: "Isolation",
+      customer_type: "Résidentiel",
       business_city: "Terrebonne",
       service_areas: ["Laval"],
       goals: ["Plus de contrats"],
