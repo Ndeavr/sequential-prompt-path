@@ -27,11 +27,19 @@ function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
   });
 }
 
-export type ClaraQualificationField = "primary_trade" | "business_city" | "service_areas" | "goals" | "business_name";
+export type ClaraQualificationField =
+  | "primary_trade"
+  | "customer_type"
+  | "business_city"
+  | "service_areas"
+  | "goals"
+  | "business_name";
 
 export interface ClaraContractorQualification {
   /** Métier principal déclaré par l'entrepreneur. */
   primary_trade?: string | null;
+  /** Clientèle desservie (résidentiel, commercial, les deux) — jamais un rôle. */
+  customer_type?: string | null;
   /** Ville où l'entreprise est établie (siège) — jamais un territoire. */
   business_city?: string | null;
   /** Villes ou régions réellement desservies. */
