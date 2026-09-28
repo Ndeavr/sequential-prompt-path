@@ -1001,8 +1001,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         }).catch(() => {});
 
         // « Je l'ajoute à votre dossier maison » : le dossier s'ouvre vraiment,
-        // par-dessus la conversation, sans quitter l'échange en cours.
-        if (mentionsDossier(shownText) && !dossierAutoOpened.current) {
+        // par-dessus la conversation — jamais dans un parcours entrepreneur.
+        if (
+          audienceRef.current === "homeowner"
+          && mentionsDossier(shownText)
+          && !dossierAutoOpened.current
+        ) {
           dossierAutoOpened.current = true;
           setDossierOpen(true);
         }
@@ -1017,6 +1021,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           // Clara qualifie d'abord : l'audit n'est ouvert qu'une fois l'essentiel connu.
           const asked = await askNextQualification();
           if (!asked) await beginTextContractorTransition(text, CLARA_CONTRACTOR_ANALYSIS_NOTE);
+        } else if (audienceRef.current === "contractor" && ANNOUNCES_CONTRACTOR_FORM.test(shownText)) {
+          // Clara vient d'annoncer l'inscription : l'écran s'ouvre réellement.
+          setQuickReplies(null);
+          await runOpen("contractor_onboarding", text);
         } else if (destination) {
           setQuickReplies(null);
           await runOpen(detected, text);
