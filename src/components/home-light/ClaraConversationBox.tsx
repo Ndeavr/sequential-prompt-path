@@ -194,6 +194,16 @@ const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
 type ClaraAudience = "homeowner" | "contractor";
+
+/**
+ * Clara ne dit jamais qu'elle ouvre l'inscription sans que l'écran s'ouvre :
+ * cette formule déclenche l'ouverture réelle du parcours entrepreneur.
+ */
+const ANNOUNCES_CONTRACTOR_FORM =
+  /(formulaire d['’]inscription|ouvre (?:votre |le )?(?:formulaire|dossier|inscription)|votre inscription)/i;
+
+/** Un choix cliquable d'ouverture : il agit, il n'est jamais renvoyé comme texte. */
+const OPEN_CHOICE = /^ouvrir\b|inscription|activer mon profil/i;
 type ContractorChoice = "score" | "contracts" | "profile";
 const CONTRACTOR_SUGGESTIONS: { label: string; choice: ContractorChoice }[] = [
   { label: "Vérifier mon score IA", choice: "score" },
