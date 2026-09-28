@@ -72,22 +72,24 @@ export function FallbackCredit350Card({
           },
         },
       );
-      if (fnError) throw fnError;
-      const payload = data as { url?: string; error?: string } | null;
+      const payload = data as
+        | { url?: string; error?: string; code?: string; retryable?: boolean }
+        | null;
       if (payload?.error) throw new Error(payload.error);
+      if (fnError) throw fnError;
       if (!payload?.url) throw new Error("url_manquante");
       redirectToCheckout(payload.url);
       setTimeout(() => setLoading(false), 2500);
     } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
       void logFunnelEvent({
         event_type: FALLBACK_CREDIT_EVENTS.paymentFailed,
         contractor_id: contractorId ?? null,
-        metadata: {
-          quote_id: quoteId ?? null,
-          reason: e instanceof Error ? e.message : String(e),
-        },
+        metadata: { quote_id: quoteId ?? null, reason },
       });
-      setError("Le paiement n'a pas pu démarrer. Vous pouvez réessayer.");
+      setError(
+        "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
+      );
       toast.error("Le paiement n'a pas pu démarrer.");
       setLoading(false);
     }
@@ -134,6 +136,8 @@ export function FallbackCredit350Card({
           <span className="inline-flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Ouverture du paiement…
           </span>
+        ) : error ? (
+          "Réessayer"
         ) : (
           FALLBACK_CREDIT_COPY.ctaPrimary
         )}

@@ -83,69 +83,122 @@ Deno.serve(async (req) => {
     const { data, error } = await sb.rpc("fn_match_waiting_demand", { _contractor_id: contractorId });
     if (error) {
       await logJourney(contractorId, "matching_failed", { reason: error.message });
+      await sb.from("platform_operation_outcomes").insert({
+        operation: "demand_matching",
+        intent: "match_waiting_demand_after_activation",
+        business_outcome: "failed",
+        failure_code: "matching_rpc_error",
+        affected_record: `contractors:${contractorId}`,
+        service: "match-waiting-demand",
+        next_action: "Relancer le rapprochement depuis l'administration",
+        payload: { contractor_id: contractorId, reason: error.message },
+      });
       return json({ ok: false, error: error.message, code: "matching_failed" }, 500);
     }
 
     const row = Array.isArray(data) ? data[0] : data;
     const matched = row?.matched_count ?? 0;
+    const newlyMatched = row?.newly_matched_count ?? 0;
     const segments = row?.segments ?? [];
 
-    // Notify each newly matched homeowner — best-effort, never blocking.
-    if (matched > 0) {
-      const { data: signals } = await sb
-        .from("demand_signals")
-        .select("id, homeowner_id, city, category, project_id")
-        .eq("matched_contractor_id", contractorId)
-        .eq("status", "matched")
-        .order("updated_at", { ascending: false })
-        .limit(200);
+    // ── ÉTAT RÉELLEMENT ENREGISTRÉ ─────────────────────────────────────────
+    // Lu après la mutation : c'est la seule source du résultat retourné.
+    const { data: matchedRows } = await sb
+      .from("demand_signals")
+      .select("id, homeowner_id, city, category, project_id, updated_at")
+      .eq("matched_contractor_id", contractorId)
+      .eq("status", "matched")
+      .order("updated_at", { ascending: false })
+      .limit(200);
 
-      for (const s of signals ?? []) {
-        const { error: nErr } = await sb.from("notifications").insert({
-          profile_id: s.homeowner_id,
-          type: "demand_matched",
-          channel: "in_app",
-          title: "Une recommandation est prête",
-          body: `Un entrepreneur compatible est maintenant disponible pour votre projet ${s.category} à ${s.city}.`,
-          entity_type: "demand_signal",
-          entity_id: s.id,
-          metadata: { signal_id: s.id, contractor_id: contractorId, project_id: s.project_id },
-        });
-        if (nErr) console.error("[match-waiting-demand] notify failed", s.id, nErr.message);
+    const rows = matchedRows ?? [];
+
+    // ── NOTIFICATIONS ──────────────────────────────────────────────────────
+    // Résultat distinct du rapprochement. Un doublon (index unique) compte
+    // comme déjà notifié; un échec réel reste reprenable par une relance.
+    // demand_signals.homeowner_id = auth user id; notifications.profile_id = profiles.id.
+    let notificationsSent = 0;
+    let notificationsAlreadySent = 0;
+    const notificationFailures: { demand_id: string; reason: string }[] = [];
+
+    const ownerUserIds = [...new Set(rows.map((r) => r.homeowner_id).filter(Boolean))];
+    const profileByUserId = new Map<string, string>();
+    if (ownerUserIds.length > 0) {
+      const { data: profileRows } = await sb
+        .from("profiles")
+        .select("id, user_id")
+        .in("user_id", ownerUserIds);
+      for (const p of profileRows ?? []) {
+        if (p.user_id) profileByUserId.set(p.user_id, p.id);
+      }
+    }
+
+    for (const s of rows) {
+      const profileId = profileByUserId.get(s.homeowner_id);
+      if (!profileId) {
+        notificationFailures.push({ demand_id: s.id, reason: "profile_not_found" });
+        console.error("[match-waiting-demand] notify skipped, no profile", s.id);
+        continue;
+      }
+      const { error: nErr } = await sb.from("notifications").insert({
+        profile_id: profileId,
+        type: "demand_matched",
+        channel: "in_app",
+        title: "Une recommandation est prête",
+        body: `Un entrepreneur compatible est maintenant disponible pour votre projet ${s.category} à ${s.city}.`,
+        entity_type: "demand_signal",
+        entity_id: s.id,
+        metadata: { signal_id: s.id, contractor_id: contractorId, project_id: s.project_id },
+      });
+      if (!nErr) {
+        notificationsSent += 1;
+      } else if (nErr.code === "23505") {
+        notificationsAlreadySent += 1;
+      } else {
+        notificationFailures.push({ demand_id: s.id, reason: nErr.message });
+        console.error("[match-waiting-demand] notify failed", s.id, nErr.message);
       }
     }
 
     await logJourney(contractorId, matched > 0 ? "matching_succeeded" : "matching_no_result", {
       matched_count: matched,
+      newly_matched_count: newlyMatched,
+      notifications_sent: notificationsSent,
+      notifications_failed: notificationFailures.length,
       segments,
       reason: matched > 0 ? null : "Aucune demande propriétaire en attente compatible",
       duration_ms: Date.now() - start,
     });
 
-    // Canonical, readable audit trail: demand(s), contractor, result, reason, timestamp.
-    const { data: matchedRows } = await sb
-      .from("demand_signals")
-      .select("id, city, category, project_id, updated_at")
-      .eq("matched_contractor_id", contractorId)
-      .eq("status", "matched")
-      .order("updated_at", { ascending: false })
-      .limit(50);
+    // Journal canonique : demande(s), entrepreneur, résultat, raison, horodatage.
+    const outcome = matched === 0
+      ? "blocked"
+      : notificationFailures.length > 0
+        ? "partial"
+        : "achieved";
 
     const { error: outcomeErr } = await sb.from("platform_operation_outcomes").insert({
       operation: "demand_matching",
       intent: "match_waiting_demand_after_activation",
-      business_outcome: matched > 0 ? "achieved" : "blocked",
+      business_outcome: outcome,
       block_reason: matched > 0 ? null : "no_compatible_waiting_demand",
+      failure_code: notificationFailures.length > 0 ? "notification_delivery_failed" : null,
       affected_record: `contractors:${contractorId}`,
       service: "match-waiting-demand",
-      next_action: matched > 0
-        ? "Notifier l'entrepreneur et planifier le rendez-vous"
-        : "Ajouter territoires/services ou attendre une nouvelle demande",
+      next_action: matched === 0
+        ? "Ajouter territoires/services ou attendre une nouvelle demande"
+        : notificationFailures.length > 0
+          ? "Relancer le rapprochement pour reprendre les avis non transmis"
+          : "Notifier l'entrepreneur et planifier le rendez-vous",
       payload: {
         contractor_id: contractorId,
         matched_count: matched,
+        newly_matched_count: newlyMatched,
+        notifications_sent: notificationsSent,
+        notifications_already_sent: notificationsAlreadySent,
+        notification_failures: notificationFailures,
         segments,
-        demands: (matchedRows ?? []).map((d) => ({
+        demands: rows.slice(0, 50).map((d) => ({
           demand_id: d.id,
           city: d.city,
           category: d.category,
@@ -165,9 +218,23 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
+      matching: {
+        matched_count: matched,
+        newly_matched_count: newlyMatched,
+        segments,
+        matched_demands: rows.map((d) => d.id),
+      },
+      notifications: {
+        sent: notificationsSent,
+        already_sent: notificationsAlreadySent,
+        failed: notificationFailures.length,
+        failures: notificationFailures,
+        resumable: notificationFailures.length > 0,
+      },
+      // Compatibilité avec les appelants existants.
       matched_count: matched,
       segments,
-      matched_demands: (matchedRows ?? []).map((d) => d.id),
+      matched_demands: rows.map((d) => d.id),
       outcome_logged: !outcomeErr,
       outcome_log_error: outcomeErr?.message ?? null,
       duration_ms: Date.now() - start,

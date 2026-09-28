@@ -100385,6 +100385,8 @@ export type Database = {
         Args: { _contractor_id: string }
         Returns: {
           matched_count: number
+          newly_matched_count: number
+          newly_matched_ids: string[]
           segments: Json
         }[]
       }
