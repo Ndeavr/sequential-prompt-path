@@ -137,7 +137,7 @@ export default function PageAffiliateOnboarding() {
 
   useEffect(() => {
     captureAttribution(new URLSearchParams(location.search));
-    trackAffiliateFunnel("onboarding_started");
+    trackAffiliateFunnel("onboarding_started", { metadata: { resumed_step: draft.step } });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -199,8 +199,11 @@ export default function PageAffiliateOnboarding() {
   async function sendPhoneOtp() {
     setBusy(true);
     setOtpError(null);
+    const trace = { step: draft.step, authed: !!user };
+    void trackAffiliateFunnel("otp_send_clicked", { metadata: trace });
     try {
       const res = await sendOtpSms(draft.phone);
+      void trackAffiliateFunnel("otp_send_result", { metadata: { ...trace, ok: res.ok, reason: res.ok ? null : res.message ?? "unknown" } });
       if (!res.ok) {
         const msg = res.message ?? "Impossible d'envoyer le code par SMS pour le moment.";
         setOtpError(msg);
@@ -219,9 +222,12 @@ export default function PageAffiliateOnboarding() {
     if (busy) return; // anti double-soumission
     setBusy(true);
     setOtpError(null);
+    const trace = { step: draft.step };
+    void trackAffiliateFunnel("otp_verify_clicked", { metadata: trace });
     try {
       // La session n'est ouverte que si le serveur a validé le code (verify-otp).
       const res = await verifyOtpSms(draft.phone, otpCode);
+      void trackAffiliateFunnel("otp_verify_result", { metadata: { ...trace, ok: res.ok, reason: res.ok ? null : res.message ?? "unknown" } });
       if (!res.ok) {
         const msg = res.message ?? "Code invalide. Réessayez.";
         setOtpError(msg);
@@ -345,6 +351,7 @@ export default function PageAffiliateOnboarding() {
     if (!user || busy) return;
     setActivationError(null);
     setBusy(true);
+    void trackAffiliateFunnel("activation_clicked", { metadata: { terms } });
     try {
       const stored = getStoredAttribution();
       const params = new URLSearchParams(location.search);
@@ -373,6 +380,7 @@ export default function PageAffiliateOnboarding() {
       const code = error
         ? await readErrorCode(error)
         : ((data as any)?.error as string | undefined) ?? null;
+      void trackAffiliateFunnel("activation_result", { metadata: { ok: !code, code } });
       if (code) {
         const message = ACTIVATION_MESSAGES[code] ?? ACTIVATION_MESSAGES.default;
         setActivationError(message);
@@ -383,6 +391,7 @@ export default function PageAffiliateOnboarding() {
       toast.success("Bienvenue dans le programme!");
       nav("/affiliate", { replace: true });
     } catch {
+      void trackAffiliateFunnel("activation_result", { metadata: { ok: false, code: "exception" } });
       setActivationError(ACTIVATION_MESSAGES.default);
       toast.error(ACTIVATION_MESSAGES.default);
     } finally {
