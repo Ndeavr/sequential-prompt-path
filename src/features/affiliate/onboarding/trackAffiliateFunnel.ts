@@ -20,7 +20,14 @@ export type AffiliateFunnelEvent =
   | "profile_claimed"
   | "checkout_started"
   | "paid_conversion"
-  | "commission_created";
+  | "commission_created"
+  // Traçage de la vérification SMS / activation (jamais de numéro ni de code)
+  | "otp_send_clicked"
+  | "otp_send_result"
+  | "otp_verify_clicked"
+  | "otp_verify_result"
+  | "activation_clicked"
+  | "activation_result";
 
 const SESSION_KEY = "unpro_aff_funnel_session";
 
