@@ -33,11 +33,19 @@ describe("Clara — qualification entrepreneur", () => {
 
   it("ne repose jamais une question déjà répondue", () => {
     saveClaraQualification({ primary_trade: "Isolation" });
+    expect(nextQualificationStep()?.field).toBe("customer_type");
+    saveClaraQualification({ customer_type: "Résidentiel" });
     expect(nextQualificationStep()?.field).toBe("service_areas");
     saveClaraQualification({ service_areas: ["Laval"] });
     expect(nextQualificationStep()?.field).toBe("goals");
     saveClaraQualification({ goals: ["Plus de contrats"] });
     expect(nextQualificationStep()?.field).toBe("business_name");
+  });
+
+  it("garde la clientèle desservie sans changer le rôle entrepreneur", () => {
+    saveClaraQualification({ primary_trade: "Design intérieur", customer_type: "Résidentiel" });
+    expect(getClaraQualification().customer_type).toBe("Résidentiel");
+    expect(getClaraQualification().provenance?.customer_type).toBe("declared");
   });
 
   it("garde la ville de l'entreprise séparée des territoires desservis", () => {
