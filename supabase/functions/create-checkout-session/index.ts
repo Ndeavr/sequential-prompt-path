@@ -190,25 +190,59 @@ Deno.serve(async (req) => {
     if (fallbackCredit === true) {
       const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
-      let { data: fbContractor } = await serviceClient
-        .from("contractors")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
+      // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
+      // doublon sur double-clic ou nouvelle tentative (user_id est unique).
+      const findContractor = async () => {
+        const { data } = await serviceClient
+          .from("contractors")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+        return data ?? null;
+      };
+
+      let fbContractor = await findContractor();
 
       if (!fbContractor) {
+        // Nom d'entreprise réel si le devis en fournit un; sinon le courriel.
+        let fallbackBusinessName = userEmail;
+        if (quoteId) {
+          const { data: quoteName } = await serviceClient
+            .from("contractor_pricing_quotes")
+            .select("company_name")
+            .eq("id", String(quoteId))
+            .maybeSingle();
+          if (quoteName?.company_name) fallbackBusinessName = quoteName.company_name;
+        }
+
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, business_name: userEmail })
+          .insert({ user_id: userId, business_name: fallbackBusinessName })
           .select("id")
-          .single();
-        if (createErr || !created) {
+          .maybeSingle();
+
+        if (created) {
+          fbContractor = created;
+        } else {
+          // Course concurrente : la fiche vient d'être créée par l'autre appel.
+          fbContractor = await findContractor();
+        }
+
+        if (!fbContractor) {
+          console.error(
+            "[checkout:fallback_credit_350:contractor_create_failed]",
+            { user_id: userId, reason: createErr?.message ?? "unknown" },
+          );
           return new Response(
-            JSON.stringify({ error: "Impossible de préparer votre compte entrepreneur." }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            JSON.stringify({
+              error:
+                "Nous n'avons pas pu préparer votre compte entrepreneur. Réessayez dans un instant.",
+              code: "contractor_create_failed",
+              retryable: true,
+            }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
-        fbContractor = created;
       }
 
       const amountCents = assertFallbackCreditAmount(FALLBACK_CREDIT_AMOUNT_CENTS);
