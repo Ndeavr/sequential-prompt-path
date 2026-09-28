@@ -83,12 +83,6 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
 
@@ -1689,13 +1683,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 onTakeVideo={() => videoCameraRef.current?.click()}
                 onChooseVideo={() => videoLibraryRef.current?.click()}
               />
-              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} aria-label={copy.camera} title={copy.camera} className="home-clara-tool touch-manipulation rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
               </PromptInputButton>
               <PromptInputButton
                 type="button"
                 onClick={() => void startVoice()}
-                tooltip={voiceTip ?? copy.voice}
+                title={copy.voice}
                 aria-label={copy.voice}
                 data-voice-suggested={voiceGlow ? "true" : undefined}
                 data-voice-listening={voiceActive ? "true" : undefined}
@@ -1761,37 +1755,65 @@ interface MediaMenuProps {
   onChooseVideo: () => void;
 }
 
+/**
+ * Menu média tactile : chaque choix ouvre son sélecteur natif directement
+ * dans le même geste (pas de fermeture asynchrone ni d'infobulle), ce qui
+ * évite les boutons « morts » sur Chrome Android et Safari iOS.
+ */
 function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
+    { key: "tp", icon: Camera, text: "Prendre une photo", run: onTakePhoto },
+    { key: "cp", icon: ImageIcon, text: "Choisir une photo", run: onChoosePhoto },
+    { key: "tv", icon: Video, text: "Prendre une vidéo", run: onTakeVideo },
+    { key: "cv", icon: Video, text: "Choisir une vidéo", run: onChooseVideo },
+    { key: "doc", icon: FileText, text: "Joindre un document", run: () => attachments.openFileDialog() },
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <PromptInputButton
-          type="button"
-          tooltip={label}
-          aria-label={label}
-          className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
-        >
-          <Plus className="h-5 w-5" />
-        </PromptInputButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuItem onSelect={() => onTakePhoto()}>
-          <Camera className="h-4 w-4" /> Prendre une photo
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChoosePhoto()}>
-          <ImageIcon className="h-4 w-4" /> Choisir une photo
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onTakeVideo()}>
-          <Video className="h-4 w-4" /> Prendre une vidéo
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChooseVideo()}>
-          <Video className="h-4 w-4" /> Choisir une vidéo
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => attachments.openFileDialog()}>
-          <FileText className="h-4 w-4" /> Joindre un document
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="home-clara-tool inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+      >
+        <Plus className="h-5 w-5" />
+      </button>
+      {open && (
+        <div role="menu" className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg">
+          {items.map(({ key, icon: Icon, text, run }) => (
+            <button
+              key={key}
+              type="button"
+              role="menuitem"
+              onClick={() => { run(); setOpen(false); }}
+              className="flex w-full touch-manipulation items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <Icon className="h-4 w-4" /> {text}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
