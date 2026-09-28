@@ -532,7 +532,7 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
         <li><span>Taux de conclusion</span> <strong>40 %</strong> <em>Estimation UNPRO</em></li>
       </ul>
       <p className="home-clara-card-title">Entente de départ : {PLAN[quote.recommended_plan] ?? quote.recommended_plan}</p>
-      <p className="home-clara-card-meta">Jusqu’à {quote.target_monthly_appointments} rendez-vous exclusifs par mois selon la demande, jamais partagés.</p>
+      <p className="home-clara-card-meta">Jusqu’à {flow.appointments ?? quote.target_monthly_appointments} rendez-vous exclusifs par mois selon la demande, jamais partagés.</p>
       <p className="home-clara-card-price">{formatCAD(quote.recommended_monthly_price)} / mois <small>+ TPS 5 % et TVQ 9,975 %</small></p>
       <p className="home-clara-card-meta">Conditions : le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
       <button type="button" className="home-clara-card-primary" onClick={onActivate}>Activer mon profil</button>
