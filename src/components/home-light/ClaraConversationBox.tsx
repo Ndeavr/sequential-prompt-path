@@ -1061,9 +1061,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         return;
       }
       // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
-      if (/^ouvrir\b/i.test(option) && lastIntentRef.current) {
-        void runOpen(lastIntentRef.current);
-        return;
+      // En parcours entrepreneur, la destination est connue même sans intention détectée.
+      if (OPEN_CHOICE.test(option)) {
+        const intent: ClaraWorkflowIntent | null =
+          audienceRef.current === "contractor" ? "contractor_onboarding" : lastIntentRef.current;
+        if (intent) {
+          void runOpen(intent);
+          return;
+        }
       }
       if (/^autre$/i.test(option)) {
         focusComposer();
