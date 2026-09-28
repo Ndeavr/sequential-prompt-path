@@ -871,7 +871,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
       // Dossier maison : ce que le propriétaire vient de déclarer est conservé
       // tel quel, avec sa provenance. Aucune interprétation n'est enregistrée.
-      if (nextMode === "PROJECT") {
+      // Le dossier maison appartient au parcours propriétaire uniquement.
+      if (nextMode === "PROJECT" && audienceRef.current === "homeowner") {
         rememberInDossier({
           category: "project",
           label: text.slice(0, 160),
