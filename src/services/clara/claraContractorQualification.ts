@@ -27,6 +27,8 @@ function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
   });
 }
 
+export type ClaraProvenance = "public" | "declared" | "inferred";
+
 export type ClaraQualificationField =
   | "primary_trade"
   | "customer_type"
@@ -48,8 +50,16 @@ export interface ClaraContractorQualification {
   business_name?: string | null;
   /** Objectifs déclarés (plusieurs possibles). */
   goals?: string[];
-  /** Provenance : tout ce qui vient de la conversation est « déclaré ». */
-  provenance?: Record<string, "declared">;
+  /** Site Web et téléphone publics (fiche Google) ou déclarés. */
+  website?: string | null;
+  phone?: string | null;
+  /** Identifiant de la fiche Google confirmée par l'entrepreneur. */
+  google_place_id?: string | null;
+  /**
+   * Provenance par champ : « public » = fiche Google confirmée,
+   * « declared » = dit par l'entrepreneur, « inferred » = déduit par UNPRO.
+   */
+  provenance?: Record<string, ClaraProvenance>;
   updated_at?: string;
 }
 
@@ -82,13 +92,19 @@ export function getClaraQualification(): ClaraContractorQualification {
 }
 
 /** Enregistre une réponse réelle, sans jamais écraser une valeur par du vide. */
-export function saveClaraQualification(patch: ClaraContractorQualification): ClaraContractorQualification {
+export function saveClaraQualification(
+  patch: ClaraContractorQualification,
+  source: ClaraProvenance | Partial<Record<string, ClaraProvenance>> = "declared",
+): ClaraContractorQualification {
   const current = read();
   const next: ClaraContractorQualification = { ...current };
   if (patch.primary_trade) next.primary_trade = patch.primary_trade;
   if (patch.customer_type) next.customer_type = patch.customer_type;
   if (patch.business_city) next.business_city = patch.business_city;
   if (patch.business_name) next.business_name = patch.business_name;
+  if (patch.website) next.website = patch.website;
+  if (patch.phone) next.phone = patch.phone;
+  if (patch.google_place_id) next.google_place_id = patch.google_place_id;
   if (patch.service_areas?.length) {
     next.service_areas = Array.from(new Set([...(current.service_areas ?? []), ...patch.service_areas]));
   }
@@ -98,9 +114,9 @@ export function saveClaraQualification(patch: ClaraContractorQualification): Cla
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      (["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name"] as ClaraQualificationField[])
+      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id"]
         .filter((k) => (patch as Record<string, unknown>)[k])
-        .map((k) => [k, "declared" as const]),
+        .map((k) => [k, typeof source === "string" ? source : source[k] ?? "declared"]),
     ),
   };
   next.updated_at = new Date().toISOString();

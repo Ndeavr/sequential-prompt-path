@@ -66,6 +66,7 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
+import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -327,6 +328,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const contractorTransitionRef = useRef(false);
   /** Question de qualification en attente de réponse (une seule à la fois). */
   const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
+  /** Parcours entrepreneur mené entièrement dans le chat. */
+  const [contractorFlow, setContractorFlow] = useState(false);
+  const contractorFlowRef = useRef<ClaraContractorFlowHandle | null>(null);
   const mountedRef = useRef(true);
   const askNextRef = useRef<(() => Promise<boolean>) | null>(null);
   const transitionRef = useRef<((note: string) => Promise<void>) | null>(null);
@@ -467,6 +471,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setMode("IDLE");
     setAudience("homeowner");
     qualificationStepRef.current = null;
+    setContractorFlow(false);
     activationTracked.current = false;
     trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
@@ -761,6 +766,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
   }, []);
 
+  const addFlowUserMessage = useCallback((text: string) => {
+    const id = uid();
+    setQuickReplies(null);
+    setMessages((previous) => [...previous, { id, role: "user", text }]);
+    void appendClaraMessage({ role: "user", text, clientMessageId: id }).catch(() => undefined);
+    scrollToLatest("smooth");
+  }, [scrollToLatest]);
+
   /**
    * Qualification entrepreneur : Clara pose une seule question utile par tour,
    * jamais une déjà répondue. L'audit ne s'ouvre qu'ensuite.
@@ -768,6 +781,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
    */
   const askNextQualification = useCallback(
     async (options: { opening?: boolean } = {}) => {
+      // Le parcours entrepreneur avance maintenant dans le chat :
+      // aucune redirection automatique vers l'audit.
+      if (options.opening) await sayClara(CLARA_CONTRACTOR_OPENING);
+      setContractorFlow(true);
+      qualificationStepRef.current = null;
+      trackCopilotEvent("contractor_context_captured", { surface: "home_clara_box", kind: "in_chat_flow" });
+      return true;
       // Entreprise déjà identifiée (audit précédent) : jamais redemandée.
       const known = getClaraQualification();
       if (!known.business_name) {
@@ -845,6 +865,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     async (raw: string) => {
       const text = raw.trim();
       if (!text || busy) return;
+
+      // Parcours entrepreneur dans le chat : la réponse libre lui revient.
+      if (contractorFlow && contractorFlowRef.current?.handleText(text)) {
+        setError(null);
+        focusComposer();
+        return;
+      }
 
       setError(null);
       setQuickReplies(null);
@@ -1048,7 +1075,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [askNextQualification, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
   );
 
   const chooseQuickReply = useCallback(
@@ -1551,7 +1578,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 ))}
               </div>
             )}
-            {audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
+            {contractorFlow && (
+              <ClaraContractorFlow
+                ref={contractorFlowRef}
+                say={(text) => sayClara(text)}
+                addUser={addFlowUserMessage}
+                onBusy={setBusy}
+              />
+            )}
+            {!contractorFlow && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
               <div className="home-clara-quick" role="group" aria-label="Choix entrepreneur" data-audience="contractor">
                 {CONTRACTOR_SUGGESTIONS.map((option) => (
                   <button key={option.choice} type="button" onClick={() => void chooseContractorSuggestion(option.label, option.choice)}>
