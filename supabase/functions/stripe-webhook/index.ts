@@ -70,11 +70,19 @@ Deno.serve(async (req) => {
       // Live signature first; fall back to the Stripe test endpoint secret so
       // test-mode events can be verified for real (never forged, never skipped).
       try {
-        event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-      } catch (liveErr) {
-        if (!testWebhookSecret) throw liveErr;
-        event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
-        if (event.livemode) throw liveErr;
+        try {
+          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+        } catch (liveErr) {
+          if (!testWebhookSecret) throw liveErr;
+          event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
+          if (event.livemode) throw liveErr;
+        }
+      } catch (_sigErr) {
+        // Invalid signature = client error; never processed, never retried as a server fault.
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     } else {
       event = JSON.parse(body) as Stripe.Event;
