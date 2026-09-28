@@ -128,8 +128,19 @@ describe("Clara — ouverture réelle avant toute confirmation", () => {
   });
 
   it("le bouton visible emprunte exactement la même fonction d'ouverture", () => {
-    expect(box).toContain("/^ouvrir\\b/i.test(option) && lastIntentRef.current");
-    expect(box).toContain("void runOpen(lastIntentRef.current)");
+    expect(box).toContain("OPEN_CHOICE.test(option)");
+    expect(box).toContain("void runOpen(intent)");
+    // En parcours entrepreneur, « Ouvrir l'inscription » ouvre l'écran réel.
+    expect(box).toContain('audienceRef.current === "contractor" ? "contractor_onboarding" : lastIntentRef.current');
+  });
+
+  it("n'annonce jamais l'inscription sans ouvrir l'écran réel", () => {
+    expect(box).toContain("ANNOUNCES_CONTRACTOR_FORM.test(shownText)");
+    expect(box).toContain('await runOpen("contractor_onboarding", text)');
+  });
+
+  it("n'ouvre jamais le dossier maison dans un parcours entrepreneur", () => {
+    expect(box).toContain('audienceRef.current === "homeowner"\n          && mentionsDossier(shownText)');
   });
 
   it("garde les pages UNPRO dans le même onglet", () => {
