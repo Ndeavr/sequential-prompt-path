@@ -351,6 +351,7 @@ export default function PageAffiliateOnboarding() {
     if (!user || busy) return;
     setActivationError(null);
     setBusy(true);
+    void trackAffiliateFunnel("activation_clicked", { metadata: { terms } });
     try {
       const stored = getStoredAttribution();
       const params = new URLSearchParams(location.search);
@@ -379,6 +380,7 @@ export default function PageAffiliateOnboarding() {
       const code = error
         ? await readErrorCode(error)
         : ((data as any)?.error as string | undefined) ?? null;
+      void trackAffiliateFunnel("activation_result", { metadata: { ok: !code, code } });
       if (code) {
         const message = ACTIVATION_MESSAGES[code] ?? ACTIVATION_MESSAGES.default;
         setActivationError(message);
@@ -389,6 +391,7 @@ export default function PageAffiliateOnboarding() {
       toast.success("Bienvenue dans le programme!");
       nav("/affiliate", { replace: true });
     } catch {
+      void trackAffiliateFunnel("activation_result", { metadata: { ok: false, code: "exception" } });
       setActivationError(ACTIVATION_MESSAGES.default);
       toast.error(ACTIVATION_MESSAGES.default);
     } finally {
