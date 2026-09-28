@@ -21,7 +21,7 @@ import {
   type ClaraProvenance,
 } from "@/services/clara/claraContractorQualification";
 import { computePricingQuote, formatCAD, type PricingQuote } from "@/services/contractorPricingQuoteService";
-import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
+import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 
 type Candidate = {
   place_id: string;
@@ -164,7 +164,6 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       if (error || (providerError && results.length === 0)) {
         setLookupError("La recherche Google ne répond pas pour le moment.");
         setRetry(() => () => void search(query));
-        void trackFunnelFailure?.("analysis_started", "lookup_unavailable" as never).catch?.(() => {});
         await say("La recherche Google ne répond pas pour le moment. Vous pouvez réessayer ou continuer avec le nom que vous m’avez donné.");
         setStep("pick");
         setCandidates([]);
@@ -530,7 +529,7 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
       <p className="home-clara-card-title">Entente de départ : {PLAN[quote.recommended_plan] ?? quote.recommended_plan}</p>
       <p className="home-clara-card-meta">{included} rendez-vous exclusifs par mois, jamais partagés.</p>
       <p className="home-clara-card-price">{formatCAD(quote.recommended_monthly_price)} / mois <small>+ TPS 5 % et TVQ 9,975 %</small></p>
-      <p className="home-clara-card-meta">Conditions : sans engagement de durée affiché ici; le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
+      <p className="home-clara-card-meta">Conditions : le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
       <button type="button" className="home-clara-card-primary" onClick={onActivate}>Activer mon profil</button>
       <button type="button" className="home-clara-card-link" onClick={onDetails}>Voir les détails de l’analyse</button>
     </article>
