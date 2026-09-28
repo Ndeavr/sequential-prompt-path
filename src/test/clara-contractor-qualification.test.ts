@@ -63,16 +63,17 @@ describe("Clara — qualification entrepreneur", () => {
   });
 
   it("découpe une réponse multiple en plusieurs territoires", () => {
-    saveClaraQualification({ primary_trade: "Isolation", business_city: "Terrebonne" });
+    saveClaraQualification({ primary_trade: "Isolation", customer_type: "Résidentiel", business_city: "Terrebonne" });
     const step = nextQualificationStep();
     expect(step?.field).toBe("service_areas");
     applyAnswer(step!, "Laval, Montréal et Repentigny");
     expect(getClaraQualification().service_areas).toEqual(["Laval", "Montréal", "Repentigny"]);
   });
 
-  it("termine la qualification une fois les 4 réponses obtenues", () => {
+  it("termine la qualification une fois toutes les réponses obtenues", () => {
     saveClaraQualification({
       primary_trade: "Isolation",
+      customer_type: "Résidentiel",
       business_city: "Terrebonne",
       service_areas: ["Laval"],
       goals: ["Plus de contrats"],
