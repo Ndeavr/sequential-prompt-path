@@ -1075,7 +1075,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         focusComposer();
       }
     },
-    [askNextQualification, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
   );
 
   const chooseQuickReply = useCallback(
