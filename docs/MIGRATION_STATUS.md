@@ -58,3 +58,11 @@ Keep the following fields in `.codex-private/MIGRATION_STATUS.md`:
 - approvals still required.
 
 Never include passwords, connection strings, secret values, raw personal records, Auth hashes, or signed URLs.
+
+## Production backend reference (verified 2026-09-29)
+
+- Confirmed production backend ref: `clmaqdnphbndvmmqvpff` (Lovable Cloud).
+- Evidence: live bundle on unpro.ca (`/assets/index-Cudg281m.js`) targets `clmaqdnphbndvmmqvpff.supabase.co`; `.env` and `supabase/config.toml` match; edge function `twilio-auth-audit` answered from this project; runtime DB reachable.
+- Refs `uspqjllklgqtfoyodkjx` and `mfffwgzmyswsanmxeahn` come from older CLI/restoration contexts. They are NOT validated production targets. Never write, restore, or send from them.
+- Twilio (2026-09-29 22:14 UTC, GET-only audit, no SMS): account active (Full), sender +1 450 328-6776 owned with SMS capability, Messaging and Verify services OK. The 20003 failures of 2026-09-24 are no longer reproduced.
+- Outreach master switch `system_flags.OUTREACH_ENABLED` remains `false`. Reason: cron job 142 (`acquisition-queue-worker`, every 15 min) would resume daily sending (cap 25/channel/day, recurring), and no existing mechanism limits resumption to a single batch. Resume only on explicit founder request inside the SMS window, then switch back off after the batch.
