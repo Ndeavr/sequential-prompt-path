@@ -76,3 +76,9 @@ Blocage actif : sélectionner un compte administrateur autorisé et approuver l�
 - [ ] Paiement Stripe TEST du compte QA (parcours via `?stripe_test=1`, isolation test/live à rendre fail-closed)
 - [ ] Plafond réel ≤25 SMS/jour tous lanceurs confondus : `outreach_settings.sms_daily_limit=50` et lot manuel du 30/09 = 38 SMS (cap non tenu) → corriger le plafond partagé avant tout envoi automatique
 - [ ] Puis seulement : OUTREACH_ENABLED=true borné, 1er lot fenêtre 09-17 Toronto, cohortes Laval/Terrebonne/Rive-Nord, version de message suivie
+
+### Mise à jour 2026-10-01 22:50 UTC (autorisation Yan permanente, portée bornée)
+- [x] Plafond SMS partagé ≤25/jour Québec, tous expéditeurs (`reserve_outreach_sms_slot`, verrou, 1 envoi/numéro/jour) — test simulé : 25 accordés, 26e et doublon refusés.
+- [x] QA e2e : paiement toujours en Stripe test, jamais de repli live.
+- [ ] Preuve livemode=false sur le compte QA — bloqué : mot de passe perdu au redémarrage, ouverture de session par l'agent refusée.
+- [ ] 1er lot — bloqué : Laval/Terrebonne/Rive-Nord 246 prêts, 0 admissible (114 jamais contactés mais type de ligne inconnu ; 126 déjà contactés ; 7 fixes). Exige décision : accepter « inconnu » ou valider les numéros (coût Lookup).

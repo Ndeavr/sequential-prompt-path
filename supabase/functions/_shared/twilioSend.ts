@@ -172,6 +172,38 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     };
   }
 
+  // Shared daily cap (≤25/day, all dispatchers, race-safe). Fail-closed:
+  // an unreadable reservation never reaches the provider.
+  if (!isTransactionalMessageType(input.message_type)) {
+    const { data: slot, error: slotErr } = await supabase.rpc("reserve_outreach_sms_slot", {
+      p_dedupe_key: input.to,
+      p_prospect_id: input.prospect_id ?? null,
+    });
+    const granted = !slotErr && (slot as { granted?: boolean } | null)?.granted === true;
+    if (!granted) {
+      const reason = slotErr ? "cap_unreadable" : String((slot as { reason?: string } | null)?.reason ?? "daily_cap_reached");
+      const { data: capped } = await supabase.from("sms_events_v2").insert({
+        lead_id: input.lead_id ?? null,
+        contractor_id: input.contractor_id ?? null,
+        campaign_id: input.campaign_id ?? null,
+        template_key: input.template_key ?? null,
+        message_type: input.message_type,
+        raw_phone: input.to,
+        normalized_phone: input.to,
+        from_number: TWILIO_FROM_NUMBER || null,
+        message_preview: input.body.slice(0, 160),
+        body_hash: await hashBody(input.body),
+        attempt_number: input.attempt_number ?? 1,
+        status: "blocked_daily_cap",
+        error_code: reason,
+        error_message: "Envoi bloqué : plafond quotidien partagé atteint.",
+        status_callback_url: STATUS_CALLBACK_URL,
+        metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null, daily_cap: slot ?? null },
+      }).select("id").maybeSingle();
+      return { event_id: capped?.id ?? "", status: "blocked_daily_cap", twilio_sid: null, error_code: reason, error_message: "daily_cap" };
+    }
+  }
+
   const bypassGuard = input.bypass_guard === true && input.strict_admin_override === true;
   const guard = bypassGuard
     ? {

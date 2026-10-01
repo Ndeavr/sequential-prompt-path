@@ -66701,6 +66701,30 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_daily_sms_reservations: {
+        Row: {
+          created_at: string
+          day_local: string
+          dedupe_key: string
+          id: string
+          prospect_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_local: string
+          dedupe_key: string
+          id?: string
+          prospect_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_local?: string
+          dedupe_key?: string
+          id?: string
+          prospect_id?: string | null
+        }
+        Relationships: []
+      }
       outreach_delivery_events: {
         Row: {
           event_status: string | null
@@ -100986,6 +101010,10 @@ export type Database = {
       repair_mojibake_text: { Args: { input: string }; Returns: string }
       reserve_external_enrichment_call: {
         Args: { p_est_cost_usd?: number; p_items?: number; p_provider?: string }
+        Returns: Json
+      }
+      reserve_outreach_sms_slot: {
+        Args: { p_dedupe_key: string; p_prospect_id?: string }
         Returns: Json
       }
       reserve_places_external_call: {
