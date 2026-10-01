@@ -25,7 +25,7 @@ The user's current instruction and verified live state override these documents.
 
 - UNPRO recommends one best contractor, or a tightly justified top three, rather than selling a shared lead to many contractors.
 - `auth.users` is the identity source; `profiles` is the application profile layer.
-- Keep contractors and other professional/business entities separate from profiles and link them through explicit IDs.
+- Business entities (contractors etc.) stay separate from profiles, linked by explicit IDs.
 - Roles belong in `user_roles`, not in `profiles`.
 - Property and document data are private by default. Public pages use deliberately public-safe views.
 - Storage buckets are private by default; use short-lived signed access when required.
@@ -38,8 +38,8 @@ The user's current instruction and verified live state override these documents.
 - A required RBQ licence that is suspended, revoked, invalid, expired, or not verifiably active is a hard exclusion from homeowner recommendations.
 - Compliance gates override reviews, awards, paid plans, reputation, and commercial pressure.
 - Keep Contractor Risk Score separate from contractor quality/compatibility scoring.
-- Do not proactively solicit high-risk contractors. If they apply themselves, route them to enhanced verification and risk-based supervision.
-- Isolated accusations in reviews are not proof. Prefer verifiable regulatory, insurance, licence, public-record, consistency, and UNPRO-history signals.
+- Never solicit high-risk contractors; self-applicants get enhanced verification.
+- Isolated review accusations are not proof; prefer verifiable regulatory, licence, insurance and public-record signals.
 
 ## Engineering workflow
 
