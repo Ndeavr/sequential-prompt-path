@@ -10,7 +10,7 @@ const drawer = readFileSync("src/components/navigation/DrawerNavigationMobileInt
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Discutons.");
+    expect(hero).toContain("Discutons de votre projet.");
     expect(hero).toContain("rénover");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
