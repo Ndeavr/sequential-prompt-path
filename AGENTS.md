@@ -55,20 +55,10 @@ The user's current instruction and verified live state override these documents.
 - Report every check actually run and its result. Do not hide failures behind empty arrays, fallback success states, or vague summaries.
 - Do not modify generated sitemap or corpus files manually when a repository script generates them.
 
-## Remote data and migration safety
+## Remote data and backend rules
 
-Treat every Supabase project as live infrastructure.
+See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments).
 
-- Diagnostic requests are read-only unless the user explicitly asks for a change.
-- Before any remote database write, verify the exact project identity, environment, connection host, target emptiness/expected state, authorization, rollback path, and backup integrity.
-- Never restore into, modify, or test writes against the legacy/source project.
-- Never bypass or weaken a target guard merely to make a migration proceed.
-- Stop on the first unexpected SQL or access error. A failed guard means no write.
-- Keep outbound email, SMS, calls, webhooks, cron jobs, queues, and other automations disabled during restoration and validation.
-- Do not print, commit, or preserve plaintext secrets, signed access tokens, API keys, credentials, or personal data in logs.
-- Do not read or display `.env` values unless the specific task requires one named value and the user authorized that access.
-- A sanitized restoration copy may preserve Auth password hashes when explicitly approved, but must remove plaintext credentials and other operational secrets.
-- After a migration milestone, update the local `.codex-private/MIGRATION_STATUS.md` with sanitized evidence, counts, checks, and the next safe action. Keep the public migration document generic and never include secrets.
 
 ## Source-of-truth discipline
 
@@ -76,9 +66,6 @@ Treat every Supabase project as live infrastructure.
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
 
-- Prospect import (`import-contractors`) never overwrites an existing prospect: dedupe by google_place_id → E.164 → email → domain → name+city, admin/service only, `auto_send` defaults to false. Why: re-imports were resetting contacted prospects and could trigger sends.
 
 - Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
 - Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 résumé entreprise confirmé, 2 objectif ventes/profit annuel + hypothèses modifiables + RDV accueillables le mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.
-- Every commercial SMS reserves a slot via `public.reserve_outreach_sms_slot` inside `_shared/twilioSend.ts` (hard ≤25/day America/Toronto, one per number per day). Why: per-dispatcher limits let 38 SMS leave when 11 were expected.
-- QA accounts (e2e+…@unpro.ca or metadata e2e_test) always use the Stripe test key in `create-checkout-session` and fail closed without it. Why: a forgotten `?stripe_test=1` could create a live session.
