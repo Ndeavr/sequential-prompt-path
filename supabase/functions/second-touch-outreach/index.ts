@@ -120,6 +120,8 @@ Deno.serve(async (req) => {
       if (!tk) return false;
       if (!skipClickedFilter && tk.clicked_at) return false;
       if (done.has(c.id as string) || optedOut.has(String(c.phone_e164))) return false;
+      // Arrêt de relance : réponse, désinscription, paiement ou activation.
+      if (/^(replied|responded|unsubscribed|opted_out|stopped|paid|activated|converted|do_not_contact)$/i.test(String(c.outreach_status ?? ""))) return false;
       if (recentIds.has(String(c.id)) || recentPhones.has(String(c.phone_e164))) {
         duplicateSkipped += 1;
         return false;

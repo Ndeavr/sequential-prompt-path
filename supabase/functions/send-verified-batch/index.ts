@@ -20,6 +20,7 @@ import {
   firstTouchScoreSms,
   emailSubject,
   emailHtml,
+  COPY_VERSION,
   localServiceFreeYearSms,
   localServiceFreeYearEmailSubject,
   localServiceFreeYearEmailHtml,
@@ -90,7 +91,7 @@ const SMS_TEMPLATE = (biz: string, auditLink: string) =>
   );
 
 /** Compliance guard: first-touch SMS must never carry commercial/pricing terms. */
-const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti)/i;
+const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti|analys|audit|nous avons trouv)/i;
 const safeFirstTouchBody = (biz: string, personalized: string | null, auditLink: string) => {
   const link = buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN });
   if (personalized && !FORBIDDEN_FIRST_TOUCH.test(personalized)) {
@@ -682,7 +683,7 @@ Deno.serve(async (req) => {
           prospect_id: p.id,
           campaign_id: campaignId ?? undefined,
           attempt_number: Number(p.retry_count ?? 0) + 1,
-          metadata: { source: FUNCTION_NAME, token, attribution, test: false },
+          metadata: { source: FUNCTION_NAME, token, attribution, test: false, copy_version: COPY_VERSION },
         });
         if (["sending", "sent", "delivered"].includes(sendResult.status) && sendResult.twilio_sid) {
           smsSid = sendResult.twilio_sid;
