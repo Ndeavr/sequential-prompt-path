@@ -38,6 +38,7 @@ import {
   CLARA_CONTRACTOR_ANALYSIS_NOTE,
   CLARA_CONTRACTOR_OPENING,
   getClaraQualification,
+  hydrateClaraQualification,
   nextQualificationStep,
   type ClaraQualificationStep,
   saveClaraQualification,
@@ -66,6 +67,7 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
+import { hasActiveContractorFlow, isContractorContext, rememberActiveContractorFlow } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 
@@ -258,7 +260,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const [messages, setMessages] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ClaraSurfaceMode>("IDLE");
+  const [mode, setMode] = useState<ClaraSurfaceMode>(() => hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
@@ -268,9 +270,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudienceState] = useState<ClaraAudience>("homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>(() => hasActiveContractorFlow() ? "contractor" : "homeowner");
   /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
-  const audienceRef = useRef<ClaraAudience>("homeowner");
+  const audienceRef = useRef<ClaraAudience>(audience);
   const setAudience = useCallback((next: ClaraAudience) => {
     audienceRef.current = next;
     setAudienceState(next);
@@ -466,6 +468,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     setAudience("homeowner");
     qualificationStepRef.current = null;
     setContractorFlow(false);
+    rememberActiveContractorFlow(false);
     activationTracked.current = false;
     trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
@@ -551,12 +554,21 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const restoredMode = typeof state.context.current_intent === "string"
           ? state.context.current_intent.toUpperCase() as ClaraSurfaceMode
           : latestUser ? detectSurfaceMode(latestUser.text) : "IDLE";
-        setMode(restoredMode);
+        // Context and qualification must be restored with the messages.
+        // A local marker only applies to this exact canonical conversation.
+        hydrateClaraQualification(state.context.workflow as Record<string, unknown> | undefined);
+        const contractor = isContractorContext(state.context)
+          || (!state.context.current_intent && hasActiveContractorFlow());
+        setAudience(contractor ? "contractor" : "homeowner");
+        setContractorFlow(contractor);
+        rememberActiveContractorFlow(contractor);
+        setMode(contractor ? "CONTRACTOR" : restoredMode);
       } catch {
-        // Conversation locale utilisable malgré tout : aucune erreur technique affichée.
+        // Preserve this session’s in-chat progress when the server is unavailable.
+        if (hasActiveContractorFlow()) setContractorFlow(true);
       }
     })();
-  }, [lang]);
+  }, [lang, setAudience]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -778,6 +790,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       // Le parcours entrepreneur avance maintenant dans le chat :
       // aucune redirection automatique vers l'audit.
       if (options.opening) await sayClara(CLARA_CONTRACTOR_OPENING);
+      rememberActiveContractorFlow(true);
       setContractorFlow(true);
       qualificationStepRef.current = null;
       trackCopilotEvent("contractor_context_captured", { surface: "home_clara_box", kind: "in_chat_flow" });
