@@ -18,7 +18,7 @@ The user's current instruction and verified live state override these documents.
 - Never say that something is live, deployed, restored, delivered, or successful without direct evidence.
 - Complete safe, reversible work end to end and minimize interruptions.
 - Ask the user only when credentials must be entered, a destructive or irreversible remote action is required, the exact remote target is uncertain, or a material business choice cannot be inferred safely.
-- Never ask the user to paste a password, API key, access token, private URL, database dump, or personal customer data into chat.
+- Never ask users to paste secrets, private URLs, dumps or customer data into chat.
 - When blocked, preserve completed work, state the single blocker clearly, and give one exact next action.
 
 ## Product and architecture invariants
@@ -47,11 +47,7 @@ The user's current instruction and verified live state override these documents.
 - Search before editing. Reuse established utilities and design tokens.
 - Prefer small, reviewable changes with explicit error propagation and fail-closed behavior for critical queries.
 - Add or update tests for behavior changes and regressions.
-- During iteration, run focused tests. Before handoff, run the relevant subset of:
-  - `npm test`
-  - `npm run typecheck`
-  - `npm run lint:critical`
-  - `npm run build`
+- Run focused tests while iterating; before handoff run the relevant subset of `npm test`, `npm run typecheck`, `npm run lint:critical`, `npm run build`.
 - Report every check actually run and its result. Do not hide failures behind empty arrays, fallback success states, or vague summaries.
 - Do not modify generated sitemap or corpus files manually when a repository script generates them.
 
@@ -62,10 +58,9 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 
 ## Source-of-truth discipline
 
-- Treat [docs/UNPRO_CONTEXT.md](docs/UNPRO_CONTEXT.md) as durable product context, not as proof of current runtime state.
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
 
 
 - Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
-- Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 résumé entreprise confirmé, 2 objectif ventes/profit annuel + hypothèses modifiables + RDV accueillables le mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.
+- Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 entreprise confirmée, 2 objectif annuel + RDV du mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.
