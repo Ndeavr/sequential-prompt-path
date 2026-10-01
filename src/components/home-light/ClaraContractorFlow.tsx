@@ -141,7 +141,11 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     if (known.google_place_id && known.business_name) {
       void (async () => {
         await say(`Je reprends avec ${known.business_name}, déjà confirmée.`);
-        await askGoals();
+        if (known.goals?.length && readFlow().priority) {
+          await runAudit();
+        } else {
+          await askGoals();
+        }
       })();
       return;
     }
@@ -277,7 +281,11 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const nextQuestion = useCallback(async () => {
     const k = getClaraQualification();
     const f = readFlow();
-    if (!k.primary_trade) return go("trade", "Quel est votre métier principal?");
+    if (!k.primary_trade || k.provenance?.primary_trade !== "declared") {
+      return go("trade", k.primary_trade
+        ? `Google indique « ${k.primary_trade} ». Quel est votre métier principal?`
+        : "Quel est votre métier principal?");
+    }
     if (!k.customer_type) return go("customer", "Travaillez-vous surtout au résidentiel, au commercial, ou les deux?");
     if (!k.service_areas?.length) {
       return go("areas", k.business_city
@@ -289,6 +297,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     if (f.priority === "matching" && !f.avoid) return go("goal_detail2", "Et quels mandats préférez-vous éviter?");
     if (f.priority === "time" && !f.time_sink) return go("goal_detail", "Quelle tâche vous prend le plus de temps?");
     if (f.appointments == null) return go("appointments", "Combien de rendez-vous pourriez-vous accueillir le mois prochain?");
+    if (f.appointments === 0) return go("appointments", "Votre capacité enregistrée est de 0. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
     if (f.avg_value == null) return go("avg_value", "Quelle est la valeur moyenne d’un contrat?");
     return buildProposal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -314,7 +323,18 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
         break;
       }
       case "goal_detail2": writeFlow({ avoid: clean.slice(0, 200) }); break;
-      case "appointments": writeFlow({ appointments: Math.max(1, Math.min(60, num || 1)) }); break;
+      case "appointments": {
+        if (!/^\d+$/.test(clean) || num > 60) {
+          await say("Indiquez un nombre de rendez-vous entre 0 et 60.");
+          return;
+        }
+        writeFlow({ appointments: num });
+        if (num === 0) {
+          await say("Je conserve votre capacité à 0. Aucun forfait de rendez-vous ne sera proposé tant que vous n’avez pas de disponibilité. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
+          return;
+        }
+        break;
+      }
       case "avg_value": {
         const map: Record<string, number> = { "Moins de 2 000 $": 1500, "2 000 à 5 000 $": 3500, "5 000 à 15 000 $": 10000, "Plus de 15 000 $": 20000 };
         writeFlow({ avg_value: map[clean] ?? Math.max(200, num || 3500), avg_value_label: clean });
@@ -323,7 +343,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       default: return;
     }
     await nextQuestion();
-  }, [nextQuestion]);
+  }, [nextQuestion, say]);
 
   const pick = useCallback(async (label: string, current: Step) => {
     addUser(label);
@@ -334,6 +354,9 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const buildProposal = useCallback(async () => {
     const k = getClaraQualification();
     const f = readFlow();
+    if (f.appointments === 0) {
+      return go("appointments", "Votre capacité enregistrée est de 0. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
+    }
     const city = k.service_areas?.[0] ?? k.business_city ?? "";
     setStep("quoting");
     onBusy(true);
@@ -366,7 +389,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     } finally {
       onBusy(false);
     }
-  }, [audit, onBusy, say]);
+  }, [audit, go, onBusy, say]);
 
   /* --------------------------------------------- réponses libres (composer) */
   useImperativeHandle(ref, () => ({
