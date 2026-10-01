@@ -91,7 +91,7 @@ const SMS_TEMPLATE = (biz: string, auditLink: string) =>
   );
 
 /** Compliance guard: first-touch SMS must never carry commercial/pricing terms. */
-const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti)/i;
+const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti|analys|audit|nous avons trouv)/i;
 const safeFirstTouchBody = (biz: string, personalized: string | null, auditLink: string) => {
   const link = buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN });
   if (personalized && !FORBIDDEN_FIRST_TOUCH.test(personalized)) {
