@@ -48,7 +48,7 @@ The user's current instruction and verified live state override these documents.
 - Prefer small, reviewable changes with explicit error propagation and fail-closed behavior for critical queries.
 - Add or update tests for behavior changes and regressions.
 - Run focused tests while iterating; before handoff run the relevant subset of `npm test`, `npm run typecheck`, `npm run lint:critical`, `npm run build`.
-- Report every check actually run and its result. Do not hide failures behind empty arrays, fallback success states, or vague summaries.
+- Report every check actually run and its result; never hide failures.
 - Do not modify generated sitemap or corpus files manually when a repository script generates them.
 
 ## Remote data and backend rules
@@ -59,7 +59,7 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 ## Source-of-truth discipline
 
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
-- Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
+- Prefer verified code, DB metadata, provider receipts and test output over chat history.
 
 
 - Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
