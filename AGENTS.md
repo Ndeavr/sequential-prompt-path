@@ -1,6 +1,6 @@
 # UNPRO repository instructions
 
-These instructions apply to the entire repository.
+Applies repo-wide.
 
 ## Start every task with the durable context
 
