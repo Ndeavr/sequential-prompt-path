@@ -82,3 +82,9 @@ Blocage actif : sélectionner un compte administrateur autorisé et approuver l�
 - [x] QA e2e : paiement toujours en Stripe test, jamais de repli live.
 - [ ] Preuve livemode=false sur le compte QA — bloqué : mot de passe perdu au redémarrage, ouverture de session par l'agent refusée.
 - [ ] 1er lot — bloqué : Laval/Terrebonne/Rive-Nord 246 prêts, 0 admissible (114 jamais contactés mais type de ligne inconnu ; 126 déjà contactés ; 7 fixes). Exige décision : accepter « inconnu » ou valider les numéros (coût Lookup).
+
+### 2026-10-01 23:05 UTC
+- [x] Copie v2 `agreement_v2_2026-10-01` (1er contact, relance, récupération, courriel) : plus d'affirmation d'audit ni « 350 $ paiement unique »; version tracée dans metadata.copy_version.
+- [x] Relances stoppées sur réponse/désinscription/paiement/activation.
+- [ ] 1er lot : 0 nouveau destinataire admissible (SMS mobile connu 0, courriels sourcés tous déjà contactés). Relance possible : 359 livrés sans clic, mais réactiver l'interrupteur global laisserait le lanceur 142 viser des numéros de type inconnu → filtrer d'abord ce lanceur sur numéros connus/déjà livrés.
+- [ ] Preuve livemode=false QA : ouverture de session refusée par la plateforme (approbation indisponible).
