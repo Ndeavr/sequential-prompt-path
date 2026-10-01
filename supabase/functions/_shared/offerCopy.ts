@@ -20,52 +20,50 @@ export const OFFER = {
   cta: "Voir ce que 350 $ peut me garantir",
 } as const;
 
-/** Premier contact SMS — profil déjà préparé + offre 350 $. */
-export function firstTouchSms(businessName: string): string {
-  const name = (businessName || "votre entreprise").trim().slice(0, 40);
-  return (
-    `Bonjour, UNPRO a préparé le profil d'entreprise de ${name} pour que les propriétaires ` +
-    `et les IA de recherche la comprennent. ${OFFER.headline}. ${OFFER.payment_note}`
-  );
-}
-
 /**
- * Premier contact SMS — objectif curiosité → score IA GRATUIT.
- * AUCUN prix, paiement, abonnement ni nombre de rendez-vous garantis.
- * Le lien mène à l'Audit IA personnalisé de l'entreprise (/unpro/audit/:token).
+ * Version de copie suivie par cohorte (metadata.copy_version).
+ * v2 (2026-10-01) : aucune affirmation d'audit, aucun prix ni rendez-vous
+ * promis — la proposition est calculée par le serveur après les objectifs.
  */
-export function firstTouchScoreSms(businessName: string): string {
-  const name = (businessName || "votre entreprise").trim().slice(0, 40);
+export const COPY_VERSION = "agreement_v2_2026-10-01";
+
+const nm = (b: string, max = 40) => (b || "votre entreprise").trim().slice(0, max);
+
+/** Premier contact SMS — proposition personnalisée, lien direct ajouté par l'appelant. */
+export function firstTouchSms(businessName: string): string {
   return (
-    `${name}, UNPRO a analysé votre visibilité auprès des propriétaires et des IA. ` +
-    `Voyez ce que nous trouvons sur votre entreprise et comment devenir admissible aux recommandations :`
+    `Bonjour ${nm(businessName)}, UNPRO vise des rendez-vous exclusifs adaptés à vos services ` +
+    `et à votre territoire, sans soumissions partagées. Voyez la proposition pour votre entreprise :`
   );
 }
 
-/** Relance — même promesse, aucune nouvelle offre. */
+/** Alias historique : même message v2 (plus d'affirmation « nous avons analysé »). */
+export function firstTouchScoreSms(businessName: string): string {
+  return firstTouchSms(businessName);
+}
+
+/** Relance — même proposition, aucune nouvelle offre. */
 export function secondTouchSms(businessName: string): string {
-  const name = (businessName || "votre entreprise").trim().slice(0, 40);
   return (
-    `Je vous renvoie le lien pour voir le profil UNPRO de ${name}. ` +
-    `${OFFER.headline}. ${OFFER.payment_note}`
+    `${nm(businessName)} : je vous renvoie le lien vers votre proposition UNPRO. ` +
+    `Vous confirmez votre entreprise et vos objectifs; le forfait est calculé selon votre capacité :`
   );
 }
 
 /** Récupération d'un clic sans suite. */
 export function clickRecoverySms(businessName: string): string {
-  const name = (businessName || "votre entreprise").trim().slice(0, 40);
   return (
-    `UNPRO — ${name} : votre profil est prêt. ${OFFER.headline}. ${OFFER.payment_note}`
+    `${nm(businessName)} : votre proposition UNPRO reste disponible. ` +
+    `Deux minutes pour confirmer vos objectifs et voir le prix exact :`
   );
 }
 
 export function emailSubject(businessName: string): string {
-  const name = (businessName || "votre entreprise").trim();
-  return `${name} — votre profil UNPRO est prêt (dès ${OFFER.price_label})`;
+  return `${nm(businessName, 60)} — votre proposition UNPRO`;
 }
 
 export function emailHtml(businessName: string, link: string): string {
-  const name = (businessName || "votre entreprise").trim();
+  const name = nm(businessName, 80);
   return `
 <!doctype html>
 <html lang="fr">
@@ -74,18 +72,16 @@ export function emailHtml(businessName: string, link: string): string {
       <tr><td align="center">
         <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;padding:32px;max-width:560px;">
           <tr><td>
-            <p style="font-size:14px;color:#666;margin:0 0 16px 0;letter-spacing:0.06em;text-transform:uppercase;">UNPRO — Concierge Décisif</p>
             <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">Bonjour ${name},</h1>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO a préparé gratuitement le profil d'entreprise de <strong>${name}</strong> afin que les propriétaires et les IA de recherche comprennent vos services au Québec.</p>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 24px 0;"><strong>${OFFER.headline}.</strong> ${OFFER.payment_note}</p>
+            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO vise des rendez-vous exclusifs adaptés à vos services et à votre territoire — moins de soumissions perdues et de déplacements inutiles, jamais de demandes partagées entre plusieurs entrepreneurs.</p>
+            <p style="font-size:16px;line-height:1.55;margin:0 0 24px 0;">Vous confirmez votre entreprise et vos objectifs; UNPRO calcule ensuite l'entente de départ adaptée à votre capacité du mois prochain, avec le prix exact avant tout paiement.</p>
             <p style="margin:0 0 24px 0;">
-              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">${OFFER.cta}</a>
+              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Voir ma proposition</a>
             </p>
-            <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 12px 0;">Ou copiez ce lien dans votre navigateur :<br /><a href="${link}" style="color:#666;">${link}</a></p>
-            <p style="font-size:12px;line-height:1.5;color:#999;margin:0;">${OFFER.disclaimer}</p>
+            <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 12px 0;">Ou copiez ce lien :<br /><a href="${link}" style="color:#666;">${link}</a></p>
           </td></tr>
         </table>
-        <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
+        <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca · Pour ne plus recevoir nos messages, répondez « STOP ».</p>
       </td></tr>
     </table>
   </body>
