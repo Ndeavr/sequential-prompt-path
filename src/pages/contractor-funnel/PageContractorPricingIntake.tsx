@@ -82,7 +82,7 @@ const BASE_DEFAULTS: Partial<PricingIntakeInput> = {
 };
 
 /** Champs que l'entrepreneur a lui-même confirmés — priorité absolue. */
-type ConfirmableField = "city" | "trade_primary" | "trade_secondary" | "company_name";
+type ConfirmableField = "city" | "trade_primary" | "trade_secondary" | "company_name" | "service_radius_km";
 
 export default function PageContractorPricingIntake() {
   const navigate = useNavigate();
@@ -104,6 +104,8 @@ export default function PageContractorPricingIntake() {
   const [manualEntry, setManualEntry] = useState(false);
   const [searchState, setSearchState] = useState({ loading: false, count: 0, searched: false });
   const [hydrated, setHydrated] = useState(false);
+  /** Saisie manuelle en cours : le résumé ne remplace jamais le formulaire avant « Continuer ». */
+  const [userEditing, setUserEditing] = useState(false);
 
   useEffect(() => {
     setActiveActivationToken(activationToken);
@@ -285,7 +287,7 @@ export default function PageContractorPricingIntake() {
         company_name: confirmedFields.includes("company_name") ? d.company_name : row.business_name || d.company_name,
         trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : row.specialty || d.trade_primary,
         city: confirmedFields.includes("city") ? d.city : area?.city_name || row.city || d.city,
-        service_radius_km: area?.radius_km ?? row.travel_radius_km ?? d.service_radius_km,
+        service_radius_km: confirmedFields.includes("service_radius_km") ? d.service_radius_km : area?.radius_km ?? row.travel_radius_km ?? d.service_radius_km,
       }));
       if (row.business_name) setBusinessConfirmed(true);
     })();
@@ -296,7 +298,7 @@ export default function PageContractorPricingIntake() {
   const auditValid = Boolean(audit?.business_name);
   /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
   const identityKnown = Boolean(
-    businessConfirmed && data.company_name && data.trade_primary && data.city,
+    !userEditing && businessConfirmed && data.company_name && data.trade_primary && data.city,
   );
   const detectedCity = audit?.city ?? data.city ?? null;
   /** L'audit vient de mesurer la présence : on ne la redemande pas. */
@@ -460,7 +462,7 @@ export default function PageContractorPricingIntake() {
         <NumberInput
           label="Rayon de service (km)"
           value={d.service_radius_km ?? null}
-          onChange={(v) => set({ service_radius_km: v ?? undefined })}
+          onChange={(v) => { confirm("service_radius_km"); set({ service_radius_km: v ?? undefined }); }}
           min={5}
           max={300}
           placeholder="Ex. 50"
@@ -483,7 +485,7 @@ export default function PageContractorPricingIntake() {
   };
 
   /* Étape 1 — Votre entreprise : résumé prérempli, modifiable, confirmé une fois. */
-  const summaryReady = Boolean(identityKnown && data.company_name && data.trade_primary && data.city);
+  const summaryReady = Boolean(!userEditing && identityKnown && data.company_name && data.trade_primary && data.city);
   const profileStep: Step = {
     key: "profile",
     question: summaryReady && !editingProfile
@@ -495,7 +497,9 @@ export default function PageContractorPricingIntake() {
         ? "Complétez seulement ce qui manque."
         : "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
     isValid: (d) => Boolean(d.company_name && d.trade_primary && d.city),
-    render: (d, set) => (
+    render: (d, rawSet) => {
+      const set = (p: Partial<PricingIntakeInput>) => { setUserEditing(true); rawSet(p); };
+      return (
       summaryReady && !editingProfile ? (
         <div className="space-y-2 text-sm" data-testid="company-summary">
           {[
@@ -539,7 +543,7 @@ export default function PageContractorPricingIntake() {
           <NumberInput
             label="Rayon desservi autour de cette ville (km)"
             value={d.service_radius_km ?? null}
-            onChange={(v) => set({ service_radius_km: v ?? undefined })}
+            onChange={(v) => { confirm("service_radius_km"); set({ service_radius_km: v ?? undefined }); }}
             min={5}
             max={300}
             placeholder="Ex. 40"
@@ -554,7 +558,8 @@ export default function PageContractorPricingIntake() {
           />
         </div>
       )
-    ),
+      );
+    },
   };
 
   /* Étape 2 — Votre objectif financier, calcul transparent, capacité du mois prochain. */
@@ -1052,7 +1057,8 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
   const cadence = Math.max(1, Math.ceil(appointmentsTotal / months));
   const next = g.next_month_appointments ?? 0;
   if (!next || next <= 0) return null;
-  const startAppointments = Math.min(cadence, next);
+  // Le forfait de départ couvre les RDV demandés pour le mois prochain (jamais réduits).
+  const startAppointments = next;
   return {
     avgSale, margin, conversion, contribution, contracts, appointmentsTotal, months, cadence,
     startAppointments,
@@ -1064,7 +1070,7 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
       average_project_value: avgSale,
       close_rate_estimate: conversion,
       target_monthly_appointments: startAppointments,
-      monthly_capacity: d.monthly_capacity ?? next,
+      monthly_capacity: Math.max(d.monthly_capacity ?? 0, next),
       pricing_mode: "goal",
       monthly_budget_cents: undefined,
     } as Partial<PricingIntakeInput>,

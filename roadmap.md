@@ -70,3 +70,9 @@ Blocage actif : sélectionner un compte administrateur autorisé et approuver l�
 - Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.
 
 - [x] Clara ouvre réellement les pages internes (même onglet, confirmation après succès, action de secours si échec).
+
+## Acquisition quotidienne (autorisation Yan 2026-10-01) — BLOQUÉ avant envoi
+- [x] P1 formulaire : ville manuelle ne bascule plus au résumé à la 1re touche ; 4 RDV demandés restent 4 ; rayon saisi protégé au rechargement
+- [ ] Paiement Stripe TEST du compte QA (parcours via `?stripe_test=1`, isolation test/live à rendre fail-closed)
+- [ ] Plafond réel ≤25 SMS/jour tous lanceurs confondus : `outreach_settings.sms_daily_limit=50` et lot manuel du 30/09 = 38 SMS (cap non tenu) → corriger le plafond partagé avant tout envoi automatique
+- [ ] Puis seulement : OUTREACH_ENABLED=true borné, 1er lot fenêtre 09-17 Toronto, cohortes Laval/Terrebonne/Rive-Nord, version de message suivie
