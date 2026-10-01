@@ -30,7 +30,8 @@ describe("Clara — transition entrepreneur", () => {
 });
 describe("Clara — choix entrepreneur pilotés par l'audience", () => {
   it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
-    expect(box).toContain('useState<ClaraAudience>("homeowner")');
+    // Propriétaire par défaut, sauf reprise d'un parcours entrepreneur de la même conversation.
+    expect(box).toContain('useState<ClaraAudience>(() => hasActiveContractorFlow() ? "contractor" : "homeowner")');
     expect(box).toContain("Vérifier mon score IA");
     expect(box).toContain("Obtenir plus de contrats");
     expect(box).toContain("Compléter mon profil");
