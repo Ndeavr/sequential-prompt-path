@@ -20,6 +20,7 @@ import {
   firstTouchScoreSms,
   emailSubject,
   emailHtml,
+  COPY_VERSION,
   localServiceFreeYearSms,
   localServiceFreeYearEmailSubject,
   localServiceFreeYearEmailHtml,
@@ -682,7 +683,7 @@ Deno.serve(async (req) => {
           prospect_id: p.id,
           campaign_id: campaignId ?? undefined,
           attempt_number: Number(p.retry_count ?? 0) + 1,
-          metadata: { source: FUNCTION_NAME, token, attribution, test: false },
+          metadata: { source: FUNCTION_NAME, token, attribution, test: false, copy_version: COPY_VERSION },
         });
         if (["sending", "sent", "delivered"].includes(sendResult.status) && sendResult.twilio_sid) {
           smsSid = sendResult.twilio_sid;
