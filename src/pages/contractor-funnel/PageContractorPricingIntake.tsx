@@ -1030,6 +1030,18 @@ export function monthsToYearEnd(now = new Date()): number {
  * rendez-vous = ⌈contrats / conversion⌉. Estimation avant le coût d'UNPRO.
  * L'entente de départ se base sur la capacité du mois prochain, pas sur l'objectif annuel.
  */
+/**
+ * L'identité est confiée dès qu'une entreprise est sélectionnée ou déclarée.
+ * Elle ne dépend PAS des champs modifiables (ville, métier, rayon) : vider la
+ * ville pour la retaper ne doit jamais faire réapparaître la recherche.
+ */
+export function isIdentityKnown(args: {
+  businessConfirmed: boolean;
+  data: Partial<PricingIntakeInput>;
+}): boolean {
+  return Boolean(args.businessConfirmed && (args.data.company_name ?? "").trim());
+}
+
 export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Date()): {
   payload: Partial<PricingIntakeInput>;
   avgSale: number;

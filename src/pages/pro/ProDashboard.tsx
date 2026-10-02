@@ -9,6 +9,7 @@ import { useContractorProfile } from "@/hooks/useContractor";
 import { useAppointments } from "@/hooks/useAppointments";
 import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
 import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
+import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
 const ProDashboard = () => {
   const { data: profile, isLoading: pL } = useContractorProfile();
@@ -20,8 +21,7 @@ const ProDashboard = () => {
 
   // Activation confirmée côté serveur uniquement : tant qu'elle n'est pas
   // acquise, l'entrepreneur voit un seul écran avec une seule prochaine action.
-  const isActivated =
-    profile?.activation_status === "activated" || profile?.account_status === "active";
+  const isActivated = isContractorAgreementActive(profile);
 
   if (!isActivated) {
     return (
