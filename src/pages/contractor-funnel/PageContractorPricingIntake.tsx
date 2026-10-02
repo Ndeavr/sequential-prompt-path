@@ -297,9 +297,9 @@ export default function PageContractorPricingIntake() {
 
   const auditValid = Boolean(audit?.business_name);
   /** Identité déjà connue (audit ou étape précédente) : on ne la redemande pas. */
-  const identityKnown = Boolean(
-    !userEditing && businessConfirmed && data.company_name && data.trade_primary && data.city,
-  );
+  // Identité confiée (entreprise sélectionnée/déclarée) ≠ état d'édition :
+  // modifier ville/métier/rayon ne doit jamais renvoyer à la recherche.
+  const identityKnown = isIdentityKnown({ businessConfirmed, data });
   const detectedCity = audit?.city ?? data.city ?? null;
   /** L'audit vient de mesurer la présence : on ne la redemande pas. */
   const auditScoreKnown = typeof audit?.readiness_score === "number";

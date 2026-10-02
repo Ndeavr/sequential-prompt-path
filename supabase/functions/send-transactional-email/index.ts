@@ -5,9 +5,12 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time
 const SITE_NAME = "UNPRO"
-const SENDER_DOMAIN = "mail.unpro.ca"
-const FROM_DOMAIN = "mail.unpro.ca"
-const DEFAULT_FROM_EMAIL = "clara@mail.unpro.ca"
+// Must equal the verified delegated sender subdomain (provider 403
+// "No sender domain matches" when it differs). mail.unpro.ca is a Resend-only
+// domain used by outbound prospecting, never by this function.
+const SENDER_DOMAIN = "notify.unpro.ca"
+const FROM_DOMAIN = "notify.unpro.ca"
+const DEFAULT_FROM_EMAIL = "clara@notify.unpro.ca"
 const DEFAULT_FROM_NAME = "Clara d'UNPRO"
 
 const corsHeaders = {
