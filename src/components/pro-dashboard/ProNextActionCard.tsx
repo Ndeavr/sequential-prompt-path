@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
 interface Props {
   profile: any;
@@ -66,9 +67,11 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
       className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-3"
       data-testid="pro-next-action"
     >
-      <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Votre entente est activée.
-      </p>
+      {isContractorAgreementActive(profile) && (
+        <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Votre entente est activée.
+        </p>
+      )}
       <div>
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{detail}</p>
