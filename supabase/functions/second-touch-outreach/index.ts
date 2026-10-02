@@ -90,6 +90,8 @@ Deno.serve(async (req) => {
     const ids = (candidates ?? []).map((c) => c.id);
     if (ids.length === 0) return json({ ok: true, eligible: 0, attempts: [] });
 
+    // Blocked attempts (switch off, cap, gate) never reached the provider:
+    // they must not consume the single follow-up nor the duplicate window.
     // Cross-automation duplicate guard window: any contact logged in
     // acq_sms_logs by ANY automation inside this window blocks a new send.
     const DUP_GUARD_HOURS = Number(Deno.env.get("OUTREACH_DUP_GUARD_HOURS") ?? 24);
@@ -97,9 +99,9 @@ Deno.serve(async (req) => {
 
     const [{ data: tokens }, { data: already }, { data: optOuts }, { data: recentLogs }] = await Promise.all([
       supabase.from("verified_prospect_tokens").select("token, prospect_id, clicked_at").in("prospect_id", ids),
-      supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", relanceKind).in("prospect_id", ids),
+      supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", relanceKind).not("status", "like", "blocked%").in("prospect_id", ids),
       supabase.from("sms_opt_outs").select("normalized_phone"),
-      supabase.from("acq_sms_logs").select("prospect_id, recipient_phone").gte("created_at", dupSince).in("prospect_id", ids),
+      supabase.from("acq_sms_logs").select("prospect_id, recipient_phone").gte("created_at", dupSince).not("status", "like", "blocked%").in("prospect_id", ids),
     ]);
 
     const tokenBy = new Map<string, { token: string; clicked_at: string | null }>();

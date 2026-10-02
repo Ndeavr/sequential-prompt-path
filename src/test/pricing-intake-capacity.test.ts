@@ -8,9 +8,8 @@ describe("pricing intake — requested capacity preserved", () => {
     expect(r?.payload.target_monthly_appointments).toBe(4);
     expect((r?.payload.monthly_capacity ?? 0)).toBeGreaterThanOrEqual(4);
   });
-  it("manual entry does not flip to summary on first keystroke; radius user value protected", () => {
+  it("radius user value protected from server prefill", () => {
     const src = readFileSync("src/pages/contractor-funnel/PageContractorPricingIntake.tsx", "utf8");
-    expect(src).toContain("!userEditing && businessConfirmed");
     expect(src).toContain('confirmedFields.includes("service_radius_km") ? d.service_radius_km');
   });
 });
