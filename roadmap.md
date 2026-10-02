@@ -88,3 +88,9 @@ Blocage actif : sélectionner un compte administrateur autorisé et approuver l�
 - [x] Relances stoppées sur réponse/désinscription/paiement/activation.
 - [ ] 1er lot : 0 nouveau destinataire admissible (SMS mobile connu 0, courriels sourcés tous déjà contactés). Relance possible : 359 livrés sans clic, mais réactiver l'interrupteur global laisserait le lanceur 142 viser des numéros de type inconnu → filtrer d'abord ce lanceur sur numéros connus/déjà livrés.
 - [ ] Preuve livemode=false QA : ouverture de session refusée par la plateforme (approbation indisponible).
+
+### 2026-10-02 12:35 UTC
+- [x] SMS limité aux mobiles vérifiés OU numéros déjà livrés (confirmés fournisseur) dans `send-verified-batch` ; Lookup payant coupé dans `acquisition-queue-worker` (`PAID_LOOKUP_ENABLED` absent → bloqué). Déployé.
+- Comptes : 1er contact mobile admissible 0 ; inconnus exclus 58 ; livrés sans clic 394 → relance admissible aujourd'hui 4 (simulation, 0 envoi) ; cliqués 0 en statut courant ; payés/activés 1 (test, exclu du revenu).
+- [ ] Envoi des 4 relances : fenêtre 09-17 Toronto non ouverte au moment du run (08:30) ; interrupteur laissé false.
+- [ ] Preuve livemode=false QA : session refusée par la plateforme (inchangé).

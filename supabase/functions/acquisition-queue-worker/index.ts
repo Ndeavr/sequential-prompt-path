@@ -1417,7 +1417,11 @@ Deno.serve(async (req) => {
 
       // Fresh Twilio Lookup required — blocked when outreach is disabled.
       counts.lookup_required += 1;
-      if (!outreachGate.allowed) {
+      // No paid Lookup budget (Yan 2026-10-02): unknown lines stay blocked
+      // unless PAID_LOOKUP_ENABLED is explicitly "true".
+      const paidLookupAllowed = Deno.env.get("PAID_LOOKUP_ENABLED") === "true";
+      if (!outreachGate.allowed || !paidLookupAllowed) {
+        const blockReason = !outreachGate.allowed ? outreachGate.reason : "paid_lookup_disabled";
         (counts as any).gate_blocked += 1;
         const due = nextActionAt(1);
         await supabase.from("acquisition_queue").upsert(
@@ -1425,7 +1429,7 @@ Deno.serve(async (req) => {
             prospect_id: promoted.id,
             state: "blocked",
             next_action_at: due,
-            last_error: outreachGate.reason,
+            last_error: blockReason,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "prospect_id", ignoreDuplicates: false },
@@ -1434,10 +1438,10 @@ Deno.serve(async (req) => {
           prospect_id: promoted.id,
           business_name: promoted.business_name,
           stage: "blocked",
-          reason_code: outreachGate.reason,
+          reason_code: blockReason,
           metadata: { lookup_performed: false, next_action_at: due },
         });
-        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "blocked", reason: outreachGate.reason });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "blocked", reason: blockReason });
         continue;
       }
       const lookup = await callTwilioLookup(url, serviceKey, promoted.phone_e164);
