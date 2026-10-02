@@ -592,6 +592,21 @@ Deno.serve(async (req) => {
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const results: Array<Record<string, unknown>> = [];
 
+    // Provider-confirmed delivered destinations (fail-closed: unreadable → empty set).
+    const deliveredPhones = new Set<string>();
+    {
+      const phones = (eligible as any[]).map((p) => p.phone_e164).filter(Boolean);
+      if (phones.length > 0) {
+        const { data: dl, error: dlErr } = await supabase
+          .from("outreach_delivery_logs")
+          .select("recipient_normalized")
+          .eq("channel", "sms")
+          .eq("status", "delivered")
+          .in("recipient_normalized", phones);
+        if (!dlErr) for (const r of dl ?? []) if (r.recipient_normalized) deliveredPhones.add(r.recipient_normalized);
+      }
+    }
+
     for (const p of eligible) {
       // Hard stop: another automation already contacted this candidate inside
       // the guard window. No provider call, no log row, no second contact.
@@ -607,7 +622,16 @@ Deno.serve(async (req) => {
       }
       const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
       const hasValidPhone = !!p.phone_e164 && !/555\d{4}$/.test(p.phone_e164);
-      const shouldTrySms = smsEligibleTier && hasValidPhone;
+      // Destination gate (Yan 2026-10-02): SMS only to a verified mobile line
+      // OR a number with a provider-confirmed prior delivery. Delivery proves
+      // reachability only — consent/provenance gates above still apply.
+      // Unknown, never-delivered lines are never texted (no paid Lookup).
+      const smsDestinationOk = p.phone_line_type === "mobile" || deliveredPhones.has(p.phone_e164);
+      const shouldTrySms = smsEligibleTier && hasValidPhone && smsDestinationOk;
+      if (smsEligibleTier && hasValidPhone && !smsDestinationOk && !p.email) {
+        results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "sms_destination_unverified", channel_used: null });
+        continue;
+      }
 
 
       // Build a single activation link both channels will share.

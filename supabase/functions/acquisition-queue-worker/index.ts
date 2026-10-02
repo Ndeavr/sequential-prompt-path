@@ -1417,7 +1417,11 @@ Deno.serve(async (req) => {
 
       // Fresh Twilio Lookup required — blocked when outreach is disabled.
       counts.lookup_required += 1;
-      if (!outreachGate.allowed) {
+      // No paid Lookup budget (Yan 2026-10-02): unknown lines stay blocked
+      // unless PAID_LOOKUP_ENABLED is explicitly "true".
+      const paidLookupAllowed = Deno.env.get("PAID_LOOKUP_ENABLED") === "true";
+      if (!outreachGate.allowed || !paidLookupAllowed) {
+        if (outreachGate.allowed && !paidLookupAllowed) (outreachGate as any) = { ...outreachGate, reason: "paid_lookup_disabled" };
         (counts as any).gate_blocked += 1;
         const due = nextActionAt(1);
         await supabase.from("acquisition_queue").upsert(
