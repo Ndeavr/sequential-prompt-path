@@ -8,6 +8,13 @@
       "when": 1791122219203,
       "tag": "0000_lock_admin_ops_permissive_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791176690266,
+      "tag": "0001_drop_redundant_service_role_true_policies",
+      "breakpoints": true
     }
   ]
 }
