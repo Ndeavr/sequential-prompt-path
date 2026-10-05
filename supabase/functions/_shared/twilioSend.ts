@@ -97,7 +97,12 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   // P0 fail-closed kill switch — prospection/follow-up may never reach a
   // provider while OUTREACH_ENABLED is false, missing or unreadable.
   // Transactional traffic (OTP, admin test, founder alert) is unaffected.
-  if (!isTransactionalMessageType(input.message_type)) {
+  // Admin monitoring test (caller enforces admin role + admin whitelist):
+  // never tied to a prospect/lead, so it is not prospection.
+  const isAdminMonitoringTest = input.message_type === "test" &&
+    input.strict_admin_override === true && input.bypass_guard === true &&
+    !input.prospect_id && !input.lead_id && !input.campaign_id;
+  if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
     const gate = await assertOutreachEnabled(supabase as any);
     if (!gate.allowed) {
       const body_hash_gate = await hashBody(input.body);
@@ -174,7 +179,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
 
   // Shared daily cap (≤25/day, all dispatchers, race-safe). Fail-closed:
   // an unreadable reservation never reaches the provider.
-  if (!isTransactionalMessageType(input.message_type)) {
+  if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
     const { data: slot, error: slotErr } = await supabase.rpc("reserve_outreach_sms_slot", {
       p_dedupe_key: input.to,
       p_prospect_id: input.prospect_id ?? null,
