@@ -84,7 +84,13 @@ Deno.serve(async (req) => {
     }).select("id").single();
 
     const stamp = formatQcTime(new Date());
-    const body = `UNPRO · test système ${stamp} — aucune action requise.`;
+    // Optional admin-supplied body (destination stays server-side only).
+    let reqBody: any = {};
+    try { reqBody = await req.clone().json(); } catch { reqBody = {}; }
+    const custom = typeof reqBody?.body === "string" ? reqBody.body.trim() : "";
+    const body = custom && custom.length <= 160 && !/https?:\/\//i.test(custom)
+      ? custom
+      : `UNPRO · test système ${stamp} — aucune action requise.`;
 
     // Admin-only monitoring SMS: refuse if recipient not in the admin whitelist.
     const guard = await assertAdminOnlySms(admin, body, to);
