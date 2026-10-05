@@ -15,6 +15,13 @@
       "when": 1791176690266,
       "tag": "0001_drop_redundant_service_role_true_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791177102639,
+      "tag": "0002_lock_remaining_tautology_write_policies",
+      "breakpoints": true
     }
   ]
 }
