@@ -104,11 +104,47 @@ function rememberToken(token: string | undefined | null) {
   if (token) safeSet(TOKEN_KEY, token);
 }
 
-async function call<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
+async function readErrorCode(error: unknown): Promise<string | null> {
+  const ctx = (error as { context?: Response })?.context;
+  if (!ctx || typeof ctx.clone !== "function") return null;
+  try {
+    const body = await ctx.clone().json();
+    return typeof body?.error === "string" ? body.error : null;
+  } catch {
+    return null;
+  }
+}
+
+function newToken(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `clara_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function call<T>(
+  action: string,
+  payload: Record<string, unknown> = {},
+  retried = false,
+): Promise<T> {
   const { data, error } = await supabase.functions.invoke("clara-session", {
     body: { action, ...payload },
   });
-  if (error) throw new Error(error.message || "clara_session_unavailable");
+  if (error) {
+    const code = await readErrorCode(error);
+    // Le jeton local appartient à un autre compte (changement de compte dans
+    // ce navigateur) : on repart sur une conversation neuve pour ce compte,
+    // sans jamais lire ni toucher la conversation de l'autre compte.
+    if (code === "not_your_session" && !retried && action !== "resume" && action !== "start") {
+      const fresh = newToken();
+      safeSet(TOKEN_KEY, fresh);
+      lastSessionToken = null;
+      const state = await call<ClaraSessionState>("start", { session_token: fresh, language: "fr", entrypoint: "account_switch" }, true);
+      rememberToken(state.session_token);
+      lastSessionToken = state.session_token;
+      return call<T>(action, { ...payload, session_token: state.session_token }, true);
+    }
+    throw new Error(code || error.message || "clara_session_unavailable");
+  }
   const result = data as T & { error?: string };
   if (result && typeof result === "object" && "error" in result && result.error) {
     throw new Error(String(result.error));
