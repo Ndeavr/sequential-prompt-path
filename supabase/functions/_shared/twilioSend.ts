@@ -138,6 +138,47 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     }
   }
 
+  // Hard compliance gate (Yan 2026-10-06): every commercial SMS needs a
+  // stored, valid, unexpired lawful-contact basis for this exact number,
+  // with source URL + retrieval timestamp, and no refusal statement.
+  // Fail-closed: unreadable evidence never reaches the provider.
+  if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
+    const { data: ev, error: evErr } = await supabase
+      .from("casl_consent_evidence")
+      .select("id, lawful_basis, source_url, retrieved_at, expires_at, refusal_statement_found")
+      .in("destination_type", ["phone_sms", "phone"])
+      .in("destination_normalized", [input.to, input.to.replace(/\D/g, ""), input.to.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")])
+      .eq("is_valid", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const okEvidence = !evErr && ev && ev.lawful_basis && ev.source_url && ev.retrieved_at &&
+      ev.refusal_statement_found !== true &&
+      (!ev.expires_at || new Date(ev.expires_at) > new Date());
+    if (!okEvidence) {
+      const reason = evErr ? "casl_evidence_unreadable" : "no_valid_casl_evidence_for_destination";
+      const { data: c } = await supabase.from("sms_events_v2").insert({
+        lead_id: input.lead_id ?? null,
+        contractor_id: input.contractor_id ?? null,
+        campaign_id: input.campaign_id ?? null,
+        template_key: input.template_key ?? null,
+        message_type: input.message_type,
+        raw_phone: input.to,
+        normalized_phone: input.to,
+        from_number: TWILIO_FROM_NUMBER || null,
+        message_preview: input.body.slice(0, 160),
+        body_hash: await hashBody(input.body),
+        attempt_number: input.attempt_number ?? 1,
+        status: "blocked",
+        error_code: reason,
+        error_message: "Envoi bloqué : aucune base légale de contact enregistrée pour ce numéro.",
+        status_callback_url: STATUS_CALLBACK_URL,
+        metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null },
+      }).select("id").maybeSingle();
+      return { event_id: c?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
+    }
+  }
+
   const founderBypass = await isFounderModeActive();
   const windowCheck = await assertSendAllowed({
     channel: "sms",
