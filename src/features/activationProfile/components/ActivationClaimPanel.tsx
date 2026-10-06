@@ -152,11 +152,8 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [claim, token, prospectId, preview]);
 
-  useEffect(() => {
-    if (phase !== "verify") return;
-    void logFunnelEvent({ event_type: "otp_requested", step: "activate", ...attribution });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  // « otp_requested » est journalisé uniquement quand send-otp réussit
+  // (src/lib/auth/phoneOtp.ts), jamais sur simple affichage de l'écran.
 
   if (phase === "done") {
     return (

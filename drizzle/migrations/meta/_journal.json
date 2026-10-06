@@ -50,6 +50,13 @@
       "when": 1791295316576,
       "tag": "0006_acquisition_funnel_dashboard_rpc_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791301074916,
+      "tag": "0007_acquisition_funnel_truthful_counts",
+      "breakpoints": true
     }
   ]
 }
