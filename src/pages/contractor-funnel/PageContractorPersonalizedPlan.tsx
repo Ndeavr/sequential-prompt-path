@@ -429,8 +429,10 @@ export default function PageContractorPersonalizedPlan() {
                 </div>
                 <p className="text-2xl font-semibold tracking-[-0.03em]">Forfait {planLabel}</p>
                 <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
-                  La plus petite offre qui couvre ce que vous pouvez accueillir le mois prochain
-                  ({quote.target_monthly_appointments} rendez-vous) pour {quote.trade_primary} à {quote.city}.
+                  Pour atteindre vos objectifs, nous vous recommandons cette entente de départ.
+                </p>
+                <p className="text-sm text-white/70 mt-1">
+                  Elle est conçue pour vous permettre de commencer simplement et d'ajuster ensuite selon vos résultats.
                 </p>
 
                 <div className="mt-5 space-y-2 text-sm text-white/85">
