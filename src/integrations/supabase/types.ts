@@ -99989,6 +99989,7 @@ export type Database = {
         Args: { _activation_token?: string; _context?: Json; _user_id: string }
         Returns: Json
       }
+      admin_acquisition_funnel: { Args: { p_since: string }; Returns: Json }
       admin_activate_contractor_finalize: {
         Args: {
           p_activation_note: string
