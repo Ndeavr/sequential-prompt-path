@@ -255,7 +255,6 @@ const PageAiEntity = lazyWithRetry(() => import("@/pages/ai/PageAiEntity"));
 const PageAdminAiEntities = lazyWithRetry(() => import("@/pages/admin/PageAdminAiEntities"));
 const PageAdminSmartContext = lazyWithRetry(() => import("@/pages/admin/PageAdminSmartContext"));
 const PageAdminPlansMatrix = lazyWithRetry(() => import("@/pages/admin/PageAdminPlansMatrix"));
-const PageAdminAcquisitionFunnel = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
 const PageAdminComplianceCenter = lazyWithRetry(() => import("@/pages/admin/PageAdminComplianceCenter"));
 
 const PageAdminAutopilotMvp = lazyWithRetry(() => import("@/pages/admin/PageAdminAutopilotMvp"));
@@ -1554,7 +1553,6 @@ export const AppRouter = () => (
         <Route path="/admin/ai-entities" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiEntities /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/smart-context" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmartContext /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/plans-matrix" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPlansMatrix /></Suspense></AdminProtectedRoute>} />
-        <Route path="/admin/acquisition-funnel" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/compliance" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminComplianceCenter /></Suspense></AdminProtectedRoute>} />
 
 
