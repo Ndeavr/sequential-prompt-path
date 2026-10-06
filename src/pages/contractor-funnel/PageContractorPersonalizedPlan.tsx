@@ -338,10 +338,11 @@ export default function PageContractorPersonalizedPlan() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6">
         <div className="max-w-md text-center space-y-4">
-          <h1 className="text-2xl font-semibold">Votre budget ne couvre pas encore un rendez-vous exclusif.</h1>
+          <h1 className="text-2xl font-semibold">Votre budget mensuel est encore trop serré pour une entente UNPRO.</h1>
           <p className="text-white/70">
             Chaque rendez-vous UNPRO est exclusif : il n'est jamais partagé. Ajustez votre budget
-            mensuel ou le nombre de rendez-vous souhaités, et nous recalculons votre plan.
+            mensuel ou le nombre de rendez-vous souhaités, et nous vous proposerons une entente
+            adaptée à vos objectifs.
           </p>
           <button
             onClick={() => navigate("/entrepreneur/devis-personnalise")}
