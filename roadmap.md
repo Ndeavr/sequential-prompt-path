@@ -1,9 +1,9 @@
-# Roadmap — P0 automated contractor acquisition
+# Roadmap — P0 contractor acquisition golden path
 
-- [x] Number check switched on (PAID_LOOKUP_ENABLED, TWILIO_LOOKUP_ENABLED).
-- [ ] BLOCKED (Twilio): Line Type Intelligence returns error 60601 — must be activated in the Twilio console before any number can be confirmed mobile.
-- [x] Hard CASL gate in canonical sender (evidence + source + timestamp, opt-outs via smsGuard).
-- [ ] BLOCKED: end-to-end SMS test — admin session could not be minted (needs Yan signed in to the preview once).
-- [ ] Turn OUTREACH_ENABLED on — only after the end-to-end test passes (rule 9).
-- [ ] Follow-up crons (no click / unfinished / checkout) — enable with the switch; they go through the same gate.
-- [x] Dashboard /admin/acquisition-funnel (activations today on top, funnel today + 7 days).
+- [x] Paid number check OFF again (PAID_LOOKUP_ENABLED=false, TWILIO_LOOKUP_ENABLED=0).
+- [x] OUTREACH_ENABLED=false kept during repair.
+- [x] Hard CASL gate in canonical sender matches stored 10-digit evidence; unknown line types stay excluded.
+- [x] One SMS dispatcher cron active (acquisition-queue-worker); all legacy senders inactive.
+- [x] Telemetry: otp_requested only after send-otp success; dashboard excludes QA/test SMS and quotes.
+- [ ] BLOCKED (auth): authenticated Stripe TEST E2E — needs a non-admin QA account signed into the preview.
+- [ ] Controlled outreach — awaits Yan's go after E2E (17 incomplete signups, 14 Rive-Nord email-eligible; 0 SMS-eligible).
