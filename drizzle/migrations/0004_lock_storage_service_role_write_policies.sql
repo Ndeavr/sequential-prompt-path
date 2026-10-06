@@ -1,0 +1,3 @@
+ALTER POLICY "Service role upload blog images" ON storage.objects TO authenticated WITH CHECK (bucket_id = 'blog-images' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+ALTER POLICY "Service role update blog images" ON storage.objects TO authenticated USING (bucket_id = 'blog-images' AND public.has_role(auth.uid(), 'admin'::public.app_role)) WITH CHECK (bucket_id = 'blog-images' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+ALTER POLICY "Service role write partner-media" ON storage.objects TO authenticated WITH CHECK (bucket_id = 'partner-media' AND public.has_role(auth.uid(), 'admin'::public.app_role));
