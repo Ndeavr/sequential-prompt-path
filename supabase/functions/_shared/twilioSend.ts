@@ -147,7 +147,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       .from("casl_consent_evidence")
       .select("id, lawful_basis, source_url, retrieved_at, expires_at, refusal_statement_found")
       .in("destination_type", ["phone_sms", "phone"])
-      .eq("destination_normalized", input.to)
+      .in("destination_normalized", [input.to, input.to.replace(/\D/g, ""), input.to.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")])
       .eq("is_valid", true)
       .order("created_at", { ascending: false })
       .limit(1)
