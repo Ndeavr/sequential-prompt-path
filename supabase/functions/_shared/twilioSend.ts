@@ -169,13 +169,13 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         message_preview: input.body.slice(0, 160),
         body_hash: await hashBody(input.body),
         attempt_number: input.attempt_number ?? 1,
-        status: "blocked_compliance",
+        status: "blocked",
         error_code: reason,
         error_message: "Envoi bloqué : aucune base légale de contact enregistrée pour ce numéro.",
         status_callback_url: STATUS_CALLBACK_URL,
         metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null },
       }).select("id").maybeSingle();
-      return { event_id: c?.id ?? "", status: "blocked_compliance", twilio_sid: null, error_code: reason };
+      return { event_id: c?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
     }
   }
 
