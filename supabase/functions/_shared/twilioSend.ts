@@ -146,7 +146,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     const { data: ev, error: evErr } = await supabase
       .from("casl_consent_evidence")
       .select("id, lawful_basis, source_url, retrieved_at, expires_at, refusal_statement_found")
-      .eq("destination_type", "phone")
+      .in("destination_type", ["phone_sms", "phone"])
       .eq("destination_normalized", input.to)
       .eq("is_valid", true)
       .order("created_at", { ascending: false })
