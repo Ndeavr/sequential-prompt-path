@@ -38,6 +38,8 @@ interface Input {
   service_radius_km?: number;
   /** "goal" = appointments in → budget out. "budget" = budget in → guarantee out. */
   pricing_mode?: PricingMode;
+  /** Optional manual entry-tier choice (whitelisted cents). */
+  entry_tier_cents?: number;
   /** Required when pricing_mode = "budget" (CAD cents). */
   monthly_budget_cents?: number;
   /** Required when pricing_mode = "pack" — one-time amount (CAD cents). */
@@ -329,6 +331,19 @@ async function resolveAppointmentUnitPrice(
 }
 
 
+
+/** Approved entry ladder (founder decision 2026-10-07), monthly CAD cents before tax. */
+export const ENTRY_TIERS = [
+  { cents: 10000, label: "Commencer" },
+  { cents: 20000, label: "Développer" },
+  { cents: 35000, label: "Accélérer" },
+  { cents: 50000, label: "Croissance" },
+] as const;
+/** Smallest tier >= computed price, capped at the top tier. */
+export function snapToEntryTier(computedCents: number): { cents: number; label: string } {
+  const c = Number.isFinite(computedCents) ? computedCents : 0;
+  return ENTRY_TIERS.find((t) => t.cents >= c) ?? ENTRY_TIERS[ENTRY_TIERS.length - 1];
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -965,7 +980,20 @@ Deno.serve(async (req) => {
       status = "offered";
     }
 
-    const guaranteedAppointments =
+    // ENTRY LADDER (approved 2026-10-07): the first agreement is always one of
+    // 100/200/350/500 $/month. The full computed price is kept internally only
+    // (future upgrade); no appointment guarantee is attached to a tier.
+    const internalTargetCents = finalPrice;
+    let entryTier: { cents: number; label: string } | null = null;
+    if (pricingMode !== "pack" && status === "offered") {
+      const requested = ENTRY_TIERS.find((t) => t.cents === Number(body.entry_tier_cents));
+      entryTier = requested ?? snapToEntryTier(finalPrice);
+      finalPrice = entryTier.cents;
+      const eligible = plans.filter((p) => p.monthly_price <= entryTier!.cents);
+      finalPlanCode = (eligible[eligible.length - 1] ?? plans[0]).code;
+    }
+
+    const guaranteedAppointments = entryTier ? 0 :
       status === "waitlisted" ||
       status === "analysis_required" ||
       modeOutcome === "analysis_required" ||
@@ -1128,6 +1156,8 @@ Deno.serve(async (req) => {
       calculation_version: CALCULATION_VERSION,
       pricing_mode: pricingMode,
       mode_outcome: modeOutcome,
+      entry_tier: entryTier,
+      entry_tiers: entryTier ? ENTRY_TIERS : null,
       appointment_recommendation: appointmentRecommendation,
       appointment_unit_price_cents: chain.appointment_unit_price_cents,
       appointment_unit_status: extra.status,
@@ -1367,6 +1397,8 @@ Deno.serve(async (req) => {
         guaranteed_appointments: guaranteedAppointments,
         plan: finalPlanCode,
         price_cents: finalPrice,
+        entry_tier_cents: entryTier?.cents ?? null,
+        internal_target_cents: entryTier ? internalTargetCents : null,
         status,
         capacity: capacityAvailability,
         extra_appointment_price: extra.price_cents,

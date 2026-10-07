@@ -129,7 +129,27 @@ export default function PageContractorPersonalizedPlan() {
   }, [quoteId]);
 
   const waitlisted = quote?.pricing_status === "waitlisted";
-  const planLabel = PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
+  const entryTier = ((quote as any)?.pricing_explanation?.entry_tier ?? null) as { cents: number; label: string } | null;
+  const entryTiers = ((quote as any)?.pricing_explanation?.entry_tiers ?? null) as { cents: number; label: string }[] | null;
+  const planLabel = entryTier?.label ?? PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [tierLoading, setTierLoading] = useState<number | null>(null);
+  const chooseTier = async (cents: number) => {
+    if (!quote || cents === entryTier?.cents) return;
+    setTierLoading(cents);
+    try {
+      const { data, error } = await supabase.functions.invoke("compute-pricing-quote", {
+        body: { ...(quote.input_payload ?? {}), entry_tier_cents: cents, quote_id: undefined },
+      });
+      const newId = (data as { quote_id?: string } | null)?.quote_id;
+      if (error || !newId) throw new Error("tier");
+      navigate(`/entrepreneur/plan-personnalise/${newId}`, { replace: true });
+    } catch {
+      toast.error("Impossible de changer d'entente pour le moment. Réessayez dans un instant.");
+    } finally {
+      setTierLoading(null);
+    }
+  };
 
   // Taxes du Québec affichées avant paiement : TPS 5 % + TVQ 9,975 %.
   // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
@@ -428,25 +448,35 @@ export default function PageContractorPersonalizedPlan() {
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span className="text-xs uppercase tracking-wider text-amber-300/80">Offre recommandée pour commencer</span>
                 </div>
-                <p className="text-2xl font-semibold tracking-[-0.03em]">Forfait {planLabel}</p>
+                <p className="text-2xl font-semibold tracking-[-0.03em]" data-testid="plan-name">{entryTier ? planLabel : `Forfait ${planLabel}`}</p>
                 <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
-                  Pour atteindre vos objectifs, nous vous recommandons cette entente de départ.
+                  {entryTier
+                    ? "Pour atteindre vos objectifs, nous vous recommandons de commencer avec cette entente."
+                    : "Pour atteindre vos objectifs, nous vous recommandons cette entente de départ."}
                 </p>
                 <p className="text-sm text-white/70 mt-1">
-                  Elle est conçue pour vous permettre de commencer simplement et d'ajuster ensuite selon vos résultats.
+                  {entryTier
+                    ? "Vous pourrez augmenter votre capacité au fur et à mesure de vos résultats."
+                    : "Elle est conçue pour vous permettre de commencer simplement et d'ajuster ensuite selon vos résultats."}
                 </p>
 
                 <div className="mt-5 space-y-2 text-sm text-white/85">
                   <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
-                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{guarantee.checkoutPrimaryLabel}</p>
+                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{entryTier ? "Rendez-vous exclusifs selon votre entente et votre capacité" : guarantee.checkoutPrimaryLabel}</p>
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Rendez-vous exclusifs, jamais partagés avec d'autres entrepreneurs</p>
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil public UNPRO pour {quote.trade_primary}</p>
                 </div>
 
                 <div className="mt-5 space-y-1 text-xs text-white/60 leading-relaxed">
                   <p className="text-xs uppercase tracking-wider text-white/50">Conditions</p>
-                  <p>{guarantee.checkoutSecondaryLabel}</p>
-                  <p>Facturation mensuelle, sans engagement annuel. L'engagement de rendez-vous indiqué ci-dessus est calculé sur 12 mois d'abonnement actif; une résiliation avant 12 mois met fin à l'engagement pour les mois non payés.</p>
+                  {entryTier ? (
+                    <p>Facturation mensuelle, sans engagement annuel.</p>
+                  ) : (
+                    <>
+                      <p>{guarantee.checkoutSecondaryLabel}</p>
+                      <p>Facturation mensuelle, sans engagement annuel. L'engagement de rendez-vous indiqué ci-dessus est calculé sur 12 mois d'abonnement actif; une résiliation avant 12 mois met fin à l'engagement pour les mois non payés.</p>
+                    </>
+                  )}
                   <p>Avant de recevoir des mandats, votre licence RBQ et votre fiche doivent être vérifiées par UNPRO. Le paiement ne remplace pas cette vérification.</p>
                   {waitlisted && <p className="text-amber-200/90">Votre métier est en forte demande dans ce territoire : une place d'attente vous est proposée.</p>}
                 </div>
@@ -476,8 +506,31 @@ export default function PageContractorPersonalizedPlan() {
                   data-testid="activate-offer"
                   className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? "Continuer vers le paiement" : "Activer mon offre gratuite"}
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? (entryTier ? "Commencer avec cette entente" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
                 </button>
+                {entryTier && entryTiers && !waitlisted && (
+                  <div className="mt-3 text-center">
+                    <button type="button" onClick={() => setOptionsOpen((o) => !o)} className="text-sm text-white/70 underline underline-offset-4" data-testid="other-options">
+                      Voir les autres options
+                    </button>
+                    {optionsOpen && (
+                      <div className="mt-3 grid grid-cols-2 gap-2" data-testid="tier-options">
+                        {entryTiers.map((t) => (
+                          <button
+                            key={t.cents}
+                            type="button"
+                            disabled={tierLoading !== null}
+                            onClick={() => chooseTier(t.cents)}
+                            className={`rounded-[18px] border px-3 py-3 text-left text-sm ${t.cents === entryTier.cents ? "border-amber-400 bg-amber-500/10" : "border-white/15 bg-white/5"}`}
+                          >
+                            <div className="font-semibold text-white">{formatCAD(t.cents)} / mois</div>
+                            <div className="text-white/70">{tierLoading === t.cents ? "Chargement…" : t.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {checkoutOutcome === "canceled" && (
                   <p className="mt-2 text-xs text-white/60 text-center">Paiement annulé. Votre offre est conservée : vous pouvez reprendre ici.</p>
                 )}
