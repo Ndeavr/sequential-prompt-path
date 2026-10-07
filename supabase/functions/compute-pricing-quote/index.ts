@@ -965,7 +965,20 @@ Deno.serve(async (req) => {
       status = "offered";
     }
 
-    const guaranteedAppointments =
+    // ENTRY LADDER (approved 2026-10-07): the first agreement is always one of
+    // 100/200/350/500 $/month. The full computed price is kept internally only
+    // (future upgrade); no appointment guarantee is attached to a tier.
+    const internalTargetCents = finalPrice;
+    let entryTier: { cents: number; label: string } | null = null;
+    if (pricingMode !== "pack" && status === "offered") {
+      const requested = ENTRY_TIERS.find((t) => t.cents === Number(body.entry_tier_cents));
+      entryTier = requested ?? snapToEntryTier(finalPrice);
+      finalPrice = entryTier.cents;
+      const eligible = plans.filter((p) => p.monthly_price <= entryTier!.cents);
+      finalPlanCode = (eligible[eligible.length - 1] ?? plans[0]).code;
+    }
+
+    const guaranteedAppointments = entryTier ? 0 :
       status === "waitlisted" ||
       status === "analysis_required" ||
       modeOutcome === "analysis_required" ||
