@@ -1158,7 +1158,6 @@ Deno.serve(async (req) => {
       mode_outcome: modeOutcome,
       entry_tier: entryTier,
       entry_tiers: entryTier ? ENTRY_TIERS : null,
-      internal_target_cents: entryTier ? internalTargetCents : null,
       appointment_recommendation: appointmentRecommendation,
       appointment_unit_price_cents: chain.appointment_unit_price_cents,
       appointment_unit_status: extra.status,
