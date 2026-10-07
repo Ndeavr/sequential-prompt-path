@@ -1793,11 +1793,13 @@ function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVid
   }, [open]);
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
+    { key: "cp", icon: ImageIcon, text: "Photo", run: onChoosePhoto },
+    { key: "cv", icon: Video, text: "Vidéo", run: onChooseVideo },
+    { key: "doc", icon: FileText, text: "Document", run: () => attachments.openFileDialog() },
     { key: "tp", icon: Camera, text: "Prendre une photo", run: onTakePhoto },
-    { key: "cp", icon: ImageIcon, text: "Choisir une photo", run: onChoosePhoto },
     { key: "tv", icon: Video, text: "Prendre une vidéo", run: onTakeVideo },
-    { key: "cv", icon: Video, text: "Choisir une vidéo", run: onChooseVideo },
-    { key: "doc", icon: FileText, text: "Joindre un document", run: () => attachments.openFileDialog() },
+    { key: "quote", icon: FileText, text: "Importer une soumission", run: () => attachments.openFileDialog() },
+    { key: "plan", icon: FileText, text: "Importer un plan", run: () => attachments.openFileDialog() },
   ];
 
   return (
@@ -1808,7 +1810,7 @@ function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVid
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="home-clara-tool inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+        className="home-clara-tool inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
       >
         <Plus className="h-5 w-5" />
       </button>
