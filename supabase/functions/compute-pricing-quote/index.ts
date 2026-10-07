@@ -1397,6 +1397,8 @@ Deno.serve(async (req) => {
         guaranteed_appointments: guaranteedAppointments,
         plan: finalPlanCode,
         price_cents: finalPrice,
+        entry_tier_cents: entryTier?.cents ?? null,
+        internal_target_cents: entryTier ? internalTargetCents : null,
         status,
         capacity: capacityAvailability,
         extra_appointment_price: extra.price_cents,
