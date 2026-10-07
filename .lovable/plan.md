@@ -72,3 +72,33 @@ Les seuls signaux sont des clics suivis d'une ouverture de page, survenus 28 à 
 - Relier `contractor_prospects` et `verified_contractor_prospects` par courriel ou téléphone pour toute future vérification de doublon.
 - Limiter le nombre total de relances sans réponse.
 - Vérifier d'où vient la valeur « paiement lancé » de MFC.
+
+---
+
+# Nouveaux prospects SMS (V1) — résultat de la cohorte, aucun envoi
+
+## Vérifications faites (lecture seule, 7 oct. 17 h 20 heure de Toronto)
+- **Fenêtre :** dépassée (17 h). Aucun envoi possible ce soir.
+- **Nouveaux prospects :** 830 fiches « jamais contactées » dans `contractor_prospects`, dont 745 avec un téléphone.
+- **Mobiles confirmés :** 0. Seulement 4 numéros sont marqués « capables de recevoir des SMS », tous avec un type de ligne `unknown_valid`.
+- **Ces 4 numéros sont tous exclus :**
+  - aucune preuve de consentement (CASL) pour le numéro ;
+  - déjà présents dans `verified_contractor_prospects`, la fiche qui contient l'historique d'envoi ;
+  - RD Reno Demo a en plus déjà reçu des courriels.
+- **Côté `verified_contractor_prospects` :** 0 prospect jamais contacté, toutes lignes confondues.
+
+## Résultat
+- Nouveaux prospects admissibles : **0**
+- SMS tentés, acceptés, livrés, en échec : **0**
+- Clics, onboarding, paiements lancés, payés, activés : **0**
+- Revenu attribué : **0 $**
+
+## Ce qui bloque
+Sans vérification payante du type de ligne, aucun nouveau numéro n'est confirmé mobile, et aucun n'a de preuve de consentement SMS enregistrée. Les règles actuelles interdisent de supposer qu'un numéro est mobile. Le lot ne peut donc pas partir, même demain à 9 h, tant que l'une de ces conditions n'est pas remplie :
+1. Les nouveaux prospects proviennent d'une source qui indique déjà le type de ligne et permet de documenter le consentement.
+2. Yan autorise un coût limité de vérification du type de ligne, par exemple 1 ¢ par numéro, plafonné à un lot précis.
+
+## Si Yan approuve cette étape
+- **Dédoublonnage croisé avant chaque envoi :** vérifier téléphone, courriel, domaine et nom normalisé dans `contractor_prospects`, `verified_contractor_prospects`, `email_send_log` et les journaux SMS. Cette vérification se fait au moment de la sélection, sans changer l'architecture.
+- **Envoi par l'outil existant :** même chemin de prospection, plafond de 25 par jour, fenêtre 9 h – 17 h, réponse STOP. Le message V1 est utilisé mot pour mot avec un lien suivi `/unpro/activate/:token`.
+- **Réconciliation durable des deux tables :** traitée comme un problème P0 séparé, inscrit à la feuille de route.
