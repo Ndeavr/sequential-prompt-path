@@ -1614,7 +1614,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     qualificationStepRef.current = null;
                     setAudience("homeowner");
                     setMode("PROJECT");
-                    trackCopilotEvent("clara_intent_switched", { surface: "home_clara_box", to: "homeowner" });
+                    trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text", intent: "homeowner" });
                     void sayClara("Bien sûr. Reprenons votre projet maison. Où en étions-nous?");
                   }}
                 >
