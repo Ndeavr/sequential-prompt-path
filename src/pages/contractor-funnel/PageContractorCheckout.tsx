@@ -78,9 +78,10 @@ export default function PageContractorCheckout() {
       const returnParams = new URLSearchParams();
       if (quoteId) returnParams.set("quoteId", quoteId);
       if (activationToken) returnParams.set("t", activationToken);
-      sessionStorage.setItem("unpro_funnel_redirect", `/entrepreneur/checkout?${returnParams.toString()}`);
+      const back = `/entrepreneur/checkout?${returnParams.toString()}`;
+      sessionStorage.setItem("unpro_funnel_redirect", back);
       toast.info("Connectez-vous pour finaliser votre paiement");
-      navigate("/login", { replace: true });
+      navigate(contractorLoginPath(back), { replace: true });
     }
   }, [activationToken, authLoading, isAuthenticated, navigate, quoteId]);
 

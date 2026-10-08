@@ -228,7 +228,7 @@ export default function PageContractorPersonalizedPlan() {
         setActiveQuoteId(quote.id);
         const next = `${window.location.pathname}${window.location.search}`;
         setCheckoutLoading(false);
-        navigate(`/auth?next=${encodeURIComponent(next)}`);
+        navigate(contractorLoginPath(next));
         return;
       }
       const { data, error } = await supabase.functions.invoke(
