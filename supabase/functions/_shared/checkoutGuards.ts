@@ -23,7 +23,7 @@ export interface WebhookEventRow { processing_status?: string | null; received_a
 export function shouldSkipRedelivery(row: WebhookEventRow | null, nowMs = Date.now()): boolean {
   if (!row) return true; // unknown state: keep historical behaviour
   const s = row.processing_status ?? "";
-  if (s === "processed" || s === "ignored" || s === "success") return true;
+  if (s === "processed" || s === "ignored" || s === "ignored_unpaid" || s === "success") return true;
   if (s === "processing") {
     const t = row.received_at ? Date.parse(row.received_at) : nowMs;
     return nowMs - t < 5 * 60_000;

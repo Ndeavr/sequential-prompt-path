@@ -1,3 +1,4 @@
+import { shouldSkipRedelivery } from "../_shared/checkoutGuards.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -170,10 +171,20 @@ Deno.serve(async (req) => {
         console.warn("[stripe-webhook] audit insert warning", insertErr.message);
       }
       if (insertErr && String(insertErr.message).includes("duplicate")) {
+        const { data: prior } = await supabase.from("stripe_webhook_events")
+          .select("processing_status, received_at").eq("stripe_event_id", event.id).maybeSingle();
+        if (!shouldSkipRedelivery(prior)) {
+          // Previous attempt failed or stalled: retry idempotently instead of dropping it.
+          console.log(`Redelivered webhook ${event.id} after ${prior?.processing_status}, reprocessing`);
+          await supabase.from("stripe_webhook_events").update({
+            processing_status: "processing", error_message: null, last_retry_at: new Date().toISOString(),
+          }).eq("stripe_event_id", event.id);
+        } else {
         console.log(`Duplicate webhook event ${event.id}, skipping`);
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+        }
       }
     }
 
@@ -286,6 +297,7 @@ Deno.serve(async (req) => {
 
     switch (event.type) {
 
+      case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const contractorId = session.metadata?.contractor_id;
