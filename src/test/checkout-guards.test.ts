@@ -5,7 +5,8 @@ import { safeRedirectUrl, shouldSkipRedelivery, isSessionPaid } from "../../supa
 describe("checkout redirect allowlist", () => {
   it("keeps our origins and rejects others", () => {
     expect(safeRedirectUrl("https://unpro.ca/x?checkout=success", "F")).toBe("https://unpro.ca/x?checkout=success");
-    expect(safeRedirectUrl("https://id-preview--abc.lovable.app/x", "F")).toContain("lovable.app");
+    expect(safeRedirectUrl("https://id-preview--ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovable.app/x", "F")).toContain("lovable.app");
+    expect(safeRedirectUrl("https://attacker.lovable.app/x", "F")).toBe("F");
     expect(safeRedirectUrl("http://localhost:8080/x", "F")).toContain("localhost");
     expect(safeRedirectUrl("https://evil.com/x", "F")).toBe("F");
     expect(safeRedirectUrl("https://unpro.ca.evil.com/x", "F")).toBe("F");

@@ -1,6 +1,10 @@
 // Pure guards shared by checkout + webhook (no Deno APIs: unit-tested in vitest).
 
-const ALLOWED_HOSTS = [/^(www\.|app\.)?unpro\.ca$/i, /\.lovable\.app$/i, /\.lovableproject\.com$/i];
+const ALLOWED_HOSTS = new Set([
+  "unpro.ca", "www.unpro.ca", "app.unpro.ca", "unpro.lovable.app",
+  "id-preview--ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovable.app",
+  "ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovableproject.com",
+]);
 
 /** Only our own origins may receive the Stripe redirect (no open redirect). */
 export function safeRedirectUrl(url: unknown, fallback: string): string {
@@ -8,7 +12,7 @@ export function safeRedirectUrl(url: unknown, fallback: string): string {
   try {
     const u = new URL(url);
     const local = u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1");
-    if (local || (u.protocol === "https:" && ALLOWED_HOSTS.some((r) => r.test(u.hostname)))) return url;
+    if (local || (u.protocol === "https:" && ALLOWED_HOSTS.has(u.hostname.toLowerCase()))) return url;
   } catch { /* invalid */ }
   return fallback;
 }
