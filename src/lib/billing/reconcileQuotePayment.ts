@@ -11,3 +11,14 @@ export async function reconcileQuotePayment(quoteId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Stripe return URL that keeps attribution (t, ref, offer, utm…) so a cancel
+ * then retry is still attributed to the original prospect link.
+ */
+export function planReturnUrl(origin: string, quoteId: string, search: string, outcome: "success" | "canceled"): string {
+  const p = new URLSearchParams(search);
+  p.delete("checkout");
+  p.set("checkout", outcome);
+  return `${origin}/entrepreneur/plan-personnalise/${quoteId}?${p.toString()}`;
+}

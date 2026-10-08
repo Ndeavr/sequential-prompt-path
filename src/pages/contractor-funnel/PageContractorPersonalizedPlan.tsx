@@ -4,7 +4,7 @@
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
-import { reconcileQuotePayment } from "@/lib/billing/reconcileQuotePayment";
+import { reconcileQuotePayment, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -261,8 +261,8 @@ export default function PageContractorPersonalizedPlan() {
             ...(affiliateRef && { ref: affiliateRef }),
             ...(offerId && { offerId }),
             ...(activationToken && { activationToken }),
-            successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
-            cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
+            successUrl: planReturnUrl(window.location.origin, quote.id, window.location.search, "success"),
+            cancelUrl: planReturnUrl(window.location.origin, quote.id, window.location.search, "canceled"),
           },
         },
       );

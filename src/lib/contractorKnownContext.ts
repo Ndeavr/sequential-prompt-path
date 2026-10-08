@@ -12,9 +12,14 @@ export type KnownContractorContext = {
   businessName: string | null;
   trade: string | null;
   city: string | null;
+  /** Tous les territoires déclarés à Clara (jamais déduits). */
+  serviceAreas: string[];
+  /** Objectifs qualitatifs déclarés à Clara — jamais convertis en montant. */
+  goals: string[];
+  website: string | null;
 };
 
-const EMPTY: KnownContractorContext = { businessName: null, trade: null, city: null };
+const EMPTY: KnownContractorContext = { businessName: null, trade: null, city: null, serviceAreas: [], goals: [], website: null };
 
 function clean(v: unknown): string | null {
   return typeof v === "string" && v.trim().length >= 2 ? v.trim() : null;
@@ -64,5 +69,8 @@ export function getKnownContractorContext(): KnownContractorContext {
       draft.city ??
       funnel.city ??
       null,
+    serviceAreas: (clara.service_areas ?? []).map(clean).filter((v): v is string => !!v),
+    goals: (clara.goals ?? []).map(clean).filter((v): v is string => !!v),
+    website: clean(clara.website),
   };
 }
