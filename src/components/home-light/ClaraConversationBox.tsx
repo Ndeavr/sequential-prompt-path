@@ -1602,6 +1602,26 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 ))}
               </div>
             )}
+            {audience === "contractor" && !busy && !transitionPause && (
+              <div className="home-clara-quick" role="group" aria-label="Retour au projet maison">
+                <button
+                  type="button"
+                  data-testid="clara-back-to-home-project"
+                  onClick={() => {
+                    // Même conversation : on change seulement le segment d'intention.
+                    setContractorFlow(false);
+                    rememberActiveContractorFlow(false);
+                    qualificationStepRef.current = null;
+                    setAudience("homeowner");
+                    setMode("PROJECT");
+                    trackCopilotEvent("clara_intent_switched", { surface: "home_clara_box", to: "homeowner" });
+                    void sayClara("Bien sûr. Reprenons votre projet maison. Où en étions-nous?");
+                  }}
+                >
+                  Revenir à mon projet maison
+                </button>
+              </div>
+            )}
             {transitionPause ? (
               <div className="home-clara-transition-pause" data-pulses={TRANSITION_PULSES} role="status" aria-label="Clara prépare la prochaine étape">
                 <span>Clara</span><i /><i /><i />
