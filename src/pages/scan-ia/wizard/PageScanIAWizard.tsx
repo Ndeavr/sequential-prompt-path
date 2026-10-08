@@ -42,10 +42,8 @@ export default function PageScanIAWizard() {
       return;
     }
     (async () => {
-      const { data, error } = await supabase
-        .from("scan_ia_reports")
-        .select("*")
-        .eq("session_token", token)
+      const { data, error } = await (supabase as any)
+        .rpc("get_scan_ia_report", { _token: token })
         .maybeSingle();
       if (error || !data) {
         navigate("/scan-ia");
