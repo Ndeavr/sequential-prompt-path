@@ -100268,6 +100268,10 @@ export type Database = {
           starts_at: string
         }[]
       }
+      contractor_calendar_connected: {
+        Args: { _contractor_id: string }
+        Returns: boolean
+      }
       contractor_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
@@ -100592,6 +100596,45 @@ export type Database = {
       get_recruitment_offer_by_token: {
         Args: { _token: string }
         Returns: Json
+      }
+      get_scan_ia_report: {
+        Args: { _token: string }
+        Returns: {
+          activated_at: string | null
+          activation_status: string
+          alex_simulation: Json
+          business_name: string | null
+          category: string | null
+          city: string | null
+          claimed_at: string | null
+          claimed_by: string | null
+          company_reveal: Json | null
+          created_at: string
+          id: string
+          input_type: string
+          input_value: string
+          market_position: Json | null
+          normalized_url: string | null
+          opportunities: Json
+          overall_score: number
+          recommended_plan: string | null
+          session_token: string
+          signals: Json
+          stripe_session_id: string | null
+          sub_scores: Json
+          territory_demand: Json | null
+          threats: Json
+          today_jobs_per_month: number | null
+          updated_at: string
+          user_capacity: number | null
+          user_goal: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "scan_ia_reports"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_secondary_category_limit: {
         Args: { plan_code: string }
