@@ -1608,14 +1608,23 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                   type="button"
                   data-testid="clara-back-to-home-project"
                   onClick={() => {
-                    // Même conversation : on change seulement le segment d'intention.
+                    // Même conversation : le parcours entrepreneur est suspendu (jamais effacé)
+                    // et le curseur maison reprend exactement la dernière question sans réponse.
                     setContractorFlow(false);
-                    rememberActiveContractorFlow(false);
+                    pauseActiveContractorFlow();
                     qualificationStepRef.current = null;
                     setAudience("homeowner");
                     setMode("PROJECT");
+                    rememberClaraReferences({ current_intent: "PROJECT" });
                     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text", intent: "homeowner" });
-                    void sayClara("Bien sûr. Reprenons votre projet maison. Où en étions-nous?");
+                    const cursor = readHomeCursor();
+                    if (cursor) {
+                      void sayClara(cursor.text, cursor.options);
+                    } else if (messagesRef.current.some((m) => m.role === "user" && m.segment !== "contractor")) {
+                      void sayClara("Bien sûr. Continuons votre projet maison : dites-moi ce qui a changé ou ce que vous souhaitez préciser.");
+                    } else {
+                      void sayClara("Bien sûr. Décrivez-moi votre projet maison en quelques mots.");
+                    }
                   }}
                 >
                   Revenir à mon projet maison
