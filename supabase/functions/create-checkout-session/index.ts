@@ -1,4 +1,5 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { isSessionPaid, safeRedirectUrl } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   assertCompensationAllowed,
@@ -101,13 +102,14 @@ Deno.serve(async (req) => {
     const {
       planId,
       billingInterval,
-      successUrl,
-      cancelUrl,
+      successUrl: rawSuccessUrl,
+      cancelUrl: rawCancelUrl,
       promoCode,
       appointmentPack,
       uiMode,
-      returnUrl,
+      returnUrl: rawReturnUrl,
       quoteId,
+      action,
       displayedPriceCents,
       displayedGuaranteedAppointments,
       includeProfileFee,
@@ -122,6 +124,10 @@ Deno.serve(async (req) => {
       testMode,
 
     } = await req.json();
+    // Redirects only to our own origins (undefined → existing defaults).
+    const successUrl = rawSuccessUrl ? safeRedirectUrl(rawSuccessUrl, "") || undefined : undefined;
+    const cancelUrl = rawCancelUrl ? safeRedirectUrl(rawCancelUrl, "") || undefined : undefined;
+    const returnUrl = rawReturnUrl ? safeRedirectUrl(rawReturnUrl, "") || undefined : undefined;
 
     // ── MODE TEST STRIPE (validation E2E uniquement) ──────────────────────
     // Réutilise exactement ce parcours : seule la clé Stripe change. Réservé
@@ -166,6 +172,48 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ── RÉCONCILIATION (retour de paiement / reconnexion) ─────────────────
+    // Lecture Stripe côté serveur. N'active jamais directement : si Stripe
+    // confirme le paiement et que le webhook n'est pas encore traité, l'événement
+    // authentique récupéré chez Stripe est rejoué dans le webhook canonique.
+    if (action === "reconcile") {
+      const json = (b: unknown, st = 200) => new Response(JSON.stringify(b), { status: st, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!quoteId) return json({ error: "quote_required" }, 400);
+      const { data: rq } = await serviceClient.from("contractor_pricing_quotes")
+        .select("id, user_id, pricing_status").eq("id", String(quoteId)).maybeSingle();
+      if (!rq) return json({ error: "quote_not_found" }, 404);
+      if (rq.user_id && rq.user_id !== userId) return json({ error: "quote_forbidden" }, 403);
+      if (rq.pricing_status === "paid") return json({ status: "paid" });
+      const { data: cs } = await serviceClient.from("checkout_sessions")
+        .select("external_checkout_id").eq("quote_id", String(quoteId))
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const sid = cs?.external_checkout_id as string | undefined;
+      if (!sid) return json({ status: "no_session" });
+      const key = sid.startsWith("cs_test_") ? stripeTestKey : stripeKey;
+      if (!key) return json({ status: "pending" });
+      const rs = new Stripe(key, { apiVersion: "2025-08-27.basil" });
+      const sess = await rs.checkout.sessions.retrieve(sid);
+      if (!isSessionPaid(sess)) {
+        return json({ status: sess.status === "expired" ? "expired" : sess.status === "open" ? "open" : "unpaid" });
+      }
+      const events = await rs.events.list({ type: "checkout.session.completed", created: { gte: sess.created - 60 }, limit: 100 });
+      const ev = events.data.find((e) => (e.data.object as { id?: string }).id === sid);
+      if (!ev) return json({ status: "webhook_pending" });
+      const { data: evRow } = await serviceClient.from("stripe_webhook_events")
+        .select("processing_status").eq("stripe_event_id", ev.id).maybeSingle();
+      if (evRow?.processing_status === "processed") return json({ status: "webhook_pending" });
+      const replay = await fetch(`${supabaseUrl}/functions/v1/stripe-webhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-replay-token": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")! },
+        body: JSON.stringify(ev),
+      });
+      await replay.text();
+      console.info("[checkout:reconcile]", { quote_id: quoteId, session: sid, event: ev.id, replay_status: replay.status });
+      const { data: after } = await serviceClient.from("contractor_pricing_quotes")
+        .select("pricing_status").eq("id", String(quoteId)).maybeSingle();
+      return json({ status: after?.pricing_status === "paid" ? "paid" : "webhook_pending" });
+    }
 
     let verifiedProspectId: string | null = null;
     let verifiedActivationToken: string | null = null;
@@ -485,6 +533,11 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: "Ce devis est expiré.", code: "quote_expired" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.pricing_status === "paid") {
+        return new Response(JSON.stringify({ error: "Cette entente est déjà payée.", code: "already_paid" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (q.pricing_status === "waitlisted") {
@@ -1015,6 +1068,30 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: "La réduction n'a pas pu être appliquée. Aucun paiement n'a été créé.", code: "promo_application_failed" }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
+      }
+    }
+
+    // Nouvelle tentative : réutiliser la session ouverte du même devis plutôt
+    // que d'en créer une seconde (évite deux abonnements payés).
+    if (quoteId && !isEmbedded) {
+      const { data: prev } = await serviceClient.from("checkout_sessions")
+        .select("external_checkout_id").eq("quote_id", String(quoteId))
+        .eq("contractor_profile_id", contractor.id)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (prev?.external_checkout_id) {
+        try {
+          const old = await stripe.checkout.sessions.retrieve(prev.external_checkout_id);
+          if (isSessionPaid(old)) {
+            return new Response(JSON.stringify({ error: "Paiement déjà reçu.", code: "already_paid" }), {
+              status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (old.status === "open" && old.url && old.amount_total != null) {
+            return new Response(JSON.stringify({ url: old.url, sessionId: old.id, reused: true }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } catch { /* autre mode Stripe ou session purgée : on en crée une neuve */ }
       }
     }
 
