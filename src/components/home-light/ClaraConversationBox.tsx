@@ -67,7 +67,7 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
-import { hasActiveContractorFlow, isContractorContext, rememberActiveContractorFlow } from "@/services/clara/claraContractorResume";
+import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 
@@ -258,6 +258,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       };
 
   const [messages, setMessages] = useState<Msg[]>([]);
+  /** Fil courant lisible sans fermeture périmée (anti-doublon des tours de Clara). */
+  const messagesRef = useRef<Msg[]>([]);
+  messagesRef.current = messages;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ClaraSurfaceMode>(() => hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
@@ -410,7 +413,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     });
   }, []);
   const keepComposerVisible = useCallback(() => {
-    bringComposerIntoView();
+    // La page ne bouge que si le clavier est ouvert : jamais à chaque nouveau message.
+    if (document.activeElement === composerRef.current) bringComposerIntoView();
     // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
     if (!isNearBottom()) return;
     scrollToLatest("auto");
@@ -563,6 +567,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setContractorFlow(contractor);
         rememberActiveContractorFlow(contractor);
         setMode(contractor ? "CONTRACTOR" : restoredMode);
+        // Rafraîchissement : les choix de la dernière question maison reviennent.
+        const cursor = contractor ? null : readHomeCursor();
+        const lastRestored = restored[restored.length - 1];
+        if (cursor && cursor.options.length >= 2 && lastRestored?.role === "assistant" && lastRestored.text.trim() === cursor.text.trim()) {
+          setQuickReplies({ messageId: lastRestored.id, options: cursor.options });
+        }
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
         if (hasActiveContractorFlow()) setContractorFlow(true);
@@ -748,6 +758,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   /** Écrit une phrase de Clara dans la conversation visible ET canonique. */
   const sayClara = useCallback(async (text: string, quick?: string[]) => {
     if (!mountedRef.current) return;
+    // Anti-doublon : si Clara vient déjà de poser exactement cette question,
+    // on réaffiche seulement ses choix, sans second tour identique.
+    const lastAssistant = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
+    const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+    if (lastMessage && lastMessage === lastAssistant && lastAssistant.text.trim() === text.trim()) {
+      setQuickReplies(quick && quick.length >= 2 ? { messageId: lastAssistant.id, options: quick } : null);
+      return;
+    }
     const messageId = uid();
     setQuickReplies(null);
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -1038,6 +1056,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
         );
         setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
+        // Curseur maison : dernière question propriétaire, restaurée au retour.
+        if (audienceRef.current === "homeowner") {
+          rememberHomeCursor({ text: shownText, options: parsed.options.length >= 2 ? parsed.options : [] });
+        }
         void appendClaraMessage({
           role: "assistant",
           text: shownText,
@@ -1620,7 +1642,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     const cursor = readHomeCursor();
                     if (cursor) {
                       void sayClara(cursor.text, cursor.options);
-                    } else if (messagesRef.current.some((m) => m.role === "user" && m.segment !== "contractor")) {
+                    } else if (messagesRef.current.some((m) => m.role === "user")) {
                       void sayClara("Bien sûr. Continuons votre projet maison : dites-moi ce qui a changé ou ce que vous souhaitez préciser.");
                     } else {
                       void sayClara("Bien sûr. Décrivez-moi votre projet maison en quelques mots.");
