@@ -251,12 +251,17 @@ export default function PageContractorPricingIntake() {
         company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || declaredName || undefined,
         trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : d.trade_primary || declaredTrade || undefined,
         city: confirmedFields.includes("city") ? d.city : d.city || declaredCity || undefined,
+        website_url: d.website_url || known.website || undefined,
       }));
+      setClaraDeclared({ serviceAreas: known.serviceAreas, goals: known.goals });
       if ((declaredName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey]);
+
+  /* Déclaré à Clara : affiché tel quel, jamais redemandé ni chiffré. */
+  const [claraDeclared, setClaraDeclared] = useState<{ serviceAreas: string[]; goals: string[] }>({ serviceAreas: [], goals: [] });
 
   /* ---------- Fiche entrepreneur rattachée au compte : source prioritaire ---------- */
   const [linked, setLinked] = useState<{ id: string; business_name: string | null; address: string | null } | null>(null);
@@ -507,6 +512,8 @@ export default function PageContractorPricingIntake() {
             ["Métier principal", d.trade_primary],
             ["Territoire", `${d.city}${d.service_radius_km ? ` · ${d.service_radius_km} km` : ""}`],
             ["Capacité de travaux", d.monthly_capacity ? `${d.monthly_capacity} projets/mois` : "Non indiquée"],
+            ...(claraDeclared.serviceAreas.length ? [["Territoires desservis", claraDeclared.serviceAreas.join(", ")]] : []),
+            ...(claraDeclared.goals.length ? [["Vos priorités (déclarées)", claraDeclared.goals.join(", ")]] : []),
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3 border-b border-white/5 pb-2">
               <span className="text-white/55">{k}</span>
@@ -680,7 +687,7 @@ export default function PageContractorPricingIntake() {
         metadata: { plan_code: quote.recommended_plan ?? null, from: searchParams.get("from") },
       });
       const carry = new URLSearchParams();
-      for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t", "objective", "from"]) {
+      for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t", "objective", "from", "utm_source", "utm_medium", "utm_campaign", "utm_content", "campaign", "source"]) {
         const value = searchParams.get(key);
         if (value) carry.set(key, value);
       }
