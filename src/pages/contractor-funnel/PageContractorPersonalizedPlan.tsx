@@ -320,7 +320,7 @@ export default function PageContractorPersonalizedPlan() {
           )}
           {paymentConfirm === "timeout" && (
             <>
-              <h1 className="text-2xl font-semibold">Paiement reçu, confirmation en attente.</h1>
+              <h1 className="text-2xl font-semibold">Confirmation du paiement en cours.</h1>
               <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
               <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Vérifier à nouveau
