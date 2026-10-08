@@ -218,6 +218,15 @@ export default function PageContractorPersonalizedPlan() {
         }
         await new Promise((r) => setTimeout(r, 3000));
       }
+      // Lecture finale après la dernière réconciliation, avant d'abandonner.
+      try {
+        const last = await fetchPricingQuote(quoteId);
+        if (last?.pricing_status === "paid") {
+          if (!cancelled) setPaymentConfirm("paid");
+          setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
+          return;
+        }
+      } catch { /* état inconnu : délai dépassé */ }
       if (!cancelled) setPaymentConfirm("timeout");
     })();
     return () => { cancelled = true; };
