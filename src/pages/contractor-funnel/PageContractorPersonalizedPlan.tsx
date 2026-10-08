@@ -3,6 +3,7 @@
  * Route: /entrepreneur/plan-personnalise/:quoteId
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
+import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";

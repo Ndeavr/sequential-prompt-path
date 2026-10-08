@@ -3,6 +3,7 @@
  * Summary, Stripe checkout, founder offer.
  * Personalized quote (?quoteId=...) is the single source of truth for price/plan.
  */
+import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
