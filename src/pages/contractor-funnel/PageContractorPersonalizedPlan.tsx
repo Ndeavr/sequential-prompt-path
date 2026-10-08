@@ -3,6 +3,7 @@
  * Route: /entrepreneur/plan-personnalise/:quoteId
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
+import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -228,7 +229,7 @@ export default function PageContractorPersonalizedPlan() {
         setActiveQuoteId(quote.id);
         const next = `${window.location.pathname}${window.location.search}`;
         setCheckoutLoading(false);
-        navigate(`/auth?next=${encodeURIComponent(next)}`);
+        navigate(contractorLoginPath(next));
         return;
       }
       const { data, error } = await supabase.functions.invoke(
