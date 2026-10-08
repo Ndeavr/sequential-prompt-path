@@ -414,7 +414,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, []);
   const keepComposerVisible = useCallback(() => {
     // La page ne bouge que si le clavier est ouvert : jamais à chaque nouveau message.
-    if (document.activeElement === composerRef.current) bringComposerIntoView();
+    if (composerRef.current?.contains(document.activeElement)) bringComposerIntoView();
     // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
     if (!isNearBottom()) return;
     scrollToLatest("auto");
@@ -463,6 +463,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     clearLocalPreviews();
     announcedMedia.current = new Set();
     workflowRef.current = null;
+    rememberHomeCursor(null);
     setMessages([]);
     setQuickReplies(null);
     setError(null);
