@@ -107,11 +107,8 @@ export default function PageHomeownerBookingFunnel() {
       setContractorId(c.id);
 
       const { data: conn } = await (supabase as any)
-        .from("contractor_calendar_connections")
-        .select("access_status")
-        .eq("contractor_id", c.id)
-        .maybeSingle();
-      const isConnected = conn?.access_status === "connected";
+        .rpc("contractor_calendar_connected", { _contractor_id: c.id });
+      const isConnected = conn === true;
       setCalendarConnected(isConnected);
 
       if (isConnected) {
