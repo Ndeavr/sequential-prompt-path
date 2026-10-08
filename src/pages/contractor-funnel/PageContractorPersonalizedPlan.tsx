@@ -4,6 +4,7 @@
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
+import { reconcileQuotePayment } from "@/lib/billing/reconcileQuotePayment";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -210,6 +211,11 @@ export default function PageContractorPersonalizedPlan() {
             return;
           }
         } catch { /* on réessaie */ }
+        // Webhook en retard : réconciliation serveur auprès de Stripe (jamais
+        // d'activation depuis l'URL de retour).
+        if (i === 5 || i === 15 || i === 29) {
+          if (await reconcileQuotePayment(quoteId)) continue;
+        }
         await new Promise((r) => setTimeout(r, 3000));
       }
       if (!cancelled) setPaymentConfirm("timeout");
@@ -314,7 +320,7 @@ export default function PageContractorPersonalizedPlan() {
           )}
           {paymentConfirm === "timeout" && (
             <>
-              <h1 className="text-2xl font-semibold">Paiement reçu, confirmation en attente.</h1>
+              <h1 className="text-2xl font-semibold">Confirmation du paiement en cours.</h1>
               <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
               <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Vérifier à nouveau
