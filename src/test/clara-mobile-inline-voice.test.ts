@@ -64,3 +64,15 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
     }
   });
 });
+describe("Clara — retour au projet maison sans perte d’état", () => {
+  const box2 = read("src/components/home-light/ClaraConversationBox.tsx");
+  it("restaure le curseur maison sans « Où en étions-nous? »", () => {
+    expect(box2).not.toContain("Où en étions-nous");
+    expect(box2).toContain("readHomeCursor()");
+    expect(box2).toContain("pauseActiveContractorFlow()");
+    expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT" })');
+  });
+  it("évite les tours identiques consécutifs de Clara", () => {
+    expect(box2).toContain("lastAssistant.text.trim() === text.trim()");
+  });
+});
