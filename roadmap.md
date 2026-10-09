@@ -1,5 +1,8 @@
 # Roadmap — P0 contractor acquisition golden path
 
+- [ ] P0 mobile Clara: keyboard-aware viewport, one scroll owner, shared live voice transcript; targeted tests and mobile browser checks.
+- [ ] Publish mobile repair only after checks and security gate pass; existing critical findings remain an external publication blocker.
+
 - [x] Paid number check OFF again (PAID_LOOKUP_ENABLED=false, TWILIO_LOOKUP_ENABLED=0).
 - [x] OUTREACH_ENABLED=false kept during repair.
 - [x] Hard CASL gate in canonical sender matches stored 10-digit evidence; unknown line types stay excluded.
