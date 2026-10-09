@@ -271,9 +271,9 @@ export default function OnboardingPageUnpro() {
     } finally {
       setSaving(false);
     }
-  }, [user?.id, navigate]);
+  }, [user?.id, navigate, teamSize]);
 
-  if (authLoading || profileLoading) {
+  if (authLoading || profileLoading || contractorLoading || contractorActive) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -348,7 +348,21 @@ export default function OnboardingPageUnpro() {
 
             {/* Contractor Flow */}
             {isContractor && step === 2 && (
-              <FormContractorBusinessCore onSave={handleContractorBusinessSave} loading={saving} />
+              <FormContractorBusinessCore
+                initialData={{
+                  company_name: (contractor as any)?.business_name || known.businessName || "",
+                  email: (contractor as any)?.email || profile?.email || user?.email || "",
+                  phone: (contractor as any)?.phone || profile?.phone || "",
+                  website: (contractor as any)?.website || known.website || "",
+                  main_category: (contractor as any)?.specialty || known.trade || "",
+                  service_areas: (contractor as any)?.service_areas?.length
+                    ? (contractor as any).service_areas
+                    : known.serviceAreas.length ? known.serviceAreas
+                    : [(contractor as any)?.city || known.city].filter(Boolean) as string[],
+                }}
+                onSave={handleContractorBusinessSave}
+                loading={saving}
+              />
             )}
             {isContractor && step === 3 && (
               <FormContractorDNA onSave={handleContractorDNASave} loading={saving} />
