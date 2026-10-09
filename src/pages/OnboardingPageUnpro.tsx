@@ -212,21 +212,26 @@ export default function OnboardingPageUnpro() {
     }
   }, [user?.id, navigate]);
 
-  const handleContractorBusinessSave = useCallback(async (data: Record<string, string>) => {
+  const handleContractorBusinessSave = useCallback(async (data: ContractorBusinessData) => {
     if (!user?.id) return;
     setSaving(true);
     try {
-      await (supabase.from("contractors") as any).upsert({
-        user_id: user.id,
-        business_name: data.company_name,
-        email: data.email,
-        phone: data.phone,
-        website: data.website,
-        specialty: data.main_category,
-        city: data.service_area,
-      }, { onConflict: "user_id" });
+      // Only commercial fields; RBQ/verification columns are never written here.
+      const row: Record<string, unknown> = { user_id: user.id, business_name: data.company_name };
+      if (data.email) row.email = data.email;
+      if (data.phone) row.phone = data.phone;
+      if (data.website) row.website = data.website;
+      if (data.main_category) row.specialty = data.main_category;
+      if (data.service_areas.length) {
+        row.service_areas = data.service_areas;
+        row.city = data.service_areas[0];
+      }
+      const { error } = await (supabase.from("contractors") as any).upsert(row, { onConflict: "user_id" });
+      if (error) throw error;
+      setTeamSize(data.team_size);
       setStep(3);
     } catch (err) {
+      console.error("[onboarding] contractor save error", err);
       toast.error("Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
@@ -244,13 +249,14 @@ export default function OnboardingPageUnpro() {
         .maybeSingle();
 
       if (contractor) {
+        const traits = teamSize ? { ...data, team_size: teamSize } : data;
         await (supabase.from("contractor_dna_profiles") as any).upsert({
           contractor_id: contractor.id,
           dna_type: "onboarding",
           dna_label_fr: "Profil ADN initial",
           dna_label_en: "Initial DNA profile",
-          scores: data,
-          traits: data,
+          scores: traits,
+          traits,
           generated_by: "onboarding",
         }, { onConflict: "contractor_id" });
       }
