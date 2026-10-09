@@ -3,10 +3,14 @@
  * Handles role selection, identity, property, intent, DNA for homeowner & contractor flows.
  * Auto-saves progress, resumes from last step.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useContractorProfile } from "@/hooks/useContractor";
+import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
+import { getKnownContractorContext } from "@/lib/contractorKnownContext";
+import type { ContractorBusinessData } from "@/components/onboarding/FormContractorBusinessCore";
 import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { toast } from "sonner";
@@ -39,24 +43,43 @@ export default function OnboardingPageUnpro() {
   const isContractor = role === "contractor";
   const steps = isContractor ? CONTRACTOR_STEPS : HOMEOWNER_STEPS;
 
-  // Resume from last step
+  // Existing contractor record (owner-only read via RLS).
+  const { data: contractor, isLoading: contractorLoading } = useContractorProfile();
+  const contractorActive = isContractorAgreementActive(contractor as { activation_status?: string | null } | null);
+  const known = getKnownContractorContext();
+  const [teamSize, setTeamSize] = useState("");
+  const resumed = useRef(false);
+
+  // Paid & active contractor → straight to /pro, never replay onboarding/payment.
   useEffect(() => {
-    if (!authLoading && !profileLoading && profile) {
-      if (profile.onboarding_completed) {
-        navigate(getDefaultRedirectForRole(existingRole ?? "homeowner"), { replace: true });
-        return;
-      }
-      // If role exists, skip step 0
-      if (existingRole) {
-        setSelectedRole(existingRole);
-        if (profile.first_name && profile.last_name) {
-          setStep(2); // Identity done
-        } else {
-          setStep(1);
-        }
-      }
+    if (!user?.id || contractorLoading || !contractorActive) return;
+    if (profile && !profile.onboarding_completed) {
+      supabase.from("profiles").update({ onboarding_completed: true } as any).eq("user_id", user.id).then(() => {});
     }
-  }, [authLoading, profileLoading, profile, existingRole, navigate]);
+    navigate("/pro", { replace: true });
+  }, [user?.id, contractorLoading, contractorActive, profile, navigate]);
+
+  // Resume at the first step that still has missing data (once, never fights user edits).
+  useEffect(() => {
+    if (resumed.current || authLoading || profileLoading || contractorLoading || !profile) return;
+    if (contractorActive) return;
+    resumed.current = true;
+    if (profile.onboarding_completed) {
+      navigate(getDefaultRedirectForRole(existingRole ?? "homeowner"), { replace: true });
+      return;
+    }
+    if (!existingRole) return;
+    setSelectedRole(existingRole);
+    const identityDone = !!(profile.first_name && profile.last_name && (profile.email || user?.email));
+    if (!identityDone) return setStep(1);
+    if (existingRole === "contractor") {
+      const c = contractor as any;
+      const businessDone = !!(c?.business_name && c?.specialty && (c?.service_areas?.length || c?.city));
+      setStep(businessDone ? 3 : 2);
+    } else {
+      setStep(2);
+    }
+  }, [authLoading, profileLoading, contractorLoading, contractorActive, profile, contractor, existingRole, navigate, user?.email]);
 
   const handleRoleSelect = useCallback(async (r: string) => {
     console.info("[onboarding] role selected", { role: r, hasUser: !!user?.id });
