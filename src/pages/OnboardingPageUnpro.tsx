@@ -3,10 +3,14 @@
  * Handles role selection, identity, property, intent, DNA for homeowner & contractor flows.
  * Auto-saves progress, resumes from last step.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useContractorProfile } from "@/hooks/useContractor";
+import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
+import { getKnownContractorContext } from "@/lib/contractorKnownContext";
+import type { ContractorBusinessData } from "@/components/onboarding/FormContractorBusinessCore";
 import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { toast } from "sonner";
@@ -39,24 +43,43 @@ export default function OnboardingPageUnpro() {
   const isContractor = role === "contractor";
   const steps = isContractor ? CONTRACTOR_STEPS : HOMEOWNER_STEPS;
 
-  // Resume from last step
+  // Existing contractor record (owner-only read via RLS).
+  const { data: contractor, isLoading: contractorLoading } = useContractorProfile();
+  const contractorActive = isContractorAgreementActive(contractor as { activation_status?: string | null } | null);
+  const known = getKnownContractorContext();
+  const [teamSize, setTeamSize] = useState("");
+  const resumed = useRef(false);
+
+  // Paid & active contractor → straight to /pro, never replay onboarding/payment.
   useEffect(() => {
-    if (!authLoading && !profileLoading && profile) {
-      if (profile.onboarding_completed) {
-        navigate(getDefaultRedirectForRole(existingRole ?? "homeowner"), { replace: true });
-        return;
-      }
-      // If role exists, skip step 0
-      if (existingRole) {
-        setSelectedRole(existingRole);
-        if (profile.first_name && profile.last_name) {
-          setStep(2); // Identity done
-        } else {
-          setStep(1);
-        }
-      }
+    if (!user?.id || contractorLoading || !contractorActive) return;
+    if (profile && !profile.onboarding_completed) {
+      supabase.from("profiles").update({ onboarding_completed: true } as any).eq("user_id", user.id).then(() => {});
     }
-  }, [authLoading, profileLoading, profile, existingRole, navigate]);
+    navigate("/pro", { replace: true });
+  }, [user?.id, contractorLoading, contractorActive, profile, navigate]);
+
+  // Resume at the first step that still has missing data (once, never fights user edits).
+  useEffect(() => {
+    if (resumed.current || authLoading || profileLoading || contractorLoading || !profile) return;
+    if (contractorActive) return;
+    resumed.current = true;
+    if (profile.onboarding_completed) {
+      navigate(getDefaultRedirectForRole(existingRole ?? "homeowner"), { replace: true });
+      return;
+    }
+    if (!existingRole) return;
+    setSelectedRole(existingRole);
+    const identityDone = !!(profile.first_name && profile.last_name && (profile.email || user?.email));
+    if (!identityDone) return setStep(1);
+    if (existingRole === "contractor") {
+      const c = contractor as any;
+      const businessDone = !!(c?.business_name && c?.specialty && (c?.service_areas?.length || c?.city));
+      setStep(businessDone ? 3 : 2);
+    } else {
+      setStep(2);
+    }
+  }, [authLoading, profileLoading, contractorLoading, contractorActive, profile, contractor, existingRole, navigate, user?.email]);
 
   const handleRoleSelect = useCallback(async (r: string) => {
     console.info("[onboarding] role selected", { role: r, hasUser: !!user?.id });
@@ -189,21 +212,26 @@ export default function OnboardingPageUnpro() {
     }
   }, [user?.id, navigate]);
 
-  const handleContractorBusinessSave = useCallback(async (data: Record<string, string>) => {
+  const handleContractorBusinessSave = useCallback(async (data: ContractorBusinessData) => {
     if (!user?.id) return;
     setSaving(true);
     try {
-      await (supabase.from("contractors") as any).upsert({
-        user_id: user.id,
-        business_name: data.company_name,
-        email: data.email,
-        phone: data.phone,
-        website: data.website,
-        specialty: data.main_category,
-        city: data.service_area,
-      }, { onConflict: "user_id" });
+      // Only commercial fields; RBQ/verification columns are never written here.
+      const row: Record<string, unknown> = { user_id: user.id, business_name: data.company_name };
+      if (data.email) row.email = data.email;
+      if (data.phone) row.phone = data.phone;
+      if (data.website) row.website = data.website;
+      if (data.main_category) row.specialty = data.main_category;
+      if (data.service_areas.length) {
+        row.service_areas = data.service_areas;
+        row.city = data.service_areas[0];
+      }
+      const { error } = await (supabase.from("contractors") as any).upsert(row, { onConflict: "user_id" });
+      if (error) throw error;
+      setTeamSize(data.team_size);
       setStep(3);
     } catch (err) {
+      console.error("[onboarding] contractor save error", err);
       toast.error("Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
@@ -221,13 +249,14 @@ export default function OnboardingPageUnpro() {
         .maybeSingle();
 
       if (contractor) {
+        const traits = teamSize ? { ...data, team_size: teamSize } : data;
         await (supabase.from("contractor_dna_profiles") as any).upsert({
           contractor_id: contractor.id,
           dna_type: "onboarding",
           dna_label_fr: "Profil ADN initial",
           dna_label_en: "Initial DNA profile",
-          scores: data,
-          traits: data,
+          scores: traits,
+          traits,
           generated_by: "onboarding",
         }, { onConflict: "contractor_id" });
       }
@@ -242,9 +271,9 @@ export default function OnboardingPageUnpro() {
     } finally {
       setSaving(false);
     }
-  }, [user?.id, navigate]);
+  }, [user?.id, navigate, teamSize]);
 
-  if (authLoading || profileLoading) {
+  if (authLoading || profileLoading || contractorLoading || contractorActive) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -319,7 +348,21 @@ export default function OnboardingPageUnpro() {
 
             {/* Contractor Flow */}
             {isContractor && step === 2 && (
-              <FormContractorBusinessCore onSave={handleContractorBusinessSave} loading={saving} />
+              <FormContractorBusinessCore
+                initialData={{
+                  company_name: (contractor as any)?.business_name || known.businessName || "",
+                  email: (contractor as any)?.email || profile?.email || user?.email || "",
+                  phone: (contractor as any)?.phone || profile?.phone || "",
+                  website: (contractor as any)?.website || known.website || "",
+                  main_category: (contractor as any)?.specialty || known.trade || "",
+                  service_areas: (contractor as any)?.service_areas?.length
+                    ? (contractor as any).service_areas
+                    : known.serviceAreas.length ? known.serviceAreas
+                    : [(contractor as any)?.city || known.city].filter(Boolean) as string[],
+                }}
+                onSave={handleContractorBusinessSave}
+                loading={saving}
+              />
             )}
             {isContractor && step === 3 && (
               <FormContractorDNA onSave={handleContractorDNASave} loading={saving} />
