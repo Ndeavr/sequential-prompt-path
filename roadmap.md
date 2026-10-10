@@ -14,3 +14,6 @@
 - [ ] P0 Réconcilier contractor_prospects ↔ verified_contractor_prospects (dédup téléphone/courriel/domaine/nom) — avant tout nouveau lot
 - [ ] Lot SMS V1 nouveaux prospects — bloqué : 0 mobile confirmé + 0 preuve CASL SMS (décision Yan : source avec type de ligne ou Lookup plafonné)
 - [ ] Courriel Maple Wood Painting — attend « Envoie Maple Wood » entre 9 h et 17 h
+
+- [ ] Offre 350 $ reprise — plan rédigé (.lovable/plan.md), attend approbation
+- [ ] Compteur d'impact accueil (heures/$ épargnés, données serveur réelles) + page /impact avec manifeste
