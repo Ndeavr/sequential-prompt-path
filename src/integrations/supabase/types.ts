@@ -56489,6 +56489,42 @@ export type Database = {
         }
         Relationships: []
       }
+      impact_formula_versions: {
+        Row: {
+          active: boolean
+          assumptions: string
+          avoided_spend_source: string | null
+          contractor_hours_per_match: number
+          created_at: string
+          eligible_statuses: string[]
+          homeowner_hours_per_match: number
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          assumptions: string
+          avoided_spend_source?: string | null
+          contractor_hours_per_match: number
+          created_at?: string
+          eligible_statuses: string[]
+          homeowner_hours_per_match: number
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          assumptions?: string
+          avoided_spend_source?: string | null
+          contractor_hours_per_match?: number
+          created_at?: string
+          eligible_statuses?: string[]
+          homeowner_hours_per_match?: number
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       improvement_tasks: {
         Row: {
           assigned_to: string | null
@@ -100593,6 +100629,7 @@ export type Database = {
         Args: { _contractor_id: string }
         Returns: Json
       }
+      get_public_impact_snapshot: { Args: never; Returns: Json }
       get_recruitment_offer_by_token: {
         Args: { _token: string }
         Returns: Json
