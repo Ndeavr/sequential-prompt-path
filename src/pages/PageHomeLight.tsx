@@ -7,6 +7,7 @@ import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
+import HomeImpactCounter from "@/components/impact-counter/HomeImpactCounter";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 
@@ -58,6 +59,7 @@ export default function PageHomeLight() {
 
         <div className="home-light">
           <HeroHomeownerLight />
+          <HomeImpactCounter />
           <div className="home-afterglow" aria-hidden="true" />
         </div>
       </MainLayout>
