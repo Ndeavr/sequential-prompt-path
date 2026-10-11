@@ -18,20 +18,52 @@ const json = (payload: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+// Quota glissant par appelant (10 min), par instance : bornage anti-abus.
+const hits = new Map<string, number[]>();
+function allow(key: string, max: number): boolean {
+  const now = Date.now();
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < 600_000);
+  if (recent.length >= max) { hits.set(key, recent); return false; }
+  recent.push(now); hits.set(key, recent);
+  if (hits.size > 5000) hits.clear();
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Accès : compte connecté OU session invitée Clara vérifiée en base.
+  // Jamais d'inscription forcée; quota borné par appelant (anti-abus).
   const auth = req.headers.get("Authorization") ?? "";
   const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!url || !anonKey || !auth.startsWith("Bearer ") || auth === `Bearer ${anonKey}`) {
-    return json({ error: "AUTH_REQUIRED", message: "Connectez-vous pour vérifier une adresse." }, 401);
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !anonKey || !serviceKey) return json({ error: "SERVICE_FAILED" }, 500);
+  const body = await req.json().catch(() => ({}));
+  let callerKey: string | null = null;
+  const bearer = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (bearer && bearer !== anonKey && bearer.split(".").length === 3) {
+    const { data } = await createClient(url, anonKey).auth.getUser(bearer);
+    if (data?.user) callerKey = `u:${data.user.id}`;
   }
-  const client = createClient(url, anonKey, { global: { headers: { Authorization: auth } } });
-  const { data: caller, error: authError } = await client.auth.getUser(auth.slice(7));
-  if (authError || !caller.user) return json({ error: "AUTH_REQUIRED" }, 401);
+  if (!callerKey) {
+    const guest = typeof body.session_token === "string" ? body.session_token.trim() : "";
+    if (guest.length >= 16 && guest.length <= 100) {
+      const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+      const since = new Date(Date.now() - 30 * 864e5).toISOString();
+      const { data } = await admin.from("alex_sessions").select("id")
+        .eq("session_token", guest).gte("updated_at", since).limit(1).maybeSingle();
+      if (data?.id) callerKey = `g:${data.id}`;
+    }
+  }
+  if (!callerKey) {
+    return json({ error: "SESSION_REQUIRED", message: "Session invitée introuvable. Réessayez dans un instant." }, 401);
+  }
+  if (!allow(callerKey, callerKey.startsWith("u:") ? 300 : 80)) {
+    return json({ predictions: [], error: "RATE_LIMITED", message: "Trop de recherches. Votre saisie est conservée; réessayez dans quelques minutes." }, 429);
+  }
 
   const creds = getGoogleMapsCredentials();
   if (!googleConnectorAvailable(creds) && !creds.serverKey && !creds.legacyKey) {
@@ -44,7 +76,6 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
     const sessionToken = typeof body.sessionToken === "string" && /^[a-f0-9-]{36}$/i.test(body.sessionToken) ? body.sessionToken : undefined;
     if (body.place_id && (typeof body.place_id !== "string" || !/^[A-Za-z0-9_-]{1,255}$/.test(body.place_id))) return json({ error: "INVALID_PLACE_ID" }, 400);
 
