@@ -1,4 +1,4 @@
-.impact-dials { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+.impact-dials { scroll-margin-top: 88px; padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
 .impact-instrument { min-width: 0; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--card)); padding: 1rem; }
 .impact-instrument-face { position: relative; height: 112px; width: 100%; max-width: 220px; margin: 0.5rem auto 0; }
 .impact-instrument-face svg { position: absolute; inset: 0; height: 100%; width: 100%; overflow: visible; }
