@@ -71,6 +71,9 @@ import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 
+const CHOOSE_ADDRESS = "Choisir mon adresse";
+const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
+
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -292,6 +295,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const voiceCooldownUntil = useRef(0);
   // Dossier maison : s'ouvre PAR-DESSUS la conversation, jamais en navigation.
   const [dossierOpen, setDossierOpen] = useState(false);
+  const [dossierEditAddress, setDossierEditAddress] = useState(false);
+  // Vrai seulement après une adresse réellement enregistrée par le serveur.
+  const dossierAddressSavedRef = useRef(false);
+  const dossierPendingRef = useRef(false);
   /** Le dossier ne s'ouvre de lui-même qu'une fois : ensuite, le bouton suffit. */
   const dossierAutoOpened = useRef(false);
   // Conversations passées : liste réelle, jamais reconstruite localement.
@@ -1077,6 +1084,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           dossierAutoOpened.current = true;
           setDossierOpen(true);
         }
+        // Clara a promis d'agir sur le dossier : les confirmations génériques
+        // (« C'est fait », « Un instant ») sont remplacées par l'action réelle.
+        if (audienceRef.current === "homeowner" && mentionsDossier(shownText) && !dossierAddressSavedRef.current) {
+          dossierPendingRef.current = true;
+          setQuickReplies({ messageId: assistantId, options: [CHOOSE_ADDRESS, "Continuer sans adresse"] });
+        }
 
 
         // Navigation assistée : Clara ouvre elle-même l'écran réel, dans le même
@@ -1113,6 +1126,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       if (busy) return;
       setQuickReplies(null);
       trackCopilotEvent("clara_quick_reply_selected", { surface: "home_clara_box", kind: /photo/i.test(option) ? "photo" : "text" });
+      if (option === CHOOSE_ADDRESS || (dossierPendingRef.current && FAKE_DONE.test(option))) {
+        setDossierEditAddress(true);
+        setDossierOpen(true);
+        return;
+      }
+      if (option === "Continuer sans adresse") dossierPendingRef.current = false;
       if (/ajouter une photo/i.test(option)) {
         cameraRef.current?.click();
         return;
@@ -1530,7 +1549,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             </button>
           </div>
         )}
-        <DossierMaisonSheet open={dossierOpen} onOpenChange={setDossierOpen} />
+        <DossierMaisonSheet
+          open={dossierOpen}
+          onOpenChange={(next) => { setDossierOpen(next); if (!next) setDossierEditAddress(false); }}
+          editAddress={dossierEditAddress}
+          onAddressSaved={(entry) => {
+            dossierAddressSavedRef.current = true;
+            dossierPendingRef.current = false;
+            setDossierOpen(false);
+            setDossierEditAddress(false);
+            trackCopilotEvent("clara_property_address_saved", { surface: "home_clara_box", provenance: entry.provenance });
+            // L'adresse confirmée par le serveur fait avancer la conversation.
+            void send(`L'adresse de ma propriété est ${entry.label}${entry.provenance === "pending" ? " (à confirmer)" : ""}.`);
+          }}
+        />
         {confirmReset && (
           <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
             <p>{copy.resetConfirm}</p>
