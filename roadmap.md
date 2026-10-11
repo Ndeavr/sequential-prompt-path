@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] Focused homepage impact dials: explicit per-journey scenario, once-per-visit animation, methodology; 8 tests and desktop/mobile simulated browser checks passed. Report: `docs/audits/impact-dials-2026-10-11.md`. Not published.
 
 - [x] Focused public date freshness audit (2026-10-11): original dates preserved, shared display/schema corrected, one sourced IA guide updated; tests and representative public browser checks recorded in `docs/audits/date-freshness-2026-10-11.md`. Not published.
 - [ ] Deferred after two real $350 activations: full price/grant/legal article review with current sources, SEO publication provenance and crawler date consistency; do not bulk refresh dates.
@@ -29,4 +30,4 @@
 - [ ] Tableau de pilotage « premiers 350 $ » (événements réels)
 - [ ] Prospection Laval/Terrebonne/Rive-Nord — reste OFF jusqu'à preuve CASL + feu vert de Yan
 - [ ] Backlog préservé : affiliés 20 %/5 %, capacité ville/métier, RBQ/CMMTQ/CMEQ, calendrier, Clara voix/mémoire, soumissions, Plus/Gold, SEO/AEO, partenariats, knowledge graph
-- [ ] Compteur d'impact accueil (heures/$ épargnés, données serveur réelles) + page /impact avec manifeste
+- [x] Compteur d’impact accueil + /impact : scénario type transparent avec hypothèses serveur existantes, sans total mondial ni gains UNPRO attribués; cadrans animés, dollars en consolidation.

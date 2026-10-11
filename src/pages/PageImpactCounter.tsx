@@ -1,11 +1,11 @@
 /**
- * /impact — Impact UNPRO : chiffres serveur (get_public_impact_snapshot),
- * méthode de calcul et manifeste. Aucun chiffre simulé.
+ * /impact — Explicit illustrative journey assumptions, not industry totals.
  */
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
-import { useImpactSnapshot, fmtHours, fmtDateQc } from "@/hooks/useImpactSnapshot";
+import { useImpactSnapshot, fmtHours } from "@/hooks/useImpactSnapshot";
+import { impactScenario } from "@/lib/impactScenario";
 
 const SECTIONS = [
   { id: "approche", label: "Notre approche" },
@@ -25,13 +25,14 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 export default function PageImpactCounter() {
-  const { data, error, loading } = useImpactSnapshot();
+  const { data } = useImpactSnapshot();
+  const scenario = impactScenario(data);
 
   return (
     <MainLayout>
       <Helmet>
         <title>Impact UNPRO — Moins de démarches, plus de bons matchs</title>
-        <meta name="description" content="Heures épargnées par les propriétaires et entrepreneurs grâce à UNPRO : chiffres réels, méthode de calcul transparente et manifeste." />
+        <meta name="description" content="Impact potentiel de l’IA : scénario résidentiel illustratif, hypothèses explicites et limites. Aucun total sectoriel ni résultat UNPRO revendiqué." />
         <link rel="canonical" href="https://unpro.ca/impact" />
         <meta property="og:title" content="Impact UNPRO" />
         <meta property="og:type" content="article" />
@@ -43,16 +44,15 @@ export default function PageImpactCounter() {
           Le bon match. Moins de temps perdu.
         </h1>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-3" aria-live="polite">
-          <Stat label="Heures épargnées (estimation)" value={data ? fmtHours(data.hours_saved) : loading ? "…" : "Indisponible"} />
-          <Stat label="Propriétaires / entrepreneurs" value={data ? `${fmtHours(data.homeowner_hours)} / ${fmtHours(data.contractor_hours)}` : "…"} />
-          <Stat label="$ épargnés" value={data?.dollars_status === "measured" && data.dollars_saved != null ? `${data.dollars_saved.toLocaleString("fr-CA")} $` : "Mesure en cours"} />
+        <p className="mt-6 text-base text-muted-foreground">Impact potentiel estimé de l'IA depuis le 1er janvier 2026</p>
+        <p className="mt-2 text-base text-muted-foreground">Estimations fondées sur des hypothèses explicites, non sur les résultats UNPRO.</p>
+        <h2 className="mt-8 text-xl font-semibold text-foreground">Scénario type : un projet, un jumelage exclusif.</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Stat label="Temps potentiel par parcours" value={scenario ? fmtHours(scenario.total) : "À consolider"} />
+          <Stat label="Propriétaire / entrepreneur" value={scenario ? `${fmtHours(scenario.homeowner)} / ${fmtHours(scenario.contractor)}` : "À consolider"} />
+          <Stat label="Économies en dollars" value="À consolider" />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {data
-            ? `Depuis le ${fmtDateQc(data.period_start)} · ${data.eligible_matches} rendez-vous confirmés · calculé le ${fmtDateQc(data.computed_at)} · formule ${data.formula_version} · actualisé chaque minute${error ? " · dernière valeur connue" : ""}`
-            : error ? "Données momentanément indisponibles." : "Chargement…"}
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">Illustration par parcours, pas un total sectoriel cumulé ni un gain garanti.</p>
 
         <nav aria-label="Sections" className="mt-8 flex flex-wrap gap-2">
           {SECTIONS.map((s) => (
@@ -81,14 +81,15 @@ export default function PageImpactCounter() {
 
         <Section id="calcul" title="Comment nous calculons">
           <ul className="list-disc space-y-2 pl-5">
-            <li><strong>Ce qui est compté :</strong> les rendez-vous exclusifs réellement confirmés dans UNPRO (confirmés, planifiés, acceptés, complétés). Chaque rendez-vous ne compte qu'une fois. Les tests sont exclus. Un rendez-vous annulé ou corrigé sort automatiquement du total.</li>
-            <li><strong>Formule {data?.formula_version ?? ""} :</strong> heures = rendez-vous admissibles × ({data?.homeowner_hours_per_match ?? "…"} h propriétaire + {data?.contractor_hours_per_match ?? "…"} h entrepreneur).</li>
-            <li><strong>Hypothèse :</strong> {data?.assumptions ?? "…"}</li>
-            <li><strong>Mesuré ou estimé :</strong> le nombre de rendez-vous est mesuré. Les heures sont une estimation fondée sur ces rendez-vous et sur l'hypothèse ci-dessus.</li>
-            <li><strong>Dollars :</strong> aucun taux horaire n'est appliqué au temps. Nous n'additionnons pas la valeur du temps et les dépenses évitées. Tant qu'aucune dépense évitée n'est vérifiée, nous affichons « Mesure en cours » plutôt qu'un chiffre.</li>
-            <li><strong>Période et couverture :</strong> depuis le premier rendez-vous admissible, pour tout le Québec. Le total est le même pour tous les visiteurs et est recalculé par le serveur.</li>
+            <li><strong>Base de calcul :</strong> un parcours résidentiel hypothétique où un jumelage exclusif évite des démarches supplémentaires. Les volumes de rendez-vous UNPRO ne sont pas utilisés dans ces cadrans.</li>
+            <li><strong>Formule par parcours :</strong> {scenario ? `${fmtHours(scenario.homeowner)} pour le propriétaire + ${fmtHours(scenario.contractor)} pour l'entrepreneur = ${fmtHours(scenario.total)} au total.` : "Hypothèses en consolidation; aucun chiffre affiché sans base explicite."}</li>
+            <li><strong>Hypothèse existante :</strong> {scenario?.assumptions ?? "Données en consolidation."}</li>
+            <li><strong>Source et limites :</strong> hypothèses de méthode UNPRO, pas une étude de temps observés ni une mesure externe validée. Les économies réelles varient selon le projet et peuvent être nulles. Ce scénario ne représente ni une moyenne sectorielle, ni des résultats obtenus par UNPRO.</li>
+            <li><strong>Dollars :</strong> aucun taux horaire ni coût publicitaire hypothétique n'est appliqué. Sans base monétaire vérifiée pour ce parcours, aucun montant n'est annoncé.</li>
+            <li><strong>Période et couverture :</strong> la période annoncée est un repère pour l'impact sectoriel envisagé; aucun total depuis cette date n'est validé. Le scénario n'est pas multiplié par le temps écoulé, une population ou un nombre de rendez-vous.</li>
+            <li><strong>Actualisation :</strong> seules les hypothèses courantes de la méthode existante sont reprises. Les valeurs restent identiques tant que ces hypothèses ne changent pas; l'animation d'entrée n'ajoute aucun gain.</li>
           </ul>
-          <p className="text-sm text-muted-foreground">Les exemples de cette page servent seulement d'illustration. Ils ne sont pas inclus dans le compteur.</p>
+          <p className="text-sm text-muted-foreground">Aucun total mondial ou québécois de l'impact de l'IA n'est revendiqué.</p>
         </Section>
 
         <Section id="manifeste" title="Notre manifeste">
@@ -106,7 +107,7 @@ export default function PageImpactCounter() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-1 truncate text-xl font-semibold tabular-nums text-foreground">{value}</p>
     </div>
   );
