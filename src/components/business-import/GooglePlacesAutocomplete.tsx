@@ -1,3 +1,4 @@
+import { getAddressAccessToken } from "@/services/addressAccessToken";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
@@ -48,7 +49,7 @@ export default function GooglePlacesAutocomplete({ onSelect, placeholder = "Rech
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
-        body: { input, types: "establishment", region: "ca", language: "fr" },
+        body: { input, types: "establishment", region: "ca", language: "fr", session_token: await getAddressAccessToken() },
       });
       if (!error && data?.predictions) {
         setPredictions(data.predictions);
@@ -74,35 +75,16 @@ export default function GooglePlacesAutocomplete({ onSelect, placeholder = "Rech
     setDetailLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
-        body: { place_id: p.place_id },
+        body: { place_id: p.place_id, session_token: await getAddressAccessToken() },
       });
       if (!error && data?.result) {
         onSelect(data.result);
       } else {
-        onSelect({
-          place_id: p.place_id,
-          name: p.structured_formatting.main_text,
-          address: p.structured_formatting.secondary_text || "",
-          city: "",
-          phone: "",
-          website: "",
-          rating: 0,
-          review_count: 0,
-          types: [],
-        });
+        // Détails non résolus : rien n'est considéré vérifié; la saisie reste.
+        setQuery(p.description || p.structured_formatting.main_text);
       }
     } catch {
-      onSelect({
-        place_id: p.place_id,
-        name: p.structured_formatting.main_text,
-        address: p.structured_formatting.secondary_text || "",
-        city: "",
-        phone: "",
-        website: "",
-        rating: 0,
-        review_count: 0,
-        types: [],
-      });
+      setQuery(p.description || p.structured_formatting.main_text);
     } finally {
       setDetailLoading(false);
     }
