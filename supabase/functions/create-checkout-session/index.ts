@@ -413,7 +413,7 @@ Deno.serve(async (req) => {
 
       await serviceClient.from("contractor_funnel_events").insert({
         contractor_id: fbContractor.id,
-        event_type: "fallback_350_checkout_created",
+        event_type: isEntryActivation ? "entry_350_checkout_created" : "fallback_350_checkout_created",
         metadata: {
           checkout_session_id: fbSession.id,
           amount_cents: amountCents,
