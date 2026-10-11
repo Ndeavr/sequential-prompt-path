@@ -334,6 +334,82 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── ACTIVATION D'ENTRÉE 350 $ ────────────────────────────────────
+        // Paiement unique confirmé par Stripe → rôle entrepreneur, profil
+        // activé, devis payé, 12 mois de Présence IA consignés. Idempotent par
+        // stripe_session_id dans le registre d'activation.
+        if (session.metadata?.offer === "entry_activation_350") {
+          const entryContractorId = session.metadata?.contractor_id ?? null;
+          const paid = session.payment_status === "paid";
+          if (entryContractorId && paid) {
+            const { data: already } = await supabase
+              .from("contractor_activation_ledger")
+              .select("id")
+              .eq("action", "entry_activation_350_paid")
+              .eq("metadata->>stripe_session_id", session.id)
+              .maybeSingle();
+            if (!already) {
+              const nowIso = new Date().toISOString();
+              const presenceUntil = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
+              const guaranteed = Number(session.metadata?.guaranteed_appointments ?? 0) || 0;
+              const { data: ownerRow } = await supabase
+                .from("contractors").select("user_id, activation_status").eq("id", entryContractorId).maybeSingle();
+              if (ownerRow?.user_id) {
+                await supabase.from("user_roles")
+                  .upsert({ user_id: ownerRow.user_id, role: "contractor" }, { onConflict: "user_id,role" });
+              }
+              const { error: ledgerErr } = await supabase.from("contractor_activation_ledger").insert({
+                contractor_id: entryContractorId,
+                action: "entry_activation_350_paid",
+                source: "stripe_webhook",
+                before_state: { activation_status: ownerRow?.activation_status ?? null },
+                after_state: { activation_status: "activated", presence_ia_until: presenceUntil, guaranteed_appointments: guaranteed },
+                metadata: {
+                  stripe_session_id: session.id,
+                  stripe_event_id: event.id,
+                  stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
+                  amount_cents: session.amount_total ?? 35000,
+                  livemode: event.livemode ?? null,
+                  quote_id: session.metadata?.quote_id ?? null,
+                  prospect_id: session.metadata?.prospect_id ?? null,
+                  ref: session.metadata?.ref ?? null,
+                  campaign: session.metadata?.campaign ?? null,
+                },
+              });
+              if (ledgerErr) {
+                console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
+                throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
+              }
+              await supabase.from("contractors")
+                .update({ account_status: "active", activation_status: "activated" })
+                .eq("id", entryContractorId)
+                .neq("activation_status", "activated");
+              if (session.metadata?.quote_id) {
+                await supabase.from("contractor_pricing_quotes")
+                  .update({ pricing_status: "paid", stripe_checkout_session_id: session.id, updated_at: nowIso })
+                  .eq("id", String(session.metadata.quote_id))
+                  .neq("pricing_status", "paid");
+                await supabase.from("contractor_leads")
+                  .update({ lead_status: "entry_350_paid", payment_status: "paid", paid_at: nowIso, next_follow_up_at: null })
+                  .eq("metadata_json->>quote_id", String(session.metadata.quote_id));
+              }
+              await supabase.from("contractor_funnel_events").insert({
+                contractor_id: entryContractorId,
+                event_type: "entry_350_payment_success",
+                metadata: { stripe_session_id: session.id, amount_cents: session.amount_total ?? 35000, livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null, ref: session.metadata?.ref ?? null },
+              });
+              await supabase.from("admin_notifications").insert({
+                type: "entry_activation_350_paid",
+                severity: "info",
+                contractor_id: entryContractorId,
+                title: event.livemode ? "Activation 350 $ payée (réel)" : "Activation 350 $ payée (TEST)",
+                body: "Un entrepreneur a activé son profil (350 $, 12 mois de Présence IA).",
+                payload_json: { stripe_session_id: session.id, ref: session.metadata?.ref ?? null, quote_id: session.metadata?.quote_id ?? null, guaranteed_appointments: guaranteed },
+              });
+            }
+          }
+        }
+
         // ── OFFRE DE REPLI — CRÉDIT UNPRO 350 $ ──────────────────────────
         // Seule source d'octroi du crédit. Idempotent : un index unique sur
         // metadata->>'stripe_session_id' empêche tout double crédit.
