@@ -429,6 +429,16 @@
     grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.8fr);
     align-items: stretch;
   }
+  .address-predictions {
+    z-index: 99999;
+    width: var(--radix-popover-trigger-width, var(--radix-popover-anchor-width));
+    min-width: min(300px, calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
+    max-height: min(300px, var(--radix-popover-content-available-height), calc(var(--app-visible-height, 100dvh) - 24px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: none;
+  }
   .home-light .home-clara-glass {
     position: relative;
     width: 100%;
