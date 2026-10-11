@@ -103,9 +103,25 @@ type Msg = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  status?: "pending" | "streaming" | "complete" | "failed";
   attachments?: MsgAttachment[];
   action?: MsgAction;
 };
+
+function reconcileMessages(current: Msg[], incoming: Msg[]): Msg[] {
+  if (current.length === 0) return incoming.map((message) => ({ ...message, status: "complete" }));
+  const pending = new Map(incoming.map((message) => [message.id, message]));
+  const merged = current.map((message) => {
+    const persisted = pending.get(message.id);
+    if (!persisted) return message;
+    pending.delete(message.id);
+    return { ...message, ...persisted, status: "complete" as const };
+  });
+  for (const message of incoming) {
+    if (pending.has(message.id)) merged.push({ ...message, status: "complete" });
+  }
+  return merged;
+}
 
 const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
 const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|construction|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
@@ -317,6 +333,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
+  const activeTypingIdRef = useRef<string | null>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
   // Dernière intention avec écran réel : sert au bouton visible d'ouverture.
@@ -398,7 +415,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       window.requestAnimationFrame(() => {
         const scroller = getScroller();
         if (!scroller) return;
-        scroller.scrollTo({ top: scroller.scrollHeight, behavior });
+        scroller.scrollTo({ top: scroller.scrollHeight - scroller.clientHeight, behavior });
       });
     },
     [getScroller],
@@ -496,7 +513,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       }
       try {
         const state = await resumeClaraConversation(entry.session_token);
-        setMessages(state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })));
+        setMessages((current) => reconcileMessages(current, state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }))));
         setQuickReplies(null);
         setError(null);
         setMode("IDLE");
@@ -538,7 +555,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
 
         const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
-        setMessages(restored);
+        setMessages((current) => reconcileMessages(current, restored));
         workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
         const restoredMode = typeof state.context.current_intent === "string"
@@ -596,6 +613,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   useEffect(() => keepComposerVisible(), [messages, busy, composerText, keepComposerVisible]);
 
   useEffect(() => {
+    if (!quickReplies || busy) return;
+    // Les choix apparaissent après la réponse : si le lecteur suivait déjà le
+    // bas, leur dernière ligne doit rester atteignable au-dessus du composeur.
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => scrollToLatest("auto"));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, [busy, quickReplies, scrollToLatest]);
+
+  useEffect(() => {
     trackCopilotEvent("clara_chat_opened", { surface: "home_clara_box" });
   }, []);
 
@@ -610,10 +641,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       // (les transcriptions partielles ne doivent jamais créer un doublon).
       const normalized = detail.text.trim().toLowerCase();
       setMessages((previous) => {
-        if (previous.some((m) => m.id === detail.id)) return previous;
+        if (previous.some((m) => m.id === detail.id)) {
+          return previous.map((message) => message.id === detail.id
+            ? { ...message, text: detail.text, status: "complete" }
+            : message);
+        }
         const last = [...previous].reverse().find((m) => m.role === detail.role);
         if (last && last.text.trim().toLowerCase() === normalized) return previous;
-        return [...previous, { id: detail.id, role: detail.role, text: detail.text }];
+        return [...previous, { id: detail.id, role: detail.role, text: detail.text, status: "complete" }];
       });
       if (detail.role === "user") {
         setQuickReplies(null);
@@ -638,7 +673,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       void (async () => {
         try {
           const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
-          setMessages(state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })));
+          setMessages((current) => reconcileMessages(current, state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }))));
         } catch {
           // Les messages déjà visibles restent affichés.
         }
@@ -762,17 +797,25 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       if (!mountedRef.current) return;
       setClaraBreathing(false);
     }
-    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "" }]);
+    activeTypingIdRef.current = messageId;
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "", status: "streaming" }]);
     // Affichage progressif seulement : le texte enregistré reste exact.
     setClaraTyping(true);
     await playTyping(text, (value) => {
-      setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value } : m)));
-    }, { reducedMotion, isAlive: () => mountedRef.current });
+      setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value, status: "streaming" } : m)));
+    }, { reducedMotion, isAlive: () => mountedRef.current && activeTypingIdRef.current === messageId });
 
     if (!mountedRef.current) return;
+    if (activeTypingIdRef.current !== messageId) {
+      setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, status: "complete" } : m)));
+      setClaraTyping(false);
+      return;
+    }
     setQuickReplies(quick && quick.length >= 2 ? { messageId, options: quick } : null);
     // L’enregistrement se fait en arrière-plan : aucun « Analyse en cours… » après une question.
     setClaraTyping(false);
+    activeTypingIdRef.current = null;
+    setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text, status: "complete" } : m)));
     void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
   }, []);
 
@@ -995,7 +1038,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
         setMessages((prev) => [
           ...prev,
-          { id: assistantId, role: "assistant", text: "" },
+          { id: assistantId, role: "assistant", text: "", status: "streaming" },
         ]);
 
         const reader = res.body.getReader();
@@ -1022,7 +1065,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 const shown = cleanAlexText(extractQuickReplies(full).text);
                 setMessages((prev) =>
                   prev.map((m) =>
-                    m.id === assistantId ? { ...m, text: shown } : m,
+                    m.id === assistantId ? { ...m, text: shown, status: "streaming" } : m,
                   ),
                 );
               }
@@ -1039,7 +1082,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const shownText =
           guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
+          prev.map((m) => (m.id === assistantId ? { ...m, text: shownText, status: "complete" } : m)),
         );
         setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
         // Curseur maison : dernière question propriétaire, restaurée au retour.
@@ -1088,7 +1131,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           await runOpen(detected, text);
         }
       } catch {
-        setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+        setMessages((prev) => prev.map((m) => m.id === assistantId
+          ? { ...m, text: m.text || copy.fallback, status: "failed" }
+          : m));
         setError(copy.fallback);
       } finally {
         setBusy(false);
@@ -1369,6 +1414,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang]);
 
   const startVoice = async () => {
+    // Un changement de canal fige la révélation en cours au lieu de la rejouer.
+    activeTypingIdRef.current = null;
+    setClaraTyping(false);
     useAlexStore.getState().markUserEngaged();
     try {
       await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
@@ -1395,6 +1443,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const handleComposerChange = useCallback((value: string) => {
     setComposerText(value);
     if (voiceActive) {
+      activeTypingIdRef.current = null;
+      setClaraTyping(false);
       window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
       setVoiceActive(false);
       setMode((current) => current === "LISTENING" ? "IDLE" : current);
@@ -1406,6 +1456,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const handleComposerFocus = useCallback(() => {
     setComposerFocused(true);
     if (voiceActive) {
+      activeTypingIdRef.current = null;
+      setClaraTyping(false);
       window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
       setVoiceActive(false);
       setMode((current) => current === "LISTENING" ? "IDLE" : current);
@@ -1576,7 +1628,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               <Message from={message.role} key={message.id}>
                 <MessageContent
                   data-role={message.role}
-                  data-streaming={busy && message.role === "assistant" && message.id === messages[messages.length - 1]?.id ? "true" : "false"}
+                  data-streaming={message.status === "streaming" ? "true" : "false"}
+                  data-message-status={message.status ?? "complete"}
                   className="home-clara-message home-clara-message leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground"
                 >
                   {message.attachments && message.attachments.length > 0 && (

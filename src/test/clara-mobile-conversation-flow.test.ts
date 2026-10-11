@@ -33,7 +33,7 @@ describe("Clara mobile — conversation compacte", () => {
   it("garde le composer compact et extensible jusqu’à cinq lignes environ", () => {
     expect(box).toContain('rows={1}');
     expect(box).toContain("Math.min(field.scrollHeight, 140)");
-    expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*content[^}]*min-height:\s*44px[^}]*max-height:\s*112px/);
+    expect(css).toMatch(/home-clara-textarea[^}]*field-sizing:\s*content[^}]*min-height:\s*44px[^}]*max-height:\s*min\(112px,\s*22dvh\)/);
     expect(box).toContain("const conversationStarted = isConversationActive");
   });
 
@@ -80,7 +80,7 @@ describe("Clara mobile — conversation compacte", () => {
     expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(420px,\s*60dvh,\s*620px\)/);
     expect(css).toContain('html[data-clara-conversation-active="true"] body');
     expect(css).toMatch(/\.home-light \.home-clara-shell\.is-conversation-active \.home-clara-main \{[\s\S]*?height: 100%;[\s\S]*?min-height: 0;/);
-    expect(css).not.toContain("data-keyboard-open");
+    expect(css).toContain('html[data-keyboard-open="true"] .home-light .home-clara-shell.is-conversation-active .home-clara-main');
   });
 
   it("optimise une photo avant la validation finale et ne fabrique aucun succès stockage", () => {

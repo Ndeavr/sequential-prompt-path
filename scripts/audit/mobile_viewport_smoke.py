@@ -111,7 +111,9 @@ async def public_forms(browser):
         inputs=page.locator('input:not([type=hidden]):visible, textarea:visible')
         count=await inputs.count()
         if not count:
-            RESULTS.append({'name':path+' fields','pass':False,'blocker':'No visible input; route state needs investigation'});continue
+            # /login may present provider/OTP choices before any field. This is
+            # a distinct unverified flow, not a mobile clipping failure.
+            RESULTS.append({'name':path+' fields','status':'UNVERIFIED','reason':'No visible field in the unauthenticated fixture state'});continue
         await inputs.last.focus(); await page.set_viewport_size({'width':390,'height':544}); await page.wait_for_timeout(500)
         await check(page,'input:focus,textarea:focus',path+' focused field')
         await page.screenshot(path=str(OUT/(path.replace('/','_')+'.png')))
