@@ -19,8 +19,10 @@ const MAX_TOKEN_RETRIES = 0; // Strictly event-driven — no silent reconnects.
 const RETRY_BACKOFF_MS = 1500;
 
 interface UseLiveVoiceCallbacks {
+  onTranscriptPartial?: (text: string) => void;
   onTranscript?: (text: string) => void;
   onUserTranscript?: (text: string) => void;
+  onUserTranscriptPartial?: (text: string) => void;
   onFirstAudio?: () => void;
   onError?: (error: unknown) => void;
   onConnect?: () => void;
@@ -276,6 +278,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     onMessage: (message: any) => {
       const msgType = (message as any)?.type as string | undefined;
 
+      // Agent Final
       if (msgType === "agent_response") {
         const text = (message as any)?.agent_response_event?.agent_response as string | undefined;
         if (text) {
@@ -287,6 +290,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         }
       }
 
+      // Agent Partial (Streaming)
+      if (msgType === "agent_chat_response_part") {
+        const text = (message as any)?.text_response_part?.text as string | undefined;
+        if (text) {
+          callbacksRef.current?.onTranscriptPartial?.(text);
+        }
+      }
+
+      // User Final
       if (msgType === "user_transcript") {
         const text = (message as any)?.user_transcription_event?.user_transcript as string | undefined;
         if (text && text.trim().length >= 2) {
@@ -299,6 +311,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           }
           const nextLanguage = languageSessionRef.current.processUtterance(text);
           syncAgentLanguage(nextLanguage);
+        }
+      }
+
+      // User Partial (Streaming)
+      if (msgType === "tentative_user_transcript") {
+        const text = (message as any)?.tentative_user_transcription_event?.user_transcript as string | undefined;
+        if (text) {
+          callbacksRef.current?.onUserTranscriptPartial?.(text);
         }
       }
     },

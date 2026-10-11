@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
@@ -38,14 +38,35 @@ export const ConversationContent = ({
  * Reuse its lock/escape state so keyboard resize never overrides manual reading. */
 export const ConversationViewportFollow = () => {
   const { scrollRef, scrollToBottom, state } = useStickToBottomContext();
+  const followRef = useRef(true);
   useEffect(() => {
     const scroller = scrollRef.current;
     if (!scroller) return;
-    const observer = new ResizeObserver(() => {
-      if (!state.escapedFromLock) void scrollToBottom({ animation: "instant", preserveScrollPosition: true });
-    });
+    const updateFollow = () => {
+      const distance = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      followRef.current = distance <= 140;
+    };
+    const follow = () => {
+      if (followRef.current && !state.escapedFromLock) {
+        void scrollToBottom({ animation: "instant", preserveScrollPosition: true });
+      }
+    };
+    updateFollow();
+    const observer = new ResizeObserver(follow);
     observer.observe(scroller);
-    return () => observer.disconnect();
+    const content = scroller.firstElementChild;
+    if (content instanceof HTMLElement) observer.observe(content);
+    scroller.addEventListener("scroll", updateFollow, { passive: true });
+    window.visualViewport?.addEventListener("resize", follow);
+    window.visualViewport?.addEventListener("scroll", follow);
+    window.addEventListener("orientationchange", follow);
+    return () => {
+      observer.disconnect();
+      scroller.removeEventListener("scroll", updateFollow);
+      window.visualViewport?.removeEventListener("resize", follow);
+      window.visualViewport?.removeEventListener("scroll", follow);
+      window.removeEventListener("orientationchange", follow);
+    };
   }, [scrollRef, scrollToBottom, state]);
   return null;
 };
@@ -94,7 +115,7 @@ export const ConversationScrollButton = ({
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
-    scrollToBottom({ animation: "instant" });
+    scrollToBottom({ animation: "instant", preserveScrollPosition: false });
   }, [scrollToBottom]);
 
   return (

@@ -126,6 +126,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const [bootNonce, setBootNonce] = useState(0);
   const armInactivityRef = useRef<(reason: string) => void>(() => {});
   const pauseVoiceRef = useRef<(reason: string) => void>(() => {});
+  const partialUserIdRef = useRef<string | null>(null);
+  const partialAlexIdRef = useRef<string | null>(null);
   const contractorTransitionRef = useRef(false);
 
   transcriptsRef.current = transcripts;
@@ -267,6 +269,19 @@ export default function OverlayAlexVoiceFullScreen() {
         s.transitionTo("speaking", "first_audio_frame");
       }
     },
+    onTranscriptPartial: (text) => {
+      const s = getStore();
+      if (!s.isOverlayOpen || HALTED.has(s.machineState) || !text.trim()) return;
+      const id = partialAlexIdRef.current ?? `alex-live-${++entryIdRef.current}`;
+      partialAlexIdRef.current = id;
+      lastAlexIdRef.current = id;
+      setTranscripts((previous) => {
+        const exists = previous.some((entry) => entry.id === id);
+        return exists
+          ? previous.map((entry) => entry.id === id ? { ...entry, text } : entry)
+          : [...previous, { role: "alex" as const, text, id }];
+      });
+    },
     onTranscript: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen) return;
@@ -288,13 +303,26 @@ export default function OverlayAlexVoiceFullScreen() {
 
 
       setTranscripts(prev => {
-        const last = prev.length > 0 && prev[prev.length - 1].role === "alex" ? prev[prev.length - 1] : null;
-        if (last && last.id === lastAlexIdRef.current) {
-          return prev.map(e => e.id === last.id ? { ...e, text: e.text + text } : e);
+        const partialId = partialAlexIdRef.current;
+        partialAlexIdRef.current = null;
+        if (partialId && prev.some((entry) => entry.id === partialId)) {
+          return prev.map((entry) => entry.id === partialId ? { ...entry, text } : entry);
         }
         const newId = `alex-${++entryIdRef.current}`;
         lastAlexIdRef.current = newId;
         return [...prev, { role: "alex" as const, text, id: newId }];
+      });
+    },
+    onUserTranscriptPartial: (text) => {
+      const s = getStore();
+      if (!s.isOverlayOpen || HALTED.has(s.machineState) || !text.trim()) return;
+      const id = partialUserIdRef.current ?? `user-live-${++entryIdRef.current}`;
+      partialUserIdRef.current = id;
+      setTranscripts((previous) => {
+        const exists = previous.some((entry) => entry.id === id);
+        return exists
+          ? previous.map((entry) => entry.id === id ? { ...entry, text } : entry)
+          : [...previous, { role: "user" as const, text, id }];
       });
     },
     onUserTranscript: (text) => {
@@ -318,10 +346,14 @@ export default function OverlayAlexVoiceFullScreen() {
         window.dispatchEvent(new CustomEvent(CLARA_CONTRACTOR_VOICE_REQUEST_EVENT, { detail: { note: text } }));
       }
 
-      setTranscripts(prev => [
-        ...prev,
-        { role: "user" as const, text, id: `user-${++entryIdRef.current}` },
-      ]);
+      setTranscripts((previous) => {
+        const partialId = partialUserIdRef.current;
+        partialUserIdRef.current = null;
+        if (partialId && previous.some((entry) => entry.id === partialId)) {
+          return previous.map((entry) => entry.id === partialId ? { ...entry, text } : entry);
+        }
+        return [...previous, { role: "user" as const, text, id: `user-${++entryIdRef.current}` }];
+      });
     },
     onConnect: () => {
       console.log("[VoiceOverlay] ✅ ElevenLabs connected");
