@@ -75,7 +75,7 @@ const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import { Conversation, ConversationContent, ConversationScrollButton, ConversationViewportFollow } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -1561,6 +1561,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         </div>
         <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
         <Conversation className="home-clara-conversation min-h-0" initial="instant" resize="instant">
+          <ConversationViewportFollow />
           {/* Les messages commencent en haut, juste sous la barre d'outils :
               aucune zone vide artificielle avant le premier échange. */}
           <ConversationContent className="flex flex-col justify-start gap-3 px-5 py-3 sm:px-6">
