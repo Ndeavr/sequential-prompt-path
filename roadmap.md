@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Focused homepage impact dials: validate existing assumptions, once-per-visit animation, transparent methodology, targeted tests/browser; no publication.
 
 - [x] Focused public date freshness audit (2026-10-11): original dates preserved, shared display/schema corrected, one sourced IA guide updated; tests and representative public browser checks recorded in `docs/audits/date-freshness-2026-10-11.md`. Not published.
 - [ ] Deferred after two real $350 activations: full price/grant/legal article review with current sources, SEO publication provenance and crawler date consistency; do not bulk refresh dates.
