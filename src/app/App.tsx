@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useKeyboardAwareViewport } from "@/hooks/useKeyboardAwareViewport";
 import { Providers } from "./providers";
 import { AppRouter } from "./router";
 import AppErrorBoundary, { clearChunkReloadFlag } from "@/components/errors/AppErrorBoundary";
@@ -10,6 +11,7 @@ import ContractorHumanCalloutModal from "@/components/contractor-intent/Contract
 import StableBackgroundLayer from "@/components/system/background/StableBackgroundLayer";
 
 const App = () => {
+  useKeyboardAwareViewport();
   useEffect(() => {
     // Successful mount — rearm chunk-reload recovery for the next stale deploy.
     clearChunkReloadFlag();

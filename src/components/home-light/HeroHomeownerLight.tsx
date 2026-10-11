@@ -30,7 +30,7 @@ function useVisibleViewportHeight() {
 
 export default function HeroHomeownerLight() {
   const [isConversationActive, setIsConversationActive] = useState(false);
-  useVisibleViewportHeight();
+  // Hauteur visible publiée globalement par useKeyboardAwareViewport (App).
   const copy = {
     title: "Discutons de votre projet.",
     subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",

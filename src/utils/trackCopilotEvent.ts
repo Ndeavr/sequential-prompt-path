@@ -51,6 +51,7 @@ export type CopilotEventName =
   | "clara_hero_collapsed"
   | "clara_keyboard_viewport_adjusted"
   | "clara_quick_reply_selected"
+  | "clara_property_address_saved"
   | "clara_attachment_selected"
   | "clara_image_compressed"
   | "clara_attachment_uploaded"
