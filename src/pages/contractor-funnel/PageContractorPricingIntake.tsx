@@ -578,9 +578,17 @@ export default function PageContractorPricingIntake() {
     render: (d, set) => {
       const g = d as GoalFields;
       const kind = g.goal_kind ?? "sales";
-      const calc = objectiveToPayload({ ...d, next_month_appointments: g.next_month_appointments || 1 } as Partial<PricingIntakeInput>);
+      const sim = simulateGoal(d);
+      const calc = sim.ok ? sim : null;
+      const confirmed = Boolean(g.avg_sale || g.conversion_pct || typeof g.margin_pct === "number");
       const setG = (p: Partial<GoalFields>) => set(p as Partial<PricingIntakeInput>);
-      const months = (g.horizon ?? "12m") === "year_end" ? monthsToYearEnd() : 12;
+      const money = (n: number) => `${Math.round(n).toLocaleString("fr-CA")} $`;
+      const simMessage: Record<string, string> = {
+        missing_margin: "Indiquez votre marge bénéficiaire estimée pour calculer un objectif de profit.",
+        invalid_margin: "La marge doit être supérieure à 0 % et au plus 100 % pour un objectif de profit.",
+        invalid_sale: "Indiquez une vente moyenne supérieure à 0 $.",
+        invalid_conversion: "Indiquez un taux de conversion entre 1 % et 100 %.",
+      };
       return (
         <div className="space-y-3">
           <NumberInput
@@ -597,7 +605,7 @@ export default function PageContractorPricingIntake() {
             value={kind}
             onChange={(v) => setG({ goal_kind: v as "sales" | "profit" })}
             options={[
-              { v: "sales", l: "Ventes supplémentaires" },
+              { v: "sales", l: "Chiffre d'affaires supplémentaire" },
               { v: "profit", l: "Profit supplémentaire" },
             ]}
           />
@@ -610,27 +618,47 @@ export default function PageContractorPricingIntake() {
               { v: "year_end", l: "D'ici la fin de l'année" },
             ]}
           />
-          {calc && (
+          {g.goal_amount && g.goal_amount > 0 && (
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 space-y-3" data-testid="objective-assumptions">
               <p className="text-[11px] uppercase tracking-wider text-white/50">
-                Hypothèses {calc.assumptionsConfirmed ? "(modifiées par vous)" : "à confirmer — estimations UNPRO, non sourcées"}
+                Hypothèses {confirmed ? "(modifiées par vous)" : "à confirmer — estimations UNPRO, non sourcées"}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <NumberInput label="Vente moyenne ($)" value={g.avg_sale ?? calc.avgSale} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
-                <NumberInput label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(calc.conversion * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={95} />
-                {kind === "profit" && (
-                  <NumberInput label="Marge (%)" value={g.margin_pct ?? Math.round(calc.margin * 100)} onChange={(v) => setG({ margin_pct: v ?? undefined })} min={1} max={95} />
-                )}
+                <NumberInput label="Vente moyenne ($)" value={g.avg_sale ?? avgTicketFor(d.trade_primary)} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
+                <NumberInput label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={100} />
+                <div className="col-span-2">
+                  <NumberInput
+                    label="Marge bénéficiaire estimée (%)"
+                    value={g.margin_pct ?? null}
+                    onChange={(v) => setG({ margin_pct: v ?? undefined })}
+                    min={0}
+                    max={100}
+                    placeholder="Ex. 30"
+                    hint="Marge après les coûts directs des travaux, avant les frais UNPRO, les autres frais non inclus et les impôts."
+                  />
+                </div>
               </div>
-              <p data-testid="objective-calc">
-                {kind === "profit" && <>{calc.contribution.toLocaleString("fr-CA")} $ de contribution par contrat → </>}
-                <strong className="text-white">{calc.contracts} contrats</strong> →{" "}
-                <strong className="text-white">{calc.appointmentsTotal} rendez-vous</strong> sur {months} mois
-                (≈ {calc.cadence}/mois).
-              </p>
+              {calc ? (
+                <div data-testid="objective-calc" className="space-y-1.5">
+                  <p>
+                    {calc.kind === "profit"
+                      ? <>{money(calc.amount)} ÷ ({money(calc.avgSale)} × {Math.round((calc.margin ?? 0) * 100)} %) → </>
+                      : <>{money(calc.amount)} ÷ {money(calc.avgSale)} → </>}
+                    <strong className="text-white">{calc.contracts} contrats</strong> →{" "}
+                    <strong className="text-white">{calc.appointmentsTotal} rendez-vous</strong> sur {calc.months} mois
+                    (≈ {calc.cadence}/mois).
+                  </p>
+                  <p data-testid="objective-revenue">Chiffre d'affaires supplémentaire estimé : <strong className="text-white">{money(calc.estimatedRevenue)}</strong></p>
+                  <p data-testid="objective-profit">
+                    Profit estimé avant frais UNPRO :{" "}
+                    <strong className="text-white">{calc.estimatedProfit === null ? "indiquez votre marge" : money(calc.estimatedProfit)}</strong>
+                  </p>
+                </div>
+              ) : (
+                <p data-testid="objective-calc-missing" className="text-amber-300">{simMessage[(sim as { reason: string }).reason] ?? ""}</p>
+              )}
               <p className="text-[11px] text-white/55">
-                Estimation avant le coût d'UNPRO, qui dépend entièrement de ces hypothèses.
-                {kind === "profit" && " Une contribution estimée n'est pas un bénéfice net garanti."}
+                Projection selon vos hypothèses, jamais une garantie. Le volume réel dépend de la demande et de la capacité validées dans votre territoire. Le coût UNPRO est présenté dans votre proposition.
               </p>
             </div>
           )}
@@ -1049,10 +1077,62 @@ export function isIdentityKnown(args: {
   return Boolean(args.businessConfirmed && (args.data.company_name ?? "").trim());
 }
 
+export type GoalSimulation =
+  | { ok: false; reason: "missing_goal" | "missing_margin" | "invalid_margin" | "invalid_sale" | "invalid_conversion" }
+  | {
+      ok: true;
+      kind: "sales" | "profit";
+      amount: number;
+      avgSale: number;
+      margin: number | null;
+      conversion: number;
+      contribution: number;
+      contracts: number;
+      appointmentsTotal: number;
+      months: number;
+      cadence: number;
+      estimatedRevenue: number;
+      /** Profit avant frais UNPRO; null si la marge est inconnue. */
+      estimatedProfit: number | null;
+    };
+
+/**
+ * Simulation pure et auditable.
+ * ventes : contrats = ⌈objectif / vente moyenne⌉
+ * profit : contrats = ⌈objectif / (vente moyenne × marge/100)⌉ — marge obligatoire.
+ * RDV = ⌈contrats / (conversion/100)⌉ ; par mois = ⌈RDV / mois de l'horizon⌉.
+ */
+export function simulateGoal(d: Partial<PricingIntakeInput>, now = new Date()): GoalSimulation {
+  const g = d as GoalFields;
+  const kind = g.goal_kind ?? "sales";
+  const amount = Number(g.goal_amount ?? 0);
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: "missing_goal" };
+  const avgSale = typeof g.avg_sale === "number" ? g.avg_sale : avgTicketFor(d.trade_primary);
+  if (!Number.isFinite(avgSale) || avgSale <= 0) return { ok: false, reason: "invalid_sale" };
+  const convPct = typeof g.conversion_pct === "number" ? g.conversion_pct : Math.round(closeRateFor(d.trade_primary) * 100);
+  if (!Number.isFinite(convPct) || convPct <= 0 || convPct > 100) return { ok: false, reason: "invalid_conversion" };
+  const conversion = convPct / 100;
+  const hasMargin = typeof g.margin_pct === "number" && Number.isFinite(g.margin_pct);
+  if (hasMargin && (g.margin_pct! < 0 || g.margin_pct! > 100)) return { ok: false, reason: "invalid_margin" };
+  const margin = hasMargin ? g.margin_pct! / 100 : null;
+  if (kind === "profit") {
+    if (margin === null) return { ok: false, reason: "missing_margin" };
+    if (margin <= 0) return { ok: false, reason: "invalid_margin" };
+  }
+  const contribution = kind === "profit" ? avgSale * (margin as number) : avgSale;
+  const contracts = Math.ceil(amount / contribution);
+  const appointmentsTotal = Math.ceil(contracts / conversion);
+  const months = (g.horizon ?? "12m") === "year_end" ? monthsToYearEnd(now) : 12;
+  const cadence = Math.ceil(appointmentsTotal / months);
+  const estimatedRevenue = contracts * avgSale;
+  const estimatedProfit = margin === null ? null : Math.round(estimatedRevenue * margin);
+  return { ok: true, kind, amount, avgSale, margin, conversion, contribution, contracts, appointmentsTotal, months, cadence, estimatedRevenue, estimatedProfit };
+}
+
 export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Date()): {
   payload: Partial<PricingIntakeInput>;
   avgSale: number;
-  margin: number;
+  margin: number | null;
   conversion: number;
   contribution: number;
   contracts: number;
@@ -1064,16 +1144,9 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
 } | null {
   const g = d as GoalFields;
   const kind = g.goal_kind ?? "sales";
-  const amount = g.goal_amount ?? 0;
-  if (!amount || amount <= 0) return null;
-  const avgSale = g.avg_sale && g.avg_sale > 0 ? g.avg_sale : avgTicketFor(d.trade_primary);
-  const margin = Math.min(0.95, Math.max(0.01, (g.margin_pct ?? 30) / 100));
-  const conversion = Math.min(0.95, Math.max(0.01, (g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)) / 100));
-  const contribution = kind === "profit" ? avgSale * margin : avgSale;
-  const contracts = Math.max(1, Math.ceil(amount / contribution));
-  const appointmentsTotal = Math.max(1, Math.ceil(contracts / conversion));
-  const months = (g.horizon ?? "12m") === "year_end" ? monthsToYearEnd(now) : 12;
-  const cadence = Math.max(1, Math.ceil(appointmentsTotal / months));
+  const sim = simulateGoal(d, now);
+  if (!sim.ok) return null;
+  const { avgSale, margin, conversion, contribution, contracts, appointmentsTotal, months, cadence } = sim;
   const next = g.next_month_appointments ?? 0;
   if (!next || next <= 0) return null;
   // Le forfait de départ couvre les RDV demandés pour le mois prochain (jamais réduits).
