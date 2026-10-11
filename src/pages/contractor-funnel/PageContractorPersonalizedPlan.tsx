@@ -32,6 +32,7 @@ import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
   isContractorObjective,
@@ -159,6 +160,12 @@ export default function PageContractorPersonalizedPlan() {
   const gstCents = Math.round(baseCents * 0.05);
   const qstCents = Math.round(baseCents * 0.09975);
   const totalWithTaxCents = baseCents + gstCents + qstCents;
+
+  // Offre d'entrée 350 $ : jamais affichée si une promotion (affilié, gratuité)
+  // est déjà validée côté serveur, si le devis est payé ou en liste d'attente.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const promotionGranted = !!offerState && (offerState.promo_valid || (offerState.offer_exists && ["granted", "accepted", "offered"].includes(offerState.status ?? "")));
+  const entryEligible = !!quote && quote.pricing_status !== "paid" && !waitlisted && !promotionGranted && totalWithTaxCents > 0;
 
   // Étape « plan présenté » : écrite une seule fois par session et par devis.
   useEffect(() => {
@@ -453,8 +460,35 @@ export default function PageContractorPersonalizedPlan() {
           </GlassCard>
         )}
 
+        {/* Activation d'entrée 350 $ : nouvel entrepreneur sans promotion déjà accordée. */}
+        {entryEligible && (
+          <EntryActivation350Card
+            quoteId={quote.id}
+            contractorId={quote.contractor_id ?? null}
+            guaranteedAppointments={quote.guaranteed_appointments ?? null}
+            affiliateRef={affiliateRef}
+            activationToken={activationToken}
+            successUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "success")}
+            cancelUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "canceled")}
+            onLogin={() => {
+              setActiveQuoteId(quote.id);
+              navigate(contractorLoginPath(`${window.location.pathname}${window.location.search}`));
+            }}
+            onMore={() => {
+              setMoreOpen(true);
+              void trackFunnelStep("plan_presented", { subjectId: quote.id, metadata: { from: "entry_350_more" } });
+              setTimeout(() => document.getElementById("plan-volume")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+            }}
+          />
+        )}
+        {entryEligible && moreOpen && (
+          <p id="plan-volume" className="text-sm text-white/70 mb-3">
+            Forfait mensuel calculé selon votre métier, votre territoire et votre capacité. Vous pouvez toujours revenir à l'activation à 350 $ ci-dessus.
+          </p>
+        )}
+
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
-        {quote.pricing_status !== "paid" && (() => {
+        {quote.pricing_status !== "paid" && (!entryEligible || moreOpen) && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
           const included = quote.guaranteed_appointments ?? quote.target_monthly_appointments;
           return (
@@ -569,7 +603,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!waitlisted && !fallbackDeclined && quote.pricing_status !== "paid" && (
+        {!waitlisted && !fallbackDeclined && !entryEligible && quote.pricing_status !== "paid" && (
           <div className="mt-8">
             {fallbackVisible ? (
               <FallbackCredit350Card

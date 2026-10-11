@@ -58,3 +58,23 @@ export function guaranteeSentence(appointments: number): string {
   if (appointments <= 0) return OFFER_350.analysisRequired;
   return `${appointments} rendez-vous exclusif${appointments > 1 ? "s" : ""} garanti${appointments > 1 ? "s" : ""}`;
 }
+
+/**
+ * Activation d'entrée 350 $ — paiement unique pour un nouvel entrepreneur.
+ * « 588 $ » = 12 × 49 $ (prix mensuel Présence du catalogue). Le nombre de
+ * rendez-vous n'est affiché que s'il est garanti par le devis serveur.
+ */
+export const ENTRY_350 = {
+  eyebrow: "Nouvel entrepreneur · Paiement unique",
+  title: "Activer mon profil — 350 $",
+  cta: "Activer mon profil — 350 $",
+  ctaMore: "J'aimerais plus de rendez-vous dès maintenant",
+  profile: "Votre profil entrepreneur UNPRO",
+  presence: "12 mois de Présence IA (valeur de 588 $, soit 12 × 49 $)",
+  appointments: (n: number) =>
+    `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
+  appointmentsPending:
+    "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
+  paymentNote: "Paiement unique de 350 $. Aucun abonnement. Activation dès la confirmation du paiement.",
+  errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
+} as const;

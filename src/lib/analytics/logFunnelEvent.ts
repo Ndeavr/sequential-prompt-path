@@ -107,6 +107,9 @@ export type FunnelEventType =
   // Offre de repli — crédit UNPRO 350 $
   | "fallback_350_shown"
   | "fallback_350_clicked"
+  | "entry_350_shown"
+  | "entry_350_clicked"
+  | "entry_350_checkout_failed"
   | "fallback_350_checkout_created"
   | "fallback_350_payment_success"
   | "fallback_350_payment_failed"

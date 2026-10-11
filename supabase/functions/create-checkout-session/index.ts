@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
       professionCode,
       activationToken,
       fallbackCredit,
+      entryActivation,
       auditId,
       campaign,
       source,
@@ -241,7 +242,12 @@ Deno.serve(async (req) => {
     // ── OFFRE DE REPLI — CRÉDIT UNPRO 350 $ ───────────────────────────────
     // Paiement unique, montant fixé côté serveur. Le crédit n'est JAMAIS
     // accordé ici : seul le webhook Stripe crédite, après confirmation.
-    if (fallbackCredit === true) {
+    // ── ACTIVATION D'ENTRÉE 350 $ (nouvel entrepreneur) ──────────────────
+    // Même chemin serveur que le crédit de repli (montant fixe, fiche unique,
+    // activation sur webhook seulement), mais présenté comme l'activation du
+    // profil + 12 mois de Présence IA. Aucun crédit n'est accordé.
+    const isEntryActivation = entryActivation === true;
+    if (fallbackCredit === true || isEntryActivation) {
       const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
@@ -303,6 +309,42 @@ Deno.serve(async (req) => {
       const origin = req.headers.get("origin") ?? "https://unpro.ca";
       const isEmbeddedFallback = uiMode === "embedded";
 
+      // Activation d'entrée : refus d'une deuxième facturation, garantie lue
+      // uniquement depuis le devis serveur du même propriétaire.
+      let entryGuaranteed: number | null = null;
+      if (isEntryActivation) {
+        const { data: actRow } = await serviceClient
+          .from("contractors")
+          .select("activation_status")
+          .eq("id", fbContractor.id)
+          .maybeSingle();
+        if (actRow?.activation_status === "activated" || actRow?.activation_status === "active") {
+          return new Response(
+            JSON.stringify({ error: "Votre profil est déjà activé.", code: "already_active" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        if (quoteId) {
+          const { data: eq } = await serviceClient
+            .from("contractor_pricing_quotes")
+            .select("user_id, pricing_status, pricing_explanation")
+            .eq("id", String(quoteId))
+            .maybeSingle();
+          if (eq?.user_id && eq.user_id !== userId) {
+            return new Response(JSON.stringify({ error: "Ce devis ne vous appartient pas.", code: "quote_forbidden" }), {
+              status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (eq?.pricing_status === "paid") {
+            return new Response(JSON.stringify({ error: "Cette entente est déjà payée.", code: "already_paid" }), {
+              status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          const g = Number((eq?.pricing_explanation as Record<string, unknown> | null)?.guaranteed_appointments ?? 0);
+          entryGuaranteed = Number.isFinite(g) && g > 0 ? Math.round(g) : null;
+        }
+      }
+
       const fallbackConfig: Record<string, unknown> = {
         mode: "payment",
         locale: "fr",
@@ -312,22 +354,36 @@ Deno.serve(async (req) => {
             price_data: {
               currency: "cad",
               unit_amount: amountCents,
-              product_data: {
-                name: FALLBACK_CREDIT_PRODUCT_NAME,
-                description:
-                  "Crédit UNPRO applicable à vos futurs achats admissibles.",
-              },
+              product_data: isEntryActivation
+                ? {
+                    name: "Activation du profil UNPRO",
+                    description: entryGuaranteed
+                      ? `Profil entrepreneur + 12 mois de Présence IA + ${entryGuaranteed} rendez-vous qualifiés exclusifs. Paiement unique.`
+                      : "Profil entrepreneur + 12 mois de Présence IA. Paiement unique, aucun abonnement.",
+                  }
+                : {
+                    name: FALLBACK_CREDIT_PRODUCT_NAME,
+                    description:
+                      "Crédit UNPRO applicable à vos futurs achats admissibles.",
+                  },
             },
             quantity: 1,
           },
         ],
         metadata: {
-          offer: FALLBACK_CREDIT_OFFER_KEY,
+          offer: isEntryActivation ? "entry_activation_350" : FALLBACK_CREDIT_OFFER_KEY,
           contractor_id: fbContractor.id,
           user_id: userId,
-          credit_amount_cents: String(amountCents),
+          ...(isEntryActivation
+            ? {
+                amount_cents: String(amountCents),
+                presence_ia_months: "12",
+                guaranteed_appointments: String(entryGuaranteed ?? 0),
+              }
+            : { credit_amount_cents: String(amountCents) }),
           ...(quoteId && { quote_id: String(quoteId) }),
           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+          ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
           ...(typeof ref === "string" && ref.trim() && { ref: ref.trim() }),
           ...(auditIdMeta && { audit_id: auditIdMeta }),
           ...(campaignMeta && { campaign: campaignMeta }),
@@ -357,7 +413,7 @@ Deno.serve(async (req) => {
 
       await serviceClient.from("contractor_funnel_events").insert({
         contractor_id: fbContractor.id,
-        event_type: "fallback_350_checkout_created",
+        event_type: isEntryActivation ? "entry_350_checkout_created" : "fallback_350_checkout_created",
         metadata: {
           checkout_session_id: fbSession.id,
           amount_cents: amountCents,
