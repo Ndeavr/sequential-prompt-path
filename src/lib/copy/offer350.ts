@@ -75,6 +75,6 @@ export const ENTRY_350 = {
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
     "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
-  paymentNote: "Paiement unique de 350 $ + taxes. Aucun abonnement. Activation dès la confirmation du paiement.",
+  paymentNote: "Paiement unique de 350 $. Aucun abonnement. Activation dès la confirmation du paiement.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;
