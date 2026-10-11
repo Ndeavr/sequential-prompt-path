@@ -87,6 +87,11 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
           <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Votre entente est activée.
         </p>
       )}
+      {note && (
+        <p className="flex items-center gap-2 text-sm text-foreground" data-testid="rbq-not-required">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {note}
+        </p>
+      )}
       <div>
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{detail}</p>
