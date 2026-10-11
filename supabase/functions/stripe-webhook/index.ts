@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
                 .neq("activation_status", "activated");
               if (session.metadata?.quote_id) {
                 await supabase.from("contractor_pricing_quotes")
-                  .update({ pricing_status: "paid", stripe_checkout_session_id: session.id, updated_at: nowIso })
+                  .update({ pricing_status: "paid", stripe_checkout_session_id: session.id })
                   .eq("id", String(session.metadata.quote_id))
                   .neq("pricing_status", "paid");
                 await supabase.from("contractor_leads")
