@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Current P0: address autocomplete mobile/Places configuration, readable Clara streaming, strict property/business/territory context separation; verify targeted tests and preview, no publication without proof.
 - [x] Focused homepage impact dials: explicit per-journey scenario, once-per-visit animation, methodology; 8 tests and desktop/mobile simulated browser checks passed. Report: `docs/audits/impact-dials-2026-10-11.md`. Not published.
 
 - [x] Focused public date freshness audit (2026-10-11): original dates preserved, shared display/schema corrected, one sourced IA guide updated; tests and representative public browser checks recorded in `docs/audits/date-freshness-2026-10-11.md`. Not published.
