@@ -44,8 +44,16 @@ export function EntryActivation350Card(p: Props) {
           cancelUrl: p.cancelUrl,
         },
       });
-      const payload = data as { url?: string; error?: string; code?: string } | null;
+      let payload = data as { url?: string; error?: string; code?: string } | null;
+      if (!payload && fnErr) {
+        // Réponse non-2xx : le corps JSON est dans error.context (Response brute).
+        const ctx = (fnErr as { context?: Response }).context;
+        try {
+          if (ctx && typeof ctx.json === "function") payload = await ctx.clone().json();
+        } catch { /* corps illisible : on garde l'erreur d'origine */ }
+      }
       if (payload?.code === "already_active" || payload?.code === "already_paid") {
+        toast.success("Votre profil est déjà activé.");
         window.location.assign("/pro");
         return;
       }
