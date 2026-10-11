@@ -32,6 +32,7 @@ import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
   isContractorObjective,
@@ -602,7 +603,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!waitlisted && !fallbackDeclined && quote.pricing_status !== "paid" && (
+        {!waitlisted && !fallbackDeclined && !entryEligible && quote.pricing_status !== "paid" && (
           <div className="mt-8">
             {fallbackVisible ? (
               <FallbackCredit350Card
