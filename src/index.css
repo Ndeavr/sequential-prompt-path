@@ -444,7 +444,21 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: min(620px, calc(100dvh - 9rem));
+    /* Hauteur réellement visible (clavier inclus), jamais 100vh/dvh seul. */
+    max-height: min(620px, calc(var(--app-visible-height, 100dvh) - 9rem));
+  }
+  html[data-keyboard-open="true"] .home-light .home-clara-main {
+    max-height: calc(var(--app-visible-height, 100dvh) - 4.5rem);
+  }
+  /* Formulaires mobiles : le champ actif et le bouton du bas restent atteignables. */
+  html[data-keyboard-open="true"] input,
+  html[data-keyboard-open="true"] textarea,
+  html[data-keyboard-open="true"] select {
+    scroll-margin-block: 96px;
+  }
+  html[data-keyboard-open="true"] [role="dialog"] {
+    max-height: var(--app-visible-height, 100dvh);
+    overflow-y: auto;
   }
   .home-light .home-clara-glass::before {
     content: "";
