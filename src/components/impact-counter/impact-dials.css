@@ -1,0 +1,11 @@
+.impact-dials { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+.impact-instrument { min-width: 0; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--card)); padding: 1rem; }
+.impact-instrument-face { position: relative; height: 112px; width: 100%; max-width: 220px; margin: 0.5rem auto 0; }
+.impact-instrument-face svg { position: absolute; inset: 0; height: 100%; width: 100%; overflow: visible; }
+.impact-instrument-track { fill: none; stroke: hsl(var(--muted-foreground) / 0.25); stroke-width: 3; }
+.impact-instrument-arc { fill: none; stroke: hsl(var(--primary)); stroke-width: 3; stroke-linecap: round; }
+.impact-instrument-ticks { stroke: hsl(var(--muted-foreground) / 0.65); stroke-width: 1; }
+.impact-instrument-value { position: absolute; bottom: 8px; left: 0; right: 0; margin: 0; font-size: 2rem; line-height: 1.15; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; color: hsl(var(--foreground)); }
+.impact-instrument-unit { font-size: 1rem; font-weight: 400; color: hsl(var(--muted-foreground)); }
+.impact-instrument-label { min-height: 1.5rem; text-align: center; font-size: 0.875rem; line-height: 1.5; color: hsl(var(--muted-foreground)); }
+@media (min-width: 640px) { .impact-instrument-value { font-size: 2.5rem; } .impact-instrument-face { height: 128px; } }
