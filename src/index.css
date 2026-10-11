@@ -680,6 +680,7 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     scrollbar-gutter: stable;
+    scroll-padding-block: 12px;
   }
   .home-light .home-clara-conversation .home-clara-message,
   .home-light .home-clara-conversation .home-clara-message * {
@@ -1004,7 +1005,7 @@
     background: linear-gradient(180deg, hsl(226 63% 5%), hsl(225 66% 3%));
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 767px), (max-width: 1024px) and (max-height: 500px) {
     .home-light .home-minimal-header > div { padding-inline: 1rem; }
     .home-light .home-minimal-header > div > div { height: 64px; }
     .home-light .home-header-layout-spacer { height: 66px; }
@@ -1030,9 +1031,18 @@
     .home-light .home-glossy-hero.is-conversation-active {
       /* Hauteur réellement visible : le clavier mobile ne recouvre jamais
          la zone de saisie, et aucun double décompte du header. */
-      height: calc(var(--clara-visible-height, 100dvh) - 64px);
+      position: fixed;
+      inset-inline: 0;
+      top: calc(var(--app-visible-top, 0px) + var(--app-header-height, 0px));
+      height: max(0px, calc(var(--app-visible-height, 100dvh) - var(--app-header-height, 0px)));
+      z-index: 40;
       min-height: 0;
       overflow: hidden;
+    }
+    html[data-clara-conversation-active="true"] .home-light [data-page-shell] {
+      contain: none;
+      overflow: visible;
+      min-height: 0;
     }
     .home-light .home-glossy-hero.is-conversation-active .home-hero-content {
       height: 100%;
@@ -1083,11 +1093,12 @@
       pointer-events: none;
       background: linear-gradient(hsl(0 0% 100% / 0.96) 58%, hsl(0 0% 100% / 0));
     }
-    .home-light .home-clara-shell.is-conversation-active .home-clara-conversation > div { padding-top: 46px; }
+    .home-light .home-clara-conversation { margin-top: 46px; }
+    .home-light .home-clara-shell.is-conversation-active .home-clara-conversation > div { padding-top: 0; }
 
     .home-light .home-clara-composer { position: relative; padding: 0.35rem 0.5rem max(0.35rem, env(safe-area-inset-bottom)); }
     .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 0; border-radius: 16px; }
-    .home-light .home-clara-textarea { field-sizing: content; box-sizing: border-box; min-height: 44px !important; max-height: 112px; padding: 0.6rem 0.8rem 0.2rem; overflow-y: hidden; font-size: 1rem; }
+    .home-light .home-clara-textarea { field-sizing: content; box-sizing: border-box; min-height: 44px !important; max-height: min(112px, 22dvh); padding: 0.6rem 0.8rem 0.2rem; overflow-y: hidden; font-size: 1rem; }
     .home-light .home-clara-controls { position: static; min-height: 48px; width: 100%; padding: 0 0.3rem 0.25rem; justify-content: space-between; }
     .home-light .home-clara-tool { width: 44px; height: 44px; }
     .home-light .home-clara-submit { width: 44px; height: 44px; }
@@ -2362,3 +2373,14 @@ html[data-theme-ready="true"] .glass-btn {
 .home-clara-card-primary:disabled { opacity: .5; }
 .home-clara-card-link { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; color: hsl(var(--primary)); text-decoration: underline; }
 .home-clara-quick button[data-selected="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+
+@media (max-width: 767px) {
+  html[data-keyboard-open="true"] [role="dialog"][data-state="open"] {
+    top: calc(var(--app-visible-top, 0px) + 8px);
+    bottom: auto;
+    max-height: calc(var(--app-visible-height, 100dvh) - 16px);
+    transform: none;
+    overflow-y: auto;
+    scroll-padding-block: 16px;
+  }
+}

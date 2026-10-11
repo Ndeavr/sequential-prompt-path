@@ -30,7 +30,9 @@ describe("Dossier maison — adresse réelle et actions honnêtes", () => {
   it("gère le clavier globalement, sans 100vh fixe", () => {
     expect(app).toContain("useKeyboardAwareViewport()");
     expect(hook).toContain("visualViewport");
-    expect(hook).toContain("nearBottom.get(el) !== false");
+    expect(hook).toContain('--app-visible-top');
+    expect(hook).not.toContain('el.scrollTop = el.scrollHeight');
+    expect(box).toContain('resize="instant"');
     expect(css).toContain("var(--app-visible-height, 100dvh)");
   });
 });

@@ -75,7 +75,7 @@ const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import { Conversation, ConversationContent, ConversationScrollButton, ConversationViewportFollow } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -375,7 +375,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     if (textarea instanceof HTMLTextAreaElement) {
       textarea.disabled = false;
       textarea.focus({ preventScroll: true });
-      window.requestAnimationFrame(() => textarea.scrollIntoView({ block: "nearest" }));
     }
   }, []);
 
@@ -409,33 +408,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
    * On ne déplace la page que si la zone de saisie déborde réellement de la
    * fenêtre visible — jamais de recentrage automatique intempestif.
    */
-  const bringComposerIntoView = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      const composer = composerRef.current;
-      if (!composer) return;
-      const rect = composer.getBoundingClientRect();
-      const overflow = rect.bottom - window.innerHeight + 8;
-      if (overflow > 1) window.scrollBy({ top: overflow, behavior: "auto" });
-      else if (rect.top < 0) window.scrollBy({ top: rect.top - 8, behavior: "auto" });
-    });
-  }, []);
   const keepComposerVisible = useCallback(() => {
-    // La page ne bouge que si le clavier est ouvert : jamais à chaque nouveau message.
-    if (composerRef.current?.contains(document.activeElement)) bringComposerIntoView();
-    // Suivi intelligent : aucune remontée forcée pendant une lecture en cours.
-    if (!isNearBottom()) return;
-    scrollToLatest("auto");
-  }, [bringComposerIntoView, isNearBottom, scrollToLatest]);
-  // Ouverture/fermeture du clavier : la fenêtre change de hauteur, on replace
-  // la zone de saisie au-dessus du clavier sans toucher au reste de la page.
-  useEffect(() => {
-    if (!composerFocused) return;
-    const onResize = () => bringComposerIntoView();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [bringComposerIntoView, composerFocused]);
+    // StickToBottom owns follow/manual scrolling; viewport CSS owns composer.
+    // Never scroll the document from a message, focus or composer resize.
+  }, []);
 
-  const isConversationActive = messages.length > 0 || mode !== "IDLE";
+  const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused;
 
   useEffect(() => {
     document.documentElement.dataset.claraConversationActive = String(isConversationActive);
@@ -1582,7 +1560,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           <span /><i /><i />
         </div>
         <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
-        <Conversation className="home-clara-conversation min-h-0">
+        <Conversation className="home-clara-conversation min-h-0" initial="instant" resize="instant">
+          <ConversationViewportFollow />
           {/* Les messages commencent en haut, juste sous la barre d'outils :
               aucune zone vide artificielle avant le premier échange. */}
           <ConversationContent className="flex flex-col justify-start gap-3 px-5 py-3 sm:px-6">
@@ -1696,6 +1675,20 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
             {error && <p role="alert" className="home-clara-error">{error}</p>}
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
+        {showIntentSuggestions && (
+         <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
+           {intentSuggestions.map((suggestion) => (
+             <button
+               key={`${suggestion.source}-${suggestion.label}`}
+               type="button"
+               disabled={busy}
+               onClick={() => void chooseIntentSuggestion(suggestion)}
+             >
+               {suggestion.label}
+             </button>
+           ))}
+        </div>
+      )}
             <div ref={bottomAnchorRef} className="home-clara-bottom-anchor" aria-hidden="true" />
           </ConversationContent>
           <ConversationScrollButton title="Nouveau message" />
@@ -1802,20 +1795,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </PromptInputFooter>
         </PromptInput>
       </div>
-        {showIntentSuggestions && (
-         <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
-           {intentSuggestions.map((suggestion) => (
-             <button
-               key={`${suggestion.source}-${suggestion.label}`}
-               type="button"
-               disabled={busy}
-               onClick={() => void chooseIntentSuggestion(suggestion)}
-             >
-               {suggestion.label}
-             </button>
-           ))}
-        </div>
-      )}
+
       </div>
       {contextVisible && (
         <motion.div className="home-context-slot" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>

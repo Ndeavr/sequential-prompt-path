@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
@@ -33,6 +33,22 @@ export const ConversationContent = ({
     {...props}
   />
 );
+
+/** The library observes growing content, but not shrinking scroll viewports.
+ * Reuse its lock/escape state so keyboard resize never overrides manual reading. */
+export const ConversationViewportFollow = () => {
+  const { scrollRef, scrollToBottom, state } = useStickToBottomContext();
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const observer = new ResizeObserver(() => {
+      if (!state.escapedFromLock) void scrollToBottom({ animation: "instant", preserveScrollPosition: true });
+    });
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, [scrollRef, scrollToBottom, state]);
+  return null;
+};
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;
@@ -78,7 +94,7 @@ export const ConversationScrollButton = ({
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
-    scrollToBottom();
+    scrollToBottom({ animation: "instant" });
   }, [scrollToBottom]);
 
   return (

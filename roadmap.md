@@ -1,5 +1,7 @@
 # Roadmap — P0 contractor acquisition golden path
 
+- [ ] Current mobile P0: active surface, shared viewport repair, real-DOM smoke tests; physical Gboard and authenticated final registration require device/session verification.
+
 - [ ] P0 mobile Clara: keyboard-aware viewport, one scroll owner, shared live voice transcript; targeted tests and mobile browser checks.
 - [ ] Publish mobile repair only after checks and security gate pass; existing critical findings remain an external publication blocker.
 
