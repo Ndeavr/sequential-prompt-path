@@ -1005,7 +1005,7 @@
     background: linear-gradient(180deg, hsl(226 63% 5%), hsl(225 66% 3%));
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 767px), (max-width: 1024px) and (max-height: 500px) {
     .home-light .home-minimal-header > div { padding-inline: 1rem; }
     .home-light .home-minimal-header > div > div { height: 64px; }
     .home-light .home-header-layout-spacer { height: 66px; }
