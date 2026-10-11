@@ -700,6 +700,10 @@ export default function PageContractorPricingIntake() {
       metadata: {
         goal_kind: (data as GoalFields).goal_kind ?? "sales",
         horizon: (data as GoalFields).horizon ?? "12m",
+        goal_amount: (data as GoalFields).goal_amount ?? null,
+        margin_pct: (data as GoalFields).margin_pct ?? null,
+        contracts_needed: calc.contracts,
+        appointments_needed_total: calc.appointmentsTotal,
         average_project_value: payload.average_project_value ?? null,
         close_rate_estimate: payload.close_rate_estimate ?? null,
         target_monthly_appointments: payload.target_monthly_appointments ?? null,
