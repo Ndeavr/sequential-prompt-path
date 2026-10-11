@@ -48,6 +48,13 @@
 - White-label pour partenaires
 - API publique
 
+## Initiative différée — DNA Matching, apprentissage et contenu
+
+- Statut : documentation seulement; aucune implémentation avant déclenchement autorisé.
+- Priorité inchangée : obtenir la première puis la deuxième activation entrepreneur réellement payée à 350 $.
+- Référence : [Pipeline DNA, apprentissage et contenu](roadmap/UNPRO_DNA_MATCHING_LEARNING_CONTENT_PIPELINE_2026-10-11.md).
+- Réutiliser et auditer la mémoire, les événements, les questions adaptatives, les feedbacks et les explications existants avant toute nouvelle structure.
+
 ---
 
 _Créé le 2026-03-21 — Piloté par l'agent `platform-roadmap-agent`_
