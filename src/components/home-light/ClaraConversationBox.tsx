@@ -140,6 +140,7 @@ function reconcileMessages(current: Msg[], incoming: Msg[]): Msg[] {
     const persisted = pending.get(message.id);
     if (!persisted) return message;
     pending.delete(message.id);
+    if (message.status === "streaming") return message;
     return { ...message, ...persisted, status: "complete" as const };
   });
   for (const message of incoming) {
@@ -679,6 +680,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setQuickReplies(null);
         // Réponse vocale à la question en cours : même enregistrement que le texte.
         if (qualificationStepRef.current) {
+          if (qualificationStepRef.current.field === "service_areas" && isAddressAnswer(detail.text)) return;
           applyAnswer(qualificationStepRef.current, detail.text);
           qualificationStepRef.current = null;
           // Même machine d’états que le texte : question suivante ou transition.
