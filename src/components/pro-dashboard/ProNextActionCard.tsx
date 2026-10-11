@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { getRbqApplicability } from "@/lib/compliance/rbqStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
