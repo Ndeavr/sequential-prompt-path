@@ -15,7 +15,15 @@ interface ArticleContentWithVisualsProps {
 
 export default function ArticleContentWithVisuals({ html, slug }: ArticleContentWithVisualsProps) {
   if (slug !== THREE_QUOTES_ARTICLE_SLUG) {
-    return <BlockArticleParagraphReadable html={html} />;
+    return <>
+      {slug === "pavage-asphalte-laval-entree-garage" && (
+        <aside className="mb-6 border-l-2 border-border bg-muted p-4 text-sm text-foreground" aria-label="Contexte des prix">
+          Les fourchettes de prix ci-dessous datent de 2024. Elles sont conservées comme référence historique,
+          et ne constituent pas une estimation pour octobre 2026. Demandez une évaluation actuelle pour votre terrain et vos travaux.
+        </aside>
+      )}
+      <BlockArticleParagraphReadable html={html} />
+    </>;
   }
 
   const parts = html.split(VISUAL_MARKERS);
