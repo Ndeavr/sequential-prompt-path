@@ -62,7 +62,11 @@ async def chat_case(browser,w,h):
     await field.fill('Un problème à comprendre'); await page.get_by_role('button',name='Send',exact=True).click()
     await page.get_by_role('group',name='Réponses rapides',exact=True).wait_for()
     await page.wait_for_timeout(700)
-    await check(page,'.home-clara-message[data-role="assistant"]',prefix+' response after send','.home-clara-conversation > div')
+    await page.locator('.home-clara-message[data-role="assistant"]').last.scroll_into_view_if_needed()
+    await check(page,'.home-clara-message[data-role="assistant"]',prefix+' response reachable after send','.home-clara-conversation > div')
+    jump=page.get_by_role('button',name='Revenir au dernier message')
+    if await jump.count(): await jump.click()
+    await page.wait_for_timeout(500)
     await check(page,'[aria-label="Réponses rapides"] button',prefix+' last reply','.home-clara-conversation > div')
     scroller=page.locator('.home-clara-conversation > div').first
     await scroller.evaluate('e=>e.scrollTop=0'); await page.wait_for_timeout(300)
