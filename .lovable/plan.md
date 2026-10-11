@@ -1,42 +1,42 @@
-# Offre entrepreneur 350 $ — reprise (phase 1)
+# P0 — Stabiliser le chat Clara et l’affichage mobile
 
-## Ce qui existe déjà (réutilisé, rien de parallèle)
-- Calcul serveur du devis (`compute-pricing-quote`) avec un mode « pack 350 $ » et des frais de profil de 350 $ configurables.
-- Le paiement Stripe côté serveur (`create-checkout-session`) et la confirmation par webhook signé, idempotente (`stripe-webhook`).
-- L'offre de repli « crédit 350 $ » et l'offre fondateur. Elles restent intactes.
-- La page du plan personnalisé (`/entrepreneur/plan-personnalise/:id`), qui est l'étape 3 du parcours actuel.
-- Le chantier ouvert sur le chat mobile reste à faire. Il n'est pas touché ici.
+## Résultat
+Rendre le chat partagé utilisable avec le clavier mobile, sans disparition ni rejeu des réponses, tout en conservant la même conversation lors des passages texte, voix et parcours entrepreneur.
 
-## Ce qui sera fait
-1. **Carte principale « Activer mon profil — 350 $ »** sur le plan personnalisé, pour un nouvel entrepreneur sans droit gratuit ni fondateur. La carte contient :
-   - le profil ;
-   - 12 mois de Présence IA, présentés comme une valeur de 588 $ (12 × 49 $, prix Présence du catalogue) ;
-   - le nombre exact de rendez-vous garantis par le devis serveur. Si le serveur ne peut rien garantir, la carte affiche « Analyse du territoire requise » et aucun chiffre.
-   - La mention « Paiement unique. Aucun abonnement. »
-2. **Bouton secondaire « J'aimerais plus de rendez-vous dès maintenant »**. Il ouvre un choix 5 / 10 / 20 / Autre par mois. Le serveur recalcule alors un forfait à partir des données déjà connues (métier, territoires, capacité), sans rien redemander.
-   - Si un forfait est trouvé : la page affiche le prix mensuel, la ligne « Activation 350 $ incluse dans le premier paiement », et deux boutons : « Activer mon forfait » et « Continuer avec l'offre à 350 $ ».
-   - Si aucun prix n'est confirmé pour ce volume : la page affiche « Analyse requise ». Aucun prix n'est inventé.
-3. **Pas de double facturation**. Le premier paiement d'un forfait supérieur = mensualité du forfait. Les 350 $ d'activation sont comptés dedans, pas ajoutés en plus. Ce calcul est fait côté serveur seulement.
-4. **Consentement à l'abonnement**. Une case à cocher obligatoire, avec ce texte : « J'accepte un prélèvement mensuel de X $ jusqu'à annulation. » Sans elle, le paiement ne démarre pas. Le serveur refuse aussi tout abonnement si le consentement n'a pas été enregistré.
-5. **Mise en service**. Le compte n'est activé que sur confirmation du webhook Stripe : profil publié en attente de vérification, 12 mois de Présence IA, rendez-vous garantis enregistrés. L'URL de retour ne suffit jamais à activer un compte.
-6. **Promotions déjà accordées respectées**. Les droits gratuits, fondateur ou 3 RDV gratuits passent avant tout. Ces entrepreneurs ne voient jamais la carte 350 $.
+## Correctifs
+1. **Un seul cadre mobile stable**
+   - Utiliser la hauteur visible publiée par le gestionnaire global `visualViewport`, les safe areas et la hauteur réellement mesurée du composeur.
+   - Garder le fil comme unique zone défilable; placer voix, médias, saisie et commandes hors de ce défilement.
+   - Réduire la barre d’outils et les espaces verticaux sur petit écran; garantir que messages, cartes entrepreneur et choix restent au-dessus de la saisie et du clavier.
+   - Appliquer ce cadre à la conversation principale et à son parcours entrepreneur intégré, sans créer un autre chat.
 
-## Tests
-- Tests ciblés :
-  - choix de l'offre selon l'admissibilité ;
-  - absence de chiffre sans garantie serveur ;
-  - montant du premier paiement sans double facturation ;
-  - consentement obligatoire ;
-  - webhook rejoué → une seule activation.
-- Contrôle des types et build.
-- Session Stripe en mode TEST seulement, avec le compte QA. Si je ne peux pas me connecter à ce compte, je m'arrête là et je le signale.
+2. **Message assistant permanent**
+   - Créer chaque tour avec un identifiant client stable et conserver ce même objet pendant respiration, diffusion, animation, sauvegarde et restauration.
+   - Remplacer les suppressions/réinjections par des mises à jour d’état (`pending`, `streaming`, `complete`, `failed`) qui gardent le texte déjà reçu.
+   - Réconcilier le retour serveur et la fermeture de la voix par identifiant stable, sans remplacer tout l’historique visible ni dupliquer le dernier tour.
+   - Empêcher tout remontage, restauration ou retour de canal de relancer l’animation d’un message déjà révélé.
 
-## Points à confirmer (hypothèses retenues si pas de réponse)
-- 350 $ couvre 12 mois de Présence IA, qui remplacent les 6 mois de l'ancien pack. Le plafond de rendez-vous reste celui que le serveur calcule.
-- Les forfaits 5 / 10 / 20 utilisent la grille mensuelle actuelle du calculateur. Aucun nouveau tarif n'est créé.
+3. **Texte, animation et voix unifiés**
+   - Conserver une seule révélation progressive pour les réponses texte non diffusées; les réponses diffusées s’affichent directement dans le même message à mesure des fragments reçus.
+   - Faire évoluer le pont vocal pour mettre à jour un tour utilisateur ou Clara en direct, puis le finaliser une seule fois dans l’historique canonique.
+   - Exploiter les événements réellement disponibles du fournisseur pour distinguer fragments et fin de tour; ne pas enregistrer chaque fragment comme un nouveau message.
+   - Sur pause, interruption, erreur ou changement texte/voix, figer le texte déjà révélé, arrêter l’animation courante et reprendre au même endroit sans rejeu.
 
-## Détails techniques
-- `compute-pricing-quote` : ajout de `entry_offer` (350 $, 12 mois, `guaranteed_appointments` serveur) et de `upgrade_quote(volume)`, qui renvoie `first_payment_cents = max(monthly, 35000)` avec `activation_included=true`.
-- `create-checkout-session` : nouveaux modes `entry_350` (payment) et `upgrade_subscription`. Le mode abonnement exige `recurring_consent_at`, stocké dans le devis. Le premier paiement passe en crédit sur la facture : aucun `price_data` d'activation n'est ajouté.
-- `stripe-webhook` : les branches `entry_350` et `upgrade_subscription` sont idempotentes via `shouldSkipRedelivery`.
-- UI : uniquement la page du plan personnalisé, plus un panneau. Le texte vient de `src/lib/copy/offer350.ts`, mis à jour.
+4. **Suivi du dernier message sans scroll forcé**
+   - Centraliser le suivi dans le composant partagé de conversation.
+   - Suivre la dernière ligne pendant croissance seulement si l’utilisateur était près du bas.
+   - Recalculer après clavier, rotation, redimensionnement du composeur, apparition des médias/cartes/choix et reprise vocale.
+   - Préserver la lecture manuelle de l’historique et garder le bouton accessible « Revenir au dernier message ».
+
+## Validation obligatoire
+- Ajouter des tests ciblés sur : identité stable, réponse temporaire→persistée, échec sans disparition, aucun rejeu après remontage/rechargement, fragments vocaux consolidés, pause/reprise et changements texte↔voix.
+- Étendre le test mobile du DOM à 360×740 et 390×844 : réponse longue diffusée, choix multiples, clavier simulé ouvert/fermé, scroll manuel, retour au dernier message, rotation et restauration.
+- Tester le parcours entrepreneur intégré afin que ses cartes et choix restent accessibles dans le même fil.
+- Exécuter les tests ciblés, le contrôle des types, le lint critique et la compilation; vérifier ensuite le journal de compilation.
+- Exécuter une QA navigateur mobile avec captures et mesures. Un clavier Android matériel sera rapporté séparément comme **testé** seulement si un appareil réel est accessible; sinon il restera explicitement **non vérifié**, sans assimiler l’émulation à un appareil réel.
+
+## Garde-fous
+- Réutiliser `ClaraConversationBox`, les AI Elements installés, `ClaraContractorFlow`, `claraVoiceBridge`, `useLiveVoice` et la session Clara canonique.
+- Aucun nouveau moteur de chat/voix, aucune table, migration, fonction serveur ou changement paiement, acquisition, sécurité ou publication.
+- Préserver médias, historique, dossier maison, qualification entrepreneur, intention/rôle et curseurs de reprise.
+- Ne déclarer le correctif terminé qu’après preuve visuelle et comportementale, pas seulement après compilation.
