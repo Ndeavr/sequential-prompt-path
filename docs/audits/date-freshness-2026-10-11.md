@@ -29,12 +29,20 @@
 - Official sitemap generator ran successfully for pages/blog/journal/entities/problems; contractor public-view query returned HTTP 401. Contractor sitemap was already empty before this work and remains unchanged. No permission bypass attempted.
 - Harness automatic compilation: build OK after code edits; no manual build/typecheck executed.
 - Chromium localhost desktop 1280×1800 and simulated mobile 390×844: blog, legacy real listing, inspection blog, historical paving blog, journal, AI guide and lead-pipe city all rendered without horizontal overflow. Guide visible original/update dates, OG and Article schema asserted; paving warning and city 2026 title asserted. Screenshots inspected for guide/paving mobile.
-- Initial guessed guide URL `/guides/choisir-entrepreneur` returned unavailable; no fix attempted for an invalid slug. Further valid guide/SEO/English-journal checks recorded below when completed.
+- Initial guessed guide URL `/guides/choisir-entrepreneur` returned unavailable; no fix attempted for an invalid slug. Final run: 20 browser page checks (10 routes × desktop/mobile) rendered, including valid `/guides/comment-choisir-couvreur`, `/articles/comment-intelligence-artificielle-trouve-bons-clients-entreprise` and `/journal/ia-prevention-problemes-residentiels-en`; no horizontal overflow. These are rendering/date checks, not full interaction tests.
 
 ## Preserved / remaining
 
-- All 80 database originals preserved; 79 unreviewed database articles plus the historical-price article are NOT stamped October. The single updated guide is a separate static article.
+- All 80 database originals preserved and NOT stamped October. The single substantively updated guide is a separate static article; the paving warning is contextual, not a full pricing review.
 - No broad claim that every public route was rendered or every older-year fact validated. Historical building/legal facts and private document examples kept.
 - Full price/grant/legal review needs authoritative current sources per article; defer that larger review after the two real paid activations. No invented updated numbers.
 - SEO creation-versus-publication provenance, crawler prerender consistency and authenticated/private demo-data cleanup remain separate evidence-dependent work; no backend/deployment changes made here.
 - Real devices and published-site verification of these changes are not performed; these changes have not been published.
+
+## File inventory
+
+- Shared date helper/test: `src/seo/editorialDates.ts`, `src/test/editorial-date-freshness.test.tsx`.
+- Articles/listings: `src/pages/blog/BlogArticlePage.tsx`, `src/pages/blog/BlogIndexPage.tsx`, `src/pages/BlogPage2.tsx`, `src/pages/journal/JournalArticlePage.tsx`, `src/pages/seo/SeoArticlePage.tsx`, `src/pages/articles/PageApparaitreRechercheIA2026.tsx`, `src/components/blog/ArticleContentWithVisuals.tsx`.
+- Other date display: `src/components/layout/SiteFooterPremium.tsx`, `src/components/scroll-story/ImmersiveFooterGrid.tsx`, `src/pages/lead-pipe/PagePlombEauCity.tsx`, `src/pages/CoproprietePage.tsx`.
+- Generator: `scripts/generate-sitemaps.ts`; generated changes only in `public/sitemap-pages.xml`, `public/sitemap.xml`, `public/llms-full.txt`. Blog/journal/contractor XML unchanged.
+- Documentation: this report, `roadmap.md`, architecture rule in `AGENTS.md`.
