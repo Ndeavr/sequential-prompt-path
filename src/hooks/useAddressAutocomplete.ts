@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { peekClaraSessionToken } from "@/services/clara/claraSession";
+import { getAddressAccessToken } from "@/services/addressAccessToken";
 import type { VerifiedAddressData } from "@/types/address";
 
 export interface AddressPrediction {
@@ -58,11 +58,13 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
       try {
         const { data, error: fnError } = await supabase.functions.invoke(
           "google-places-autocomplete",
-          { body: { input, types: "address", region, language, sessionToken: sessionRef.current, session_token: peekClaraSessionToken() } }
+          { body: { input, types: "address", region, language, sessionToken: sessionRef.current, session_token: await getAddressAccessToken() } }
         );
         if (reqId !== reqIdRef.current) return;
         if (fnError) {
-          setError({ code: "FUNCTION_ERROR", message: fnError.message || "Erreur réseau" });
+          let code = "FUNCTION_ERROR";
+          try { code = (await (fnError as { context?: Response }).context?.json())?.error || code; } catch { /* corps illisible */ }
+          setError({ code, message: "Service d'adresses momentanément indisponible" });
           setPredictions([]);
           return;
         }
@@ -87,7 +89,7 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
         "google-places-autocomplete",
-        { body: { place_id: placeId, sessionToken: sessionRef.current, session_token: peekClaraSessionToken() } }
+        { body: { place_id: placeId, sessionToken: sessionRef.current, session_token: await getAddressAccessToken() } }
       );
       if (fnError || !data?.result) return null;
       const r = data.result;
