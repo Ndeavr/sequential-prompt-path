@@ -92,7 +92,7 @@ export default function SiteFooterPremium() {
 
         {/* Bottom bar */}
         <div className="mt-16 pt-6 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>UNPRO © 2026</div>
+          <div>UNPRO © {new Date().getFullYear()}</div>
           <div className="italic text-foreground/70">
             Votre maison devrait se souvenir de tout.
           </div>

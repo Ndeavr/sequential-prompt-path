@@ -26,6 +26,7 @@ import {
   ArticleIntelligenceReportFooter,
 } from "@/components/articles/intelligence/ArticleIntelligenceBlocks";
 import ArticleSemanticLinksGraph from "@/components/articles/intelligence/ArticleSemanticLinksGraph";
+import { editorialModifiedDate } from "@/seo/editorialDates";
 
 /* ── Helpers ── */
 
@@ -175,7 +176,7 @@ export default function SeoArticlePage() {
         description={article.meta_description || ""}
         slug={article.slug}
         datePublished={article.created_at}
-        dateModified={article.updated_at || article.created_at}
+        dateModified={editorialModifiedDate(article.created_at, article.schema_json_ld?.dateModified)}
         wordCount={article.word_count}
         category={article.service_category}
         city={article.city}

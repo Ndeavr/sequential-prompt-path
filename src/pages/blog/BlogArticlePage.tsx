@@ -15,6 +15,7 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisuals";
+import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
 
@@ -66,7 +67,7 @@ export default function BlogArticlePage() {
     headline: article.title,
     description: article.meta_description,
     datePublished: article.published_at,
-    dateModified: article.updated_at,
+    dateModified: editorialModifiedDate(article.published_at, article.schema_json?.dateModified),
     wordCount: article.word_count,
     url: `https://unpro.ca/blog/${article.slug}`,
     author: { "@type": "Organization", name: "UNPRO" },
@@ -167,7 +168,7 @@ export default function BlogArticlePage() {
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {article.category && <span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{article.category}</span>}
             {article.city && <><span>•</span><span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{article.city}</span></>}
-            {article.published_at && <><span>•</span><span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{new Date(article.published_at).toLocaleDateString("fr-CA")}</span></>}
+            {article.published_at && <><span>•</span><span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />Publié le <time dateTime={article.published_at}>{formatEditorialDate(article.published_at)}</time></span></>}
             {article.reading_time_minutes && <><span>•</span><span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{article.reading_time_minutes} min</span></>}
           </div>
           <div className="flex items-center justify-between">

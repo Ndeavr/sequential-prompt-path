@@ -16,6 +16,7 @@
  */
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { EDITORIAL_REVISIONS, editorialModifiedDate } from "../src/seo/editorialDates";
 
 const BASE_URL = "https://unpro.ca";
 const SUPABASE_URL =
@@ -121,20 +122,20 @@ async function sb<T = any>(path: string): Promise<T[]> {
 // --------------------------------------------------------------------------
 async function buildPages() {
   const urls = PILLAR_ROUTES.map((r) =>
-    urlNode(`${BASE_URL}${r.path}`, undefined, r.changefreq, r.priority),
+    urlNode(`${BASE_URL}${r.path}`, EDITORIAL_REVISIONS[r.path], r.changefreq, r.priority),
   );
   writeSitemap("sitemap-pages.xml", urls);
   return urls.length;
 }
 
 async function buildBlog() {
-  const rows = await sb<{ slug: string; updated_at: string; published_at: string | null }>(
-    "blog_articles?select=slug,updated_at,published_at&status=eq.published&order=published_at.desc.nullslast",
+  const rows = await sb<{ slug: string; published_at: string | null; schema_json: { dateModified?: string } | null }>(
+    "blog_articles?select=slug,published_at,schema_json&status=eq.published&order=published_at.desc.nullslast",
   );
   const urls = rows.map((r) =>
     urlNode(
       `${BASE_URL}/blog/${r.slug}`,
-      isoDate(r.published_at ?? r.updated_at),
+      isoDate(editorialModifiedDate(r.published_at, r.schema_json?.dateModified)),
       "weekly",
       "0.7",
     ),
@@ -150,7 +151,7 @@ async function buildJournal() {
   const urls = rows.map((r) =>
     urlNode(
       `${BASE_URL}/journal/${r.slug}`,
-      isoDate(r.published_at ?? r.updated_at),
+      isoDate(editorialModifiedDate(r.published_at, undefined)),
       "weekly",
       "0.8",
     ),

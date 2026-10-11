@@ -6,6 +6,7 @@ import { Copy, ArrowLeft, Quote, Mic, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { detectAlexIntent } from "@/services/alexOpeningTemplates";
+import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
 
 export default function JournalArticlePage() {
   const { openAlex } = useAlexVoice();
@@ -18,7 +19,7 @@ export default function JournalArticlePage() {
       const { data: article } = await supabase
         .from("journal_articles")
         .select("*,journal_series(slug,title)")
-        .eq("slug", slug!)
+        .eq("slug", slug ?? "")
         .eq("status", "published")
         .maybeSingle();
       if (!article) return null;
@@ -79,7 +80,7 @@ export default function JournalArticlePage() {
       description: desc,
       url: `https://unpro.ca/journal/${a.slug}`,
       datePublished: a.published_at,
-      dateModified: a.updated_at,
+      dateModified: editorialModifiedDate(a.published_at, undefined),
       wordCount: a.word_count,
       author: { "@type": "Organization", name: "UNPRO Research" },
       publisher: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca", logo: { "@type": "ImageObject", url: "https://unpro.ca/unpro-favicon.svg" } },
@@ -152,12 +153,12 @@ export default function JournalArticlePage() {
           </div>
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1]">{article.title}</h1>
           <p className="mt-6 text-lg md:text-xl text-white/70 leading-relaxed">{article.dek}</p>
-          <div className="mt-6 flex items-center gap-4 text-xs text-white/40">
+          <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-readable-soft">
             <span>UNPRO Research</span>
             <span aria-hidden>·</span>
             <span>{article.reading_time_minutes} min</span>
             <span aria-hidden>·</span>
-            <span>{article.published_at ? new Date(article.published_at).toLocaleDateString("fr-CA") : ""}</span>
+            {article.published_at && <span>Publié le <time dateTime={article.published_at}>{formatEditorialDate(article.published_at)}</time></span>}
           </div>
         </div>
       </header>

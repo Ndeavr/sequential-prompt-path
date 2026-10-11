@@ -31,10 +31,12 @@ import SectionArticleFAQSEO from "@/components/articles/SectionArticleFAQSEO";
 import SectionArticleInternalLinksSEO from "@/components/articles/SectionArticleInternalLinksSEO";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/articles/apparaitre-recherche-ia-2026.jpg";
+import { EDITORIAL_REVISIONS, formatEditorialDate } from "@/seo/editorialDates";
 
 const SLUG = "comment-apparaitre-resultats-recherche-ia-2026-entrepreneur";
 const PUBLISHED = "2026-08-22";
 const CANONICAL = `https://unpro.ca/articles/${SLUG}`;
+const MODIFIED = EDITORIAL_REVISIONS[`/articles/${SLUG}`];
 
 const H1 = "Comment apparaître dans les résultats de recherche par l'IA en 2026? Le guide pour les entrepreneurs";
 const TITLE = "Comment apparaître dans les résultats de recherche par l'IA en 2026?";
@@ -80,7 +82,7 @@ const SEO_AEO_GEO = [
     title: "AEO — Answer Engine Optimization",
     subtitle: "Être la réponse",
     body:
-      "Les moteurs de réponse ne présentent plus dix liens : ils formulent une réponse. Pour être repris dans cette réponse, l'information doit être claire, factuelle, structurée et facile à extraire.",
+      "Les moteurs peuvent compléter leurs liens par une réponse générée. Google précise que les bonnes pratiques SEO restent pertinentes pour ses fonctionnalités d'IA : aucune optimisation spéciale n'est exigée. Une information claire et vérifiable reste essentielle.",
   },
   {
     icon: Bot,
@@ -120,7 +122,7 @@ const FAQS = [
   {
     question: "Quelle est la différence entre le SEO, l'AEO et le GEO?",
     answer:
-      "Le SEO vise à être trouvable dans une liste de liens. L'AEO vise à être repris dans une réponse formulée par un moteur de réponse. Le GEO vise à être compris et cité par des systèmes génératifs qui synthétisent plusieurs sources. Les trois sont complémentaires : le SEO reste utile, mais il ne suffit plus seul.",
+      "Le SEO vise la visibilité dans les résultats de recherche. AEO et GEO décrivent des approches de contenu pour les réponses générées et les citations. Ces termes ne désignent pas des exigences supplémentaires de Google : ses bonnes pratiques SEO restent applicables aux Aperçus IA et au Mode IA, sans garantie d'apparition.",
   },
   {
     question: "Est-ce que le SEO traditionnel est mort en 2026?",
@@ -226,6 +228,7 @@ export default function PageApparaitreRechercheIA2026() {
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:image" content={`https://unpro.ca${heroImage}`} />
         <meta property="article:published_time" content={PUBLISHED} />
+        <meta property="article:modified_time" content={MODIFIED} />
         <meta property="article:author" content="Équipe UNPRO" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={TITLE} />
@@ -238,7 +241,7 @@ export default function PageApparaitreRechercheIA2026() {
         description={DESCRIPTION}
         slug={SLUG}
         datePublished={PUBLISHED}
-        dateModified={PUBLISHED}
+        dateModified={MODIFIED}
         wordCount={2600}
         category="Visibilité et intelligence artificielle"
         h1={H1}
@@ -262,7 +265,8 @@ export default function PageApparaitreRechercheIA2026() {
               </span>
               <span className="text-xs text-muted-foreground">
                 <Clock className="inline h-3 w-3 mr-1" />
-                Lecture 12 min · Équipe UNPRO · 22 août 2026
+                Lecture 12 min · Équipe UNPRO · Publié le <time dateTime={PUBLISHED}>{formatEditorialDate(PUBLISHED)}</time>
+                {MODIFIED && <> · Mis à jour le <time dateTime={MODIFIED}>{formatEditorialDate(MODIFIED)}</time></>}
               </span>
             </div>
 
@@ -346,7 +350,7 @@ export default function PageApparaitreRechercheIA2026() {
             SEO, AEO et GEO : trois logiques différentes
           </h2>
           <p className="text-foreground leading-relaxed">
-            Trois acronymes circulent depuis un an. Ils ne sont pas interchangeables.
+            Trois acronymes décrivent différentes approches de visibilité. Ils ne constituent pas trois exigences techniques distinctes de Google.
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
             {SEO_AEO_GEO.map((b) => (
@@ -359,9 +363,12 @@ export default function PageApparaitreRechercheIA2026() {
             ))}
           </div>
           <p className="text-foreground leading-relaxed">
-            Le SEO reste la fondation : un site clair et rapide demeure utile. Mais l'AEO et le GEO
-            reposent sur autre chose que des pages. Ils reposent sur des faits vérifiables au sujet de
-            votre entreprise.
+            Le SEO reste la fondation : des pages indexables, utiles et cohérentes demeurent pertinentes.
+            Google n'exige ni fichier IA spécial ni balisage dédié pour ses fonctionnalités d'IA.
+            Les données structurées doivent correspondre au contenu visible; elles ne garantissent pas une citation.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Source consultée le 11 octobre 2026 : <a href="https://developers.google.com/search/docs/appearance/ai-features?hl=fr" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google Search Central — Fonctionnalités d'IA et votre site Web</a>.
           </p>
         </section>
 

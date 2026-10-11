@@ -1,5 +1,8 @@
 # Roadmap — P0 contractor acquisition golden path
 
+- [x] Focused public date freshness audit (2026-10-11): original dates preserved, shared display/schema corrected, one sourced IA guide updated; tests and representative public browser checks recorded in `docs/audits/date-freshness-2026-10-11.md`. Not published.
+- [ ] Deferred after two real $350 activations: full price/grant/legal article review with current sources, SEO publication provenance and crawler date consistency; do not bulk refresh dates.
+
 - [ ] DEFERRED after first two real paid $350 contractor activations: DNA matching, learning, voluntary questionnaire, feedback, and content pipeline; reference `docs/roadmap/UNPRO_DNA_MATCHING_LEARNING_CONTENT_PIPELINE_2026-10-11.md`. Documentation only; no implementation or funnel impact now.
 - [ ] Current mobile P0: active surface, shared viewport repair, real-DOM smoke tests; physical Gboard and authenticated final registration require device/session verification.
 - [ ] P0 Clara → onboarding réel : actions structurées confirmées par le rendu, assistance continue mobile/bureau, préremplissage partagé et reprise sans perte; valider échec, répétition, retour, rafraîchissement et voix/texte.

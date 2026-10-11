@@ -11,6 +11,7 @@ import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+import { formatEditorialDate } from "@/seo/editorialDates";
 
 
 const CATEGORIES = [
@@ -149,7 +150,7 @@ export default function BlogIndexPage() {
                       {article.published_at && (
                         <span className="flex items-center gap-1">
                           <CalendarDays className="h-3 w-3" />
-                          {new Date(article.published_at).toLocaleDateString("fr-CA")}
+                          <time dateTime={article.published_at}>{formatEditorialDate(article.published_at)}</time>
                         </span>
                       )}
                     </div>

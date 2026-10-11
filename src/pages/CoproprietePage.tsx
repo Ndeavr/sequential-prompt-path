@@ -244,7 +244,7 @@ const CoproprietePage = () => {
                     <span className="text-muted-foreground">Année de construction</span>
                     <span className="font-semibold">{buildYear[0]}</span>
                   </div>
-                  <Slider value={buildYear} onValueChange={setBuildYear} min={1960} max={2024} step={1} />
+                  <Slider value={buildYear} onValueChange={setBuildYear} min={1960} max={new Date().getFullYear()} step={1} />
                 </div>
                 {/* Units */}
                 <div>

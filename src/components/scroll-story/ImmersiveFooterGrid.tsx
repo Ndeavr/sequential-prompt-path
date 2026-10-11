@@ -19,7 +19,7 @@ export default function ImmersiveFooterGrid() {
         </div>
         <UnproLogo size={260} tone="dark" className="mt-16 h-auto w-full max-w-3xl" />
         <div className="mt-10 flex flex-col gap-5 border-t border-border/70 pt-6 text-sm text-readable-soft sm:flex-row sm:items-center sm:justify-between">
-          <span>UNPRO © 2026 · Québec, Canada</span>
+          <span>UNPRO © {new Date().getFullYear()} · Québec, Canada</span>
           <nav className="flex flex-wrap gap-x-5 gap-y-3" aria-label="Liens légaux">
             <Link className="transition-colors hover:text-foreground" to="/confidentialite">Confidentialité</Link>
             <Link className="transition-colors hover:text-foreground" to="/conditions">Conditions</Link>
