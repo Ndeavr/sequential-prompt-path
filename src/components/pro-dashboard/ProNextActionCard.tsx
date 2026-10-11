@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { getRbqApplicability } from "@/lib/compliance/rbqStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
@@ -35,18 +36,32 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
     };
   }, [profile?.id]);
 
-  const rbqPending =
-    !profile?.rbq_number || profile?.rbq_compliance_status !== "verified";
+  const applicability = getRbqApplicability({
+    specialty: profile?.specialty,
+    services: Array.isArray(profile?.services) ? profile.services : Array.isArray(profile?.categories) ? profile.categories : [],
+  });
+  const rbqVerified = !!profile?.rbq_number && profile?.rbq_compliance_status === "verified";
+  const rbqPending = applicability.status === "rbq_required" && !rbqVerified;
 
   let title: string;
   let detail: string;
   let cta: string;
   let to: string;
+  let note: string | null = null;
 
-  if (rbqPending) {
+  if (applicability.status === "rbq_not_required" && !rbqVerified) {
+    note = "Aucune licence RBQ requise pour les activités que vous avez déclarées.";
+  }
+
+  if (applicability.status === "rbq_needs_clarification" && !rbqVerified) {
+    title = "Vérifions les travaux que vous offrez";
+    detail = "Précisez vos travaux pour savoir si une licence RBQ s'applique. Les travaux réglementés restent en attente d'une licence vérifiée.";
+    cta = "Préciser mes travaux";
+    to = "/pro/profile";
+  } else if (rbqPending) {
     title = "Prochaine action : votre licence RBQ";
     detail = !profile?.rbq_number
-      ? "Ajoutez votre numéro de licence RBQ à votre fiche. Sans lui, aucun mandat ne peut vous être confié."
+      ? "Vos travaux déclarés exigent une licence RBQ. Ajoutez votre numéro : sans licence vérifiée, aucun mandat de travaux réglementés ne peut vous être confié."
       : "Votre licence RBQ est en cours de vérification par UNPRO. Vous pouvez compléter votre fiche pendant ce temps.";
     cta = "Compléter ma fiche";
     to = "/pro/profile";
@@ -70,6 +85,11 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
       {isContractorAgreementActive(profile) && (
         <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Votre entente est activée.
+        </p>
+      )}
+      {note && (
+        <p className="flex items-center gap-2 text-sm text-foreground" data-testid="rbq-not-required">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {note}
         </p>
       )}
       <div>

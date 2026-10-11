@@ -171,3 +171,72 @@ export function isEligibleForCategory(
   if (!rbqRequired) return true;
   return c.status === "verified";
 }
+
+/* ------------------------------------------------------------------ */
+/* Applicabilité RBQ selon les activités déclarées                      */
+/* ------------------------------------------------------------------ */
+/**
+ * Règle auditable, volontairement prudente :
+ * - rbq_required : au moins une activité déclarée est un travail de construction
+ *   (rénovation, réparation, installation) clairement visé par la Loi sur le bâtiment.
+ * - rbq_not_required : TOUTES les activités déclarées relèvent d'une exemption
+ *   officielle explicite (entretien ménager visant la propreté, ex. cirage de planchers —
+ *   FAQ RBQ « licence »).
+ * - rbq_needs_clarification : activité vide, inconnue ou mixte/ambiguë
+ *   (ex. pavage, peinture, paysagement, nettoyage de conduits) — un humain ou le
+ *   guide RBQ tranche. Dans le doute, aucun mandat réglementé sans licence vérifiée.
+ * Source : https://www.rbq.gouv.qc.ca/foire-aux-questions-faq/constructeur-proprietaire/licence/
+ */
+export type RbqApplicability = "rbq_required" | "rbq_not_required" | "rbq_needs_clarification";
+
+export interface RbqApplicabilityResult {
+  status: RbqApplicability;
+  certainty: "high" | "low";
+  matched: string[];
+  reasonFr: string;
+  source: string;
+}
+
+const RBQ_SOURCE = "https://www.rbq.gouv.qc.ca/foire-aux-questions-faq/constructeur-proprietaire/licence/";
+
+const REQUIRED_KEYWORDS = [
+  "toiture", "couvreur", "roofing", "fondation", "coffrage", "excavation", "plomb", "plumbing",
+  "electri", "hvac", "ventilation", "chauffage", "climatisation", "thermopompe", "isolation",
+  "renovation", "cuisine", "salle de bain", "carrelage", "ceramique", "charpent", "menuiserie",
+  "entrepreneur general", "gaz", "structur", "impermeabilisation", "waterproofing", "maconnerie",
+  "gypse", "fenetre", "porte", "revetement", "drain",
+];
+const EXEMPT_KEYWORDS = ["entretien menager", "menage", "nettoyage residentiel", "cirage", "conciergerie"];
+
+function norm(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+export function getRbqApplicability(input: {
+  specialty?: string | string[] | null;
+  services?: (string | null | undefined)[] | null;
+}): RbqApplicabilityResult {
+  const raw = [
+    ...(Array.isArray(input.specialty) ? input.specialty : [input.specialty]),
+    ...(input.services ?? []),
+  ]
+    .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    .map(norm);
+
+  if (raw.length === 0) {
+    return { status: "rbq_needs_clarification", certainty: "low", matched: [], source: RBQ_SOURCE,
+      reasonFr: "Aucune activité déclarée : impossible de savoir si une licence RBQ est requise." };
+  }
+  const required = raw.filter((a) => REQUIRED_KEYWORDS.some((k) => a.includes(k)));
+  if (required.length > 0) {
+    return { status: "rbq_required", certainty: "high", matched: required, source: RBQ_SOURCE,
+      reasonFr: "Au moins une activité déclarée est un travail de construction visé par la RBQ." };
+  }
+  const allExempt = raw.every((a) => EXEMPT_KEYWORDS.some((k) => a.includes(k)));
+  if (allExempt) {
+    return { status: "rbq_not_required", certainty: "high", matched: raw, source: RBQ_SOURCE,
+      reasonFr: "Les activités déclarées relèvent de l'entretien ménager de propreté, exempté par la RBQ." };
+  }
+  return { status: "rbq_needs_clarification", certainty: "low", matched: raw, source: RBQ_SOURCE,
+    reasonFr: "Les activités déclarées doivent être précisées pour savoir si une licence RBQ est requise." };
+}
