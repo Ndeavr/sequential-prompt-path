@@ -192,6 +192,15 @@ export function nextQualificationStep(
 /** Nombre maximal de questions posées par Clara avant l'audit. */
 export const MAX_QUALIFICATION_QUESTIONS = ALL_STEPS.length;
 
+/** Une adresse précise n'est jamais une déclaration de territoire. */
+export function isAddressAnswer(answer: string): boolean {
+  return /\b(adresse|ma propriété|mon domicile|à confirmer|place_id)\b/i.test(answer)
+    || /(?:^|\s)\d{1,6}\s+(?:\d+e?\s+)?(?:[\p{L}'’-]+\s+){0,3}(?:rue|avenue|ave\b|av\.|boulevard|boul\b|chemin|rang|street|road)/iu.test(answer);
+}
+
+export const CLARA_ADDRESS_CLARIFICATION =
+  "Cette adresse concerne-t-elle votre entreprise ou votre propriété personnelle? Elle ne détermine pas vos villes desservies.";
+
 export function isQualificationComplete(known: ClaraContractorQualification = read()): boolean {
   return nextQualificationStep(known) === null;
 }
@@ -203,6 +212,7 @@ export function applyAnswer(
 ): ClaraContractorQualification {
   const clean = answer.trim();
   if (!clean) return read();
+  if (step.field === "service_areas" && isAddressAnswer(clean)) return read();
   if (step.multi) {
     const list = clean
       .split(/[,;/]|\bet\b/i)

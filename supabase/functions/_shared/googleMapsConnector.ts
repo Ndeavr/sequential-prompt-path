@@ -38,7 +38,7 @@ export function googleConnectorAvailable(c?: GoogleMapsCredentials): boolean {
 function connectorHeaders(c: GoogleMapsCredentials) {
   return {
     "Authorization": `Bearer ${c.lovableKey}`,
-    "X-Connection-Api-Key": c.connectionKey!,
+    "X-Connection-Api-Key": c.connectionKey || "",
     "Content-Type": "application/json",
   };
 }
@@ -98,6 +98,7 @@ interface SearchTextOptions {
 }
 
 interface DetailsOptions {
+  sessionToken?: string;
   language?: string;
   fields?: string;
 }
@@ -118,98 +119,43 @@ export function getEffectiveServerKey(c?: GoogleMapsCredentials): string | null 
  * Autocomplete: prefers New Places API autocomplete via connector,
  * falls back to connector searchText, then legacy autocomplete.
  */
-export async function placesAutocomplete(
-  input: string,
-  opts: AutocompleteOptions = {},
-): Promise<ApiResult<PlacePrediction[]>> {
+export async function placesAutocomplete(input: string, opts: AutocompleteOptions = {}): Promise<ApiResult<PlacePrediction[]>> {
   const c = getGoogleMapsCredentials();
-  const language = opts.language || "fr";
-  const region = opts.region || "CA";
-
-  if (googleConnectorAvailable(c)) {
-    // 1) Try New Places API autocomplete
-    try {
-      const url = `${GATEWAY_BASE}/places/v1/places:autocomplete`;
-      const body: Record<string, unknown> = {
-        input: input.trim(),
-        languageCode: language,
-        regionCode: region,
-      };
-      if (opts.types) body.includedPrimaryTypes = [opts.types];
-      if (opts.sessionToken) body.sessionToken = opts.sessionToken;
-
-      const r = await fetch(url, {
-        method: "POST",
-        headers: {
-          ...connectorHeaders(c),
-          "X-Goog-FieldMask": AUTOCOMPLETE_FIELDS,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (r.ok) {
-        const data = await r.json();
-        const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
-        if (suggestions.length > 0) {
-          return {
-            data: suggestions.map((s: any) => {
-              const p = s.placePrediction;
-              return {
-                place_id: p?.placeId || "",
-                description: p?.text?.text || "",
-                structured_formatting: {
-                  main_text: p?.structuredFormat?.mainText?.text || "",
-                  secondary_text: p?.structuredFormat?.secondaryText?.text || "",
-                },
-              };
-            }),
-            source: "connector_places_autocomplete",
-          };
-        }
-      }
-    } catch (e) {
-      console.error("[googleMapsConnector] places:autocomplete failed:", e);
-    }
-
-    // 2) NO Text Search fallback here (cost invariant, incident 2026-08):
-    //    Text Search is a far more expensive SKU and is reserved for the
-    //    discovery gateway. Autocomplete degrades to the legacy autocomplete
-    //    endpoint below, or returns a structured error — never to Text Search.
-  }
-
-
-  // 3) Legacy direct key fallback (server key preferred, then browser key)
-  const key = getEffectiveServerKey(c);
-  if (!key) {
-    return {
-      data: null,
-      source: "missing_credentials",
-      error_message: "Aucune clé Google Maps configurée (LOVABLE_API_KEY+GOOGLE_MAPS_API_KEY ou GOOGLE_PLACES_API_KEY)",
-    };
-  }
-
-  const params = new URLSearchParams({
-    input: input.trim(),
-    key,
-    types: opts.types || "address",
-    language,
-  });
-  if (region) params.set("components", `country:${region}`);
-
-  const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`;
-  const r = await fetch(url);
-  const data = await r.json();
-
-  return {
-    data: (data.predictions || []).map((p: any) => ({
-      place_id: p.place_id,
-      description: p.description,
-      structured_formatting: p.structured_formatting,
-    })),
-    source: "legacy_autocomplete",
-    google_status: data.status,
-    error_message: data.error_message,
+  if (!googleConnectorAvailable(c)) return { data: null, source: "missing_connector", google_status: "API_KEY_MISSING", error_message: "Connexion Google Maps indisponible" };
+  const body: Record<string, unknown> = {
+    input: input.trim(), languageCode: opts.language || "fr", regionCode: "CA",
+    includedRegionCodes: ["ca"],
+    locationBias: { circle: { center: { latitude: 46.8139, longitude: -71.208 }, radius: 50000 } },
   };
+  // Legacy collections `address`, `geocode`, `establishment` are NOT New API primary types.
+  if (opts.types && !["address", "geocode", "establishment"].includes(opts.types)) body.includedPrimaryTypes = [opts.types];
+  if (opts.sessionToken) body.sessionToken = opts.sessionToken;
+  try {
+    const response = await fetch(`${GATEWAY_BASE}/places/v1/places:autocomplete`, {
+      method: "POST", headers: { ...connectorHeaders(c), "X-Goog-FieldMask": AUTOCOMPLETE_FIELDS }, body: JSON.stringify(body),
+    });
+    if (!response.ok) return await placesFailure(response, "connector_places_autocomplete");
+    const result = await response.json();
+    return { data: (result.suggestions || []).filter((s: any) => s.placePrediction?.placeId && s.placePrediction?.text?.text).slice(0, 5).map((s: any) => ({
+      place_id: s.placePrediction.placeId, description: s.placePrediction.text.text,
+      structured_formatting: { main_text: s.placePrediction.structuredFormat?.mainText?.text || "", secondary_text: s.placePrediction.structuredFormat?.secondaryText?.text || "" },
+    })), source: "connector_places_autocomplete", google_status: "OK" };
+  } catch { return { data: null, source: "connector_places_autocomplete", google_status: "NETWORK_ERROR", error_message: "Google Maps indisponible" }; }
+}
+
+async function placesFailure(response: Response, source: string): Promise<ApiResult<never>> {
+  const raw = await response.text();
+  let reason = "";
+  try { const body = JSON.parse(raw); reason = body.error?.details?.find((d: any) => d.reason)?.reason || ""; } catch { /* non-JSON provider failure */ }
+  const message = response.status === 403
+    ? reason === "API_KEY_HTTP_REFERRER_BLOCKED"
+      ? "Google Cloud : la clé serveur doit utiliser des restrictions IP ou aucune restriction de site."
+      : reason === "API_KEY_SERVICE_BLOCKED"
+        ? "Google Cloud : autorisez Places API (New) sur la clé serveur."
+        : "Google Cloud : vérifiez les restrictions de la clé serveur."
+    : `Google Maps indisponible (${response.status}).`;
+  console.error("[googleMapsConnector] denied", { status: response.status, reason });
+  return { data: null, source, google_status: reason || `HTTP_${response.status}`, error_message: message };
 }
 
 /**
@@ -290,75 +236,21 @@ export async function placesSearchText(
 /**
  * Place details via connector (New API) or legacy fallback.
  */
-export async function placeDetails(
-  placeId: string,
-  opts: DetailsOptions = {},
-): Promise<ApiResult<PlaceDetails>> {
+export async function placeDetails(placeId: string, opts: DetailsOptions = {}): Promise<ApiResult<PlaceDetails>> {
   const c = getGoogleMapsCredentials();
-  const language = opts.language || "fr";
-
-  if (googleConnectorAvailable(c)) {
-    try {
-      const id = placeId.startsWith("places/") ? placeId : `places/${placeId}`;
-      const url = `${GATEWAY_BASE}/places/v1/${encodeURIComponent(id)}`;
-      const r = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${c.lovableKey}`,
-          "X-Connection-Api-Key": c.connectionKey!,
-          "X-Goog-FieldMask": opts.fields || DETAILS_FIELDS,
-        },
-      });
-
-      if (r.ok) {
-        const data = await r.json();
-        if (data.id) {
-          return {
-            data: normalizeNewPlaceDetails(data),
-            source: "connector_details",
-            google_status: "OK",
-          };
-        }
-      }
-    } catch (e) {
-      console.error("[googleMapsConnector] place details failed:", e);
-    }
-  }
-
-  // Legacy fallback
-  const key = getEffectiveServerKey(c);
-  if (!key) {
-    return {
-      data: null,
-      source: "missing_credentials",
-      error_message: "Aucune clé Google Maps disponible pour les détails",
-    };
-  }
-
-  const legacyId = placeId.startsWith("places/") ? placeId.slice(7) : placeId;
-  const fields =
-    opts.fields ||
-    "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,types,address_components,geometry";
-  const url =
-    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(legacyId)}&fields=${fields}&language=${language}&key=${key}`;
-
-  const r = await fetch(url);
-  const data = await r.json();
-
-  if (data.status !== "OK" || !data.result) {
-    return {
-      data: null,
-      source: "legacy_details",
-      google_status: data.status,
-      error_message: data.error_message,
-    };
-  }
-
-  return {
-    data: normalizeLegacyPlaceDetails(data.result),
-    source: "legacy_details",
-    google_status: "OK",
-  };
+  if (!googleConnectorAvailable(c)) return { data: null, source: "missing_connector", google_status: "API_KEY_MISSING", error_message: "Connexion Google Maps indisponible" };
+  const id = placeId.replace(/^places\//, "");
+  const params = new URLSearchParams({ languageCode: opts.language || "fr" });
+  if (opts.sessionToken) params.set("sessionToken", opts.sessionToken);
+  try {
+    const response = await fetch(`${GATEWAY_BASE}/places/v1/places/${encodeURIComponent(id)}?${params}`, {
+      headers: { ...connectorHeaders(c), "X-Goog-FieldMask": opts.fields || DETAILS_FIELDS },
+    });
+    if (!response.ok) return await placesFailure(response, "connector_details");
+    const data = await response.json();
+    if (!data.id) return { data: null, source: "connector_details", google_status: "DETAILS_FAILED" };
+    return { data: normalizeNewPlaceDetails(data), source: "connector_details", google_status: "OK" };
+  } catch { return { data: null, source: "connector_details", google_status: "NETWORK_ERROR" }; }
 }
 
 function normalizeNewPlaceDetails(p: any): PlaceDetails {

@@ -17,6 +17,8 @@ import { CheckCircle2, ExternalLink, MapPin, Phone, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getClaraQualification,
+  isAddressAnswer,
+  CLARA_ADDRESS_CLARIFICATION,
   saveClaraQualification,
   type ClaraProvenance,
 } from "@/services/clara/claraContractorQualification";
@@ -311,6 +313,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       case "trade": saveClaraQualification({ primary_trade: clean.slice(0, 120) }); break;
       case "customer": saveClaraQualification({ customer_type: clean.slice(0, 60) }); break;
       case "areas": {
+        if (isAddressAnswer(clean)) { await say(CLARA_ADDRESS_CLARIFICATION); return; }
         const list = clean.split(/[,;/]|\bet\b/i).map((v) => v.trim()).filter(Boolean).slice(0, 8);
         saveClaraQualification({ service_areas: list });
         break;
@@ -395,6 +398,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   useImperativeHandle(ref, () => ({
     handleText: (text: string) => {
       const s = stepRef.current;
+      if (isAddressAnswer(text)) { addUser(text); void say(CLARA_ADDRESS_CLARIFICATION); return true; }
       if (s === "name" || s === "pick") { addUser(text); void search(text); return true; }
       if (s === "goals") { const g = goals; addUser(text); void (async () => { saveClaraQualification({ goals: [text.slice(0, 80)] }); writeFlow({ priority: g[0] ?? "other" }); void trackFunnelStep("goals_completed", { metadata: { surface: "home_clara_chat", free: true } }); await runAudit(); })(); return true; }
       if (["trade", "customer", "areas", "goal_detail", "goal_detail2", "appointments", "avg_value"].includes(s)) {
@@ -402,7 +406,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       }
       return false;
     },
-  }), [addUser, answer, goals, runAudit, search]);
+  }), [addUser, answer, goals, runAudit, search, say]);
 
   /* ------------------------------------------------------------ rendu */
   const known = getClaraQualification();

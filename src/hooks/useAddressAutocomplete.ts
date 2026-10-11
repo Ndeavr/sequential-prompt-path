@@ -5,6 +5,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { peekClaraSessionToken } from "@/services/clara/claraSession";
 import type { VerifiedAddressData } from "@/types/address";
 
 export interface AddressPrediction {
@@ -32,26 +33,32 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
   const [error, setError] = useState<AddressServiceError | null>(null);
   const debounceRef = useRef<number | null>(null);
   const reqIdRef = useRef(0);
+  const sessionRef = useRef<string | null>(null);
 
   useEffect(() => () => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    reqIdRef.current += 1;
   }, []);
 
   const search = useCallback((input: string) => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    const reqId = ++reqIdRef.current;
+    setPredictions([]);
     if (!input || input.trim().length < minChars) {
       setPredictions([]);
       setError(null);
+      setIsLoading(false);
       return;
     }
+    sessionRef.current ??= crypto.randomUUID();
+    setIsLoading(true);
     debounceRef.current = window.setTimeout(async () => {
-      const reqId = ++reqIdRef.current;
       setIsLoading(true);
       setError(null);
       try {
         const { data, error: fnError } = await supabase.functions.invoke(
           "google-places-autocomplete",
-          { body: { input, types: "address", region, language } }
+          { body: { input, types: "address", region, language, sessionToken: sessionRef.current, session_token: peekClaraSessionToken() } }
         );
         if (reqId !== reqIdRef.current) return;
         if (fnError) {
@@ -80,10 +87,11 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
         "google-places-autocomplete",
-        { body: { place_id: placeId } }
+        { body: { place_id: placeId, sessionToken: sessionRef.current, session_token: peekClaraSessionToken() } }
       );
       if (fnError || !data?.result) return null;
       const r = data.result;
+      if (r.place_id !== placeId || typeof r.address !== "string" || !r.address.trim()) return null;
       return {
         verified: true,
         placeId,
@@ -99,10 +107,15 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
       };
     } catch {
       return null;
+    } finally {
+      sessionRef.current = null;
     }
   }, []);
 
   const reset = useCallback(() => {
+    reqIdRef.current += 1;
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    setIsLoading(false);
     setPredictions([]);
     setError(null);
   }, []);

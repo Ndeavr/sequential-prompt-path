@@ -10,7 +10,7 @@ const css = readFileSync("src/index.css", "utf8");
 
 describe("Dossier maison — adresse réelle et actions honnêtes", () => {
   it("garde Historique et Dossier maison distincts", () => {
-    expect(box).toContain('aria-label="Ouvrir mon dossier maison"');
+    expect(box).toContain('<Home aria-hidden="true" /> Dossier maison');
     expect(box).toContain('aria-label="Voir mes conversations"');
   });
   it("utilise le sélecteur Google existant et une clé unique d'adresse", () => {

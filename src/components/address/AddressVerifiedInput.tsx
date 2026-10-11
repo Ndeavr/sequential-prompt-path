@@ -3,14 +3,15 @@
  * Single, mandatory-verification address capture used everywhere.
  * The user MUST select a Google Places suggestion. Free text is rejected.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAddressAutocomplete, type AddressPrediction } from "@/hooks/useAddressAutocomplete";
-import type { VerifiedAddress, VerifiedAddressData } from "@/types/address";
+import type { VerifiedAddress } from "@/types/address";
 import { emptyAddress, isVerified } from "@/types/address";
 
 interface AddressVerifiedInputProps {
@@ -34,6 +35,9 @@ export default function AddressVerifiedInput({
 }: AddressVerifiedInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
+  const listId = `${inputId}-predictions`;
+  const selectionRef = useRef(0);
   const [draft, setDraft] = useState(() => {
     if (isVerified(value)) return value.fullAddress;
     return value?.raw || "";
@@ -55,19 +59,14 @@ export default function AddressVerifiedInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value && (isVerified(value) ? value.placeId : value.raw)]);
 
-  // Close on outside click
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+  useEffect(() => () => { selectionRef.current += 1; }, []);
 
   const verified = isVerified(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
+    selectionRef.current += 1;
+    setResolving(false);
     setDraft(v);
     // Any keystroke invalidates a previously verified address
     if (verified) {
@@ -81,11 +80,13 @@ export default function AddressVerifiedInput({
   };
 
   const handleSelect = async (pred: AddressPrediction) => {
+    const selection = ++selectionRef.current;
     setIsOpen(false);
     reset();
     setDraft(pred.description);
     setResolving(true);
     const details = await fetchDetails(pred.place_id);
+    if (selection !== selectionRef.current) return;
     setResolving(false);
     if (details) {
       // Preserve unit if user already typed one
@@ -98,6 +99,8 @@ export default function AddressVerifiedInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") { setIsOpen(false); return; }
+    if (e.key === "Enter") e.preventDefault();
     if (!isOpen || predictions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -127,7 +130,7 @@ export default function AddressVerifiedInput({
   return (
     <div ref={containerRef} className={cn("space-y-2", className)}>
       {label && (
-        <Label className="text-sm font-medium">
+        <Label htmlFor={inputId} className="text-sm font-medium">
           {label} {required && <span className="text-destructive">*</span>}
         </Label>
       )}
@@ -167,10 +170,18 @@ export default function AddressVerifiedInput({
           )}
         </div>
       ) : (
+        <Popover open={isOpen && predictions.length > 0} onOpenChange={setIsOpen}>
         <div className="relative">
+          <PopoverAnchor asChild><div>
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
           <Input
             ref={inputRef}
+            id={inputId}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={isOpen && predictions.length > 0}
+            aria-controls={listId}
+            aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
             type="text"
             placeholder={placeholder}
             value={draft}
@@ -181,31 +192,40 @@ export default function AddressVerifiedInput({
             autoComplete="off"
             aria-invalid={!!draft && !verified}
           />
+          </div></PopoverAnchor>
           {(isLoading || resolving) && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
           )}
           {isOpen && predictions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border/40 bg-popover shadow-lg overflow-hidden">
-              <ul role="listbox" className="max-h-72 overflow-y-auto">
+            <PopoverContent
+              align="start" sideOffset={6} collisionPadding={8}
+              className="address-predictions p-0"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              onInteractOutside={(e) => { if (e.target === inputRef.current) e.preventDefault(); }}
+            >
+              <ul id={listId} role="listbox" aria-label="Adresses suggérées" className="overflow-y-auto overscroll-contain">
                 {predictions.map((p, idx) => (
                   <li
                     key={p.place_id}
+                    id={`${listId}-${idx}`}
                     role="option"
                     aria-selected={idx === activeIndex}
-                    onMouseDown={(e) => { e.preventDefault(); handleSelect(p); }}
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => void handleSelect(p)}
                     onMouseEnter={() => setActiveIndex(idx)}
                     className={cn(
-                      "px-3 py-2.5 cursor-pointer flex items-start gap-2 text-sm transition-colors",
+                      "min-h-11 px-3 py-2.5 cursor-pointer flex items-start gap-2 text-sm transition-colors",
                       idx === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
                     )}
                   >
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">
+                      <div className="font-medium break-words">
                         {p.structured_formatting?.main_text || p.description}
                       </div>
                       {p.structured_formatting?.secondary_text && (
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="text-xs text-muted-foreground break-words">
                           {p.structured_formatting.secondary_text}
                         </div>
                       )}
@@ -213,7 +233,8 @@ export default function AddressVerifiedInput({
                   </li>
                 ))}
               </ul>
-            </div>
+              <p className="px-3 py-1 text-xs text-muted-foreground">Google Maps</p>
+            </PopoverContent>
           )}
           {serviceError && (
             <div className="mt-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 space-y-1.5">
@@ -221,10 +242,7 @@ export default function AddressVerifiedInput({
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <div className="font-medium">Service d'adresse temporairement indisponible</div>
-                  <div className="text-[11px] opacity-80 mt-0.5">
-                    Code: {serviceError.code}
-                    {serviceError.message && serviceError.code !== serviceError.message ? ` — ${serviceError.message}` : ""}
-                  </div>
+                  <div className="text-xs mt-0.5">Conservez votre adresse à confirmer ou réessayez.</div>
                 </div>
               </div>
               <Button
@@ -250,10 +268,11 @@ export default function AddressVerifiedInput({
           {!serviceError && draft && !verified && !isLoading && !resolving && predictions.length === 0 && (
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
               <AlertCircle className="h-3 w-3" />
-              <span>Sélectionnez une adresse dans la liste pour la vérifier</span>
+              <span>Aucune suggestion affichée. Précisez la ville; l'adresse reste à confirmer.</span>
             </div>
           )}
         </div>
+        </Popover>
       )}
     </div>
   );

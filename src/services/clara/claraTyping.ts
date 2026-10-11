@@ -12,8 +12,8 @@ const NEARBY = "azertyuiopqsdfghjklmwxcvbn";
 export const CLARA_TYPO_CHANCE = 0;
 
 function charDelay(char: string, rand: () => number): number {
-  // Cadence lisible : ~20–28 ms par caractère (35–50 caractères/seconde).
-  const base = 20 + Math.round(rand() * 8);
+  // Affichage seulement : environ 20 caractères/seconde.
+  const base = 44 + Math.round(rand() * 12);
   if (/[.!?…]/.test(char)) return base + 220 + Math.round(rand() * 120);
   if (/[,;:—]/.test(char)) return base + 90 + Math.round(rand() * 60);
   return base;
@@ -30,15 +30,7 @@ export function buildTypingFrames(
 ): TypingFrame[] {
   const rand = options.rand ?? Math.random;
   if (options.reducedMotion) {
-    // Révélation simple et rapide, par mots, sans fausse correction.
-    const words = text.split(/(\s+)/);
-    const frames: TypingFrame[] = [];
-    let acc = "";
-    for (const word of words) {
-      acc += word;
-      if (word.trim()) frames.push({ text: acc, delay: 18 });
-    }
-    return frames.length ? frames : [{ text, delay: 0 }];
+    return [{ text, delay: 0 }];
   }
 
   const chance = options.typoChance ?? CLARA_TYPO_CHANCE;
@@ -70,7 +62,9 @@ export function buildTypingFrames(
     }
     frames.push({ text: text.slice(0, i + 1), delay: charDelay(text[i], rand) });
   }
-  return frames;
+  const total = frames.reduce((sum, frame) => sum + frame.delay, 0);
+  const factor = Math.min(1, 16000 / Math.max(total, 1));
+  return frames.map((frame) => ({ ...frame, delay: frame.delay * factor }));
 }
 
 /** Joue les images ; s'arrête proprement si le composant disparaît. */
@@ -85,5 +79,37 @@ export async function playTyping(
     onFrame(frame.text);
     await new Promise<void>((resolve) => window.setTimeout(resolve, frame.delay));
   }
-  onFrame(text);
+  if (!options.isAlive || options.isAlive()) onFrame(text);
+}
+
+/** Une seule révélation monotone, même si plusieurs jetons arrivent ensemble. */
+export function createStreamingTyping(onFrame: (text: string) => void, options: {
+  reducedMotion?: boolean; isAlive?: () => boolean;
+} = {}) {
+  let target = "";
+  let shown = "";
+  let timer = 0;
+  let ended = false;
+  let stopped = false;
+  const started = performance.now();
+  let resolveDone: () => void = () => undefined;
+  const done = new Promise<void>((resolve) => { resolveDone = resolve; });
+  const tick = () => {
+    if (stopped || (options.isAlive && !options.isAlive())) { resolveDone(); return; }
+    const remaining = target.length - shown.length;
+    if (remaining > 0) {
+      const step = options.reducedMotion || performance.now() - started >= 16000
+        ? remaining : Math.max(1, Math.ceil(remaining / 240));
+      shown = target.slice(0, shown.length + step);
+      onFrame(shown);
+    }
+    if (ended && shown === target) { resolveDone(); return; }
+    timer = window.setTimeout(tick, charDelay(shown.at(-1) ?? "", () => 0.5));
+  };
+  tick();
+  return {
+    update(text: string) { if (text.startsWith(target)) target = text; },
+    finish() { ended = true; return done; },
+    cancel() { stopped = true; window.clearTimeout(timer); resolveDone(); },
+  };
 }

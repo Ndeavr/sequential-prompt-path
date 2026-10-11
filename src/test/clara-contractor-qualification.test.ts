@@ -13,6 +13,7 @@ vi.mock("@/services/clara/claraSession", () => ({
 
 import {
   applyAnswer,
+  isAddressAnswer,
   getClaraQualification,
   isQualificationComplete,
   MAX_QUALIFICATION_QUESTIONS,
@@ -66,8 +67,22 @@ describe("Clara — qualification entrepreneur", () => {
     saveClaraQualification({ primary_trade: "Isolation", customer_type: "Résidentiel", business_city: "Terrebonne" });
     const step = nextQualificationStep();
     expect(step?.field).toBe("service_areas");
-    applyAnswer(step!, "Laval, Montréal et Repentigny");
+    if (!step) throw new Error("Missing step");
+    applyAnswer(step, "Laval, Montréal et Repentigny");
     expect(getClaraQualification().service_areas).toEqual(["Laval", "Montréal", "Repentigny"]);
+  });
+
+  it("ne transforme jamais une adresse de propriété à confirmer en territoires", () => {
+    saveClaraQualification({ primary_trade: "Isolation", customer_type: "Résidentiel" });
+    const step = nextQualificationStep();
+    if (!step) throw new Error("Missing step");
+    for (const answer of ["L'adresse de ma propriété est 128 78e Avenue, LaSalle (à confirmer).", "128 78e ave", "123 rue Centrale"]) {
+      expect(isAddressAnswer(answer)).toBe(true);
+      applyAnswer(step, answer);
+      expect(getClaraQualification().service_areas).toBeUndefined();
+      expect(nextQualificationStep()?.field).toBe("service_areas");
+    }
+    expect(isAddressAnswer("Laval, Montréal et Repentigny")).toBe(false);
   });
 
   it("termine la qualification une fois toutes les réponses obtenues", () => {

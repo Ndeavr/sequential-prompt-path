@@ -16,13 +16,17 @@ describe("Clara — écriture progressive", () => {
     expect(wrong.length).toBeGreaterThan(0);
     expect(wrong.length).toBeLessThanOrEqual(6);
   });
-  it("délais 20–28 ms par lettre", () => {
+  it("délais 44–56 ms par lettre", () => {
     const frames = buildTypingFrames("abcdefghij", { typoChance: 0 });
-    frames.forEach((f) => expect(f.delay).toBeGreaterThanOrEqual(20));
-    frames.forEach((f) => expect(f.delay).toBeLessThanOrEqual(28));
+    frames.forEach((f) => expect(f.delay).toBeGreaterThanOrEqual(44));
+    frames.forEach((f) => expect(f.delay).toBeLessThanOrEqual(56));
   });
   it("mouvement réduit : aucune fausse correction", () => {
     const frames = buildTypingFrames(text, { reducedMotion: true });
     frames.forEach((f) => expect(text.startsWith(f.text)).toBe(true));
+    expect(frames).toEqual([{ text, delay: 0 }]);
+  });
+  it("borne les messages longs à 16 secondes", () => {
+    expect(buildTypingFrames("Un long message. ".repeat(300)).reduce((sum, frame) => sum + frame.delay, 0)).toBeLessThanOrEqual(16001);
   });
 });

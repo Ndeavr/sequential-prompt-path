@@ -54,6 +54,8 @@ import {
 } from "@/services/clara/claraVoiceBridge";
 import {
   applyAnswer,
+  isAddressAnswer,
+  CLARA_ADDRESS_CLARIFICATION,
   CLARA_CONTRACTOR_ANALYSIS_NOTE,
   CLARA_CONTRACTOR_OPENING,
   getClaraQualification,
@@ -62,7 +64,7 @@ import {
   type ClaraQualificationStep,
   saveClaraQualification,
 } from "@/services/clara/claraContractorQualification";
-import { playTyping } from "@/services/clara/claraTyping";
+import { playTyping, createStreamingTyping } from "@/services/clara/claraTyping";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
 import {
   destinationCtaLabel,
@@ -138,6 +140,7 @@ function reconcileMessages(current: Msg[], incoming: Msg[]): Msg[] {
     const persisted = pending.get(message.id);
     if (!persisted) return message;
     pending.delete(message.id);
+    if (message.status === "streaming") return message;
     return { ...message, ...persisted, status: "complete" as const };
   });
   for (const message of incoming) {
@@ -677,6 +680,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         setQuickReplies(null);
         // Réponse vocale à la question en cours : même enregistrement que le texte.
         if (qualificationStepRef.current) {
+          if (qualificationStepRef.current.field === "service_areas" && isAddressAnswer(detail.text)) return;
           applyAnswer(qualificationStepRef.current, detail.text);
           qualificationStepRef.current = null;
           // Même machine d’états que le texte : question suivante ou transition.
@@ -964,6 +968,11 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       if (pendingStep) {
         setBusy(true);
         void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        if (pendingStep.field === "service_areas" && isAddressAnswer(text)) {
+          try { await sayClara(CLARA_ADDRESS_CLARIFICATION); }
+          finally { setBusy(false); }
+          return;
+        }
         applyAnswer(pendingStep, text);
         qualificationStepRef.current = null;
         try {
@@ -1038,6 +1047,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
 
       const assistantId = uid();
+      const reveal = createStreamingTyping((shown) => {
+        setMessages((prev) => prev.map((m) => m.id === assistantId
+          ? { ...m, text: shown, status: "streaming" } : m));
+      }, {
+        reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+        isAlive: () => mountedRef.current,
+      });
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/alex-chat`, {
           method: "POST",
@@ -1052,6 +1068,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             context: {
               surface: "home_clara_box",
               mode: nextMode,
+              userRole: audienceRef.current,
+              contractorQualification: audienceRef.current === "contractor" ? getClaraQualification() : undefined,
+              addressScope: "homeownerPropertyAddress is separate from contractorBusinessAddress and contractorServiceArea; pending addresses are unverified",
               workflow: workflowRef.current,
             },
           }),
@@ -1086,11 +1105,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
               if (typeof delta === "string") {
                 full += delta;
                 const shown = cleanAlexText(extractQuickReplies(full).text);
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, text: shown, status: "streaming" } : m,
-                  ),
-                );
+                reveal.update(shown);
               }
             } catch {
               /* partial frame — ignore */
@@ -1104,10 +1119,6 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         const guidedText = stripOpenAnnouncement(rewriteGuidance(finalText, destination));
         const shownText =
           guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, text: shownText, status: "complete" } : m)),
-        );
-        setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
         // Curseur maison : dernière question propriétaire, restaurée au retour.
         if (audienceRef.current === "homeowner") {
           rememberHomeCursor({ text: shownText, options: parsed.options.length >= 2 ? parsed.options : [] });
@@ -1153,12 +1164,19 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           setQuickReplies(null);
           await runOpen(detected, text);
         }
+        await reveal.finish();
+        if (mountedRef.current) {
+          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, text: shownText, status: "complete" } : m));
+          if (!destination) setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
+        }
       } catch {
+        reveal.cancel();
         setMessages((prev) => prev.map((m) => m.id === assistantId
           ? { ...m, text: m.text || copy.fallback, status: "failed" }
           : m));
         setError(copy.fallback);
       } finally {
+        reveal.cancel();
         setBusy(false);
         setMode((current) => current === "ANALYZING" ? nextMode : current);
         focusComposer();
@@ -1605,8 +1623,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             setDossierOpen(false);
             setDossierEditAddress(false);
             trackCopilotEvent("clara_property_address_saved", { surface: "home_clara_box", provenance: entry.provenance });
-            // L'adresse confirmée par le serveur fait avancer la conversation.
-            void send(`L'adresse de ma propriété est ${entry.label}${entry.provenance === "pending" ? " (à confirmer)" : ""}.`);
+            // Une sauvegarde de dossier n'est jamais une réponse à la qualification entrepreneur.
+            const note = `L'adresse de ma propriété est ${entry.label}${entry.provenance === "pending" ? " (à confirmer)" : ""}.`;
+            if (audienceRef.current === "contractor") {
+              addFlowUserMessage(note);
+              void sayClara("L'adresse reste dans votre dossier maison, séparée des territoires de votre entreprise. Dans quelles villes souhaitez-vous travailler?");
+            } else void send(note);
           }}
         />
         <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
