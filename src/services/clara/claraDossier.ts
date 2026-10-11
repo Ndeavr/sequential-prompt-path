@@ -32,6 +32,8 @@ export interface DossierEntry {
 
 export const DOSSIER_UPDATED_EVENT = "unpro:dossier-maison-updated";
 export const DOSSIER_OPEN_EVENT = "unpro:dossier-maison-open";
+/** Clé unique de l'adresse de la propriété : une seule ligne, jamais dupliquée. */
+export const PROPERTY_ADDRESS_KEY = "property_address";
 
 export const DOSSIER_SECTIONS: Array<{ key: DossierCategory; title: string; empty: string }> = [
   { key: "property", title: "Votre propriété", empty: "Adresse et type de propriété pas encore confirmés." },
