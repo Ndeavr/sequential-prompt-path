@@ -7,7 +7,7 @@ const fn = readFileSync("supabase/functions/clara-session/index.ts", "utf8");
 
 describe("Clara — nouvelle conversation", () => {
   it("expose un bouton discret accessible", () => {
-    expect(box).toContain('className="home-clara-reset"');
+    expect(box).toContain('className="home-clara-reset min-h-11 gap-2"');
     expect(box).toContain("aria-label={copy.reset}");
     expect(box).toContain("Nouvelle conversation");
   });

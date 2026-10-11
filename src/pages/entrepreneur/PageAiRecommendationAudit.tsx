@@ -41,6 +41,7 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { getClaraQualification } from "@/services/clara/claraContractorQualification";
 import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
 import { AuditPersonalizedOfferCard } from "@/components/entrepreneur/AuditPersonalizedOfferCard";
+import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
 
 
 const FALLBACK_AUDIT_DISMISSED_KEY = "unpro_audit_fallback_350_dismissed";
@@ -479,7 +480,7 @@ export default function PageAiRecommendationAudit() {
   const currentStep = result ? 2 : 1;
 
   return (
-    <div className="audit-gold min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
+    <div className="audit-gold audit-pro-page min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Helmet>
         <title>Audit IA gratuit — Découvrez comment l'IA voit votre entreprise | UNPRO</title>
         <meta
@@ -680,6 +681,7 @@ export default function PageAiRecommendationAudit() {
         {/* ------------------------------------- Operational sections A–F */}
         <OperationalSections onAuditClick={scrollToAudit} />
       </main>
+      <ClaraFormAssistant form="contractor_audit" step={currentStep} />
     </div>
   );
 }

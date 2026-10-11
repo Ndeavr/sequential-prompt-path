@@ -17,6 +17,8 @@ export interface ClaraDestination {
   spoken: string;
   /** Libellé du bouton d'ouverture, identique pour Clara et pour l'utilisateur. */
   ctaLabel?: string;
+  /** Sélecteur CSS pour vérifier que la page est bien montée. */
+  mountSelector?: string;
 }
 
 /**
@@ -24,15 +26,15 @@ export interface ClaraDestination {
  * conversation et poursuit la qualification (jamais de route inventée).
  */
 const DESTINATIONS: Record<ClaraWorkflowIntent, ClaraDestination | null> = {
-  quote_comparison: { path: "/compare-quotes", spoken: "Oui — je vous y amène." },
-  quote_analysis: { path: "/compare-quotes", spoken: "Oui — je vous y amène." },
-  contractor_verification: { path: "/verifier-un-entrepreneur", spoken: "Oui — je vous y amène." },
-  contractor_onboarding: { path: "/entrepreneurs/audit-ia", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir mon audit gratuit" },
-  affiliate_onboarding: { path: "/affilies/onboarding", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir le formulaire" },
-  design_generation: { path: "/design", spoken: "Oui — je vous y amène." },
+  quote_comparison: { path: "/compare-quotes", spoken: "Oui — je vous y amène.", mountSelector: ".compare-quotes-page" },
+  quote_analysis: { path: "/compare-quotes", spoken: "Oui — je vous y amène.", mountSelector: ".compare-quotes-page" },
+  contractor_verification: { path: "/verifier-un-entrepreneur", spoken: "Oui — je vous y amène.", mountSelector: ".verify-contractor-page" },
+  contractor_onboarding: { path: "/entrepreneurs/audit-ia", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir mon audit gratuit", mountSelector: ".audit-pro-page" },
+  affiliate_onboarding: { path: "/affilies/onboarding", spoken: "Oui — je vous y amène.", ctaLabel: "Ouvrir le formulaire", mountSelector: ".affiliate-onboarding-page" },
+  design_generation: { path: "/design", spoken: "Oui — je vous y amène.", mountSelector: "main" },
   photo_problem_analysis: null,
   video_problem_analysis: null,
-  contractor_search: { path: "/decrire-mon-projet", spoken: "Oui — je vous y amène." },
+  contractor_search: { path: "/decrire-mon-projet", spoken: "Oui — je vous y amène.", mountSelector: "main" },
   homeowner_problem: null,
   appointment_booking: null,
   general_question: null,
@@ -116,6 +118,8 @@ export function isInternalPath(target: string): boolean {
   return target.startsWith("/") && !target.startsWith("//");
 }
 
+let activeNavigation: string | null = null;
+
 /**
  * Ouverture unique, partagée par Clara et par le bouton visible.
  * Ferme le clavier mobile, change de route, puis vérifie réellement que
@@ -127,26 +131,49 @@ export async function openClaraDestination(
   context?: { intent?: string; note?: string },
 ): Promise<{ ok: boolean }> {
   if (!isInternalPath(destination.path)) return { ok: false };
+  
+  // Anti-doublon : on ignore les clics répétés sur la même destination.
+  if (activeNavigation === destination.path) return { ok: false };
+  activeNavigation = destination.path;
 
   try {
     const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
     active?.blur?.();
 
+    // Passage par state uniquement (aucune donnée sensible en URL).
     navigate(destination.path, {
       state: { fromClara: true, claraIntent: context?.intent, claraContext: context?.note },
     });
 
-    await new Promise<void>((resolve) => {
-      if (typeof window === "undefined") return resolve();
-      window.setTimeout(resolve, 120);
-    });
+    // Attente du changement de route et du montage du composant cible.
+    const start = Date.now();
+    let arrived = false;
+    
+    while (Date.now() - start < 2000) {
+      if (typeof window !== "undefined") {
+        const pathMatch = window.location.pathname === destination.path;
+        const mounted = !destination.mountSelector || !!document.querySelector(destination.mountSelector);
+        
+        if (pathMatch && mounted) {
+          arrived = true;
+          break;
+        }
+      } else {
+        arrived = true;
+        break;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
 
-    if (typeof window === "undefined") return { ok: true };
-    const arrived = window.location.pathname === destination.path;
-    if (arrived) window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    if (arrived && typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }
+    
     return { ok: arrived };
   } catch {
     return { ok: false };
+  } finally {
+    activeNavigation = null;
   }
 }
 

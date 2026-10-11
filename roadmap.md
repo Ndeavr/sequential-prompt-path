@@ -2,6 +2,7 @@
 
 - [ ] DEFERRED after first two real paid $350 contractor activations: DNA matching, learning, voluntary questionnaire, feedback, and content pipeline; reference `docs/roadmap/UNPRO_DNA_MATCHING_LEARNING_CONTENT_PIPELINE_2026-10-11.md`. Documentation only; no implementation or funnel impact now.
 - [ ] Current mobile P0: active surface, shared viewport repair, real-DOM smoke tests; physical Gboard and authenticated final registration require device/session verification.
+- [ ] P0 Clara → onboarding réel : actions structurées confirmées par le rendu, assistance continue mobile/bureau, préremplissage partagé et reprise sans perte; valider échec, répétition, retour, rafraîchissement et voix/texte.
 
 - [ ] P0 mobile Clara: keyboard-aware viewport, one scroll owner, shared live voice transcript; targeted tests and mobile browser checks.
 - [ ] Publish mobile repair only after checks and security gate pass; existing critical findings remain an external publication blocker.

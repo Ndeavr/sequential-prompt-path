@@ -58,6 +58,7 @@ async def chat_case(browser,w,h):
     prefix=f'{w}x{h}'
     await check(page,'.home-clara-composer',prefix+' composer')
     await check(page,'.home-clara-textarea',prefix+' input')
+    await check(page,'[data-chat-row="commands"]',prefix+' command row')
     await check(page,'.home-clara-message[data-role="assistant"]',prefix+' last response','.home-clara-conversation > div')
     await field.fill('Un problème à comprendre'); await page.get_by_role('button',name='Send',exact=True).click()
     await page.get_by_role('group',name='Réponses rapides',exact=True).wait_for()
@@ -68,6 +69,20 @@ async def chat_case(browser,w,h):
     if await jump.count(): await jump.click()
     await page.wait_for_timeout(500)
     await check(page,'[aria-label="Réponses rapides"] button',prefix+' last reply','.home-clara-conversation > div')
+    # Portaled menus remain inside the visible viewport, independent of the
+    # chat card's overflow clipping.
+    await page.get_by_role('button',name='Ajouter une photo ou un document',exact=True).click()
+    await page.get_by_role('menu').last.wait_for()
+    await check(page,'[role="menu"]',prefix+' media menu')
+    await page.keyboard.press('Escape')
+    await page.get_by_role('button',name='Voir mes conversations',exact=True).click()
+    await page.get_by_role('menu').last.wait_for()
+    await check(page,'[role="menu"]',prefix+' history menu')
+    await page.keyboard.press('Escape')
+    await page.get_by_role('button',name='Plus d’actions',exact=True).click()
+    await page.get_by_role('menu').last.wait_for()
+    await check(page,'[role="menu"]',prefix+' actions menu')
+    await page.get_by_role('menuitem',name='Dossier maison',exact=True).click()
     scroller=page.locator('.home-clara-conversation > div').first
     await scroller.evaluate('e=>e.scrollTop=0'); await page.wait_for_timeout(300)
     before=await scroller.evaluate('e=>e.scrollTop')
@@ -77,7 +92,10 @@ async def chat_case(browser,w,h):
     after=await scroller.evaluate('e=>e.scrollTop')
     assert abs(after-before)<2, f'manual reading displaced: {before}->{after}'
     RESULTS.append({'name':prefix+' manual scroll preserved','pass':True})
-    await page.get_by_role('button',name='Revenir au dernier message').click(); await page.wait_for_timeout(700)
+    jump = page.get_by_role('button',name='Revenir au dernier message')
+    if await jump.count(): await jump.click()
+    else: await scroller.evaluate('e=>e.scrollTop=e.scrollHeight')
+    await page.wait_for_timeout(700)
     await check(page,'[aria-label="Réponses rapides"] button',prefix+' jump to latest','.home-clara-conversation > div')
     # First greeting remains reachable below the reserved tool strip.
     await scroller.evaluate('e=>e.scrollTop=0'); await page.wait_for_timeout(200)
@@ -85,7 +103,6 @@ async def chat_case(browser,w,h):
     first_rect=await first.bounding_box(); scroll_rect=await scroller.bounding_box()
     assert first_rect and scroll_rect and first_rect['y']>=scroll_rect['y']-1
     RESULTS.append({'name':prefix+' first message reachable','pass':True})
-    await page.get_by_role('button',name='Ouvrir mon dossier maison').click()
     await page.get_by_role('button',name="Ajouter l'adresse",exact=True).click()
     address=page.get_by_placeholder('Ex. 1234 rue Centrale, LaSalle'); await address.focus()
     await page.wait_for_timeout(500)
@@ -97,7 +114,9 @@ async def chat_case(browser,w,h):
     await page.set_viewport_size({'width':740,'height':360}); await page.evaluate('visualViewport.height=innerHeight;visualViewport.dispatchEvent(new Event("resize"))'); await page.wait_for_timeout(500)
     await field.focus(); await check(page,'.home-clara-composer',prefix+' landscape composer')
     await page.screenshot(path=str(OUT/(prefix+'-landscape.png')))
-    await page.reload(wait_until='domcontentloaded'); await page.wait_for_timeout(700)
+    await page.reload(wait_until='domcontentloaded')
+    await page.locator('.home-clara-message[data-role="assistant"]').last.wait_for()
+    await page.wait_for_timeout(700)
     await check(page,'.home-clara-composer',prefix+' refresh composer')
     assert not errors, errors
     await ctx.close()

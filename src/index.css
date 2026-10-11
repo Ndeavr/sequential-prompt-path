@@ -441,8 +441,8 @@
     color: hsl(222 49% 9%);
   }
   .home-light .home-clara-main {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     min-height: 0;
     /* Hauteur réellement visible (clavier inclus), jamais 100vh/dvh seul. */
     max-height: min(620px, calc(var(--app-visible-height, 100dvh) - var(--app-header-height, 0px) - 1rem));
@@ -460,6 +460,50 @@
     max-height: var(--app-visible-height, 100dvh);
     overflow-y: auto;
   }
+  .clara-form-assistant-desktop { display: none; }
+  .clara-form-assistant-trigger {
+    position: fixed;
+    z-index: 40;
+    right: 1rem;
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-lg);
+  }
+  .clara-form-assistant-sheet {
+    height: min(78dvh, calc(var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) - 8px));
+    max-height: calc(var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) - 8px);
+    overflow: hidden;
+    border-radius: 18px 18px 0 0;
+  }
+  .clara-form-assistant-sheet-header {
+    min-height: 56px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .clara-form-assistant-sheet .home-glossy-conversation-shell { height: calc(100% - 56px); }
+  .clara-form-assistant-sheet .home-clara-main { height: 100%; max-height: none; border-radius: 0; }
+  @media (min-width: 1024px) {
+    .clara-form-assistant-desktop {
+      display: block;
+      position: fixed;
+      z-index: 30;
+      right: 1rem;
+      top: calc(var(--app-header-height, 0px) + 1rem);
+      width: min(390px, 31vw);
+      height: calc(100dvh - var(--app-header-height, 0px) - 2rem);
+    }
+    .clara-form-assistant-desktop .home-glossy-conversation-shell { height: calc(100% - 44px); }
+    .clara-form-assistant-desktop .home-clara-main { height: 100%; max-height: none; }
+    .clara-form-assistant-heading { height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0 0.75rem; }
+    .clara-form-assistant-heading span { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+    .audit-pro-page > main { padding-right: min(410px, 33vw); }
+  }
   .home-light .home-clara-glass::before {
     content: "";
     position: absolute;
@@ -471,93 +515,48 @@
       radial-gradient(260px 90px at 9% 0%, hsl(0 0% 100% / 0.92), transparent 68%),
       radial-gradient(260px 90px at 91% 0%, hsl(204 100% 92% / 0.72), transparent 68%);
   }
-  .home-light .home-clara-reset {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
+  .home-light .home-clara-command-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 52px;
+    padding: 0.4rem 0.55rem;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.94);
+    backdrop-filter: blur(18px);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .home-light .home-clara-command-actions { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 0.15rem; }
+  .home-light .home-clara-reset,
+  .home-light .home-clara-dossier-open,
+  .home-light .home-clara-history-open,
+  .home-light .home-clara-more {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(0 0% 100% / 0.72);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-pill);
     color: hsl(220 14% 38%);
-    backdrop-filter: blur(12px);
-    transition: transform 420ms cubic-bezier(.22,1,.36,1), color 200ms ease, background 200ms ease;
+    transition: transform 180ms var(--ease-cinematic), color 180ms ease, background 180ms ease;
   }
-  .home-light .home-clara-reset:hover {
+  .home-light .home-clara-reset:hover,
+  .home-light .home-clara-dossier-open:hover,
+  .home-light .home-clara-history-open:hover,
+  .home-light .home-clara-more:hover {
     transform: translateY(-2px);
     color: hsl(222 49% 9%);
-    background: hsl(0 0% 100% / 0.92);
+    background: hsl(var(--muted));
   }
-  .home-light .home-clara-reset:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
-  /* Dossier maison : accès permanent, sans quitter la conversation. */
-  .home-light .home-clara-dossier-open {
-    position: absolute;
-    top: 10px;
-    right: 52px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(0 0% 100% / 0.72);
-    color: hsl(220 14% 38%);
-    backdrop-filter: blur(12px);
-    transition: transform 420ms cubic-bezier(.22,1,.36,1), color 200ms ease, background 200ms ease;
-  }
-  .home-light .home-clara-dossier-open:hover {
-    transform: translateY(-2px);
-    color: hsl(222 49% 9%);
-    background: hsl(0 0% 100% / 0.92);
-  }
-  .home-light .home-clara-dossier-open:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
-  /* Conversations passées : accès discret, même surface, aucune navigation. */
-  .home-light .home-clara-history-open {
-    position: absolute;
-    top: 10px;
-    right: 94px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(0 0% 100% / 0.72);
-    color: hsl(220 14% 38%);
-    backdrop-filter: blur(12px);
-    transition: transform 420ms cubic-bezier(.22,1,.36,1), color 200ms ease, background 200ms ease;
-  }
-  .home-light .home-clara-history-open:hover {
-    transform: translateY(-2px);
-    color: hsl(222 49% 9%);
-    background: hsl(0 0% 100% / 0.92);
-  }
-  .home-light .home-clara-history-open:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
   .home-light .home-clara-history {
-    position: absolute;
-    top: 52px;
-    right: 10px;
-    left: 10px;
-    z-index: 4;
-    max-width: 340px;
-    margin-left: auto;
-    max-height: min(60%, 340px);
+    width: min(340px, calc(100vw - 24px));
+    max-height: min(340px, calc(var(--app-visible-height, 100dvh) - 80px));
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 12px;
-    border-radius: 20px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(0 0% 100% / 0.97);
-    box-shadow: 0 22px 60px hsl(222 49% 9% / 0.18);
+    border-radius: 12px;
   }
   .home-light .home-clara-history-title {
     font-size: 0.78rem;
@@ -568,8 +567,7 @@
     margin-bottom: 8px;
   }
   .home-light .home-clara-history-empty { font-size: 0.85rem; color: hsl(220 14% 38%); padding: 4px 2px; }
-  .home-light .home-clara-history ul { display: flex; flex-direction: column; gap: 2px; }
-  .home-light .home-clara-history li > button {
+  .home-light .home-clara-history [role="menuitem"] {
     display: flex;
     width: 100%;
     align-items: center;
@@ -583,66 +581,35 @@
     color: hsl(222 49% 9%);
     transition: background 200ms ease;
   }
-  .home-light .home-clara-history li > button span {
+  .home-light .home-clara-history [role="menuitem"] span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .home-light .home-clara-history li > button em {
+  .home-light .home-clara-history [role="menuitem"] em {
     flex: 0 0 auto;
     font-style: normal;
     font-size: 0.7rem;
     color: hsl(var(--primary));
   }
-  .home-light .home-clara-history li > button:hover { background: hsl(var(--primary) / 0.08); }
-  .home-light .home-clara-history li > button[data-current="true"] { background: hsl(var(--primary) / 0.1); }
-  .home-light .home-clara-history-close {
-    margin-top: 8px;
-    width: 100%;
-    padding: 8px;
-    border-radius: 12px;
-    border: 1px solid hsl(var(--border));
-    font-size: 0.85rem;
-    color: hsl(222 49% 9%);
-  }
+  .home-light .home-clara-history [role="menuitem"]:hover { background: hsl(var(--primary) / 0.08); }
+  .home-light .home-clara-history [role="menuitem"][data-current="true"] { background: hsl(var(--primary) / 0.1); }
   .home-light .home-clara-reset-confirm {
-    position: absolute;
-    top: 52px;
-    right: 10px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-    max-width: 240px;
-    border-radius: 18px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(0 0% 100% / 0.96);
-    box-shadow: 0 18px 40px hsl(222 49% 9% / 0.14);
-  }
-  .home-light .home-clara-reset-confirm p { font-size: 0.85rem; color: hsl(222 49% 9%); }
-  .home-light .home-clara-reset-confirm div { display: flex; gap: 8px; justify-content: flex-end; }
-  .home-light .home-clara-reset-confirm button {
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 0.82rem;
-    min-height: 36px;
-    border: 1px solid hsl(var(--border));
-    color: hsl(222 49% 9%);
-  }
-  .home-light .home-clara-reset-confirm button[data-variant="primary"] {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border-color: transparent;
+    width: min(420px, calc(100vw - 24px));
+    max-height: calc(var(--app-visible-height, 100dvh) - 24px);
+    overflow-y: auto;
+    border-radius: 16px;
   }
   .home-light .home-clara-presence {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 4px;
-    height: 30px;
-    padding-top: 8px;
+    min-width: 0;
+    height: 44px;
   }
+  .home-light .home-clara-presence strong { margin-left: 0.35rem; font-size: 0.9rem; color: hsl(var(--foreground)); }
+  .home-light .home-clara-presence small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
   .home-light .home-clara-presence span,
   .home-light .home-clara-presence i {
     display: block;
@@ -664,7 +631,6 @@
   .home-light .home-clara-presence i:first-of-type { height: 9px; animation-delay: 160ms; }
   .home-light .home-clara-presence i:last-of-type { height: 13px; animation-delay: 320ms; }
   .home-light .home-clara-conversation {
-    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
     color: hsl(222 49% 9%);
@@ -680,7 +646,7 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     scrollbar-gutter: stable;
-    scroll-padding-block: 12px calc(var(--clara-composer-height, 110px) + 12px);
+    scroll-padding-block: 12px;
   }
   .home-light .home-clara-conversation .home-clara-message,
   .home-light .home-clara-conversation .home-clara-message * {
@@ -852,12 +818,38 @@
     50% { transform: scaleY(1.2); opacity: 1; }
   }
   .home-light .home-clara-composer {
-    flex: 0 0 auto;
     padding: 0.9rem 1rem max(0.6rem, env(safe-area-inset-bottom));
     position: relative;
     z-index: 2;
     background: hsl(0 0% 100% / 0.9);
     backdrop-filter: blur(18px);
+  }
+  .home-light .home-clara-input-row { min-width: 0; min-height: 0; width: 100%; box-sizing: border-box; border-top: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.94); }
+  .home-light .home-clara-composer,
+  .home-light .home-clara-prompt,
+  .home-light .home-clara-prompt [data-slot="input-group"] { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+  .home-clara-media-menu { max-height: min(360px, calc(var(--app-visible-height, 100dvh) - 24px)); overflow-y: auto; overscroll-behavior: contain; }
+  /* Radix calcule normalement les collisions. Quand le clavier superpose le
+     layout viewport, on borne explicitement ses wrappers portalisés à la
+     fenêtre visuelle publiée par le gestionnaire global. */
+  html[data-keyboard-open="true"] [data-radix-popper-content-wrapper]:has(.home-clara-media-menu) {
+    position: fixed !important;
+    inset: auto auto calc(100vh - var(--app-visible-top, 0px) - var(--app-visible-height, 100dvh) + var(--clara-composer-height, 104px) + 8px) 12px !important;
+    transform: none !important;
+    min-width: 0 !important;
+  }
+  html[data-keyboard-open="true"] [data-radix-popper-content-wrapper]:has(.home-clara-history) {
+    position: fixed !important;
+    inset: calc(var(--app-visible-top, 0px) + var(--app-header-height, 0px) + 8px) 12px auto auto !important;
+    transform: none !important;
+    min-width: 0 !important;
+  }
+  .home-light .home-clara-actions-menu { max-height: min(260px, calc(var(--app-visible-height, 100dvh) - 24px)); overflow-y: auto; }
+  html[data-keyboard-open="true"] [data-radix-popper-content-wrapper]:has(.home-clara-actions-menu) {
+    position: fixed !important;
+    inset: calc(var(--app-visible-top, 0px) + var(--app-header-height, 0px) + 8px) 12px auto auto !important;
+    transform: none !important;
+    min-width: 0 !important;
   }
   .home-light .home-clara-voice-slot:empty { display: none; }
   .home-light .home-clara-voice-inline {
@@ -975,7 +967,7 @@
   .home-light .home-clara-bottom-anchor {
     width: 100%;
     height: 1px;
-    flex: 0 0 calc(var(--clara-composer-height, 110px) * 0.42);
+    flex: 0 0 1px;
     scroll-margin-bottom: 0.5rem;
   }
   .home-light .home-clara-offline { font-size: 0.82rem; color: hsl(0 72% 42%); }
@@ -1092,17 +1084,6 @@
     }
     /* Conversation active : la carte de contexte libère l'espace de lecture. */
     .home-light .home-clara-shell.is-conversation-active .home-context-slot { display: none; }
-    /* Bandeau discret derrière les commandes : jamais de texte sous les boutons. */
-    .home-light .home-clara-shell.is-conversation-active .home-clara-main::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 46px;
-      z-index: 1;
-      pointer-events: none;
-      background: linear-gradient(hsl(0 0% 100% / 0.96) 58%, hsl(0 0% 100% / 0));
-    }
-    .home-light .home-clara-conversation { margin-top: 42px; }
     .home-light .home-clara-shell.is-conversation-active .home-clara-conversation > div { padding-top: 0; }
 
     .home-light .home-clara-composer { position: relative; padding: 0.35rem 0.5rem max(0.35rem, env(safe-area-inset-bottom)); }
@@ -1112,6 +1093,9 @@
     .home-light .home-clara-controls { position: static; min-height: 48px; width: 100%; padding: 0 0.3rem 0.25rem; justify-content: space-between; }
     .home-light .home-clara-tool { width: 44px; height: 44px; }
     .home-light .home-clara-submit { width: 44px; height: 44px; }
+    .home-light .home-clara-command-row { min-height: 52px; padding: 0.25rem 0.4rem; }
+    .home-light .home-clara-presence small { display: none; }
+    .home-light .home-clara-voice-tip { display: none; }
 
     .home-light .home-clara-media { gap: 0.3rem; padding: 0 0.65rem 0.4rem; }
     .home-light .home-clara-media-item { gap: 0.5rem; min-height: 48px; padding: 0.35rem 0.5rem; border-radius: 12px; }
