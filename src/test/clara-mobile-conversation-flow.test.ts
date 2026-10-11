@@ -18,11 +18,11 @@ describe("Clara mobile — conversation compacte", () => {
     expect(header).not.toContain("homeConversationActive");
   });
 
-  it("laisse 100dvh absorber le clavier sans gestionnaire de repositionnement", () => {
+  it("délègue le viewport clavier au gestionnaire global sans écouteur local", () => {
     expect(box).not.toContain("window.visualViewport");
     expect(box).not.toContain('addEventListener("resize", updateViewport)');
     expect(box).not.toContain('addEventListener("scroll", updateViewport)');
-    expect(css).toContain("100dvh");
+    expect(css).toContain("var(--app-visible-height, 100dvh)");
   });
 
   it("cible le seul élément réellement défilable rendu par la conversation", () => {
@@ -77,7 +77,7 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("donne à Clara la majorité de l’écran et résiste au clavier", () => {
-    expect(css).toMatch(/home-clara-main\s*\{[\s\S]*height:\s*clamp\(420px,\s*60dvh,\s*620px\)/);
+    expect(css).toMatch(/home-clara-main\s*\{[\s\S]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto/);
     expect(css).toContain('html[data-clara-conversation-active="true"] body');
     expect(css).toMatch(/\.home-light \.home-clara-shell\.is-conversation-active \.home-clara-main \{[\s\S]*?height: 100%;[\s\S]*?min-height: 0;/);
     expect(css).toContain('html[data-keyboard-open="true"] .home-light .home-clara-shell.is-conversation-active .home-clara-main');

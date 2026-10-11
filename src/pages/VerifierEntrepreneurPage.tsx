@@ -233,7 +233,7 @@ export default function VerifierEntrepreneurPage() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background verify-contractor-page">
         {/* ═══ HERO ═══ */}
         <section className="relative pt-12 pb-8 md:pt-20 md:pb-12 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">

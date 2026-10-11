@@ -58,7 +58,10 @@ export function useKeyboardAwareViewport() {
         const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 0;
         root.style.setProperty("--app-header-height", `${headerHeight}px`);
         baseline = Math.max(baseline, window.innerHeight);
-        const open = isEditable(document.activeElement) && baseline - h > 120;
+        // La fenêtre visuelle est l'autorité. Le focus peut quitter brièvement
+        // le champ quand un menu portalisé s'ouvre alors que le clavier est
+        // toujours affiché; ne jamais relâcher les contraintes à ce moment.
+        const open = baseline - h > 120;
         if (open) root.setAttribute("data-keyboard-open", "true");
         else root.removeAttribute("data-keyboard-open");
 

@@ -25,11 +25,20 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
   });
 
   it("rend seulement l’historique défilable et conserve le composer dans la colonne", () => {
-    expect(css).toMatch(/\.home-light \.home-clara-main \{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;[\s\S]*?min-height: 0;/);
+    expect(css).toMatch(/\.home-light \.home-clara-main \{[\s\S]*?display: grid;[\s\S]*?grid-template-rows: auto minmax\(0, 1fr\) auto;[\s\S]*?min-height: 0;/);
     expect(css).toMatch(/\.home-light \.home-clara-conversation \{[\s\S]*?min-height: 0;[\s\S]*?overflow: hidden;/);
     expect(css).toMatch(/\.home-light \.home-clara-conversation > div \{[\s\S]*?overflow-y: auto/);
-    expect(css).toMatch(/\.home-light \.home-clara-composer \{[\s\S]*?flex: 0 0 auto;/);
+    expect(box).toContain('data-chat-row="commands"');
+    expect(box).toContain('data-chat-row="composer"');
     expect(box).not.toContain("max-h-[38vh]");
+  });
+
+  it("porte les menus hors du conteneur coupé et les borne au viewport visible", () => {
+    expect(box).toContain("PromptInputActionMenuContent");
+    expect(box).toContain("DropdownMenuContent");
+    expect(box).not.toContain('role="menu" className="absolute bottom-full');
+    expect(css).toContain("var(--app-visible-height, 100dvh)");
+    expect(css).toMatch(/\.home-clara-media-menu[^}]*overflow-y: auto/);
   });
 
   it("suit le clavier mobile avec le viewport dynamique sans déplacer le document", () => {

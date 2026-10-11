@@ -25,7 +25,7 @@ export default function CompareQuotesPage() {
   const cta = "/analyse-soumissions/importer";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background compare-quotes-page">
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 mesh-gradient" />

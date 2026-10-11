@@ -8,7 +8,26 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -79,6 +98,10 @@ import { Conversation, ConversationContent, ConversationScrollButton, Conversati
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuItem,
+  PromptInputActionMenuTrigger,
   PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
@@ -1527,58 +1550,51 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       aria-label="Conversation avec Clara"
     >
       <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
-        <button
-          type="button"
-          onClick={handleResetClick}
-          className="home-clara-reset"
-          title={copy.reset}
-          aria-label={copy.reset}
-          aria-expanded={confirmReset}
-        >
-          <SquarePen className="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setDossierOpen(true)}
-          className="home-clara-dossier-open"
-          title="Dossier maison"
-          aria-label="Ouvrir mon dossier maison"
-        >
-          <Home className="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={() => (historyOpen ? setHistoryOpen(false) : void openHistory())}
-          className="home-clara-history-open"
-          title="Conversations"
-          aria-label="Voir mes conversations"
-          aria-expanded={historyOpen}
-        >
-          <History className="h-4 w-4" aria-hidden="true" />
-        </button>
-        {historyOpen && (
-          <div className="home-clara-history" role="dialog" aria-label="Mes conversations">
-            <p className="home-clara-history-title">Mes conversations</p>
-            {historyLoading && <p className="home-clara-history-empty">Chargement…</p>}
-            {historyError && <p className="home-clara-history-empty" role="alert">{historyError}</p>}
-            {!historyLoading && !historyError && historyItems.length === 0 && (
-              <p className="home-clara-history-empty">Aucune conversation précédente.</p>
-            )}
-            <ul>
-              {historyItems.map((entry) => (
-                <li key={entry.session_id}>
-                  <button type="button" onClick={() => void resumeConversation(entry)} data-current={entry.current ? "true" : undefined}>
+        <div className="home-clara-command-row" data-chat-row="commands">
+          <div className={`home-clara-presence${busy ? " is-active" : ""}`} data-state={busy ? "working" : "idle"}>
+            <span aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" />
+            <strong>Clara</strong>
+            <small>{busy ? "Analyse en cours…" : voiceActive ? "Mode vocal" : "Disponible"}</small>
+          </div>
+          <div className="home-clara-command-actions" aria-label="Commandes de conversation">
+            <DropdownMenu open={historyOpen} onOpenChange={(next) => { setHistoryOpen(next); if (next) void openHistory(); }}>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="home-clara-history-open" title="Conversations" aria-label="Voir mes conversations">
+                  <History aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="home-clara-history">
+                <DropdownMenuLabel>Mes conversations</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {historyLoading && <p className="home-clara-history-empty">Chargement…</p>}
+                {historyError && <p className="home-clara-history-empty" role="alert">{historyError}</p>}
+                {!historyLoading && !historyError && historyItems.length === 0 && <p className="home-clara-history-empty">Aucune conversation précédente.</p>}
+                {historyItems.map((entry) => (
+                  <DropdownMenuItem key={entry.session_id} onSelect={() => void resumeConversation(entry)} data-current={entry.current ? "true" : undefined}>
                     <span>{entry.title || "Conversation sans message"}</span>
                     {entry.current && <em>En cours</em>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <button type="button" className="home-clara-history-close" onClick={() => setHistoryOpen(false)}>
-              Fermer
-            </button>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="home-clara-more" title="Plus d’actions" aria-label="Plus d’actions">
+                  <EllipsisVertical aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="home-clara-actions-menu">
+                <DropdownMenuItem onSelect={() => setDossierOpen(true)} className="home-clara-dossier-open min-h-11 gap-2">
+                  <Home aria-hidden="true" /> Dossier maison
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleResetClick} className="home-clara-reset min-h-11 gap-2" aria-label={copy.reset}>
+                  <SquarePen aria-hidden="true" /> {copy.reset}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        )}
+          <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
+        </div>
         <DossierMaisonSheet
           open={dossierOpen}
           onOpenChange={(next) => { setDossierOpen(next); if (!next) setDossierEditAddress(false); }}
@@ -1593,25 +1609,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             void send(`L'adresse de ma propriété est ${entry.label}${entry.provenance === "pending" ? " (à confirmer)" : ""}.`);
           }}
         />
-        {confirmReset && (
-          <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
-            <p>{copy.resetConfirm}</p>
-            <div>
-              <button type="button" onClick={() => setConfirmReset(false)}>{copy.resetNo}</button>
-              <button type="button" data-variant="primary" onClick={() => void startFreshConversation()}>
-                {copy.resetYes}
-              </button>
-            </div>
-          </div>
-        )}
-        <div
-          className={`home-clara-presence${busy ? " is-active" : ""}`}
-          data-state={busy ? "working" : "idle"}
-          aria-hidden="true"
-        >
-          <span /><i /><i />
-        </div>
-        <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
+        <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
+          <AlertDialogContent className="home-clara-reset-confirm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>{copy.reset}</AlertDialogTitle>
+              <AlertDialogDescription>{copy.resetConfirm}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{copy.resetNo}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void startFreshConversation()}>{copy.resetYes}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Conversation className="home-clara-conversation min-h-0" initial="instant" resize="instant">
           <ConversationViewportFollow />
           {/* Les messages commencent en haut, juste sous la barre d'outils :
@@ -1747,6 +1756,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           <ConversationScrollButton title="Nouveau message" />
         </Conversation>
 
+      <div className="home-clara-input-row" data-chat-row="composer">
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
           {mediaItems.map((item) => (
@@ -1848,6 +1858,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           </PromptInputFooter>
         </PromptInput>
       </div>
+      </div>
 
       </div>
       {contextVisible && (
@@ -1892,22 +1903,6 @@ interface MediaMenuProps {
  */
 function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", close);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", close);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
     { key: "cp", icon: ImageIcon, text: "Photo", run: onChoosePhoto },
@@ -1920,32 +1915,17 @@ function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVid
   ];
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        aria-label={label}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="home-clara-tool inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-      >
+    <PromptInputActionMenu>
+      <PromptInputActionMenuTrigger aria-label={label} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
         <Plus className="h-5 w-5" />
-      </button>
-      {open && (
-        <div role="menu" className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg">
-          {items.map(({ key, icon: Icon, text, run }) => (
-            <button
-              key={key}
-              type="button"
-              role="menuitem"
-              onClick={() => { run(); setOpen(false); }}
-              className="flex w-full touch-manipulation items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-            >
+      </PromptInputActionMenuTrigger>
+      <PromptInputActionMenuContent side="top" sideOffset={8} collisionPadding={12} className="home-clara-media-menu w-56">
+        {items.map(({ key, icon: Icon, text, run }) => (
+            <PromptInputActionMenuItem key={key} onSelect={run} className="min-h-11 touch-manipulation gap-2">
               <Icon className="h-4 w-4" /> {text}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+            </PromptInputActionMenuItem>
+        ))}
+      </PromptInputActionMenuContent>
+    </PromptInputActionMenu>
   );
 }

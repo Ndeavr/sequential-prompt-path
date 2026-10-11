@@ -33,6 +33,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
 
 const DRAFT_KEY = "unpro_aff_onboarding_draft";
 
@@ -402,7 +403,7 @@ export default function PageAffiliateOnboarding() {
   const progress = (step / 4) * 100;
 
   return (
-    <div className="landing-warm min-h-screen bg-background text-foreground">
+    <div className="affiliate-onboarding-page landing-warm min-h-screen bg-background text-foreground">
       <Helmet>
         <title>Activation affiliée — UNPRO</title>
         <meta name="robots" content="noindex" />
@@ -609,6 +610,7 @@ export default function PageAffiliateOnboarding() {
           </section>
         )}
       </main>
+      <ClaraFormAssistant form="affiliate_onboarding" step={step} />
     </div>
   );
 }
