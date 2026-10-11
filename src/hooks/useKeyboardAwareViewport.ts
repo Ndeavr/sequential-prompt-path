@@ -11,8 +11,6 @@
  */
 import { useEffect } from "react";
 
-const NEAR_BOTTOM_PX = 140;
-const SCROLLERS = ".home-clara-conversation > div, [data-chat-scroller]";
 
 export function isEditable(el: Element | null): el is HTMLElement {
   if (!el || !(el instanceof HTMLElement)) return false;
@@ -29,18 +27,23 @@ export function useKeyboardAwareViewport() {
     if (typeof window === "undefined") return;
     const vv = window.visualViewport;
     const root = document.documentElement;
-    const baseline = { height: window.innerHeight };
-    const nearBottom = new WeakMap<Element, boolean>();
-
-    const rememberScrollers = () => {
-      document.querySelectorAll(SCROLLERS).forEach((el) => {
-        nearBottom.set(el, el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX);
-      });
-    };
-    const onScroll = (e: Event) => {
-      const t = e.target;
-      if (t instanceof Element && t.matches(SCROLLERS)) {
-        nearBottom.set(t, t.scrollHeight - t.scrollTop - t.clientHeight < NEAR_BOTTOM_PX);
+    let baseline = window.innerHeight;
+    let focusTimer = 0;
+    const revealField = () => {
+      const active = document.activeElement;
+      if (!isEditable(active) || active.closest(".home-clara-composer")) return;
+      const top = vv?.offsetTop ?? 0;
+      const bottom = top + (vv?.height ?? window.innerHeight);
+      const header = document.querySelector("header")?.getBoundingClientRect();
+      const bounds = active.getBoundingClientRect();
+      const safeTop = Math.max(top, header?.bottom ?? top) + 8;
+      if (bounds.top < safeTop || bounds.bottom > bottom - 8) {
+        active.scrollIntoView({ block: "nearest", behavior: "auto" });
+        const updated = active.getBoundingClientRect();
+        if (!active.closest('[role="dialog"]')) {
+          const delta = updated.bottom > bottom - 8 ? updated.bottom - bottom + 8 : Math.min(0, updated.top - safeTop);
+          if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: "auto" });
+        }
       }
     };
 
@@ -51,46 +54,51 @@ export function useKeyboardAwareViewport() {
         const h = Math.round(vv?.height ?? window.innerHeight);
         root.style.setProperty("--app-visible-height", `${h}px`);
         root.style.setProperty("--clara-visible-height", `${h}px`);
-        baseline.height = Math.max(baseline.height, window.innerHeight);
-        const open = baseline.height - h > 120;
+        root.style.setProperty("--app-visible-top", `${vv?.offsetTop ?? 0}px`);
+        const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 0;
+        root.style.setProperty("--app-header-height", `${headerHeight}px`);
+        baseline = Math.max(baseline, window.innerHeight);
+        const open = isEditable(document.activeElement) && baseline - h > 120;
         if (open) root.setAttribute("data-keyboard-open", "true");
         else root.removeAttribute("data-keyboard-open");
 
-        // Fil de conversation : rester ancré en bas seulement s'il l'était.
-        document.querySelectorAll(SCROLLERS).forEach((el) => {
-          if (nearBottom.get(el) !== false) el.scrollTop = el.scrollHeight;
-        });
-        // Champ actif : visible au-dessus du clavier (hors composer du chat).
-        const active = document.activeElement;
-        if (open && isEditable(active) && !active.closest(".home-clara-composer")) {
-          active.scrollIntoView({ block: "center", behavior: "auto" });
-        }
+        revealField();
       });
     };
 
     const onFocusIn = (e: FocusEvent) => {
-      rememberScrollers();
+      apply();
       const t = e.target as Element | null;
-      if (!isEditable(t) || t.closest(".home-clara-composer")) return;
-      // Le clavier arrive après le focus : on recentre une fois installé.
-      window.setTimeout(() => {
-        if (document.activeElement === t) (t as HTMLElement).scrollIntoView({ block: "center", behavior: "auto" });
+      if (!isEditable(t)) return;
+      window.clearTimeout(focusTimer);
+      focusTimer = window.setTimeout(() => {
+        if (document.activeElement === t) revealField();
       }, 320);
     };
+    const onOrientation = () => { baseline = window.innerHeight; apply(); };
+    const headerObserver = new ResizeObserver(apply);
+    const header = document.querySelector("header");
+    if (header) headerObserver.observe(header);
 
     apply();
     vv?.addEventListener("resize", apply);
+    vv?.addEventListener("scroll", apply);
     window.addEventListener("resize", apply);
-    window.addEventListener("orientationchange", apply);
+    window.addEventListener("orientationchange", onOrientation);
     document.addEventListener("focusin", onFocusIn);
-    document.addEventListener("scroll", onScroll, true);
+    document.addEventListener("focusout", apply);
     return () => {
       cancelAnimationFrame(raf);
       vv?.removeEventListener("resize", apply);
+      vv?.removeEventListener("scroll", apply);
       window.removeEventListener("resize", apply);
-      window.removeEventListener("orientationchange", apply);
+      window.removeEventListener("orientationchange", onOrientation);
       document.removeEventListener("focusin", onFocusIn);
-      document.removeEventListener("scroll", onScroll, true);
+      document.removeEventListener("focusout", apply);
+      window.clearTimeout(focusTimer);
+      headerObserver.disconnect();
+      root.removeAttribute("data-keyboard-open");
+      ["--app-visible-height", "--clara-visible-height", "--app-visible-top", "--app-header-height"].forEach((key) => root.style.removeProperty(key));
     };
   }, []);
 }
