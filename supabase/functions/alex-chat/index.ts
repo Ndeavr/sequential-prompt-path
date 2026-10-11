@@ -669,6 +669,10 @@ serve(async (req) => {
     systemPrompt += isVoiceMode ? VOICE_MODE_RULES : TEXT_MODE_RULES;
     systemPrompt += getFrustrationPrompt(frustrationLevel);
     systemPrompt += getUrgencyPrompt(lastUserMessage);
+    systemPrompt += "\n\nSÉPARATION DES PARCOURS : une adresse de propriété, une adresse d'entreprise et les villes desservies sont trois informations distinctes. Ne réaffecte jamais une adresse à un territoire. Une saisie à confirmer reste non vérifiée. Ne qualifie jamais un secteur d'excellent sans preuve. Aucun rendez-vous garanti sans engagement serveur validé. Si une adresse arrive dans une question de territoire entrepreneur, demande uniquement si elle concerne l'entreprise ou une propriété personnelle; ne change pas de parcours.";
+    if (context?.userRole === "contractor") {
+      systemPrompt += "\nPARCOURS ACTIF ENTREPRENEUR : rester sur métier, territoires déclarés, objectifs, capacité et plan; ne pas lancer un diagnostic propriétaire. Les données de propriété de l'historique ne sont pas les territoires de l'entreprise. Données entrepreneur déclarées : " + JSON.stringify(context.contractorQualification || {});
+    }
     // Promesse de rendez-vous : source unique. Les chiffres viennent du plan réel
     // transmis dans le contexte ; sans plan connu, Clara ne cite aucun nombre.
     systemPrompt +=

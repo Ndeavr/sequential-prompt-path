@@ -8,7 +8,8 @@ const voice = readFileSync("src/components/voice/OverlayAlexVoiceFullScreen.tsx"
 describe("Clara — cycle de vie stable des messages", () => {
   it("met à jour le même message pendant la diffusion puis la finalisation", () => {
     expect(box).toContain('status?: "pending" | "streaming" | "complete" | "failed"');
-    expect(box).toContain('m.id === assistantId ? { ...m, text: shown, status: "streaming" } : m');
+    expect(box).toContain('reveal.update(shown)');
+    expect(box).toContain('await reveal.finish()');
     expect(box).toContain('m.id === assistantId ? { ...m, text: shownText, status: "complete" } : m');
   });
 
