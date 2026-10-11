@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
       professionCode,
       activationToken,
       fallbackCredit,
+      entryActivation,
       auditId,
       campaign,
       source,
@@ -241,7 +242,12 @@ Deno.serve(async (req) => {
     // ── OFFRE DE REPLI — CRÉDIT UNPRO 350 $ ───────────────────────────────
     // Paiement unique, montant fixé côté serveur. Le crédit n'est JAMAIS
     // accordé ici : seul le webhook Stripe crédite, après confirmation.
-    if (fallbackCredit === true) {
+    // ── ACTIVATION D'ENTRÉE 350 $ (nouvel entrepreneur) ──────────────────
+    // Même chemin serveur que le crédit de repli (montant fixe, fiche unique,
+    // activation sur webhook seulement), mais présenté comme l'activation du
+    // profil + 12 mois de Présence IA. Aucun crédit n'est accordé.
+    const isEntryActivation = entryActivation === true;
+    if (fallbackCredit === true || isEntryActivation) {
       const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
 
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
