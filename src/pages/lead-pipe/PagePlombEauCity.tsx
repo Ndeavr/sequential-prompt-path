@@ -23,7 +23,7 @@ export default function PagePlombEauCity() {
   }, [citySlug]);
 
   const cityName = profile?.city ?? (citySlug.charAt(0).toUpperCase() + citySlug.slice(1));
-  const year = new Date().getFullYear() + 1;
+  const year = new Date().getFullYear();
 
   const faq = useMemo(() => [
     {
@@ -60,7 +60,6 @@ export default function PagePlombEauCity() {
         headline: `Tuyaux de Plomb à ${cityName} : Votre Immeuble est-il à Risque en ${year}?`,
         author: { "@type": "Organization", name: "UNPRO" },
         publisher: { "@type": "Organization", name: "UNPRO" },
-        datePublished: new Date().toISOString().slice(0, 10),
         about: { "@type": "Place", name: cityName, addressRegion: "QC" },
       }),
     ];
