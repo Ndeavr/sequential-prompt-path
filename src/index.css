@@ -252,6 +252,15 @@
   }
 
   /* Homepage concierge surface. */
+  .home-matching-section {
+    --matching-aura: linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent 52%);
+    background-image: var(--matching-aura);
+    letter-spacing: 0;
+  }
+  .home-matching-section article {
+    background-image: var(--glass-highlight);
+    backdrop-filter: blur(12px);
+  }
   .home-light {
     --background: 226 63% 5%;
     --foreground: 215 45% 97%;
