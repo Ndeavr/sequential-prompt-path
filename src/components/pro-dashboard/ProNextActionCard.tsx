@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
-import { getRbqApplicability } from "@/lib/compliance/rbqStatus";
+import { getRbqDashboardState } from "@/lib/compliance/rbqDeclaration";
 import { supabase } from "@/integrations/supabase/client";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
@@ -36,12 +36,14 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
     };
   }, [profile?.id]);
 
-  const applicability = getRbqApplicability({
+  const rbq = getRbqDashboardState({
     specialty: profile?.specialty,
     services: Array.isArray(profile?.services) ? profile.services : Array.isArray(profile?.categories) ? profile.categories : [],
+    rbq_number: profile?.rbq_number,
+    rbq_compliance_status: profile?.rbq_compliance_status,
+    rbq_expiry_date: profile?.rbq_expiry_date,
+    rbq_declaration: profile?.rbq_declaration,
   });
-  const rbqVerified = !!profile?.rbq_number && profile?.rbq_compliance_status === "verified";
-  const rbqPending = applicability.status === "rbq_required" && !rbqVerified;
 
   let title: string;
   let detail: string;
@@ -49,22 +51,15 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
   let to: string;
   let note: string | null = null;
 
-  if (applicability.status === "rbq_not_required" && !rbqVerified) {
-    note = "Aucune licence RBQ requise pour les activités que vous avez déclarées.";
+  if (!rbq.isNextAction && rbq.kind !== "verified") {
+    note = `${rbq.title}.`;
   }
 
-  if (applicability.status === "rbq_needs_clarification" && !rbqVerified) {
-    title = "Vérifions les travaux que vous offrez";
-    detail = "Précisez vos travaux pour savoir si une licence RBQ s'applique. Les travaux réglementés restent en attente d'une licence vérifiée.";
-    cta = "Préciser mes travaux";
-    to = "/pro/profile";
-  } else if (rbqPending) {
-    title = "Prochaine action : votre licence RBQ";
-    detail = !profile?.rbq_number
-      ? "Vos travaux déclarés exigent une licence RBQ. Ajoutez votre numéro : sans licence vérifiée, aucun mandat de travaux réglementés ne peut vous être confié."
-      : "Votre licence RBQ est en cours de vérification par UNPRO. Vous pouvez compléter votre fiche pendant ce temps.";
-    cta = "Compléter ma fiche";
-    to = "/pro/profile";
+  if (rbq.isNextAction) {
+    title = rbq.title;
+    detail = rbq.detail;
+    cta = rbq.kind === "needs_rbq" || rbq.kind === "clarify" || rbq.kind === "blocked" ? "Indiquer ma situation RBQ" : "Voir ma situation RBQ";
+    to = "/pro/profile#rbq";
   } else if (hasAvailability === false) {
     title = "Prochaine action : vos disponibilités";
     detail = "Indiquez vos plages horaires pour recevoir des rendez-vous. Aucun compte externe requis.";
