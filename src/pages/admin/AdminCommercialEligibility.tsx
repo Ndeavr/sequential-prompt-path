@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RefreshCw, ShieldCheck, ShieldAlert, Search, Download } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
+import CaslHumanReviewPanel from "@/components/admin/CaslHumanReviewPanel";
 
 const SMS_COOLDOWN_DAYS = 30;
 
@@ -268,6 +269,7 @@ export default function AdminCommercialEligibility() {
       </div>
 
       {/* KPIs */}
+      <CaslHumanReviewPanel />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total</CardTitle></CardHeader>
