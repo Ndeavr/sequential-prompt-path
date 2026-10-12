@@ -56619,6 +56619,54 @@ export type Database = {
           },
         ]
       }
+      inbound_call_logs: {
+        Row: {
+          call_sid: string
+          created_at: string
+          destination_masked: string | null
+          dial_duration_s: number | null
+          dial_status: string
+          from_number: string | null
+          id: string
+          matched_prospect_count: number
+          matched_prospect_id: string | null
+          needs_callback: boolean
+          source: string
+          to_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          call_sid: string
+          created_at?: string
+          destination_masked?: string | null
+          dial_duration_s?: number | null
+          dial_status?: string
+          from_number?: string | null
+          id?: string
+          matched_prospect_count?: number
+          matched_prospect_id?: string | null
+          needs_callback?: boolean
+          source?: string
+          to_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          call_sid?: string
+          created_at?: string
+          destination_masked?: string | null
+          dial_duration_s?: number | null
+          dial_status?: string
+          from_number?: string | null
+          id?: string
+          matched_prospect_count?: number
+          matched_prospect_id?: string | null
+          needs_callback?: boolean
+          source?: string
+          to_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       indexed_route_fallbacks: {
         Row: {
           created_at: string
