@@ -5,7 +5,7 @@
  * Saving a CASL review only documents evidence; send_enabled/dispatchable stay false.
  */
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +132,7 @@ function LinkPanel({ row, link, onChanged }: { row: Row; link: LinkRow | undefin
 }
 
 export default function ApchqReviewSection() {
-  const qc = useQueryClient();
+
   const [filter, setFilter] = useState<"all" | "missing" | "casl_doc" | "excluded">("all");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
