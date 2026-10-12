@@ -14,9 +14,12 @@ import { toast } from "sonner";
 import { RbqStatusBadge } from "@/features/compliance/RbqStatusBadge";
 import { getRbqCompliance, type RbqStatus } from "@/lib/compliance/rbqStatus";
 import type { Tables } from "@/integrations/supabase/types";
+import RbqSituationSelector from "@/components/compliance/RbqSituationSelector";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ProProfile = () => {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { data: profile, isLoading } = useContractorProfile();
   const upsert = useUpsertContractorProfile();
   const [form, setForm] = useState({
@@ -60,17 +63,11 @@ const ProProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Contractor may only self-declare "not_provided" or "in_progress".
-      // "verified" and "expired" are admin/system controlled.
-      const submitStatus: RbqStatus =
-        form.rbq_compliance_status === "verified" || form.rbq_compliance_status === "expired"
-          ? profile?.rbq_compliance_status || "in_progress"
-          : form.rbq_compliance_status;
+      // RBQ fields are saved only by RbqSituationSelector (DB refuses self-verification).
+      const { rbq_number: _n, rbq_compliance_status: _s, rbq_expiry_date: _x, ...rest } = form;
       const savedProfile = await upsert.mutateAsync({
-        ...form,
+        ...rest,
         years_experience: form.years_experience ? parseInt(form.years_experience) : undefined,
-        rbq_compliance_status: submitStatus,
-        rbq_expiry_date: form.rbq_expiry_date || null,
       });
       toast.success("Profil enregistré !");
       navigate(`/pro/profile/public/${savedProfile.id}`, { replace: true, state: { saved: true } });
@@ -138,55 +135,16 @@ const ProProfile = () => {
               <div className="space-y-2"><Label>Numéro de licence (autre)</Label><Input value={form.license_number} onChange={set("license_number")} /></div>
             </div>
 
-            {/* RBQ Compliance Block */}
-            <div className="rounded-lg border border-border/50 p-4 space-y-4 bg-muted/20">
+            {/* RBQ — 5 choix (auto-déclaration), vérification par UNPRO */}
+            <div className="rounded-lg border border-border/50 p-4 space-y-3 bg-muted/20" id="rbq">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">Licence RBQ (Régie du bâtiment du Québec)</h3>
-                  <p className="text-xs text-muted-foreground">Obligatoire pour la plupart des travaux résidentiels au Québec.</p>
-                </div>
-                <RbqStatusBadge
-                  status={currentCompliance.status}
-                  expiryDate={form.rbq_expiry_date || null}
-                />
+                <h3 className="text-sm font-semibold">Licence RBQ (Régie du bâtiment du Québec)</h3>
+                <RbqStatusBadge status={currentCompliance.status} expiryDate={form.rbq_expiry_date || null} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Numéro RBQ</Label>
-                  <Input value={form.rbq_number} onChange={set("rbq_number")} placeholder="1234-5678-90" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Statut RBQ</Label>
-                  <Select
-                    value={form.rbq_compliance_status}
-                    onValueChange={(v: RbqStatus) => setForm((f) => ({ ...f, rbq_compliance_status: v }))}
-                    disabled={statusLocked}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="not_provided">Non fournie</SelectItem>
-                      <SelectItem value="in_progress">En cours d'obtention</SelectItem>
-                      {statusLocked && (
-                        <SelectItem value={currentDbStatus!} disabled>
-                          {currentDbStatus === "verified" ? "Vérifiée (validée par UNPRO)" : "Expirée / invalide"}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Date d'expiration</Label>
-                  <Input type="date" value={form.rbq_expiry_date} onChange={set("rbq_expiry_date")} />
-                </div>
-              </div>
-              {statusLocked && (
-                <p className="text-[11px] text-muted-foreground">
-                  Le statut « Vérifiée » et « Expirée » est contrôlé par l'équipe UNPRO. Contactez-nous pour toute correction.
-                </p>
-              )}
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {currentCompliance.badge.explanationFr}
-              </p>
+              <RbqSituationSelector
+                profile={profile}
+                onSaved={() => qc.invalidateQueries({ queryKey: ["contractor-profile"] })}
+              />
             </div>
 
             <Button type="submit" disabled={upsert.isPending}>{upsert.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
