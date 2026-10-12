@@ -46,7 +46,7 @@ export default function CaslHumanReviewPanel() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["casl-review"],
     queryFn: async () => {
-      const [ev, oo] = await Promise.all([
+      const [ev, oo, dl] = await Promise.all([
         supabase
           .from("casl_consent_evidence" as any)
           .select("id,destination_normalized,source_url,source_publisher,business_relevance_explanation,lawful_basis,retrieved_at,reviewer_id,refusal_statement_found,is_valid,created_at")
@@ -55,12 +55,15 @@ export default function CaslHumanReviewPanel() {
           .order("created_at", { ascending: false })
           .limit(2000),
         supabase.from("sms_opt_outs" as any).select("normalized_phone").limit(5000),
+        supabase.from("sms_events_v2" as any).select("normalized_phone").eq("status", "delivered").eq("message_type", "outreach").not("twilio_sid", "is", null).not("delivered_at", "is", null).limit(5000),
       ]);
+      if (dl.error) throw dl.error;
+      const reachable = new Set(((dl.data as any[]) ?? []).map((o) => String(o.normalized_phone).replace(/^\+?1/, "")));
       if (ev.error) throw ev.error;
       if (oo.error) throw oo.error;
       const opted = new Set(((oo.data as any[]) ?? []).map((o) => String(o.normalized_phone).replace(/^\+1/, "")));
       const seen = new Set<string>();
-      const rows: (Ev & { block: string | null })[] = [];
+      const rows: (Ev & { block: string | null; smsReachable: boolean })[] = [];
       for (const r of (ev.data as unknown as Ev[]) ?? []) {
         if (seen.has(r.destination_normalized)) continue; // dedupe by number
         seen.add(r.destination_normalized);
@@ -69,9 +72,10 @@ export default function CaslHumanReviewPanel() {
           : r.refusal_statement_found
             ? "Refus publié"
             : precheck(r.destination_normalized);
-        rows.push({ ...r, block });
+        rows.push({ ...r, block, smsReachable: reachable.has(r.destination_normalized) });
       }
-      return rows;
+      // Priority: SMS delivery proof (Twilio SID + delivered_at) first. Never treated as mobile proof.
+      return rows.sort((a, b) => Number(b.smsReachable) - Number(a.smsReachable));
     },
   });
 
@@ -116,7 +120,9 @@ export default function CaslHumanReviewPanel() {
             <div className="flex flex-wrap gap-2 items-center">
               <span className="font-mono">{maskNum(r.destination_normalized)}</span>
               <Badge variant="outline">{r.lawful_basis ?? "base ?"}</Badge>
-              <Badge variant="secondary">Capture auto — non revue</Badge>
+              <Badge variant="secondary">casl_en_attente</Badge>
+              <Badge variant="outline">type_ligne_non_verifie</Badge>
+              <Badge variant={r.smsReachable ? "default" : "outline"}>{r.smsReachable ? "sms_joignable (livraison Twilio)" : "joignabilité inconnue"}</Badge>
             </div>
             <p className="text-sm">{r.business_relevance_explanation ?? "Pertinence non documentée"}</p>
             {r.source_url && (

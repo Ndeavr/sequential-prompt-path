@@ -149,6 +149,8 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       .in("destination_type", ["phone_sms", "phone"])
       .in("destination_normalized", [input.to, input.to.replace(/\D/g, ""), input.to.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")])
       .eq("is_valid", true)
+      // Auto-captured evidence is not a legal review: require a human reviewer decision.
+      .not("reviewer_id", "is", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
