@@ -241,8 +241,8 @@ export default function AddressVerifiedInput({
               <div className="flex items-start gap-1.5 text-xs text-destructive">
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <div className="font-medium">Service d'adresse temporairement indisponible</div>
-                  <div className="text-xs mt-0.5">Conservez votre adresse à confirmer ou réessayez.</div>
+                  <div className="font-medium">{serviceError.code === "RATE_LIMITED" ? "Recherche d'adresse en pause" : "Service d'adresse temporairement indisponible"}</div>
+                  <div className="text-xs mt-0.5">{serviceError.code === "RATE_LIMITED" ? serviceError.message : "Conservez votre adresse à confirmer ou réessayez."}</div>
                 </div>
               </div>
               <Button
