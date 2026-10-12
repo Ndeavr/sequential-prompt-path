@@ -9,12 +9,13 @@
  */
 import { corsHeaders, recordAgentRun } from "../_shared/agentRun.ts";
 import { idempotencyKey, isDraftEligible, MAX_PER_RUN, TEMPLATE } from "./logic.ts";
+import { buildSmsGreeting, reliableCompanyName, validateSmsBody } from "../_shared/smsGreeting.ts";
 
 const SYSTEM_PROMPT = `Tu écris des SMS B2B pour UNPRO en français québécois.
 Règles ABSOLUES:
-- Max 300 caractères. Pas d'emojis. Phrases courtes.
-- Inclure prénom ou compagnie, métier, ville et un constat factuel fourni.
-- N'invente AUCUN chiffre, rareté, nombre de places, garantie ou rendez-vous.
+- Max 220 caractères. Pas d'emojis. Phrases courtes. AUCUNE salutation (elle est ajoutée séparément).
+- N'invente AUCUN chiffre, score, constat, rareté, nombre de places, garantie ou rendez-vous.
+- Si une donnée est « inconnue », ne la mentionne pas.
 - Ne mets aucun lien (il est ajouté séparément après validation).`;
 
 Deno.serve(async (req) => {
@@ -55,9 +56,11 @@ Deno.serve(async (req) => {
       if (!reserved?.length) { skipped_existing++; continue; }
       const rowId = reserved[0].id;
 
-      const trade = lead.trade ?? lead.category_primary ?? "votre métier";
-      const fname = lead.first_name ?? (lead.full_name ?? "").split(" ")[0] ?? lead.company_name ?? "";
-      let messageBody = "";
+      // Single shared salutation (A prénom fiable / B équipe / C générique).
+      const greeting = buildSmsGreeting({ first_name: lead.first_name, company_name: lead.company_name });
+      const company = reliableCompanyName(lead.company_name);
+      // ONE LLM call max per reserved row; the model only writes the body after the greeting.
+      let rest = "";
       if (LOVABLE_KEY) {
         try {
           const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -66,7 +69,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               model: "google/gemini-2.5-flash",
               messages: [{ role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: `Compagnie: ${lead.company_name}. Prénom: ${fname}. Métier: ${trade}. Ville: ${lead.city}.` }],
+                { role: "user", content: `Entreprise: ${company ?? "(inconnue)"}. Métier: ${lead.trade ?? lead.category_primary ?? "(inconnu)"}. Ville: ${lead.city ?? "(inconnue)"}. Écris seulement la suite, SANS salutation.` }],
             }),
           });
           if (r.status === 402 || r.status === 403 || r.status === 429) {
@@ -75,14 +78,20 @@ Deno.serve(async (req) => {
             break; // circuit breaker
           }
           const j = await r.json();
-          messageBody = j.choices?.[0]?.message?.content?.trim() ?? "";
+          rest = (j.choices?.[0]?.message?.content ?? "").trim().replace(/^(bonjour|salut)[^,.!]*[,.!]\s*/i, "");
         } catch (_) { /* fallback */ }
       }
-      if (!messageBody) {
-        messageBody = `Bonjour ${fname}, UNPRO a préparé un aperçu de la présence de ${lead.company_name} (${trade}, ${lead.city}) dans les recommandations IA. Souhaitez-vous le voir?`;
+      if (!rest) {
+        rest = greeting.kind === "generic"
+          ? "Nous aidons les entrepreneurs à recevoir des rendez-vous exclusifs. Voulez-vous en savoir plus?"
+          : "UNPRO aide les entrepreneurs à recevoir des rendez-vous exclusifs. Voulez-vous en savoir plus?";
       }
+      const messageBody = `${greeting.text} ${rest} Répondez STOP pour ne plus recevoir de messages.`;
+      const check = validateSmsBody(messageBody, { commercial: true });
       await db.from("agent_outreach_messages")
-        .update({ body: messageBody, status: "draft", metadata: { requires_approval: true, cta_url: null } })
+        .update(check.ok
+          ? { body: messageBody, status: "draft", metadata: { requires_approval: true, cta_url: null, greeting_kind: greeting.kind } }
+          : { body: messageBody, status: "quarantined", error: `invalid_body:${check.issues.join(",")}`, metadata: { requires_approval: true, greeting_kind: greeting.kind } })
         .eq("id", rowId);
       generated++;
     }
