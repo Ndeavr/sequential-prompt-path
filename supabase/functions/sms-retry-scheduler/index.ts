@@ -33,6 +33,14 @@ Deno.serve(async (req) => {
 
   let processed = 0, sent = 0, skipped = 0;
   for (const job of due ?? []) {
+    // Réservation atomique : un seul passage peut prendre la tâche (pas de double envoi).
+    const { data: claimed } = await supabase.from("sms_retry_queue")
+      .update({ status: "processing" }).eq("id", job.id).eq("status", "pending").select("id").maybeSingle();
+    if (!claimed) continue;
+    if ((job.attempt ?? 1) > 3) {
+      await supabase.from("sms_retry_queue").update({ status: "skipped", processed_at: new Date().toISOString() }).eq("id", job.id);
+      skipped++; continue;
+    }
     processed++;
     const { data: ev } = await supabase.from("sms_events_v2").select("*").eq("id", job.event_id).single();
     if (!ev) { skipped++; await supabase.from("sms_retry_queue").update({ status: "skipped", processed_at: new Date().toISOString() }).eq("id", job.id); continue; }

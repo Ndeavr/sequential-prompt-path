@@ -191,11 +191,14 @@ Deno.serve(async (req) => {
         leadUpdate.sms_attempts = ((cur as any)?.sms_attempts ?? 0) + 1;
         leadUpdate.last_sms_error_code = errorCode ?? null;
         leadUpdate.last_sms_attempt_at = now;
-        if (failed >= 2) {
+        // Codes permanents (30006 ligne fixe/injoignable, 21610 STOP, 30003/30005
+        // numéro inexistant, 21614 non mobile) : suppression immédiate, sans retry.
+        const permanent = ["30006", "21610", "30003", "30005", "21614", "21211"].includes(String(errorCode ?? ""));
+        if (failed >= 2 || permanent) {
           leadUpdate.sms_disabled = true;
           leadUpdate.contact_method = "email";
           leadUpdate.sms_suppressed_at = now;
-          leadUpdate.sms_suppressed_reason = failed >= 5 ? "permanent_suppression" : "failure_threshold";
+          leadUpdate.sms_suppressed_reason = permanent ? `twilio_permanent_${errorCode}` : failed >= 5 ? "permanent_suppression" : "failure_threshold";
         }
         if (failed >= 5) {
           try {
@@ -233,7 +236,8 @@ Deno.serve(async (req) => {
     if (mapped === "failed" || mapped === "undelivered") {
       const { data: ev } = await supabase.from("sms_events_v2").select("id, attempt_number").eq("twilio_sid", sid).maybeSingle();
       const retry = classifyTwilio(400, { code: errorCode, message: errorMessage });
-      if (ev && retry.retryable && (ev.attempt_number ?? 1) < 3) {
+      const permanentCode = ["30006", "21610", "30003", "30005", "21614", "21211"].includes(String(errorCode ?? ""));
+      if (ev && retry.retryable && !permanentCode && (ev.attempt_number ?? 1) < 3) {
         const delays = [15 * 60_000, 24 * 60 * 60_000, 72 * 60 * 60_000];
         const next = new Date(Date.now() + delays[(ev.attempt_number ?? 1) - 1]).toISOString();
         await supabase.from("sms_retry_queue").insert({ event_id: ev.id, attempt: (ev.attempt_number ?? 1) + 1, scheduled_at: next });

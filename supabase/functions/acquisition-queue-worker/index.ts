@@ -182,19 +182,36 @@ async function detectAndRepairDeadQueue(supabase: any) {
       repair_attempts: 1,
       updated_at: new Date().toISOString(),
     };
-    const { data: existingAlert } = await supabase
+    // Anti-boucle (incident 2026-10-12) : une seule alerte active par prospect,
+    // tentatives bornées, aucune remise en file répétée. Les doublons hérités
+    // sont conservés (historique), seule la plus récente est mise à jour.
+    const { data: activeAlerts } = await supabase
       .from("acquisition_dead_queue_alerts")
-      .select("id")
+      .select("id, repair_attempts")
       .eq("prospect_id", row.prospect_id)
       .in("status", ["open", "repairing"])
-      .maybeSingle();
-    if (existingAlert?.id) {
-      await supabase.from("acquisition_dead_queue_alerts").update(alertPayload).eq("id", existingAlert.id);
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    const { count: recentRepairs } = await supabase
+      .from("acquisition_dead_queue_alerts")
+      .select("id", { count: "exact", head: true })
+      .eq("prospect_id", row.prospect_id)
+      .eq("status", "resolved")
+      .gte("resolved_at", since);
+    const existing = activeAlerts?.[0];
+    const attempts = Number(existing?.repair_attempts ?? 0) + 1;
+    const exhausted = attempts > 3 || (recentRepairs ?? 0) >= 3;
+    const payload = { ...alertPayload, repair_attempts: attempts, status: exhausted ? "open" : "repairing" };
+    if (existing?.id) {
+      await supabase.from("acquisition_dead_queue_alerts").update(payload).eq("id", existing.id);
     } else {
-      await supabase.from("acquisition_dead_queue_alerts").insert(alertPayload);
+      await supabase.from("acquisition_dead_queue_alerts").insert(payload);
     }
     alerts += 1;
-    if (["queue_state_mismatch", "eligibility_mismatch"].includes(row.root_cause)) {
+    // Remise en file uniquement pour une incohérence d'état, jamais pour une
+    // erreur d'envoi, et jamais après 3 tentatives (revue humaine requise).
+    if (!exhausted && ["queue_state_mismatch", "eligibility_mismatch"].includes(row.root_cause)) {
       await supabase.from("acquisition_queue").upsert(
         {
           prospect_id: row.prospect_id,
@@ -208,7 +225,8 @@ async function detectAndRepairDeadQueue(supabase: any) {
       await supabase
         .from("acquisition_dead_queue_alerts")
         .update({ status: "resolved", resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-        .eq("prospect_id", row.prospect_id);
+        .eq("prospect_id", row.prospect_id)
+        .in("status", ["open", "repairing"]);
       repaired += 1;
     }
   }
