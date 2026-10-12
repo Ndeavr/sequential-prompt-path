@@ -5,13 +5,14 @@
  */
 import { getRbqApplicability, getRbqCompliance, type RbqStatus } from "./rbqStatus";
 
-export type RbqDeclaration = "has_license" | "not_required" | "in_progress" | "unsure" | "other";
+export type RbqDeclaration = "has_license" | "not_required" | "in_progress" | "unsure" | "other" | "employer_licensed";
 
 export const RBQ_DECLARATION_OPTIONS: { value: RbqDeclaration; label: string; hint: string }[] = [
   { value: "has_license", label: "J'ai une licence RBQ", hint: "Votre numéro sera vérifié auprès du registre officiel." },
   { value: "not_required", label: "Mon activité ne requiert pas de licence RBQ", hint: "Déclaration examinée par UNPRO selon vos travaux précis." },
   { value: "in_progress", label: "Ma licence est en cours d'obtention", hint: "Vous pouvez compléter votre fiche en attendant." },
   { value: "unsure", label: "Je ne sais pas si j'en ai besoin", hint: "Clara vous pose une question, puis UNPRO examine." },
+  { value: "employer_licensed", label: "Je travaille pour une entreprise titulaire d'une licence RBQ", hint: "Employé ou représentant mandaté. Les sous-traitants doivent avoir leur propre licence." },
   { value: "other", label: "Autre situation", hint: "Licence expirée, suspendue, autre organisme, sous-traitants…" },
 ];
 
@@ -21,12 +22,16 @@ export interface RbqDeclarationDetails {
   expected_date?: string;
   situation?: "expired" | "suspended" | "revoked" | "other_body" | "subcontractors" | "other";
   notes?: string;
+  employer_legal_name?: string;
+  employer_rbq?: string;
+  /** employee | representative = possible affiliation; independent = needs own licence. */
+  employer_relationship?: "employee" | "representative" | "independent";
 }
 
 export type RbqMarker = "VERIFIED" | "DECLARED" | "PENDING" | "INFERRED";
 
 export interface RbqDashboardState {
-  kind: "verified" | "blocked" | "declared_exempt" | "in_progress" | "unsure" | "under_review" | "needs_rbq" | "clarify" | "not_required_inferred";
+  kind: "pending_employer_authorization" | "independent_needs_own_licence" | "verified" | "blocked" | "declared_exempt" | "in_progress" | "unsure" | "under_review" | "needs_rbq" | "clarify" | "not_required_inferred";
   marker: RbqMarker;
   title: string;
   detail: string;
@@ -43,6 +48,7 @@ export function getRbqDashboardState(p: {
   rbq_compliance_status?: RbqStatus | string | null;
   rbq_expiry_date?: string | null;
   rbq_declaration?: string | null;
+  rbq_declaration_details?: RbqDeclarationDetails | null;
 }): RbqDashboardState {
   const compliance = getRbqCompliance({
     rbq_compliance_status: (p.rbq_compliance_status as RbqStatus) ?? "not_provided",
@@ -74,6 +80,16 @@ export function getRbqDashboardState(p: {
       return { kind: "in_progress", marker: "PENDING", title: "Licence en cours d'obtention", detail: "Complétez votre fiche. Aucun mandat de travaux réglementés avant une licence valide.", isNextAction: regulated, regulatedEligible: false };
     case "unsure":
       return { kind: "unsure", marker: "PENDING", title: "Vérifier si une licence est nécessaire", detail: "UNPRO examine vos travaux exacts. Vous serez avisé du résultat.", isNextAction: true, regulatedEligible: false };
+    case "employer_licensed": {
+      // Art. 46 B-1.1 : pas de prêt de licence; un sous-traitant doit avoir sa propre licence.
+      // L'affiliation n'est jamais validée automatiquement (autorisation écrite + registre requis).
+      const rel = p.rbq_declaration_details?.employer_relationship;
+      if (rel === "independent") {
+        return { kind: "independent_needs_own_licence", marker: "DECLARED", title: "Licence RBQ propre requise", detail: "Un sous-traitant indépendant doit détenir sa propre licence RBQ pour les travaux réglementés. La licence d'une autre entreprise ne peut pas être utilisée. Examen de conformité en cours.", isNextAction: true, regulatedEligible: false };
+      }
+      const name = p.rbq_declaration_details?.employer_legal_name?.trim();
+      return { kind: "pending_employer_authorization", marker: "PENDING", title: "Autorisation de l'entreprise titulaire en attente", detail: `Votre lien avec ${name || "l'entreprise titulaire"} doit être confirmé par écrit par un responsable autorisé, et sa licence vérifiée. D'ici là, aucun mandat de travaux réglementés.`, isNextAction: true, regulatedEligible: false };
+    }
     case "other":
       return { kind: "under_review", marker: "PENDING", title: "Situation RBQ en examen", detail: "UNPRO examine votre situation. Aucun mandat de travaux réglementés avant une licence RBQ valide et vérifiée.", isNextAction: true, regulatedEligible: false };
   }
