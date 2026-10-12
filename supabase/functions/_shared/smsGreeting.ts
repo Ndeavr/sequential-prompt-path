@@ -6,6 +6,7 @@ const JUNK = new Set(["", "null", "undefined", "none", "nan", "n/a", "na", "-", 
 
 function clean(v: unknown): string {
   if (typeof v !== "string") return "";
+  if (/[<>{}\[\]`$\\|]/.test(v)) return ""; // suspicious markup/template → treat as absent
   return v.normalize("NFC").replace(/[\u0000-\u001f\u007f<>{}\[\]`$\\|]/g, "").replace(/\s+/g, " ").trim();
 }
 
