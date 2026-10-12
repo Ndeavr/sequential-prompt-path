@@ -140,7 +140,7 @@ describe("Clara — ouverture réelle avant toute confirmation", () => {
   });
 
   it("n'ouvre jamais le dossier maison dans un parcours entrepreneur", () => {
-    expect(box).toContain('audienceRef.current === "homeowner"\n          && mentionsDossier(shownText)');
+    expect(box).toContain('audienceRef.current === "homeowner"\n          && !contractorTurn\n          && mentionsDossier(shownText)');
   });
 
   it("garde les pages UNPRO dans le même onglet", () => {

@@ -14,6 +14,7 @@
  * préremplissage immédiat après un changement d'écran ou un rafraîchissement.
  */
 import { saveClaraContext } from "@/services/clara/claraSession";
+import { RBQ_DECLARATION_OPTIONS, type RbqDeclaration } from "@/lib/compliance/rbqDeclaration";
 
 /** Synchronisation bornée : la copie locale reste la référence en cas d’échec. */
 function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
@@ -55,6 +56,8 @@ export interface ClaraContractorQualification {
   phone?: string | null;
   /** Identifiant de la fiche Google confirmée par l'entrepreneur. */
   google_place_id?: string | null;
+  /** Situation RBQ DÉCLARÉE (jamais vérifiée ici) — mêmes 6 statuts que « Mon profil ». */
+  rbq_declaration?: RbqDeclaration | null;
   /**
    * Provenance par champ : « public » = fiche Google confirmée,
    * « declared » = dit par l'entrepreneur, « inferred » = déduit par UNPRO.
@@ -105,6 +108,7 @@ export function saveClaraQualification(
   if (patch.website) next.website = patch.website;
   if (patch.phone) next.phone = patch.phone;
   if (patch.google_place_id) next.google_place_id = patch.google_place_id;
+  if (patch.rbq_declaration) next.rbq_declaration = patch.rbq_declaration;
   if (patch.service_areas?.length) {
     next.service_areas = Array.from(new Set([...(current.service_areas ?? []), ...patch.service_areas]));
   }
@@ -114,7 +118,7 @@ export function saveClaraQualification(
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id"]
+      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id", "rbq_declaration"]
         .filter((k) => (patch as Record<string, unknown>)[k])
         .map((k) => [k, typeof source === "string" ? source : source[k] ?? "declared"]),
     ),
@@ -236,4 +240,61 @@ export function buildKnownBusinessConfirmation(input: {
   if (input.trade) parts.push(`en ${input.trade.toLowerCase()}`);
   if (input.businessCity) parts.push(`établie à ${input.businessCity}`);
   return `${parts.join(", ")}. C'est bien ça ?`;
+}
+
+
+/* ─────────────── Rôle de la conversation (entrepreneur vs propriétaire) ─────────────── */
+
+const CONTRACTOR_USER_TEXT =
+  /\b(inscri\w*\s+(?:mon|notre|ma)\s+(?:entreprise|compagnie|business)|mon\s+entreprise|notre\s+entreprise|ma\s+compagnie|je\s+suis\s+(?:un\s+|une\s+)?entrepreneur|je\s+suis\s+(?:un\s+|une\s+)?pro\b|mes\s+clients|ma\s+licence\s+rbq|plus\s+de\s+contrats)/i;
+
+/** Questions de Clara qui ne concernent QUE l'entreprise. */
+const CONTRACTOR_ASSISTANT_QUESTION =
+  /(de\s+(?:cette|votre|l['’])\s*entreprise|inscription\s+de\s+votre\s+entreprise|licence\s+rbq|num[ée]ro\s+rbq|m[ée]tier\s+principal|villes?\s+desservies|travaillez-vous)/i;
+
+/**
+ * Vrai quand ce tour appartient au parcours entrepreneur : soit l'utilisateur
+ * parle de son entreprise, soit il répond à une question de Clara portant sur
+ * l'entreprise (« propriétaire » = propriétaire de l'ENTREPRISE dans ce cas).
+ * Une demande explicite de projet maison n'est jamais reclassée.
+ */
+export function isContractorConversationTurn(userText: string, lastAssistantText?: string | null): boolean {
+  const text = (userText ?? "").trim();
+  if (!text) return false;
+  if (CONTRACTOR_USER_TEXT.test(text)) return true;
+  if (/\b(ma\s+maison|mon\s+condo|chez\s+moi|mon\s+toit|ma\s+propri[ée]t[ée])\b/i.test(text) && !CONTRACTOR_ASSISTANT_QUESTION.test(lastAssistantText ?? "")) return false;
+  return CONTRACTOR_ASSISTANT_QUESTION.test(lastAssistantText ?? "");
+}
+
+/** Les 6 situations RBQ existantes (« Mon profil »), proposées comme réponses rapides. */
+export const CLARA_RBQ_QUICK_REPLIES = RBQ_DECLARATION_OPTIONS.map((o) => o.label);
+
+export const CLARA_RBQ_QUESTION =
+  "D'accord. Laquelle de ces situations décrit le mieux votre entreprise ? Vous pourrez continuer dans tous les cas; seuls les travaux réglementés exigent une licence RBQ valide.";
+
+/** Une question/annonce de Clara qui porte sur la licence RBQ. */
+export function mentionsRbq(text: string): boolean {
+  return /\b(rbq|licence)\b/i.test(text ?? "");
+}
+
+/**
+ * Convertit un choix rapide ou une réponse naturelle vers un statut existant.
+ * `null` = réponse ambiguë (ex. « Je n'ai pas de licence ») : Clara propose
+ * alors les 6 choix, sans jamais conclure à une licence suspendue.
+ */
+export function mapRbqAnswer(answer: string): RbqDeclaration | null {
+  const t = (answer ?? "").trim();
+  const exact = RBQ_DECLARATION_OPTIONS.find((o) => o.label.toLowerCase() === t.toLowerCase());
+  if (exact) return exact.value;
+  if (/ne\s+requiert\s+pas|pas\s+(?:besoin|requis|n[ée]cessaire)|exempt/i.test(t)) return "not_required";
+  if (/en\s+cours|j['’]attends|demande\s+(?:faite|envoy)/i.test(t)) return "in_progress";
+  if (/travaille\s+pour|employ[ée]|salari[ée]/i.test(t)) return "employer_licensed";
+  if (/je\s+ne\s+sais\s+pas|incertain|pas\s+s[ûu]r/i.test(t)) return "unsure";
+  if (/^(oui|j['’]ai\s+(?:une|ma)\s+licence)/i.test(t) || /\b\d{4}-\d{4}-\d{2}\b/.test(t)) return "has_license";
+  return null;
+}
+
+/** Réponse qui parle de licence sans désigner une situation précise. */
+export function isAmbiguousRbqAnswer(answer: string): boolean {
+  return mentionsRbq(answer) || /^(non|pas en main|aucune)\b/i.test((answer ?? "").trim());
 }

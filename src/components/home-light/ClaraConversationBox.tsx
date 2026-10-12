@@ -5,7 +5,7 @@
  * écrit dans la session Clara canonique, ce qui rend la conversation persistante
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
@@ -63,6 +63,12 @@ import {
   nextQualificationStep,
   type ClaraQualificationStep,
   saveClaraQualification,
+  isContractorConversationTurn,
+  mentionsRbq,
+  mapRbqAnswer,
+  isAmbiguousRbqAnswer,
+  CLARA_RBQ_QUICK_REPLIES,
+  CLARA_RBQ_QUESTION,
 } from "@/services/clara/claraContractorQualification";
 import { playTyping, createStreamingTyping } from "@/services/clara/claraTyping";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
@@ -413,12 +419,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   useEffect(() => clearLocalPreviews, [clearLocalPreviews]);
 
+  /**
+   * Clavier stable (Android Gboard) : Clara ne rouvre JAMAIS le clavier d'elle-même.
+   * Le focus n'est rendu que si l'utilisateur était en train d'écrire
+   * (composer engagé), sinon un tap sur un choix ouvrirait le clavier.
+   */
+  const composerEngagedRef = useRef(false);
   const focusComposer = useCallback(() => {
     const textarea = textareaRef.current ?? rootRef.current?.querySelector("textarea");
-    if (textarea instanceof HTMLTextAreaElement) {
-      textarea.disabled = false;
-      textarea.focus({ preventScroll: true });
-    }
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    textarea.disabled = false;
+    if (!composerEngagedRef.current || document.activeElement === textarea) return;
+    textarea.focus({ preventScroll: true });
   }, []);
 
   /**
@@ -456,7 +468,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     // Never scroll the document from a message, focus or composer resize.
   }, []);
 
-  const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused;
+  // Une fois engagée, la conversation reste active : un blur (clavier fermé)
+  // ne refait jamais apparaître l'accueil, donc aucune hauteur qui saute.
+  const [composerEverFocused, setComposerEverFocused] = useState(false);
+  const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused || composerEverFocused;
 
   useEffect(() => {
     document.documentElement.dataset.claraConversationActive = String(isConversationActive);
@@ -493,6 +508,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     workflowRef.current = null;
     rememberHomeCursor(null);
     setMessages([]);
+    setComposerEverFocused(false);
     setQuickReplies(null);
     setError(null);
     setQuoteCount(0);
@@ -988,7 +1004,37 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         return;
       }
 
-      const nextMode = detectSurfaceMode(text);
+      // Rôle de la conversation : « propriétaire » s'interprète selon la question
+      // ACTIVE de Clara. Une réponse à une question sur l'entreprise reste
+      // dans le parcours entrepreneur — jamais de Dossier maison.
+      const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
+      const contractorTurn = audienceRef.current === "contractor"
+        || isContractorConversationTurn(text, lastAssistantText);
+
+      // Situation RBQ : mêmes 6 statuts que « Mon profil », jamais une 2e validation.
+      if (contractorTurn && (mentionsRbq(lastAssistantText) || mentionsRbq(text))) {
+        const declaration = mapRbqAnswer(text);
+        if (declaration || isAmbiguousRbqAnswer(text)) {
+          setAudience("contractor");
+          setBusy(true);
+          void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+          try {
+            if (declaration) {
+              saveClaraQualification({ rbq_declaration: declaration });
+              trackCopilotEvent("contractor_context_captured", { surface: "home_clara_box", kind: `rbq_${declaration}` });
+              await sayClara("Merci, c'est noté comme déclaré. UNPRO le vérifiera; on continue votre inscription.");
+              await askNextQualification();
+            } else {
+              await sayClara(CLARA_RBQ_QUESTION, CLARA_RBQ_QUICK_REPLIES);
+            }
+          } finally {
+            if (mountedRef.current) setBusy(false);
+          }
+          return;
+        }
+      }
+
+      const nextMode = contractorTurn ? "CONTRACTOR" : detectSurfaceMode(text);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
 
@@ -1028,7 +1074,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
 
       // Entrepreneur : Clara qualifie directement dans le chat, sans longue réponse.
-      if (destination && detected === "contractor_onboarding") {
+      if ((destination && detected === "contractor_onboarding") || (contractorTurn && !contractorFlow)) {
         void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
         setAudience("contractor");
         trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
@@ -1133,6 +1179,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         // par-dessus la conversation — jamais dans un parcours entrepreneur.
         if (
           audienceRef.current === "homeowner"
+          && !contractorTurn
           && mentionsDossier(shownText)
           && !dossierAutoOpened.current
         ) {
@@ -1141,7 +1188,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         }
         // Clara a promis d'agir sur le dossier : les confirmations génériques
         // (« C'est fait », « Un instant ») sont remplacées par l'action réelle.
-        if (audienceRef.current === "homeowner" && mentionsDossier(shownText) && !dossierAddressSavedRef.current) {
+        if (audienceRef.current === "homeowner" && !contractorTurn && mentionsDossier(shownText) && !dossierAddressSavedRef.current) {
           dossierPendingRef.current = true;
           setQuickReplies({ messageId: assistantId, options: [CHOOSE_ADDRESS, "Continuer sans adresse"] });
         }
@@ -1167,7 +1214,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
         await reveal.finish();
         if (mountedRef.current) {
           setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, text: shownText, status: "complete" } : m));
-          if (!destination) setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
+          const rbqChoices = audienceRef.current === "contractor" && mentionsRbq(shownText);
+          if (!destination) setQuickReplies(rbqChoices
+            ? { messageId: assistantId, options: CLARA_RBQ_QUICK_REPLIES }
+            : parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
         }
       } catch {
         reveal.cancel();
@@ -1495,7 +1545,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, [keepComposerVisible, voiceActive]);
 
   const handleComposerFocus = useCallback(() => {
+    composerEngagedRef.current = true;
     setComposerFocused(true);
+    setComposerEverFocused(true);
     if (voiceActive) {
       activeTypingIdRef.current = null;
       setClaraTyping(false);
@@ -1691,11 +1743,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             ))}
             {quickReplies && !busy && (
               <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-                {quickReplies.options.map((option) => (
+                {quickReplies.options.map((option, index) => (
                   <button
-                    key={option}
+                    key={`${quickReplies.messageId}:${option}`}
                     type="button"
                     disabled={busy}
+                    data-stagger="true"
+                    style={{ "--chip-index": index } as CSSProperties}
+                    // Garde le clavier ouvert si l'utilisateur écrivait : aucun blur.
+                    onPointerDown={(event) => { if (composerEngagedRef.current) event.preventDefault(); }}
                     onClick={() => chooseQuickReply(option)}
                   >
                     {option}
@@ -1846,7 +1902,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                keepComposerVisible();
              }}
              onFocus={handleComposerFocus}
-             onBlur={() => setComposerFocused(false)}
+             onBlur={() => { composerEngagedRef.current = false; setComposerFocused(false); }}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
           <PromptInputFooter className="home-clara-controls">

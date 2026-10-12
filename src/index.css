@@ -2401,3 +2401,14 @@ html[data-theme-ready="true"] .glass-btn {
     scroll-padding-block: 16px;
   }
 }
+
+/* Clara — choix rapides : apparaissent un par un après le message, sans déplacer le texte. */
+@keyframes clara-chip-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.home-clara-quick button[data-stagger="true"] {
+  opacity: 0;
+  animation: clara-chip-in 160ms cubic-bezier(.22,1,.36,1) forwards;
+  animation-delay: calc(380ms + var(--chip-index, 0) * 140ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-clara-quick button[data-stagger="true"] { opacity: 1; animation: none; }
+}

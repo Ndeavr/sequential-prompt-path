@@ -12,10 +12,10 @@ const NEARBY = "azertyuiopqsdfghjklmwxcvbn";
 export const CLARA_TYPO_CHANCE = 0;
 
 function charDelay(char: string, rand: () => number): number {
-  // Affichage seulement : environ 20 caractères/seconde.
-  const base = 44 + Math.round(rand() * 12);
-  if (/[.!?…]/.test(char)) return base + 220 + Math.round(rand() * 120);
-  if (/[,;:—]/.test(char)) return base + 90 + Math.round(rand() * 60);
+  // Affichage seulement : environ 30 caractères/seconde, pauses de ponctuation.
+  const base = 30 + Math.round(rand() * 6);
+  if (/[.!?…]/.test(char)) return base + 420;
+  if (/[,;:—]/.test(char)) return base + 170;
   return base;
 }
 

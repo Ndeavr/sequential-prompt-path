@@ -19,6 +19,7 @@ vi.mock("@/services/clara/claraContractorQualification", () => ({
   saveClaraQualification: (patch: object) => {
     mocks.qualification = { ...mocks.qualification, ...patch };
   },
+  isAddressAnswer: () => false,
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { functions: { invoke: vi.fn(async () => ({ data: {
