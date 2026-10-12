@@ -29,7 +29,7 @@ export function reliableFirstName(
   if (/[@\d_/\\]|\.(com|ca)\b/i.test(raw)) return null;
   if (!/^[\p{L}][\p{L}'’-]*( [\p{L}][\p{L}'’-]*)?$/u.test(raw)) return null;
   if (BLOCKED_NAMES.has(raw.toLowerCase())) return null;
-  if (raw === raw.toUpperCase() && raw.length > 3) return null; // sigles type "ABC"
+  if (raw === raw.toUpperCase() && raw.length >= 2) return null; // sigles type "ABC"
   const biz = (businessName ?? "").trim().toLowerCase();
   if (biz && biz === raw.toLowerCase()) return null;
   return raw.charAt(0).toUpperCase() + raw.slice(1);
