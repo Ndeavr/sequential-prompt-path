@@ -42,6 +42,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Corps brut conservé : le flux de la requête ne peut être lu qu'une fois,
+  // et le bloc d'erreur doit pouvoir marquer l'événement « failed ».
+  let rawBody = "";
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -50,6 +53,7 @@ Deno.serve(async (req) => {
 
     let stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
     const body = await req.text();
+    rawBody = body;
 
     // Replay mode: internal reprocessing bypasses Stripe signature check.
     // Requires x-replay-token header matching SERVICE_ROLE_KEY.
@@ -1793,16 +1797,16 @@ Deno.serve(async (req) => {
       // (may not always succeed depending on where the throw occurred).
       // Callers can also inspect logs by request id.
       try {
-        const rawBody = await req.clone().text();
         const parsed = JSON.parse(rawBody);
         if (parsed?.id) {
           await supabase.from("stripe_webhook_events").update({
             processing_status: "failed",
             error_message: msg,
             success: false,
+            last_retry_at: new Date().toISOString(),
           }).eq("stripe_event_id", parsed.id);
         }
-      } catch (_) { /* noop */ }
+      } catch (markErr) { console.error("[stripe-webhook] could not mark event failed", String(markErr)); }
     } catch (_) { /* noop */ }
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
