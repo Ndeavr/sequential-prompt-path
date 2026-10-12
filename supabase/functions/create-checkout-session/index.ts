@@ -368,6 +368,7 @@ Deno.serve(async (req) => {
                   },
             },
             quantity: 1,
+            ...(isEntryActivation && { tax_rates: await ensureQuebecTaxRates(stripeFallback) }),
           },
         ],
         metadata: {

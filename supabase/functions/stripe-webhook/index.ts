@@ -341,7 +341,18 @@ Deno.serve(async (req) => {
         if (session.metadata?.offer === "entry_activation_350") {
           const entryContractorId = session.metadata?.contractor_id ?? null;
           const paid = session.payment_status === "paid";
-          if (entryContractorId && paid) {
+          // Montant exact exigé : 350 $ CAD hors taxes. Tout écart = aucune activation.
+          const amountOk = session.amount_subtotal === 35000 && (session.currency ?? "").toLowerCase() === "cad";
+          if (entryContractorId && paid && !amountOk) {
+            console.error("[stripe-webhook][entry_activation_350] amount mismatch", session.id, session.amount_subtotal, session.currency);
+            await supabase.from("admin_notifications").insert({
+              type: "entry_activation_350_amount_mismatch", severity: "critical", contractor_id: entryContractorId,
+              title: "Paiement 350 $ : montant inattendu — activation bloquée",
+              body: "Vérifier la session Stripe avant toute activation manuelle.",
+              payload_json: { stripe_session_id: session.id, amount_subtotal: session.amount_subtotal, currency: session.currency },
+            });
+          }
+          if (entryContractorId && paid && amountOk) {
             const { data: already } = await supabase
               .from("contractor_activation_ledger")
               .select("id")
