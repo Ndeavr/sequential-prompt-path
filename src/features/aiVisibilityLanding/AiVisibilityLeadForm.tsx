@@ -12,7 +12,7 @@ import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { formatPhoneDisplay, phoneDigitsOnly } from "@/utils/formatPhone";
 import { CheckCircle2, Loader2, Phone } from "lucide-react";
 
-const PHONE_TEL = "tel:+15142499522";
+const PHONE_TEL = "tel:+14503286776";
 
 const Schema = z.object({
   company_name: z.string().trim().min(2, "Indiquez le nom de votre entreprise.").max(150),
@@ -102,7 +102,7 @@ export default function AiVisibilityLeadForm() {
       console.error("[AiVisibilityLeadForm]", err);
       setStatus("idle");
       lockRef.current = false;
-      setFormError("Une erreur est survenue. Réessayez ou appelez le (514) 249-9522.");
+      setFormError("Une erreur est survenue. Réessayez ou appelez le 450-328-6776.");
       logFunnelEvent({ event_type: "ai_visibility_form_error", metadata: { reason: "network" } });
     }
   }
@@ -117,7 +117,7 @@ export default function AiVisibilityLeadForm() {
         <h3 className="text-xl font-semibold text-foreground">Demande reçue</h3>
         <p className="mt-3 text-muted-foreground">
           Votre demande a bien été reçue. UNPRO communiquera avec vous prochainement.
-          Pour une réponse immédiate, appelez le (514) 249-9522.
+          Pour une réponse immédiate, appelez le 450-328-6776.
         </p>
         <a
           href={PHONE_TEL}
@@ -125,7 +125,7 @@ export default function AiVisibilityLeadForm() {
           className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground"
         >
           <Phone className="h-4 w-4" aria-hidden="true" />
-          Appeler le (514) 249-9522
+          Appeler le 450-328-6776
         </a>
       </div>
     );
@@ -199,7 +199,7 @@ export default function AiVisibilityLeadForm() {
           className="mt-1 inline-flex items-center gap-2 font-semibold text-primary underline underline-offset-4"
         >
           <Phone className="h-4 w-4" aria-hidden="true" />
-          Appelez UNPRO au (514) 249-9522
+          Appelez UNPRO au 450-328-6776
         </a>
       </div>
     </form>

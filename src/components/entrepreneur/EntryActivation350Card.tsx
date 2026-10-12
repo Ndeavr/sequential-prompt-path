@@ -10,6 +10,7 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { ENTRY_350 } from "@/lib/copy/offer350";
 import { toast } from "sonner";
+import { CallUnproLink } from "@/components/contact/CallUnproLink";
 
 interface Props {
   quoteId: string;
@@ -97,6 +98,14 @@ export function EntryActivation350Card(p: Props) {
       <button type="button" onClick={p.onMore} className="mt-3 w-full min-h-11 rounded-[18px] border border-white/15 px-5 py-3 text-sm text-white/85 hover:bg-white/5">
         {ENTRY_350.ctaMore}
       </button>
+      <div className="mt-2 flex justify-center">
+        <CallUnproLink
+          context={error ? "entry_350_checkout_error" : "entry_350_card"}
+          label={error ? "Besoin d'aide? Appeler UNPRO" : "Une question avant d'activer? Appeler UNPRO"}
+          compact
+          className="text-white/80"
+        />
+      </div>
     </div>
   );
 }

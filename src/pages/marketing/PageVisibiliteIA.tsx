@@ -27,7 +27,7 @@ import { ContractorIntelligenceVisual } from "@/components/scroll-story/StoryVis
 import ImmersiveFooterGrid from "@/components/scroll-story/ImmersiveFooterGrid";
 
 const CANONICAL = "https://unpro.ca/visibilite-ia-entrepreneurs";
-const PHONE_TEL = "tel:+15142499522";
+const PHONE_TEL = "tel:+14503286776";
 
 const SIGNALS = [
   { icon: Wrench, label: "Services offerts" },
@@ -79,7 +79,7 @@ const JSON_LD = {
       "@id": "https://unpro.ca/#organization",
       name: "UNPRO",
       url: "https://unpro.ca",
-      telephone: "+1-514-249-9522",
+      telephone: "+1-450-328-6776",
       areaServed: "CA-QC",
     },
     {
@@ -140,7 +140,7 @@ export default function PageVisibiliteIA() {
     <MainLayout hideMemorySection hideFooter>
       <SeoHead
         title="Agence de visibilité IA pour entrepreneurs au Québec | UNPRO"
-        description="Faites comprendre et découvrir votre entreprise par ChatGPT, Gemini et les autres moteurs IA. Analyse SEO, AEO et GEO pour entrepreneurs. Appelez UNPRO au 514 249-9522."
+        description="Faites comprendre et découvrir votre entreprise par ChatGPT, Gemini et les autres moteurs IA. Analyse SEO, AEO et GEO pour entrepreneurs. Appelez UNPRO au 450-328-6776."
         canonical={CANONICAL}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
@@ -181,7 +181,7 @@ export default function PageVisibiliteIA() {
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-7 py-3.5 font-semibold text-foreground transition hover:-translate-y-0.5"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" />
-                Appeler le (514) 249-9522
+                Appeler le 450-328-6776
               </a>
             </div>
 
@@ -367,7 +367,7 @@ export default function PageVisibiliteIA() {
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-7 py-3.5 font-semibold text-foreground"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" />
-                Appeler le (514) 249-9522
+                Appeler le 450-328-6776
               </a>
             </div>
           </div>

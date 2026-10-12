@@ -15,7 +15,7 @@ export const ISR_BRAND = {
   company: "Isolation Solution Royal",
   legal: "9480-0976 Québec inc.",
   website: "isroyal.ca",
-  phones: ["514-249-9522", "514-941-3141"],
+  phones: ["514-941-3141"],
   territory: "Laval · Montréal · Rive-Nord · Lanaudière",
   positioning: "Spécialiste de l'entretoit",
   services: [
