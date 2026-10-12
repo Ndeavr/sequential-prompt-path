@@ -23,6 +23,7 @@ import { useActivationTracking } from "@/features/activationProfile/useActivatio
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { extractEdgeReason, extractEdgeStatus } from "@/lib/edgeFunctionError";
+import GuestInviteView from "@/features/activationProfile/components/GuestInviteView";
 
 /** Messages d'échec du jeton, alignés sur les `reason` du serveur. */
 const RESOLVE_ERRORS: Record<string, { title: string; body: string }> = {
@@ -67,7 +68,7 @@ interface ResolvedContact {
   channel: string | null;
 }
 
-export default function PageUnproActivate() {
+function ProspectActivate() {
   const { token } = useParams<{ token: string }>();
   // QA : ?preview=1 rend la page réelle sans écrire de clic ni d'événement
   // d'entonnoir, afin de ne pas contaminer la cohorte de production.
@@ -372,4 +373,11 @@ export default function PageUnproActivate() {
 
     </div>
   );
+}
+
+/** Les invitations protégées (gi_…) ont leur propre vue, sans prospect. */
+export default function PageUnproActivate() {
+  const { token } = useParams<{ token: string }>();
+  if (token?.startsWith("gi_")) return <GuestInviteView token={token} />;
+  return <ProspectActivate />;
 }

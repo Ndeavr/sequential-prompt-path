@@ -11,6 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 import { logInviteEvent } from "../_shared/inviteAudit.ts";
+import { GUEST_PREFIX, claimGuestInvite } from "../_shared/guestInvite.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +89,14 @@ Deno.serve(async (req) => {
     if (userErr || !user) {
       await logEvent("activation_error", { step_failed: "auth", code: "not_authenticated" }, { token_hash: tokenHash });
       return json({ ok: false, reason: "not_authenticated" }, 401);
+    }
+
+    // Invitation protégée : revendication en attente de vérification humaine,
+    // aucun prospect/compte entrepreneur/paiement créé ici.
+    if (token.startsWith(GUEST_PREFIX)) {
+      if (probe) return json({ ok: true, kind: "guest_invite", attached: false });
+      const r = await claimGuestInvite(admin, token, user.id);
+      return json(r.body, r.status);
     }
 
     // ------------------------------------------------------------ jeton → prospect
