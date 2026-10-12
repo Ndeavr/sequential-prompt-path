@@ -35,3 +35,9 @@
 - [ ] Prospection Laval/Terrebonne/Rive-Nord — reste OFF jusqu'à preuve CASL + feu vert de Yan
 - [ ] Backlog préservé : affiliés 20 %/5 %, capacité ville/métier, RBQ/CMMTQ/CMEQ, calendrier, Clara voix/mémoire, soumissions, Plus/Gold, SEO/AEO, partenariats, knowledge graph
 - [x] Compteur d’impact accueil + /impact : scénario type transparent avec hypothèses serveur existantes, sans total mondial ni gains UNPRO attribués; cadrans animés, dollars en consolidation.
+
+## Backlog — Affiliation RBQ « entreprise titulaire » (art. 46 B-1.1)
+- [ ] Invitation sécurisée expirable au responsable autorisé de l'entreprise titulaire (identité, autorité, fonctions, période, révocation, audit).
+- [ ] Vérification registre RBQ de l'employeur (active, sous-catégories, nom/NEQ concordants) + règles CCQ/CMEQ/CMMTQ.
+- [ ] Statut EMPLOYER_AFFILIATION_VERIFIED, affichage « Membre autorisé de [société] », contrat/paiement au nom de la société titulaire.
+- [ ] Écran admin d'examen des déclarations RBQ (exemption, incertain, autre, employeur, indépendant).

@@ -43,6 +43,7 @@ export default function ProNextActionCard({ profile, appointments }: Props) {
     rbq_compliance_status: profile?.rbq_compliance_status,
     rbq_expiry_date: profile?.rbq_expiry_date,
     rbq_declaration: profile?.rbq_declaration,
+    rbq_declaration_details: profile?.rbq_declaration_details,
   });
 
   let title: string;
