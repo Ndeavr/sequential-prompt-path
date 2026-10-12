@@ -45218,6 +45218,9 @@ export type Database = {
           published_at: string | null
           rating: number | null
           rbq_compliance_status: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_declaration: string | null
+          rbq_declaration_details: Json
+          rbq_declared_at: string | null
           rbq_expiry_date: string | null
           rbq_last_check: string | null
           rbq_number: string | null
@@ -45297,6 +45300,9 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_declaration?: string | null
+          rbq_declaration_details?: Json
+          rbq_declared_at?: string | null
           rbq_expiry_date?: string | null
           rbq_last_check?: string | null
           rbq_number?: string | null
@@ -45376,6 +45382,9 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_declaration?: string | null
+          rbq_declaration_details?: Json
+          rbq_declared_at?: string | null
           rbq_expiry_date?: string | null
           rbq_last_check?: string | null
           rbq_number?: string | null
