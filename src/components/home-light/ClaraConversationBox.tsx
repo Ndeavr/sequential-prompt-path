@@ -5,7 +5,7 @@
  * écrit dans la session Clara canonique, ce qui rend la conversation persistante
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
@@ -508,6 +508,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     workflowRef.current = null;
     rememberHomeCursor(null);
     setMessages([]);
+    setComposerEverFocused(false);
     setQuickReplies(null);
     setError(null);
     setQuoteCount(0);
@@ -1748,7 +1749,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     type="button"
                     disabled={busy}
                     data-stagger="true"
-                    style={{ "--chip-index": index } as React.CSSProperties}
+                    style={{ "--chip-index": index } as CSSProperties}
                     // Garde le clavier ouvert si l'utilisateur écrivait : aucun blur.
                     onPointerDown={(event) => { if (composerEngagedRef.current) event.preventDefault(); }}
                     onClick={() => chooseQuickReply(option)}
