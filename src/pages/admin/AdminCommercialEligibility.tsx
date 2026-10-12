@@ -27,6 +27,7 @@ import { RefreshCw, ShieldCheck, ShieldAlert, Search, Download } from "lucide-re
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import CaslHumanReviewPanel from "@/components/admin/CaslHumanReviewPanel";
+import ApchqReviewSection from "@/components/admin/ApchqReviewSection";
 
 const SMS_COOLDOWN_DAYS = 30;
 
@@ -269,6 +270,7 @@ export default function AdminCommercialEligibility() {
       </div>
 
       {/* KPIs */}
+      <ApchqReviewSection />
       <CaslHumanReviewPanel />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
