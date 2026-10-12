@@ -79,3 +79,34 @@ export function returnConfirmationMode(search: string): "none" | "confirm" | "ca
   if (outcome !== "success") return "none";
   return isValidCheckoutSessionId(p.get("session_id")) ? "confirm" : "invalid";
 }
+
+/**
+ * Décision du webhook pour une session 350 $ payée et au bon montant.
+ * - TEST (livemode=false) n'active QUE des comptes QA marqués : jamais une
+ *   activation commerciale réelle depuis un événement de test.
+ * - Une deuxième session payée pour une fiche déjà activée n'active rien :
+ *   c'est un double paiement à rembourser, signalé à l'admin.
+ */
+export type EntryActivationDecision = "activate" | "already_processed" | "duplicate_payment" | "test_on_non_qa";
+export function entryActivationDecision(i: {
+  livemode: boolean | null | undefined;
+  isQaAccount: boolean;
+  sessionAlreadyInLedger: boolean;
+  activatedByOtherSession: boolean;
+}): EntryActivationDecision {
+  if (i.sessionAlreadyInLedger) return "already_processed";
+  if (i.livemode !== true && !i.isQaAccount) return "test_on_non_qa";
+  if (i.activatedByOtherSession) return "duplicate_payment";
+  return "activate";
+}
+
+/** Le webhook a-t-il échoué de façon définitive ou reste-t-il bloqué (> 5 min) ? */
+export function webhookConfirmationFailed(row: WebhookEventRow | null, nowMs = Date.now()): boolean {
+  if (!row) return false;
+  if (row.processing_status === "failed") return true;
+  if (row.processing_status === "processing") {
+    const t = row.received_at ? Date.parse(row.received_at) : nowMs;
+    return nowMs - t >= 5 * 60_000;
+  }
+  return false;
+}
