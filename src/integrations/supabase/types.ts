@@ -100996,6 +100996,18 @@ export type Database = {
         }
         Returns: string
       }
+      manual_import_batch_eligibility: {
+        Args: { _source: string }
+        Returns: {
+          reasons: Json
+          row_id: string
+          status: string
+        }[]
+      }
+      manual_import_eligibility_internal: {
+        Args: { _row_id: string }
+        Returns: Json
+      }
       manual_override_appointment_quota: {
         Args: {
           _contractor_id: string
