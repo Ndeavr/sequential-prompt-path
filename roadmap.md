@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] Focused homepage: approved two-path section replaces dials; animated scenario consolidated on /impact. 21 focused tests and local browser checks at 360/390/1280, FR/EN, /index, CTA destinations and reduced motion pass. Preview only; physical devices, voice and authenticated payment unverified. Evidence: `docs/audits/home-matching-2026-10-12.md`.
 - [x] Bounded HELP repair: public SMS contact, signed simulations and live unsigned 403 verified; only twilio-inbound deployed. Twilio Advanced Opt-Out text still requires console inspection; no SMS or configuration changes. Evidence: `docs/audits/sms-help-2026-10-12.md`.
 - [ ] Current P0: address autocomplete mobile/Places configuration, readable Clara streaming, strict property/business/territory context separation; verify targeted tests and preview, no publication without proof.
 - [x] Focused homepage impact dials: explicit per-journey scenario, once-per-visit animation, methodology; 8 tests and desktop/mobile simulated browser checks passed. Report: `docs/audits/impact-dials-2026-10-11.md`. Not published.

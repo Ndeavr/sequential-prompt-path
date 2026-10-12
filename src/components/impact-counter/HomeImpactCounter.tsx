@@ -68,11 +68,11 @@ export default function HomeImpactCounter() {
   ];
 
   return (
-    <section ref={ref} aria-labelledby="impact-home-title" className="impact-dials home-light mx-auto w-full max-w-3xl px-5 py-8 sm:py-12">
+    <section ref={ref} aria-labelledby="impact-home-title" className="impact-dials mx-auto w-full max-w-3xl py-8 sm:py-12">
         <h2 id="impact-home-title" className="text-2xl font-semibold text-foreground">
           Le bon match. Moins de temps perdu.
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Impact potentiel estimé de l'IA depuis le 1er janvier 2026</p>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">Impact potentiel estimé de l'IA par scénario.</p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Estimations fondées sur des hypothèses explicites, non sur les résultats UNPRO.</p>
         <p className="mt-5 font-medium text-foreground">Scénario type : un projet, un jumelage exclusif.</p>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Illustration par parcours, pas un total sectoriel cumulé.</p>
