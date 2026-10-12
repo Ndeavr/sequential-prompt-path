@@ -30,6 +30,6 @@ describe("Activation d'entrée 350 $", () => {
     const branch = wh.slice(i, i + 2500);
     expect(branch).toMatch(/payment_status === "paid"/);
     expect(branch).toMatch(/entry_activation_350_paid/);
-    expect(branch).toMatch(/if \(!already\)/);
+    expect(branch).toMatch(/sessionAlreadyInLedger: !!already/);
   });
 });
