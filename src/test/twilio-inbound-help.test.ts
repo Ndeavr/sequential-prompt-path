@@ -47,7 +47,7 @@ function harness(authToken = token) {
       const headers: Record<string, string> = { "Content-Type": "application/x-www-form-urlencoded" };
       if (signed) headers["X-Twilio-Signature"] = createHmac("sha1", token).update(payload).digest("base64");
       if (!handler) throw new Error("Handler not registered");
-      return handler(new Request(url, { method: "POST", headers, body: new URLSearchParams(params) }));
+      return handler(new Request(url, { method: "POST", headers, body: new URLSearchParams(params).toString() }));
     },
   };
 }
