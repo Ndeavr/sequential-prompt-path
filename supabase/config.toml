@@ -21,6 +21,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.twilio-inbound]
     verify_jwt = false
+  [functions.twilio-voice-inbound]
+    verify_jwt = false
   [functions.twilio-status]
     verify_jwt = false
   [functions.twilio-status-v2]
