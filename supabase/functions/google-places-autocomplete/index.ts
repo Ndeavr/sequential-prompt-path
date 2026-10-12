@@ -10,6 +10,7 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "Retry-After",
 };
 
 const json = (payload: unknown, status = 200) =>
@@ -18,15 +19,19 @@ const json = (payload: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-// Quota glissant par appelant (10 min), par instance : bornage anti-abus.
-const hits = new Map<string, number[]>();
-function allow(key: string, max: number): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < 600_000);
-  if (recent.length >= max) { hits.set(key, recent); return false; }
-  recent.push(now); hits.set(key, recent);
-  if (hits.size > 5000) hits.clear();
-  return true;
+// Plafonds partagés (base de données, fenêtre glissante 10 min, atomiques).
+export const LIMITS = {
+  predictions: { guest: 15, user: 30, ip: 40 },
+  details: { guest: 6, user: 12, ip: 20 },
+} as const;
+
+// Cache court des prédictions identiques (même appelant, même saisie) : aucun appel Google, aucun quota.
+const cache = new Map<string, { at: number; payload: unknown }>();
+const CACHE_MS = 120_000;
+
+async function sha(v: string) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
 serve(async (req) => {
@@ -61,8 +66,32 @@ serve(async (req) => {
   if (!callerKey) {
     return json({ error: "SESSION_REQUIRED", message: "Session invitée introuvable. Réessayez dans un instant." }, 401);
   }
-  if (!allow(callerKey, callerKey.startsWith("u:") ? 300 : 80)) {
-    return json({ predictions: [], error: "RATE_LIMITED", message: "Trop de recherches. Votre saisie est conservée; réessayez dans quelques minutes." }, 429);
+  const isDetails = !!body.place_id;
+  const normInput = typeof body.input === "string" ? body.input.trim().toLowerCase().replace(/\s+/g, " ") : "";
+  const cacheKey = `${callerKey}|${normInput}|${body.region ?? "ca"}|${body.language ?? "fr"}`;
+  if (!isDetails) {
+    if (normInput.length < 4 || normInput.length > 200) return json({ predictions: [] });
+    const hit = cache.get(cacheKey);
+    if (hit && Date.now() - hit.at < CACHE_MS) return json(hit.payload);
+  }
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("cf-connecting-ip") || "unknown";
+  const ipKey = `ip:${await sha(ip)}`;
+  const kind = isDetails ? "details" : "predictions";
+  const lim = LIMITS[kind];
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data: gate, error: gateErr } = await admin.rpc("reserve_address_lookup", {
+    p_keys: [`${kind}:${callerKey}`, `${kind}:${ipKey}`],
+    p_limits: [callerKey.startsWith("u:") ? lim.user : lim.guest, lim.ip],
+  });
+  if (gateErr || !gate) {
+    console.error("[google-places] quota check failed", gateErr?.code);
+    return json({ predictions: [], error: "SERVICE_FAILED", message: "Service d'adresses momentanément indisponible." }, 503);
+  }
+  if (!(gate as { allowed: boolean }).allowed) {
+    const retry = Math.max(1, Number((gate as { retry_after_seconds: number }).retry_after_seconds) || 60);
+    return new Response(JSON.stringify({ predictions: [], error: "RATE_LIMITED", retry_after_seconds: retry,
+      message: "Beaucoup de recherches d'adresse en peu de temps. Votre saisie est conservée « à confirmer »; vous pourrez réessayer sous peu." }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(retry) } });
   }
 
   const creds = getGoogleMapsCredentials();
@@ -152,14 +181,17 @@ serve(async (req) => {
       console.log("[google-places][autocomplete]", data.length, "results via", source);
     }
 
-    return json({
+    const payload = {
       predictions: data.map((p) => ({
         place_id: p.place_id,
         description: p.description,
         structured_formatting: p.structured_formatting,
       })),
       source,
-    });
+    };
+    if (cache.size > 2000) cache.clear();
+    cache.set(cacheKey, { at: Date.now(), payload });
+    return json(payload);
   } catch (err) {
     console.error("[google-places] unexpected error:", err);
     return json({

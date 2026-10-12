@@ -3055,6 +3055,24 @@ export type Database = {
         }
         Relationships: []
       }
+      address_lookup_hits: {
+        Row: {
+          bucket_key: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          bucket_key: string
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          bucket_key?: string
+          created_at?: string
+          id?: never
+        }
+        Relationships: []
+      }
       admin_action_logs: {
         Row: {
           action_type: string
@@ -101089,6 +101107,14 @@ export type Database = {
         Returns: boolean
       }
       repair_mojibake_text: { Args: { input: string }; Returns: string }
+      reserve_address_lookup: {
+        Args: {
+          p_keys: string[]
+          p_limits: number[]
+          p_window_seconds?: number
+        }
+        Returns: Json
+      }
       reserve_external_enrichment_call: {
         Args: { p_est_cost_usd?: number; p_items?: number; p_provider?: string }
         Returns: Json
