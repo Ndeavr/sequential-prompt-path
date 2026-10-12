@@ -1021,7 +1021,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           try {
             if (declaration) {
               saveClaraQualification({ rbq_declaration: declaration });
-              trackCopilotEvent("clara_rbq_declared", { surface: "home_clara_box", kind: declaration });
+              trackCopilotEvent("contractor_context_captured", { surface: "home_clara_box", kind: `rbq_${declaration}` });
               await sayClara("Merci, c'est noté comme déclaré. UNPRO le vérifiera; on continue votre inscription.");
               await askNextQualification();
             } else {
