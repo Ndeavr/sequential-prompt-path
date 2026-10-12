@@ -51,7 +51,7 @@ export function validateSmsBody(body: unknown, opts: { commercial?: boolean } = 
   const issues: SmsBodyIssue[] = [];
   const s = typeof body === "string" ? body : "";
   if (!s.trim()) issues.push("empty_body");
-  if (/^\s*(bonjour|salut|allo|hello|hi)\s*[,!.]/i.test(s) && !/^\s*bonjour,\s*ici unpro\./i.test(s)) issues.push("empty_greeting");
+  if (opts.commercial && /^\s*(bonjour|salut|allo|hello|hi)\s*[,!.]/i.test(s) && !/^\s*bonjour,\s*ici unpro\./i.test(s)) issues.push("empty_greeting");
   if (/(bonjour|salut|allo|hello|hi)\s+,/i.test(s)) issues.push("empty_greeting");
   if (/\bnull\b/i.test(s)) issues.push("null_token");
   if (/\bundefined\b|\bNaN\b|\[object Object\]/.test(s)) issues.push("undefined_token");
