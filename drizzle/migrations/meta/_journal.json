@@ -141,6 +141,13 @@
       "when": 1791837347535,
       "tag": "0019_manual_import_claim_links_and_casl_reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791838978309,
+      "tag": "0020_manual_import_send_eligibility",
+      "breakpoints": true
     }
   ]
 }

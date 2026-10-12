@@ -166,6 +166,23 @@ export default function ApchqReviewSection() {
       return { links: (l.data ?? []) as LinkRow[], reviews: (v.data ?? []) as Review[] };
     },
   });
+  // Admissibilité calculée côté serveur (aucun badge déterminé par le client).
+  const { data: elig, error: eligErr } = useQuery({
+    queryKey: ["apchq-eligibility", ids.join(",")],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("manual_import_batch_eligibility", { _source: BATCH_SOURCE });
+      if (error) throw error;
+      return (data ?? []) as { row_id: string; status: string; reasons: string[] }[];
+    },
+  });
+  const eligOf = (id: string) => elig?.find((e) => e.row_id === id);
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { admissible_sur_preuve: 0, a_qualifier: 0, exclu: 0 };
+    (elig ?? []).forEach((e) => { c[e.status] = (c[e.status] ?? 0) + 1; });
+    return c;
+  }, [elig]);
+  const STATUS_LABEL: Record<string, string> = { admissible_sur_preuve: "Admissible sur preuve", a_qualifier: "À qualifier", exclu: "Exclu" };
   const linkOf = (id: string) => extra?.links.find((x) => x.import_row_id === id);
   const reviewsOf = (id: string) => (extra?.reviews ?? []).filter((x) => x.import_row_id === id);
   const lastDecision = (id: string) => reviewsOf(id).at(-1)?.decision;
@@ -183,7 +200,12 @@ export default function ApchqReviewSection() {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">APCHQ — {data?.length ?? 24} dossiers à qualifier</CardTitle>
-        <p className="text-xs text-muted-foreground">Revue seulement. Aucun prospect créé, aucun envoi possible. Prêts à envoyer : 0.</p>
+        <p className="text-xs text-muted-foreground">Revue seulement. Aucun prospect créé, aucun envoi possible.</p>
+        <p className="text-xs text-foreground">
+          {eligErr ? "Admissibilité non calculée (accès administrateur requis)." : elig
+            ? `Calcul serveur — Admissible sur preuve : ${counts.admissible_sur_preuve} · À qualifier : ${counts.a_qualifier} · Exclu : ${counts.exclu}. « Admissible » ne déclenche aucun envoi.`
+            : "Calcul de l'admissibilité…"}
+        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-2">
@@ -222,6 +244,10 @@ export default function ApchqReviewSection() {
                   <Flag label="LCAP" kind={lastDecision(r.id) === "evidence_documented" ? "declared" : "pending"} />
                   <Flag label="Lien 350 $" kind={linkOf(r.id) && new Date(linkOf(r.id)!.expires_at) > new Date() ? "declared" : "pending"} />
                   <Flag label="RBQ" kind="pending" />
+                </div>
+                <div className="text-[11px] text-foreground">
+                  <strong>{eligOf(r.id) ? STATUS_LABEL[eligOf(r.id)!.status] ?? eligOf(r.id)!.status : "—"}</strong>
+                  {eligOf(r.id)?.reasons?.length ? ` · ${eligOf(r.id)!.reasons.join(", ").replace(/_/g, " ")}` : ""}
                 </div>
                 {isOpen && (
                   <div className="space-y-2 text-xs text-foreground">
