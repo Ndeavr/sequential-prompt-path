@@ -48,7 +48,7 @@ describe("wiring", () => {
     expect(hook).toContain("shouldSkipRedelivery(prior)");
   });
   it("delayed webhook triggers server reconciliation, never URL activation", () => {
-    expect(plan).toContain("reconcileQuotePayment(quoteId)");
+    expect(plan).toContain("reconcileQuoteStatus(quoteId, stripeSessionId)");
     expect(plan).not.toContain("Paiement reçu, confirmation en attente.");
   });
 });
