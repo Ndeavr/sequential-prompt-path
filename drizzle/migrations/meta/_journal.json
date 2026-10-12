@@ -127,6 +127,13 @@
       "when": 1791828618813,
       "tag": "0017_sms_body_guard_and_anti_loop",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791831601955,
+      "tag": "0018_manual_import_rows_needs_review",
+      "breakpoints": true
     }
   ]
 }

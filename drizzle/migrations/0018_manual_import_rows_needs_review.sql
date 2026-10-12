@@ -1,0 +1,4 @@
+ALTER TABLE public.acquisition_manual_import_rows DROP CONSTRAINT acquisition_manual_import_rows_status_check;
+ALTER TABLE public.acquisition_manual_import_rows ADD CONSTRAINT acquisition_manual_import_rows_status_check CHECK (status = ANY (ARRAY['queued','imported','verified','queued_outreach','sent','failed','duplicate','needs_review']));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_amir_dedup_key ON public.acquisition_manual_import_rows ((normalized->>'dedup_key')) WHERE normalized ? 'dedup_key';
+COMMENT ON COLUMN public.acquisition_manual_import_rows.status IS 'needs_review = review-only row, no prospect created, never dispatchable (send_enabled=false in normalized).';
