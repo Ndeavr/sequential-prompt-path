@@ -94,8 +94,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SUPABASE_URL || !SERVICE_ROLE) return forbidden("missing_configuration");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
     const REQUIRE_SIGNATURE = (Deno.env.get("TWILIO_REQUIRE_SIGNATURE") ?? "true").toLowerCase() !== "false";
 
@@ -131,10 +132,14 @@ serve(async (req) => {
         return forbidden("invalid_signature");
       }
     } else if (REQUIRE_SIGNATURE) {
-      console.warn("twilio-inbound: TWILIO_AUTH_TOKEN missing — signature check skipped (dev mode)");
+      console.error("twilio-inbound: signature validation unavailable");
+      return forbidden("signature_validation_unavailable");
     }
 
-    const intent = classify(Body);
+    // Signed marker means Advanced Opt-Out already sent its confirmation.
+    const optOutType = (rawPayload.OptOutType ?? "").toUpperCase();
+    const providerAlreadyReplied = ["HELP", "STOP", "START"].includes(optOutType);
+    const intent = optOutType === "STOP" ? "stop" : optOutType === "HELP" ? "help" : classify(Body);
 
     const { data: smsRow } = await sb.from("sms_messages").insert({
       message_sid: MessageSid,
@@ -248,7 +253,9 @@ serve(async (req) => {
     // We deliberately DO NOT auto-reply to STOP with any promotional wording.
     // Twilio itself sends the native opt-out confirmation; we return empty TwiML.
     if (intent === "stop") return twiml();
-    if (intent === "help") return twiml("UNPRO: Aide au 1-800-UNPRO. Répondez STOP pour vous désabonner.");
+    if (providerAlreadyReplied) return twiml();
+    // One GSM-7 segment. Voice forwarding is not call-tested: SMS only.
+    if (intent === "help") return twiml("UNPRO - Aide: unpro.ca/contact. Questions par SMS: 450-328-6776. Pour ne plus recevoir de SMS commerciaux, répondez STOP.");
 
     if (reply?.id) {
       sb.functions.invoke("agent-activation-reply", { body: { reply_id: reply.id } }).catch(() => {});
