@@ -58,6 +58,7 @@ export default function RbqSituationSelector({ profile, onSaved }: Props) {
     if (choice === "not_required") return !!d.activities?.trim();
     if (choice === "unsure") return !!d.activities?.trim();
     if (choice === "other") return !!d.situation;
+    if (choice === "employer_licensed") return !!d.employer_relationship && (d.employer_relationship === "independent" || (!!d.employer_legal_name?.trim() && isValidRbq(d.employer_rbq || "") && !!d.activities?.trim()));
     return true;
   })();
 
@@ -69,6 +70,11 @@ export default function RbqSituationSelector({ profile, onSaved }: Props) {
     if (d.reason?.trim()) clean.reason = d.reason.trim().slice(0, 500);
     if (choice === "in_progress" && d.expected_date) clean.expected_date = d.expected_date;
     if (choice === "other" && d.situation) clean.situation = d.situation;
+    if (choice === "employer_licensed") {
+      clean.employer_relationship = d.employer_relationship;
+      if (d.employer_legal_name?.trim()) clean.employer_legal_name = d.employer_legal_name.trim().slice(0, 200);
+      if (d.employer_rbq) clean.employer_rbq = normalizeRbq(d.employer_rbq);
+    }
     if (d.notes?.trim()) clean.notes = d.notes.trim().slice(0, 500);
     const update: Record<string, unknown> = {
       rbq_declaration: choice,
@@ -186,6 +192,48 @@ export default function RbqSituationSelector({ profile, onSaved }: Props) {
             </>
           )}
           <p className="text-xs text-muted-foreground">Ceci n'est pas un avis juridique. UNPRO examinera vos travaux et vous avisera.</p>
+        </div>
+      )}
+
+      {choice === "employer_licensed" && (
+        <div className="space-y-3" data-testid="rbq-employer-fields">
+          <p className="text-sm font-medium text-foreground">Quel est votre lien avec cette entreprise?</p>
+          <div role="radiogroup" aria-label="Lien avec l'entreprise titulaire" className="grid gap-2">
+            {([
+              ["employee", "Employé ou salarié de l'entreprise"],
+              ["representative", "Représentant mandaté par l'entreprise"],
+              ["independent", "Sous-traitant ou travailleur indépendant"],
+            ] as const).map(([v, l]) => (
+              <button type="button" key={v} role="radio" aria-checked={d.employer_relationship === v}
+                data-testid={`rbq-rel-${v}`}
+                onClick={() => setD((x) => ({ ...x, employer_relationship: v }))}
+                className={cn("min-h-11 rounded-xl border px-3 text-left text-sm text-foreground", d.employer_relationship === v ? "border-primary bg-primary/10" : "border-border/60")}
+              >{l}</button>
+            ))}
+          </div>
+          {d.employer_relationship === "independent" ? (
+            <p className="text-xs text-foreground rounded-xl border border-border/60 p-3">
+              Un sous-traitant doit détenir sa propre licence RBQ pour les travaux réglementés (Loi sur le bâtiment, art. 46). La licence d'une autre entreprise ne peut pas être prêtée ni utilisée, même avec une autorisation. Choisissez « Ma licence est en cours d'obtention » ou enregistrez pour un examen de conformité.
+            </p>
+          ) : d.employer_relationship ? (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="emp-name">Nom légal de l'entreprise titulaire</Label>
+                <Input id="emp-name" value={d.employer_legal_name || ""} onChange={set("employer_legal_name")} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="emp-rbq">Numéro RBQ de l'entreprise</Label>
+                <Input id="emp-rbq" inputMode="numeric" value={d.employer_rbq || ""} onChange={set("employer_rbq")} placeholder="1234-5678-90" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="emp-act">Travaux exacts que vous faites</Label>
+                <Textarea id="emp-act" rows={2} value={d.activities || ""} onChange={set("activities")} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Un responsable autorisé de l'entreprise devra confirmer par écrit. Les contrats et paiements des clients restent au nom de l'entreprise titulaire. Cette autorisation ne vous donne pas de licence.
+              </p>
+            </>
+          ) : null}
         </div>
       )}
 

@@ -35,3 +35,17 @@ describe("RBQ — 5 options et état dashboard", () => {
   it("activité mixte = demande RBQ", () => expect(s({ specialty: "Entretien ménager", services: ["Rénovation"] }).kind).toBe("needs_rbq"));
   it("service non réglementé sans déclaration n'exige rien", () => expect(s(clean).isNextAction).toBe(false));
 });
+
+describe("RBQ — entreprise titulaire (art. 46 B-1.1)", () => {
+  it("employé = autorisation en attente, jamais admissible", () => {
+    const r = s({ ...roof, rbq_declaration: "employer_licensed", rbq_declaration_details: { employer_relationship: "employee", employer_legal_name: "Toitures ABC inc." } });
+    expect(r.kind).toBe("pending_employer_authorization"); expect(r.detail).toContain("Toitures ABC inc."); expect(r.regulatedEligible).toBe(false);
+  });
+  it("représentant = en attente", () => {
+    expect(s({ ...roof, rbq_declaration: "employer_licensed", rbq_declaration_details: { employer_relationship: "representative" } }).kind).toBe("pending_employer_authorization");
+  });
+  it("indépendant = licence propre requise, bloqué", () => {
+    const r = s({ ...roof, rbq_declaration: "employer_licensed", rbq_declaration_details: { employer_relationship: "independent" } });
+    expect(r.kind).toBe("independent_needs_own_licence"); expect(r.regulatedEligible).toBe(false); expect(r.isNextAction).toBe(true);
+  });
+});
