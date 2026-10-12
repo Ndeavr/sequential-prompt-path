@@ -206,14 +206,16 @@ export default function PageContractorPersonalizedPlan() {
 
   /* Étape 4 : activation payante affichée SEULEMENT après confirmation serveur
      (webhook Stripe → pricing_status = "paid"). Le retour Stripe seul ne suffit pas. */
-  type ConfirmState = "idle" | "waiting" | "paid" | "timeout" | "no_session" | "expired" | "unpaid" | "confirmation_failed";
+  type ConfirmState = "idle" | "waiting" | "paid" | "timeout" | "no_session" | "expired" | "unpaid" | "confirmation_failed" | "already_active" | "duplicate_payment";
   const [paymentConfirm, setPaymentConfirm] = useState<ConfirmState>("idle");
+  const [confirmLivemode, setConfirmLivemode] = useState<boolean | null>(null);
   const stripeSessionId = searchParams.get("session_id");
   const confirmMode = returnConfirmationMode(searchParams.toString());
   useEffect(() => {
     if (!quoteId || checkoutOutcome !== "success") return;
-    // Aucun identifiant de session Stripe valable : rien à confirmer, pas d'attente.
-    if (confirmMode !== "confirm") { setPaymentConfirm("no_session"); return; }
+    // Sans identifiant valable, l'URL ne prouve rien : seule la corrélation
+    // serveur (devis + compte connecté + registre/événements Stripe signés) compte.
+    const sid = confirmMode === "confirm" ? stripeSessionId : null;
     let cancelled = false;
     const done = (st: ConfirmState) => { if (!cancelled) setPaymentConfirm(st); };
     const onPaid = () => {
@@ -222,17 +224,19 @@ export default function PageContractorPersonalizedPlan() {
     };
     setPaymentConfirm("waiting");
     void (async () => {
-      // Attente bornée (~60 s) ; seul le serveur (webhook Stripe signé) peut
-      // passer le devis à « payé ». Jamais d'activation depuis l'URL.
       for (let i = 0; i < 20 && !cancelled; i++) {
         try {
           const q = await fetchPricingQuote(quoteId);
           if (q?.pricing_status === "paid") return onPaid();
         } catch { /* on réessaie */ }
         if (i === 0 || i === 4 || i === 10 || i === 19) {
-          const st = await reconcileQuoteStatus(quoteId, stripeSessionId);
+          const r = await reconcileQuoteDetail(quoteId, sid);
+          const st = r.status;
           if (cancelled) return;
+          if (typeof r.livemode === "boolean") setConfirmLivemode(r.livemode);
           if (st === "paid") return onPaid();
+          if (st === "already_active") return done("already_active");
+          if (st === "duplicate_payment") return done("duplicate_payment");
           if (st === "invalid_session" || st === "no_session") return done("no_session");
           if (st === "expired") return done("expired");
           if (st === "confirmation_failed") return done("confirmation_failed");
@@ -349,13 +353,37 @@ export default function PageContractorPersonalizedPlan() {
               </button>
             </>
           )}
+          {(paymentConfirm === "already_active" || paymentConfirm === "duplicate_payment") && (
+            <div data-testid="payment-already-active" className="space-y-4">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+              <p className="inline-block rounded-full border border-white/20 px-3 py-1 text-xs font-semibold">
+                {confirmLivemode ? "Paiement réel confirmé" : "Paiement TEST confirmé"}
+              </p>
+              <h1 className="text-2xl font-semibold">Votre profil est déjà activé.</h1>
+              {paymentConfirm === "duplicate_payment" ? (
+                <p className="text-white/80">Ce paiement s'ajoute à une activation déjà confirmée. Aucune activation en double n'a été faite; UNPRO a été avertie pour le remboursement.</p>
+              ) : (
+                <p className="text-white/80">L'activation 350 $ est inscrite chez UNPRO. Aucun autre paiement n'est requis.</p>
+              )}
+              <p className="text-sm font-semibold text-amber-200">Ne payez pas une deuxième fois.</p>
+              <button onClick={() => navigate("/pro", { replace: true })} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Ouvrir mon espace entrepreneur
+              </button>
+            </div>
+          )}
           {paymentConfirm === "no_session" && (
             <>
-              <h1 className="text-2xl font-semibold">Aucun paiement à confirmer</h1>
-              <p className="text-white/70">Aucun paiement n'a été trouvé pour ce lien. Rien n'a été facturé ni activé.</p>
-              <button onClick={backToActivation} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+              <h1 className="text-2xl font-semibold">Paiement introuvable pour ce lien</h1>
+              <p className="text-white/70">Nous n'avons pas pu associer ce lien à un paiement sur ce compte. Si vous venez de payer, ne payez pas une deuxième fois : vérifiez votre reçu Stripe ou appelez UNPRO.</p>
+              <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Vérifier à nouveau
+              </button>
+              <button onClick={backToActivation} className="block mx-auto text-sm text-white/80 underline">
                 Retour à mon activation
               </button>
+              <div className="flex justify-center">
+                <CallUnproLink context="payment_return_no_session" label="Appeler UNPRO" compact className="text-white/85" />
+              </div>
             </>
           )}
           {(paymentConfirm === "expired" || paymentConfirm === "unpaid") && (
