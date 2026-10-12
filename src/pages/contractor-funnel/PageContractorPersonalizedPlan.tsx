@@ -4,7 +4,7 @@
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
-import { reconcileQuoteStatus, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
+import { reconcileQuoteDetail, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
 import { returnConfirmationMode } from "../../../supabase/functions/_shared/checkoutGuards";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
