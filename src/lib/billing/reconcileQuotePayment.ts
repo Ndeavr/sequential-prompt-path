@@ -2,19 +2,27 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ReconcileStatus =
   | "paid" | "open" | "unpaid" | "expired" | "no_session" | "invalid_session"
-  | "webhook_pending" | "pending" | "confirmation_failed" | "error";
+  | "webhook_pending" | "pending" | "confirmation_failed" | "error"
+  | "already_active" | "duplicate_payment";
+
+export interface ReconcileResult { status: ReconcileStatus; livemode?: boolean }
 
 /** Asks the server to reconcile a quote with Stripe. Status always comes from the server. */
-export async function reconcileQuoteStatus(quoteId: string, sessionId?: string | null): Promise<ReconcileStatus> {
+export async function reconcileQuoteDetail(quoteId: string, sessionId?: string | null): Promise<ReconcileResult> {
   try {
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
       body: { action: "reconcile", quoteId, ...(sessionId ? { sessionId } : {}) },
     });
-    if (error) return "error";
-    return ((data as { status?: ReconcileStatus } | null)?.status) ?? "error";
+    if (error) return { status: "error" };
+    const d = data as { status?: ReconcileStatus; livemode?: boolean } | null;
+    return { status: d?.status ?? "error", livemode: d?.livemode };
   } catch {
-    return "error";
+    return { status: "error" };
   }
+}
+
+export async function reconcileQuoteStatus(quoteId: string, sessionId?: string | null): Promise<ReconcileStatus> {
+  return (await reconcileQuoteDetail(quoteId, sessionId)).status;
 }
 
 /** True only if server says paid. */
