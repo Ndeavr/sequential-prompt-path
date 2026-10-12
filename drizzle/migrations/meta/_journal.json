@@ -134,6 +134,13 @@
       "when": 1791831601955,
       "tag": "0018_manual_import_rows_needs_review",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791837347535,
+      "tag": "0019_manual_import_claim_links_and_casl_reviews",
+      "breakpoints": true
     }
   ]
 }

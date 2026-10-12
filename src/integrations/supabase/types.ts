@@ -59872,6 +59872,109 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_import_casl_reviews: {
+        Row: {
+          created_at: string
+          decision: string
+          evidence_date: string
+          id: string
+          import_row_id: string
+          notes: string | null
+          reason: string
+          reviewer_id: string
+          source_url: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          evidence_date: string
+          id?: string
+          import_row_id: string
+          notes?: string | null
+          reason: string
+          reviewer_id: string
+          source_url: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          evidence_date?: string
+          id?: string
+          import_row_id?: string
+          notes?: string | null
+          reason?: string
+          reviewer_id?: string
+          source_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_import_casl_reviews_import_row_id_fkey"
+            columns: ["import_row_id"]
+            isOneToOne: false
+            referencedRelation: "acquisition_manual_import_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_import_claim_links: {
+        Row: {
+          claim_attempts: number
+          claim_requested_at: string | null
+          claim_status: string
+          claim_user_id: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          import_row_id: string
+          last_opened_at: string | null
+          opened_count: number
+          revoked_at: string | null
+          revoked_reason: string | null
+          token_hash: string
+        }
+        Insert: {
+          claim_attempts?: number
+          claim_requested_at?: string | null
+          claim_status?: string
+          claim_user_id?: string | null
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          import_row_id: string
+          last_opened_at?: string | null
+          opened_count?: number
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          token_hash: string
+        }
+        Update: {
+          claim_attempts?: number
+          claim_requested_at?: string | null
+          claim_status?: string
+          claim_user_id?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          import_row_id?: string
+          last_opened_at?: string | null
+          opened_count?: number
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_import_claim_links_import_row_id_fkey"
+            columns: ["import_row_id"]
+            isOneToOne: false
+            referencedRelation: "acquisition_manual_import_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manual_test_runs: {
         Row: {
           completed_at: string | null
