@@ -22,3 +22,4 @@ Treat every Supabase project as live infrastructure.
 - Commercial SMS CASL evidence must also carry a human `reviewer_id`; auto-captured rows (`auto_captured`, `is_valid`) are never a legal review. Why: 827 auto rows were dispatchable without any human decision.
 
 - Stripe TEST events (livemode=false) may activate only QA-marked accounts (e2e_test / e2e+…@unpro.ca) and never feed contractor_leads; a second paid 350 $ session for an activated contractor is flagged as a duplicate, never re-activated. Why: QA payments must never create real commercial activations or double charges.
+- Every SMS body passes `_shared/smsGreeting.ts` (`buildSmsGreeting` A prénom fiable / B équipe / C générique, `validateSmsBody` fail-closed inside `sendSms`) and the DB trigger `guard_agent_outreach_message` (invalid body never dispatchable, one open row per lead). Why: 36k pending drafts began with "Bonjour ," and the generator looped.

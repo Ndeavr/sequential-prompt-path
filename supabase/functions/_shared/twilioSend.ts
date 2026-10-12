@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend } from "./smsGuard.ts";
 import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
 import { assertOutreachEnabled, isTransactionalMessageType } from "./outreachGate.ts";
+import { validateSmsBody } from "./smsGreeting.ts";
 
 // Map sendSms message_type to the central send-window MessageClass.
 function classifyMessage(type: string): MessageClass {
@@ -93,6 +94,33 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
 
   // Send-window gate (skipped for transactional, OTP, founder bypass).
   const messageClass = classifyMessage(input.message_type);
+
+  // P0 2026-10-12 — final body validation BEFORE any other gate or provider
+  // call. Applies to every caller (old templates, LLM output, workers).
+  // Logs issue codes + body hash only (no phone, no body text).
+  const bodyCheck = validateSmsBody(input.body, { commercial: !isTransactionalMessageType(input.message_type) });
+  if (!bodyCheck.ok) {
+    const reason = `invalid_body:${bodyCheck.issues.join(",")}`;
+    const { data: inv } = await supabase.from("sms_events_v2").insert({
+      lead_id: input.lead_id ?? null,
+      contractor_id: input.contractor_id ?? null,
+      campaign_id: input.campaign_id ?? null,
+      template_key: input.template_key ?? null,
+      message_type: input.message_type,
+      raw_phone: null,
+      normalized_phone: null,
+      from_number: TWILIO_FROM_NUMBER || null,
+      message_preview: null,
+      body_hash: await hashBody(String(input.body ?? "")),
+      attempt_number: input.attempt_number ?? 1,
+      status: "blocked",
+      error_code: reason,
+      error_message: "Envoi bloqué : message invalide (salutation vide, placeholder ou affirmation non vérifiée).",
+      status_callback_url: STATUS_CALLBACK_URL,
+      metadata: { prospect_id: input.prospect_id ?? null, body_issues: bodyCheck.issues },
+    }).select("id").maybeSingle();
+    return { event_id: inv?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
+  }
 
   // P0 fail-closed kill switch — prospection/follow-up may never reach a
   // provider while OUTREACH_ENABLED is false, missing or unreadable.

@@ -101299,6 +101299,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      sms_body_issues: { Args: { p_body: string }; Returns: string[] }
       sms_infrastructure_score: { Args: never; Returns: Json }
       stalled_activations_report: {
         Args: { p_min_age_minutes?: number }
