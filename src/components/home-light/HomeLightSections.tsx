@@ -13,6 +13,7 @@ import {
   Crown,
   Home,
   MessageSquare,
+  Phone,
   Search,
   Wrench,
 } from "lucide-react";
@@ -22,6 +23,8 @@ import { useAlexStore } from "@/features/alex/state/alexStore";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import { PUBLIC_PHONE } from "@/config/publicContact";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 /** Active homepage paths; existing qualification and Clara remain authoritative. */
 export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: () => void }) {
@@ -39,10 +42,9 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
     contractorBody: "Soyez mieux positionné pour être découvert par ChatGPT et les autres IA. Et surtout, rencontrez des propriétaires réellement intéressés par VOS services, dans VOTRE territoire.",
     contractorCta: "Faire connaître mon entreprise",
     contractorMicro: "Vos services. Votre territoire. Vos clients. Aucun lead partagé.",
-    disclaimer: "Les plateformes d’IA restent libres de leurs recommandations; UNPRO ne garantit pas leur sélection.",
     homeowner: "Vous êtes propriétaire?",
     homeownerPromise: "Pourquoi courir après cinq entrepreneurs quand l'IA peut vous aider à trouver le bon?",
-    homeownerBody: "Décrivez votre projet à Clara. UNPRO tient compte du projet, des compétences, des disponibilités et des facteurs humains.",
+    homeownerBody: "Décrivez votre problème ou votre projet à Clara. Téléchargez une photo ou parlez-lui du design souhaité.",
     homeownerCta: "Trouver mon entrepreneur",
     homeownerMicro: "Gratuit pour les propriétaires. Sans obligation. Sans cinq soumissions à gérer.",
     difference: "Un bon entrepreneur pour le mauvais client, ça reste un mauvais match.",
@@ -59,10 +61,9 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
     contractorBody: "Help ChatGPT and other AI platforms discover your business. More importantly, meet homeowners genuinely interested in YOUR services, in YOUR service area.",
     contractorCta: "Get my business discovered",
     contractorMicro: "Your services. Your territory. Your clients. No shared leads.",
-    disclaimer: "AI platforms make their own recommendations; UNPRO does not guarantee selection.",
     homeowner: "Are you a homeowner?",
     homeownerPromise: "Why chase five contractors when AI can help you find the right one?",
-    homeownerBody: "Describe your project to Clara. UNPRO takes the project, skills, availability and human factors into account.",
+    homeownerBody: "Describe your problem or project to Clara. Upload a photo or tell her about the design you have in mind.",
     homeownerCta: "Find my contractor",
     homeownerMicro: "Free for homeowners. No obligation. No five quotes to manage.",
     difference: "A good contractor for the wrong client is still a bad match.",
@@ -100,7 +101,6 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
                   <Link to="/entrepreneur/devis-personnalise" onClick={() => trackCopilotEvent("contractor_entry_click", { surface: "home_matching", destination: "/entrepreneur/devis-personnalise" })}>{copy.contractorCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
                 </Button> : <Button onClick={() => { trackCopilotEvent("hero_find_pro_click", { surface: "home_matching" }); onStartHomeowner(); }} variant="outline" className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl px-4 py-3 text-base">{copy.homeownerCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Button>}
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{contractor ? copy.contractorMicro : copy.homeownerMicro}</p>
-                {contractor && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{copy.disclaimer}</p>}
               </div>
             </motion.article>;
           })}
@@ -109,6 +109,13 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
           <p className="text-lg font-medium text-foreground">{copy.difference}</p>
           <p>{copy.closing}</p>
           <Button asChild variant="link" className="h-auto min-h-11 whitespace-normal px-0 text-left text-primary-tint"><Link to="/impact">{copy.impact} →</Link></Button>
+          <div>
+            <Button asChild className="min-h-11 rounded-full bg-primary-strong shadow-glow hover:-translate-y-0.5 active:scale-100 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none">
+              <a href={PUBLIC_PHONE.tel} aria-label={`${fr ? "Appeler UNPRO au" : "Call UNPRO at"} ${PUBLIC_PHONE.display}`} onClick={() => {
+                void logFunnelEvent({ event_type: "call_cta_clicked", metadata: { context: "home_bottom", route: window.location.pathname } });
+              }}><Phone aria-hidden="true" className="h-4 w-4" />{fr ? "Appeler" : "Call"}</a>
+            </Button>
+          </div>
         </div>
       </div>
     </section>
