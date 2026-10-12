@@ -121,7 +121,8 @@ export default {
         "elevated": "var(--shadow-lg)",
         "float": "var(--shadow-xl)",
         "dramatic": "var(--shadow-2xl)",
-        "glow": "var(--shadow-glow)",
+"glow": "var(--shadow-glow)",
+        "glow-soft": "var(--shadow-glow-soft)",
         "glow-lg": "var(--shadow-glow-lg)",
       },
       keyframes: {

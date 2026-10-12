@@ -110,10 +110,10 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
           <p>{copy.closing}</p>
           <Button asChild variant="link" className="h-auto min-h-11 whitespace-normal px-0 text-left text-primary-tint"><Link to="/impact">{copy.impact} →</Link></Button>
           <div>
-            <Button asChild className="min-h-11 rounded-full bg-primary-strong shadow-glow hover:-translate-y-0.5 active:scale-100 active:translate-y-0 motion-reduce:hover:transform-none motion-reduce:active:transform-none motion-reduce:transform-none motion-reduce:transition-none">
+            <Button asChild className="min-h-11 rounded-full bg-primary-strong px-3.5 py-1.5 text-[13px] font-medium shadow-glow-soft hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none">
               <a href={PUBLIC_PHONE.tel} aria-label={`${fr ? "Appeler UNPRO au" : "Call UNPRO at"} ${PUBLIC_PHONE.display}`} onClick={() => {
                 void logFunnelEvent({ event_type: "call_cta_clicked", metadata: { context: "home_bottom", route: window.location.pathname } });
-              }}><Phone aria-hidden="true" className="h-4 w-4" />{fr ? "Appeler" : "Call"}</a>
+              }}><Phone aria-hidden="true" className="h-3.5 w-3.5" />{fr ? "Appeler" : "Call"}</a>
             </Button>
           </div>
         </div>
