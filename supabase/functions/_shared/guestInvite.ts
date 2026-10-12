@@ -28,7 +28,7 @@ async function loadActive(admin: any, token: string) {
   if (!isGuestToken(token)) return { error: "token_not_found" as const };
   const hash = await sha256Hex(token);
   const { data: link } = await admin.from("manual_import_claim_links")
-    .select("id, import_row_id, expires_at, revoked_at, opened_count, claim_user_id, claim_status, claim_attempts")
+    .select("id, import_row_id, expires_at, revoked_at, opened_count, claim_user_id, claim_status, claim_attempts, claim_requested_at")
     .eq("token_hash", hash).maybeSingle();
   if (!link) return { error: "token_not_found" as const };
   if (link.revoked_at) return { error: "token_revoked" as const };
