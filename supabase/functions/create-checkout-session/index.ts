@@ -182,22 +182,40 @@ Deno.serve(async (req) => {
       const json = (b: unknown, st = 200) => new Response(JSON.stringify(b), { status: st, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (!quoteId) return json({ error: "quote_required" }, 400);
       const { data: rq } = await serviceClient.from("contractor_pricing_quotes")
-        .select("id, user_id, pricing_status").eq("id", String(quoteId)).maybeSingle();
+        .select("id, user_id, pricing_status, contractor_id").eq("id", String(quoteId)).maybeSingle();
       if (!rq) return json({ error: "quote_not_found" }, 404);
       if (rq.user_id && rq.user_id !== userId) return json({ error: "quote_forbidden" }, 403);
       if (rq.pricing_status === "paid") return json({ status: "paid" });
-      // Identifiant de session Stripe fourni au retour : format strict, sinon
-      // dernière session connue du devis. Jamais d'activation depuis l'URL.
+      // Identifiant fourni au retour : format strict. Sinon (ou si falsifié),
+      // corrélation serveur par devis + compte via les événements Stripe signés.
       let sid: string | undefined;
-      if (rawSessionId !== undefined) {
-        const v = typeof rawSessionId === "string" ? rawSessionId.trim() : "";
-        if (!isValidCheckoutSessionId(v)) return json({ status: "invalid_session" });
-        sid = v;
-      } else {
+      const v = typeof rawSessionId === "string" ? rawSessionId.trim() : "";
+      if (v && isValidCheckoutSessionId(v)) sid = v;
+      if (!sid && rq.user_id === userId) {
+        const { data: evs } = await serviceClient.from("stripe_webhook_events")
+          .select("session_id, payload").eq("event_type", "checkout.session.completed")
+          .eq("payload->data->object->metadata->>quote_id", String(quoteId))
+          .eq("payload->data->object->metadata->>user_id", String(userId))
+          .order("received_at", { ascending: false }).limit(1);
+        sid = (evs?.[0]?.session_id as string | undefined) ?? undefined;
+      }
+      if (!sid) {
         const { data: cs } = await serviceClient.from("checkout_sessions")
           .select("external_checkout_id").eq("quote_id", String(quoteId))
           .order("created_at", { ascending: false }).limit(1).maybeSingle();
         sid = cs?.external_checkout_id as string | undefined;
+      }
+      // Fiche déjà activée par un paiement 350 $ inscrit au registre (source de vérité).
+      if (rq.contractor_id && rq.user_id === userId) {
+        const { data: led } = await serviceClient.from("contractor_activation_ledger")
+          .select("metadata").eq("action", "entry_activation_350_paid")
+          .eq("contractor_id", rq.contractor_id).limit(1).maybeSingle();
+        if (led) {
+          const m = (led.metadata ?? {}) as Record<string, unknown>;
+          const livemode = m.livemode === true;
+          const dup = !!sid && sid !== m.stripe_session_id;
+          return json({ status: dup ? "duplicate_payment" : "already_active", livemode });
+        }
       }
       if (!sid) return json({ status: "no_session" });
       const key = sid.startsWith("cs_test_") ? stripeTestKey : stripeKey;

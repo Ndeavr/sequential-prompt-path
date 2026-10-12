@@ -54,9 +54,14 @@ describe("câblage", () => {
   const plan = readFileSync("src/pages/contractor-funnel/PageContractorPersonalizedPlan.tsx", "utf8");
   const entry = readFileSync("src/pages/contractor-funnel/PageContractorPlanEntry.tsx", "utf8");
   const co = readFileSync("supabase/functions/create-checkout-session/index.ts", "utf8");
-  it("page : message sans session, états expiré/non payé, attente bornée", () => {
-    expect(plan).toContain("Aucun paiement à confirmer");
-    expect(plan).toContain('if (confirmMode !== "confirm") { setPaymentConfirm("no_session"); return; }');
+  it("page : corrélation serveur sans session, déjà activé TEST/LIVE, attente bornée", () => {
+    expect(plan).toContain("Paiement introuvable pour ce lien");
+    expect(plan).toContain('const sid = confirmMode === "confirm" ? stripeSessionId : null;');
+    expect(plan).not.toContain("Rien n'a été facturé");
+    expect(plan).toContain("Paiement TEST confirmé");
+    expect(plan).toContain("Votre profil est déjà activé.");
+    expect(co).toContain('status: dup ? "duplicate_payment" : "already_active"');
+    expect(co).toContain('payload->data->object->metadata->>user_id');
     expect(plan).toContain("i < 20");
     expect(plan).toContain("La page de paiement a expiré");
   });
