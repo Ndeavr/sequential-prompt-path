@@ -40,6 +40,9 @@ export default function PageContractorPlanEntry() {
 
     // Contexte conservé tel quel (promo, ref, source, attribution).
     const carry = new URLSearchParams(searchParams);
+    // Un ancien retour Stripe ne doit jamais rouvrir l'écran de confirmation.
+    carry.delete("checkout");
+    carry.delete("session_id");
     const qs = carry.toString();
 
     if (isAuthenticated && audience === "homeowner") {
