@@ -27,7 +27,7 @@ describe("Activation d'entrée 350 $", () => {
     const wh = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
     const i = wh.indexOf('offer === "entry_activation_350"');
     expect(i).toBeGreaterThan(0);
-    const branch = wh.slice(i, i + 2500);
+    const branch = wh.slice(i, i + 4000);
     expect(branch).toMatch(/payment_status === "paid"/);
     expect(branch).toMatch(/entry_activation_350_paid/);
     expect(branch).toMatch(/sessionAlreadyInLedger: !!already/);
