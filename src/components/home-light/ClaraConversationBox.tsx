@@ -419,12 +419,18 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   useEffect(() => clearLocalPreviews, [clearLocalPreviews]);
 
+  /**
+   * Clavier stable (Android Gboard) : Clara ne rouvre JAMAIS le clavier d'elle-même.
+   * Le focus n'est rendu que si l'utilisateur était en train d'écrire
+   * (composer engagé), sinon un tap sur un choix ouvrirait le clavier.
+   */
+  const composerEngagedRef = useRef(false);
   const focusComposer = useCallback(() => {
     const textarea = textareaRef.current ?? rootRef.current?.querySelector("textarea");
-    if (textarea instanceof HTMLTextAreaElement) {
-      textarea.disabled = false;
-      textarea.focus({ preventScroll: true });
-    }
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    textarea.disabled = false;
+    if (!composerEngagedRef.current || document.activeElement === textarea) return;
+    textarea.focus({ preventScroll: true });
   }, []);
 
   /**
@@ -462,7 +468,10 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     // Never scroll the document from a message, focus or composer resize.
   }, []);
 
-  const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused;
+  // Une fois engagée, la conversation reste active : un blur (clavier fermé)
+  // ne refait jamais apparaître l'accueil, donc aucune hauteur qui saute.
+  const [composerEverFocused, setComposerEverFocused] = useState(false);
+  const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused || composerEverFocused;
 
   useEffect(() => {
     document.documentElement.dataset.claraConversationActive = String(isConversationActive);
@@ -1535,7 +1544,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   }, [keepComposerVisible, voiceActive]);
 
   const handleComposerFocus = useCallback(() => {
+    composerEngagedRef.current = true;
     setComposerFocused(true);
+    setComposerEverFocused(true);
     if (voiceActive) {
       activeTypingIdRef.current = null;
       setClaraTyping(false);
@@ -1731,11 +1742,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             ))}
             {quickReplies && !busy && (
               <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-                {quickReplies.options.map((option) => (
+                {quickReplies.options.map((option, index) => (
                   <button
-                    key={option}
+                    key={`${quickReplies.messageId}:${option}`}
                     type="button"
                     disabled={busy}
+                    data-stagger="true"
+                    style={{ "--chip-index": index } as React.CSSProperties}
+                    // Garde le clavier ouvert si l'utilisateur écrivait : aucun blur.
+                    onPointerDown={(event) => { if (composerEngagedRef.current) event.preventDefault(); }}
                     onClick={() => chooseQuickReply(option)}
                   >
                     {option}
@@ -1886,7 +1901,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                keepComposerVisible();
              }}
              onFocus={handleComposerFocus}
-             onBlur={() => setComposerFocused(false)}
+             onBlur={() => { composerEngagedRef.current = false; setComposerFocused(false); }}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
           <PromptInputFooter className="home-clara-controls">
