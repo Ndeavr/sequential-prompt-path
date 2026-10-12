@@ -66,7 +66,7 @@ export default function PageContractorPublicProfileISR() {
             name: "Isolation Solution Royal",
             legalName: "9480-0976 Québec inc.",
             url: "https://isroyal.ca",
-            telephone: "+1-514-249-9522",
+            telephone: "+1-450-328-6776",
             areaServed: ["Laval", "Montréal", "Rive-Nord", "Lanaudière"],
             description: "Spécialiste de l'entretoit : isolation, ventilation, décontamination, vermiculite.",
           })}
@@ -113,7 +113,7 @@ export default function PageContractorPublicProfileISR() {
               Laval · Montréal · Rive-Nord · Lanaudière
             </InfoTile>
             <InfoTile icon={<Phone className="h-4 w-4" />} label="Téléphone">
-              <a href="tel:+15142499522" className="text-white hover:text-cyan-300">514-249-9522</a>
+              <a href="tel:+14503286776" className="text-white hover:text-cyan-300">450-328-6776</a>
               <span className="text-white/40"> · </span>
               <a href="tel:+15149413141" className="text-white hover:text-cyan-300">514-941-3141</a>
             </InfoTile>
@@ -464,8 +464,8 @@ function DirectBookingPanel({ contractorId }: { contractorId: string }) {
         ) : slots.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/75">
             Aucun créneau libre cette semaine.{" "}
-            <a href="tel:+15142499522" className="text-cyan-300 hover:underline">
-              Appelez le 514-249-9522
+            <a href="tel:+14503286776" className="text-cyan-300 hover:underline">
+              Appelez le 450-328-6776
             </a>{" "}
             pour un rendez-vous prioritaire.
           </div>

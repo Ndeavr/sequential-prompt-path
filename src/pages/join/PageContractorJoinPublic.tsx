@@ -115,7 +115,7 @@ export default function PageContractorJoinPublic() {
   }, [loading]);
 
   const placeholder = useMemo(() => {
-    if (mode === "phone") return "514-249-9522";
+    if (mode === "phone") return "514-555-0123";
     if (mode === "website") return "https://votreentreprise.ca";
     return "Nom de votre entreprise";
   }, [mode]);

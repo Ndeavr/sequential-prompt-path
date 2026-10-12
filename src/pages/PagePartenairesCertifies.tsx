@@ -312,7 +312,7 @@ export default function PagePartenairesCertifies() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-white/60">
             <a href="https://unpro.ca" className="flex items-center gap-2 hover:text-amber-400"><Globe className="w-4 h-4" />unpro.ca</a>
             <a href="mailto:partenaires@unpro.ca" className="flex items-center gap-2 hover:text-amber-400"><Mail className="w-4 h-4" />partenaires@unpro.ca</a>
-            <a href="tel:+15142499522" className="flex items-center gap-2 hover:text-amber-400"><Phone className="w-4 h-4" />(514) 249-9522</a>
+            <a href="tel:+14503286776" className="flex items-center gap-2 hover:text-amber-400"><Phone className="w-4 h-4" />450-328-6776</a>
           </div>
         </section>
       </main>

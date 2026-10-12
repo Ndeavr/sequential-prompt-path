@@ -3,8 +3,8 @@
 export const HUMAN_CALLOUT_DISABLED = true;
 
 export const CONTRACTOR_HUMAN_CALLOUT = {
-  phoneDisplay: "(514) 249-9522",
-  phoneTel: "+15142499522",
+  phoneDisplay: "450-328-6776",
+  phoneTel: "+14503286776",
   delayMs: 5000,
   storageKey: "unpro:contractor_human_popup_shown",
   hours: "Lun–Ven · 8h–18h (HE)",

@@ -3,6 +3,7 @@
  * Reusable shell for legal/marketing static pages. One file, content map by slug.
  * Themed with `.landing-warm` per memory rules for public pages.
  */
+import { CallUnproLink } from "@/components/contact/CallUnproLink";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Sparkles } from "lucide-react";
@@ -40,6 +41,7 @@ const CONTENT: Record<StaticSlug, StaticContent> = {
     title: "Nous contacter",
     intro: "Notre équipe répond rapidement. Pour toute question, suggestion ou demande de partenariat.",
     sections: [
+      { heading: "Téléphone (SMS)", body: "450-328-6776" },
       { heading: "Courriel", body: "support@unpro.ca" },
       { heading: "Pour les entrepreneurs", body: "pros@unpro.ca" },
       { heading: "Presse et médias", body: "presse@unpro.ca" },
@@ -163,7 +165,11 @@ export default function StaticContentPage({ slug }: { slug: StaticSlug }) {
           {content.sections.map((s) => (
             <section key={s.heading}>
               <h2 className="text-xl font-semibold text-foreground mb-2">{s.heading}</h2>
-              <p className="text-foreground/75 leading-relaxed">{s.body}</p>
+              {s.heading.startsWith("Téléphone") ? (
+                <CallUnproLink context="contact_page" className="-ml-4 text-primary" />
+              ) : (
+                <p className="text-foreground/75 leading-relaxed">{s.body}</p>
+              )}
             </section>
           ))}
         </div>

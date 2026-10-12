@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { readAttribution } from "@/config/contractorFunnel";
 
 export type FunnelEventType =
+  | "call_cta_clicked"
   | "sms_queued"
   | "sms_sent"
   | "sms_delivered"
