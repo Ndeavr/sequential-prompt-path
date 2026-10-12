@@ -4,7 +4,8 @@
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
-import { reconcileQuotePayment, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
+import { reconcileQuoteStatus, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
+import { returnConfirmationMode } from "../../../supabase/functions/_shared/checkoutGuards";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -203,41 +204,45 @@ export default function PageContractorPersonalizedPlan() {
 
   /* Étape 4 : activation payante affichée SEULEMENT après confirmation serveur
      (webhook Stripe → pricing_status = "paid"). Le retour Stripe seul ne suffit pas. */
-  const [paymentConfirm, setPaymentConfirm] = useState<"idle" | "waiting" | "paid" | "timeout">("idle");
+  type ConfirmState = "idle" | "waiting" | "paid" | "timeout" | "no_session" | "expired" | "unpaid";
+  const [paymentConfirm, setPaymentConfirm] = useState<ConfirmState>("idle");
+  const stripeSessionId = searchParams.get("session_id");
+  const confirmMode = returnConfirmationMode(searchParams.toString());
   useEffect(() => {
-    if (checkoutOutcome !== "success" || !quoteId) return;
+    if (!quoteId || checkoutOutcome !== "success") return;
+    // Aucun identifiant de session Stripe valable : rien à confirmer, pas d'attente.
+    if (confirmMode !== "confirm") { setPaymentConfirm("no_session"); return; }
     let cancelled = false;
+    const done = (st: ConfirmState) => { if (!cancelled) setPaymentConfirm(st); };
+    const onPaid = () => {
+      done("paid");
+      setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
+    };
     setPaymentConfirm("waiting");
     void (async () => {
-      for (let i = 0; i < 30 && !cancelled; i++) {
+      // Attente bornée (~60 s) ; seul le serveur (webhook Stripe signé) peut
+      // passer le devis à « payé ». Jamais d'activation depuis l'URL.
+      for (let i = 0; i < 20 && !cancelled; i++) {
         try {
           const q = await fetchPricingQuote(quoteId);
-          if (q?.pricing_status === "paid") {
-            if (!cancelled) setPaymentConfirm("paid");
-            setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
-            return;
-          }
+          if (q?.pricing_status === "paid") return onPaid();
         } catch { /* on réessaie */ }
-        // Webhook en retard : réconciliation serveur auprès de Stripe (jamais
-        // d'activation depuis l'URL de retour).
-        if (i === 5 || i === 15 || i === 29) {
-          if (await reconcileQuotePayment(quoteId)) continue;
+        if (i === 0 || i === 4 || i === 10 || i === 19) {
+          const st = await reconcileQuoteStatus(quoteId, stripeSessionId);
+          if (cancelled) return;
+          if (st === "paid") return onPaid();
+          if (st === "invalid_session" || st === "no_session") return done("no_session");
+          if (st === "expired") return done("expired");
+          if (st === "unpaid" || st === "open") { if (i >= 4) return done("unpaid"); }
         }
         await new Promise((r) => setTimeout(r, 3000));
       }
-      // Lecture finale après la dernière réconciliation, avant d'abandonner.
-      try {
-        const last = await fetchPricingQuote(quoteId);
-        if (last?.pricing_status === "paid") {
-          if (!cancelled) setPaymentConfirm("paid");
-          setTimeout(() => { if (!cancelled) navigate("/pro", { replace: true }); }, 6000);
-          return;
-        }
-      } catch { /* état inconnu : délai dépassé */ }
-      if (!cancelled) setPaymentConfirm("timeout");
+      done("timeout");
     })();
     return () => { cancelled = true; };
-  }, [checkoutOutcome, quoteId, navigate]);
+  }, [checkoutOutcome, confirmMode, stripeSessionId, quoteId, navigate]);
+
+  const backToActivation = () => navigate(`/entrepreneur/plan-personnalise/${quoteId}`, { replace: true });
 
   const handleActivate = async () => {
     if (!quote) return;
@@ -334,12 +339,33 @@ export default function PageContractorPersonalizedPlan() {
               </button>
             </>
           )}
+          {paymentConfirm === "no_session" && (
+            <>
+              <h1 className="text-2xl font-semibold">Aucun paiement à confirmer</h1>
+              <p className="text-white/70">Aucun paiement n'a été trouvé pour ce lien. Rien n'a été facturé ni activé.</p>
+              <button onClick={backToActivation} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Retour à mon activation
+              </button>
+            </>
+          )}
+          {(paymentConfirm === "expired" || paymentConfirm === "unpaid") && (
+            <>
+              <h1 className="text-2xl font-semibold">{paymentConfirm === "expired" ? "La page de paiement a expiré" : "Paiement non complété"}</h1>
+              <p className="text-white/70">Aucun montant n'a été confirmé. Vous pouvez reprendre le paiement en toute sécurité.</p>
+              <button onClick={backToActivation} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
+                Réessayer
+              </button>
+            </>
+          )}
           {paymentConfirm === "timeout" && (
             <>
               <h1 className="text-2xl font-semibold">Confirmation du paiement en cours.</h1>
               <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
               <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Vérifier à nouveau
+              </button>
+              <button onClick={backToActivation} className="block mx-auto text-sm text-white/75 underline">
+                Retour à mon activation
               </button>
             </>
           )}
