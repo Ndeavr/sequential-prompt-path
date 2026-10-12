@@ -157,7 +157,7 @@ function LinkPanel({ row, link, onChanged }: { row: Row; link: LinkRow | undefin
 
 export default function ApchqReviewSection() {
 
-  const [filter, setFilter] = useState<"all" | "missing" | "casl_doc" | "excluded">("all");
+  const [filter, setFilter] = useState<"all" | "missing" | "casl_doc" | "excluded" | "ev_found" | "ev_alert">("all");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
