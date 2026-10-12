@@ -1,5 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
-- [ ] Current bounded P0: replace fictional inbound HELP contact; verify signed/unsigned requests and Twilio opt-out reply ownership without sending SMS or changing LOGINxSMS/voice/campaign settings.
+- [x] Bounded HELP repair: public SMS contact, signed simulations and live unsigned 403 verified; only twilio-inbound deployed. Twilio Advanced Opt-Out text still requires console inspection; no SMS or configuration changes. Evidence: `docs/audits/sms-help-2026-10-12.md`.
 - [ ] Current P0: address autocomplete mobile/Places configuration, readable Clara streaming, strict property/business/territory context separation; verify targeted tests and preview, no publication without proof.
 - [x] Focused homepage impact dials: explicit per-journey scenario, once-per-visit animation, methodology; 8 tests and desktop/mobile simulated browser checks passed. Report: `docs/audits/impact-dials-2026-10-11.md`. Not published.
 
