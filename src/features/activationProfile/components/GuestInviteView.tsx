@@ -12,7 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { saveReturnPath } from "@/lib/authReturn";
 import { extractEdgeReason } from "@/lib/edgeFunctionError";
-import { PUBLIC_PHONE_DISPLAY, PUBLIC_PHONE_TEL } from "@/config/publicContact";
+import { PUBLIC_PHONE } from "@/config/publicContact";
+const PUBLIC_PHONE_DISPLAY = PUBLIC_PHONE.display;
+const PUBLIC_PHONE_TEL = PUBLIC_PHONE.tel;
 
 interface Invite {
   company_name: string | null; city: string | null; category: string | null;
@@ -44,7 +46,7 @@ export default function GuestInviteView({ token }: { token: string }) {
     setClaim("busy");
     const { data, error } = await supabase.functions.invoke("activation-claim", { body: { token } });
     if (data?.ok) return setClaim("pending");
-    const reason = data?.reason ?? (error ? await extractEdgeReason(error) : null);
+    const reason = data?.reason ?? (error ? await extractEdgeReason(error, data) : null);
     setClaim(reason === "claimed_by_other" ? "other" : "error");
   };
 
