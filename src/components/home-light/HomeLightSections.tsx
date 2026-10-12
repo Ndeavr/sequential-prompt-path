@@ -4,7 +4,7 @@
  * Every claim is either a product behaviour or an explicit provenance label.
  */
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
@@ -19,6 +19,101 @@ import {
 
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+
+/** Active homepage paths; existing qualification and Clara remain authoritative. */
+export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: () => void }) {
+  const { lang } = useLanguage();
+  const reduced = useReducedMotion();
+  const fr = lang === "fr";
+  const copy = fr ? {
+    lines: ["UNPRO.", "Moins de leads.", "De meilleurs matchs.", "De vrais rendez-vous."],
+    intro: "Les clics, c'est beau. Les bons clients, c'est mieux.",
+    explanation: "UNPRO utilise l'intelligence artificielle pour connecter les bons entrepreneurs aux bons propriétaires.",
+    exclusive: "Pas cinq compétiteurs sur le même lead. Pas cinq soumissions à comparer.",
+    match: "Le bon match. Du premier coup.",
+    contractor: "Vous êtes entrepreneur?",
+    contractorPromise: "Arrêtez de courir après les clients. Rencontrez ceux qui vous cherchent.",
+    contractorBody: "Soyez mieux positionné pour être découvert par ChatGPT et les autres IA. Et surtout, rencontrez des propriétaires réellement intéressés par VOS services, dans VOTRE territoire.",
+    contractorCta: "Faire connaître mon entreprise",
+    contractorMicro: "Vos services. Votre territoire. Vos clients. Aucun lead partagé.",
+    disclaimer: "Les plateformes d’IA restent libres de leurs recommandations; UNPRO ne garantit pas leur sélection.",
+    homeowner: "Vous êtes propriétaire?",
+    homeownerPromise: "Pourquoi courir après cinq entrepreneurs quand l'IA peut vous aider à trouver le bon?",
+    homeownerBody: "Décrivez votre projet à Clara. UNPRO tient compte du projet, des compétences, des disponibilités et des facteurs humains.",
+    homeownerCta: "Trouver mon entrepreneur",
+    homeownerMicro: "Gratuit pour les propriétaires. Sans obligation. Sans cinq soumissions à gérer.",
+    difference: "Un bon entrepreneur pour le mauvais client, ça reste un mauvais match.",
+    closing: "UNPRO — Ce n'est pas une question de trouver plus. C'est une question de trouver mieux.",
+    impact: "Découvrir l’impact potentiel de l’IA",
+  } : {
+    lines: ["UNPRO.", "Fewer leads.", "Better matches.", "Real appointments."],
+    intro: "Clicks are nice. The right clients are better.",
+    explanation: "UNPRO uses artificial intelligence to connect the right contractors with the right homeowners.",
+    exclusive: "Not five competitors on the same lead. Not five quotes to compare.",
+    match: "The right match. The first time.",
+    contractor: "Are you a contractor?",
+    contractorPromise: "Stop chasing clients. Meet the people looking for you.",
+    contractorBody: "Help ChatGPT and other AI platforms discover your business. More importantly, meet homeowners genuinely interested in YOUR services, in YOUR service area.",
+    contractorCta: "Get my business discovered",
+    contractorMicro: "Your services. Your territory. Your clients. No shared leads.",
+    disclaimer: "AI platforms make their own recommendations; UNPRO does not guarantee selection.",
+    homeowner: "Are you a homeowner?",
+    homeownerPromise: "Why chase five contractors when AI can help you find the right one?",
+    homeownerBody: "Describe your project to Clara. UNPRO takes the project, skills, availability and human factors into account.",
+    homeownerCta: "Find my contractor",
+    homeownerMicro: "Free for homeowners. No obligation. No five quotes to manage.",
+    difference: "A good contractor for the wrong client is still a bad match.",
+    closing: "UNPRO — It’s not about finding more. It’s about finding better.",
+    impact: "Explore AI’s potential impact",
+  };
+  const reveal = (delay = 0) => ({
+    initial: reduced ? false as const : { opacity: 0, y: 12 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.15 },
+    transition: { duration: reduced ? 0 : 0.42, delay: reduced ? 0 : delay },
+  });
+  return (
+    <section aria-labelledby="home-matching-title" className="home-matching-section alex-immersive border-t border-border bg-background px-5 py-16 sm:px-8 md:py-24">
+      <div className="mx-auto max-w-5xl">
+        <h2 id="home-matching-title" className="text-3xl font-semibold leading-tight tracking-normal text-foreground sm:text-4xl md:text-5xl">
+          {copy.lines.map((line, i) => <motion.span key={i} {...reveal(i * 0.1)} className={`block ${i === 2 ? "text-primary-tint" : ""}`}>{line}</motion.span>)}
+        </h2>
+        <div className="mt-7 max-w-3xl space-y-3 text-base leading-relaxed text-muted-foreground">
+          <p className="text-xl font-medium text-foreground">{copy.intro}</p>
+          <p>{copy.explanation}</p><p>{copy.exclusive}</p>
+          <p className="font-semibold text-foreground">{copy.match}</p>
+        </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {["contractor", "homeowner"].map((path, i) => {
+            const contractor = path === "contractor";
+            const Icon = contractor ? Wrench : Home;
+            return <motion.article key={path} {...reveal(i * 0.08)} className="flex min-w-0 flex-col rounded-3xl border border-border bg-card p-6 shadow-lg sm:p-8">
+              <Icon aria-hidden="true" className="h-7 w-7 text-primary-tint" />
+              <h3 className="mt-5 text-xl font-semibold text-foreground">{contractor ? copy.contractor : copy.homeowner}</h3>
+              <p className="mt-3 text-lg font-medium leading-relaxed text-foreground">{contractor ? copy.contractorPromise : copy.homeownerPromise}</p>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">{contractor ? copy.contractorBody : copy.homeownerBody}</p>
+              <div className="mt-auto pt-7">
+                {contractor ? <Button asChild className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl bg-primary-strong px-4 py-3 text-base">
+                  <Link to="/entrepreneur/devis-personnalise" onClick={() => trackCopilotEvent("contractor_entry_click", { surface: "home_matching", destination: "/entrepreneur/devis-personnalise" })}>{copy.contractorCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
+                </Button> : <Button onClick={() => { trackCopilotEvent("hero_find_pro_click", { surface: "home_matching" }); onStartHomeowner(); }} variant="outline" className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl px-4 py-3 text-base">{copy.homeownerCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Button>}
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{contractor ? copy.contractorMicro : copy.homeownerMicro}</p>
+                {contractor && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{copy.disclaimer}</p>}
+              </div>
+            </motion.article>;
+          })}
+        </div>
+        <div className="mt-12 max-w-3xl space-y-4 text-base leading-relaxed text-muted-foreground">
+          <p className="text-lg font-medium text-foreground">{copy.difference}</p>
+          <p>{copy.closing}</p>
+          <Button asChild variant="link" className="h-auto min-h-11 whitespace-normal px-0 text-left text-primary-tint"><Link to="/impact">{copy.impact} →</Link></Button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function useStartAlex(surface: string) {
   const { openAlex } = useAlexVoice();

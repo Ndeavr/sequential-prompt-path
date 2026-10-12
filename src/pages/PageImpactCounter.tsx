@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { useImpactSnapshot, fmtHours } from "@/hooks/useImpactSnapshot";
 import { impactScenario } from "@/lib/impactScenario";
+import HomeImpactCounter from "@/components/impact-counter/HomeImpactCounter";
 
 const SECTIONS = [
   { id: "approche", label: "Notre approche" },
@@ -38,21 +39,14 @@ export default function PageImpactCounter() {
         <meta property="og:type" content="article" />
       </Helmet>
 
+      <div className="alex-immersive bg-background text-foreground">
       <article className="mx-auto max-w-3xl px-5 py-12 sm:py-20">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">Impact UNPRO</p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Le bon match. Moins de temps perdu.
+          L’impact potentiel de l’IA.
         </h1>
 
-        <p className="mt-6 text-base text-muted-foreground">Impact potentiel estimé de l'IA depuis le 1er janvier 2026</p>
-        <p className="mt-2 text-base text-muted-foreground">Estimations fondées sur des hypothèses explicites, non sur les résultats UNPRO.</p>
-        <h2 className="mt-8 text-xl font-semibold text-foreground">Scénario type : un projet, un jumelage exclusif.</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Stat label="Temps potentiel par parcours" value={scenario ? fmtHours(scenario.total) : "À consolider"} />
-          <Stat label="Propriétaire / entrepreneur" value={scenario ? `${fmtHours(scenario.homeowner)} / ${fmtHours(scenario.contractor)}` : "À consolider"} />
-          <Stat label="Économies en dollars" value="À consolider" />
-        </div>
-        <p className="mt-3 text-sm text-muted-foreground">Illustration par parcours, pas un total sectoriel cumulé ni un gain garanti.</p>
+        <HomeImpactCounter />
 
         <nav aria-label="Sections" className="mt-8 flex flex-wrap gap-2">
           {SECTIONS.map((s) => (
@@ -86,7 +80,7 @@ export default function PageImpactCounter() {
             <li><strong>Hypothèse existante :</strong> {scenario?.assumptions ?? "Données en consolidation."}</li>
             <li><strong>Source et limites :</strong> hypothèses de méthode UNPRO, pas une étude de temps observés ni une mesure externe validée. Les économies réelles varient selon le projet et peuvent être nulles. Ce scénario ne représente ni une moyenne sectorielle, ni des résultats obtenus par UNPRO.</li>
             <li><strong>Dollars :</strong> aucun taux horaire ni coût publicitaire hypothétique n'est appliqué. Sans base monétaire vérifiée pour ce parcours, aucun montant n'est annoncé.</li>
-            <li><strong>Période et couverture :</strong> la période annoncée est un repère pour l'impact sectoriel envisagé; aucun total depuis cette date n'est validé. Le scénario n'est pas multiplié par le temps écoulé, une population ou un nombre de rendez-vous.</li>
+            <li><strong>Période et couverture :</strong> ce scénario n'est pas un cumul depuis une date de départ. Il n'est pas multiplié par le temps écoulé, une population ou un nombre de rendez-vous.</li>
             <li><strong>Actualisation :</strong> seules les hypothèses courantes de la méthode existante sont reprises. Les valeurs restent identiques tant que ces hypothèses ne changent pas; l'animation d'entrée n'ajoute aucun gain.</li>
           </ul>
           <p className="text-sm text-muted-foreground">Aucun total mondial ou québécois de l'impact de l'IA n'est revendiqué.</p>
@@ -100,15 +94,8 @@ export default function PageImpactCounter() {
           <p className="text-lg font-semibold text-foreground">UNPRO. Le bon entrepreneur pour la bonne personne.</p>
         </Section>
       </article>
+      </div>
     </MainLayout>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 truncate text-xl font-semibold tabular-nums text-foreground">{value}</p>
-    </div>
-  );
-}

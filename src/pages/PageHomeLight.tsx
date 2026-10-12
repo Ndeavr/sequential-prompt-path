@@ -7,7 +7,7 @@ import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
-import HomeImpactCounter from "@/components/impact-counter/HomeImpactCounter";
+import { SectionMatchingPaths } from "@/components/home-light/HomeLightSections";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 
@@ -58,8 +58,13 @@ export default function PageHomeLight() {
         </Helmet>
 
         <div className="home-light">
-          <HeroHomeownerLight />
-          <HomeImpactCounter />
+          <div id="clara-home"><HeroHomeownerLight /></div>
+          <SectionMatchingPaths onStartHomeowner={() => {
+            const field = document.querySelector<HTMLTextAreaElement>("#clara-home textarea");
+            if (!field) return;
+            field.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+            field.focus({ preventScroll: true });
+          }} />
           <div className="home-afterglow" aria-hidden="true" />
         </div>
       </MainLayout>
