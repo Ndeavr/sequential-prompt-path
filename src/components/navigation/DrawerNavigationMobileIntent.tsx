@@ -3,7 +3,9 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserRound } from "lucide-react";
+import { Phone, UserRound } from "lucide-react";
+import { PUBLIC_PHONE } from "@/config/publicContact";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -90,6 +92,21 @@ export default function DrawerNavigationMobileIntent({
           <div className="mb-5">
             <HeaderSearch lang={lang} variant="mobile" onClose={onClose} />
           </div>
+
+          {/* Public call line — shared guest + signed-in, near the quick actions. */}
+          <a
+            href={PUBLIC_PHONE.tel}
+            onClick={() => {
+              void logFunnelEvent({ event_type: "call_cta_clicked", metadata: { context: "mobile_drawer", route: window.location.pathname } });
+              onClose();
+            }}
+            aria-label={lang === "en" ? `Call UNPRO at ${PUBLIC_PHONE.display}` : `Appeler UNPRO au ${PUBLIC_PHONE.display}`}
+            className="mb-5 flex min-h-11 items-center gap-3 rounded-xl border border-primary/25 bg-primary/10 px-3 text-sm font-medium text-primary-tint transition-colors hover:bg-primary/15"
+          >
+            <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {lang === "en" ? "Call UNPRO" : "Appeler UNPRO"}
+            <span className="ml-auto text-xs font-normal text-muted-foreground">{PUBLIC_PHONE.display}</span>
+          </a>
 
           {!isGuest ? (
             <>
