@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { ContactReveal, CallNoteForm } from "./ApchqContactTools";
 
 const BATCH_SOURCE = "apchq_pdf_review_2026-10-12";
 
@@ -155,7 +158,16 @@ function LinkPanel({ row, link, onChanged }: { row: Row; link: LinkRow | undefin
   );
 }
 
+export function describeRpcError(e: any): string {
+  const code = e?.code; const msg = String(e?.message ?? "");
+  if (code === "42501" || /forbidden|permission denied/i.test(msg)) return "Calcul refusé : ce compte n'est pas administrateur.";
+  if (/fetch|network|timeout/i.test(msg)) return "Calcul indisponible : problème réseau.";
+  return "Calcul de l'admissibilité en erreur côté serveur.";
+}
+
 export default function ApchqReviewSection() {
+  const { isAuthenticated, isLoading: authLoading, isAdmin, roles } = useAuth() as any;
+  const admin = !!isAdmin || (Array.isArray(roles) && roles.includes("admin"));
 
   const [filter, setFilter] = useState<"all" | "missing" | "casl_doc" | "excluded" | "ev_found" | "ev_alert">("all");
   const [q, setQ] = useState("");
@@ -163,6 +175,7 @@ export default function ApchqReviewSection() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["apchq-review"],
+    enabled: isAuthenticated && admin,
     queryFn: async () => {
       const { data: b, error: be } = await supabase.from("acquisition_manual_import_batches").select("id").eq("source", BATCH_SOURCE).maybeSingle();
       if (be) throw be;
@@ -191,7 +204,7 @@ export default function ApchqReviewSection() {
     },
   });
   // Admissibilité calculée côté serveur (aucun badge déterminé par le client).
-  const { data: elig, error: eligErr } = useQuery({
+  const { data: elig, error: eligErr, refetch: refetchElig, isFetching: eligFetching } = useQuery({
     queryKey: ["apchq-eligibility", ids.join(",")],
     enabled: ids.length > 0,
     queryFn: async () => {
@@ -213,7 +226,12 @@ export default function ApchqReviewSection() {
 
   const rows = useMemo(() => (data ?? []).filter((r) => {
     const n = r.normalized ?? {};
-    if (q && !`${r.company} ${r.contact} ${r.city}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q) {
+      const ql = q.toLowerCase().trim(); const qd = ql.replace(/\D/g, "");
+      const txt = `${r.company} ${r.contact} ${r.city} ${r.email ?? ""}`.toLowerCase().includes(ql);
+      const ph = qd.length >= 4 && (r.phone ?? "").replace(/\D/g, "").includes(qd);
+      if (!txt && !ph) return false;
+    }
     if (filter === "missing") return (n.crosscheck?.missing ?? []).length > 0;
     if (filter === "ev_found") return n.evidence_leads?.status === "preuve_potentielle_trouvee";
     if (filter === "ev_alert") return (n.evidence_leads?.alerts ?? []).length > 0;
@@ -222,20 +240,30 @@ export default function ApchqReviewSection() {
     return true;
   }), [data, q, filter, extra]);
 
+  if (authLoading) return <Card><CardContent className="p-4 text-sm text-muted-foreground">Vérification de la session…</CardContent></Card>;
+  if (!isAuthenticated || !admin) {
+    return (
+      <Card><CardContent className="p-4 space-y-3">
+        <p className="text-sm text-foreground">{isAuthenticated ? "Ce compte n'a pas l'accès administrateur." : "Session non connectée."} Connectez-vous avec un compte administrateur pour voir les dossiers APCHQ.</p>
+        <Button asChild className="min-h-11"><Link to="/login">Se connecter</Link></Button>
+      </CardContent></Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">APCHQ — {data?.length ?? 24} dossiers à qualifier</CardTitle>
         <p className="text-xs text-muted-foreground">Revue seulement. Aucun prospect créé, aucun envoi possible.</p>
         <p className="text-xs text-foreground">
-          {eligErr ? "Admissibilité non calculée (accès administrateur requis)." : elig
+          {eligErr ? <>{describeRpcError(eligErr)} <Button variant="link" size="sm" className="min-h-11" disabled={eligFetching} onClick={() => refetchElig()}>Réessayer</Button></> : elig
             ? `Calcul serveur — Admissible sur preuve : ${counts.admissible_sur_preuve} · À qualifier : ${counts.a_qualifier} · Exclu : ${counts.exclu}. « Admissible » ne déclenche aucun envoi.`
             : "Calcul de l'admissibilité…"}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-2">
-          <Input placeholder="Rechercher entreprise, nom, ville" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input placeholder="Entreprise, nom, ville, téléphone ou courriel" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
           <select aria-label="Filtre" className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={filter} onChange={(e) => setFilter(e.target.value as any)}>
             <option value="all">Tous</option>
             <option value="missing">Données manquantes</option>
@@ -250,7 +278,7 @@ export default function ApchqReviewSection() {
           <div className="text-sm text-destructive">Impossible de charger les dossiers. <Button variant="link" size="sm" onClick={() => refetch()}>Réessayer</Button></div>
         )}
         {!isLoading && !error && rows.length === 0 && <p className="text-sm text-muted-foreground">Aucun dossier pour ce filtre.</p>}
-        <div className="space-y-2">
+        <div className="space-y-2 pb-28">
           {rows.map((r) => {
             const n = r.normalized ?? {};
             const cc = n.crosscheck ?? {};
@@ -263,16 +291,17 @@ export default function ApchqReviewSection() {
                     <span className="text-xs text-muted-foreground">Ligne {n.source_row ?? r.row_number}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">{r.contact ?? "—"} · {r.category ?? "métier ?"} · {r.city ?? "ville ?"}</div>
-                  <div className="text-xs text-muted-foreground">{maskPhone(r.phone)} · {maskEmail(r.email)}</div>
+                  {!isOpen && <div className="text-xs text-muted-foreground">{maskPhone(r.phone)} · {maskEmail(r.email)}</div>}
                 </button>
-                <div className="flex flex-wrap gap-1">
+                {isOpen && <ContactReveal rowId={r.id} phone={r.phone} email={r.email} masked={`${maskPhone(r.phone)} · ${maskEmail(r.email)}`} />}
+                {isOpen && <div className="flex flex-wrap gap-1">
                   <Flag label="Identité" kind="declared" />
                   <Flag label="Entreprise" kind={r.company ? "declared" : "pending"} />
                   <Flag label="Mobile" kind="pending" />
                   <Flag label="LCAP" kind={lastDecision(r.id) === "evidence_documented" ? "declared" : "pending"} />
                   <Flag label="Lien 350 $" kind={linkOf(r.id) && new Date(linkOf(r.id)!.expires_at) > new Date() ? "declared" : "pending"} />
                   <Flag label="RBQ" kind="pending" />
-                </div>
+                </div>}
                 <div className="text-[11px] text-foreground">
                   {EV_LABEL[n.evidence_leads?.status] ?? "Pistes non recherchées"}{(n.evidence_leads?.alerts?.length ?? 0) > 0 ? ` · ⚠ ${n.evidence_leads.alerts.length} alerte(s)` : ""}
                 </div>
@@ -289,6 +318,7 @@ export default function ApchqReviewSection() {
                     <p>Revue LCAP : <strong>{lastDecision(r.id) ?? "à faire"}</strong></p>
                     <EvidencePanel ev={n.evidence_leads} legallyReviewed={!!lastDecision(r.id)} />
                     <LinkPanel row={r} link={linkOf(r.id)} onChanged={() => refetchExtra()} />
+                    <CallNoteForm rowId={r.id} />
                     <CaslForm row={r} reviews={reviewsOf(r.id)} onSaved={() => refetchExtra()} />
                   </div>
                 )}
