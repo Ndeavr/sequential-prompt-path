@@ -561,16 +561,47 @@
     width: 44px;
     height: 44px;
     border-radius: var(--radius-pill);
-    color: hsl(220 14% 38%);
-    transition: transform 180ms var(--ease-cinematic), color 180ms ease, background 180ms ease;
+    /* Contraste suivant le fond réel de la barre (clair ou bleu nuit). */
+    color: hsl(var(--card-foreground) / 0.92);
+    transition: transform 180ms var(--ease-cinematic), color 180ms ease, background 180ms ease, box-shadow 180ms ease;
   }
+  .home-light .home-clara-history-open svg,
+  .home-light .home-clara-more svg { width: 20px; height: 20px; stroke-width: 2; }
   .home-light .home-clara-reset:hover,
   .home-light .home-clara-dossier-open:hover,
   .home-light .home-clara-history-open:hover,
-  .home-light .home-clara-more:hover {
+  .home-light .home-clara-more:hover,
+  .home-light .home-clara-history-open[data-state="open"],
+  .home-light .home-clara-more[data-state="open"] {
     transform: translateY(-2px);
-    color: hsl(222 49% 9%);
-    background: hsl(var(--muted));
+    color: hsl(var(--card-foreground));
+    background: hsl(var(--primary) / 0.14);
+    box-shadow: 0 2px 8px -4px hsl(var(--primary) / 0.5);
+  }
+  .home-light .home-clara-history-open:focus-visible,
+  .home-light .home-clara-more:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  .home-light .home-clara-scroll-latest {
+    position: absolute;
+    left: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    transform: none;
+    width: 36px;
+    height: 36px;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    box-shadow: 0 4px 12px -4px hsl(var(--primary) / 0.6);
+    z-index: 2;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .home-light .home-clara-history-open,
+    .home-light .home-clara-more { transition: none; }
+    .home-light .home-clara-history-open:hover,
+    .home-light .home-clara-more:hover { transform: none; }
   }
   .home-light .home-clara-history {
     width: min(340px, calc(100vw - 24px));

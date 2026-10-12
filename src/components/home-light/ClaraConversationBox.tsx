@@ -1831,7 +1831,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
       )}
             <div ref={bottomAnchorRef} className="home-clara-bottom-anchor" aria-hidden="true" />
           </ConversationContent>
-          <ConversationScrollButton title="Nouveau message" />
+          <ConversationScrollButton title="Revenir au dernier message" className="home-clara-scroll-latest" />
         </Conversation>
 
       <div className="home-clara-input-row" data-chat-row="composer">
