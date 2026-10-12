@@ -1,0 +1,2 @@
+ALTER TABLE public.agent_outreach_messages ADD COLUMN IF NOT EXISTS idempotency_key text;
+CREATE UNIQUE INDEX IF NOT EXISTS agent_outreach_messages_idem_uq ON public.agent_outreach_messages (idempotency_key) WHERE idempotency_key IS NOT NULL;

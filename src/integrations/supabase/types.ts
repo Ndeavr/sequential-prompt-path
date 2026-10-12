@@ -6504,6 +6504,7 @@ export type Database = {
           created_at: string
           error: string | null
           id: string
+          idempotency_key: string | null
           last_attempt_at: string | null
           lead_id: string
           metadata: Json | null
@@ -6526,6 +6527,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           id?: string
+          idempotency_key?: string | null
           last_attempt_at?: string | null
           lead_id: string
           metadata?: Json | null
@@ -6548,6 +6550,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           id?: string
+          idempotency_key?: string | null
           last_attempt_at?: string | null
           lead_id?: string
           metadata?: Json | null
