@@ -67,7 +67,7 @@ export function guaranteeSentence(appointments: number): string {
 export const ENTRY_350 = {
   eyebrow: "Nouvel entrepreneur · Paiement unique",
   title: "Activer mon profil — 350 $",
-  cta: "Activer mon profil — 350 $",
+  cta: "Activer mon profil — 350 $ + taxes",
   ctaMore: "J'aimerais plus de rendez-vous dès maintenant",
   profile: "Votre profil entrepreneur UNPRO",
   presence: "12 mois de Présence IA (valeur de 588 $, soit 12 × 49 $)",
@@ -75,6 +75,6 @@ export const ENTRY_350 = {
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
     "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
-  paymentNote: "Paiement unique de 350 $. Aucun abonnement. Activation dès la confirmation du paiement.",
+  paymentNote: "Paiement unique de 350 $ + TPS (5 %) et TVQ (9,975 %), soit 402,41 $. Aucun abonnement. Activation dès la confirmation du paiement par Stripe.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;

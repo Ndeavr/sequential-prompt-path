@@ -216,16 +216,14 @@ Deno.serve(async (req) => {
         if (q?.guaranteed_appointments) {
           guaranteedAppointments = Math.min(Number(q.guaranteed_appointments), OFFER.max_appointments);
         }
-        if (q?.total_price_cents && Number(q.total_price_cents) >= OFFER.price_cents) {
-          packPriceCents = Number(q.total_price_cents);
-        }
+        // Prix fixe : le pack d'entrée est toujours 350 $, jamais le total d'un forfait.
       }
     } catch (_) { /* soft-fail — pack d'entrée standard */ }
 
     const priceLabel = `${Math.round(packPriceCents / 100)} $`;
     const guaranteeLine = guaranteedAppointments
       ? `${guaranteedAppointments} rendez-vous exclusif${guaranteedAppointments > 1 ? "s" : ""} garanti${guaranteedAppointments > 1 ? "s" : ""}`
-      : `Jusqu'à ${OFFER.max_appointments} rendez-vous exclusifs garantis`;
+      : "Profil UNPRO + 12 mois de Présence IA; rendez-vous confirmés seulement après analyse";
 
     const baseMetadata: Record<string, string> = {
       // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
