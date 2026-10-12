@@ -24,6 +24,30 @@ interface Row {
 }
 
 export const maskPhone = (p: string | null) => (p ? p.replace(/\d(?=\d{4})/g, "•") : "—");
+
+const EV_LABEL: Record<string, string> = {
+  preuve_potentielle_trouvee: "Preuve potentielle trouvée (site de l'entreprise) — non revue légalement",
+  source_tierce_seulement: "Annuaire tiers seulement — ne vaut pas consentement",
+  aucune_source_trouvee: "Aucune source publique trouvée",
+};
+
+function EvidencePanel({ ev, legallyReviewed }: { ev: Norm | undefined; legallyReviewed: boolean }) {
+  if (!ev) return <p>Pistes documentaires : non recherchées.</p>;
+  return (
+    <div className="rounded-md border border-border p-2 space-y-1">
+      <p><strong>{EV_LABEL[ev.status] ?? ev.status}</strong> · {legallyReviewed ? "Revue légale signée" : "Revue légale : à faire"}</p>
+      <p className="text-muted-foreground">Relevé du {new Date(ev.checked_at).toLocaleString("fr-CA")} — {ev.method}</p>
+      {(ev.sources ?? []).map((s: Norm) => (
+        <p key={s.url}>
+          <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline text-primary break-all">{s.url}</a>
+          {" "}· {s.kind === "first_party" ? "site de l'entreprise" : "tiers"} · tél. {s.phone_match ? "identique" : "absent"} · courriel {s.email_match ? "identique" : "absent"}{s.note ? ` — ${s.note}` : ""}
+        </p>
+      ))}
+      {(ev.alerts ?? []).map((a: string) => <p key={a} className="text-destructive">⚠ {a}</p>)}
+      <p>Voie : {ev.channel_note}</p>
+    </div>
+  );
+}
 export const maskEmail = (e: string | null) => {
   if (!e) return "—";
   const [u, d] = e.split("@");
@@ -191,6 +215,8 @@ export default function ApchqReviewSection() {
     const n = r.normalized ?? {};
     if (q && !`${r.company} ${r.contact} ${r.city}`.toLowerCase().includes(q.toLowerCase())) return false;
     if (filter === "missing") return (n.crosscheck?.missing ?? []).length > 0;
+    if (filter === "ev_found") return n.evidence_leads?.status === "preuve_potentielle_trouvee";
+    if (filter === "ev_alert") return (n.evidence_leads?.alerts ?? []).length > 0;
     if (filter === "casl_doc") return lastDecision(r.id) === "evidence_documented";
     if (filter === "excluded") return lastDecision(r.id) === "refusal_found";
     return true;
@@ -213,6 +239,8 @@ export default function ApchqReviewSection() {
           <select aria-label="Filtre" className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={filter} onChange={(e) => setFilter(e.target.value as any)}>
             <option value="all">Tous</option>
             <option value="missing">Données manquantes</option>
+            <option value="ev_found">Preuve potentielle trouvée</option>
+            <option value="ev_alert">Coordonnées divergentes / alertes</option>
             <option value="casl_doc">Preuve LCAP documentée</option>
             <option value="excluded">Refus trouvé</option>
           </select>
@@ -246,6 +274,9 @@ export default function ApchqReviewSection() {
                   <Flag label="RBQ" kind="pending" />
                 </div>
                 <div className="text-[11px] text-foreground">
+                  {EV_LABEL[n.evidence_leads?.status] ?? "Pistes non recherchées"}{(n.evidence_leads?.alerts?.length ?? 0) > 0 ? ` · ⚠ ${n.evidence_leads.alerts.length} alerte(s)` : ""}
+                </div>
+                <div className="text-[11px] text-foreground">
                   <strong>{eligOf(r.id) ? STATUS_LABEL[eligOf(r.id)!.status] ?? eligOf(r.id)!.status : "—"}</strong>
                   {eligOf(r.id)?.reasons?.length ? ` · ${eligOf(r.id)!.reasons.join(", ").replace(/_/g, " ")}` : ""}
                 </div>
@@ -256,6 +287,7 @@ export default function ApchqReviewSection() {
                     <p>Adhésion APCHQ : non établie. Mobile : non vérifié (Twilio Canada restreint). Envoi : bloqué.</p>
                     <p className="rounded-md bg-muted p-2">Brouillon interne (non envoyable) : {n.internal_draft?.body ?? "—"}</p>
                     <p>Revue LCAP : <strong>{lastDecision(r.id) ?? "à faire"}</strong></p>
+                    <EvidencePanel ev={n.evidence_leads} legallyReviewed={!!lastDecision(r.id)} />
                     <LinkPanel row={r} link={linkOf(r.id)} onChanged={() => refetchExtra()} />
                     <CaslForm row={r} reviews={reviewsOf(r.id)} onSaved={() => refetchExtra()} />
                   </div>
