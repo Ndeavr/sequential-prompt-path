@@ -122,7 +122,9 @@ serve(async (req) => {
         console.warn("twilio-inbound: rejected — missing X-Twilio-Signature");
         return forbidden("missing_signature");
       }
-      const url = req.url;
+      // Edge runtime req.url is internal (http, no /functions/v1); Twilio signs the public URL.
+      const search = new URL(req.url).search;
+      const url = `${SUPABASE_URL}/functions/v1/twilio-inbound${search}`;
       const ok = await validateTwilioSignature(url, rawPayload, signatureHeader, TWILIO_AUTH_TOKEN);
       if (!ok) {
         console.warn("twilio-inbound: rejected — invalid X-Twilio-Signature", { url, MessageSid });
