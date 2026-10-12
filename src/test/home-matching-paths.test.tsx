@@ -32,7 +32,7 @@ describe("active homepage matching paths", () => {
     expect(call[0]).toHaveAttribute("href", "tel:+14503286776");
     expect(call[0]).toHaveTextContent("Appeler");
     // Compact pill: small type, soft halo, 44px touch target preserved.
-    expect(call[0].parentElement).toHaveClass("text-[13px]", "shadow-glow-soft", "min-h-11");
+    expect(call[0]).toHaveClass("text-[13px]", "shadow-glow-soft", "min-h-11");
   });
   it("translates the marketing section without changing destinations", () => {
     state.lang = "en";
