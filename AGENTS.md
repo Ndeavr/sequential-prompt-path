@@ -69,4 +69,3 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 - Verify the runtime route/component and public asset revision before user-facing edits; require targeted real-DOM mobile smoke tests and clean harness build/type output. Why: inactive-source checks cannot prove usability.
 - The shared keyboard hook owns visible height/offset and field visibility; existing StickToBottom owns Clara following. Why: competing document/message scrolling clips controls and overrides manual reading.
 <!-- LOVABLE:END -->
-- Stripe TEST events (livemode=false) may activate only QA-marked accounts (e2e_test / e2e+…@unpro.ca) and never feed contractor_leads; a second paid 350 $ session for an activated contractor is flagged as a duplicate, never re-activated. Why: QA payments must never create real commercial activations or double charges.
