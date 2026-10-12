@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { classifyPrefix, reviewPriority } from "@/lib/phone/cnacPrefix";
 
 const QC = new Set(["514", "438", "450", "579", "418", "581", "367", "819", "873", "354", "263", "468"]);
 const TOLLFREE = new Set(["800", "833", "844", "855", "866", "877", "888"]);
@@ -63,7 +64,7 @@ export default function CaslHumanReviewPanel() {
       if (oo.error) throw oo.error;
       const opted = new Set(((oo.data as any[]) ?? []).map((o) => String(o.normalized_phone).replace(/^\+1/, "")));
       const seen = new Set<string>();
-      const rows: (Ev & { block: string | null; smsReachable: boolean })[] = [];
+      const rows: (Ev & { block: string | null; smsReachable: boolean; pfx: string; pfxCo: string | null })[] = [];
       for (const r of (ev.data as unknown as Ev[]) ?? []) {
         if (seen.has(r.destination_normalized)) continue; // dedupe by number
         seen.add(r.destination_normalized);
@@ -72,10 +73,11 @@ export default function CaslHumanReviewPanel() {
           : r.refusal_statement_found
             ? "Refus publié"
             : precheck(r.destination_normalized);
-        rows.push({ ...r, block, smsReachable: reachable.has(r.destination_normalized) });
+        const pfx = classifyPrefix(r.destination_normalized);
+        rows.push({ ...r, block, smsReachable: reachable.has(r.destination_normalized), pfx: pfx.class, pfxCo: pfx.originalCompany });
       }
       // Priority: SMS delivery proof (Twilio SID + delivered_at) first. Never treated as mobile proof.
-      return rows.sort((a, b) => Number(b.smsReachable) - Number(a.smsReachable));
+      return rows.sort((a, b) => reviewPriority(b.pfx as any, b.smsReachable) - reviewPriority(a.pfx as any, a.smsReachable));
     },
   });
 
@@ -122,6 +124,7 @@ export default function CaslHumanReviewPanel() {
               <Badge variant="outline">{r.lawful_basis ?? "base ?"}</Badge>
               <Badge variant="secondary">casl_en_attente</Badge>
               <Badge variant="outline">type_ligne_non_verifie</Badge>
+              <Badge variant="outline" title="Attribution d'origine CNAC — portabilité possible, pas une preuve">{r.pfx} · {r.pfxCo ?? "?"}</Badge>
               <Badge variant={r.smsReachable ? "default" : "outline"}>{r.smsReachable ? "sms_joignable (livraison Twilio)" : "joignabilité inconnue"}</Badge>
             </div>
             <p className="text-sm">{r.business_relevance_explanation ?? "Pertinence non documentée"}</p>
