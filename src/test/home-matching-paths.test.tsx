@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { SectionMatchingPaths } from "@/components/home-light/HomeLightSections";
 
@@ -8,7 +8,10 @@ const state = vi.hoisted(() => ({ lang: "fr" as "fr" | "en" }));
 vi.mock("@/components/ui/LanguageToggle", () => ({ useLanguage: () => ({ lang: state.lang }) }));
 vi.mock("@/contexts/AlexVoiceContext", () => ({ useAlexVoice: () => ({ openAlex: vi.fn() }) }));
 vi.mock("@/utils/trackCopilotEvent", () => ({ trackCopilotEvent: vi.fn() }));
-afterEach(() => { cleanup(); state.lang = "fr"; });
+beforeEach(() => vi.stubGlobal("IntersectionObserver", class {
+  observe() {} unobserve() {} disconnect() {}
+}));
+afterEach(() => { cleanup(); state.lang = "fr"; vi.unstubAllGlobals(); });
 
 describe("active homepage matching paths", () => {
   it("shows exactly two paths with real destinations and a working homeowner action", () => {

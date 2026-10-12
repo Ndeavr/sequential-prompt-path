@@ -60,6 +60,7 @@ export default function PageHomeLight() {
         <div className="home-light">
           <div id="clara-home"><HeroHomeownerLight /></div>
           <SectionMatchingPaths onStartHomeowner={() => {
+            document.querySelector<HTMLButtonElement>('[data-testid="clara-back-to-home-project"]')?.click();
             const field = document.querySelector<HTMLTextAreaElement>("#clara-home textarea");
             if (!field) return;
             field.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
