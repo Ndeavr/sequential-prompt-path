@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision } from "../_shared/checkoutGuards.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -42,6 +42,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Corps brut conservé : le flux de la requête ne peut être lu qu'une fois,
+  // et le bloc d'erreur doit pouvoir marquer l'événement « failed ».
+  let rawBody = "";
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -50,6 +53,7 @@ Deno.serve(async (req) => {
 
     let stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
     const body = await req.text();
+    rawBody = body;
 
     // Replay mode: internal reprocessing bypasses Stripe signature check.
     // Requires x-replay-token header matching SERVICE_ROLE_KEY.
@@ -359,16 +363,47 @@ Deno.serve(async (req) => {
               .eq("action", "entry_activation_350_paid")
               .eq("metadata->>stripe_session_id", session.id)
               .maybeSingle();
-            if (!already) {
+            const { data: ownerRow } = await supabase
+              .from("contractors").select("user_id, activation_status").eq("id", entryContractorId).maybeSingle();
+            const { data: otherSession } = await supabase
+              .from("contractor_activation_ledger")
+              .select("id")
+              .eq("action", "entry_activation_350_paid")
+              .eq("contractor_id", entryContractorId)
+              .neq("metadata->>stripe_session_id", session.id)
+              .limit(1)
+              .maybeSingle();
+            // Séparation TEST/LIVE : un événement de test n'active qu'un compte QA marqué.
+            let isQaAccount = false;
+            if (event.livemode !== true && ownerRow?.user_id) {
+              const { data: u } = await supabase.auth.admin.getUserById(ownerRow.user_id);
+              const md = (u?.user?.user_metadata ?? {}) as Record<string, unknown>;
+              isQaAccount = /^e2e\+[^@]+@unpro\.ca$/i.test(u?.user?.email ?? "") || md.e2e_test === true || md.e2e_test === "true";
+            }
+            const decision = entryActivationDecision({
+              livemode: event.livemode,
+              isQaAccount,
+              sessionAlreadyInLedger: !!already,
+              activatedByOtherSession: !!otherSession,
+            });
+            console.log("[stripe-webhook][entry_activation_350] decision", { event: event.id, session: session.id, livemode: event.livemode, decision });
+            if (decision === "test_on_non_qa" || decision === "duplicate_payment") {
+              await supabase.from("admin_notifications").insert({
+                type: decision === "duplicate_payment" ? "entry_activation_350_duplicate_payment" : "entry_activation_350_test_blocked",
+                severity: decision === "duplicate_payment" ? "critical" : "warning",
+                contractor_id: entryContractorId,
+                title: decision === "duplicate_payment"
+                  ? (event.livemode ? "Double paiement 350 $ (réel) — à rembourser" : "Double paiement 350 $ (TEST) — à rembourser")
+                  : "Paiement TEST sur un compte non QA — aucune activation",
+                body: "Aucune activation supplémentaire n'a été faite.",
+                payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null },
+              });
+            }
+            if (decision === "activate") {
               const nowIso = new Date().toISOString();
               const presenceUntil = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
               const guaranteed = Number(session.metadata?.guaranteed_appointments ?? 0) || 0;
-              const { data: ownerRow } = await supabase
-                .from("contractors").select("user_id, activation_status").eq("id", entryContractorId).maybeSingle();
-              if (ownerRow?.user_id) {
-                await supabase.from("user_roles")
-                  .upsert({ user_id: ownerRow.user_id, role: "contractor" }, { onConflict: "user_id,role" });
-              }
+              // Le registre d'abord : s'il échoue, rien d'autre n'est modifié.
               const { error: ledgerErr } = await supabase.from("contractor_activation_ledger").insert({
                 contractor_id: entryContractorId,
                 action: "entry_activation_350_paid",
@@ -387,36 +422,50 @@ Deno.serve(async (req) => {
                   campaign: session.metadata?.campaign ?? null,
                 },
               });
-              if (ledgerErr) {
+              // Livraison concurrente déjà inscrite (index unique) = idempotent.
+              const concurrentDup = ledgerErr && /duplicate key|uq_ledger_entry350_session/i.test(ledgerErr.message);
+              if (ledgerErr && !concurrentDup) {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
               }
-              await supabase.from("contractors")
-                .update({ account_status: "active", activation_status: "activated" })
-                .eq("id", entryContractorId)
-                .neq("activation_status", "activated");
-              if (session.metadata?.quote_id) {
-                await supabase.from("contractor_pricing_quotes")
-                  .update({ pricing_status: "paid", stripe_checkout_session_id: session.id })
-                  .eq("id", String(session.metadata.quote_id))
-                  .neq("pricing_status", "paid");
-                await supabase.from("contractor_leads")
-                  .update({ lead_status: "entry_350_paid", payment_status: "paid", paid_at: nowIso, next_follow_up_at: null })
-                  .eq("metadata_json->>quote_id", String(session.metadata.quote_id));
+              if (!concurrentDup) {
+                const must = (label: string, r: { error: { message: string } | null }) => {
+                  if (r.error) throw new Error(`entry_activation_350 ${label}: ${r.error.message}`);
+                };
+                if (ownerRow?.user_id) {
+                  must("role", await supabase.from("user_roles")
+                    .upsert({ user_id: ownerRow.user_id, role: "contractor" }, { onConflict: "user_id,role" }));
+                }
+                must("contractor", await supabase.from("contractors")
+                  .update({ account_status: "active", activation_status: "activated" })
+                  .eq("id", entryContractorId)
+                  .neq("activation_status", "activated"));
+                if (session.metadata?.quote_id) {
+                  must("quote", await supabase.from("contractor_pricing_quotes")
+                    .update({ pricing_status: "paid", stripe_checkout_session_id: session.id })
+                    .eq("id", String(session.metadata.quote_id))
+                    .neq("pricing_status", "paid"));
+                  // Pipeline commercial : jamais alimenté par un paiement TEST.
+                  if (event.livemode === true) {
+                    await supabase.from("contractor_leads")
+                      .update({ lead_status: "entry_350_paid", payment_status: "paid", paid_at: nowIso, next_follow_up_at: null })
+                      .eq("metadata_json->>quote_id", String(session.metadata.quote_id));
+                  }
+                }
+                await supabase.from("contractor_funnel_events").insert({
+                  contractor_id: entryContractorId,
+                  event_type: "entry_350_payment_success",
+                  metadata: { stripe_session_id: session.id, amount_cents: session.amount_total ?? 35000, livemode: event.livemode ?? null, test: event.livemode !== true, quote_id: session.metadata?.quote_id ?? null, ref: session.metadata?.ref ?? null },
+                });
+                await supabase.from("admin_notifications").insert({
+                  type: "entry_activation_350_paid",
+                  severity: "info",
+                  contractor_id: entryContractorId,
+                  title: event.livemode ? "Activation 350 $ payée (réel)" : "Activation 350 $ payée (TEST)",
+                  body: "Un entrepreneur a activé son profil (350 $, 12 mois de Présence IA).",
+                  payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, ref: session.metadata?.ref ?? null, quote_id: session.metadata?.quote_id ?? null, guaranteed_appointments: guaranteed },
+                });
               }
-              await supabase.from("contractor_funnel_events").insert({
-                contractor_id: entryContractorId,
-                event_type: "entry_350_payment_success",
-                metadata: { stripe_session_id: session.id, amount_cents: session.amount_total ?? 35000, livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null, ref: session.metadata?.ref ?? null },
-              });
-              await supabase.from("admin_notifications").insert({
-                type: "entry_activation_350_paid",
-                severity: "info",
-                contractor_id: entryContractorId,
-                title: event.livemode ? "Activation 350 $ payée (réel)" : "Activation 350 $ payée (TEST)",
-                body: "Un entrepreneur a activé son profil (350 $, 12 mois de Présence IA).",
-                payload_json: { stripe_session_id: session.id, ref: session.metadata?.ref ?? null, quote_id: session.metadata?.quote_id ?? null, guaranteed_appointments: guaranteed },
-              });
             }
           }
         }
@@ -1748,16 +1797,16 @@ Deno.serve(async (req) => {
       // (may not always succeed depending on where the throw occurred).
       // Callers can also inspect logs by request id.
       try {
-        const rawBody = await req.clone().text();
         const parsed = JSON.parse(rawBody);
         if (parsed?.id) {
           await supabase.from("stripe_webhook_events").update({
             processing_status: "failed",
             error_message: msg,
             success: false,
+            last_retry_at: new Date().toISOString(),
           }).eq("stripe_event_id", parsed.id);
         }
-      } catch (_) { /* noop */ }
+      } catch (markErr) { console.error("[stripe-webhook] could not mark event failed", String(markErr)); }
     } catch (_) { /* noop */ }
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,

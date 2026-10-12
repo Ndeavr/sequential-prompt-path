@@ -18,7 +18,9 @@ import {
   Sparkles,
   ChevronDown,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import { CallUnproLink } from "@/components/contact/CallUnproLink";
 import {
   fetchPricingQuote,
   formatCAD,
@@ -204,7 +206,7 @@ export default function PageContractorPersonalizedPlan() {
 
   /* Étape 4 : activation payante affichée SEULEMENT après confirmation serveur
      (webhook Stripe → pricing_status = "paid"). Le retour Stripe seul ne suffit pas. */
-  type ConfirmState = "idle" | "waiting" | "paid" | "timeout" | "no_session" | "expired" | "unpaid";
+  type ConfirmState = "idle" | "waiting" | "paid" | "timeout" | "no_session" | "expired" | "unpaid" | "confirmation_failed";
   const [paymentConfirm, setPaymentConfirm] = useState<ConfirmState>("idle");
   const stripeSessionId = searchParams.get("session_id");
   const confirmMode = returnConfirmationMode(searchParams.toString());
@@ -233,6 +235,7 @@ export default function PageContractorPersonalizedPlan() {
           if (st === "paid") return onPaid();
           if (st === "invalid_session" || st === "no_session") return done("no_session");
           if (st === "expired") return done("expired");
+          if (st === "confirmation_failed") return done("confirmation_failed");
           if (st === "unpaid" || st === "open") { if (i >= 4) return done("unpaid"); }
         }
         await new Promise((r) => setTimeout(r, 3000));
@@ -364,17 +367,25 @@ export default function PageContractorPersonalizedPlan() {
               </button>
             </>
           )}
-          {paymentConfirm === "timeout" && (
-            <>
-              <h1 className="text-2xl font-semibold">Confirmation du paiement en cours.</h1>
-              <p className="text-white/70">Nous n'avons pas encore la confirmation finale. Votre forfait n'est pas encore affiché comme activé.</p>
+          {(paymentConfirm === "timeout" || paymentConfirm === "confirmation_failed") && (
+            <div data-testid="payment-confirmation-problem" className="space-y-4">
+              <AlertTriangle className="w-9 h-9 text-amber-300 mx-auto" aria-hidden="true" />
+              <h1 className="text-2xl font-semibold">
+                {paymentConfirm === "confirmation_failed" ? "Problème de confirmation" : "Confirmation plus longue que prévu"}
+              </h1>
+              <p className="text-white/80">
+                {paymentConfirm === "confirmation_failed"
+                  ? "Stripe a bien reçu votre paiement, mais l'activation n'a pas pu être confirmée chez UNPRO. Notre équipe a été avertie."
+                  : "Nous n'avons pas encore reçu la confirmation finale de Stripe. Votre profil n'est pas encore affiché comme activé."}
+              </p>
+              <p className="text-sm font-semibold text-amber-200">Ne payez pas une deuxième fois.</p>
               <button onClick={() => window.location.reload()} className="rounded-full px-6 py-3 bg-amber-500 text-black font-semibold">
                 Vérifier à nouveau
               </button>
-              <button onClick={backToActivation} className="block mx-auto text-sm text-white/75 underline">
-                Retour à mon activation
-              </button>
-            </>
+              <div className="flex justify-center">
+                <CallUnproLink context="payment_confirmation_problem" label="Appeler UNPRO" compact className="text-white/85" />
+              </div>
+            </div>
           )}
         </div>
       </div>

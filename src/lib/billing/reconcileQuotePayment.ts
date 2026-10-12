@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ReconcileStatus =
   | "paid" | "open" | "unpaid" | "expired" | "no_session" | "invalid_session"
-  | "webhook_pending" | "pending" | "error";
+  | "webhook_pending" | "pending" | "confirmation_failed" | "error";
 
 /** Asks the server to reconcile a quote with Stripe. Status always comes from the server. */
 export async function reconcileQuoteStatus(quoteId: string, sessionId?: string | null): Promise<ReconcileStatus> {

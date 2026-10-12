@@ -1,5 +1,5 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch } from "../_shared/checkoutGuards.ts";
+import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   assertCompensationAllowed,
@@ -228,7 +228,16 @@ Deno.serve(async (req) => {
       console.info("[checkout:reconcile]", { quote_id: quoteId, session: sid, event: ev.id, replay_status: replay.status });
       const { data: after } = await serviceClient.from("contractor_pricing_quotes")
         .select("pricing_status").eq("id", String(quoteId)).maybeSingle();
-      return json({ status: after?.pricing_status === "paid" ? "paid" : "webhook_pending" });
+      if (after?.pricing_status === "paid") return json({ status: "paid" });
+      // Paiement confirmé par Stripe mais traitement UNPRO en échec ou bloqué :
+      // on le dit clairement plutôt que de laisser la page attendre sans fin.
+      const { data: evAfter } = await serviceClient.from("stripe_webhook_events")
+        .select("processing_status, received_at").eq("stripe_event_id", ev.id).maybeSingle();
+      if (!replay.ok || webhookConfirmationFailed(evAfter)) {
+        console.error("[checkout:reconcile:confirmation_failed]", { quote_id: quoteId, session: sid, event: ev.id, replay_status: replay.status, processing_status: evAfter?.processing_status });
+        return json({ status: "confirmation_failed" });
+      }
+      return json({ status: "webhook_pending" });
     }
 
     let verifiedProspectId: string | null = null;
@@ -338,6 +347,26 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "Votre profil est déjà activé.", code: "already_active" }),
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
+        }
+        // Un paiement 350 $ déjà reçu par Stripe pour cette fiche, mais pas encore
+        // confirmé chez UNPRO : jamais de deuxième facturation.
+        {
+          const { data: paidEvt } = await serviceClient
+            .from("stripe_webhook_events")
+            .select("stripe_event_id")
+            .eq("contractor_id", fbContractor.id)
+            .eq("event_type", "checkout.session.completed")
+            .eq("livemode", !useTestMode)
+            .eq("payload->data->object->metadata->>offer", "entry_activation_350")
+            .eq("payload->data->object->>payment_status", "paid")
+            .limit(1)
+            .maybeSingle();
+          if (paidEvt) {
+            return new Response(
+              JSON.stringify({ error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }),
+              { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+          }
         }
         if (quoteId) {
           const { data: eq } = await serviceClient

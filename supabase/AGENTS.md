@@ -20,3 +20,5 @@ Treat every Supabase project as live infrastructure.
 - Every commercial SMS also requires a valid, unexpired `casl_consent_evidence` row (phone_sms, source_url + retrieved_at, no refusal) for the exact number, checked in `_shared/twilioSend.ts` before provider send, fail-closed. Why: CASL lawful basis must be auditable per send.
 - First contractor agreement is snapped server-side in `compute-pricing-quote` to the entry ladder (`ENTRY_TIERS`), with no appointment guarantee on a tier; the full computed price is logged only in `pricing_audit_log`. Why: low first-purchase friction without exposing the recipe.
 - Commercial SMS CASL evidence must also carry a human `reviewer_id`; auto-captured rows (`auto_captured`, `is_valid`) are never a legal review. Why: 827 auto rows were dispatchable without any human decision.
+
+- Stripe TEST events (livemode=false) may activate only QA-marked accounts (e2e_test / e2e+…@unpro.ca) and never feed contractor_leads; a second paid 350 $ session for an activated contractor is flagged as a duplicate, never re-activated. Why: QA payments must never create real commercial activations or double charges.

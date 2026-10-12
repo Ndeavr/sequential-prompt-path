@@ -58,6 +58,12 @@ export function EntryActivation350Card(p: Props) {
         window.location.assign("/pro");
         return;
       }
+      if (payload?.code === "payment_received_pending") {
+        // Paiement déjà reçu par Stripe : jamais de deuxième facturation.
+        setError("Votre paiement a déjà été reçu. Ne payez pas une deuxième fois : la confirmation est en cours chez UNPRO.");
+        setLoading(false);
+        return;
+      }
       if (payload?.error) throw new Error(payload.error);
       if (fnErr) throw fnErr;
       if (!payload?.url) throw new Error("url_manquante");
