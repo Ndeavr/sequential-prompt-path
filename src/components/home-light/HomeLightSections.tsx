@@ -70,7 +70,7 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
     impact: "Explore AI’s potential impact",
   };
   const reveal = (delay = 0) => ({
-    initial: reduced ? false as const : { opacity: 0, y: 12 },
+    initial: reduced ? false as const : { opacity: 1, y: 12 },
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, amount: 0.15 },
     transition: { duration: reduced ? 0 : 0.42, delay: reduced ? 0 : delay },
