@@ -1,5 +1,5 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { isSessionPaid, safeRedirectUrl } from "../_shared/checkoutGuards.ts";
+import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   assertCompensationAllowed,
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
       campaign,
       source,
       testMode,
-
+      sessionId: rawSessionId,
     } = await req.json();
     // Redirects only to our own origins (undefined → existing defaults).
     const successUrl = rawSuccessUrl ? safeRedirectUrl(rawSuccessUrl, "") || undefined : undefined;
@@ -186,15 +186,30 @@ Deno.serve(async (req) => {
       if (!rq) return json({ error: "quote_not_found" }, 404);
       if (rq.user_id && rq.user_id !== userId) return json({ error: "quote_forbidden" }, 403);
       if (rq.pricing_status === "paid") return json({ status: "paid" });
-      const { data: cs } = await serviceClient.from("checkout_sessions")
-        .select("external_checkout_id").eq("quote_id", String(quoteId))
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      const sid = cs?.external_checkout_id as string | undefined;
+      // Identifiant de session Stripe fourni au retour : format strict, sinon
+      // dernière session connue du devis. Jamais d'activation depuis l'URL.
+      let sid: string | undefined;
+      if (rawSessionId !== undefined) {
+        const v = typeof rawSessionId === "string" ? rawSessionId.trim() : "";
+        if (!isValidCheckoutSessionId(v)) return json({ status: "invalid_session" });
+        sid = v;
+      } else {
+        const { data: cs } = await serviceClient.from("checkout_sessions")
+          .select("external_checkout_id").eq("quote_id", String(quoteId))
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        sid = cs?.external_checkout_id as string | undefined;
+      }
       if (!sid) return json({ status: "no_session" });
       const key = sid.startsWith("cs_test_") ? stripeTestKey : stripeKey;
       if (!key) return json({ status: "pending" });
       const rs = new Stripe(key, { apiVersion: "2025-08-27.basil" });
-      const sess = await rs.checkout.sessions.retrieve(sid);
+      let sess: Stripe.Checkout.Session;
+      try { sess = await rs.checkout.sessions.retrieve(sid); } catch { return json({ status: "invalid_session" }); }
+      const mismatch = sessionMismatch(sess as never, { quoteId: String(quoteId), userId, testKey: sid.startsWith("cs_test_") });
+      if (mismatch) {
+        console.warn("[checkout:reconcile:mismatch]", { quote_id: quoteId, session: sid, reason: mismatch });
+        return json({ status: "invalid_session" });
+      }
       if (!isSessionPaid(sess)) {
         return json({ status: sess.status === "expired" ? "expired" : sess.status === "open" ? "open" : "unpaid" });
       }
