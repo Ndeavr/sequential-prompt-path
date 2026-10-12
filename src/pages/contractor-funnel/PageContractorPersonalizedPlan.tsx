@@ -242,7 +242,14 @@ export default function PageContractorPersonalizedPlan() {
     return () => { cancelled = true; };
   }, [checkoutOutcome, confirmMode, stripeSessionId, quoteId, navigate]);
 
-  const backToActivation = () => navigate(`/entrepreneur/plan-personnalise/${quoteId}`, { replace: true });
+  const backToActivation = () => {
+    const keep = new URLSearchParams(searchParams);
+    keep.delete("checkout");
+    keep.delete("session_id");
+    const qs = keep.toString();
+    setPaymentConfirm("idle");
+    navigate(`/entrepreneur/plan-personnalise/${quoteId}${qs ? `?${qs}` : ""}`, { replace: true });
+  };
 
   const handleActivate = async () => {
     if (!quote) return;
