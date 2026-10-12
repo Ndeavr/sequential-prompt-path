@@ -11,6 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 import { logInviteEvent } from "../_shared/inviteAudit.ts";
+import { GUEST_PREFIX, resolveGuestInvite } from "../_shared/guestInvite.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,6 +88,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Invitation protégée (dossier d'import, sans prospect) — branche isolée.
+    if (token.startsWith(GUEST_PREFIX)) {
+      if (trackEvent || preview) return json({ ok: true, guest: true });
+      const r = await resolveGuestInvite(supabase, token);
+      return json(r.body, r.status);
+    }
 
     // ---------------------------------------------------------------- tracking
     if (trackEvent) {
