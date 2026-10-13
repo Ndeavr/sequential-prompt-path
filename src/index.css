@@ -759,6 +759,11 @@
     padding-top: 0.1rem;
   }
   .home-light .home-clara-quick button {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
     min-height: 44px;
     padding: 0.55rem 1rem;
     border-radius: var(--radius-pill);
