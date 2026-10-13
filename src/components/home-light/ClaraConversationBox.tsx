@@ -97,6 +97,7 @@ import {
 import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
+import { canRunClaraAction, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
 
 const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
@@ -331,6 +332,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     audienceRef.current = next;
     setAudienceState(next);
   }, []);
+  const [switchConfirm, setSwitchConfirm] = useState(false);
+  // Passage en entrepreneur : toute fenêtre propriétaire se ferme immédiatement.
+  useEffect(() => {
+    if (audience !== "homeowner") { setDossierOpen(false); setDossierEditAddress(false); }
+    else setSwitchConfirm(false);
+  }, [audience]);
   const [composerText, setComposerText] = useState("");
   const [composerFocused, setComposerFocused] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
@@ -401,7 +408,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
 
   // Clara ouvre elle-même le Dossier maison, dans la même conversation.
   useEffect(() => {
-    const onOpen = () => setDossierOpen(true);
+    // Garde de rôle : en parcours entrepreneur/affilié, l'ouverture est refusée à la source.
+    const onOpen = () => { if (canRunClaraAction(audienceRef.current, "open_dossier_maison")) setDossierOpen(true); };
     window.addEventListener(DOSSIER_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(DOSSIER_OPEN_EVENT, onOpen);
   }, []);
@@ -1654,9 +1662,15 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="home-clara-actions-menu">
-                <DropdownMenuItem onSelect={() => setDossierOpen(true)} className="home-clara-dossier-open min-h-11 gap-2">
-                  <Home aria-hidden="true" /> Dossier maison
-                </DropdownMenuItem>
+                {audience === "homeowner" ? (
+                  <DropdownMenuItem onSelect={() => setDossierOpen(true)} className="home-clara-dossier-open min-h-11 gap-2">
+                    <Home aria-hidden="true" /> Ma propriété
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => setSwitchConfirm(true)} className="home-clara-switch-path min-h-11 gap-2" data-testid="clara-switch-path">
+                    <Home aria-hidden="true" /> Changer de parcours
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onSelect={handleResetClick} className="home-clara-reset min-h-11 gap-2" aria-label={copy.reset}>
                   <SquarePen aria-hidden="true" /> {copy.reset}
                 </DropdownMenuItem>
@@ -1666,7 +1680,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
           <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
         </div>
         <DossierMaisonSheet
-          open={dossierOpen}
+          open={dossierOpen && canRunClaraAction(audience, "open_dossier_maison")}
           onOpenChange={(next) => { setDossierOpen(next); if (!next) setDossierEditAddress(false); }}
           editAddress={dossierEditAddress}
           onAddressSaved={(entry) => {
@@ -1743,7 +1757,7 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             ))}
             {quickReplies && !busy && (
               <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-                {quickReplies.options.map((option, index) => (
+                {filterSuggestionsForRole(audience, quickReplies.options).map((option, index) => (
                   <button
                     key={`${quickReplies.messageId}:${option}`}
                     type="button"
@@ -1776,14 +1790,14 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                 ))}
               </div>
             )}
-            {audience === "contractor" && !busy && !transitionPause && (
-              <div className="home-clara-quick" role="group" aria-label="Retour au projet maison">
+            {audience === "contractor" && switchConfirm && !busy && !transitionPause && (
+              <div className="home-clara-quick" role="group" aria-label="Confirmer le changement de parcours">
                 <button
                   type="button"
-                  data-testid="clara-back-to-home-project"
+                  data-testid="clara-confirm-switch-homeowner"
                   onClick={() => {
-                    // Même conversation : le parcours entrepreneur est suspendu (jamais effacé)
-                    // et le curseur maison reprend exactement la dernière question sans réponse.
+                    // Changement volontaire et confirmé : le parcours entrepreneur est suspendu (jamais effacé).
+                    setSwitchConfirm(false);
                     setContractorFlow(false);
                     pauseActiveContractorFlow();
                     qualificationStepRef.current = null;
@@ -1792,17 +1806,13 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                     rememberClaraReferences({ current_intent: "PROJECT" });
                     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text", intent: "homeowner" });
                     const cursor = readHomeCursor();
-                    if (cursor) {
-                      void sayClara(cursor.text, cursor.options);
-                    } else if (messagesRef.current.some((m) => m.role === "user")) {
-                      void sayClara("Bien sûr. Continuons votre projet maison : dites-moi ce qui a changé ou ce que vous souhaitez préciser.");
-                    } else {
-                      void sayClara("Bien sûr. Décrivez-moi votre projet maison en quelques mots.");
-                    }
+                    if (cursor) void sayClara(cursor.text, cursor.options);
+                    else void sayClara("Bien sûr. Décrivez-moi votre projet pour votre propriété en quelques mots.");
                   }}
                 >
-                  Revenir à mon projet maison
+                  Oui, passer au parcours propriétaire
                 </button>
+                <button type="button" onClick={() => setSwitchConfirm(false)}>Rester entrepreneur</button>
               </div>
             )}
             {transitionPause ? (

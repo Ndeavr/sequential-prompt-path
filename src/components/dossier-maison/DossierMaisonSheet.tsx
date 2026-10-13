@@ -130,10 +130,10 @@ export default function DossierMaisonSheet({ open, onOpenChange, editAddress, on
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2 text-base">
             <Home className="h-4 w-4" aria-hidden="true" />
-            Dossier maison
+            Ma propriété
           </SheetTitle>
           <SheetDescription>
-            Ce que Clara a réellement enregistré sur votre propriété. Rien n'est ajouté sans votre échange.
+            Vos informations restent privées et vous pouvez les modifier en tout temps.
           </SheetDescription>
         </SheetHeader>
 
