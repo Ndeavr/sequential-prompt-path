@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { ClaraPageAssistant } from "@/components/clara/ClaraFormAssistant";
 import FloatingAlexGuide from "@/components/alex/FloatingAlexGuide";
 import { lazy, Suspense } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -2031,6 +2032,7 @@ export const AppRouter = () => (
 
       </Routes>
     </Suspense>
+    <ClaraPageAssistant />
     <FloatingAlexGuide />
   </BrowserRouter>
 );

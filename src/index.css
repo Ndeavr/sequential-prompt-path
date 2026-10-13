@@ -2463,3 +2463,16 @@ html[data-theme-ready="true"] .glass-btn {
   html[data-keyboard-open="true"] .clara-form-assistant-panel .home-clara-command-row { min-height: 44px; padding-block: 0; }
   html[data-keyboard-open="true"] .clara-form-assistant-panel .home-clara-composer { padding-block: 0; }
 }
+
+/* A short reading pause precedes this transition in ClaraConversationBox. */
+.home-clara-shell.is-opening-page {
+  transform-origin: bottom right;
+  animation: clara-page-reveal 320ms ease-in forwards;
+  pointer-events: none;
+}
+@keyframes clara-page-reveal {
+  to { transform: scale(0.12); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-clara-shell.is-opening-page { animation: none; }
+}

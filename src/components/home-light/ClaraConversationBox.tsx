@@ -269,13 +269,16 @@ const TRANSITION_PULSES = 3;
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
   surface?: "home" | "embedded";
+  onDestinationOpened?: () => void;
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded" }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened }: ClaraConversationBoxProps) {
   const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const [openingPage, setOpeningPage] = useState(false);
+  const openingPageRef = useRef(false);
 
   const copy = lang === "fr"
     ? {
@@ -769,26 +772,48 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const runOpen = useCallback(
     async (intent: ClaraWorkflowIntent, note?: string) => {
       const destination = resolveClaraDestination(intent);
-      if (!destination) return false;
+      if (!destination || openingPageRef.current) return false;
+      openingPageRef.current = true;
+      try {
+        if (window.matchMedia("(max-width: 1023px)").matches) {
+          const messageId = uid();
+          const text = destination.ctaLabel === "Ouvrir le formulaire"
+            ? "Je vous ouvre le formulaire. Je reste ici si vous avez une question."
+            : "Je vous ouvre la page. Je reste ici si vous avez une question.";
+          (document.activeElement as HTMLElement | null)?.blur();
+          setMessages((previous) => [...previous, { id: messageId, role: "assistant", text }]);
+          void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 1600));
+          if (!mountedRef.current) return false;
+          setOpeningPage(true);
+          await new Promise<void>((resolve) => window.setTimeout(resolve,
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 320));
+          if (!mountedRef.current) return false;
+        }
 
-      trackCopilotEvent("clara_navigation_attempted", { surface: "home_clara_box", kind: destination.path });
-      logClaraWorkflowEvent("workflow_started", { intent, step: destination.path });
-      const { ok } = await openClaraDestination(navigate, destination, { intent, note });
+        trackCopilotEvent("clara_navigation_attempted", { surface: "home_clara_box", kind: destination.path });
+        logClaraWorkflowEvent("workflow_started", { intent, step: destination.path });
+        const { ok } = await openClaraDestination(navigate, destination, { intent, note });
 
-      const messageId = uid();
-      const text = ok ? openSuccessMessage(destination) : openFailureMessage(destination);
-      setMessages((previous) => [
-        ...previous,
-        { id: messageId, role: "assistant", text, action: ok ? undefined : { label: destinationCtaLabel(destination), intent } },
-      ]);
-      void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
-      trackCopilotEvent(ok ? "clara_navigation_succeeded" : "clara_navigation_failed", {
-        surface: "home_clara_box",
-        kind: destination.path,
-      });
-      return ok;
+        const messageId = uid();
+        const text = ok ? openSuccessMessage(destination) : openFailureMessage(destination);
+        setMessages((previous) => [
+          ...previous,
+          { id: messageId, role: "assistant", text, action: ok ? undefined : { label: destinationCtaLabel(destination), intent } },
+        ]);
+        void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => {});
+        trackCopilotEvent(ok ? "clara_navigation_succeeded" : "clara_navigation_failed", {
+          surface: "home_clara_box",
+          kind: destination.path,
+        });
+        if (ok) onDestinationOpened?.();
+        return ok;
+      } finally {
+        openingPageRef.current = false;
+        if (mountedRef.current) setOpeningPage(false);
+      }
     },
-    [navigate],
+    [navigate, onDestinationOpened],
   );
 
   const openContractorAfterTransition = useCallback(async (note?: string) => {
@@ -1629,7 +1654,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   return (
     <section
       ref={rootRef}
-      className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
+      className={`home-clara-shell mx-auto w-full text-left${openingPage ? " is-opening-page" : ""}${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
       aria-label="Conversation avec Clara"
     >
       <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
