@@ -27,3 +27,17 @@ describe("Clara — garde de rôle", () => {
     expect(box).toMatch(/canRunClaraAction\(audience, "open_dossier_maison"\)/);
   });
 });
+
+import { contractorSuggestionsFor } from "@/services/clara/claraRoleGuard";
+describe("Clara — boutons entrepreneur selon l'état", () => {
+  it("donne 2-3 actions réelles, jamais maison, jamais réinscription après activation", () => {
+    for (const s of ["visitor", "started", "registered", "activated"] as const) {
+      const out = contractorSuggestionsFor(s);
+      expect(out.length).toBeGreaterThanOrEqual(2);
+      expect(out.length).toBeLessThanOrEqual(3);
+      for (const o of out) expect(o.label).not.toMatch(/maison|propri/i);
+    }
+    expect(contractorSuggestionsFor("activated").some((o) => /inscri/i.test(o.label))).toBe(false);
+    expect(contractorSuggestionsFor("visitor", "en")[0].label).toBe("View my AI score");
+  });
+});
