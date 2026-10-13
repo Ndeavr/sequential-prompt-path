@@ -92,7 +92,7 @@ describe("Clara mobile — conversation compacte", () => {
 
   it("masque les noms techniques de photos et fournit un retour au dernier message accessible", () => {
     expect(box).toContain('alt="Photo ajoutée"');
-    expect(box).toContain('title="Nouveau message"');
+    expect(box).toContain('title="Revenir au dernier message"');
     expect(box).toContain('item.kind === "photo" ? "Photo ajoutée"');
     expect(box).toContain('aria-label="Réessayer ce fichier"');
     expect(box).toContain('aria-label="Retirer ce fichier"');

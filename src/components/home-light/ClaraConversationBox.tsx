@@ -268,9 +268,10 @@ const TRANSITION_PULSES = 3;
 
 interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
+  surface?: "home" | "embedded";
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded" }: ClaraConversationBoxProps) {
   const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
@@ -482,8 +483,12 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
   const isConversationActive = messages.length > 0 || mode !== "IDLE" || composerFocused || composerEverFocused;
 
   useEffect(() => {
-    document.documentElement.dataset.claraConversationActive = String(isConversationActive);
-    window.dispatchEvent(new CustomEvent("clara:conversation-active", { detail: { active: isConversationActive } }));
+    // Only the homepage owns the full-page conversation layout. Embedded
+    // assistants must not lock the onboarding page or clear another chat's lock.
+    if (surface === "home") {
+      document.documentElement.dataset.claraConversationActive = String(isConversationActive);
+      window.dispatchEvent(new CustomEvent("clara:conversation-active", { detail: { active: isConversationActive } }));
+    }
     onConversationActiveChange?.(isConversationActive);
     if (isConversationActive && !activationTracked.current) {
       activationTracked.current = true;
@@ -493,9 +498,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
     // Toujours retirer le verrou : au changement d'état l'effet le repose,
     // au démontage (navigation Clara) la page de destination défile nativement.
     return () => {
-      delete document.documentElement.dataset.claraConversationActive;
+      if (surface === "home") delete document.documentElement.dataset.claraConversationActive;
     };
-  }, [isConversationActive, onConversationActiveChange]);
+  }, [isConversationActive, onConversationActiveChange, surface]);
 
   /**
    * Nouvelle conversation : une VRAIE session canonique est créée côté serveur
@@ -1908,7 +1913,9 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
                const field = event.currentTarget;
                field.style.height = "auto";
               field.style.height = `${Math.min(field.scrollHeight, 140)}px`;
-              field.style.overflowY = field.scrollHeight > 140 ? "auto" : "hidden";
+              // Mobile CSS can cap the field below 140px. Compare with its
+              // actual height so long drafts remain scrollable above the keyboard.
+              field.style.overflowY = field.scrollHeight > field.clientHeight ? "auto" : "hidden";
                keepComposerVisible();
              }}
              onFocus={handleComposerFocus}

@@ -492,8 +492,8 @@
     box-shadow: var(--shadow-lg);
   }
   .clara-form-assistant-sheet {
-    height: min(78dvh, calc(var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) - 8px));
-    max-height: calc(var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) - 8px);
+    height: min(78dvh, calc(var(--app-visible-height, 100dvh) - 16px));
+    max-height: calc(var(--app-visible-height, 100dvh) - 16px);
     overflow: hidden;
     border-radius: 18px 18px 0 0;
   }
@@ -507,8 +507,9 @@
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid hsl(var(--border));
   }
-  .clara-form-assistant-sheet .home-glossy-conversation-shell { height: calc(100% - 56px); }
-  .clara-form-assistant-sheet .home-clara-main { height: 100%; max-height: none; border-radius: 0; }
+  .clara-form-assistant-sheet.home-light .home-clara-shell { height: calc(100% - 56px); min-height: 0; margin-top: 0; grid-template-columns: minmax(0, 1fr); }
+  .clara-form-assistant-sheet.home-light .home-clara-main { height: 100%; min-height: 0; max-height: 100%; border-radius: 0; }
+  .clara-form-assistant-sheet .home-context-slot { display: none; }
   @media (min-width: 1024px) {
     .clara-form-assistant-desktop {
       display: block;
@@ -519,8 +520,9 @@
       width: min(390px, 31vw);
       height: calc(100dvh - var(--app-header-height, 0px) - 2rem);
     }
-    .clara-form-assistant-desktop .home-glossy-conversation-shell { height: calc(100% - 44px); }
-    .clara-form-assistant-desktop .home-clara-main { height: 100%; max-height: none; }
+    .clara-form-assistant-desktop.home-light .home-clara-shell { height: calc(100% - 44px); min-height: 0; margin-top: 0; grid-template-columns: minmax(0, 1fr); }
+    .clara-form-assistant-desktop.home-light .home-clara-main { height: 100%; min-height: 0; max-height: 100%; }
+    .clara-form-assistant-desktop .home-context-slot { display: none; }
     .clara-form-assistant-heading { height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0 0.75rem; }
     .clara-form-assistant-heading span { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
     .audit-pro-page > main { padding-right: min(410px, 33vw); }
@@ -2422,7 +2424,7 @@ html[data-theme-ready="true"] .glass-btn {
 .home-clara-card-link { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; color: hsl(var(--primary)); text-decoration: underline; }
 .home-clara-quick button[data-selected="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-width: 1024px) and (max-height: 500px) {
   html[data-keyboard-open="true"] [role="dialog"][data-state="open"] {
     top: calc(var(--app-visible-top, 0px) + 8px);
     bottom: auto;
@@ -2430,6 +2432,18 @@ html[data-theme-ready="true"] .glass-btn {
     transform: none;
     overflow-y: auto;
     scroll-padding-block: 16px;
+  }
+}
+
+/* In landscape with the keyboard open, reserve the visible area for Clara's
+   own commands and composer. The site header returns when the keyboard closes. */
+@media (max-width: 1024px) and (max-height: 500px) {
+  html[data-clara-conversation-active="true"][data-keyboard-open="true"] .home-minimal-header {
+    visibility: hidden;
+  }
+  html[data-keyboard-open="true"] .home-light .home-glossy-hero.is-conversation-active {
+    top: var(--app-visible-top, 0px);
+    height: var(--app-visible-height, 100dvh);
   }
 }
 
