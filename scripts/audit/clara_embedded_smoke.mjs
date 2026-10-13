@@ -52,13 +52,14 @@ try {
     });
     const page=await context.newPage(); const errors=[]; page.on('pageerror',e=>errors.push(e.message));
     await page.goto('http://127.0.0.1:8080/entrepreneurs/audit-ia',{waitUntil:'domcontentloaded'});
-    await page.locator('.clara-form-assistant-desktop .home-clara-message').first().waitFor({state:'attached',timeout:90000});
+    await page.getByRole('button',{name:'Demander à Clara',exact:true}).waitFor({timeout:90000});
+    check(await page.locator('.home-clara-shell').count()===0,`${width}: assistant starts minimized`);
     check(await page.evaluate(()=>!document.documentElement.hasAttribute('data-clara-conversation-active')),`${width}: embedded assistant does not lock form`);
     await page.evaluate(()=>window.scrollTo(0,300));
     check(await page.evaluate(()=>window.scrollY>0),`${width}: form remains scrollable`);
     const mobile=width<1024;
-    if(mobile) await page.getByRole('button',{name:'Demander à Clara',exact:true}).click();
-    const host=mobile?'.clara-form-assistant-sheet':'.clara-form-assistant-desktop';
+    await page.getByRole('button',{name:'Demander à Clara',exact:true}).click();
+    const host='.clara-form-assistant-panel';
     const field=page.locator(`${host} .home-clara-textarea`);
     await field.waitFor({state:'visible'});await field.focus();
     if(mobile) await page.evaluate(()=>{visualViewport.height=innerHeight-Math.min(300,innerHeight/2);visualViewport.offsetTop=24;visualViewport.dispatchEvent(new Event('resize'))});
@@ -67,7 +68,11 @@ try {
     check(await visibleIn(page,`${host} [data-chat-row="commands"]`,host),`${width}: assistant commands visible`);
     await field.fill('Une longue réponse à Clara.\n'.repeat(12));
     check(await field.evaluate(e=>e.scrollHeight>e.clientHeight && getComputedStyle(e).overflowY==='auto'),`${width}: long draft scrollable`);
-    if(mobile){await page.getByRole('button',{name:'Retour au formulaire',exact:false}).click();
+    {await page.getByRole('button',{name:'Réduire Clara',exact:true}).click();
+      check(await page.locator(host).isHidden(),`${width}: panel minimized`);
+      await page.getByRole('button',{name:'Demander à Clara',exact:true}).click();
+      check((await field.inputValue()).includes('Une longue réponse'),`${width}: draft preserved on reopen`);
+      check(await page.locator(`${host} .home-clara-shell`).count()===1,`${width}: only one conversation mounted`);
       check(await page.evaluate(()=>!document.documentElement.hasAttribute('data-clara-conversation-active')),`${width}: closing assistance leaves form unlocked`);}
     await page.goto('http://127.0.0.1:8080/',{waitUntil:'domcontentloaded'});
     await page.locator('.home-clara-textarea').waitFor();

@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MessageCircle, Minus } from "lucide-react";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
@@ -14,6 +13,13 @@ interface ClaraFormAssistantProps {
 
 export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantProps) {
   const [open, setOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const minimizeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (hasOpened) (open ? minimizeRef : triggerRef).current?.focus({ preventScroll: true });
+  }, [open, hasOpened]);
 
   useEffect(() => {
     rememberClaraReferences({ workflow: { visible_form: form, visible_step: String(step) } } as never);
@@ -21,6 +27,7 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
   }, [form, step]);
 
   const setAssistanceOpen = (next: boolean) => {
+    if (next) setHasOpened(true);
     setOpen(next);
     trackCopilotEvent(next ? "clara_form_assistance_opened" : "clara_form_assistance_closed", {
       surface: form,
@@ -30,28 +37,25 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
 
   return (
     <>
-      <aside className="clara-form-assistant-desktop home-light" aria-label="Assistance Clara">
-        <div className="clara-form-assistant-heading">
-          <strong>Clara</strong><span>Étape {step}</span>
-        </div>
-        <ClaraConversationBox />
-      </aside>
+      {!open && (
+        <Button ref={triggerRef} type="button" onClick={() => setAssistanceOpen(true)} className="clara-form-assistant-trigger" aria-label="Demander à Clara" aria-expanded={false} aria-controls="clara-form-assistance">
+          <MessageCircle aria-hidden="true" /> Clara
+        </Button>
+      )}
 
-      <Button type="button" onClick={() => setAssistanceOpen(true)} className="clara-form-assistant-trigger lg:hidden" aria-label="Demander à Clara">
-        <MessageCircle aria-hidden="true" /> Demander à Clara
-      </Button>
-
-      <Sheet open={open} onOpenChange={setAssistanceOpen}>
-        <SheetContent side="bottom" className="clara-form-assistant-sheet home-light p-0">
-          <SheetHeader className="clara-form-assistant-sheet-header">
-            <SheetTitle>Clara · Étape {step}</SheetTitle>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setAssistanceOpen(false)}>
-              <X aria-hidden="true" /> Retour au formulaire
+      {/* Mount once on demand, then keep drafts and the conversation on minimize.
+          One responsive panel avoids two competing Clara sessions on mobile. */}
+      {hasOpened && (
+        <aside id="clara-form-assistance" className="clara-form-assistant-panel home-light" aria-label="Assistance Clara" hidden={!open}>
+          <div className="clara-form-assistant-heading">
+            <strong>Clara</strong><span>Étape {step}</span>
+            <Button ref={minimizeRef} type="button" variant="ghost" size="icon" aria-label="Réduire Clara" onClick={() => setAssistanceOpen(false)}>
+              <Minus aria-hidden="true" />
             </Button>
-          </SheetHeader>
+          </div>
           <ClaraConversationBox />
-        </SheetContent>
-      </Sheet>
+        </aside>
+      )}
     </>
   );
 }

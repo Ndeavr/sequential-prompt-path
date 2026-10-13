@@ -529,7 +529,7 @@ function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typ
       <p className="home-clara-card-source">
         Sources : {sources.length ? sources.join(", ") : "aucune source vérifiée pour l’instant"} · {date}
       </p>
-      <a className="home-clara-card-link" href="/entrepreneurs/audit-ia">Voir les détails</a>
+      <a className="home-clara-card-link" href="/entrepreneurs/audit-ia">Découvrir mon score IA</a>
     </article>
   );
 }
