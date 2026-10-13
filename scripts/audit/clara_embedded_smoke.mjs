@@ -24,14 +24,14 @@ const browser = await chromium.launch({
 });
 let checks = 0;
 const check = (value, name) => { assert.ok(value, name); checks++; console.log('PASS', name); };
-async function fixture(route) {
+async function fixture(route, contractor = false) {
   const req = route.request();
   if (new URL(req.url()).hostname === '127.0.0.1') return route.continue();
   if (req.url().includes('/functions/v1/clara-session')) {
     const body = req.postDataJSON() || {};
     const messages = Array.from({length:18}, (_, i) => ({id:`m${i}`, role:i%2?'assistant':'user', text:'Message de test pour vérifier le défilement. '.repeat(4)}));
     messages.push({id:'last',role:'assistant',text:'Quelle option préférez-vous ?'});
-    return route.fulfill({json:{session_id:'00000000-0000-0000-0000-000000000001',session_token:body.session_token,messages,context:{},resumed:true,language:'fr',current_step:'chat',auth_state:'guest',role:null}});
+    return route.fulfill({json:{session_id:'00000000-0000-0000-0000-000000000001',session_token:body.session_token,messages,context:contractor ? {current_intent:"CONTRACTOR"} : {},resumed:true,language:'fr',current_step:'chat',auth_state:'guest',role:null}});
   }
   return route.fulfill({json:[]});
 }
@@ -84,6 +84,32 @@ try {
     await page.waitForTimeout(300);
     check(Math.abs(await scroller.evaluate(e=>e.scrollTop)-before)<2,`${width}: manual history reading preserved`);
     check(errors.length===0,`${width}: no browser runtime errors: ${errors.join('; ')}`);
+    await context.close();
+  }
+  for (const width of [360, 390]) {
+    const context = await browser.newContext({viewport:{width,height:844}});
+    await context.route('**/*', route => fixture(route, true));
+    await context.addInitScript(() => {
+      localStorage.setItem('unpro_clara_session_token','qa-contractor-token');
+      localStorage.setItem('unpro_clara_contractor_qualification',JSON.stringify({google_place_id:'qa-place',business_name:'Entreprise de test',trade:'Rénovation'}));
+      sessionStorage.setItem('unpro_clara_contractor_flow',JSON.stringify({active:true,session_token:'qa-contractor-token'}));
+    });
+    const page=await context.newPage();
+    await page.goto('http://127.0.0.1:8080/',{waitUntil:'domcontentloaded'});
+    const goals=page.getByRole('group',{name:'Objectifs',exact:true});
+    await goals.waitFor({timeout:60000});
+    const buttons=goals.locator('button');
+    check(await buttons.count()===4,`${width}: actual contractor goals rendered`);
+    for(const button of await buttons.all()) {
+      const fits=await button.evaluate(e=>{
+        const r=e.getBoundingClientRect(), container=e.closest('.home-clara-conversation').getBoundingClientRect();
+        return r.left>=container.left && r.right<=container.right && e.scrollWidth<=e.clientWidth+1 && getComputedStyle(e).whiteSpace==='normal';
+      });
+      check(fits,`${width}: complete goal label fits: ${await button.innerText()}`);
+    }
+    await buttons.first().click();
+    check(await buttons.first().getAttribute('aria-pressed')==='true',`${width}: wrapped goal remains selectable`);
+    check(await page.getByRole('button',{name:'Continuer',exact:true}).isEnabled(),`${width}: goal selection enables Continue`);
     await context.close();
   }
   console.log(`PASS ${checks} real-DOM checks; external services mocked, physical keyboard unverified.`);
