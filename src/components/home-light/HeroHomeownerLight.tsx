@@ -26,7 +26,7 @@ export default function HeroHomeownerLight() {
           </div>
         )}
 
-        <ClaraConversationBox onConversationActiveChange={setIsConversationActive} />
+        <ClaraConversationBox surface="home" onConversationActiveChange={setIsConversationActive} />
       </div>
     </section>
   );
