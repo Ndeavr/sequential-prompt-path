@@ -97,7 +97,7 @@ import {
 import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
-import { canRunClaraAction, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
+import { canRunClaraAction, contractorSuggestionsFor, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
 
 const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
@@ -1783,8 +1783,8 @@ export default function ClaraConversationBox({ onConversationActiveChange }: Cla
             )}
             {!contractorFlow && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
               <div className="home-clara-quick" role="group" aria-label="Choix entrepreneur" data-audience="contractor">
-                {CONTRACTOR_SUGGESTIONS.map((option) => (
-                  <button key={option.choice} type="button" onClick={() => void chooseContractorSuggestion(option.label, option.choice)}>
+                {contractorSuggestionsFor("visitor").map((option) => (
+                  <button key={option.label} type="button" onClick={() => { if ("route" in option) window.location.assign(option.route); else void chooseContractorSuggestion(option.label, option.choice); }}>
                     {option.label}
                   </button>
                 ))}
