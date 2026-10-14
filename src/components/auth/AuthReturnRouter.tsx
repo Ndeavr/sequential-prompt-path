@@ -6,7 +6,7 @@
  * 3. If no role exists at all, sends to /onboarding
  * 4. Redirects to intent or role-based default
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
@@ -81,10 +81,31 @@ function postLoginPathForRole(role: string | null, intentPath?: string | null): 
 export default function AuthReturnRouter() {
   const navigate = useNavigate();
   const location = useLocation();
+  // Live pathname (avoids stale closures across awaits).
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
+  // User id already signed in when this tab booted / last processed. supabase-js
+  // re-emits SIGNED_IN on tab focus & session recovery: those are NOT fresh logins
+  // and must never hijack the page the user is on (e.g. /condos/diagnostic).
+  const knownUserRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (knownUserRef.current === undefined) knownUserRef.current = data.session?.user?.id ?? null;
+    });
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") { knownUserRef.current = null; return; }
       if (event !== "SIGNED_IN" || !session?.user) return;
+      const startPath = pathRef.current;
+      const isFreshLogin = knownUserRef.current !== session.user.id;
+      knownUserRef.current = session.user.id;
+      if (!isFreshLogin && !isAuthSurface(startPath)) {
+        // Session re-emission on a real page: never navigate away.
+        return;
+      }
 
       console.log("[AuthReturnRouter] SIGNED_IN", { user: session.user.id, path: location.pathname });
 
@@ -98,7 +119,7 @@ export default function AuthReturnRouter() {
       if (provider === "google") trackAuthEvent("google_success");
 
       const intent = peekAuthIntent();
-      const here = location.pathname;
+      const here = pathRef.current;
 
       // /auth/callback is the canonical orchestrator surface — do not race it.
       if (here === "/auth/callback") return;
@@ -147,6 +168,12 @@ export default function AuthReturnRouter() {
         isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
       } catch { /* noop */ }
 
+      // Race guard: user navigated explicitly while we were awaiting → their choice wins.
+      if (pathRef.current !== startPath) {
+        console.log("[AuthReturnRouter] skip redirect: navigation changed during auth resolution");
+        return;
+      }
+
       // 5) Honor explicit return path even from non-auth surfaces
       if (intentReturnPath && !/^\/(login|signup|auth\/callback)\b/.test(intentReturnPath)) {
         console.log("[AuthReturnRouter] -> intent path", intentReturnPath);
@@ -182,7 +209,7 @@ export default function AuthReturnRouter() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   return null;
 }
