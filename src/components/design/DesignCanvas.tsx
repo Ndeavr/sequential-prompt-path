@@ -70,7 +70,7 @@ export default function DesignCanvas({
     <div className="flex-1 flex flex-col min-h-0 h-full">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {activeVersion && (
             <Badge variant="outline" className="font-mono text-xs">
               V{activeVersion.versionNumber}
@@ -86,7 +86,7 @@ export default function DesignCanvas({
             <span className="text-xs text-muted-foreground">{activeVersion.styleLabel}</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant={showSlider ? "default" : "ghost"}
             size="icon"
@@ -97,13 +97,13 @@ export default function DesignCanvas({
           >
             <RotateCcw className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onFreeze} title="Geler">
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={onFreeze} title="Geler" aria-label="Geler cette version" disabled={!activeVersion?.imageUrl || isGenerating || activeVersion.frozen}>
             <Snowflake className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} title="Dupliquer">
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={onDuplicate} title="Dupliquer" aria-label="Dupliquer cette version" disabled={!activeVersion?.imageUrl || isGenerating}>
             <Copy className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onShare} title="Partager">
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={onShare} title="Partager" aria-label="Partager cette version" disabled={!activeVersion?.imageUrl || isGenerating}>
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
@@ -128,7 +128,7 @@ export default function DesignCanvas({
               </div>
               <p className="mt-6 text-foreground font-medium">Génération en cours…</p>
               <p className="text-sm text-muted-foreground mt-1">L'IA transforme votre espace</p>
-              <p className="text-xs text-muted-foreground/60 mt-3">Cela peut prendre 15 à 30 secondes</p>
+              <p className="text-xs text-muted-foreground/60 mt-3">Cela peut prendre jusqu’à deux minutes</p>
             </motion.div>
           ) : error ? (
             <motion.div
@@ -142,7 +142,7 @@ export default function DesignCanvas({
               </div>
               <p className="text-foreground font-medium text-center">{error}</p>
               <p className="text-sm text-muted-foreground mt-1 text-center">
-                Modifiez vos instructions et réessayez
+                Votre photo et vos instructions sont conservées. Vous pouvez réessayer.
               </p>
             </motion.div>
           ) : renderImage ? (

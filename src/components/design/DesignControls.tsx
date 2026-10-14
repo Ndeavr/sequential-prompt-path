@@ -2,12 +2,14 @@
  * UNPRO Design — Right Panel Controls
  * Prompt bar, inspiration uploads, materials, colors, style presets, budget, actions
  */
-import { useState, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
-  Send, Mic, Sparkles, Paintbrush, Layers, DollarSign,
-  Wand2, X, ChevronDown, ImagePlus, Palette, Gem
+  Mic, Sparkles, Paintbrush, Layers, DollarSign,
+  Wand2, X, ChevronDown, ImagePlus, Palette, Gem, type LucideIcon
 } from "lucide-react";
+import { useAlexVoiceInput } from "@/hooks/useAlexVoiceInput";
+import { prepareDesignPhoto } from "@/lib/design/photo";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -37,6 +39,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedColorPalette, setSelectedColorPalette] = useState<string | null>(null);
   const [inspirationImages, setInspirationImages] = useState<string[]>([]);
+  const [inspirationError, setInspirationError] = useState<string | null>(null);
   const [sliderValues, setSliderValues] = useState<Record<string, number>>({
     brightness: 50,
     warmth: 50,
@@ -46,9 +49,17 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
   const [expandedSection, setExpandedSection] = useState<string | null>("prompt");
   const inspoInputRef = useRef<HTMLInputElement>(null);
 
+  const voice = useAlexVoiceInput({ onTranscript: (text, final) => {
+    if (final) setPrompt((previous) => [previous, text].filter(Boolean).join(" "));
+  } });
+  const { stopListening } = voice;
+  useEffect(() => () => stopListening(), [stopListening]);
+  const canSend = !!(prompt.trim() || selectedStyle || inspirationImages.length || selectedMaterials.length || selectedColorPalette || selectedZones.length || selectedBudget);
+
   const handleSend = () => {
-    if (!prompt.trim() && !selectedStyle && inspirationImages.length === 0) return;
-    const finalPrompt = prompt.trim() || (inspirationImages.length > 0 ? "Reproduire ce style d'inspiration" : `Style ${selectedStyle}`);
+    if (isGenerating || !canSend) return;
+    voice.stopListening();
+    const finalPrompt = prompt.trim() || (inspirationImages.length > 0 ? "Reproduire ce style d'inspiration" : (selectedStyle ? `Style ${selectedStyle}` : "Rénover selon les options sélectionnées"));
     onSendPrompt(finalPrompt, {
       style: selectedStyle ?? undefined,
       budget: selectedBudget ?? undefined,
@@ -58,11 +69,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
       materials: selectedMaterials.length > 0 ? selectedMaterials : undefined,
       colorPalette: selectedColorPalette ?? undefined,
     });
-    setPrompt("");
-    // Scroll back up so user sees the transformation
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+
   };
 
   const toggleZone = (zone: string) => {
@@ -80,13 +87,15 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
   const handleInspirationUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).slice(0, 3 - inspirationImages.length).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
+    Array.from(files).slice(0, 3 - inspirationImages.length).forEach(async (file) => {
+      try {
       const reader = new FileReader();
       reader.onload = () => {
         setInspirationImages((prev) => prev.length < 3 ? [...prev, reader.result as string] : prev);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(await prepareDesignPhoto(file));
+      setInspirationError(null);
+      } catch (error) { setInspirationError(error instanceof Error ? error.message : "Impossible de lire cette photo."); }
     });
     e.target.value = "";
   }, [inspirationImages.length]);
@@ -101,7 +110,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
     sectionKey,
     badge,
   }: {
-    icon: any;
+    icon: LucideIcon;
     label: string;
     sectionKey: string;
     badge?: number;
@@ -128,7 +137,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
   );
 
   return (
-    <div className="w-full lg:w-80 bg-card border-l border-border flex flex-col h-full">
+    <div className="w-full lg:w-80 bg-card border-l border-border flex flex-col lg:h-full min-w-0">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border">
         <span className="text-sm font-semibold text-foreground font-display">
@@ -136,7 +145,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div className="flex-1 lg:overflow-y-auto px-4 py-3 space-y-1">
         {/* Prompt Section */}
         <SectionToggle icon={Wand2} label="Instructions" sectionKey="prompt" />
         {expandedSection === "prompt" && (
@@ -162,17 +171,23 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
               <div className="absolute bottom-2 right-2 flex gap-1">
                 <button
                   className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                  title="Entrée vocale (Clara)"
+                  title={voice.isSupported ? "Dicter mes instructions" : "Utilisez le micro du clavier"}
+                  aria-label={voice.isListening ? "Arrêter la dictée" : "Dicter mes instructions"}
+                  aria-pressed={voice.isListening}
+                  disabled={isGenerating || !voice.isSupported}
+                  onClick={voice.toggleListening}
                 >
-                  <Mic className="w-4 h-4 text-muted-foreground" />
+                  <Mic className={`w-4 h-4 ${voice.isListening ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
                 </button>
               </div>
             </div>
 
+            {voice.liveTranscript && <p className="text-sm text-muted-foreground" role="status">{voice.liveTranscript}</p>}
+            {voice.permissionDenied && <p className="text-sm text-destructive" role="alert">Autorisez le micro dans votre navigateur ou utilisez le micro du clavier.</p>}
             <Button
               onClick={handleSend}
-              disabled={isGenerating || (!prompt.trim() && !selectedStyle && inspirationImages.length === 0)}
-              className="w-full gap-2"
+              disabled={isGenerating || !canSend}
+              className="hidden lg:flex w-full gap-2"
               size="sm"
             >
               {isGenerating ? (
@@ -228,7 +243,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
                   <img src={img} alt={`Inspo ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     onClick={() => removeInspiration(i)}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-100 transition-opacity"
                   >
                     <X className="w-3 h-3 text-foreground" />
                   </button>
@@ -253,6 +268,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
               className="hidden"
               onChange={handleInspirationUpload}
             />
+            {inspirationError && <p role="alert" className="text-xs text-destructive">{inspirationError}</p>}
 
             {inspirationImages.length > 0 && (
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
@@ -448,22 +464,12 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
         )}
       </div>
 
-      {/* Bottom CTA (Mobile) */}
-      <div className="lg:hidden px-4 py-3 border-t border-border bg-card">
-        <div className="flex gap-2">
-          <input
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Décrivez les changements…"
-            className="flex-1 h-10 rounded-xl bg-muted/50 border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSend();
-            }}
-          />
-          <Button size="icon" onClick={handleSend} disabled={isGenerating}>
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+      {/* Mobile action stays reachable; instructions are preserved after failures. */}
+      <div className="lg:hidden sticky bottom-0 px-4 pt-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] border-t border-border bg-card z-10">
+        <Button className="w-full gap-2 h-11" onClick={handleSend} disabled={isGenerating || !canSend}>
+          <Sparkles className="w-4 h-4" />
+          {isGenerating ? "Génération…" : "Générer 3 versions"}
+        </Button>
       </div>
     </div>
   );

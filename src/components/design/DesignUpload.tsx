@@ -7,6 +7,7 @@ import { Upload, Camera, Image, Sparkles, ArrowRight, X, ChevronLeft, ChevronRig
 import { Button } from "@/components/ui/button";
 import { ROOM_TYPES } from "./data";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
+import { prepareDesignPhoto } from "@/lib/design/photo";
 
 import before1 from "@/assets/design-before-1.jpg";
 import after1 from "@/assets/design-after-1.jpg";
@@ -84,10 +85,13 @@ export default function DesignUpload({ onUpload }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [activeShowcase, setActiveShowcase] = useState(0);
   const [showAfter, setShowAfter] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
   // Auto-cycle showcases — slower rhythm
@@ -104,12 +108,22 @@ export default function DesignUpload({ onUpload }: Props) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleFile = useCallback((f: File) => {
-    if (!f.type.startsWith("image/")) return;
-    setFile(f);
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
-    reader.readAsDataURL(f);
+  const handleFile = useCallback(async (f: File) => {
+    setPreparing(true);
+    setUploadError(null);
+    try {
+      const prepared = await prepareDesignPhoto(f);
+      const reader = new FileReader();
+      const image = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(prepared);
+      });
+      setFile(prepared);
+      setPreview(image);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Impossible de lire cette photo.");
+    } finally { setPreparing(false); }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -314,11 +328,18 @@ export default function DesignUpload({ onUpload }: Props) {
                   type="file"
                   accept="image/*"
                   className="hidden"
+                  aria-label="Choisir une photo dans la galerie"
+                  onClick={(e) => e.stopPropagation()}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFile(f);
+                    e.target.value = "";
                   }}
                 />
+                <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+                  aria-label="Prendre une photo avec la caméra"
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
                     <Upload className="w-7 h-7 text-primary" />
@@ -331,12 +352,12 @@ export default function DesignUpload({ onUpload }: Props) {
                       ou cliquez pour parcourir • JPG, PNG, WebP
                     </p>
                   </div>
-                  <div className="flex gap-3 mt-2">
-                    <Button variant="outline" size="sm" className="gap-2">
+                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={(e) => { e.stopPropagation(); cameraRef.current?.click(); }}>
                       <Camera className="w-4 h-4" />
                       Prendre une photo
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}>
                       <Image className="w-4 h-4" />
                       Galerie
                     </Button>
@@ -396,6 +417,8 @@ export default function DesignUpload({ onUpload }: Props) {
               </motion.div>
             )}
           </AnimatePresence>
+          {preparing && <p className="mt-3 text-sm text-muted-foreground" role="status">Préparation de votre photo…</p>}
+          {uploadError && <p className="mt-3 text-sm text-destructive" role="alert">{uploadError}</p>}
         </div>
       </section>
 
