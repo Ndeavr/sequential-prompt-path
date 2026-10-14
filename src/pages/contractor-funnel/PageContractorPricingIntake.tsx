@@ -1,3 +1,4 @@
+import { CLARA_QUALIFICATION_UPDATED_EVENT } from "@/services/clara/claraContractorQualification";
 import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
 import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
 /**
@@ -255,15 +256,31 @@ export default function PageContractorPricingIntake() {
         city: confirmedFields.includes("city") ? d.city : d.city || declaredCity || undefined,
         website_url: d.website_url || known.website || undefined,
       }));
-      setClaraDeclared({ serviceAreas: known.serviceAreas, goals: known.goals });
+      setClaraDeclared({ serviceAreas: known.serviceAreas, goals: known.goals, preferences: known.preferences });
       if ((declaredName || declaredTrade || declaredCity)) setBusinessConfirmed(true);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey]);
 
+  // The minimized Clara assistant fills this same form while it stays open.
+  useEffect(() => {
+    const applyClara = () => {
+      const known = getKnownContractorContext();
+      setData(d => ({ ...d,
+        company_name: confirmedFields.includes("company_name") ? d.company_name : known.businessName || d.company_name,
+        trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : known.trade || d.trade_primary,
+        city: confirmedFields.includes("city") ? d.city : known.city || d.city,
+        website_url: d.website_url || known.website || undefined,
+      }));
+      setClaraDeclared({ serviceAreas: known.serviceAreas, goals: known.goals, preferences: known.preferences });
+    };
+    window.addEventListener(CLARA_QUALIFICATION_UPDATED_EVENT, applyClara);
+    return () => window.removeEventListener(CLARA_QUALIFICATION_UPDATED_EVENT, applyClara);
+  }, [confirmedFields]);
+
   /* Déclaré à Clara : affiché tel quel, jamais redemandé ni chiffré. */
-  const [claraDeclared, setClaraDeclared] = useState<{ serviceAreas: string[]; goals: string[] }>({ serviceAreas: [], goals: [] });
+  const [claraDeclared, setClaraDeclared] = useState<{ serviceAreas: string[]; goals: string[]; preferences?: ReturnType<typeof getKnownContractorContext>["preferences"] }>({ serviceAreas: [], goals: [] });
 
   /* ---------- Fiche entrepreneur rattachée au compte : source prioritaire ---------- */
   const [linked, setLinked] = useState<{ id: string; business_name: string | null; address: string | null } | null>(null);
@@ -516,6 +533,10 @@ export default function PageContractorPricingIntake() {
             ["Capacité de travaux", d.monthly_capacity ? `${d.monthly_capacity} projets/mois` : "Non indiquée"],
             ...(claraDeclared.serviceAreas.length ? [["Territoires desservis", claraDeclared.serviceAreas.join(", ")]] : []),
             ...(claraDeclared.goals.length ? [["Vos priorités (déclarées)", claraDeclared.goals.join(", ")]] : []),
+            ...(claraDeclared.preferences?.work.length ? [["Travaux préférés (déclarés)", claraDeclared.preferences.work.join(", ")]] : []),
+            ...(claraDeclared.preferences?.excludedWork.length ? [["Mandats à éviter (déclarés)", claraDeclared.preferences.excludedWork.join(", ")]] : []),
+            ...(claraDeclared.preferences?.excludedAreas.length ? [["Territoires exclus (déclarés)", claraDeclared.preferences.excludedAreas.join(", ")]] : []),
+            ...(claraDeclared.preferences?.projectSizes.length ? [["Taille des contrats (déclarée)", claraDeclared.preferences.projectSizes.join(", ")]] : []),
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3 border-b border-white/5 pb-2">
               <span className="text-white/55">{k}</span>
@@ -726,8 +747,8 @@ export default function PageContractorPricingIntake() {
         if (value) carry.set(key, value);
       }
       navigate(`/entrepreneur/plan-personnalise/${quote.id}${carry.size ? `?${carry}` : ""}`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Impossible de calculer votre forfait.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Impossible de calculer votre forfait.");
       setSubmitting(false);
     }
   };

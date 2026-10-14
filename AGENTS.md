@@ -8,7 +8,7 @@ Applies repo-wide.
 - The production project is `ba1eabf3-fd1c-40fe-9856-3812a70f9869` in repository `Ndeavr/sequential-prompt-path`. Its active Lovable integration branch is `lovable-sync`.
 - Before editing, fetch `origin/lovable-sync`, inspect the project's current commit and run `npm run verify:source`. Start feature branches from the verified active commit, never from a stale default branch.
 - `main` is a discoverability mirror, not a second development line. Reconcile it by fast-forwarding to commits containing both histories; never replace the live tree with legacy April code or force-push.
-- Target feature PRs to `lovable-sync`; preserve concurrent Lovable changes before merging. Keep `main` synchronized after completed changes.
+- Target feature PRs to `lovable-sync`; preserve concurrent Lovable changes before merging. The existing critical-path workflow mirrors verified `lovable-sync` pushes to `main` by fast-forward only. A divergence fails closed for reconciliation; `main` pushes do not run a duplicate verification pipeline.
 - Timestamped `lovable-sync-*` branches are historical snapshots, not work targets. Retire feature branches only after their commits are included in the active branch and their PR is merged. Preserve unmerged work.
 - An inactive-source test or a GitHub commit is not proof of a production release. Verify the deployed revision separately.
 

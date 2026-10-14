@@ -350,6 +350,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceGlow, setVoiceGlow] = useState(false);
   const [voiceTip, setVoiceTip] = useState<string | null>(null);
+  const [inputSuggestion, setInputSuggestion] = useState<"media" | "design" | null>(null);
+  const [mediaGlow, setMediaGlow] = useState(false);
+  const inputSuggestionsShown = useRef(new Set<string>());
   const voiceTipShown = useRef(false);
   const voiceCooldownUntil = useRef(0);
   // Dossier maison : s'ouvre PAR-DESSUS la conversation, jamais en navigation.
@@ -710,6 +713,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       });
       if (detail.role === "user") {
         setQuickReplies(null);
+        contractorFlowRef.current?.captureVoice(detail.text);
         // Réponse vocale à la question en cours : même enregistrement que le texte.
         if (qualificationStepRef.current) {
           if (qualificationStepRef.current.field === "service_areas" && isAddressAnswer(detail.text)) return;
@@ -728,6 +732,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     const onVoiceClosed = () => {
       // Retour au clavier : même conversation, simple changement de canal.
       setVoiceActive(false);
+      contractorFlowRef.current?.resumeAfterVoice();
       trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
       void (async () => {
         try {
@@ -1514,24 +1519,24 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   useEffect(() => {
-    const recommended = shouldSuggestVoice({
+    const recommended = (contractorFlow && userMessageCount > 0) || shouldSuggestVoice({
       lastAssistantText,
       lastUserText,
       userMessageCount,
       uploading: uploadingMedia || busy,
       voiceActive,
     });
-    if (!recommended) {
+    if (!recommended || busy || voiceActive || uploadingMedia) {
       setVoiceGlow(false);
       setVoiceTip(null);
       return;
     }
-    if (Date.now() < voiceCooldownUntil.current) return;
+    if (voiceTipShown.current || Date.now() < voiceCooldownUntil.current) { setVoiceGlow(false); setVoiceTip(null); return; }
     setVoiceGlow(true);
     trackCopilotEvent("clara_voice_suggested", { surface: "home_clara_box" });
     if (!voiceTipShown.current) {
       voiceTipShown.current = true;
-      setVoiceTip(lang === "fr" ? "Plus simple à expliquer à voix haute" : "Easier to explain out loud");
+      setVoiceTip(lang === "fr" ? "Vous pouvez aussi utiliser le micro. Je complète votre dossier pendant que vous parlez." : "You can also use the microphone. I’ll complete your profile as you speak.");
     }
     const timer = window.setTimeout(() => {
       setVoiceGlow(false);
@@ -1540,7 +1545,22 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       trackCopilotEvent("clara_voice_suggestion_dismissed", { surface: "home_clara_box" });
     }, 10_000);
     return () => window.clearTimeout(timer);
-  }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang]);
+  }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang, contractorFlow]);
+
+
+  useEffect(() => {
+    if (busy || voiceActive || voiceTip || contractorFlow || audienceRef.current !== "homeowner" || !lastUserText) {
+      setInputSuggestion(null); setMediaGlow(false); return;
+    }
+    const text = lastUserText.toLowerCase();
+    const kind = /fissure|fuite|moisiss|infiltration|difficile.*expli|comment.*expli/.test(text) && !mediaItems.length ? "media"
+      : /rénov|renov|cuisine|salle de bain|décor|decor|agrandir/.test(text) ? "design" : null;
+    if (!kind || inputSuggestionsShown.current.has(kind)) return;
+    inputSuggestionsShown.current.add(kind);
+    setInputSuggestion(kind); setMediaGlow(kind === "media");
+    const timer = window.setTimeout(() => setMediaGlow(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [lastUserText, busy, voiceActive, voiceTip, contractorFlow, mediaItems.length]);
 
   const startVoice = async () => {
     // Un changement de canal fige la révélation en cours au lieu de la rejouer.
@@ -1917,6 +1937,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" className="hidden" aria-label="Prendre une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={photoLibraryRef} type="file" accept="image/*" multiple className="hidden" aria-label="Choisir une photo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={videoLibraryRef} type="file" accept="video/*" className="hidden" aria-label="Choisir une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        {voiceTip && <div className="home-clara-input-tip" role="note"><span>{voiceTip}</span><button type="button" aria-label="Fermer la suggestion de microphone" onClick={() => { setVoiceTip(null); setVoiceGlow(false); }}><X className="h-4 w-4" /></button></div>}
+        {inputSuggestion && !voiceTip && <div className="home-clara-input-tip" role="note">
+          <div>
+            {inputSuggestion === "media" ? <><p>Une photo ou une courte vidéo m’aiderait à mieux comprendre.</p><div className="flex gap-2 mt-2"><button type="button" onClick={() => { setInputSuggestion(null); photoLibraryRef.current?.click(); }}>Ajouter une photo</button><button type="button" onClick={() => { setInputSuggestion(null); videoLibraryRef.current?.click(); }}>Ajouter une vidéo</button></div></>
+              : <><p>Aimeriez-vous voir de quoi ces rénovations auraient l’air chez vous?</p><button type="button" className="mt-2" onClick={() => { setInputSuggestion(null); void runOpen("design_generation", "Visualiser mes rénovations"); }}>Voir avec ma photo</button><p className="text-muted-foreground mt-1">Illustration du résultat possible.</p></>}
+          </div>
+          <button type="button" aria-label="Fermer la suggestion" onClick={() => { setInputSuggestion(null); setMediaGlow(false); }}><X className="h-4 w-4" /></button>
+        </div>}
         <PromptInput
           accept="image/*,video/*,.pdf,.doc,.docx"
           multiple
@@ -1950,6 +1978,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
               <MediaMenu
+                suggested={mediaGlow}
                 label={copy.attach}
                 onTakePhoto={() => cameraRef.current?.click()}
                 onChoosePhoto={() => photoLibraryRef.current?.click()}
@@ -1970,9 +1999,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
               >
                 <Mic className="h-5 w-5" />
               </PromptInputButton>
-              {voiceTip && (
-                <span className="home-clara-voice-tip" role="note">{voiceTip}</span>
-              )}
+
             </PromptInputTools>
             <ClaraSubmitButton busy={busy} hasText={composerText.trim().length > 0} label={copy.send} />
           </PromptInputFooter>
@@ -2009,6 +2036,7 @@ function ClaraSubmitButton({ busy, hasText, label }: { busy: boolean; hasText: b
 }
 
 interface MediaMenuProps {
+  suggested?: boolean;
   label: string;
   onTakePhoto: () => void;
   onChoosePhoto: () => void;
@@ -2021,7 +2049,7 @@ interface MediaMenuProps {
  * dans le même geste (pas de fermeture asynchrone ni d'infobulle), ce qui
  * évite les boutons « morts » sur Chrome Android et Safari iOS.
  */
-function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
+function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
@@ -2036,7 +2064,7 @@ function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVid
 
   return (
     <PromptInputActionMenu>
-      <PromptInputActionMenuTrigger aria-label={label} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+      <PromptInputActionMenuTrigger data-media-suggested={suggested ? "true" : undefined} aria-label={label} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
         <Plus className="h-5 w-5" />
       </PromptInputActionMenuTrigger>
       <PromptInputActionMenuContent side="top" sideOffset={8} collisionPadding={12} className="home-clara-media-menu w-56">

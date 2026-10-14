@@ -63,6 +63,15 @@ export interface ClaraContractorQualification {
    * « declared » = dit par l'entrepreneur, « inferred » = déduit par UNPRO.
    */
   provenance?: Record<string, ClaraProvenance>;
+  /** Critères courts déclarés, jamais la transcription complète. */
+  preferred_work?: string[];
+  excluded_areas?: string[];
+  excluded_work?: string[];
+  preferred_project_sizes?: string[];
+  preferred_duration?: string | null;
+  availability?: string | null;
+  preferences_captured?: boolean;
+  preferences_confirmed?: boolean;
   updated_at?: string;
 }
 
@@ -98,28 +107,44 @@ export function getClaraQualification(): ClaraContractorQualification {
 export function saveClaraQualification(
   patch: ClaraContractorQualification,
   source: ClaraProvenance | Partial<Record<string, ClaraProvenance>> = "declared",
+  options: { replaceLists?: boolean } = {},
 ): ClaraContractorQualification {
   const current = read();
   const next: ClaraContractorQualification = { ...current };
   if (patch.primary_trade) next.primary_trade = patch.primary_trade;
   if (patch.customer_type) next.customer_type = patch.customer_type;
+  if (options.replaceLists) {
+    if (patch.primary_trade !== undefined) next.primary_trade = patch.primary_trade;
+    if (patch.customer_type !== undefined) next.customer_type = patch.customer_type;
+    if (patch.business_city !== undefined) next.business_city = patch.business_city;
+  }
   if (patch.business_city) next.business_city = patch.business_city;
   if (patch.business_name) next.business_name = patch.business_name;
   if (patch.website) next.website = patch.website;
   if (patch.phone) next.phone = patch.phone;
   if (patch.google_place_id) next.google_place_id = patch.google_place_id;
   if (patch.rbq_declaration) next.rbq_declaration = patch.rbq_declaration;
-  if (patch.service_areas?.length) {
+  for (const key of ["preferred_work", "excluded_work", "excluded_areas", "preferred_project_sizes"] as const) {
+    if (patch[key] !== undefined) next[key] = [...new Set(patch[key])];
+  }
+  for (const key of ["preferred_duration", "availability"] as const) {
+    if (patch[key] !== undefined) next[key] = patch[key];
+  }
+  if (patch.preferences_captured !== undefined) next.preferences_captured = patch.preferences_captured;
+  if (patch.preferences_confirmed !== undefined) next.preferences_confirmed = patch.preferences_confirmed;
+  if (options.replaceLists && patch.service_areas !== undefined) next.service_areas = [...new Set(patch.service_areas)];
+  else if (patch.service_areas?.length) {
     next.service_areas = Array.from(new Set([...(current.service_areas ?? []), ...patch.service_areas]));
   }
-  if (patch.goals?.length) {
+  if (options.replaceLists && patch.goals !== undefined) next.goals = [...new Set(patch.goals)];
+  else if (patch.goals?.length) {
     next.goals = Array.from(new Set([...(current.goals ?? []), ...patch.goals]));
   }
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id", "rbq_declaration"]
-        .filter((k) => (patch as Record<string, unknown>)[k])
+      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id", "rbq_declaration", "preferred_work", "excluded_work", "excluded_areas", "preferred_project_sizes", "preferred_duration", "availability"]
+        .filter((k) => (patch as Record<string, unknown>)[k] !== undefined)
         .map((k) => [k, typeof source === "string" ? source : source[k] ?? "declared"]),
     ),
   };

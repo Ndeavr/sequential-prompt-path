@@ -1,3 +1,6 @@
+import { peekClaraSessionToken } from "@/services/clara/claraSession";
+import { captureClaraContractorAnswer } from "@/services/clara/claraQualificationSummary";
+import ClaraQualificationPreview from "./ClaraQualificationPreview";
 /**
  * UNPRO — Parcours entrepreneur de Clara, directement dans le chat.
  *
@@ -61,7 +64,7 @@ type AuditResult = {
 
 type Step =
   | "name" | "searching" | "pick" | "goals" | "priority" | "auditing" | "audit_done"
-  | "trade" | "customer" | "areas" | "goal_detail" | "goal_detail2" | "appointments"
+  | "preferences" | "preferences_review" | "trade" | "customer" | "areas" | "goal_detail" | "goal_detail2" | "appointments"
   | "avg_value" | "quoting" | "proposal" | "failed";
 
 const GOALS = [
@@ -103,6 +106,8 @@ const PROVENANCE_LABEL: Record<string, string> = {
 export interface ClaraContractorFlowHandle {
   /** Retourne true si le parcours a consommé la réponse libre. */
   handleText: (text: string) => boolean;
+  captureVoice: (text: string) => void;
+  resumeAfterVoice: () => void;
 }
 
 interface Props {
@@ -123,14 +128,17 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const [freeGoal, setFreeGoal] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditResult | null>(null);
   const [quote, setQuote] = useState<PricingQuote | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [retry, setRetry] = useState<null | (() => void)>(null);
   const startedRef = useRef(false);
+  const pendingVoiceSummary = useRef<Promise<unknown> | null>(null);
+  const currentQuestion = useRef("");
   const stepRef = useRef<Step>("name");
   stepRef.current = step;
 
   const go = useCallback(async (next: Step, question?: string) => {
-    if (question) await say(question);
+    if (question) { currentQuestion.current = question; await say(question); }
     setStep(next);
   }, [say]);
 
@@ -283,6 +291,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const nextQuestion = useCallback(async () => {
     const k = getClaraQualification();
     const f = readFlow();
+    if (!k.preferences_captured) return go("preferences", "Décrivez-moi le contrat idéal pour vous : qu’est-ce qui vous donne envie de le prendre?");
     if (!k.primary_trade || k.provenance?.primary_trade !== "declared") {
       return go("trade", k.primary_trade
         ? `Google indique « ${k.primary_trade} ». Quel est votre métier principal?`
@@ -295,9 +304,10 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
         : "Dans quelles villes acceptez-vous des mandats?");
     }
     if (f.priority === "contracts" && f.contract_goal == null) return go("goal_detail", "Combien de contrats de plus visez-vous par mois?");
-    if (f.priority === "matching" && !f.prefer) return go("goal_detail", "Quels mandats aimeriez-vous recevoir en priorité?");
+    if (f.priority === "matching" && !f.prefer && !k.preferred_work?.length) return go("goal_detail", "Quels mandats aimeriez-vous recevoir en priorité?");
     if (f.priority === "matching" && !f.avoid) return go("goal_detail2", "Et quels mandats préférez-vous éviter?");
     if (f.priority === "time" && !f.time_sink) return go("goal_detail", "Quelle tâche vous prend le plus de temps?");
+    if (!k.preferences_confirmed) return go("preferences_review", "Voici ce que j’ai compris. Vous pouvez corriger les critères, puis les valider.");
     if (f.appointments == null) return go("appointments", "Combien de rendez-vous pourriez-vous accueillir le mois prochain?");
     if (f.appointments === 0) return go("appointments", "Votre capacité enregistrée est de 0. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
     if (f.avg_value == null) return go("avg_value", "Quelle est la valeur moyenne d’un contrat?");
@@ -309,15 +319,32 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     const clean = text.trim();
     if (!clean) return;
     const num = Number((clean.match(/\d[\d\s]*/)?.[0] ?? "").replace(/\s/g, ""));
+    if (["preferences", "trade", "customer", "areas", "goal_detail2"].includes(current) || (current === "goal_detail" && readFlow().priority === "matching")) {
+      onBusy(true);
+      setSummaryError(null);
+      try {
+        const question = current === "areas" ? "Quelles villes desservez-vous?" : current === "trade" ? "Quel est votre métier?" : current === "customer" ? "Quelle clientèle desservez-vous?" : "Décrivez votre contrat idéal et les mandats à éviter.";
+        const result = await captureClaraContractorAnswer(clean, currentQuestion.current || question);
+        if (result.clarification) { currentQuestion.current = result.clarification; await say(result.clarification); return; }
+        const known = getClaraQualification();
+        if (current === "preferences") {
+          if (!known.preferred_work?.length && !known.preferred_project_sizes?.length && !known.excluded_areas?.length) {
+            await say("Quel genre de travaux aimez-vous particulièrement réaliser?"); return;
+          }
+          saveClaraQualification({ preferences_captured: true, preferences_confirmed: false });
+        }
+        if (current === "goal_detail" && known.preferred_work?.length) writeFlow({ prefer: known.preferred_work.join(", ") });
+        if (current === "goal_detail2") {
+          const avoid = [...(known.excluded_work ?? []), ...(known.excluded_areas ?? [])].join(", ");
+          if (!avoid && !/^(aucun|aucune|rien|pas de préférence)/i.test(clean)) { await say("Quels types de mandats préférez-vous éviter?"); return; }
+          writeFlow({ avoid: avoid || "Aucune exclusion déclarée" });
+        }
+        await nextQuestion();
+      } catch { await say("Je n’ai pas pu résumer votre réponse. Vos critères sont conservés; vous pouvez réessayer."); }
+      finally { onBusy(false); }
+      return;
+    }
     switch (current) {
-      case "trade": saveClaraQualification({ primary_trade: clean.slice(0, 120) }); break;
-      case "customer": saveClaraQualification({ customer_type: clean.slice(0, 60) }); break;
-      case "areas": {
-        if (isAddressAnswer(clean)) { await say(CLARA_ADDRESS_CLARIFICATION); return; }
-        const list = clean.split(/[,;/]|\bet\b/i).map((v) => v.trim()).filter(Boolean).slice(0, 8);
-        saveClaraQualification({ service_areas: list });
-        break;
-      }
       case "goal_detail": {
         const p = readFlow().priority;
         if (p === "contracts") writeFlow({ contract_goal: num > 0 ? num : 1 });
@@ -346,7 +373,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       default: return;
     }
     await nextQuestion();
-  }, [nextQuestion, say]);
+  }, [nextQuestion, onBusy, say]);
 
   const pick = useCallback(async (label: string, current: Step) => {
     addUser(label);
@@ -396,17 +423,47 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   /* --------------------------------------------- réponses libres (composer) */
   useImperativeHandle(ref, () => ({
+    captureVoice: (text: string) => {
+      if (!["goals", "preferences", "trade", "customer", "areas", "goal_detail", "goal_detail2"].includes(stepRef.current)) return;
+      const token = peekClaraSessionToken();
+      const question = currentQuestion.current;
+      const task = Promise.resolve(pendingVoiceSummary.current).then(() => {
+        if (peekClaraSessionToken() !== token) throw new Error("Conversation changed");
+        return captureClaraContractorAnswer(text, question);
+      }).then(result => {
+        if (result.clarification) currentQuestion.current = result.clarification;
+        const k = getClaraQualification();
+        if (k.preferred_work?.length || k.preferred_project_sizes?.length) saveClaraQualification({ preferences_captured: true, preferences_confirmed: false });
+      }).catch(() => setSummaryError("Cette réponse vocale n’a pas pu être résumée. Vos critères précédents sont conservés."));
+      pendingVoiceSummary.current = task;
+    },
+    resumeAfterVoice: () => { if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) void Promise.resolve(pendingVoiceSummary.current).then(() => nextQuestion()); },
     handleText: (text: string) => {
       const s = stepRef.current;
       if (isAddressAnswer(text)) { addUser(text); void say(CLARA_ADDRESS_CLARIFICATION); return true; }
       if (s === "name" || s === "pick") { addUser(text); void search(text); return true; }
-      if (s === "goals") { const g = goals; addUser(text); void (async () => { saveClaraQualification({ goals: [text.slice(0, 80)] }); writeFlow({ priority: g[0] ?? "other" }); void trackFunnelStep("goals_completed", { metadata: { surface: "home_clara_chat", free: true } }); await runAudit(); })(); return true; }
-      if (["trade", "customer", "areas", "goal_detail", "goal_detail2", "appointments", "avg_value"].includes(s)) {
+      if (s === "goals") {
+        const g = goals; addUser(text); onBusy(true);
+        void (async () => {
+          try {
+            const result = await captureClaraContractorAnswer(text, "Qu’aimeriez-vous améliorer pour votre entreprise?");
+            if (result.clarification) { await say(result.clarification); return; }
+            const known = getClaraQualification();
+            if (!known.goals?.length) { await say("Qu’aimeriez-vous améliorer pour votre entreprise?"); return; }
+            if (known.preferred_work?.length || known.preferred_project_sizes?.length) saveClaraQualification({ preferences_captured: true, preferences_confirmed: false });
+            writeFlow({ priority: g[0] ?? "other" });
+            void trackFunnelStep("goals_completed", { metadata: { surface: "home_clara_chat", free: true } });
+            await runAudit();
+          } catch { await say("Je n’ai pas pu résumer votre réponse. Vous pouvez réessayer."); }
+          finally { onBusy(false); }
+        })(); return true;
+      }
+      if (["preferences", "trade", "customer", "areas", "goal_detail", "goal_detail2", "appointments", "avg_value"].includes(s)) {
         addUser(text); void answer(text, s); return true;
       }
       return false;
     },
-  }), [addUser, answer, goals, runAudit, search, say]);
+  }), [addUser, answer, goals, runAudit, search, say, nextQuestion, onBusy]);
 
   /* ------------------------------------------------------------ rendu */
   const known = getClaraQualification();
@@ -476,6 +533,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   return (
     <div className="home-clara-flow">
+      {summaryError && <p role="alert" className="home-clara-card-meta">{summaryError}</p>}
+      <ClaraQualificationPreview onConfirm={step === "preferences_review" ? () => void nextQuestion() : undefined} />
       {auditCard}
       {quick[step]?.length ? (
         <div className="home-clara-quick" role="group" aria-label="Réponses rapides">

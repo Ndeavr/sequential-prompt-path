@@ -1,3 +1,4 @@
+import { summarizeContractorAnswer } from "../_shared/claraQualificationSummary.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -612,7 +613,9 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { messages, context } = await req.json();
+    const body = await req.json();
+    if (body.action === "summarize_contractor_answer") return await summarizeContractorAnswer(body, LOVABLE_API_KEY, corsHeaders);
+    const { messages, context } = body;
     const isVoiceMode = context?.voiceMode === true;
 
     // Get the last user message for RAG retrieval

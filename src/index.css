@@ -958,7 +958,8 @@
   }
   .home-light .home-clara-tool { width: 40px; height: 40px; color: hsl(220 14% 32%); }
   /* Suggestion vocale : halo bleu très doux, jamais une alerte. */
-  .home-light .home-clara-mic[data-voice-suggested="true"] {
+  .home-light .home-clara-mic[data-voice-suggested="true"],
+  .home-light .home-clara-tool[data-media-suggested="true"] {
     color: hsl(212 100% 42%);
     box-shadow:
       0 0 0 4px rgba(20, 130, 255, 0.08),
@@ -2476,3 +2477,11 @@ html[data-theme-ready="true"] .glass-btn {
 @media (prefers-reduced-motion: reduce) {
   .home-clara-shell.is-opening-page { animation: none; }
 }
+
+.home-light .home-clara-input-tip { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; padding: .65rem .8rem; margin-bottom: .5rem; border: 1px solid hsl(var(--primary) / .2); border-radius: .8rem; background: hsl(var(--primary) / .04); font-size: .78rem; line-height: 1.4; overflow-wrap: anywhere; }
+.home-light .home-clara-input-tip button { color: hsl(var(--primary)); font-weight: 600; min-height: 32px; }
+@media (prefers-reduced-motion: reduce) { .home-light .home-clara-tool[data-media-suggested="true"] { animation: none; } }
+
+/* Conversation text uses a light surface; these cards keep their dark card tokens. */
+.home-light .home-clara-conversation .home-clara-qualification-preview input { color: hsl(var(--card-foreground)); }
+.home-light .home-clara-conversation .home-clara-qualification-preview label { color: hsl(var(--muted-foreground)); }
