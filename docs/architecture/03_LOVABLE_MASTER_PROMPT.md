@@ -96,3 +96,51 @@ User Input → Property/Project → Matching Engine → Contractor Recommendatio
 ---
 
 _This prompt ensures Lovable builds consistently across sessions._
+
+
+## Clara — onboarding conversationnel et suggestions multimédias (14 octobre 2026)
+
+### Objectif et inspection
+La conversation remplit directement le formulaire et le dossier existants pour les entrepreneurs et les propriétaires. Inspecter les routes, composants Clara/Alex, formulaires, mémoire, capture audio, uploads, edge functions, schéma, RLS et intégrations avant de modifier. Réutiliser les systèmes opérationnels; aucune double saisie, aucun profil, parcours ou système en double. Ces exigences s'appliquent à l'assistant existant, même si son nom interne est Alex.
+
+### Questions et extraction
+- Poser une seule question ouverte à la fois et rebondir sans redemander les informations déjà connues.
+- Entrepreneurs : découvrir travaux préférés, territoires et exclusions, taille des contrats, disponibilité et objectifs (incluant marge de profit si pertinente).
+- Exemple de question : « Décrivez-moi le contrat idéal pour vous. »
+- Exemple de réponse : « Montréal, j’en peux plus; j’aime les gros projets où mon équipe reste plusieurs semaines. »
+- Extraire seulement les critères utiles : Montréal à exclure, projets d’envergure préférés, chantiers de plusieurs semaines appréciés. Clarifier si nécessaire la différence entre préférence et exclusion ferme.
+- Compléter progressivement les champs existants avec un résumé court et modifiable, sans recopier toute la transcription dans le formulaire.
+- Préremplir les informations connues; conserver progression et corrections lors d’une navigation ou d’une reprise. Ne pas écraser silencieusement une correction manuelle.
+- Faire valider le résumé (« C’est bien ça? »), puis poursuivre directement le parcours existant vers l’offre et le paiement pour les entrepreneurs, ou le dossier/projet pour les propriétaires.
+- Distinguer informations déclarées, inférées, vérifiées et en attente. Ne jamais inventer scores, vérifications, statut RBQ, rendez-vous ni paiement.
+
+### Microphone contextuel
+Si la personne répond par texte et que la voix faciliterait l’échange, suggérer une fois :
+« Vous pouvez aussi utiliser le micro pour me raconter ce que vous recherchez. Je m’occupe de remplir votre profil. »
+Pour les propriétaires, adapter la fin : « Je m’occupe de compléter votre dossier. »
+Faire doucement briller et pulser le bouton microphone pendant quelques secondes. Ne jamais activer automatiquement la capture. Laisser continuer par texte et éviter les invitations répétitives.
+
+### Photos et vidéos des propriétaires
+Lorsque les médias aideraient à comprendre le problème, le projet ou le design souhaité, proposer :
+« Une photo ou une courte vidéo m’aiderait à mieux comprendre. Vous pouvez l’ajouter ici. »
+Illuminer temporairement le bouton d’ajout. Une seule suggestion contextuelle à la fois, sans insister.
+Relier les médias au dossier existant et extraire les observations utiles avec validation des éléments incertains. Respecter les formats et limites existants, le stockage privé, les permissions et les URLs signées. Afficher progression, erreur et nouvelle tentative.
+
+### Simulation visuelle
+Pour les rénovations visuelles pertinentes, proposer :
+« Aimeriez-vous voir de quoi ces rénovations auraient l’air chez vous? »
+Réutiliser le service de simulation existant, à partir de la photo du propriétaire et de ses préférences. Présenter le rendu comme une illustration du résultat possible.
+N’afficher cette action que si le service est réellement opérationnel. Sinon, identifier le blocage externe dans le compte rendu technique; aucune fonctionnalité fictive.
+
+### Frontend, backend et permissions
+- Mobile-first; dernier message et commandes accessibles lors du redimensionnement et de l’ouverture du clavier. Texte stable et défilement naturel, synchronisé à la voix lorsque celle-ci est activée.
+- Boutons accessibles et animations compatibles avec prefers-reduced-motion.
+- Parcours propriétaires, condos et entrepreneurs strictement séparés.
+- Persister via les services existants et sous les permissions du bon utilisateur; réutiliser la mémoire et les fonctions existantes. Migration uniquement si une lacune réelle est confirmée.
+- Gérer refus d’accès au micro, interruption, réseau indisponible et échec de sauvegarde sans perdre la progression.
+- Utiliser les journaux d’audit existants pour les mises à jour et erreurs, sans transcription brute ni données sensibles.
+
+### Tests et critères de completion
+Tester de bout en bout texte, voix, photos/vidéos, corrections, sauvegarde et reprise sur mobile et desktop. Vérifier qu’une information donnée une fois arrive réellement dans le bon champ et n’est pas redemandée dans le formulaire.
+Vérifier le glow contextuel, l’absence d’activation automatique du micro et d’invitations répétées, les restrictions RLS et l’absence de mélange des rôles.
+Tester la simulation uniquement avec le vrai service. Livrer les modifications, résultats des vérifications et éventuels blocages externes. L’ajout de ces instructions ne constitue pas en soi une implémentation ni un déploiement.
