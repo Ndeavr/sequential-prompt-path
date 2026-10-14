@@ -1,3 +1,4 @@
+vi.mock("@/services/clara/claraQualificationPersistence", () => ({ persistClaraQualification: vi.fn(() => Promise.resolve()), loadClaraQualification: vi.fn(() => Promise.resolve(null)) }));
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, cleanup } from "@testing-library/react";
 vi.mock("@/services/clara/claraSession", () => ({ saveClaraContext: vi.fn(() => Promise.resolve()), peekClaraSessionToken: () => "qa-session" }));

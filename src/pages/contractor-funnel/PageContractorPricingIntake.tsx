@@ -1,4 +1,5 @@
-import { CLARA_QUALIFICATION_UPDATED_EVENT } from "@/services/clara/claraContractorQualification";
+import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
+import { CLARA_QUALIFICATION_UPDATED_EVENT, getClaraQualification, hydrateClaraQualification } from "@/services/clara/claraContractorQualification";
 import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
 import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
 /**
@@ -61,19 +62,7 @@ const SEASONS = [
   { v: "all", l: "Toute l'année" },
 ];
 
-const SESSION_STORAGE_KEY = "unpro_matching_session_key";
 
-function getSessionKey(): string {
-  try {
-    const existing = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (existing && existing.length >= 8) return existing;
-    const key = `mp_${crypto.randomUUID()}`;
-    localStorage.setItem(SESSION_STORAGE_KEY, key);
-    return key;
-  } catch {
-    return `mp_${Math.random().toString(36).slice(2)}${Date.now()}`;
-  }
-}
 
 const BASE_DEFAULTS: Partial<PricingIntakeInput> = {
   seasonal_priority: "all",
@@ -232,12 +221,16 @@ export default function PageContractorPricingIntake() {
       const qsCity = searchParams.get("ville");
       const qsTrade = searchParams.get("metier");
       let answers: Record<string, unknown> = {};
+      const qualificationAtStart = getClaraQualification().updated_at;
       try {
         const { data: res } = await supabase.functions.invoke("matching-profile", {
           body: { action: "get", session_key: sessionKey },
         });
         const profile = (res as { profile?: { answers?: Record<string, unknown> } | null } | null)?.profile;
         answers = profile?.answers ?? {};
+        if (answers.clara_qualification && getClaraQualification().updated_at === qualificationAtStart) {
+          hydrateClaraQualification({ contractor_qualification: answers.clara_qualification }, { ownerValidated: true });
+        }
       } catch {
         /* profil indisponible : le parcours reste utilisable */
       }

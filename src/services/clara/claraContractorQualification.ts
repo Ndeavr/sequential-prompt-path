@@ -9,23 +9,42 @@
  *    informations distinctes, jamais fusionnées;
  *  - aucune donnée n'est inventée : ce qui n'est pas dit reste vide.
  *
- * La persistance passe par la conversation canonique (`clara-session`,
- * champ `workflow.contractor_qualification`) avec un miroir local qui permet le
+ * La persistance passe par le profil de jumelage existant (`matching-profile`) avec un miroir local qui permet le
  * préremplissage immédiat après un changement d'écran ou un rafraîchissement.
  */
-import { saveClaraContext } from "@/services/clara/claraSession";
+import { persistClaraQualification, loadClaraQualification } from "./claraQualificationPersistence";
 import { RBQ_DECLARATION_OPTIONS, type RbqDeclaration } from "@/lib/compliance/rbqDeclaration";
 
-/** Synchronisation bornée : la copie locale reste la référence en cas d’échec. */
-function syncWithRetry(value: ClaraContractorQualification, attempt = 0): void {
-  void saveClaraContext({ workflow: { contractor_qualification: value } } as never).catch(() => {
-    if (attempt >= 3 || typeof window === "undefined") return;
-    window.setTimeout(() => {
-      const latest = read();
-      if ((latest.updated_at ?? "") > (value.updated_at ?? "")) return; // une sauvegarde plus récente prend le relais
-      syncWithRetry(latest, attempt + 1);
-    }, [2000, 8000, 30000][attempt]);
-  });
+/** Immediate local mirror, debounced canonical matching-profile persistence. */
+let pendingQualification: ClaraContractorQualification | null = null;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncQueue: Promise<void> = Promise.resolve();
+let syncError: Error | null = null;
+function scheduleQualification(value: ClaraContractorQualification) {
+  pendingQualification = value;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => { void flushClaraQualification().catch(() => {}); }, 400);
+}
+export async function flushClaraQualification(): Promise<void> {
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  const value = pendingQualification;
+  pendingQualification = null;
+  if (value) {
+    syncQueue = syncQueue.then(async () => {
+      try { await persistClaraQualification(value); syncError = null; }
+      catch (error) { syncError = error instanceof Error ? error : new Error("Sauvegarde indisponible."); }
+    });
+  }
+  await syncQueue;
+  if (syncError) throw syncError;
+}
+export async function resumeClaraQualification(): Promise<void> {
+  const snapshot = read();
+  const remote = await loadClaraQualification();
+  if (!remote || read().updated_at !== snapshot.updated_at) return;
+  // Server ownership is authoritative; keep only genuinely unsaved local edits.
+  if (pendingQualification || syncError) return;
+  write(remote);
 }
 
 export type ClaraProvenance = "public" | "declared" | "inferred";
@@ -151,16 +170,17 @@ export function saveClaraQualification(
   next.updated_at = new Date().toISOString();
   write(next);
   // Continuité canonique : la conversation garde l'avancement, jamais une copie métier.
-  syncWithRetry(next);
+  scheduleQualification(next);
   return next;
 }
 
 /** Hydrate la qualification à partir de la session canonique (retour, second appareil). */
-export function hydrateClaraQualification(workflow: Record<string, unknown> | null | undefined): void {
+export function hydrateClaraQualification(workflow: Record<string, unknown> | null | undefined, options: { ownerValidated?: boolean } = {}): void {
   const remote = (workflow?.contractor_qualification ?? null) as ClaraContractorQualification | null;
   if (!remote) return;
   const current = read();
-  if ((current.updated_at ?? "") >= (remote.updated_at ?? "")) return;
+  if (options.ownerValidated && (pendingQualification || syncError)) return;
+  if (!options.ownerValidated && (current.updated_at ?? "") >= (remote.updated_at ?? "")) return;
   write(remote);
 }
 

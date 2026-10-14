@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // UNPRO — affiliate-next-prospect
 // Sélectionne le meilleur prochain prospect réel pour l'affiliée authentifiée,
 // pose un verrou anti-collision, et gère « passer » / « libérer ».

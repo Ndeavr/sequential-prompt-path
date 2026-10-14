@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 /**
  * UNPRO — Permissions de contact au niveau destination (logique pure).
  *

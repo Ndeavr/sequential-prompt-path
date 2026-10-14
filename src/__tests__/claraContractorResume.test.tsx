@@ -16,6 +16,7 @@ vi.mock("@/services/clara/claraSession", () => ({
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
   CLARA_QUALIFICATION_UPDATED_EVENT: "clara-contractor-qualification-updated",
+  resumeClaraQualification: () => Promise.resolve(),
   getClaraQualification: () => mocks.qualification,
   saveClaraQualification: (patch: object) => {
     mocks.qualification = { ...mocks.qualification, ...patch };

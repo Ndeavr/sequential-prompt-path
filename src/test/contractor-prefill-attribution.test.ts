@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
+vi.mock("@/services/clara/claraQualificationPersistence", () => ({ persistClaraQualification: vi.fn(() => Promise.resolve()), loadClaraQualification: vi.fn(() => Promise.resolve(null)) }));
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 import { saveClaraQualification } from "@/services/clara/claraContractorQualification";
 import { planReturnUrl } from "@/lib/billing/reconcileQuotePayment";

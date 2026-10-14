@@ -1,6 +1,6 @@
 import { peekClaraSessionToken } from "./claraSession";
 import { supabase } from "@/integrations/supabase/client";
-import { getClaraQualification, saveClaraQualification } from "./claraContractorQualification";
+import { getClaraQualification, saveClaraQualification, flushClaraQualification } from "./claraContractorQualification";
 import { sanitizeQualificationSummary } from "../../../supabase/functions/_shared/claraQualificationSummary";
 
 /** Use the existing chat gateway and canonical workflow; never another profile. */
@@ -19,5 +19,6 @@ export async function captureClaraContractorAnswer(answer: string, question = ""
     if (JSON.stringify(current[key]) !== JSON.stringify(snapshot[key])) delete patch[key];
   }
   saveClaraQualification(patch, "declared", { replaceLists: true });
+  await flushClaraQualification();
   return { patch, clarification: typeof data.clarification === "string" ? data.clarification : null };
 }

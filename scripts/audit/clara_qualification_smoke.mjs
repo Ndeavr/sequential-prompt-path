@@ -22,6 +22,7 @@ try {
     const url=route.request().url();
     if(url.includes('/functions/v1/clara-session'))return route.fulfill({json:{session_id:'qa',session_token:'qa-token',messages:[],context:{},language:'fr',current_step:'chat',auth_state:'guest',resumed:false}});
     if(url.includes('/functions/v1/ai-recommendation-audit'))return route.fulfill({json:{ok:true,audit_id:'qa',token:'qa-audit',generated_at:new Date().toISOString(),readiness_score:null,baseline:{facts:[],missions:[],level:'partial',matched:{merged_sources:[]}},gaps:[]}});
+    if(url.includes('/functions/v1/matching-profile'))return route.fulfill({json:{ok:true,profile:{answers:{}}}});
     if(url.includes('/functions/v1/alex-chat'))return route.fulfill({json:{patch:{preferred_work:['Isolation'],excluded_areas:['Montréal'],preferred_project_sizes:["Projets d’envergure"]},clarification:null}});
     return route.fulfill({json:[]});
   });
@@ -31,6 +32,8 @@ try {
   await page.addStyleTag({content:'[title*="HUD"] { pointer-events: none !important; }'});
   await page.getByRole('button',{name:'Je suis entrepreneur',exact:true}).click({timeout:90000});
   const goal = page.getByRole('button',{name:'Obtenir plus de contrats',exact:true});
+  const ideal = page.getByText('Décrivez-moi le contrat idéal pour vous : qu’est-ce qui vous donne envie de le prendre?',{exact:true});
+  await goal.or(ideal).first().waitFor({timeout:90000});
   if(await goal.isVisible()) { await goal.click(); await page.getByRole('button',{name:'Continuer',exact:true}).click(); }
   
   await page.getByText('Décrivez-moi le contrat idéal pour vous : qu’est-ce qui vous donne envie de le prendre?',{exact:true}).waitFor({timeout:30000});
