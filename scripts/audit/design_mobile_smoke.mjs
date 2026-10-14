@@ -12,14 +12,14 @@ try {
  for(const width of [360,390,1280]) {
   const context=await browser.newContext({viewport:{width,height:850},reducedMotion:'reduce'});
   let generations=0; let request;
-  await context.route('**/*',route=>{
+  await context.route('**/*',async route=>{
     const url=route.request().url(); if(new URL(url).hostname==='127.0.0.1')return route.continue();
     if(url.includes('/functions/v1/design-generate')) {
       const body=route.request().postDataJSON();
       if(body.action==='identify_room')return route.fulfill({json:{room_type:'kitchen'}});
       if(body.action==='generate') {
         generations++; request=body;
-        if(generations===1)return route.fulfill({status:503,json:{error:'Le service de génération est momentanément indisponible.'}});
+        if(generations===1) { await new Promise(resolve=>setTimeout(resolve,2200)); return route.fulfill({status:503,json:{error:'Le service de génération est momentanément indisponible.'}}); }
         return route.fulfill({json:{versions:[{id:'qa-v1',imageUrl:'http://127.0.0.1:8080/src/assets/design-after-1.jpg'}]}});
       }
     }
@@ -42,6 +42,8 @@ try {
   await prompt.fill('Peindre les murs en blanc');
   const generate=page.getByRole('button',{name:'Générer 3 versions',exact:true}).filter({visible:true});await generate.click();
   await page.getByText('Le service de génération est momentanément indisponible.',{exact:true}).waitFor();
+  await page.getByText('Votre design est en cours…',{exact:true}).waitFor({state:'hidden'});
+  check(!(await page.getByText('Votre design est en cours…',{exact:true}).isVisible()),`${width}: signup overlay releases controls after failure`);
   check(await prompt.inputValue()==='Peindre les murs en blanc',`${width}: failed generation preserves prompt`);
   check(await generate.isEnabled(),`${width}: retry remains usable`);
   check(request.imageBase64.length<1_400_000,`${width}: bounded photo payload`);
