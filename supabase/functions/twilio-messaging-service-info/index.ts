@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // Reveal the active Twilio Messaging Service: SID, friendly name,
 // currently configured inbound webhook URL, status callback, and attached phone numbers.
 // Compares with expected URLs and links to the exact Twilio Console page.

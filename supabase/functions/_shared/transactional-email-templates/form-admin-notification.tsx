@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
 import {

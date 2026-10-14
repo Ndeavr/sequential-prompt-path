@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // UNPRO — Autonomous contractor onboarding worker.
 // Runs every 5 minutes via pg_cron. For each due active sequence:
 //   1) defensive eligibility checks

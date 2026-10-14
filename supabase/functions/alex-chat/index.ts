@@ -770,12 +770,12 @@ serve(async (req) => {
 
     // ===== LOG QUERY =====
     if (context?.userId) {
-      supabase.from("rag_queries_log").insert({
+      Promise.resolve(supabase.from("rag_queries_log").insert({
         user_id: context.userId,
         query_text: lastUserMessage,
         namespace_filter: namespaces,
         top_k: 6,
-      }).then(() => {}).catch(() => {});
+      })).then(() => {}).catch(() => {});
     }
 
     // ===== CALL LLM =====

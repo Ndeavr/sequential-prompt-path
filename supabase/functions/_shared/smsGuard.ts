@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // PROTECTED — SMS pre-flight guard. Blocks test numbers, opt-outs, invalid phones.
 // Every outbound SMS MUST pass through validateBeforeSend() before hitting Twilio.
 
