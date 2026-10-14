@@ -1,6 +1,6 @@
 # UNPRO project context
 
-_Last updated: 2026-09-12. This file contains public-safe, durable context only._
+_Last updated: 2026-10-14. This file contains public-safe, durable context only._
 
 ## Purpose
 
@@ -51,6 +51,12 @@ The experience should recommend one best-fit contractor, or a tightly justified 
 7. Backend logic is authoritative for eligibility and matching.
 8. Database migrations are the canonical schema source.
 9. Existing canonical flows should be extended rather than duplicated.
+
+## Canonical code source
+
+The active site source is `Ndeavr/sequential-prompt-path`, branch `lovable-sync`, linked to the existing production Lovable project. `main` is a synchronized mirror for GitHub discovery, not an independent development line. Verify the active project commit before each task, fetch it, and run `npm run verify:source`.
+
+The October 14 reconciliation keeps the live code tree and both branch histories, and carries forward the requested Clara onboarding prompt. Legacy April landing changes remain recoverable in Git history; they must not be reintroduced over the current routes or schema without a fresh review. Historical synchronization snapshots are not active sources.
 
 ## Working sources
 

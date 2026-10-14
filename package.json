@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "ci:critical": "npm test && npm run typecheck && npm run lint:critical && vite build",
-    "content-audit": "tsx scripts/content-audit.ts"
+    "content-audit": "tsx scripts/content-audit.ts",
+    "verify:source": "node scripts/verify-source-branch.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
