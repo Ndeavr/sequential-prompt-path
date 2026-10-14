@@ -1,3 +1,4 @@
+import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffiliateTeaser";
 /**
  * /entrepreneurs/plans — Public plan comparison for contractors.
  *
@@ -224,6 +225,7 @@ export default function PageEntrepreneurPlans() {
             </p>
           </div>
         </div>
+        <div className="mx-auto max-w-4xl px-5"><ContractorAffiliateTeaser /></div>
       </div>
     </>
   );

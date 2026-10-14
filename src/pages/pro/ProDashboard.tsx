@@ -1,3 +1,4 @@
+import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffiliateTeaser";
 /**
  * UNPRO — Dashboard Entrepreneur v2
  * Recevez des rendez-vous exclusifs. Pas des leads partagés.
@@ -52,6 +53,7 @@ const ProDashboard = () => {
         </div>
 
         <ProNextActionCard profile={profile} appointments={appts} />
+        <ContractorAffiliateTeaser />
 
         <div className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-3" data-testid="pro-upcoming">
           <p className="text-sm font-semibold text-foreground">Prochains rendez-vous</p>

@@ -1,3 +1,6 @@
+import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffiliateTeaser";
+import { Link, useLocation } from "react-router-dom";
+import { campaignLink } from "@/lib/contractorCampaignLinks";
 import { useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +15,7 @@ import SectionFormV2 from "@/components/entrepreneur-landing/v2/SectionFormV2";
 import StickyMobileCTAV2 from "@/components/entrepreneur-landing/v2/StickyMobileCTAV2";
 
 const PageEntrepreneursLanding = () => {
+  const { search } = useLocation();
   const trackCta = useCallback((ctaKey: string, section: string) => {
     supabase
       .from("entrepreneur_cta_events")
@@ -40,6 +44,13 @@ const PageEntrepreneursLanding = () => {
         <SectionSocialProofV2 />
         <SectionHowItWorksV2 />
         <SectionPlansPreviewV2 onTrackCta={trackCta} />
+        <div className="mx-auto max-w-4xl px-5">
+          <Link to={campaignLink("/credit-promotionnel", search)} className="block rounded-2xl border border-primary/25 bg-primary/5 p-5 hover:bg-primary/10 focus-visible:outline focus-visible:outline-2">
+            <span className="block font-semibold">Êtes-vous admissible à 1 000 $ de crédit promotionnel?</span>
+            <span className="mt-1 block text-sm text-muted-foreground">Avec un forfait admissible de 1 000 $ ou plus. Vérifier ici →</span>
+          </Link>
+          <ContractorAffiliateTeaser />
+        </div>
         <SectionScarcityV2 onTrackCta={trackCta} />
         <SectionFormV2 onTrackCta={trackCta} />
         <StickyMobileCTAV2 onTrackCta={trackCta} />
