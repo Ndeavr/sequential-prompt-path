@@ -272,7 +272,7 @@ export function getDrawerSections(role: UserRole | "guest"): DrawerSection[] {
       { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
       { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
       { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-      { to: "/condo", label: "Copros", labelEn: "Condos", icon: "Building" },
+      { to: "/condo", label: "Copropriétés (Loi 16)", labelEn: "Condos (Law 16)", icon: "Building" },
       { to: "/comment-ca-marche", label: "Comment ça marche", labelEn: "How it works", icon: "HelpCircle" },
       { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
     ],
