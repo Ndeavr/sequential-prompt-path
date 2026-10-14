@@ -84,30 +84,50 @@ export default function AuthReturnRouter() {
   // Live pathname (avoids stale closures across awaits).
   const pathRef = useRef(location.pathname);
   pathRef.current = location.pathname;
-  // User id already signed in when this tab booted / last processed. supabase-js
-  // re-emits SIGNED_IN on tab focus & session recovery: those are NOT fresh logins
-  // and must never hijack the page the user is on (e.g. /condos/diagnostic).
-  const knownUserRef = useRef<string | null | undefined>(undefined);
+  // Auth state known for this tab: "unknown" until INITIAL_SESSION/getSession,
+  // "signed_out" when explicitly signed out, otherwise the user id. supabase-js
+  // re-emits SIGNED_IN on focus/recovery: unknown or same-user is NEVER treated
+  // as a fresh login outside auth surfaces (prevents hijacking e.g. /condos/diagnostic).
+  const authStateRef = useRef<string>("unknown");
 
   useEffect(() => {
+    let cancelled = false;
     supabase.auth.getSession().then(({ data }) => {
-      if (knownUserRef.current === undefined) knownUserRef.current = data.session?.user?.id ?? null;
-    });
+      if (cancelled || authStateRef.current !== "unknown") return;
+      authStateRef.current = data.session?.user?.id ?? "signed_out";
+    }).catch(() => { /* stays unknown → fail closed */ });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
+    let unmounted = false;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") { knownUserRef.current = null; return; }
-      if (event !== "SIGNED_IN" || !session?.user) return;
-      const startPath = pathRef.current;
-      const isFreshLogin = knownUserRef.current !== session.user.id;
-      knownUserRef.current = session.user.id;
-      if (!isFreshLogin && !isAuthSurface(startPath)) {
-        // Session re-emission on a real page: never navigate away.
+      if (event === "INITIAL_SESSION") {
+        authStateRef.current = session?.user?.id ?? "signed_out";
         return;
       }
+      if (event === "SIGNED_OUT") { authStateRef.current = "signed_out"; return; }
+      if (event !== "SIGNED_IN" || !session?.user) return;
+      const startPath = pathRef.current;
+      const prev = authStateRef.current;
+      const isFreshLogin = prev !== "unknown" && prev !== session.user.id;
+      authStateRef.current = session.user.id;
+      if (!isFreshLogin && !isAuthSurface(startPath)) {
+        console.log("[AuthReturnRouter] skip: session re-emission on non-auth page");
+        return;
+      }
+      /** True only if the user is still where the sign-in started. */
+      const stillValid = () => !unmounted && pathRef.current === startPath;
+      const go = (to: string) => {
+        if (!stillValid()) {
+          console.log("[AuthReturnRouter] skip redirect: navigation changed or unmounted");
+          return false;
+        }
+        navigate(to, { replace: true });
+        return true;
+      };
 
-      console.log("[AuthReturnRouter] SIGNED_IN", { user: session.user.id, path: location.pathname });
+      console.log("[AuthReturnRouter] SIGNED_IN", { user: session.user.id, path: startPath });
 
       setTimeout(async () => {
       closeAuthOverlay();
@@ -139,9 +159,10 @@ export default function AuthReturnRouter() {
       // 2) Canonical intent resolution (server cross-device token or local), once.
       const outcome = await resolveAuthIntentOnce({ id: session.user.id, email: session.user.email });
       if (outcome.failed) {
+        if (!stillValid()) return;
         // Never fall back to the homeowner dashboard on a failed contractor intent.
         authDebug.error(new Error(outcome.error || "role_activation_failed"), "applying_prelogin_role");
-        navigate("/auth/callback", { replace: true });
+        go("/auth/callback");
         return;
       }
       if (outcome.applied && outcome.role && !roleList.includes(outcome.role)) {
@@ -168,25 +189,19 @@ export default function AuthReturnRouter() {
         isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
       } catch { /* noop */ }
 
-      // Race guard: user navigated explicitly while we were awaiting → their choice wins.
-      if (pathRef.current !== startPath) {
-        console.log("[AuthReturnRouter] skip redirect: navigation changed during auth resolution");
-        return;
-      }
+      if (!stillValid()) return;
 
       // 5) Honor explicit return path even from non-auth surfaces
       if (intentReturnPath && !/^\/(login|signup|auth\/callback)\b/.test(intentReturnPath)) {
         console.log("[AuthReturnRouter] -> intent path", intentReturnPath);
-        navigate(intentReturnPath, { replace: true });
-        clearAuthIntent();
+        if (go(intentReturnPath)) clearAuthIntent();
         return;
       }
 
       // 5b) Approved partner without intent → partner dashboard
       if (isApprovedPartner) {
         console.log("[AuthReturnRouter] -> /partenaire/dashboard (approved partner)");
-        navigate("/partenaire/dashboard", { replace: true });
-        clearAuthIntent();
+        if (go("/partenaire/dashboard")) clearAuthIntent();
         return;
       }
 
@@ -196,19 +211,17 @@ export default function AuthReturnRouter() {
       // 7) No role at all → onboarding (final safety net)
       if (roleList.length === 0) {
         console.log("[AuthReturnRouter] -> /onboarding (no role)");
-        navigate("/onboarding", { replace: true });
-        clearAuthIntent();
+        if (go("/onboarding")) clearAuthIntent();
         return;
       }
 
       const target = postLoginPathForRole(primaryRole, intentReturnPath);
       console.log("[AuthReturnRouter] -> role redirect", { primaryRole, target });
-      navigate(target, { replace: true });
-      clearAuthIntent();
+      if (go(target)) clearAuthIntent();
       }, 0);
     });
 
-    return () => subscription.unsubscribe();
+    return () => { unmounted = true; subscription.unsubscribe(); };
   }, [navigate]);
 
   return null;
