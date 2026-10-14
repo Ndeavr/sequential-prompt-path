@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 

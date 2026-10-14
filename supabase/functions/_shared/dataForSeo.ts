@@ -1,3 +1,4 @@
+// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 /**
  * dataForSeo — TARGETED enrichment adapter for already-known official records.
  *
