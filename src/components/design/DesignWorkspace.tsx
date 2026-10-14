@@ -67,6 +67,10 @@ export default function DesignWorkspace({
 
   // Show signup prompt when generation starts (if not logged in)
   useEffect(() => {
+    if (!isGenerating) {
+      setShowSignup(false);
+      return;
+    }
     if (isGenerating && !user) {
       const timer = setTimeout(() => setShowSignup(true), 1500);
       return () => clearTimeout(timer);
