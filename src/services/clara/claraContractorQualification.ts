@@ -175,11 +175,12 @@ export function saveClaraQualification(
 }
 
 /** Hydrate la qualification à partir de la session canonique (retour, second appareil). */
-export function hydrateClaraQualification(workflow: Record<string, unknown> | null | undefined): void {
+export function hydrateClaraQualification(workflow: Record<string, unknown> | null | undefined, options: { ownerValidated?: boolean } = {}): void {
   const remote = (workflow?.contractor_qualification ?? null) as ClaraContractorQualification | null;
   if (!remote) return;
   const current = read();
-  if ((current.updated_at ?? "") >= (remote.updated_at ?? "")) return;
+  if (options.ownerValidated && (pendingQualification || syncError)) return;
+  if (!options.ownerValidated && (current.updated_at ?? "") >= (remote.updated_at ?? "")) return;
   write(remote);
 }
 

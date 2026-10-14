@@ -1,5 +1,5 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
-import { CLARA_QUALIFICATION_UPDATED_EVENT } from "@/services/clara/claraContractorQualification";
+import { CLARA_QUALIFICATION_UPDATED_EVENT, getClaraQualification, hydrateClaraQualification } from "@/services/clara/claraContractorQualification";
 import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
 import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
 /**
@@ -221,12 +221,16 @@ export default function PageContractorPricingIntake() {
       const qsCity = searchParams.get("ville");
       const qsTrade = searchParams.get("metier");
       let answers: Record<string, unknown> = {};
+      const qualificationAtStart = getClaraQualification().updated_at;
       try {
         const { data: res } = await supabase.functions.invoke("matching-profile", {
           body: { action: "get", session_key: sessionKey },
         });
         const profile = (res as { profile?: { answers?: Record<string, unknown> } | null } | null)?.profile;
         answers = profile?.answers ?? {};
+        if (answers.clara_qualification && getClaraQualification().updated_at === qualificationAtStart) {
+          hydrateClaraQualification({ contractor_qualification: answers.clara_qualification }, { ownerValidated: true });
+        }
       } catch {
         /* profil indisponible : le parcours reste utilisable */
       }
