@@ -2,7 +2,7 @@ name: Critical founder path
 
 on:
   push:
-    branches: [main, lovable-sync]
+    branches: [lovable-sync]
   pull_request:
     branches: [main, lovable-sync]
 
@@ -29,3 +29,24 @@ jobs:
 
       - name: Test, typecheck, lint critical path, and build
         run: npm run ci:critical
+
+  mirror-main:
+    name: Keep main aligned with the active source
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/lovable-sync'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Mirror without discarding independent work
+        run: |
+          git fetch origin main lovable-sync
+          git merge-base --is-ancestor origin/main HEAD || {
+            echo 'main contains independent work. Reconcile both histories; never force-push.'
+            exit 1
+          }
+          git push origin HEAD:main

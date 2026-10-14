@@ -17,6 +17,7 @@ export type KnownContractorContext = {
   /** Objectifs qualitatifs déclarés à Clara — jamais convertis en montant. */
   goals: string[];
   website: string | null;
+  preferences?: { work: string[]; excludedWork: string[]; excludedAreas: string[]; projectSizes: string[]; duration: string | null };
 };
 
 const EMPTY: KnownContractorContext = { businessName: null, trade: null, city: null, serviceAreas: [], goals: [], website: null };
@@ -72,5 +73,9 @@ export function getKnownContractorContext(): KnownContractorContext {
     serviceAreas: (clara.service_areas ?? []).map(clean).filter((v): v is string => !!v),
     goals: (clara.goals ?? []).map(clean).filter((v): v is string => !!v),
     website: clean(clara.website),
+    ...(clara.preferences_captured ? { preferences: {
+      work: clara.preferred_work ?? [], excludedWork: clara.excluded_work ?? [], excludedAreas: clara.excluded_areas ?? [],
+      projectSizes: clara.preferred_project_sizes ?? [], duration: clean(clara.preferred_duration),
+    } } : {}),
   };
 }

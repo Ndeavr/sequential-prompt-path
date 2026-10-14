@@ -15,6 +15,7 @@ vi.mock("@/services/clara/claraSession", () => ({
   peekClaraSessionToken: () => mocks.token,
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
+  CLARA_QUALIFICATION_UPDATED_EVENT: "clara-contractor-qualification-updated",
   getClaraQualification: () => mocks.qualification,
   saveClaraQualification: (patch: object) => {
     mocks.qualification = { ...mocks.qualification, ...patch };
@@ -42,6 +43,7 @@ beforeEach(() => {
     goals: ["Visibilité"], primary_trade: "Isolation",
     provenance: { primary_trade: "declared" },
     customer_type: "Résidentiel", service_areas: ["Terrebonne"],
+    preferences_captured: true, preferences_confirmed: true,
   };
 });
 afterEach(cleanup);
