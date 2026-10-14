@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 /**
  * dataforseo-enrich-official — TARGETED enrichment of ALREADY-KNOWN official records.
  *

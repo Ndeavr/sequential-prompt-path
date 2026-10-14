@@ -1,3 +1,4 @@
+import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -33,19 +34,7 @@ import {
   type MatchingQuestion,
 } from "@/lib/matching/matchingQuestions";
 
-const SESSION_STORAGE_KEY = "unpro_matching_session_key";
 
-function getSessionKey(): string {
-  try {
-    const existing = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (existing && existing.length >= 8) return existing;
-    const key = `mp_${crypto.randomUUID()}`;
-    localStorage.setItem(SESSION_STORAGE_KEY, key);
-    return key;
-  } catch {
-    return `mp_${Math.random().toString(36).slice(2)}${Date.now()}`;
-  }
-}
 
 type Answers = Record<string, unknown>;
 /** Company identity resolved server-side from the validated audit. */

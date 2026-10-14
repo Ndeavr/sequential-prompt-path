@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // PROTECTED — Single canonical Twilio sender. ALL outbound SMS must route through sendSms().
 // Writes a full audit row to sms_events_v2 before/after the Twilio call so we never lose visibility.
 

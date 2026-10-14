@@ -20,6 +20,7 @@ import { CheckCircle2, ExternalLink, MapPin, Phone, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getClaraQualification,
+  resumeClaraQualification,
   isAddressAnswer,
   CLARA_ADDRESS_CLARIFICATION,
   saveClaraQualification,
@@ -147,6 +148,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     if (startedRef.current) return;
     startedRef.current = true;
     void trackFunnelStep("home_contractor_click", { metadata: { surface: "home_clara_chat" } });
+    void (async () => {
+    try { await resumeClaraQualification(); } catch { setSummaryError("La reprise serveur est indisponible. Vos informations locales sont conservées."); }
     const known = getClaraQualification();
     if (known.google_place_id && known.business_name) {
       void (async () => {
@@ -160,6 +163,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       return;
     }
     void go("name", "Quel est le nom de votre entreprise ou son site Web?");
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

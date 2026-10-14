@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 // Public edge function — processes a form_submissions row:
 // 1) sends user confirmation email (if email present)
 // 2) sends admin notification email

@@ -1,4 +1,3 @@
-// @ts-nocheck -- typage strict Deno désactivé; aucune modification de comportement
 /**
  * rbq-official-ingest — OFFICIAL identity foundation (RBQ, then REQ reconciliation).
  *

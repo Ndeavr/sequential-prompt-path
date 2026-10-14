@@ -1,3 +1,4 @@
+vi.mock("@/services/clara/claraQualificationPersistence", () => ({ persistClaraQualification: vi.fn(() => Promise.resolve()), loadClaraQualification: vi.fn(() => Promise.resolve(null)) }));
 /**
  * Qualification entrepreneur menée par Clara AVANT l'ouverture de l'audit.
  * Une question à la fois, jamais une question déjà répondue, ville de
