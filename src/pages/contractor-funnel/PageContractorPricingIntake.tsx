@@ -1,3 +1,5 @@
+import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
+import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
 /**
  * UNPRO — Pricing Intake (Clara-style conversational)
  * Route: /entrepreneur/devis-personnalise
@@ -719,7 +721,7 @@ export default function PageContractorPricingIntake() {
         metadata: { plan_code: quote.recommended_plan ?? null, from: searchParams.get("from") },
       });
       const carry = new URLSearchParams();
-      for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t", "objective", "from", "utm_source", "utm_medium", "utm_campaign", "utm_content", "campaign", "source"]) {
+      for (const key of new Set([...ATTRIBUTION_PARAMS, "promo", "offer", "audit", "audit_token", "objective", "from"])) {
         const value = searchParams.get(key);
         if (value) carry.set(key, value);
       }
@@ -762,6 +764,7 @@ export default function PageContractorPricingIntake() {
       </div>
 
       <div className="relative max-w-xl mx-auto px-5 pt-10">
+        <CreditCampaignNotice />
         {/* Fiche rattachée / entreprise analysée — jamais de détour vers l'audit. */}
         {(linked || auditValid) && (
           <div

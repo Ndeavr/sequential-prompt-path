@@ -436,6 +436,8 @@ const PageContractorAssetsStudio = lazyWithRetry(() => import("@/pages/contracto
 const PageContractorFAQBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorFAQBuilder"));
 const PageContractorPlanEntry = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPlanEntry"));
 const PageContractorPersonalizedPlan = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
+const PageCreditPromotionnel = lazyWithRetry(() => import("@/pages/contractor-funnel/PageCreditPromotionnel"));
+const PageContractorAffiliation = lazyWithRetry(() => import("@/pages/entrepreneur/PageContractorAffiliation"));
 const PageContractorPricingIntake = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminPricingIntelligence"));
 const PageAdminUnproStripeHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminUnproStripeHealth"));
@@ -1085,6 +1087,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
         <Route path="/entrepreneur/plan-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanEntry /></Suspense>} />
         <Route path="/entrepreneur/plan-personnalise/:quoteId" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedPlan /></Suspense>} />
+        <Route path="/credit-promotionnel" element={<Suspense fallback={<LazyFallback />}><PageCreditPromotionnel /></Suspense>} />
+        <Route path="/entrepreneurs/affiliation" element={<Suspense fallback={<LazyFallback />}><PageContractorAffiliation /></Suspense>} />
         <Route path="/entrepreneur/devis-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPricingIntake /></Suspense>} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />

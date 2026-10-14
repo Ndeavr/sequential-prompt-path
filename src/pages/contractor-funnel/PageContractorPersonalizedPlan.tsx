@@ -1,3 +1,5 @@
+import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
+import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffiliateTeaser";
 /**
  * UNPRO — Personalized Pricing Plan
  * Route: /entrepreneur/plan-personnalise/:quoteId
@@ -488,6 +490,7 @@ export default function PageContractorPersonalizedPlan() {
       </div>
 
       <div className="relative max-w-2xl mx-auto px-5 pt-12">
+        <CreditCampaignNotice />
         {/* En-tête — étape 3 sur 3 */}
         <div className="mb-6">
           <p className="text-sm text-white/60 tracking-wide uppercase" data-testid="plan-step-label">
@@ -714,6 +717,7 @@ export default function PageContractorPersonalizedPlan() {
           </p>
         )}
 
+        <div className="mx-auto max-w-4xl px-5"><ContractorAffiliateTeaser /></div>
         <div className="text-center text-xs text-white/40 mt-8">
           Devis #{quote.id.slice(0, 8)} · Valide 30 jours.
         </div>
