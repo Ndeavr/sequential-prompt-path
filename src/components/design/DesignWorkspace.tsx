@@ -31,7 +31,7 @@ interface Props {
   usageLimitHit: { current: number; limit: number } | null;
   dailyLimitHit?: DailyLimitPayload | null;
   onBack: () => void;
-  onGenerate: (prompt: string, options?: any) => void;
+  onGenerate: React.ComponentProps<typeof DesignControls>["onSendPrompt"];
   onFreeze: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSelectVersion: (id: string) => void;
@@ -74,20 +74,22 @@ export default function DesignWorkspace({
   }, [isGenerating, user]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="flex flex-col bg-background overflow-hidden w-full min-w-0" style={{ height: "var(--app-visible-height, 100dvh)" }}>
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm z-30">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-border bg-card/80 backdrop-blur-sm z-30 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
           <Button
             variant="ghost"
             size="icon"
             className="lg:hidden h-8 w-8"
+            aria-label="Voir mes versions"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="w-4 h-4" />
           </Button>
           <button
             onClick={onBack}
+            aria-label="Changer de photo"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -96,12 +98,12 @@ export default function DesignWorkspace({
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-display font-semibold text-foreground">
+            <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap">
               UNPRO Design
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-muted-foreground hidden sm:inline">
             {versions.length} version{versions.length !== 1 ? "s" : ""}
           </span>
@@ -118,20 +120,18 @@ export default function DesignWorkspace({
             variant="outline"
             size="sm"
             className="text-xs h-8 gap-1.5"
+            aria-label="Partager le design"
+            disabled={!activeVersion?.imageUrl || isGenerating}
             onClick={() => setIsSharing(true)}
           >
             <Share2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Partager</span>
           </Button>
-          <Button size="sm" className="text-xs h-8 gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            Créer le brief
-          </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-y-auto lg:overflow-hidden">
         {/* Left Sidebar — hidden on mobile */}
         <div className="hidden lg:block">
           <DesignSidebar
@@ -166,7 +166,7 @@ export default function DesignWorkspace({
         />
 
         {/* Center Canvas — give it a minimum height on mobile */}
-        <div className="flex-1 min-h-[40vh] lg:min-h-0">
+        <div className="h-[35dvh] min-h-[220px] shrink-0 lg:h-auto lg:flex-1 lg:min-h-0 min-w-0">
           <DesignCanvas
             originalImage={originalImage}
             activeVersion={activeVersion}
@@ -178,22 +178,9 @@ export default function DesignWorkspace({
           />
         </div>
 
-        {/* Right Controls — desktop */}
-        <div className="hidden lg:block">
-          <DesignControls
-            onSendPrompt={onGenerate}
-            isGenerating={isGenerating}
-            roomType={roomType}
-          />
-        </div>
-
-        {/* Mobile Bottom Controls — scrollable */}
-        <div className="lg:hidden max-h-[50vh] overflow-y-auto border-t border-border">
-          <DesignControls
-            onSendPrompt={onGenerate}
-            isGenerating={isGenerating}
-            roomType={roomType}
-          />
+        {/* One controls instance preserves selections across screen sizes. */}
+        <div className="border-t lg:border-t-0 border-border min-w-0 lg:shrink-0">
+          <DesignControls onSendPrompt={onGenerate} isGenerating={isGenerating} roomType={roomType} />
         </div>
       </div>
 

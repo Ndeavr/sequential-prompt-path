@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { readDesignBody, isDesignImage, generateDesignVariations } from "../_shared/designGeneration.ts";
 import {
   checkHomeownerQuota,
   consumeHomeownerQuota,
@@ -33,16 +34,16 @@ Deno.serve(async (req) => {
       userId = user?.id ?? null;
     }
 
-    const body = await req.json();
+    const body: any = await readDesignBody(req);
     const { action } = body;
 
     // ─── ACTION: generate ───
     if (action === "generate") {
       const { imageBase64, prompt, style, budget, zones, roomType, projectId, inspirationImages, materials, colorPalette } = body;
 
-      if (!imageBase64) {
+      if (!isDesignImage(imageBase64) || (inspirationImages && (!Array.isArray(inspirationImages) || inspirationImages.length > 3 || !inspirationImages.every(isDesignImage)))) {
         return new Response(
-          JSON.stringify({ error: "Image requise" }),
+          JSON.stringify({ error: "Choisissez une photo JPG, PNG ou WebP de moins de 1 Mo et au maximum 3 inspirations." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -84,8 +85,11 @@ Deno.serve(async (req) => {
 
       const userPrompt = prompt || `Redesign this room in a ${style || "modern"} style.`;
 
-      // Generate 3 variations by making parallel requests
+      // Sequential requests avoid exhausting the Edge runtime with base64 copies.
+      const deadline = Date.now() + 110_000;
+      let providerStatus = 502;
       const generateOne = async (variation: number) => {
+        if (Date.now() >= deadline) { providerStatus = 504; return null; }
         const variationHint = variation === 1
           ? "Create a subtle, conservative transformation."
           : variation === 2
@@ -115,6 +119,7 @@ Deno.serve(async (req) => {
 
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
+          signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
           headers: {
             Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
@@ -132,30 +137,24 @@ Deno.serve(async (req) => {
         });
 
         if (!response.ok) {
-          console.error(`Generation ${variation} failed:`, await response.text());
+          providerStatus = response.status;
+          console.error("design_provider_failure", { variation, status: response.status });
+          await response.body?.cancel();
           return null;
         }
 
         const data = await response.json();
         const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
         const text = data.choices?.[0]?.message?.content || "";
-        return { imageUrl, text, variation };
+        return imageUrl ? { imageUrl, text, variation } : null;
       };
 
-      const results = await Promise.allSettled([
-        generateOne(1),
-        generateOne(2),
-        generateOne(3),
-      ]);
-
-      const generated = results
-        .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled" && r.value?.imageUrl)
-        .map((r) => r.value);
+      const generated = await generateDesignVariations(generateOne);
 
       if (generated.length === 0) {
         return new Response(
-          JSON.stringify({ error: "La génération a échoué. Réessayez." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: providerStatus === 429 ? "Le service de génération est occupé. Réessayez dans un moment." : providerStatus === 402 ? "Le service de génération est momentanément indisponible." : "Le service de génération n’a pas répondu. Votre photo est conservée; réessayez." }),
+          { status: providerStatus === 429 ? 429 : 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -215,7 +214,7 @@ Deno.serve(async (req) => {
             savedVersions.push({
               ...version,
               imageUrl: publicUrl || g.imageUrl,
-              label: labels[i],
+              label: labels[g.variation - 1],
             });
           }
         }
@@ -229,7 +228,7 @@ Deno.serve(async (req) => {
                 id: `gen-${Date.now()}-${i}`,
                 imageUrl: g.imageUrl,
                 text: g.text,
-                label: ["Sobre", "Équilibré", "Premium"][i],
+                label: ["Sobre", "Équilibré", "Premium"][g.variation - 1],
               })),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -239,6 +238,7 @@ Deno.serve(async (req) => {
     // ─── ACTION: identify_room ───
     if (action === "identify_room") {
       const { imageBase64 } = body;
+      if (!isDesignImage(imageBase64)) return new Response(JSON.stringify({ error: "Photo invalide ou trop volumineuse." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -553,10 +553,11 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("design-generate error:", err);
+    console.error("design_generate_failure", err instanceof Error ? err.name : "unknown");
+    const tooLarge = err instanceof Error && err.message === "image_too_large";
     return new Response(
-      JSON.stringify({ error: "Erreur interne du serveur" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: tooLarge ? "Les photos sont trop volumineuses. Choisissez des versions plus petites." : "Le service de génération est momentanément indisponible. Réessayez." }),
+      { status: tooLarge ? 413 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

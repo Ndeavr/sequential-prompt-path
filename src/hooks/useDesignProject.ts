@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { DesignVersion } from "@/components/design/data";
 import { parseDailyLimit, type DailyLimitPayload } from "@/lib/copy/usagePolicy";
+import { prepareDesignPhoto } from "@/lib/design/photo";
 
 const DESIGN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/design-generate`;
 
@@ -27,6 +28,7 @@ export function useDesignProject() {
   const authHeaders = useCallback(
     () => ({
       "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     }),
     [session]
@@ -37,10 +39,12 @@ export function useDesignProject() {
   // ─── Upload + identify room ───
   const uploadPhoto = useCallback(
     async (file: File, selectedRoom?: string) => {
+      const prepared = await prepareDesignPhoto(file);
       const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
+      const base64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
+        reader.onerror = () => reject(new Error("Impossible de lire la photo."));
+        reader.readAsDataURL(prepared);
       });
 
       setOriginalImage(base64);
@@ -109,7 +113,10 @@ export function useDesignProject() {
         colorPalette?: string;
       }
     ) => {
-      if (!originalImage) return;
+      if (!originalImage || abortRef.current) return;
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const timeout = window.setTimeout(() => controller.abort(), 135_000);
       setIsGenerating(true);
       setError(null);
       setDailyLimitHit(null);
@@ -118,6 +125,7 @@ export function useDesignProject() {
         const resp = await fetch(DESIGN_URL, {
           method: "POST",
           headers: authHeaders(),
+          signal: controller.signal,
           body: JSON.stringify({
             action: "generate",
             imageBase64: originalImage,
@@ -133,6 +141,7 @@ export function useDesignProject() {
           }),
         });
 
+        if (abortRef.current !== controller) return;
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({ error: "Erreur" }));
           const daily = parseDailyLimit(err);
@@ -145,13 +154,14 @@ export function useDesignProject() {
             setUsageLimitHit({ current: err.current_count, limit: err.limit });
             return;
           }
-          setError(err.error || "La génération a échoué.");
+          setError(err.error || (resp.status === 429 ? "Le service est occupé. Réessayez dans un moment." : "La génération est momentanément indisponible. Réessayez."));
           return;
         }
 
         const data = await resp.json();
+        if (abortRef.current !== controller) return;
         const newVersions: DesignVersion[] = (data.versions || []).map(
-          (v: any, i: number) => ({
+          (v: { id?: string; version_number?: string; imageUrl?: string; image_url?: string; style_label?: string; budget_mode?: string; created_at?: string }, i: number) => ({
             id: v.id || `gen-${Date.now()}-${i}`,
             versionNumber: v.version_number || `${versions.length + i + 1}`,
             imageUrl: v.imageUrl || v.image_url || null,
@@ -171,10 +181,15 @@ export function useDesignProject() {
           setError("Aucune image générée. Réessayez.");
         }
       } catch (err) {
-        console.error("Generation error:", err);
-        setError("Erreur de connexion. Réessayez.");
+        if (abortRef.current === controller) {
+          setError(controller.signal.aborted ? "La génération a pris trop de temps. Réessayez." : "Erreur de connexion. Réessayez.");
+        }
       } finally {
-        setIsGenerating(false);
+        window.clearTimeout(timeout);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setIsGenerating(false);
+        }
       }
     },
     [originalImage, roomType, projectId, versions, activeVersionId, authHeaders]
@@ -225,6 +240,8 @@ export function useDesignProject() {
   }, []);
 
   const reset = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     setProjectId(null);
     setOriginalImage(null);
     setRoomType(null);
