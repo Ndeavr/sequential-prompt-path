@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import SeoHead from "@/seo/components/SeoHead";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { creditCampaignHref } from "@/lib/contractorCampaignLinks";
+import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffiliateTeaser";
 
 const STEPS = [
   { icon: Briefcase, title: "Métier et ville", text: "Votre domaine et votre territoire." },
@@ -50,7 +51,7 @@ export default function PageCreditPromotionnel() {
             Vérifier mon admissibilité <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <p className="text-sm text-muted-foreground">Avec un forfait admissible de 1 000 $ CA ou plus. Conditions applicables.</p>
-        <p className="text-sm text-muted-foreground">Admissibilité à confirmer : la disponibilité et les services couverts doivent être validés avant l’achat. Cette vérification ne réserve pas de place.</p>
+          <p className="text-sm text-muted-foreground">Admissibilité à confirmer : la disponibilité et les services couverts doivent être validés avant l’achat. Cette vérification ne réserve pas de place.</p>
         </div>
       </section>
 
@@ -62,6 +63,15 @@ export default function PageCreditPromotionnel() {
             <p className="text-sm text-muted-foreground">{s.text}</p>
           </div>
         ))}
+      </section>
+
+      <section className="mx-auto w-full max-w-4xl px-5 pb-10">
+        <div className="rounded-3xl border border-primary/20 bg-card p-6 sm:p-8">
+          <h2 className="text-2xl font-semibold">Un coup de pouce pour vos prochains contrats.</h2>
+          <p className="mt-3 text-muted-foreground">Par exemple, si votre forfait admissible coûte 1 500 $, vous payez 1 500 $. Si votre admissibilité est confirmée, vous recevez aussi 1 000 $ en services UNPRO supplémentaires, détaillés dans votre offre.</p>
+          <Button size="lg" className="mt-5 h-auto min-h-12 whitespace-normal py-3" onClick={start}>Vérifier mon admissibilité <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" /></Button>
+        </div>
+        <ContractorAffiliateTeaser />
       </section>
 
       <section className="mx-auto w-full max-w-4xl px-5 pb-16 text-sm text-muted-foreground space-y-2">
