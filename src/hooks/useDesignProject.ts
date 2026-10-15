@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { DesignVersion } from "@/components/design/data";
 import { parseDailyLimit, type DailyLimitPayload } from "@/lib/copy/usagePolicy";
-import { prepareDesignPhoto } from "@/lib/design/photo";
+import { prepareDesignPhoto, designVariationSource } from "@/lib/design/photo";
+import { parseDesignQuota, type DesignQuotaNotice } from "@/lib/design/quota";
 
 const DESIGN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/design-generate`;
 
@@ -21,7 +22,7 @@ export function useDesignProject() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usageLimitHit, setUsageLimitHit] = useState<{ current: number; limit: number } | null>(null);
+  const [usageLimitHit, setUsageLimitHit] = useState<DesignQuotaNotice | null>(null);
   const [dailyLimitHit, setDailyLimitHit] = useState<DailyLimitPayload | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -120,15 +121,18 @@ export function useDesignProject() {
       setIsGenerating(true);
       setError(null);
       setDailyLimitHit(null);
+      setUsageLimitHit(null);
 
       try {
+        const sourceImage = activeVersion?.imageUrl ? await designVariationSource(activeVersion.imageUrl, controller.signal) : originalImage;
         const resp = await fetch(DESIGN_URL, {
           method: "POST",
           headers: authHeaders(),
           signal: controller.signal,
           body: JSON.stringify({
             action: "generate",
-            imageBase64: originalImage,
+            imageBase64: sourceImage,
+            variationCount: 1,
             prompt,
             style: options?.style,
             budget: options?.budget,
@@ -150,8 +154,9 @@ export function useDesignProject() {
             setDailyLimitHit(daily);
             return;
           }
-          if (err.usage_limit) {
-            setUsageLimitHit({ current: err.current_count, limit: err.limit });
+          const quota = parseDesignQuota(err);
+          if (quota) {
+            setUsageLimitHit(quota);
             return;
           }
           setError(err.error || (resp.status === 429 ? "Le service est occupé. Réessayez dans un moment." : "La génération est momentanément indisponible. Réessayez."));
@@ -192,7 +197,7 @@ export function useDesignProject() {
         }
       }
     },
-    [originalImage, roomType, projectId, versions, activeVersionId, authHeaders]
+    [originalImage, roomType, projectId, versions, activeVersionId, activeVersion, authHeaders]
   );
 
   // ─── Version management ───

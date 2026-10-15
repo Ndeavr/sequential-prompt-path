@@ -9,7 +9,8 @@
  *   2. `consumeHomeownerQuota` AFTER the operation really succeeded
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { DAILY_LIMIT_COPY, nextTorontoMidnightISO } from "./usagePolicyCopy.ts";
+import { DAILY_LIMIT_COPY, nextTorontoMidnightISO, nextTorontoMonthISO } from "./usagePolicyCopy.ts";
+import { isQuotaAdmin, ADMIN_QUOTA } from "./adminQuota.ts";
 
 export type HomeownerFeature = "quote_analysis_monthly" | "ai_design_monthly";
 
@@ -76,6 +77,7 @@ export async function checkHomeownerQuota(
   userId: string,
   feature: HomeownerFeature,
 ): Promise<QuotaResult> {
+  if (await isQuotaAdmin(supa, userId)) return { ...ADMIN_QUOTA };
   const { data, error } = await supa.rpc("homeowner_quota_check", {
     _user_id: userId,
     _feature_key: feature,
@@ -98,6 +100,7 @@ export async function consumeHomeownerQuota(
   feature: HomeownerFeature,
   idempotencyKey?: string,
 ): Promise<QuotaResult> {
+  if (await isQuotaAdmin(supa, userId)) return { ...ADMIN_QUOTA };
   const { data, error } = await supa.rpc("homeowner_consume_quota", {
     _user_id: userId,
     _feature_key: feature,
@@ -120,7 +123,7 @@ export function quotaBlockedResponse(
     const copy = DAILY_LIMIT_COPY[feature];
     return new Response(
       JSON.stringify({
-        error: copy.title,
+        error: "Revenez demain pour continuer.",
         daily_limit_reached: true,
         feature,
         plan_code: quota.planCode,
@@ -144,7 +147,7 @@ export function quotaBlockedResponse(
 
   return new Response(
     JSON.stringify({
-      error: "Limite atteinte",
+      error: `Adoptez le plan ${label} pour continuer.`,
       quota_exceeded: true,
       feature,
       plan_code: quota.planCode,
@@ -152,6 +155,7 @@ export function quotaBlockedResponse(
       used: quota.used,
       upgrade_target: target,
       upgrade_label: label,
+      resets_at: nextTorontoMonthISO(),
       message,
     }),
     { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },

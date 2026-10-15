@@ -13,6 +13,11 @@ describe('Design generation memory boundaries', () => {
     expect((await generateDesignVariations(call)).map(x => x.variation)).toEqual([1, 3]);
     expect(max).toBe(1); expect(call).toHaveBeenCalledTimes(3);
   });
+  it('generates only one variation when requested', async () => {
+    const call=vi.fn(async variation=>({variation}));
+    expect(await generateDesignVariations(call,1)).toEqual([{variation:1}]);
+    expect(call).toHaveBeenCalledTimes(1);
+  });
   it('rejects oversized and remote image inputs', () => {
     expect(isDesignImage('data:image/jpeg;base64,AAAA')).toBe(true);
     expect(isDesignImage('https://example.com/private.jpg')).toBe(false);

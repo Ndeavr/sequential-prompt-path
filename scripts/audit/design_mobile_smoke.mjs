@@ -20,6 +20,8 @@ try {
       if(body.action==='generate') {
         generations++; request=body;
         if(generations===1) { await new Promise(resolve=>setTimeout(resolve,2200)); return route.fulfill({status:503,json:{error:'Le service de génération est momentanément indisponible.'}}); }
+        if(generations===4)return route.fulfill({status:429,json:{quota_exceeded:true,used:10,limit:10,upgrade_target:'home_signature',resets_at:'2026-11-01T04:00:00Z'}});
+        if(generations===5)return route.fulfill({status:429,json:{daily_limit_reached:true,feature:'ai_design_monthly',resets_at:'2026-10-15T04:00:00Z'}});
         return route.fulfill({json:{versions:[{id:'qa-v1',imageUrl:'http://127.0.0.1:8080/src/assets/design-after-1.jpg'}]}});
       }
     }
@@ -40,17 +42,35 @@ try {
   check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width}: no horizontal overflow`);
   check(await page.getByRole('button',{name:'Dupliquer cette version'}).isDisabled(),`${width}: no invalid version action`);
   await prompt.fill('Peindre les murs en blanc');
-  const generate=page.getByRole('button',{name:'Générer 3 versions',exact:true}).filter({visible:true});await generate.click();
+  const generate=page.getByRole('button',{name:'Générer une variation',exact:true}).filter({visible:true});await generate.click();
   await page.getByText('Le service de génération est momentanément indisponible.',{exact:true}).waitFor();
   await page.getByText('Votre design est en cours…',{exact:true}).waitFor({state:'hidden'});
   check(!(await page.getByText('Votre design est en cours…',{exact:true}).isVisible()),`${width}: signup overlay releases controls after failure`);
   check(await prompt.inputValue()==='Peindre les murs en blanc',`${width}: failed generation preserves prompt`);
   check(await generate.isEnabled(),`${width}: retry remains usable`);
+  const initialSource=request.imageBase64;
   check(request.imageBase64.length<1_400_000,`${width}: bounded photo payload`);
+  check(request.variationCount===1,`${width}: only one variation requested`);
   await generate.click();
   await page.getByRole('button',{name:'Dupliquer cette version'}).waitFor();
   await page.waitForFunction(()=>!document.querySelector('[aria-label="Dupliquer cette version"]').disabled);
   check(await page.getByRole('button',{name:'Dupliquer cette version'}).isEnabled(),`${width}: generated version unlocks actions`);
+  const comparator=page.getByRole('slider',{name:'Comparateur Avant Après'});await comparator.waitFor();
+  check(await comparator.inputValue()==='50',`${width}: before/after starts visible at midpoint`);
+  if(process.env.DESIGN_QA_SCREENSHOT && width===390) await page.screenshot({path:process.env.DESIGN_QA_SCREENSHOT});
+  await comparator.fill('30');await comparator.press('ArrowRight');
+  check(await comparator.inputValue()==='31',`${width}: comparator is keyboard accessible`);
+  check(await page.getByRole('img',{name:'Avant',exact:true}).getAttribute('src')!==await page.getByRole('img',{name:'Après',exact:true}).getAttribute('src'),`${width}: two distinct before/after images`);
+  await generate.click();await page.waitForFunction(()=>!document.querySelector('[aria-label="Dupliquer cette version"]').disabled);
+  check(request.variationCount===1 && request.imageBase64!==initialSource,`${width}: next variation uses a bounded selected image`);
+  await generate.click();
+  const quotaDialog=page.getByRole('dialog',{name:'Adoptez le plan Gold pour continuer.'});await quotaDialog.waitFor();
+  check(await quotaDialog.getByRole('link',{name:'Adoptez le plan Gold'}).getAttribute('href')==='/tarifs/proprietaires?plan=home_signature',`${width}: quota directs to canonical Gold plan`);
+  check(await quotaDialog.getByText(/1 novembre/).isVisible(),`${width}: monthly renewal date is honest`);
+  await quotaDialog.getByRole('button',{name:'Revenir à mon design'}).click();await quotaDialog.waitFor({state:'hidden'});
+  await generate.click();await page.getByText("Revenez demain pour explorer d'autres possibilités pour votre maison.").waitFor();
+  check(await prompt.inputValue()==='Peindre les murs en blanc',`${width}: quota preserves instructions`);
+  await page.getByRole('button',{name:'Revenir à mes designs'}).click();
   if(width<1000){await page.setViewportSize({width,height:480}); await prompt.fill('Armoires vertes');check(await prompt.inputValue()==='Armoires vertes',`${width}: keyboard-height input preserved`);check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width}: reduced viewport no overflow`);}
   check(errors.length===0,`${width}: no runtime errors: ${errors.join('; ')}`);
   await context.close();

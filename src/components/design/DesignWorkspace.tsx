@@ -17,6 +17,7 @@ import DesignShare from "./DesignShare";
 import DesignUpgradeModal from "./DesignUpgradeModal";
 import DesignSignupPrompt from "./DesignSignupPrompt";
 import type { DesignVersion } from "./data";
+import type { DesignQuotaNotice } from "@/lib/design/quota";
 
 interface Props {
   originalImage: string;
@@ -28,7 +29,7 @@ interface Props {
   error: string | null;
   projectId: string | null;
   shareToken: string | null;
-  usageLimitHit: { current: number; limit: number } | null;
+  usageLimitHit: DesignQuotaNotice | null;
   dailyLimitHit?: DailyLimitPayload | null;
   onBack: () => void;
   onGenerate: React.ComponentProps<typeof DesignControls>["onSendPrompt"];
@@ -223,8 +224,7 @@ export default function DesignWorkspace({
         )}
         {usageLimitHit && !dailyLimitHit && (
           <DesignUpgradeModal
-            currentCount={usageLimitHit.current}
-            limit={usageLimitHit.limit}
+            quota={usageLimitHit}
             onClose={onClearUsageLimit}
           />
         )}

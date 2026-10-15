@@ -2,7 +2,7 @@
  * UNPRO Design — Center Canvas
  * Active rendered version with before/after slider + error state
  */
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Snowflake, Copy, Share2, RotateCcw, ZoomIn, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,39 +30,7 @@ export default function DesignCanvas({
   onShare,
 }: Props) {
   const [sliderPos, setSliderPos] = useState(50);
-  const [showSlider, setShowSlider] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const updateSlider = useCallback(
-    (clientX: number) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const pos = ((clientX - rect.left) / rect.width) * 100;
-      setSliderPos(Math.max(2, Math.min(98, pos)));
-    },
-    []
-  );
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!showSlider) return;
-      setIsDragging(true);
-      updateSlider(e.clientX);
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    },
-    [showSlider, updateSlider]
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (isDragging) updateSlider(e.clientX);
-    },
-    [isDragging, updateSlider]
-  );
-
-  const handlePointerUp = useCallback(() => setIsDragging(false), []);
-
+  const [showSlider, setShowSlider] = useState(true);
   const renderImage = activeVersion?.imageUrl || originalImage;
   const canCompareSlider = showSlider && originalImage && activeVersion?.imageUrl;
 
@@ -89,13 +57,15 @@ export default function DesignCanvas({
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant={showSlider ? "default" : "ghost"}
-            size="icon"
-            className="h-8 w-8"
+            size="sm"
+            className="h-10 px-3 gap-1.5 w-auto"
+            aria-label="Avant / Après"
+            aria-pressed={showSlider}
             onClick={() => setShowSlider(!showSlider)}
             title="Avant / Après"
             disabled={!activeVersion?.imageUrl}
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" /><span className="text-xs">Avant / Après</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-10 w-10" onClick={onFreeze} title="Geler" aria-label="Geler cette version" disabled={!activeVersion?.imageUrl || isGenerating || activeVersion.frozen}>
             <Snowflake className="w-4 h-4" />
@@ -151,25 +121,20 @@ export default function DesignCanvas({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
-              ref={containerRef}
               className="absolute inset-0 flex items-center justify-center p-4 select-none"
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
             >
               {canCompareSlider ? (
                 <div className="relative w-full h-full max-w-3xl rounded-2xl overflow-hidden">
-                  <img src={activeVersion.imageUrl!} alt="Après" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPos}%` }}>
+                  <img src={activeVersion.imageUrl!} alt="Après" className="w-full h-full object-contain" />
+                  <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}>
                     <img
                       src={originalImage!}
                       alt="Avant"
-                      className="h-full object-cover"
-                      style={{ width: containerRef.current?.clientWidth }}
+                      className="w-full h-full object-contain"
                     />
                   </div>
                   <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+                    className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg pointer-events-none"
                     style={{ left: `${sliderPos}%` }}
                   >
                     <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center cursor-col-resize">
@@ -179,6 +144,9 @@ export default function DesignCanvas({
                       </div>
                     </div>
                   </div>
+                  <input type="range" min="0" max="100" value={sliderPos} onChange={(e) => setSliderPos(Number(e.target.value))}
+                    aria-label="Comparateur Avant Après" aria-valuetext={`${sliderPos} % avant`}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize" />
                   <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium">
                     Avant
                   </div>
@@ -187,11 +155,11 @@ export default function DesignCanvas({
                   </div>
                 </div>
               ) : (
-                <div className="relative">
+                <div className="relative w-full h-full">
                   <img
                     src={renderImage}
                     alt="Version active"
-                    className="max-w-full max-h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
+                    className="w-full h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
                   />
                   {activeVersion?.id && (
                     <div className="absolute bottom-4 right-4 z-20">

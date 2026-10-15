@@ -79,7 +79,7 @@ export default function DesignSignupPrompt({ isOpen, onClose }: Props) {
                 Votre design est en cours…
               </h3>
               <p className="text-sm text-muted-foreground">
-                Créez un compte gratuit pour sauvegarder vos créations et recevoir 3 variantes.
+                Créez un compte gratuit pour sauvegarder vos créations et faire évoluer votre design.
               </p>
 
               {/* Loading indicator */}
