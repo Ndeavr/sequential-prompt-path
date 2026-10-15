@@ -93,6 +93,9 @@ export function getRbqDashboardState(p: {
     case "other":
       return { kind: "under_review", marker: "PENDING", title: "Situation RBQ en examen", detail: "UNPRO examine votre situation. Aucun mandat de travaux réglementés avant une licence RBQ valide et vérifiée.", isNextAction: true, regulatedEligible: false };
   }
+  if (p.rbq_number?.trim()) {
+    return { kind: "under_review", marker: "DECLARED", title: "Numéro RBQ déclaré — validité à confirmer", detail: "Un numéro est présent sur votre fiche. Confirmez votre situation ci-dessous; seule une vérification officielle peut confirmer sa validité.", isNextAction: true, regulatedEligible: false };
+  }
   if (regulated) {
     return {
       kind: "needs_rbq", marker: "INFERRED", title: "Prochaine action : votre licence RBQ",

@@ -25,13 +25,13 @@ export function CallUnproLink({ context, label, compact, className }: Props) {
         });
       }}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-[18px] px-4 py-2 text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "inline-flex max-w-full min-w-0 flex-wrap min-h-11 items-center justify-center gap-2 rounded-[18px] px-4 py-2 text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >
       <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-      <span>{text}</span>
-      {compact && <span className="opacity-80">{PUBLIC_PHONE.display}</span>}
+      <span className="min-w-0">{text}</span>
+      {compact && <span className="shrink-0 whitespace-nowrap opacity-80">{PUBLIC_PHONE.display}</span>}
     </a>
   );
 }

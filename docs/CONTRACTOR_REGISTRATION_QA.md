@@ -14,3 +14,9 @@ Legal name and a ten-digit NEQ are editable. Declared identifiers are not verifi
 - `npm test` and `npm run lint:critical`; `npx tsc --noEmit -p tsconfig.app.json` checks the app itself; `npx vite build` validates production bundling.
 
 All browser/backend test fixtures intercept external services. They do not create real accounts, payments, messages or public company records. Live schema, public media bucket and owner policies were checked read-only. Successful mocked checkout tests are not proof of a real payment or official registry verification.
+
+## Follow-up from production-browser QA
+
+Production assets and the real routes were tested with external APIs intercepted at all three widths. That review found a price/currency wrap, a phone-number wrap, duplicated punctuation in the company greeting, and an ambiguous editor RBQ status when a stored number lacked a declaration. The follow-up keeps currency/phone tokens together, normalizes greeting punctuation, and labels that number as declared without changing eligibility.
+
+The same review found repeated role reads on profile mount. The shared `useAuth` query no longer invalidates all role observers whenever another consumer mounts. A known role has a one-second shared freshness window; unresolved roles remain immediately stale, explicit role invalidation still takes effect, and each user has a distinct cache key. `auth-role-query-sharing.test.tsx` checks shared mounts, explicit updates, user changes and failed reads.
