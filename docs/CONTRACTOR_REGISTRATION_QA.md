@@ -37,3 +37,26 @@ Paid activation takes priority over newer unpaid estimates for the same owner/co
 Validation: eight service regressions and 21 actual-DOM CTA scenarios across
 360, 390 and 1280 px, with mocked auth/data and external requests blocked.
 The signed-in Isolation Solution Royal account was not impersonated or modified.
+
+### Recalculated proposal regression — October 15
+
+A newly calculated quote is unpaid even when the contractor already paid its
+initial activation on another quote. The plan page now resolves the same owner's
+paid activation before showing purchasing actions, using the canonical resume
+service; lookup failures show retry rather than a fresh activation offer.
+An activated company sees its recalculated monthly proposal, its declared
+next-month capacity and a distinct monthly-plan CTA, with no second $350
+activation or fallback. No subscription or payment state changes on calculation.
+
+The explicit personalized view survives “more appointments”, “adjust my offer”,
+quote recalculation, tier selection, authentication return and reload through a
+`view=personalized` route hint. It changes presentation only, never entitlement or
+server pricing. A new contractor's default first offer remains the $350 activation.
+
+`scripts/audit/contractor_plan_revision_smoke.mjs` runs 63 actual-DOM checks across
+360/390/1280 px: new contractor, previously paid activation with newer unpaid quote,
+already-paid current quote and lookup failure. Both editable journeys change
+next-month capacity from 4 to 30, submit through the real intake, display the
+returned quote/price, preserve attribution and reload the personalized view.
+Auth/data/pricing responses are fixtures; all external requests are blocked.
+No real account, payment or notification is created or changed by these tests.

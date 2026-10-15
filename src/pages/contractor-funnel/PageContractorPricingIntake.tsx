@@ -749,7 +749,7 @@ export default function PageContractorPricingIntake() {
         metadata: { plan_code: quote.recommended_plan ?? null, from: searchParams.get("from") },
       });
       const carry = new URLSearchParams();
-      for (const key of new Set([...ATTRIBUTION_PARAMS, "promo", "offer", "audit", "audit_token", "objective", "from"])) {
+      for (const key of new Set([...ATTRIBUTION_PARAMS, "promo", "offer", "audit", "audit_token", "objective", "from", "view"])) {
         const value = searchParams.get(key);
         if (value) carry.set(key, value);
       }
