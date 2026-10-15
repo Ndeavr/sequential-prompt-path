@@ -1,7 +1,6 @@
 // Alex V3 — Universal Qualification Engine edge function.
 // Per turn: extract -> merge -> score -> either next_question or qualified recommendation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { normalizeAddressServer } from "../create-project-unified/validation.ts";
 import { loadOwnedDesignBrief } from "../_shared/designBrief.ts";
 
 const corsHeaders = {
@@ -236,7 +235,7 @@ Deno.serve(async (req) => {
 
     if (graph.project_context.design_brief) {
       const a = body.address_confirmation;
-      if (a && typeof a.address === "string" && normalizeAddressServer(a.address) && typeof a.city === "string" && a.city.trim()
+      if (a && typeof a.address === "string" && a.address.trim() && typeof a.city === "string" && a.city.trim()
         && typeof a.lat === "number" && Number.isFinite(a.lat) && Math.abs(a.lat) <= 90
         && typeof a.lng === "number" && Number.isFinite(a.lng) && Math.abs(a.lng) <= 180) {
         graph.project_context.design_address = { address: a.address.slice(0,300), city: a.city.slice(0,120), postal_code: typeof a.postalCode === "string" ? a.postalCode.slice(0,12) : null, latitude: a.lat, longitude: a.lng };
