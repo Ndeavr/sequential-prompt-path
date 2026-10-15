@@ -148,7 +148,7 @@ const ProProfile = () => {
             <div className="rounded-lg border border-border/50 p-4 space-y-3 bg-muted/20" id="rbq">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-sm font-semibold">Licence RBQ (Régie du bâtiment du Québec)</h3>
-                <RbqStatusBadge status={getRbqCompliance(profile ?? {}).status} expiryDate={profile?.rbq_expiry_date || null} />
+                {profile?.rbq_number && getRbqCompliance(profile).status === "not_provided" ? <span role="status" className="text-xs text-muted-foreground">Numéro RBQ déclaré — validité à confirmer</span> : <RbqStatusBadge status={getRbqCompliance(profile ?? {}).status} expiryDate={profile?.rbq_expiry_date || null} />}
               </div>
               <RbqSituationSelector
                 profile={profile}

@@ -31,6 +31,13 @@ describe("RBQ — 5 options et état dashboard", () => {
   it("vérifiée mais date passée = bloquée", () => {
     expect(s({ ...roof, rbq_number: "1", rbq_compliance_status: "verified", rbq_expiry_date: "2020-01-01" }).kind).toBe("blocked");
   });
+  it("numéro stocké sans déclaration : déclaré, jamais exempté ni vérifié", () => {
+    for (const specialty of ["Toiture", "Cuisine", "Entretien ménager"]) {
+      const r = s({ specialty, rbq_number: "1234-5678-90", rbq_compliance_status: "not_provided" });
+      expect(r.marker).toBe("DECLARED"); expect(r.kind).toBe("under_review");
+      expect(r.isNextAction).toBe(true); expect(r.regulatedEligible).toBe(false);
+    }
+  });
   it("Toiture sans déclaration = demande RBQ", () => expect(s(roof).kind).toBe("needs_rbq"));
   it("activité mixte = demande RBQ", () => expect(s({ specialty: "Entretien ménager", services: ["Rénovation"] }).kind).toBe("needs_rbq"));
   it("service non réglementé sans déclaration n'exige rien", () => expect(s(clean).isNextAction).toBe(false));

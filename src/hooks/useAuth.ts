@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { forceClearAuthSession, useAuthSession } from "@/stores/authSessionStore";
@@ -9,16 +9,6 @@ export const useAuth = () => {
   const queryClient = useQueryClient();
   const { session, loading } = useAuthSession();
   const [roleTimedOut, setRoleTimedOut] = useState(false);
-  const lastUserIdRef = useRef<string | null>(null);
-
-  // Invalidate role cache when user changes.
-  useEffect(() => {
-    const uid = session?.user?.id ?? null;
-    if (uid !== lastUserIdRef.current) {
-      lastUserIdRef.current = uid;
-      queryClient.invalidateQueries({ queryKey: ["user-role"] });
-    }
-  }, [session?.user?.id, queryClient]);
 
   useEffect(() => {
     setRoleTimedOut(false);
@@ -50,12 +40,14 @@ export const useAuth = () => {
         email: session.user.email ?? null,
         phone: session.user.phone ?? null,
         full_name: session.user.user_metadata?.full_name ?? null,
-      } as any);
+      });
       if (insertError) console.error("[useAuth] profile auto-create error", insertError);
     };
 
     ensureProfile();
     return () => { cancelled = true; };
+    // Ensure once per identity: a metadata refresh must not cancel the pending lookup.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
 
   const roleQuery = useQuery({
@@ -82,6 +74,11 @@ export const useAuth = () => {
       return { primary, all };
     },
     enabled: !!session?.user?.id,
+    // All consumers share the same user-scoped query. Mounting another
+    // component must not invalidate the role for every existing consumer.
+    // Keep unresolved roles fresh during signup; explicit role changes still
+    // invalidate this query immediately, and the server remains authoritative.
+    staleTime: query => query.state.data?.primary ? 1000 : 0,
   });
 
   const role = roleQuery.data?.primary ?? null;

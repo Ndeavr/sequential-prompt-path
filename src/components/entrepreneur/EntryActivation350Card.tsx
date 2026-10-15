@@ -82,7 +82,7 @@ export function EntryActivation350Card(p: Props) {
   return (
     <div data-testid="entry-350-card" className="w-full rounded-[28px] border border-amber-400/30 bg-white/[0.05] backdrop-blur-xl p-5 sm:p-6 mb-5">
       <p className="text-xs uppercase tracking-wider text-amber-300">{ENTRY_350.eyebrow}</p>
-      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{ENTRY_350.title}</h2>
+      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{ENTRY_350.title.replace("350 $", "350\u00a0$")}</h2>
       <ul className="mt-4 space-y-2 text-sm text-white/85">
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />{ENTRY_350.profile}</li>
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />{ENTRY_350.presence}</li>

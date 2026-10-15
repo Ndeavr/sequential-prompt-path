@@ -497,7 +497,7 @@ export default function PageContractorPersonalizedPlan() {
             Étape 3 sur 3 · Votre entente de départ
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2 tracking-[-0.04em]">
-            Pour commencer{quote.company_name ? `, ${quote.company_name}` : ""}.
+            Pour commencer{quote.company_name ? `, ${quote.company_name.trim().replace(/[.!?]+$/, "")}` : ""}.
           </h1>
         </div>
 
