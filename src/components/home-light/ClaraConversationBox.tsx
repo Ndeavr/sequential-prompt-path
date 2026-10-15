@@ -96,6 +96,7 @@ import {
 } from "@/services/clara/claraDossier";
 import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
+import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 import { canRunClaraAction, contractorSuggestionsFor, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
 
@@ -397,6 +398,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const contractorTransitionRef = useRef(false);
   /** Question de qualification en attente de réponse (une seule à la fois). */
   const qualificationStepRef = useRef<ClaraQualificationStep | null>(null);
+  const continuePricingRef = useRef<() => Promise<void>>(async () => {});
+  const continuingPricingRef = useRef(false);
+  const [nextStepRetry, setNextStepRetry] = useState(false);
   /** Parcours entrepreneur mené entièrement dans le chat. */
   const [contractorFlow, setContractorFlow] = useState(false);
   const contractorFlowRef = useRef<ClaraContractorFlowHandle | null>(null);
@@ -696,8 +700,16 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   // ici en direct, puis l'état serveur fait autorité à la fermeture.
   useEffect(() => {
     const onVoiceMessage = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string };
+      const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string; requiresNextStep?: boolean };
       if (!detail?.text) return;
+      if (detail.role === "assistant" && audienceRef.current === "contractor" && (detail.requiresNextStep || promisesDeferredFollowup(detail.text))) {
+        detail.text = CLARA_NEXT_STEP_TEXT;
+        // Stop the voice transport before showing the concrete next screen.
+        window.dispatchEvent(new CustomEvent(CLARA_VOICE_TEXT_INPUT_EVENT));
+        useAlexVoiceLockedStore.getState().closeVoiceSession("fallback_to_chat");
+        setVoiceActive(false);
+        void continuePricingRef.current();
+      }
       // Anti-duplication : même identifiant, ou même énoncé final déjà affiché
       // (les transcriptions partielles ne doivent jamais créer un doublon).
       const normalized = detail.text.trim().toLowerCase();
@@ -732,7 +744,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     const onVoiceClosed = () => {
       // Retour au clavier : même conversation, simple changement de canal.
       setVoiceActive(false);
-      contractorFlowRef.current?.resumeAfterVoice();
+      if (!continuingPricingRef.current) contractorFlowRef.current?.resumeAfterVoice();
       trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text" });
       void (async () => {
         try {
@@ -912,6 +924,28 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     void appendClaraMessage({ role: "user", text, clientMessageId: id }).catch(() => undefined);
     scrollToLatest("smooth");
   }, [scrollToLatest]);
+
+  continuePricingRef.current = async () => {
+    if (continuingPricingRef.current) return;
+    continuingPricingRef.current = true;
+    setBusy(true);
+    setNextStepRetry(false);
+    try {
+      if (contractorFlowRef.current) {
+        await contractorFlowRef.current.continueToProposal();
+        return;
+      }
+      const result = await openClaraPricingNextStep(navigate);
+      if (!result.ok) throw new Error("navigation");
+      onDestinationOpened?.();
+    } catch {
+      setError("Impossible d’ouvrir votre proposition pour le moment. Vos réponses sont conservées.");
+      setNextStepRetry(true);
+    } finally {
+      continuingPricingRef.current = false;
+      if (mountedRef.current) setBusy(false);
+    }
+  };
 
   /**
    * Qualification entrepreneur : Clara pose une seule question utile par tour,
@@ -1204,6 +1238,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
         const parsed = extractQuickReplies(full);
         const finalText = cleanAlexText(parsed.text);
+        if (audienceRef.current === "contractor" && promisesDeferredFollowup(finalText)) {
+          setMessages(previous => previous.map(message => message.id === assistantId ? { ...message, text: CLARA_NEXT_STEP_TEXT, status: "complete" } : message));
+          void appendClaraMessage({ role: "assistant", text: CLARA_NEXT_STEP_TEXT, clientMessageId: assistantId }).catch(() => {});
+          await continuePricingRef.current();
+          return;
+        }
         // Clara ne renvoie jamais l'utilisateur chercher : elle prend en charge.
         const guidedText = stripOpenAnnouncement(rewriteGuidance(finalText, destination));
         const shownText =
@@ -1823,6 +1863,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 ))}
               </div>
             )}
+            {nextStepRetry && <button type="button" className="home-clara-card-primary" onClick={() => void continuePricingRef.current()}>Reprendre ma proposition</button>}
             {contractorFlow && (
               <ClaraContractorFlow
                 ref={contractorFlowRef}

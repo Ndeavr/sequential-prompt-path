@@ -151,7 +151,8 @@ export async function openClaraDestination(
     
     while (Date.now() - start < 2000) {
       if (typeof window !== "undefined") {
-        const pathMatch = window.location.pathname === destination.path;
+        const target = new URL(destination.path, window.location.origin);
+        const pathMatch = window.location.pathname === target.pathname && window.location.search === target.search;
         const mounted = !destination.mountSelector || !!document.querySelector(destination.mountSelector);
         
         if (pathMatch && mounted) {

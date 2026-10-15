@@ -4,7 +4,7 @@ import path from 'node:path';
 import {createServer} from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import {chromium} from '@playwright/test';
-const server=await createServer({configFile:false,plugins:[react()],resolve:{alias:{'@':path.resolve('src')}},optimizeDeps:{entries:[]},server:{host:'127.0.0.1',port:8080,strictPort:true}});
+const server=await createServer({cacheDir:path.resolve("node_modules/.vite-clara-qualification"),configFile:false,plugins:[react()],resolve:{alias:{'@':path.resolve('src')}},optimizeDeps:{entries:[]},server:{host:'127.0.0.1',port:8080,strictPort:true}});
 await server.listen();
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH || undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
 let checks=0;
@@ -42,6 +42,11 @@ try {
   await page.getByRole('button',{name:/^(Envoyer|Send)$/}).click();
   const summary=page.getByRole('article',{name:'Votre profil se construit'});
   await summary.waitFor({timeout:30000});
+  // A provider-generated callback closer must resume the visible workflow.
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('clara-voice-message',{detail:{id:'qa-deferred-followup',role:'assistant',text:'Je vous recontacterai sous peu.'}})));
+  await page.getByText('Je reprends avec vous maintenant. Voici les informations déjà recueillies; complétez uniquement ce qui manque pour voir votre proposition.',{exact:true}).waitFor();
+  check(!(await page.locator('body').innerText()).includes('Je vous recontacterai sous peu.'),`${width}: unsupported voice closer replaced`);
+  check(await summary.isVisible(),`${width}: qualification continues with the existing summary`);
   check(await page.locator('#clara-criterion-excluded_areas').evaluate(el=>Number(getComputedStyle(el).color.match(/\d+/)[0])>150),`${width}: readable criterion text`);
   check(await page.locator('#clara-criterion-excluded_areas').inputValue()==='Montréal',`${width}: useful exclusion`);
   check(await page.locator('#clara-criterion-preferred_project_sizes').inputValue()==="Projets d’envergure",`${width}: contract size`);

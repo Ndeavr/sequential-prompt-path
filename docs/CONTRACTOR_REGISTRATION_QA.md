@@ -60,3 +60,29 @@ next-month capacity from 4 to 30, submit through the real intake, display the
 returned quote/price, preserve attribution and reload the personalized view.
 Auth/data/pricing responses are fixtures; all external requests are blocked.
 No real account, payment or notification is created or changed by these tests.
+
+### Clara spoken qualification must advance — October 15
+
+Unsupported callback promises are not human-task receipts. The active contractor
+voice transcript replaces such closers with an immediate continuation, stops the
+voice transport and resumes the existing in-chat qualification/proposal. The text
+chat has the same recovery. The existing flow waits for pending voice summaries,
+asks only its next missing field, and retains an already displayed proposal.
+Without an embedded flow, the canonical pricing intake opens with saved identity,
+existing draft corrections and same-conversation financial answers; save/navigation
+failures leave a visible retry. No human follow-up is created or claimed.
+
+Voice transcripts for monthly contract goals, next-month appointments and average
+project values now enter the same flow memory as text. Only a single explicit
+numeric value is accepted; ranges/abbreviations need clarification. No numeric
+fallback is invented for an ambiguous voice answer. The proposal CTA now says
+“Voir ma proposition”; it does not claim payment or activation. Voice prompt rules
+also explicitly prohibit callback promises without a real confirmed request.
+
+Validation: nine focused service/voice-bridge regressions, including canonical
+transcript correction, conversation-bound financial reuse, corrections and save
+failure. 27 real-DOM checks at 360/390/1280 px simulate spoken answers 3 contracts,
+30 appointments and $3500, reach the real summary/proposal and assert one quote
+computation. All network responses are fixtures; microphone/ElevenLabs, payment,
+SMS and email are not exercised or sent. The existing navigation helper now
+verifies both pathname and query, so a personalized-view handoff can succeed.
