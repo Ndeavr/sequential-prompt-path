@@ -228,7 +228,7 @@ export function isBlockedSync(normalizedPhone: string): boolean {
 // Inline Twilio Lookup v2 with 90d cache in phone_carrier_cache.
 // Returns: "mobile" | "landline" | "voip" | "unknown" | null (on hard failure)
 export async function lookupPhoneTypeCached(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, any, any>,
   e164: string,
 ): Promise<"mobile" | "landline" | "voip" | "unknown" | null> {
   try {
