@@ -65,6 +65,7 @@ try {
   await page.getByRole('button',{name:'Trouver un entrepreneur',exact:true}).click();
   await page.getByRole('img',{name:'Après — concept IA souhaité'}).waitFor();
   check(await page.getByRole('img',{name:'Avant — photo actuelle'}).isVisible(),`${width}: chat opens with both project photos`);
+  check(await page.getByText('Après — concept IA',{exact:true}).isVisible(),`${width}: exact AI concept caption is visible in Clara`);
   await page.getByText('Quel budget avez-vous en tête?',{exact:true}).waitFor();
   check(await page.getByRole('button',{name:'15 000 à 50 000 $',exact:true}).isVisible(),`${width}: uses qualification choices`);
   await page.getByRole('button',{name:'Fermer Clara et revenir au design'}).click();
