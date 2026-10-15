@@ -69,8 +69,8 @@ describe("Clara mobile — conversation compacte", () => {
 
   it("remplace les phrases arbitraires par des intentions réelles", () => {
     expect(box).toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
-    expect(box).toContain('label: "Analyser 3 soumissions", intent: "quote_comparison"');
-    expect(box).toContain('label: "Vérifier un entrepreneur", intent: "contractor_verification"');
+    expect(box).toContain('label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem"');
+    expect(box).toContain('label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem"');
     expect(box).toContain("chooseIntentSuggestion(suggestion)");
     expect(box).not.toContain("J’ai de l’eau ici.");
     expect(box).not.toContain("J’ai trois soumissions.");

@@ -99,6 +99,8 @@ import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
+import { usePopularQuestions } from "@/hooks/usePopularQuestions";
+import { logQuestion } from "@/services/popularQuestions";
 import { canRunClaraAction, contractorSuggestionsFor, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
 
 const CHOOSE_ADDRESS = "Choisir mon adresse";
@@ -238,9 +240,9 @@ type IntentSuggestion = {
 };
 
 const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
+  { label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem", source: "default" },
+  { label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem", source: "default" },
   { label: "Je suis entrepreneur", intent: "contractor_onboarding", source: "default" },
-  { label: "Analyser 3 soumissions", intent: "quote_comparison", source: "default" },
-  { label: "Vérifier un entrepreneur", intent: "contractor_verification", source: "default" },
 ];
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
@@ -609,7 +611,15 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const conversationStarted = isConversationActive;
   // Entrepreneur : Clara pose les questions dans le chat, aucun formulaire dessous.
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING", "CONTRACTOR"].includes(mode);
-  const intentSuggestions = DEFAULT_INTENT_SUGGESTIONS;
+  const popularQuestions = usePopularQuestions(3);
+  const intentSuggestions: IntentSuggestion[] = popularQuestions.source === "trending"
+    ? popularQuestions.items.slice(0, 3).map((item) => ({
+        label: item.label,
+        intent: item.intent === "contractor" ? "contractor_onboarding"
+          : item.intent === "comparison" ? "quote_comparison" : "homeowner_problem",
+        source: "trending",
+      }))
+    : DEFAULT_INTENT_SUGGESTIONS;
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.
@@ -1040,6 +1050,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     async (raw: string) => {
       const text = raw.trim();
       if (!text || busy) return;
+      if (!messages.some((message) => message.role === "user")) {
+        logQuestion(text, { source: "chat_composer", lang: lang === "fr" ? "fr-CA" : "en-CA" });
+      }
 
       // Parcours entrepreneur dans le chat : la réponse libre lui revient.
       if (contractorFlow && contractorFlowRef.current?.handleText(text)) {
@@ -1317,7 +1330,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         focusComposer();
       }
     },
-    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, messages, runOpen, sayClara, scrollToLatest],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, lang, messages, runOpen, sayClara, scrollToLatest],
   );
 
   const chooseQuickReply = useCallback(
@@ -1920,14 +1933,19 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
         {showIntentSuggestions && (
          <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
-           {intentSuggestions.map((suggestion) => (
+           <p className="home-clara-examples-heading">
+             {popularQuestions.source === "trending" ? "Populaire cette semaine · 7 derniers jours" : "Pour commencer, par exemple…"}
+           </p>
+           {intentSuggestions.map((suggestion, index) => (
              <button
                key={`${suggestion.source}-${suggestion.label}`}
                type="button"
                disabled={busy}
                onClick={() => void chooseIntentSuggestion(suggestion)}
              >
-               {suggestion.label}
+               <span className="home-clara-example-number" aria-hidden="true">0{index + 1}</span>
+               <span className="home-clara-example-label" style={{ animationDelay: `${index * 1150 + 250}ms` }}>{suggestion.label}</span>
+               <span className="home-clara-example-arrow" aria-hidden="true">↗</span>
              </button>
            ))}
         </div>
