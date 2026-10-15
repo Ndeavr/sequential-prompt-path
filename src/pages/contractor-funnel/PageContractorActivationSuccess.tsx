@@ -27,6 +27,7 @@ import ActivationConfetti from "@/components/unpro/ActivationConfetti";
 
 type ActivationState = {
   loading: boolean;
+  contractorId: string | null;
   businessName: string | null;
   planCode: string | null;
   paid: boolean;
@@ -40,6 +41,7 @@ type ActivationState = {
 
 const INITIAL: ActivationState = {
   loading: true,
+  contractorId: null,
   businessName: null,
   planCode: null,
   paid: false,
@@ -102,6 +104,7 @@ export default function PageContractorActivationSuccess() {
 
       setState({
         loading: false,
+        contractorId: contractor.id,
         businessName: (contractor as any).business_name ?? null,
         planCode: (sub as any)?.plan_id ?? null,
         paid: (sub as any)?.payment_status === "paid",
@@ -281,7 +284,7 @@ export default function PageContractorActivationSuccess() {
                 <h3 className="text-sm font-semibold text-foreground mb-3">Prochaines étapes</h3>
                 <div className="space-y-2">
                   <button
-                    onClick={() => navigate("/entrepreneur/profile-preview")}
+                    onClick={() => navigate(state.contractorId ? `/pro/profile/public/${state.contractorId}` : "/pro/profile")}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
                     <Eye className="h-4 w-4 text-primary" />
@@ -297,7 +300,7 @@ export default function PageContractorActivationSuccess() {
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                   <button
-                    onClick={() => navigate("/entrepreneur/assets")}
+                    onClick={() => navigate("/pro/profile")}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
                     <Star className="h-4 w-4 text-warning" />

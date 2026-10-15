@@ -48,6 +48,7 @@ type AuditContext = {
   city: string | null;
   trade: string | null;
   readiness_score: number | null;
+  facts?: Array<{ key: string; value: string }>;
 };
 
 // Aucune liste de métiers codée en dur : la taxonomie canonique
@@ -193,6 +194,7 @@ export default function PageContractorPricingIntake() {
               ? d.trade_primary
               : resolved.trade ?? d.trade_primary,
             city: confirmedFields.includes("city") ? d.city : resolved.city ?? d.city,
+            website_url: d.website_url || resolved.facts?.find(f => f.key === "website")?.value || undefined,
           }));
           setBusinessConfirmed(true);
         }
@@ -284,7 +286,7 @@ export default function PageContractorPricingIntake() {
       if (!auth.user) return;
       const { data: c } = await supabase
         .from("contractors")
-        .select("id,business_name,specialty,city,address,travel_radius_km")
+        .select("id,business_name,specialty,city,address,travel_radius_km,website,phone,province")
         .eq("user_id", auth.user.id)
         .order("created_at", { ascending: true })
         .limit(1)
@@ -296,7 +298,7 @@ export default function PageContractorPricingIntake() {
         .eq("contractor_id", (c as { id: string }).id)
         .limit(1);
       if (cancelled) return;
-      const row = c as { id: string; business_name: string | null; specialty: string | null; city: string | null; address: string | null; travel_radius_km: number | null };
+      const row = c as { id: string; business_name: string | null; specialty: string | null; city: string | null; address: string | null; travel_radius_km: number | null; website: string | null; phone: string | null; province: string | null };
       const area = (areas as unknown as Array<{ city_name: string | null; radius_km: number | null }> | null)?.[0];
       setLinked({ id: row.id, business_name: row.business_name, address: row.address });
       setData((d) => ({
@@ -304,6 +306,10 @@ export default function PageContractorPricingIntake() {
         company_name: confirmedFields.includes("company_name") ? d.company_name : row.business_name || d.company_name,
         trade_primary: confirmedFields.includes("trade_primary") ? d.trade_primary : row.specialty || d.trade_primary,
         city: confirmedFields.includes("city") ? d.city : area?.city_name || row.city || d.city,
+        website_url: d.website_url || row.website || undefined,
+        business_phone: d.business_phone || row.phone || undefined,
+        business_address: d.business_address || row.address || undefined,
+        business_province: d.business_province || row.province || undefined,
         service_radius_km: confirmedFields.includes("service_radius_km") ? d.service_radius_km : area?.radius_km ?? row.travel_radius_km ?? d.service_radius_km,
       }));
       if (row.business_name) setBusinessConfirmed(true);
@@ -339,9 +345,13 @@ export default function PageContractorPricingIntake() {
         ? d.trade_primary
         : r.primary_category || d.trade_primary,
       website_url: r.website || d.website_url,
+      business_phone: r.phone || d.business_phone,
+      business_address: r.address || d.business_address,
+      business_province: r.province || d.business_province,
     }));
     setDetected({ trade: Boolean(r.primary_category), city: Boolean(r.city) });
     setBusinessConfirmed(true);
+    setUserEditing(false);
     setManualEntry(false);
     // Entreprise réelle reconnue : l'analyse est rattachée à une identité vérifiable.
     void trackFunnelStep("company_recognized", {
@@ -522,6 +532,8 @@ export default function PageContractorPricingIntake() {
           {[
             ["Entreprise", d.company_name],
             ["Métier principal", d.trade_primary],
+            ...(d.website_url ? [["Site web", d.website_url]] : []),
+            ...(d.business_phone ? [["Téléphone", d.business_phone]] : []),
             ["Territoire", `${d.city}${d.service_radius_km ? ` · ${d.service_radius_km} km` : ""}`],
             ["Capacité de travaux", d.monthly_capacity ? `${d.monthly_capacity} projets/mois` : "Non indiquée"],
             ...(claraDeclared.serviceAreas.length ? [["Territoires desservis", claraDeclared.serviceAreas.join(", ")]] : []),
@@ -563,6 +575,8 @@ export default function PageContractorPricingIntake() {
               />
             </>
           )}
+          <TextInput label="Site web (optionnel)" value={d.website_url ?? ""} onChange={(v) => set({ website_url: v })} placeholder="https://votre-entreprise.ca" />
+          <TextInput label="Téléphone professionnel (optionnel)" value={d.business_phone ?? ""} onChange={(v) => set({ business_phone: v })} />
           <NumberInput
             label="Rayon desservi autour de cette ville (km)"
             value={d.service_radius_km ?? null}

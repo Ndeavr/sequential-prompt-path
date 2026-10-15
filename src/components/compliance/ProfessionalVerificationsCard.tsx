@@ -18,9 +18,10 @@ import {
 interface Props {
   contractorId: string;
   professionCode?: string | null;
-  /** Business/identity facts already verified elsewhere in the profile. */
+  /** Declared identity facts; their presence is not evidence of verification. */
   businessName?: string | null;
   neq?: string | null;
+  rbqNumber?: string | null;
   className?: string;
 }
 
@@ -53,12 +54,13 @@ export function ProfessionalVerificationsCard({
   professionCode,
   businessName,
   neq,
+  rbqNumber,
   className,
 }: Props) {
   const { data: credentials, isLoading, isError } = useProfessionalCredentials(contractorId);
   const { data: rule } = useComplianceRule(professionCode);
 
-  const hasAnything = (credentials?.length ?? 0) > 0 || !!businessName || !!neq;
+  const hasAnything = (credentials?.length ?? 0) > 0 || !!businessName || !!neq || !!rbqNumber;
   // Never hide or conclude "no credentials" when the read failed.
   if (!isLoading && !isError && !hasAnything) return null;
 
@@ -77,7 +79,7 @@ export function ProfessionalVerificationsCard({
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-foreground">{businessName ?? "Entreprise"}</span>
-            {neq && <span className="text-muted-foreground">NEQ {neq}</span>}
+            {neq && <span className="text-muted-foreground">NEQ {neq} · Déclaré</span>}
           </div>
         )}
 
@@ -125,7 +127,9 @@ export function ProfessionalVerificationsCard({
           </p>
         )}
 
-        {!isLoading && !isError && (credentials?.length ?? 0) === 0 && (
+        {!isLoading && !isError && rbqNumber && !(credentials ?? []).some(c => /rbq/i.test(c.credential_type ?? "")) && <p className="rounded-lg border p-3 text-sm">RBQ {rbqNumber}<span className="mt-1 block text-xs text-muted-foreground">Numéro déclaré — validité à confirmer au registre officiel.</span></p>}
+
+        {!isLoading && !isError && !rbqNumber && (credentials?.length ?? 0) === 0 && (
           <p className="text-xs text-muted-foreground">
             Titre professionnel : non fourni. Aucun titre n'a encore été déclaré ni vérifié pour ce professionnel.
           </p>
