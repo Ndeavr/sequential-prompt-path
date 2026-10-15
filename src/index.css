@@ -2512,3 +2512,50 @@ html[data-theme-ready="true"] .glass-btn {
   html[data-keyboard-open="true"] .home-light .home-clara-controls { min-height: 44px; padding-block: 0; }
   html[data-keyboard-open="true"] .home-light .home-clara-composer { padding-block: 0; }
 }
+
+/* Three calm, sequential light reveals; text never disappears after reading. */
+.home-light .home-clara-examples {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  gap: .55rem;
+  padding: .5rem 1rem 1rem;
+}
+.home-light .home-clara-examples-heading {
+  margin: 0 0 .2rem;
+  color: hsl(var(--muted-foreground));
+  font-size: .72rem;
+  letter-spacing: .025em;
+}
+.home-light .home-clara-examples button {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  width: 100%;
+  min-height: 48px;
+  padding: .75rem .85rem;
+  border-radius: 16px;
+  text-align: left;
+  font-size: clamp(.82rem, 2.8vw, .95rem);
+  line-height: 1.5;
+  background: linear-gradient(115deg, hsl(var(--primary) / .08), hsl(var(--card) / .85));
+  box-shadow: inset 0 1px 0 hsl(var(--foreground) / .035);
+}
+.home-light .home-clara-example-number { font-size: .65rem; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+.home-light .home-clara-example-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  background: linear-gradient(100deg, transparent, hsl(var(--primary) / .22), transparent) no-repeat;
+  background-size: 0% 100%;
+  animation: clara-suggestion-reveal 1000ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.home-light .home-clara-example-arrow { margin-left: auto; color: hsl(var(--primary)); }
+.home-light .home-clara-examples button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
+@keyframes clara-suggestion-reveal {
+  0% { clip-path: inset(0 100% 0 0); background-size: 0% 100%; }
+  70% { clip-path: inset(0); background-size: 100% 100%; }
+  100% { clip-path: inset(0); background-size: 0% 100%; background-position: right; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-light .home-clara-example-label { animation: none; clip-path: none; }
+}
