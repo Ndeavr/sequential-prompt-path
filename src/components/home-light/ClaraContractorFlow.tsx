@@ -131,6 +131,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const [freeGoal, setFreeGoal] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditResult | null>(null);
   const [quote, setQuote] = useState<PricingQuote | null>(null);
+  const proposalReadyRef = useRef(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [retry, setRetry] = useState<null | (() => void)>(null);
@@ -414,6 +415,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
         current_ai_visibility_score: audit?.baseline.matched.merged_sources.length ? audit.readiness_score ?? undefined : undefined,
       });
       setQuote(q);
+      proposalReadyRef.current = true;
       void trackFunnelStep("quote_computed", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
       void trackFunnelStep("plan_presented", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
       await say("Voici un résumé et l’entente de départ la plus adaptée à votre capacité du mois prochain.");
@@ -431,6 +433,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   useImperativeHandle(ref, () => ({
     continueToProposal: async () => {
       await pendingVoiceSummary.current;
+      if (proposalReadyRef.current) return;
       if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) await nextQuestion();
     },
     captureVoice: (text: string) => {
