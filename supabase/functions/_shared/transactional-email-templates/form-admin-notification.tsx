@@ -33,7 +33,7 @@ const FormAdminNotification = ({
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>Nouvelle soumission {formLabel || formType}</Preview>
+    <Preview>Nouvelle soumission {formLabel || formType || 'formulaire'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Nouvelle soumission</Heading>
