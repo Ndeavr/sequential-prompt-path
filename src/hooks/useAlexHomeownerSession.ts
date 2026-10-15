@@ -4,6 +4,7 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { persistDesignChatPhotos, type DesignChatContext } from "@/lib/design/handoff";
 import { isQualificationEngineEnabled } from "@/lib/alexFeatureFlags";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -13,7 +14,7 @@ interface HomeownerMessage {
   sender: "user" | "alex";
   text: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: { [key: string]: unknown; next_question?: { ui: string; options?: { value: string; label_fr: string }[] }; dossier_error?: string | null };
 }
 
 interface DiagnosisData {
@@ -29,7 +30,7 @@ interface NextAction {
   label_en: string;
 }
 
-export function useAlexHomeownerSession() {
+export function useAlexHomeownerSession(designContext?: DesignChatContext) {
   const { user } = useAuth();
   const [sessionToken] = useState(() => crypto.randomUUID());
   const [messages, setMessages] = useState<HomeownerMessage[]>([]);
@@ -40,6 +41,8 @@ export function useAlexHomeownerSession() {
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [sessionStarted, setSessionStarted] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const designFilesRef = useRef<{ beforeFileId: string; afterFileId: string } | null>(null);
   const [hasMatches, setHasMatches] = useState(false);
   const startedRef = useRef(false);
 
@@ -54,7 +57,7 @@ export function useAlexHomeownerSession() {
 
     try {
       // Create session in DB
-      await (supabase.from("alex_homeowner_sessions") as any).insert({
+      if (!designContext) await supabase.from("alex_homeowner_sessions").insert({
         session_token: sessionToken,
         user_id: user?.id || null,
         language: "fr",
@@ -77,9 +80,9 @@ export function useAlexHomeownerSession() {
       console.error("Failed to start homeowner session:", err);
       startedRef.current = false;
     }
-  }, [sessionToken, user]);
+  }, [sessionToken, user, designContext]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, addressConfirmation?: { address: string; lat?: number; lng?: number; city?: string; postalCode?: string }) => {
     if (!text.trim() || isProcessing) return;
 
     const userMsg: HomeownerMessage = {
@@ -93,10 +96,12 @@ export function useAlexHomeownerSession() {
 
     try {
       const token = await getToken();
-      const useV3 = isQualificationEngineEnabled();
+      const useV3 = !!designContext || isQualificationEngineEnabled();
+      if (designContext && user && !designFilesRef.current) designFilesRef.current = await persistDesignChatPhotos(designContext);
       const endpoint = useV3 ? "alex-qualify-turn" : "alex-homeowner-process-turn";
       const payload = useV3
-        ? { session_token: sessionToken, user_message: text }
+        ? { session_token: sessionToken, user_message: text, address_confirmation: addressConfirmation,
+            design_context: designContext ? { description: designContext.description, room_type: designContext.roomType, version_id: designContext.versionId, ...designFilesRef.current } : undefined }
         : { homeowner_session_id: sessionToken, user_message: text, message_mode: "text" };
 
       const resp = await fetch(`${FUNCTIONS_BASE}/${endpoint}`, {
@@ -130,9 +135,11 @@ export function useAlexHomeownerSession() {
             ready_for_match: data.ready_for_match,
             recommendation_headline_fr: data.recommendation_headline_fr,
             project_id: data.project_id ?? null,
+            dossier_error: data.dossier_error ?? null,
           },
         }]);
         if (data.project_id) setProjectId(data.project_id);
+        if (data.lead_id) setLeadId(data.lead_id);
         if (typeof data.has_matches === "boolean") setHasMatches(data.has_matches);
         if (data.status === "qualified") setCurrentStep("matching");
       } else {
@@ -164,7 +171,7 @@ export function useAlexHomeownerSession() {
     } finally {
       setIsProcessing(false);
     }
-  }, [sessionToken, isProcessing, getToken, language]);
+  }, [sessionToken, isProcessing, getToken, language, designContext, user]);
 
   return {
     sessionToken,
@@ -176,6 +183,7 @@ export function useAlexHomeownerSession() {
     language,
     sessionStarted,
     projectId,
+    leadId,
     hasMatches,
     startSession,
     sendMessage,

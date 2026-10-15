@@ -1,6 +1,8 @@
 // Alex V3 — Universal Qualification Engine edge function.
 // Per turn: extract -> merge -> score -> either next_question or qualified recommendation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { normalizeAddressServer } from "../create-project-unified/validation.ts";
+import { loadOwnedDesignBrief } from "../_shared/designBrief.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,6 +100,10 @@ function pickNext(g: Graph) {
   if (!g.problem.sub_type) return NEXT_QUESTIONS.problem_sub_type;
   if (!g.urgency) return NEXT_QUESTIONS.urgency;
   if (!g.property.type) return NEXT_QUESTIONS.property_type;
+  if (g.project_context.design_brief && (!g.budget || g.budget === "unknown")) return {
+    field: "budget", q: "Quel budget souhaitez-vous consacrer à ce projet ?", why: "Pour vérifier que l’entrepreneur correspond au projet.", ui: "choice",
+    options: [{ value: "<5k", label_fr: "Moins de 5 000 $" }, { value: "5-15k", label_fr: "5 000 – 15 000 $" }, { value: "15-50k", label_fr: "15 000 – 50 000 $" }, { value: "50k+", label_fr: "50 000 $ et plus" }],
+  };
   if (g.quotes.received === null) return { field: "quotes.received", q: "Avez-vous déjà reçu des soumissions pour ce projet ?", why: "Nous pouvons les analyser gratuitement.", ui: "upload_quote" };
   if (!g.photos.requested) return { field: "photos", q: "Souhaitez-vous ajouter des photos ?", why: "Les photos améliorent la précision du matching.", ui: "upload_photo" };
   if (!g.budget) return { field: "budget", q: "Quel budget envisagez-vous ? (Facultatif)", why: "Pour proposer des solutions adaptées.", ui: "choice",
@@ -200,6 +206,16 @@ Deno.serve(async (req) => {
     }
 
     let graph: Graph = (session.graph as Graph) ?? emptyGraph("fr");
+    if (session.user_id && session.user_id !== userId) return new Response(JSON.stringify({ error: "session_owner_mismatch" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const designInput = body.design_context;
+    if (designInput && typeof designInput === "object") {
+      const brief = userId ? await loadOwnedDesignBrief(supabase, userId, designInput) : null;
+      if (userId && !brief) return new Response(JSON.stringify({ error: "invalid_design_photos" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const description = typeof designInput.description === "string" ? designInput.description.slice(0, 2000) : "Réaliser un concept de rénovation";
+      graph.project_context = { ...graph.project_context, design_brief: brief ?? { description } };
+      graph.problem = { ...graph.problem, category: graph.problem.category ?? "renovation-generale", sub_type: graph.problem.sub_type ?? description, description: graph.problem.description ?? description };
+      graph.photos = { requested: true, uploaded_ids: brief ? [brief.before_file_id, brief.after_file_id] : [] };
+    }
 
     // Extract & merge
     let extracted: Partial<Graph> = {};
@@ -215,13 +231,29 @@ Deno.serve(async (req) => {
         quotes: { ...graph.quotes, ...(extracted.quotes ?? {}) },
       };
       // If address came back, assume confirmed pending UI validation
-      if (extracted.property?.address) graph.property.confirmed = true;
+      if (extracted.property?.address && !graph.project_context.design_brief) graph.property.confirmed = true;
+    }
+
+    if (graph.project_context.design_brief) {
+      const a = body.address_confirmation;
+      if (a && typeof a.address === "string" && normalizeAddressServer(a.address) && typeof a.city === "string" && a.city.trim()
+        && typeof a.lat === "number" && Number.isFinite(a.lat) && Math.abs(a.lat) <= 90
+        && typeof a.lng === "number" && Number.isFinite(a.lng) && Math.abs(a.lng) <= 180) {
+        graph.project_context.design_address = { address: a.address.slice(0,300), city: a.city.slice(0,120), postal_code: typeof a.postalCode === "string" ? a.postalCode.slice(0,12) : null, latitude: a.lat, longitude: a.lng };
+      }
+      const confirmed = graph.project_context.design_address as { address: string; city: string; postal_code: string | null } | undefined;
+      graph.property = { ...graph.property, ...(confirmed ?? {}), confirmed: !!confirmed };
     }
 
     const breakdown = scoreGraph(graph);
     graph.score = breakdown.total;
     graph.missing_dimensions = breakdown.missing;
     graph.ready_for_match = breakdown.ready_for_match;
+    if (graph.project_context.design_brief && (!graph.budget || graph.budget === "unknown")) {
+      graph.ready_for_match = false;
+      breakdown.ready_for_match = false;
+      graph.missing_dimensions.push("budget");
+    }
 
     // Persist session + turn
     await supabase.from("alex_qualification_sessions").update({
@@ -364,7 +396,7 @@ async function createDossier(
   const body = {
     source: "alex_chat",
     idempotency_key: `alex-qualify-${session.id}`,
-    category: graph.problem.category,
+    category: graph.project_context.design_brief ? "renovation-generale" : graph.problem.category,
     category_label: graph.problem.sub_type ?? graph.problem.category ?? "Projet",
     description: graph.problem.description ?? graph.problem.sub_type ?? null,
     address: graph.property.address,
@@ -375,6 +407,7 @@ async function createDossier(
     budget_min: budgetMin,
     budget_max: budgetMax,
     source_page: "clara_qualification",
+    ...(graph.project_context.design_brief ? { design_context: graph.project_context.design_brief, ...(graph.project_context.design_address as Record<string, unknown> ?? {}) } : {}),
   };
 
   try {

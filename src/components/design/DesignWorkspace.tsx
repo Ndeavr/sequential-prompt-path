@@ -18,6 +18,8 @@ import DesignUpgradeModal from "./DesignUpgradeModal";
 import DesignSignupPrompt from "./DesignSignupPrompt";
 import type { DesignVersion } from "./data";
 import type { DesignQuotaNotice } from "@/lib/design/quota";
+import { prepareDesignChat, type DesignChatContext } from "@/lib/design/handoff";
+import HomeownerVoiceEntryPage from "@/pages/homeowner/HomeownerVoiceEntryPage";
 
 interface Props {
   originalImage: string;
@@ -65,6 +67,18 @@ export default function DesignWorkspace({
   const [isSharing, setIsSharing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [designChat, setDesignChat] = useState<DesignChatContext | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [preparingChat, setPreparingChat] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const findContractor = async () => {
+    if (!activeVersion?.imageUrl || preparingChat) return;
+    if (designChat?.versionId === activeVersion.id) { setChatOpen(true); return; }
+    setPreparingChat(true); setChatError(null);
+    try { setDesignChat(await prepareDesignChat(originalImage, activeVersion.imageUrl, activeVersion.promptUsed || "Réaliser ce concept de rénovation", roomType, activeVersion.id)); setChatOpen(true); }
+    catch (error) { setChatError(error instanceof Error ? error.message : "Impossible d’ouvrir Clara. Réessayez."); }
+    finally { setPreparingChat(false); }
+  };
 
   // Show signup prompt when generation starts (if not logged in)
   useEffect(() => {
@@ -109,6 +123,9 @@ export default function DesignWorkspace({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button size="sm" className="text-xs h-10" onClick={findContractor} disabled={!activeVersion?.imageUrl || isGenerating || preparingChat}>
+            {preparingChat ? "Préparation…" : "Trouver un entrepreneur"}
+          </Button>
           <span className="text-xs text-muted-foreground hidden sm:inline">
             {versions.length} version{versions.length !== 1 ? "s" : ""}
           </span>
@@ -134,6 +151,7 @@ export default function DesignWorkspace({
           </Button>
         </div>
       </header>
+      {chatError && <p role="alert" className="p-3 text-sm text-destructive">{chatError}</p>}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-y-auto lg:overflow-hidden">
@@ -235,6 +253,7 @@ export default function DesignWorkspace({
         isOpen={showSignup}
         onClose={() => setShowSignup(false)}
       />
+      {designChat && <div hidden={!chatOpen}><HomeownerVoiceEntryPage key={designChat.versionId} designContext={designChat} onClose={() => setChatOpen(false)} /></div>}
     </div>
   );
 }
