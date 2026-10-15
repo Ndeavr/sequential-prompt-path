@@ -16,6 +16,26 @@ import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeReason } from "@/lib/edgeFunctionError";
+import { openAuthOverlay } from "@/hooks/useAuthOverlay";
+
+/** Profil déjà lié à un compte : on demande la connexion au lieu d'afficher une erreur brute. */
+async function friendlyProfileError(error: unknown, data: unknown, fallback: string): Promise<string> {
+  const reason = await extractEdgeReason(error, data) ?? (data as { error?: string } | null)?.error
+    ?? await (async () => {
+      try { return ((await (error as { context?: Response })?.context?.clone().json()) as { error?: string })?.error ?? null; }
+      catch { return null; }
+    })();
+  if (reason === "authentication_required" || reason === "invalid_session") {
+    openAuthOverlay({
+      label: "Reprendre votre profil",
+      returnPath: window.location.pathname + window.location.search,
+    });
+    return "Ce profil est lié à votre compte. Connectez-vous pour le reprendre.";
+  }
+  if (reason === "profile_access_denied") return "Ce profil appartient à un autre compte. Connectez-vous avec le bon compte.";
+  return fallback;
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -136,9 +156,9 @@ export default function PageMatchingProfileWizard() {
         const response = profileRequest.data as MatchingProfileResponse | null;
         const profile = response?.profile;
         if (profileRequest.error || response?.error) {
-          setLoadError(
-            response?.error || profileRequest.error?.message || "Impossible de reprendre le profil.",
-          );
+          const message = await friendlyProfileError(profileRequest.error, response, "Impossible de reprendre le profil. Réessayez.");
+          if (cancelled) return;
+          setLoadError(message);
         }
         const resolvedAudit = response?.audit ?? null;
         if (resolvedAudit) setAudit(resolvedAudit);
@@ -204,7 +224,7 @@ export default function PageMatchingProfileWizard() {
       setSaving(false);
       const response = data as MatchingProfileResponse | null;
       if (error || response?.error) {
-        setLoadError(response?.error || error?.message || "La sauvegarde a échoué. Réessayez.");
+        setLoadError(await friendlyProfileError(error, response, "La sauvegarde a échoué. Réessayez."));
         return null;
       }
       return response?.profile ?? null;
