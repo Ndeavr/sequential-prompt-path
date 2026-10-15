@@ -1,3 +1,4 @@
+import { formatClaraPageContext, getClaraPageContext } from "@/services/clara/claraPageContext";
 /**
  * Clara inline conversation, backed by the existing text, voice and upload flows.
  *
@@ -1190,6 +1191,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
               .map((m) => ({ role: m.role, content: m.text })),
             context: {
               surface: "home_clara_box",
+              currentPage: formatClaraPageContext(getClaraPageContext()),
               mode: nextMode,
               userRole: audienceRef.current,
               contractorQualification: audienceRef.current === "contractor" ? getClaraQualification() : undefined,

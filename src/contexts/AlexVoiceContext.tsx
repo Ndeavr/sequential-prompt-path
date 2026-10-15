@@ -46,13 +46,8 @@ const AlexVoiceContext = createContext<AlexVoiceContextType>({
 });
 
 /** Features that should open Alex as a compact floating glass panel instead of a full-screen takeover. */
-const FLOATING_FEATURE_PREFIXES = ["home_", "intent_", "capability_", "discovery_"];
-
 function defaultDisplayModeFor(feature: string): "fullscreen" | "floating" {
-  const f = (feature || "").toLowerCase();
-  // Mobile is always fullscreen — floating compact panel is a desktop-only treatment.
-  if (typeof window !== "undefined" && window.innerWidth < 768) return "fullscreen";
-  return FLOATING_FEATURE_PREFIXES.some((p) => f.startsWith(p)) ? "floating" : "fullscreen";
+  return feature === "voice_fullscreen" ? "fullscreen" : "floating";
 }
 
 export function AlexVoiceProvider({ children }: { children: ReactNode }) {

@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const server = await createServer({
@@ -83,7 +83,13 @@ try {
     await page.waitForTimeout(600);
     check(await visibleIn(page,'.home-clara-composer'),`${width}: homepage composer visible`);
     const scroller=page.locator('.home-clara-conversation > div').first();
-    await scroller.evaluate(e=>e.scrollTop=0);await page.waitForTimeout(150);
+    await expect.poll(() => page.locator('.home-clara-message').count(), { timeout: 10000 }).toBeGreaterThanOrEqual(19);
+    await expect.poll(() => scroller.evaluate(e => Math.abs(e.scrollHeight - e.clientHeight - e.scrollTop)), { timeout: 5000 }).toBeLessThan(2);
+    // Exercise user scrolling: programmatic scrollTop during the library's initial
+    // retained follow animation does not represent a manual escape from its lock.
+    await scroller.hover();
+    await page.mouse.wheel(0, -10000);
+    await expect.poll(() => scroller.evaluate(e => e.scrollTop), { timeout: 5000 }).toBeLessThan(2);
     const before=await scroller.evaluate(e=>e.scrollTop);
     await page.locator('.home-clara-message').last().evaluate(e=>e.append(document.createTextNode(' Streaming text. '.repeat(100))));
     await page.waitForTimeout(300);

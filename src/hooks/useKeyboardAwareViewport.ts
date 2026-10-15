@@ -33,10 +33,15 @@ export function useKeyboardAwareViewport() {
       const active = document.activeElement;
       if (!isEditable(active) || active.closest(".home-clara-composer")) return;
       const top = vv?.offsetTop ?? 0;
-      const bottom = top + (vv?.height ?? window.innerHeight);
+      const viewportBottom = top + (vv?.height ?? window.innerHeight);
       const header = document.querySelector("header")?.getBoundingClientRect();
       const bounds = active.getBoundingClientRect();
       const safeTop = Math.max(top, header?.bottom ?? top) + 8;
+      const companion = document.querySelector<HTMLElement>("[data-clara-dock]")?.getBoundingClientRect();
+      // The existing viewport owner keeps page inputs above the compact companion.
+      const overlaps = companion && bounds.right > companion.left && bounds.left < companion.right
+        && companion.top > safeTop && companion.bottom <= viewportBottom + 1;
+      const bottom = overlaps ? Math.min(viewportBottom, companion.top - 8) : viewportBottom;
       if (bounds.top < safeTop || bounds.bottom > bottom - 8) {
         active.scrollIntoView({ block: "nearest", behavior: "auto" });
         const updated = active.getBoundingClientRect();

@@ -86,3 +86,80 @@ failure. 27 real-DOM checks at 360/390/1280 px simulate spoken answers 3 contrac
 computation. All network responses are fixtures; microphone/ElevenLabs, payment,
 SMS and email are not exercised or sent. The existing navigation helper now
 verifies both pathname and query, so a personalized-view handoff can succeed.
+
+## Clara as a page companion (2026-10-15)
+
+The global voice surface defaults to a compact, nonmodal dock on mobile and
+desktop. Expanding its transcript, minimizing it or navigating does not stop or
+restart the voice transport. Explicit pause, resume and close remain available.
+The homepage keeps its existing inline voice slot; explicit fullscreen mode has
+a minimize control. Only fullscreen mode applies the page blur.
+
+One route observer publishes page/step, enabled visible CTA labels, subscription
+blockers, focused annotated numeric fields and validation/hesitation state. The
+existing live SDK receives contextual updates in the same session; the existing
+text request also receives the snapshot. This does not inject user messages,
+write form values or claim a payment/activation. Only allowlisted numeric intake
+fields are shared; credentials, payment fields, contact inputs and query strings
+are excluded. Values remain declared, never verified. The shared keyboard hook
+keeps the focused page field clear of the dock without adding another scroll owner.
+
+Validation: 36 real-DOM checks at 360, 390 and 1280 pixels use the actual dock,
+observer, subscription paywall and keyboard hook. They cover page-link access,
+route collapse, unchanged voice callbacks, numeric/focus/invalid context, secret
+exclusion and keyboard overlap. Voice callbacks are simulated and all external
+requests blocked. Seven focused unit/hook regressions include contextual updates
+through the actual useLiveVoice hook with a mocked SDK. The full suite passes 1,146 tests (one integration test skipped); explicit app
+TypeScript checking and Vite production build pass. New modules lint clean;
+critical lint passes. The older voice files retain their existing lint findings
+(the overlay's rule/message counts match its base revision).
+
+Release gate: the protected voice-health contract requires voice_smoke_test()
+before deployment. The production /admin/voice-health route redirected this
+browser to /login. Local UI/SDK-fixture tests do not establish production audio
+health; run the authenticated diagnostic before publishing this change.
+
+### Premium conversation surface (2026-10-15 follow-up)
+
+The public bundle was still index-QxgqUbzG.js at source 3566edc6; the compact
+companion PR was not yet merged or published. This explains the unchanged
+fullscreen capture; a local or PR-only fix is not a production release.
+
+Conversation, composer, messages, examples and media now use the existing
+midnight card tokens instead of mixing hardcoded white panels with a dark
+header. Reflections are restrained, borders and shadows are consistent, and the
+microphone has a subtle blue highlight. The compact dock uses the same material.
+
+The new real-homepage visual smoke runs at 360, 390 and 1280 px, checks text and
+suggestion contrast >=4.5, microphone visibility and overflow, and blocks all
+external requests. It passes 21 checks; the companion smoke passes 36 checks.
+The full unit suite passes 1,146 tests with one integration skip. Vite builds.
+
+Earlier embedded smoke runs exposed a landscape long-draft composer overflow;
+landscape keyboard textareas are now capped at 48px and scroll internally. The
+manual-reading harness also tried to assign scrollTop during the library's
+initial retained follow animation; it now exercises real wheel input and waits
+for the user's scroll position before appending content. Production scrolling
+continues to use the existing StickToBottom owner.
+
+The authenticated production voice smoke gate above still applies. These checks
+use mocked external services and do not establish live microphone/audio health.
+
+### Authenticated voice diagnostic (2026-10-15)
+
+Admin authentication completed. The real production voice smoke report at
+12:23:40–12:23:46 UTC failed: microphone permission denied, MP3 response parsed
+as text (`unexpected tts response shape`), and no orb on the admin diagnostic
+page. Edge health and live voice credential checks passed. This is not an
+all-green voice gate and does not authorize a deployment.
+
+The SDK's FunctionsClient decodes unrecognized MIME types with response.text();
+audio/mpeg is not in its binary MIME allowlist. Both diagnostic TTS callers now
+use a shared authenticated raw-response helper and arrayBuffer(), retaining MP3
+bytes, rejecting non-audio/HTTP errors and bounding requests at 15 seconds.
+No voice IDs, model, microphone/VAD settings or production transport changed.
+Three mocked regressions cover binary preservation and error responses. An
+attempt to validate the helper against production from the isolated localhost
+harness failed at fetch/network access, so that attempt does not verify live
+playback. The denied microphone and missing admin-page orb checks remain intact;
+the release gate is not weakened to hide these failures.

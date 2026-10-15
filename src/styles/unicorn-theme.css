@@ -255,3 +255,32 @@ html.alex-overlay-active .uc-orb-shell .uc-orb-caption { opacity: 0 !important; 
 /* Scrollbar removal for chip rows */
 .unicorn-theme .uc-no-scrollbar::-webkit-scrollbar { display: none; }
 .unicorn-theme .uc-no-scrollbar { scrollbar-width: none; }
+
+/* Nonmodal page companion; shared viewport hook owns keyboard geometry. */
+.clara-voice-dock {
+  position: fixed;
+  z-index: 1100;
+  right: 12px;
+  bottom: max(calc(96px + env(safe-area-inset-bottom, 0px)), calc(100dvh - var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) + 12px));
+  width: min(360px, calc(100vw - 24px));
+  color: #f8fafc;
+  background: linear-gradient(145deg, #152340f5, #0b1428fa);
+  border: 1px solid #83a9ed40;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px -12px #020617aa, inset 0 1px 0 #ffffff10;
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+.clara-voice-dock-header { display: flex; align-items: center; padding: 6px; gap: 2px; }
+.clara-voice-dock button { min-width: 44px; min-height: 44px; border-radius: 14px; padding: 8px; }
+.clara-voice-dock button:focus-visible { outline: 2px solid #93c5fd; outline-offset: -2px; }
+.clara-voice-dock button:hover { background: #ffffff12; }
+.clara-voice-dock-summary { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0 !important; text-align: left; }
+.clara-voice-dock-summary > span:nth-child(2) { flex: 1; min-width: 0; }
+.clara-voice-dock-summary strong, .clara-voice-dock-summary small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clara-voice-dock-summary small { font-size: 12px; color: #cbd5e1; }
+.clara-voice-dock-orb { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg,#2563eb,#9333ea); }
+.clara-voice-dock-details { padding: 0 14px 12px; max-height: min(360px, calc(var(--app-visible-height, 100dvh) * .45)); overflow-y: auto; overscroll-behavior: contain; font-size: 14px; }
+.clara-voice-dock-step { color: #bfdbfe; margin-bottom: 8px; }
+.clara-voice-dock-messages p { padding: 8px 10px; border-radius: 12px; background: #ffffff0b; margin: 6px 0; overflow-wrap: anywhere; }
+.clara-voice-dock-messages p[data-role="user"] { background: #2563eb25; }
