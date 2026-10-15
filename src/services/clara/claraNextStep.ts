@@ -6,8 +6,8 @@ import { openClaraDestination } from "./claraNavigation";
 /** No prose from a model is a receipt for a human callback. */
 export function promisesDeferredFollowup(text: string): boolean {
   const value = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’']/g, " ").toLowerCase();
-  if (/\b(ne|pas|jamais)\b.{0,35}\b(recontact|rappel|contactera)/.test(value)) return false;
-  return /\b(je|nous|on|notre equipe)\b.{0,65}\b(recontact\w*|rappel\w*|reviendr\w* vers vous|contactera\w*)/.test(value)
+  if (/\bne\b.{0,35}\b(recontact|rappel|contacter)/.test(value) || /\b(recontact\w*|rappel\w*|contacter\w*)\s+(pas|jamais)\b/.test(value) || /\b(rappelle|rappelons)\s+que\b/.test(value)) return false;
+  return /\b(je|nous|on|notre equipe|l equipe|quelqu un)\b.{0,65}\b(recontact\w*|rappel\w*|reviendr\w* vers vous|revenir vers vous|contacter\w*)/.test(value)
     || /\b(vous serez|vous seriez|quelqu un va vous)\s+(recontact\w*|rappele\w*|contacte\w*)/.test(value)
     || /\b(we|i|our team)\b.{0,35}\b(get back to you|contact you|call you back|be in touch)/.test(value);
 }
