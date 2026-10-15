@@ -13,6 +13,7 @@
  *    entrepreneur fictif.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { loadOwnedDesignBrief, designAccessAction } from "../_shared/designBrief.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +37,9 @@ import {
 } from "./validation.ts";
 
 interface Body {
+  action?: string;
+  match_id?: string;
+  design_context?: Record<string, unknown>;
   description?: string;
   category?: string;
   category_label?: string;
@@ -106,6 +110,12 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.getUser(auth.replace("Bearer ", ""));
     const userId = userData.user?.id ?? null;
     if (!userId) return json({ error: "auth_required" }, 401);
+    if (body.action === "share_design" || body.action === "get_design_photos") {
+      const result = await designAccessAction(supabase, userId, body as unknown as Record<string, unknown>);
+      return json(result.body, result.status);
+    }
+    const designBrief = body.design_context ? await loadOwnedDesignBrief(supabase, userId, body.design_context) : null;
+    if (body.design_context && !designBrief) return json({ error: "invalid_design_photos" }, 400);
 
     // 2. Validation stricte (allowlists et bornes numériques).
     const source = text(body.source, 60) ?? "manual";
@@ -184,6 +194,7 @@ Deno.serve(async (req) => {
       // l'admissibilité au jumelage utilise la catégorie canonique.
       ui_category: category,
       matching_category: source === "renovation_calculator" ? CANONICAL_MATCHING_CATEGORY : category,
+      ...(designBrief ? { design_context: designBrief } : {}),
     };
 
 

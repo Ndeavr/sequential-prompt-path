@@ -7,6 +7,10 @@ import { useAlexHomeownerSession } from "@/hooks/useAlexHomeownerSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, X, Home, MapPin, AlertTriangle, CheckCircle2 } from "lucide-react";
 import AlexOrb from "@/components/alex/AlexOrb";
+import type { DesignChatContext } from "@/lib/design/handoff";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
+import { openAuthOverlay } from "@/hooks/useAuthOverlay";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const QUICK_CHIPS_FR = [
@@ -27,12 +31,15 @@ const QUICK_CHIPS_EN = [
   "Notary",
 ];
 
-export default function HomeownerVoiceEntryPage() {
+export default function HomeownerVoiceEntryPage({ designContext, onClose }: { designContext?: DesignChatContext; onClose?: () => void } = {}) {
   const navigate = useNavigate();
   const {
     messages, isProcessing, diagnosis, nextAction, language,
-    sessionStarted, startSession, sendMessage,
-  } = useAlexHomeownerSession();
+    sessionStarted, startSession, sendMessage, projectId, leadId,
+  } = useAlexHomeownerSession(designContext);
+  const seededDesign = useRef(false);
+  const lastReply = [...messages].reverse().find(message => message.sender === "alex");
+  const nextQuestion = lastReply?.metadata?.next_question;
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,6 +50,13 @@ export default function HomeownerVoiceEntryPage() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (designContext && sessionStarted && !seededDesign.current) {
+      seededDesign.current = true;
+      void sendMessage(`Je souhaite trouver un entrepreneur pour réaliser ce concept : ${designContext.description}`);
+    }
+  }, [designContext, sessionStarted, sendMessage]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -57,7 +71,7 @@ export default function HomeownerVoiceEntryPage() {
   const chips = language === "en" ? QUICK_CHIPS_EN : QUICK_CHIPS_FR;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-background" style={{height:"var(--app-visible-height, 100dvh)"}} aria-label="Clara — trouver un entrepreneur">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -71,13 +85,17 @@ export default function HomeownerVoiceEntryPage() {
             </p>
           </div>
         </div>
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
+        <button onClick={() => onClose ? onClose() : navigate(-1)} aria-label="Fermer Clara et revenir au design" className="p-2 rounded-full hover:bg-muted/50 transition-colors">
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {designContext && <section className="grid grid-cols-2 gap-3" aria-label="Photos du projet avant et après">
+          <figure><img src={designContext.beforeUrl} alt="Avant — photo actuelle" className="w-full h-36 object-contain rounded-xl bg-muted/30" /><figcaption className="text-xs mt-1">Avant — votre espace</figcaption></figure>
+          <figure><img src={designContext.afterUrl} alt="Après — concept IA souhaité" className="w-full h-36 object-contain rounded-xl bg-muted/30" /><figcaption className="text-xs mt-1">Après — concept IA</figcaption></figure>
+        </section>}
         <AnimatePresence mode="popLayout">
           {messages.map((msg) => (
             <motion.div
@@ -151,8 +169,12 @@ export default function HomeownerVoiceEntryPage() {
         )}
       </div>
 
+      {designContext && projectId && <div className="px-4 pb-3"><Button className="w-full" onClick={() => navigate(`/recommendations?project=${encodeURIComponent(projectId)}${leadId ? `&lead=${encodeURIComponent(leadId)}` : ""}`)}>Voir mon entrepreneur recommandé</Button></div>}
+      {designContext && lastReply?.metadata?.dossier_error === "auth_required" && <div className="px-4 pb-3"><Button className="w-full" onClick={() => openAuthOverlay({label:"Créer ma demande avec mes photos",returnPath:"/design"})}>Me connecter pour continuer</Button><Button variant="ghost" className="w-full" onClick={() => sendMessage("Continuer avec mon dossier et mes photos")}>Continuer après connexion</Button></div>}
+      {designContext && nextQuestion?.ui === "choice" && <div className="px-4 pb-3 flex flex-wrap gap-2">{(nextQuestion.options ?? []).map((option: {value:string;label_fr:string}) => <Button key={option.value} size="sm" variant="outline" disabled={isProcessing} onClick={() => sendMessage(option.label_fr)}>{option.label_fr}</Button>)}</div>}
+      {designContext && nextQuestion?.ui === "address" && <div className="px-4 pb-3"><GooglePlacesInput value={input} onChange={setInput} onPlaceSelect={place => {setInput("");void sendMessage(`Adresse confirmée : ${place.address}, ${place.city ?? ""}, ${place.postalCode ?? ""}`, place);}} placeholder="Choisir l’adresse de la propriété" /></div>}
       {/* Quick chips (show only at start) */}
-      {messages.length <= 2 && !isProcessing && (
+      {!designContext && messages.length <= 2 && !isProcessing && (
         <div className="px-4 pb-2">
           <div className="flex flex-wrap gap-1.5">
             {chips.map((chip) => (

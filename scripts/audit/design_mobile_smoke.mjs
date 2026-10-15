@@ -25,6 +25,7 @@ try {
         return route.fulfill({json:{versions:[{id:'qa-v1',imageUrl:'http://127.0.0.1:8080/src/assets/design-after-1.jpg'}]}});
       }
     }
+    if(url.includes('/functions/v1/alex-qualify-turn'))return route.fulfill({json:{status:'qualifying',next_question:{ui:'choice',q:'Quel budget avez-vous en tête?',options:[{value:'15-50k',label_fr:'15 000 à 50 000 $'}]}}});
     if(url.includes('/functions/v1/clara-session'))return route.fulfill({json:{session_id:'qa',session_token:'qa',messages:[],context:{},language:'fr',auth_state:'guest'}});
     return route.fulfill({json:[]});
   });
@@ -61,6 +62,13 @@ try {
   await comparator.fill('30');await comparator.press('ArrowRight');
   check(await comparator.inputValue()==='31',`${width}: comparator is keyboard accessible`);
   check(await page.getByRole('img',{name:'Avant',exact:true}).getAttribute('src')!==await page.getByRole('img',{name:'Après',exact:true}).getAttribute('src'),`${width}: two distinct before/after images`);
+  await page.getByRole('button',{name:'Trouver un entrepreneur',exact:true}).click();
+  await page.getByRole('img',{name:'Après — concept IA souhaité'}).waitFor();
+  check(await page.getByRole('img',{name:'Avant — photo actuelle'}).isVisible(),`${width}: chat opens with both project photos`);
+  await page.getByText('Quel budget avez-vous en tête?',{exact:true}).waitFor();
+  check(await page.getByRole('button',{name:'15 000 à 50 000 $',exact:true}).isVisible(),`${width}: uses qualification choices`);
+  await page.getByRole('button',{name:'Fermer Clara et revenir au design'}).click();
+  check(await comparator.isVisible(),`${width}: closing chat preserves selected design`);
   await generate.click();await page.waitForFunction(()=>!document.querySelector('[aria-label="Dupliquer cette version"]').disabled);
   check(request.variationCount===1 && request.imageBase64!==initialSource,`${width}: next variation uses a bounded selected image`);
   await generate.click();

@@ -6,6 +6,7 @@
  * nom ni d'adresse publique ⇒ état honnête d'attente, sans bouton de
  * réservation. Le score interne n'est jamais affiché.
  */
+import DesignProjectPhotos from "@/components/design/DesignProjectPhotos";
 import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import PageShell from "@/layouts/PageShell";
@@ -62,6 +63,7 @@ export default function PageRecommendations() {
               </div>
               {top.city && <p className="mt-1 text-sm text-white/60">{top.city}</p>}
               {top.reason && <p className="mt-3 text-sm text-white/70">{top.reason}</p>}
+              <div className="mt-6"><DesignProjectPhotos matchId={top.matchId} allowSelection contractorName={top.name} /></div>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link
                   to={bookingHref}

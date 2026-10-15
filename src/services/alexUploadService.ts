@@ -134,7 +134,7 @@ async function uploadWithProgress(
 
 export async function uploadAlexFile(
   file: File,
-  options?: { onProgress?: (ratio: number) => void; signal?: AbortSignal },
+  options?: { onProgress?: (ratio: number) => void; signal?: AbortSignal; requireRecord?: boolean },
 ): Promise<UploadResult> {
   const validation = validateFile(file);
   if (!validation.ok) return { ok: false, error: validation.error };
@@ -195,6 +195,7 @@ export async function uploadAlexFile(
 
   if (insertError) {
     console.warn("[claraUpload] project_files insert failed (non-blocking):", insertError);
+    if (options?.requireRecord) return { ok: false, error: "La photo n’a pas pu être rattachée à votre dossier. Réessayez." };
   }
 
   let displayUrl = localUrl;

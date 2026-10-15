@@ -2,6 +2,7 @@
  * UNPRO — Matched Leads Page (Contractor)
  * Shows leads distributed via the matching engine with accept/decline + booking.
  */
+import DesignProjectPhotos from "@/components/design/DesignProjectPhotos";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
@@ -189,6 +190,8 @@ export default function ProMatchedLeads() {
                         </div>
                       </div>
                     )}
+
+                    <DesignProjectPhotos matchId={match.id} />
 
                     {/* Decision + Booking */}
                     <div className="space-y-3 pt-2 border-t border-border/20">
