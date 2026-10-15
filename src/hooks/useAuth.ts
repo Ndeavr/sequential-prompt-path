@@ -46,7 +46,9 @@ export const useAuth = () => {
 
     ensureProfile();
     return () => { cancelled = true; };
-  }, [session?.user?.id, session?.user?.email, session?.user?.phone, session?.user?.user_metadata?.full_name]);
+    // Ensure once per identity: a metadata refresh must not cancel the pending lookup.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
 
   const roleQuery = useQuery({
     queryKey: ["user-role", session?.user?.id],
