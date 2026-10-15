@@ -1,7 +1,7 @@
 // PROTECTED — SMS pre-flight guard. Blocks test numbers, opt-outs, invalid phones.
 // Every outbound SMS MUST pass through validateBeforeSend() before hitting Twilio.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizePhone } from "./normalizePhone.ts";
 
 // Known placeholder / test patterns that must never reach Twilio.
@@ -33,7 +33,7 @@ function getAdminAllowlist(): Set<string> {
 }
 
 export async function validateBeforeSend(opts: {
-  supabase: ReturnType<typeof createClient>;
+  supabase: SupabaseClient<any, any, any>;
   phone: string | null | undefined;
   lead_id?: string | null;
   prospect_id?: string | null;
@@ -228,7 +228,7 @@ export function isBlockedSync(normalizedPhone: string): boolean {
 // Inline Twilio Lookup v2 with 90d cache in phone_carrier_cache.
 // Returns: "mobile" | "landline" | "voip" | "unknown" | null (on hard failure)
 export async function lookupPhoneTypeCached(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, any, any>,
   e164: string,
 ): Promise<"mobile" | "landline" | "voip" | "unknown" | null> {
   try {

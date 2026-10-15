@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     : [];
 
   const canonical_from = "+14503286776";
-  const canonical_attached = phone_list.some((p) => p.phone_number === canonical_from);
+  const canonical_attached = phone_list.some((p: { phone_number?: string }) => p.phone_number === canonical_from);
 
   return new Response(
     JSON.stringify({
