@@ -23,6 +23,9 @@ export async function resumeContractorActivation(companyName: string | null): Pr
       .eq("user_id", auth.user.id).order("created_at", { ascending: false });
     if (error) throw error;
     // Match this company, never another business belonging to the same account.
+    // A newer unpaid estimate must never hide an already confirmed activation.
+    const paid = (data ?? []).find(quote => quote.pricing_status === "paid" && activationQuoteDestination(quote, companyName));
+    if (paid) return "/pro";
     for (const quote of data ?? []) {
       const destination = activationQuoteDestination(quote, companyName);
       if (destination) return destination;

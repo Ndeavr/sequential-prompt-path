@@ -32,6 +32,8 @@ free founder entitlement keeps its calendar destination. Another company, reject
 quotes and guest paid state cannot grant access. Missing quotes retain the existing
 intake draft; lookup failures display retry without restarting. No payment state is changed.
 
-Validation: seven service regressions and 18 actual-DOM CTA scenarios across
+Paid activation takes priority over newer unpaid estimates for the same owner/company.
+
+Validation: eight service regressions and 21 actual-DOM CTA scenarios across
 360, 390 and 1280 px, with mocked auth/data and external requests blocked.
 The signed-in Isolation Solution Royal account was not impersonated or modified.
