@@ -20,3 +20,20 @@ All browser/backend test fixtures intercept external services. They do not creat
 Production assets and the real routes were tested with external APIs intercepted at all three widths. That review found a price/currency wrap, a phone-number wrap, duplicated punctuation in the company greeting, and an ambiguous editor RBQ status when a stored number lacked a declaration. The follow-up keeps currency/phone tokens together, normalizes greeting punctuation, and labels that number as declared without changing eligibility.
 
 The same review found repeated role reads on profile mount. The shared `useAuth` query no longer invalidates all role observers whenever another consumer mounts. A known role has a one-second shared freshness window; unresolved roles remain immediately stale, explicit role invalidation still takes effect, and each user has a distinct cache key. `auth-role-query-sharing.test.tsx` checks shared mounts, explicit updates, user changes and failed reads.
+
+### Activation resume regression — October 15
+
+The completed matching-profile CTA previously always linked to pricing intake,
+restoring its draft at the annual-goal question even when a proposal already existed.
+It now checks server-owned quotes for the confirmed company (owner-scoped query),
+then the canonical Clara reference for a guest quote, including after account creation.
+An existing proposal resumes directly; confirmed paid quotes open `/pro`; the
+free founder entitlement keeps its calendar destination. Another company, rejected
+quotes and guest paid state cannot grant access. Missing quotes retain the existing
+intake draft; lookup failures display retry without restarting. No payment state is changed.
+
+Paid activation takes priority over newer unpaid estimates for the same owner/company.
+
+Validation: eight service regressions and 21 actual-DOM CTA scenarios across
+360, 390 and 1280 px, with mocked auth/data and external requests blocked.
+The signed-in Isolation Solution Royal account was not impersonated or modified.

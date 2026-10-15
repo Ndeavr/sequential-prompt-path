@@ -22,6 +22,7 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
+import { resumeContractorActivation } from "@/services/contractorActivationResume";
 import {
   type FreeServiceEntitlement,
   getMyFreeServiceEntitlement,
@@ -308,7 +309,15 @@ export default function PageMatchingProfileWizard() {
       const v = sp.get(k);
       if (v) params.set(k, v);
     }
-    navigate(`/entrepreneur/devis-personnalise?${params.toString()}`);
+    try {
+      const destination = await resumeContractorActivation(businessName ?? null);
+      navigate(destination
+        ? `${destination}${destination === "/pro" || !params.size ? "" : `?${params.toString()}`}`
+        : `/entrepreneur/devis-personnalise?${params.toString()}`);
+    } catch {
+      setActivationError("Impossible de retrouver votre activation. Vos réponses sont conservées. Réessayez.");
+      setActivationRouting(false);
+    }
   }
 
   return (
