@@ -1,3 +1,4 @@
+import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
 /**
  * UNPRO — Mode Action Affilié
  * Une seule mission à l'écran : Trouver → Appeler → Envoyer → Suivre → Gagner.
@@ -298,6 +299,7 @@ export default function PageAffiliateActionMode() {
       </header>
 
       <main className="mx-auto max-w-lg space-y-4 px-5 py-5">
+        <AffiliateVisitSummary affiliateId={affiliate.id} />
         {/* 1 — TROUVER */}
         <StepCard n={1} title="Trouver" subtitle="Le prochain prospect prioritaire" state={step1}>
           {loading && !prospect ? (
