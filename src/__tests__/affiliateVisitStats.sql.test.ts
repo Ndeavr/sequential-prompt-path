@@ -45,7 +45,7 @@ beforeAll(async () => {
 afterAll(async () => { await db.close(); });
 async function read(user: string, id: string | null = affiliate) {
   await db.query("select set_config('qa.uid',$1,false)", [user]);
-  return (await db.query("select * from get_affiliate_visit_stats($1)", [id])).rows;
+  return (await db.query<{affiliate_id: string; total_sessions: number; internal_sessions: number; attributed_sessions: number}>("select * from get_affiliate_visit_stats($1)", [id])).rows;
 }
 test("historic + companion events deduplicate; whole-session internal classification; no conversion inference", async () => {
   expect(await read(owner)).toEqual([{ affiliate_id: affiliate, total_sessions: 8, internal_sessions: 5, attributed_sessions: 3 }]);
