@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AffiliateVisitStats } from "@/features/affiliate/components/AffiliateVisitStats";
+import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -291,6 +293,7 @@ export default function PageAffiliateActionMode() {
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Mode Action</p>
             <p className="text-sm font-semibold text-foreground">{affiliate.first_name ?? affiliate.name}</p>
           </div>
+          <AffiliateHeaderMenu referralCode={affiliate.referral_code} />
           <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
             <Link to="/affiliate/crm"><ListFilter className="h-4 w-4" />Tous mes prospects</Link>
           </Button>
@@ -298,6 +301,8 @@ export default function PageAffiliateActionMode() {
       </header>
 
       <main className="mx-auto max-w-lg space-y-4 px-5 py-5">
+        <AffiliateVisitStats affiliateId={affiliate.id} />
+
         {/* 1 — TROUVER */}
         <StepCard n={1} title="Trouver" subtitle="Le prochain prospect prioritaire" state={step1}>
           {loading && !prospect ? (

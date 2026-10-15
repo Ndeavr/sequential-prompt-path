@@ -2,6 +2,7 @@
  * AffiliateHeaderMenu — role switch + logout + short login copy.
  * Used in the affiliate war room header.
  */
+import { CONTRACTOR_ENTRY_PATH } from "@/config/contractorFunnel";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +19,7 @@ const ROLE_LABELS: Record<string, { label: string; icon: any; to: string }> = {
   admin: { label: "Administration", icon: Shield, to: "/admin" },
 };
 
-export function AffiliateHeaderMenu({ affiliateSlug }: { affiliateSlug?: string | null }) {
+export function AffiliateHeaderMenu({ referralCode }: { referralCode?: string | null }) {
   const nav = useNavigate();
   const { user, roles, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -32,10 +33,15 @@ export function AffiliateHeaderMenu({ affiliateSlug }: { affiliateSlug?: string 
   }
 
   async function copyPublicLink() {
-    if (!affiliateSlug) return;
-    const url = `${window.location.origin}/a/${affiliateSlug}`;
-    await navigator.clipboard.writeText(url);
-    toast.success("Lien public copié");
+    if (!referralCode) return;
+    const url = new URL(CONTRACTOR_ENTRY_PATH, window.location.origin);
+    url.searchParams.set("ref", referralCode);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      toast.success("Lien public copié");
+    } catch {
+      toast.error("Copie impossible. Réessayez.");
+    }
   }
 
   if (!user) return null;
@@ -52,7 +58,7 @@ export function AffiliateHeaderMenu({ affiliateSlug }: { affiliateSlug?: string 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel className="text-xs text-muted-foreground">Espace affilié</DropdownMenuLabel>
-        {affiliateSlug && (
+        {referralCode && (
           <DropdownMenuItem onClick={copyPublicLink}>
             <Copy className="h-4 w-4 mr-2" /> Copier mon lien public
           </DropdownMenuItem>
