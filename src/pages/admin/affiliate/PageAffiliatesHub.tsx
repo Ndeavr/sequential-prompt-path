@@ -1,3 +1,4 @@
+import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
 /**
  * UNPRO — Admin Affiliates Hub (Sprint A shell)
  * Route: /admin/affiliates
@@ -587,7 +588,7 @@ export default function PageAffiliatesHub() {
 
           <div className="mt-6">
             <TabsContent value="dashboard">
-              {q.isLoading ? <div className="text-sm text-muted-foreground">Chargement…</div> : <DashboardTab affiliates={affiliates} />}
+              {q.isLoading ? <div className="text-sm text-muted-foreground">Chargement…</div> : <div className="space-y-4"><AffiliateVisitSummary /><DashboardTab affiliates={affiliates} /></div>}
             </TabsContent>
             <TabsContent value="affiliates">
               {q.isLoading ? <div className="text-sm text-muted-foreground">Chargement…</div> : <AffiliatesTab affiliates={affiliates} refetch={() => q.refetch()} />}

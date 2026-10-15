@@ -75,3 +75,7 @@ Historical chat context can explain intent, but it is not proof that a feature i
 Do not commit private customer information, credentials, migration targets, backup inventories, access-control findings, acquisition performance, or confidential operating details here.
 
 When those details are necessary, use an imported Codex conversation or a local untracked file under `.codex-private/`.
+
+## Affiliate visit counters
+
+Affiliate traffic uses `get_affiliate_visit_stats(uuid)`, derived from historic and future `contractor_funnel_events` landing/audit entry events, one session per affiliate. Identifiable internal/test sessions are separate; ambiguous code ownership and multi-affiliate sessions fail closed. The RPC returns only aggregates for the caller’s affiliate (or all for admins). Never infer signups, payments or commissions from traffic, and never display a query failure as zero. Legacy `affiliates.total_clicks` is not this traffic source.

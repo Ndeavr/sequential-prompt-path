@@ -5,14 +5,15 @@ import { TrendingUp, Users, DollarSign, MousePointerClick } from "lucide-react";
 
 interface Props {
   totalClicks: number;
+  trafficLabel?: string;
   totalConversions: number;
   totalRevenueCents: number;
   conversionRate: number;
 }
 
-const CardAffiliatePerformance = ({ totalClicks, totalConversions, totalRevenueCents, conversionRate }: Props) => {
+const CardAffiliatePerformance = ({ trafficLabel = "Clics", totalClicks, totalConversions, totalRevenueCents, conversionRate }: Props) => {
   const stats = [
-    { label: "Clics", value: totalClicks, icon: MousePointerClick, color: "text-blue-500" },
+    { label: trafficLabel, value: totalClicks, icon: MousePointerClick, color: "text-blue-500" },
     { label: "Conversions", value: totalConversions, icon: Users, color: "text-emerald-500" },
     { label: "Revenus", value: `${(totalRevenueCents / 100).toFixed(2)}$`, icon: DollarSign, color: "text-amber-500" },
     { label: "Taux conv.", value: `${conversionRate}%`, icon: TrendingUp, color: "text-purple-500" },

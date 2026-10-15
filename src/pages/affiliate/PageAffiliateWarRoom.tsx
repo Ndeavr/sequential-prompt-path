@@ -1,3 +1,4 @@
+import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
 /**
  * UNPRO — Affiliate War Room (Daily Call List)
  * Route: /affiliate
@@ -142,6 +143,7 @@ export default function PageAffiliateWarRoom() {
             <AffiliateHeaderMenu affiliateSlug={(affiliate as any)?.slug} />
           </div>
         </header>
+        {affiliate && <AffiliateVisitSummary affiliateId={affiliate.id} />}
 
         {/* Top stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

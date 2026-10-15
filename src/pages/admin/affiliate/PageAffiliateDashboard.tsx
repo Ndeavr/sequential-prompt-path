@@ -1,3 +1,5 @@
+import { useAffiliateVisitStats } from "@/hooks/useAffiliateVisitStats";
+import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
 /**
  * UNPRO — Admin Affiliate Dashboard
  */
@@ -32,10 +34,11 @@ const PageAffiliateDashboard = () => {
     },
   });
 
-  const totalClicks = affiliates?.reduce((s: number, a: any) => s + (a.total_clicks || 0), 0) || 0;
+  const visits = useAffiliateVisitStats();
+  const totalClicks = visits.data?.reduce((sum, row) => sum + Number(row.attributed_sessions), 0);
   const totalConversions = affiliates?.reduce((s: number, a: any) => s + (a.total_conversions || 0), 0) || 0;
   const totalRevenue = affiliates?.reduce((s: number, a: any) => s + (a.total_revenue_cents || 0), 0) || 0;
-  const convRate = totalClicks > 0 ? Math.round((totalConversions / totalClicks) * 100) : 0;
+  const convRate = totalClicks !== undefined && totalClicks > 0 ? Math.round((totalConversions / totalClicks) * 100) : 0;
 
   const rankings = (affiliates || []).map((a: any) => ({
     name: a.name,
@@ -68,12 +71,14 @@ const PageAffiliateDashboard = () => {
         </div>
 
         {/* Global stats */}
-        <CardAffiliatePerformance
+        <AffiliateVisitSummary />
+        {visits.isSuccess && totalClicks !== undefined && <CardAffiliatePerformance
+          trafficLabel="Visites attribuées"
           totalClicks={totalClicks}
           totalConversions={totalConversions}
           totalRevenueCents={totalRevenue}
           conversionRate={convRate}
-        />
+        />}
 
         {/* Leaderboard */}
         <div className="rounded-xl border border-border/30 bg-card p-5">
