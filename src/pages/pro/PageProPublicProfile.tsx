@@ -3,10 +3,12 @@ import { CheckCircle2, Expand, Loader2, Pencil } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
+import { useAuth } from "@/hooks/useAuth";
 import { useContractorProfile } from "@/hooks/useContractor";
 import { useContractorFullProfile } from "@/hooks/useContractorPublicPage";
 
 export default function PageProPublicProfile() {
+  const { isLoading: authLoading } = useAuth();
   const { contractorId = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +17,7 @@ export default function PageProPublicProfile() {
   const { data, isLoading } = useContractorFullProfile(isOwner ? contractorId : undefined);
   const saved = (location.state as { saved?: boolean } | null)?.saved === true;
 
-  if (ownerLoading || isLoading) {
+  if (authLoading || ownerLoading || isLoading) {
     return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 

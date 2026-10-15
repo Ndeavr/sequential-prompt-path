@@ -36,6 +36,11 @@ type ContractorRecord = {
   portfolio_urls?: string[] | null;
   profession_code?: string | null;
   neq?: string | null;
+  rbq_number?: string | null;
+  description?: string | null;
+  legal_name?: string | null;
+  website?: string | null;
+  phone?: string | null;
   rating?: number | null;
   review_count?: number | null;
 };
@@ -62,6 +67,11 @@ type Props = {
   compact?: boolean;
 };
 
+function publicWebsite(value?: string | null) {
+  if (!value) return null;
+  try { const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`); return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
+}
+
 const tabs = [
   { id: "overview", label: "Aperçu", icon: Sparkles },
   { id: "services", label: "Services", icon: Wrench },
@@ -74,6 +84,8 @@ const tabs = [
 export default function ContractorPublicExperience({ profileData, compact = false }: Props) {
   const contractor = profileData.contractor ?? profileData;
   const contractorId = contractor.id as string | undefined;
+  const website = publicWebsite(contractor.website);
+  const phone = contractor.phone?.replace(/[^+\d]/g, "");
   const services = profileData.services ?? [];
   const areas = profileData.service_areas ?? [];
   const media = useMemo(() => profileData.media ?? [], [profileData.media]);
@@ -131,7 +143,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
             <div className="flex items-end gap-3">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/50 bg-card shadow-glow sm:h-20 sm:w-20">
                 {contractor.logo_url ? (
-                  <img src={contractor.logo_url} alt={`Logo ${contractor.business_name}`} className="h-full w-full object-cover" />
+                  <img src={contractor.logo_url} alt={`Logo ${contractor.business_name}`} className="h-full w-full bg-white p-2 object-contain" />
                 ) : (
                   <span className="text-xl font-bold text-primary">{initials}</span>
                 )}
@@ -173,6 +185,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
       </nav>
 
       <div className="space-y-4 px-4 py-5 sm:px-6">
+        {(contractor.description || contractor.legal_name || website || phone) && <section className="rounded-xl border border-border bg-card p-4" aria-label="À propos"><h2 className="font-semibold">À propos de {contractor.business_name}</h2>{contractor.description && <p className="mt-2 whitespace-pre-line break-words text-sm text-text-secondary">{contractor.description}</p>}{contractor.legal_name && <p className="mt-2 text-xs text-muted-foreground">Nom légal : {contractor.legal_name}</p>}<div className="mt-3 flex flex-wrap gap-3 text-sm">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary underline">Site web de l’entreprise<ExternalLink className="h-3 w-3" /></a>}{phone && <a href={`tel:${phone}`} className="text-primary underline">{contractor.phone}</a>}</div></section>}
         <section aria-labelledby="compatibility-title">
           <Button
             type="button"
@@ -228,7 +241,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
         </section>
 
         <section ref={(node) => { sectionRefs.current.verifications = node; }} className="scroll-mt-32" aria-label="Vérifications">
-          {contractorId && <ProfessionalVerificationsCard contractorId={contractorId} professionCode={contractor.profession_code} businessName={contractor.business_name} neq={contractor.neq} className="border-border bg-card" />}
+          {contractorId && <ProfessionalVerificationsCard contractorId={contractorId} professionCode={contractor.profession_code} businessName={contractor.business_name} neq={contractor.neq} rbqNumber={contractor.rbq_number} className="border-border bg-card" />}
         </section>
 
         <section ref={(node) => { sectionRefs.current.reviews = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="reviews-title">

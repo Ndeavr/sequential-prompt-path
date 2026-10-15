@@ -29,6 +29,9 @@ export interface PricingIntakeInput {
   rbq_number?: string | null;
   company_name?: string | null;
   website_url?: string | null;
+  business_phone?: string;
+  business_address?: string;
+  business_province?: string;
 }
 
 export interface PricingQuote {
@@ -81,7 +84,7 @@ export async function computePricingQuote(
     { body: input },
   );
   if (error) throw new Error(error.message);
-  const payload = data as any;
+  const payload = data as { error?: string; quote?: PricingQuote; quote_id?: string; [key: string]: unknown };
   if (payload?.error) throw new Error(payload.error);
   // Le serveur renvoie `quote_id` à la racine; certains appels historiques
   // renvoyaient un objet `quote`. On accepte les deux, sans jamais inventer d'id.
@@ -99,7 +102,7 @@ export async function computePricingQuote(
 
 export async function fetchPricingQuote(id: string): Promise<PricingQuote | null> {
   const { data, error } = await supabase
-    .from("contractor_pricing_quotes" as any)
+    .from("contractor_pricing_quotes")
     .select("*")
     .eq("id", id)
     .maybeSingle();

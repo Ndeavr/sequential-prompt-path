@@ -1,13 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { isIdentityKnown } from "@/pages/contractor-funnel/PageContractorPricingIntake";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
 let mockProfile: any = null;
+let mockAppointments: Array<{ id: string; status: string; project_category: string; scheduled_at: string }> = [];
+beforeEach(() => { mockAppointments = []; });
 vi.mock("@/layouts/ContractorLayout", () => ({ default: ({ children }: any) => <div>{children}</div> }));
 vi.mock("@/hooks/useContractor", () => ({ useContractorProfile: () => ({ data: mockProfile, isLoading: false }) }));
-vi.mock("@/hooks/useAppointments", () => ({ useAppointments: () => ({ data: [], isLoading: false }) }));
+vi.mock("@/hooks/useAppointments", () => ({ useContractorAppointments: () => ({ data: mockAppointments, isLoading: false }) }));
 vi.mock("@/components/pro-dashboard/ProActivationCompact", () => ({ default: () => <div data-testid="compact-activation" /> }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }) }) }) }) },
@@ -43,6 +45,15 @@ describe("contractor dashboard — agreement status is server-authoritative", ()
   it("paid or eligible-free (server activated) shows active agreement", () => {
     renderDash({ id: "c1", account_status: "active", activation_status: "activated", rbq_number: "1", rbq_compliance_status: "verified" });
     expect(screen.getByText(/entente est activée/)).toBeTruthy();
+  });
+  it("shows the contractor appointment category/date and branded profile actions", () => {
+    mockAppointments = [{ id: "a1", status: "scheduled", project_category: "Cuisine confirmée", scheduled_at: "2026-11-18T15:00:00Z" }];
+    renderDash({ id: "c1", business_name: "Atelier QA", city: "Laval", specialty: "Cuisine", logo_url: "https://qa.example/logo.png", activation_status: "activated", rbq_number: "1", rbq_compliance_status: "verified" });
+    expect(screen.getByText("Cuisine confirmée")).toBeTruthy();
+    expect(screen.getByText(new Date(mockAppointments[0].scheduled_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }))).toBeTruthy();
+    expect(screen.getByAltText("Logo Atelier QA")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Voir ma fiche" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Compléter mon logo et mes photos" })).toBeTruthy();
   });
   it("missing profile (load error) never claims activation", () => {
     expect(isContractorAgreementActive(null)).toBe(false);

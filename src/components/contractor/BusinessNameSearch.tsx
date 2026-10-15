@@ -127,6 +127,7 @@ export default function BusinessNameSearch({
               business_name: string | null;
               city: string | null;
               trade: string | null;
+              website?: string | null;
             }>)
               .filter((c) => Boolean(c.business_name))
               .map((c) => ({
@@ -136,7 +137,7 @@ export default function BusinessNameSearch({
                 city: c.city ?? "",
                 province: "",
                 phone: "",
-                website: "",
+                website: c.website ?? "",
                 rating: 0,
                 review_count: 0,
                 primary_category: c.trade ?? null,

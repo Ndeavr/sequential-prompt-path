@@ -156,6 +156,7 @@ Deno.serve(async (req) => {
           business_name: c.business_name,
           city: c.city,
           trade: c.specialty,
+          website: c.website,
           has_rbq: Boolean(c.rbq_number),
         });
       }
@@ -169,6 +170,7 @@ Deno.serve(async (req) => {
           business_name: p.business_name,
           city: p.city,
           trade: p.category,
+          website: p.website_url,
           has_rbq: Boolean(p.rbq_number),
         });
       }
@@ -372,7 +374,7 @@ Deno.serve(async (req) => {
           : null
       );
       push(facts, rbq ? { key: "rbq", label: "Licence RBQ", value: rbq, provenance: rbqVerified ? "verified" : "declared", source: "RBQ" } : null);
-      push(facts, neq ? { key: "neq", label: "NEQ", value: neq, provenance: "verified", source: "Registraire des entreprises" } : null);
+      push(facts, neq ? { key: "neq", label: "NEQ", value: neq, provenance: "declared", source: "Fiche entreprise — validation au registre à confirmer" } : null);
       push(
         facts,
         website

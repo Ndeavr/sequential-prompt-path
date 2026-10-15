@@ -1,3 +1,4 @@
+import { contractorIdentityFromQuote, missingContractorIdentity } from "../_shared/contractorIdentity.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -291,35 +292,40 @@ Deno.serve(async (req) => {
     const isEntryActivation = entryActivation === true;
     if (fallbackCredit === true || isEntryActivation) {
       const stripeFallback = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
+      // Validate quote ownership before creating any business record.
+      let identityQuote: Record<string, unknown> | null = null;
+      if (quoteId) {
+        const { data: q, error } = await serviceClient.from("contractor_pricing_quotes")
+          .select("company_name,city,trade_primary,input_payload,user_id,contractor_id")
+          .eq("id", String(quoteId)).maybeSingle();
+        if (error || !q) return new Response(JSON.stringify({ error: "Devis introuvable", code: "quote_not_found" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (q.user_id && q.user_id !== userId) return new Response(JSON.stringify({ error: "Ce devis ne vous appartient pas.", code: "quote_forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (q.contractor_id) {
+          const { data: owner, error: ownerError } = await serviceClient.from("contractors").select("id").eq("id", q.contractor_id).eq("user_id", userId).maybeSingle();
+          if (ownerError || !owner) return new Response(JSON.stringify({ error: "Ce devis ne vous appartient pas.", code: "quote_forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        identityQuote = q;
+      }
+
 
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
       // doublon sur double-clic ou nouvelle tentative (user_id est unique).
       const findContractor = async () => {
-        const { data } = await serviceClient
+        const { data, error } = await serviceClient
           .from("contractors")
-          .select("id")
+          .select("id,business_name,city,specialty,website,phone,address,province")
           .eq("user_id", userId)
           .maybeSingle();
+        if (error) throw error;
         return data ?? null;
       };
 
       let fbContractor = await findContractor();
 
       if (!fbContractor) {
-        // Nom d'entreprise réel si le devis en fournit un; sinon le courriel.
-        let fallbackBusinessName = userEmail;
-        if (quoteId) {
-          const { data: quoteName } = await serviceClient
-            .from("contractor_pricing_quotes")
-            .select("company_name")
-            .eq("id", String(quoteId))
-            .maybeSingle();
-          if (quoteName?.company_name) fallbackBusinessName = quoteName.company_name;
-        }
-
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, business_name: fallbackBusinessName })
+          .insert({ user_id: userId, ...contractorIdentityFromQuote(identityQuote, userEmail) })
           .select("id")
           .maybeSingle();
 
@@ -345,6 +351,12 @@ Deno.serve(async (req) => {
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
+      }
+
+      const identityPatch = missingContractorIdentity(fbContractor, identityQuote, userEmail);
+      if (Object.keys(identityPatch).length) {
+        const { error } = await serviceClient.from("contractors").update(identityPatch).eq("id", fbContractor.id).eq("user_id", userId);
+        if (error) throw error;
       }
 
       const amountCents = assertFallbackCreditAmount(FALLBACK_CREDIT_AMOUNT_CENTS);
@@ -626,7 +638,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, user_id, contractor_id, company_name, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
+        .select("id, user_id, contractor_id, company_name, city, trade_primary, input_payload, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -647,6 +659,10 @@ Deno.serve(async (req) => {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+      if (q.contractor_id) {
+        const { data: quoteOwner, error: ownerError } = await serviceClient.from("contractors").select("id").eq("id", q.contractor_id).eq("user_id", userId).maybeSingle();
+        if (ownerError || !quoteOwner) return new Response(JSON.stringify({ error: "Ce devis ne vous appartient pas.", code: "quote_forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (q.expires_at && new Date(q.expires_at).getTime() <= Date.now()) {
         return new Response(JSON.stringify({ error: "Ce devis est expiré.", code: "quote_expired" }), {
@@ -741,17 +757,18 @@ Deno.serve(async (req) => {
     }
 
     // Get or create contractor
-    let { data: contractor } = await serviceClient
+    let { data: contractor, error: contractorLookupError } = await serviceClient
       .from("contractors")
-      .select("id, email, phone")
+      .select("id, email, phone,business_name,city,specialty,website,address,province")
       .eq("user_id", userId)
       .maybeSingle();
 
+    if (contractorLookupError) throw contractorLookupError;
     if (!contractor) {
       const { data: newContractor, error: insertErr } = await serviceClient
         .from("contractors")
-        .insert({ user_id: userId, business_name: userEmail })
-        .select("id, email, phone")
+        .insert({ user_id: userId, ...contractorIdentityFromQuote(quoteRow, userEmail) })
+        .select("id, email, phone,business_name,city,specialty,website,address,province")
         .single();
       if (insertErr || !newContractor) {
         return new Response(
@@ -799,6 +816,12 @@ Deno.serve(async (req) => {
         quoteRow.contractor_id = contractor.id;
         quoteRow.user_id = userId;
       }
+    }
+
+    const identityPatch = missingContractorIdentity(contractor, quoteRow, userEmail);
+    if (Object.keys(identityPatch).length) {
+      const { error } = await serviceClient.from("contractors").update(identityPatch).eq("id", contractor.id).eq("user_id", userId);
+      if (error) throw error;
     }
 
     // ── PROMO CODE VALIDATION ──
