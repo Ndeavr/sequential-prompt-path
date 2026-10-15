@@ -11,7 +11,9 @@ describe("Clara — écriture progressive", () => {
     }
   });
   it("au plus une autocorrection, 1 à 3 caractères, puis effacement", () => {
-    const frames = buildTypingFrames(text, { typoChance: 1 });
+    // Force a letter position and a wrong character: random retries can all
+    // land on spaces/punctuation, legitimately producing no correction.
+    const frames = buildTypingFrames(text, { typoChance: 1, rand: () => 0.5 });
     const wrong = frames.filter((f) => !text.startsWith(f.text));
     expect(wrong.length).toBeGreaterThan(0);
     expect(wrong.length).toBeLessThanOrEqual(6);
