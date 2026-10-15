@@ -11,6 +11,8 @@
  *  - écriture idempotente : aucun doublon après reconnexion ou rafraîchissement.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { hasActiveContractorFlow } from "./claraContractorResume";
+import { CLARA_NEXT_STEP_TEXT, promisesDeferredFollowup } from "./claraNextStep";
 import {
   appendClaraMessage,
   ensureClaraSession,
@@ -157,7 +159,8 @@ export function beginClaraVoiceRun(): void {
  * l'expose immédiatement dans le chat.
  */
 export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): void {
-  const text = (raw ?? "").trim();
+  const requiresNextStep = role === "assistant" && hasActiveContractorFlow() && promisesDeferredFollowup(raw ?? "");
+  const text = requiresNextStep ? CLARA_NEXT_STEP_TEXT : (raw ?? "").trim();
   if (!text) return;
 
   // Une même réponse renvoyée deux fois par le canal vocal n'est pas dupliquée.
@@ -186,7 +189,7 @@ export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): v
 
   try {
     window.dispatchEvent(
-      new CustomEvent(CLARA_VOICE_MESSAGE_EVENT, { detail: { id: clientMessageId, role, text } }),
+      new CustomEvent(CLARA_VOICE_MESSAGE_EVENT, { detail: { id: clientMessageId, role, text, requiresNextStep } }),
     );
   } catch {
     /* environnement sans DOM */

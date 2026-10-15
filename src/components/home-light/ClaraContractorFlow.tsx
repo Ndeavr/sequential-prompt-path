@@ -14,6 +14,7 @@ import ClaraQualificationPreview from "./ClaraQualificationPreview";
  * inferred = déduit par UNPRO).
  */
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { declaredVoiceNumber } from "@/services/clara/claraNextStep";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, ExternalLink, MapPin, Phone, Star } from "lucide-react";
 
@@ -109,6 +110,7 @@ export interface ClaraContractorFlowHandle {
   handleText: (text: string) => boolean;
   captureVoice: (text: string) => void;
   resumeAfterVoice: () => void;
+  continueToProposal: () => Promise<void>;
 }
 
 interface Props {
@@ -129,6 +131,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const [freeGoal, setFreeGoal] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditResult | null>(null);
   const [quote, setQuote] = useState<PricingQuote | null>(null);
+  const proposalReadyRef = useRef(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [retry, setRetry] = useState<null | (() => void)>(null);
@@ -412,6 +415,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
         current_ai_visibility_score: audit?.baseline.matched.merged_sources.length ? audit.readiness_score ?? undefined : undefined,
       });
       setQuote(q);
+      proposalReadyRef.current = true;
       void trackFunnelStep("quote_computed", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
       void trackFunnelStep("plan_presented", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
       await say("Voici un résumé et l’entente de départ la plus adaptée à votre capacité du mois prochain.");
@@ -427,7 +431,30 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   /* --------------------------------------------- réponses libres (composer) */
   useImperativeHandle(ref, () => ({
+    continueToProposal: async () => {
+      await pendingVoiceSummary.current;
+      if (proposalReadyRef.current) return;
+      if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) await nextQuestion();
+    },
     captureVoice: (text: string) => {
+      const current = stepRef.current;
+      if (["appointments", "avg_value"].includes(current) || (current === "goal_detail" && readFlow().priority === "contracts")) {
+        const token = peekClaraSessionToken();
+        pendingVoiceSummary.current = Promise.resolve(pendingVoiceSummary.current).then(async () => {
+          if (peekClaraSessionToken() !== token) return;
+          const value = declaredVoiceNumber(text);
+          if (value == null || (current !== "avg_value" && !Number.isInteger(value)) || (current === "appointments" && value > 60) || (current !== "appointments" && value <= 0)) {
+            setSummaryError("Ce nombre n’est pas assez précis. Indiquez une seule valeur pour continuer.");
+            return;
+          }
+          setSummaryError(null);
+          if (current === "appointments") writeFlow({ appointments: value });
+          else if (current === "avg_value") writeFlow({ avg_value: value, avg_value_label: text });
+          else writeFlow({ contract_goal: value });
+          await nextQuestion();
+        });
+        return;
+      }
       if (!["goals", "preferences", "trade", "customer", "areas", "goal_detail", "goal_detail2"].includes(stepRef.current)) return;
       const token = peekClaraSessionToken();
       const question = currentQuestion.current;
@@ -625,7 +652,7 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
       <p className="home-clara-card-meta">Jusqu’à {flow.appointments ?? quote.target_monthly_appointments} rendez-vous exclusifs par mois selon la demande, jamais partagés.</p>
       <p className="home-clara-card-price">{formatCAD(quote.recommended_monthly_price)} / mois <small>+ TPS 5 % et TVQ 9,975 %</small></p>
       <p className="home-clara-card-meta">Conditions : le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
-      <button type="button" className="home-clara-card-primary" onClick={onActivate}>Activer mon profil</button>
+      <button type="button" className="home-clara-card-primary" onClick={onActivate}>Voir ma proposition</button>
       <button type="button" className="home-clara-card-link" onClick={onDetails}>Voir les détails de l’analyse</button>
     </article>
   );

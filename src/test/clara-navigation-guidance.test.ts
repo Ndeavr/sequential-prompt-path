@@ -114,7 +114,7 @@ describe("Clara — ouverture réelle avant toute confirmation", () => {
   });
 
   it("confirme seulement après un changement de route vérifié", () => {
-    expect(nav).toContain("window.location.pathname === destination.path");
+    expect(nav).toContain("window.location.pathname === target.pathname && window.location.search === target.search");
     expect(nav).toContain("return { ok: arrived }");
     expect(box).toContain("ok ? openSuccessMessage(destination) : openFailureMessage(destination)");
   });
