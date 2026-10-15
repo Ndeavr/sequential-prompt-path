@@ -69,17 +69,14 @@ export default function PageAffiliateEntry() {
       setLoading(false);
 
       if (row?.referral_code) {
-        // Attribution écrite uniquement depuis une réponse valide.
+        // This is the affiliate's own workspace entrance, not a referral.
+        // Preserve an existing referral from another affiliate without replacing it.
         try {
-          localStorage.setItem(
-            "unpro_ref",
-            JSON.stringify({
-              refCode: row.referral_code,
-              capturedAt: new Date().toISOString(),
-              utmSource: "affiliate_entry",
-            })
-          );
-        } catch {}
+          const stored = JSON.parse(localStorage.getItem("unpro_ref") || "null");
+          if (stored?.utmSource === "affiliate_entry" && stored?.refCode === row.referral_code) {
+            localStorage.removeItem("unpro_ref");
+          }
+        } catch { /* Storage may be unavailable; never block workspace access. */ }
         trackReferralEvent("affiliate_entry_visit", row.referral_code, {
           targetType: "affiliate_entry",
           metadata: { slug: row.slug },
@@ -103,7 +100,7 @@ export default function PageAffiliateEntry() {
     }
     return {
       label: "Activer mon espace affilié",
-      to: `/affilies/onboarding?slug=${affiliate.slug}&ref=${affiliate.referral_code}`,
+      to: `/affilies/onboarding?slug=${affiliate.slug}`,
     };
   }, [affiliate, user]);
 

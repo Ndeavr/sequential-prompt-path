@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/formatPrice";
 import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
+import { AffiliateVisitStats } from "@/features/affiliate/components/AffiliateVisitStats";
 import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
@@ -139,9 +140,11 @@ export default function PageAffiliateWarRoom() {
                 </Button>
               </>
             )}
-            <AffiliateHeaderMenu affiliateSlug={(affiliate as any)?.slug} />
+            <AffiliateHeaderMenu referralCode={affiliate?.referral_code} />
           </div>
         </header>
+
+        <AffiliateVisitStats affiliateId={affiliate?.id} />
 
         {/* Top stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
