@@ -22,6 +22,7 @@ export async function compressImageFile(
   file: File,
   maxDimension = 2560,
   quality = 0.82,
+  maxBytes = 3 * 1024 * 1024,
 ): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
   if (typeof document === "undefined" || typeof createImageBitmap !== "function") return file;
@@ -29,7 +30,7 @@ export async function compressImageFile(
   try {
     const bitmap = await createImageBitmap(file);
     const largest = Math.max(bitmap.width, bitmap.height);
-    if (largest <= maxDimension && file.size <= 3 * 1024 * 1024) {
+    if (largest <= maxDimension && file.size <= maxBytes) {
       bitmap.close?.();
       return file;
     }

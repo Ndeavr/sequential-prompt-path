@@ -46,3 +46,11 @@ export function nextTorontoMidnightISO(now: Date = new Date()): string {
   const msLeft = 24 * 60 * 60_000 - msIntoDay;
   return new Date(now.getTime() + msLeft).toISOString();
 }
+
+export function nextTorontoMonthISO(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "numeric" }).formatToParts(now);
+  const year = Number(parts.find(p => p.type === "year")?.value);
+  const month = Number(parts.find(p => p.type === "month")?.value);
+  // Noon UTC on the last day is always on that same local day in Toronto.
+  return nextTorontoMidnightISO(new Date(Date.UTC(year, month, 0, 12)));
+}

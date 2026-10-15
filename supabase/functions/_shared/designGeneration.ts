@@ -31,9 +31,9 @@ export function isDesignImage(value: unknown): value is string {
 }
 
 /** Keep only one provider request/body/response in memory at a time. */
-export async function generateDesignVariations<T>(generateOne: (variation: number) => Promise<T | null>): Promise<T[]> {
+export async function generateDesignVariations<T>(generateOne: (variation: number) => Promise<T | null>, count: 1 | 3 = 3): Promise<T[]> {
   const results: T[] = [];
-  for (let variation = 1; variation <= 3; variation++) {
+  for (let variation = 1; variation <= count; variation++) {
     try {
       const result = await generateOne(variation);
       if (result) results.push(result);

@@ -85,6 +85,10 @@ Deno.serve(async (req) => {
 
       const userPrompt = prompt || `Redesign this room in a ${style || "modern"} style.`;
 
+      if (body.variationCount !== undefined && ![1, 3].includes(body.variationCount)) {
+        return new Response(JSON.stringify({ error: "Nombre de variations invalide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const variationCount = body.variationCount === 1 ? 1 : 3;
       // Sequential requests avoid exhausting the Edge runtime with base64 copies.
       const deadline = Date.now() + 110_000;
       let providerStatus = 502;
@@ -149,7 +153,7 @@ Deno.serve(async (req) => {
         return imageUrl ? { imageUrl, text, variation } : null;
       };
 
-      const generated = await generateDesignVariations(generateOne);
+      const generated = await generateDesignVariations(generateOne, variationCount);
 
       if (generated.length === 0) {
         return new Response(

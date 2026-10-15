@@ -274,8 +274,8 @@ export default function DesignUpload({ onUpload }: Props) {
       <section className="border-y border-border bg-card/50 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto grid grid-cols-3 divide-x divide-border">
           {[
-            { value: "10s", label: "par concept" },
-            { value: "3", label: "variantes générées" },
+            { value: "IA", label: "concept personnalisé" },
+            { value: "1", label: "variation à la fois" },
             { value: "100%", label: "gratuit pour essayer" },
           ].map((s) => (
             <div key={s.label} className="py-5 text-center">

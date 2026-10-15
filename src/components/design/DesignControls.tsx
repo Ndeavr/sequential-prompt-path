@@ -198,7 +198,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  Générer 3 versions
+                  Générer une variation
                 </>
               )}
             </Button>
@@ -468,7 +468,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
       <div className="lg:hidden sticky bottom-0 px-4 pt-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] border-t border-border bg-card z-10">
         <Button className="w-full gap-2 h-11" onClick={handleSend} disabled={isGenerating || !canSend}>
           <Sparkles className="w-4 h-4" />
-          {isGenerating ? "Génération…" : "Générer 3 versions"}
+          {isGenerating ? "Génération…" : "Générer une variation"}
         </Button>
       </div>
     </div>
