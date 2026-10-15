@@ -21,6 +21,7 @@ import { CheckCircle2, XCircle, Loader2, Volume2, Mic, RotateCcw } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { voice_smoke_test, type SmokeReport } from "@/lib/voiceSmokeTest";
 import { ALEX_VOICE_BASE, ALEX_VOICE_BACKUP } from "@/config/alexVoiceConfig";
+import { requestVoiceTestAudio } from "@/lib/voiceTestAudio";
 import { toast } from "sonner";
 
 type HealthSnapshot = {
@@ -115,14 +116,7 @@ export default function PageVoiceHealth() {
   const testSpeak = useCallback(async (voiceId: string, label: string) => {
     setSpeaking(true);
     try {
-      const { data, error } = await supabase.functions.invoke("alex-voice-test", {
-        body: { voice_id: voiceId, test_text: "Bonjour. Ceci est un test de la voix de Clara.", language: "fr" },
-      });
-      if (error) throw error;
-      let buf: ArrayBuffer;
-      if (data instanceof ArrayBuffer) buf = data;
-      else if (data instanceof Blob) buf = await data.arrayBuffer();
-      else throw new Error("invalid tts response");
+      const buf = await requestVoiceTestAudio(voiceId, "Bonjour. Ceci est un test de la voix de Clara.");
       const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
       const audio = new Audio(url);
       audio.onended = () => URL.revokeObjectURL(url);

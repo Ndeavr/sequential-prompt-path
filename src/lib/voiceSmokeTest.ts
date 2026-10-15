@@ -15,6 +15,7 @@
  *  - Admin > System Health > Alex Voice page
  *  - pre_deploy_voice_guard
  */
+import { requestVoiceTestAudio } from "@/lib/voiceTestAudio";
 import { supabase } from "@/integrations/supabase/client";
 import { ALEX_VOICE_BASE, ALEX_VOICE_BACKUP } from "@/config/alexVoiceConfig";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
@@ -46,17 +47,7 @@ async function timed<T>(fn: () => Promise<T>): Promise<{ result?: T; error?: unk
 }
 
 async function callTts(voiceId: string, text: string): Promise<ArrayBuffer> {
-  const { data, error } = await supabase.functions.invoke("alex-voice-test", {
-    body: { voice_id: voiceId, test_text: text, language: "fr" },
-  });
-  if (error) throw new Error(error.message || "tts invoke failed");
-  // alex-voice-test returns audio/mpeg ArrayBuffer or a JSON error.
-  if (data instanceof ArrayBuffer) return data;
-  if (data instanceof Blob) return await data.arrayBuffer();
-  if (typeof data === "object" && data && "error" in (data as Record<string, unknown>)) {
-    throw new Error(String((data as Record<string, unknown>).error));
-  }
-  throw new Error("unexpected tts response shape");
+  return requestVoiceTestAudio(voiceId, text);
 }
 
 async function tryPlay(buffer: ArrayBuffer): Promise<void> {

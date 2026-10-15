@@ -144,3 +144,22 @@ continues to use the existing StickToBottom owner.
 
 The authenticated production voice smoke gate above still applies. These checks
 use mocked external services and do not establish live microphone/audio health.
+
+### Authenticated voice diagnostic (2026-10-15)
+
+Admin authentication completed. The real production voice smoke report at
+12:23:40–12:23:46 UTC failed: microphone permission denied, MP3 response parsed
+as text (`unexpected tts response shape`), and no orb on the admin diagnostic
+page. Edge health and live voice credential checks passed. This is not an
+all-green voice gate and does not authorize a deployment.
+
+The SDK's FunctionsClient decodes unrecognized MIME types with response.text();
+audio/mpeg is not in its binary MIME allowlist. Both diagnostic TTS callers now
+use a shared authenticated raw-response helper and arrayBuffer(), retaining MP3
+bytes, rejecting non-audio/HTTP errors and bounding requests at 15 seconds.
+No voice IDs, model, microphone/VAD settings or production transport changed.
+Three mocked regressions cover binary preservation and error responses. An
+attempt to validate the helper against production from the isolated localhost
+harness failed at fetch/network access, so that attempt does not verify live
+playback. The denied microphone and missing admin-page orb checks remain intact;
+the release gate is not weakened to hide these failures.
