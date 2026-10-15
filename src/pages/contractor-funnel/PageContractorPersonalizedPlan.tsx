@@ -6,6 +6,7 @@ import ContractorAffiliateTeaser from "@/components/contractor/ContractorAffilia
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
+import { resumeContractorActivation } from "@/services/contractorActivationResume";
 import { reconcileQuoteDetail, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
 import { returnConfirmationMode } from "../../../supabase/functions/_shared/checkoutGuards";
 import { useEffect, useState } from "react";
@@ -79,7 +80,7 @@ interface AffiliateOfferState {
 
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Offre affilié : code promo personnel (50 % du premier mois payé seulement).
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
@@ -93,6 +94,8 @@ export default function PageContractorPersonalizedPlan() {
   const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activationConfirmed, setActivationConfirmed] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(true);
@@ -121,12 +124,18 @@ export default function PageContractorPersonalizedPlan() {
   useEffect(() => {
     if (!quoteId) return;
     let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
     (async () => {
       try {
         const q = await fetchPricingQuote(quoteId);
-        if (!cancelled) setQuote(q);
-      } catch (e) {
-        toast.error("Devis introuvable. Recommençons ensemble.");
+        const activated = q?.pricing_status === "paid" || (!!q && await resumeContractorActivation(q.company_name) === "/pro");
+        if (!cancelled) {
+          setQuote(q);
+          setActivationConfirmed(activated);
+        }
+      } catch {
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -137,8 +146,8 @@ export default function PageContractorPersonalizedPlan() {
   }, [quoteId]);
 
   const waitlisted = quote?.pricing_status === "waitlisted";
-  const entryTier = ((quote as any)?.pricing_explanation?.entry_tier ?? null) as { cents: number; label: string } | null;
-  const entryTiers = ((quote as any)?.pricing_explanation?.entry_tiers ?? null) as { cents: number; label: string }[] | null;
+  const entryTier = quote?.pricing_explanation?.entry_tier ?? null;
+  const entryTiers = quote?.pricing_explanation?.entry_tiers ?? null;
   const planLabel = entryTier?.label ?? PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [tierLoading, setTierLoading] = useState<number | null>(null);
@@ -151,7 +160,7 @@ export default function PageContractorPersonalizedPlan() {
       });
       const newId = (data as { quote_id?: string } | null)?.quote_id;
       if (error || !newId) throw new Error("tier");
-      navigate(`/entrepreneur/plan-personnalise/${newId}`, { replace: true });
+      navigate(`/entrepreneur/plan-personnalise/${newId}?${searchParams.toString()}`, { replace: true });
     } catch {
       toast.error("Impossible de changer d'entente pour le moment. Réessayez dans un instant.");
     } finally {
@@ -168,9 +177,9 @@ export default function PageContractorPersonalizedPlan() {
 
   // Offre d'entrée 350 $ : jamais affichée si une promotion (affilié, gratuité)
   // est déjà validée côté serveur, si le devis est payé ou en liste d'attente.
-  const [moreOpen, setMoreOpen] = useState(false);
+  const personalizedView = activationConfirmed || searchParams.get("view") === "personalized" || objective === "upgrade";
   const promotionGranted = !!offerState && (offerState.promo_valid || (offerState.offer_exists && ["granted", "accepted", "offered"].includes(offerState.status ?? "")));
-  const entryEligible = !!quote && quote.pricing_status !== "paid" && !waitlisted && !promotionGranted && totalWithTaxCents > 0;
+  const entryEligible = !!quote && !activationConfirmed && !personalizedView && quote.pricing_status !== "paid" && !waitlisted && !promotionGranted && totalWithTaxCents > 0;
 
   // Étape « plan présenté » : écrite une seule fois par session et par devis.
   useEffect(() => {
@@ -430,6 +439,10 @@ export default function PageContractorPersonalizedPlan() {
     );
   }
 
+  if (loadError) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6 text-center"><div role="alert"><p>Impossible de vérifier votre proposition et votre activation. Vos réponses sont conservées.</p><button className="mt-4 rounded-full px-5 py-3 bg-amber-500 text-black font-semibold" onClick={() => window.location.reload()}>Réessayer</button></div></div>;
+  }
+
   if (!quote) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050816] text-white p-6 text-center">
@@ -494,19 +507,19 @@ export default function PageContractorPersonalizedPlan() {
         {/* En-tête — étape 3 sur 3 */}
         <div className="mb-6">
           <p className="text-sm text-white/60 tracking-wide uppercase" data-testid="plan-step-label">
-            Étape 3 sur 3 · Votre entente de départ
+            {personalizedView ? "Votre proposition personnalisée" : "Étape 3 sur 3 · Votre entente de départ"}
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2 tracking-[-0.04em]">
-            Pour commencer{quote.company_name ? `, ${quote.company_name.trim().replace(/[.!?]+$/, "")}` : ""}.
+            {personalizedView ? "Votre plan actualisé" : "Pour commencer"}{quote.company_name ? `, ${quote.company_name.trim().replace(/[.!?]+$/, "")}` : ""}.
           </h1>
         </div>
 
         {/* Compte déjà actif : aucune nouvelle invitation à payer. */}
-        {quote.pricing_status === "paid" && (
+        {activationConfirmed && (
           <GlassCard className="p-6 mb-5 border-emerald-400/30" >
             <div data-testid="already-active">
               <p className="text-lg font-semibold">Votre entente est déjà activée.</p>
-              <p className="text-sm text-white/70 mt-1">Aucun nouveau paiement n'est requis.</p>
+              <p className="text-sm text-white/70 mt-1">{quote.pricing_status === "paid" ? "Aucun nouveau paiement n'est requis." : "Votre activation initiale est déjà réglée. Le forfait mensuel ci-dessous est une nouvelle proposition : aucun changement n'est appliqué sans votre confirmation."}</p>
               <button onClick={() => navigate("/pro", { replace: true })} className="mt-4 rounded-full px-5 py-3 bg-amber-500 text-black font-semibold">
                 Ouvrir mon espace entrepreneur
               </button>
@@ -550,30 +563,29 @@ export default function PageContractorPersonalizedPlan() {
               navigate(contractorLoginPath(`${window.location.pathname}${window.location.search}`));
             }}
             onMore={() => {
-              setMoreOpen(true);
+              const carry = new URLSearchParams(searchParams);
+              carry.set("view", "personalized");
+              setSearchParams(carry, { replace: true });
               void trackFunnelStep("plan_presented", { subjectId: quote.id, metadata: { from: "entry_350_more" } });
               setTimeout(() => document.getElementById("plan-volume")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
             }}
           />
         )}
-        {entryEligible && moreOpen && (
-          <p id="plan-volume" className="text-sm text-white/70 mb-3">
-            Forfait mensuel calculé selon votre métier, votre territoire et votre capacité. Vous pouvez toujours revenir à l'activation à 350 $ ci-dessus.
-          </p>
-        )}
-
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
-        {quote.pricing_status !== "paid" && (!entryEligible || moreOpen) && (() => {
+        {quote.pricing_status !== "paid" && !entryEligible && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
           const included = quote.guaranteed_appointments ?? quote.target_monthly_appointments;
           return (
             <GlassCard className="p-6 mb-4">
-              <div data-testid="starter-offer-card">
+              <div id="plan-volume" data-testid="starter-offer-card">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs uppercase tracking-wider text-amber-300/80">Offre recommandée pour commencer</span>
+                  <span className="text-xs uppercase tracking-wider text-amber-300/80">{personalizedView ? "Votre proposition actualisée" : "Offre recommandée pour commencer"}</span>
                 </div>
                 <p className="text-2xl font-semibold tracking-[-0.03em]" data-testid="plan-name">{entryTier ? planLabel : `Forfait ${planLabel}`}</p>
+                {typeof quote.input_payload?.monthly_capacity === "number" && (
+                  <p className="mt-2 text-sm text-white/80" data-testid="plan-capacity">Votre capacité déclarée pour le mois prochain : {quote.input_payload.monthly_capacity} rendez-vous.</p>
+                )}
                 <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
                   {entryTier
                     ? "Pour atteindre vos objectifs, nous vous recommandons de commencer avec cette entente."
@@ -631,7 +643,7 @@ export default function PageContractorPersonalizedPlan() {
                   data-testid="activate-offer"
                   className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? (entryTier ? "Commencer avec cette entente" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : entryTier ? "Commencer avec cette entente" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
                 </button>
                 {entryTier && entryTiers && !waitlisted && (
                   <div className="mt-3 text-center">
@@ -664,6 +676,7 @@ export default function PageContractorPersonalizedPlan() {
                   onClick={() => {
                     const carry = new URLSearchParams(searchParams);
                     carry.delete("checkout");
+                    carry.set("view", "personalized");
                     const qs = carry.toString();
                     navigate(`/entrepreneur/devis-personnalise${qs ? `?${qs}` : ""}`);
                   }}
@@ -678,7 +691,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
         {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!waitlisted && !fallbackDeclined && !entryEligible && quote.pricing_status !== "paid" && (
+        {!activationConfirmed && !waitlisted && !fallbackDeclined && !entryEligible && quote.pricing_status !== "paid" && (
           <div className="mt-8">
             {fallbackVisible ? (
               <FallbackCredit350Card

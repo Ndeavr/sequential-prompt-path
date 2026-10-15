@@ -35,6 +35,10 @@ export interface PricingIntakeInput {
 }
 
 export interface PricingQuote {
+  pricing_explanation?: {
+    entry_tier?: { cents: number; label: string } | null;
+    entry_tiers?: { cents: number; label: string }[] | null;
+  } | null;
   id: string;
   user_id: string | null;
   contractor_id: string | null;
