@@ -2,6 +2,7 @@ import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKe
 import { CLARA_QUALIFICATION_UPDATED_EVENT, getClaraQualification, hydrateClaraQualification } from "@/services/clara/claraContractorQualification";
 import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
 import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
+import { claraFieldKeyForLabel } from "@/services/clara/claraPageContext";
 /**
  * UNPRO — Pricing Intake (Clara-style conversational)
  * Route: /entrepreneur/devis-personnalise
@@ -781,7 +782,7 @@ export default function PageContractorPricingIntake() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
+    <div data-clara-page="contractor-pricing" data-clara-step={step === 0 ? "Entreprise à confirmer" : "Objectif et capacité du mois prochain"} className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
       <Helmet>
         <title>Votre plan personnalisé · UNPRO</title>
       </Helmet>
@@ -970,6 +971,7 @@ function NumberInput({
       <input
         type="text"
         inputMode="numeric"
+        data-clara-field={claraFieldKeyForLabel(label)}
         pattern="[0-9]*"
         value={draft}
         placeholder={placeholder ?? "—"}

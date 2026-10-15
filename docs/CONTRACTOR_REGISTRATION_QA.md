@@ -86,3 +86,35 @@ failure. 27 real-DOM checks at 360/390/1280 px simulate spoken answers 3 contrac
 computation. All network responses are fixtures; microphone/ElevenLabs, payment,
 SMS and email are not exercised or sent. The existing navigation helper now
 verifies both pathname and query, so a personalized-view handoff can succeed.
+
+## Clara as a page companion (2026-10-15)
+
+The global voice surface defaults to a compact, nonmodal dock on mobile and
+desktop. Expanding its transcript, minimizing it or navigating does not stop or
+restart the voice transport. Explicit pause, resume and close remain available.
+The homepage keeps its existing inline voice slot; explicit fullscreen mode has
+a minimize control. Only fullscreen mode applies the page blur.
+
+One route observer publishes page/step, enabled visible CTA labels, subscription
+blockers, focused annotated numeric fields and validation/hesitation state. The
+existing live SDK receives contextual updates in the same session; the existing
+text request also receives the snapshot. This does not inject user messages,
+write form values or claim a payment/activation. Only allowlisted numeric intake
+fields are shared; credentials, payment fields, contact inputs and query strings
+are excluded. Values remain declared, never verified. The shared keyboard hook
+keeps the focused page field clear of the dock without adding another scroll owner.
+
+Validation: 36 real-DOM checks at 360, 390 and 1280 pixels use the actual dock,
+observer, subscription paywall and keyboard hook. They cover page-link access,
+route collapse, unchanged voice callbacks, numeric/focus/invalid context, secret
+exclusion and keyboard overlap. Voice callbacks are simulated and all external
+requests blocked. Seven focused unit/hook regressions include contextual updates
+through the actual useLiveVoice hook with a mocked SDK. The full suite passes 1,146 tests (one integration test skipped); explicit app
+TypeScript checking and Vite production build pass. New modules lint clean;
+critical lint passes. The older voice files retain their existing lint findings
+(the overlay's rule/message counts match its base revision).
+
+Release gate: the protected voice-health contract requires voice_smoke_test()
+before deployment. The production /admin/voice-health route redirected this
+browser to /login. Local UI/SDK-fixture tests do not establish production audio
+health; run the authenticated diagnostic before publishing this change.

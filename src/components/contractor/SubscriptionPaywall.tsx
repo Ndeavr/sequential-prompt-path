@@ -12,7 +12,7 @@ const SubscriptionPaywall = ({
   title = "Abonnement requis",
   message = "Activez votre abonnement pour recevoir des rendez-vous garantis exclusifs.",
 }: SubscriptionPaywallProps) => (
-  <Card className="max-w-md mx-auto mt-12">
+  <Card data-clara-blocker="subscription_required" className="max-w-md mx-auto mt-12">
     <CardContent className="flex flex-col items-center text-center gap-4 py-8">
       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
         <Lock className="h-6 w-6 text-muted-foreground" />

@@ -50,6 +50,8 @@ import {
   type ClaraVoiceBrief,
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
+import ClaraVoiceDock from "./ClaraVoiceDock";
+import { CLARA_PAGE_CONTEXT_EVENT, formatClaraPageContext, getClaraPageContext, type ClaraPageContext } from "@/services/clara/claraPageContext";
 import { detectTerminalIntent } from "@/lib/alexTerminalIntents";
 // Floating panel styles must load wherever Clara opens (plan page, audit…), not only on the home page.
 import "@/styles/unicorn-theme.css";
@@ -104,6 +106,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
+  const [pageContext, setPageContext] = useState<ClaraPageContext | null>(getClaraPageContext);
+  const sentPageContextRef = useRef("");
   const [slowToken, setSlowToken] = useState(false);
   const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionIdRef = useRef<string>("");
@@ -237,7 +241,7 @@ export default function OverlayAlexVoiceFullScreen() {
     });
   }, []);
 
-  const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
+  const { start, stop, isActive, isConnecting, isSpeaking, conversation, updateContext } = useLiveVoice({
     onFirstAudio: () => {
       if (HALTED.has(getStore().machineState)) return;
       firstAudioReceivedRef.current = true;
@@ -461,6 +465,23 @@ export default function OverlayAlexVoiceFullScreen() {
       }
     },
   });
+
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const context = (event as CustomEvent<ClaraPageContext>).detail;
+      setPageContext(context);
+      const voice = getStore();
+      if (voice.isOverlayOpen && context.path !== "/") voice.setDisplayMode("floating");
+    };
+    window.addEventListener(CLARA_PAGE_CONTEXT_EVENT, changed);
+    return () => window.removeEventListener(CLARA_PAGE_CONTEXT_EVENT, changed);
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || !store.isOverlayOpen || HALTED.has(store.machineState)) return;
+    const context = formatClaraPageContext(pageContext);
+    if (context && context !== sentPageContextRef.current && updateContext(context)) sentPageContextRef.current = context;
+  }, [isActive, pageContext, store.isOverlayOpen, store.machineState, updateContext]);
 
   // Sync speaking/listening states
   useEffect(() => {
@@ -758,7 +779,7 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const brief = await loadClaraVoiceBrief();
         claraBriefRef.current = brief;
-        const resumeContext = buildVoiceResumeContext(brief);
+        const resumeContext = [buildVoiceResumeContext(brief), formatClaraPageContext(getClaraPageContext())].filter(Boolean).join("\n\n");
         const continuation = buildVoiceFirstMessage(brief);
         const hasConversation = Boolean(brief?.has_conversation);
         const shouldGreet = !hasConversation && !hasGreeted();
@@ -913,8 +934,7 @@ export default function OverlayAlexVoiceFullScreen() {
   // ─── Toggle page-level background blur while overlay is open ───
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const isHomeInline = store.displayMode === "floating" && store.feature === "home_hero";
-    if (store.isOverlayOpen && !isHomeInline) {
+    if (store.isOverlayOpen && store.displayMode === "fullscreen") {
       document.documentElement.classList.add("alex-overlay-active");
       document.body.dataset.alexOverlayOpen = "true";
     } else {
@@ -1121,105 +1141,11 @@ export default function OverlayAlexVoiceFullScreen() {
     return createPortal(inlinePanel, homeVoiceSlot);
   }
 
-  // ── FLOATING (compact glass panel) rendering ───────────────────────────────
+  // Compact assistance leaves the page usable while the same voice session continues.
   if (isFloating) {
-    const recentTranscripts = transcripts.slice(-4);
-    const expandToFullscreen = () => store.setDisplayMode("fullscreen");
-
-    return (
-      <>
-        <motion.div
-          key="alex-overlay-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          className="uc-alex-overlay-backdrop"
-          aria-hidden
-        />
-        <motion.div
-          key="alex-panel"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          className="uc-alex-floating-panel flex flex-col"
-          role="dialog"
-          aria-label="Clara — conversation en cours"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
-            <div className="flex items-center gap-3 min-w-0">
-              <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Clara" />
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold leading-tight truncate">Clara</p>
-                <p className="text-[11px] text-white/70 leading-tight truncate">{calmCaption}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={expandToFullscreen}
-                aria-label="Agrandir la conversation"
-                className="hidden md:flex w-8 h-8 rounded-full items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleClose}
-                aria-label="Fermer Clara"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Transcripts */}
-          <div ref={scrollRef} className="flex-1 md:max-h-[240px] overflow-y-auto px-4 py-3">
-            <div className="flex flex-col gap-2">
-              {recentTranscripts.length === 0 && (
-                <p className="text-[12px] text-white/65 text-center py-3">
-                  {isStabilizing ? "Clara démarre…" : "Je vous écoute…"}
-                </p>
-              )}
-              {recentTranscripts.map((entry) => (
-                <motion.div
-                  key={entry.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-2xl px-3 py-2 max-w-[88%] text-[13px] leading-snug ${
-                    entry.role === "user"
-                      ? "self-end bg-[#3B82F6] text-white"
-                      : "self-start bg-white/10 text-white border border-white/10"
-                  }`}
-                >
-                  {entry.text}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer controls */}
-          <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-            <button
-              type="button"
-              onClick={handleFallbackChat}
-              className="text-[11px] text-white/75 hover:text-white transition-colors px-2 py-1.5"
-            >
-              Passer au chat
-            </button>
-            <Button
-              onClick={handleClose}
-              variant="destructive"
-              size="sm"
-              className="rounded-full gap-1.5 px-3 h-8 text-[11px]"
-            >
-              <PhoneOff className="w-3.5 h-3.5" /> Raccrocher
-            </Button>
-          </div>
-        </motion.div>
-      </>
-    );
+    return <ClaraVoiceDock caption={calmCaption} paused={isPaused} context={pageContext}
+      transcripts={transcripts} onPause={() => pauseVoice("user_pause")}
+      onResume={handleResumeVoice} onClose={handleClose} onChat={handleFallbackChat} />;
   }
 
   // ── FULLSCREEN (legacy takeover) rendering ─────────────────────────────────
@@ -1262,6 +1188,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 <p className="text-[10px] text-muted-foreground">{statusText}</p>
               </div>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => store.setDisplayMode("floating")} className="rounded-full">Réduire</Button>
             <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
               <X className="w-5 h-5" />
             </Button>

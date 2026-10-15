@@ -708,5 +708,5 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     };
   }, [clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
-  return { start, stop, isActive, isConnecting, isSpeaking, conversation };
+  return { start, stop, isActive, isConnecting, isSpeaking, conversation, updateContext: sendAgentContext };
 }

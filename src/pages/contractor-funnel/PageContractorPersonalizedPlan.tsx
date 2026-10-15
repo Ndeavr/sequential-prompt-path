@@ -487,7 +487,7 @@ export default function PageContractorPersonalizedPlan() {
 
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-8">
+    <div data-clara-page="contractor-plan" data-clara-step="Proposition personnalisée" className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-8">
       <Helmet>
         <title>Votre plan recommandé · UNPRO</title>
         <meta
