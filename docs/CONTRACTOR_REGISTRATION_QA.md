@@ -118,3 +118,29 @@ Release gate: the protected voice-health contract requires voice_smoke_test()
 before deployment. The production /admin/voice-health route redirected this
 browser to /login. Local UI/SDK-fixture tests do not establish production audio
 health; run the authenticated diagnostic before publishing this change.
+
+### Premium conversation surface (2026-10-15 follow-up)
+
+The public bundle was still index-QxgqUbzG.js at source 3566edc6; the compact
+companion PR was not yet merged or published. This explains the unchanged
+fullscreen capture; a local or PR-only fix is not a production release.
+
+Conversation, composer, messages, examples and media now use the existing
+midnight card tokens instead of mixing hardcoded white panels with a dark
+header. Reflections are restrained, borders and shadows are consistent, and the
+microphone has a subtle blue highlight. The compact dock uses the same material.
+
+The new real-homepage visual smoke runs at 360, 390 and 1280 px, checks text and
+suggestion contrast >=4.5, microphone visibility and overflow, and blocks all
+external requests. It passes 21 checks; the companion smoke passes 36 checks.
+The full unit suite passes 1,146 tests with one integration skip. Vite builds.
+
+Earlier embedded smoke runs exposed a landscape long-draft composer overflow;
+landscape keyboard textareas are now capped at 48px and scroll internally. The
+manual-reading harness also tried to assign scrollTop during the library's
+initial retained follow animation; it now exercises real wheel input and waits
+for the user's scroll position before appending content. Production scrolling
+continues to use the existing StickToBottom owner.
+
+The authenticated production voice smoke gate above still applies. These checks
+use mocked external services and do not establish live microphone/audio health.

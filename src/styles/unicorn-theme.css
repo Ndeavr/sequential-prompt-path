@@ -264,10 +264,11 @@ html.alex-overlay-active .uc-orb-shell .uc-orb-caption { opacity: 0 !important; 
   bottom: max(calc(96px + env(safe-area-inset-bottom, 0px)), calc(100dvh - var(--app-visible-height, 100dvh) - var(--app-visible-top, 0px) + 12px));
   width: min(360px, calc(100vw - 24px));
   color: #f8fafc;
-  background: #101b36;
-  border: 1px solid #435478;
+  background: linear-gradient(145deg, #152340f5, #0b1428fa);
+  border: 1px solid #83a9ed40;
   border-radius: 20px;
-  box-shadow: 0 8px 30px #02061740;
+  box-shadow: 0 16px 48px -12px #020617aa, inset 0 1px 0 #ffffff10;
+  backdrop-filter: blur(20px);
   overflow: hidden;
 }
 .clara-voice-dock-header { display: flex; align-items: center; padding: 6px; gap: 2px; }
