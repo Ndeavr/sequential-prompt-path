@@ -100676,6 +100676,15 @@ export type Database = {
           visits: number
         }[]
       }
+      get_affiliate_visit_stats: {
+        Args: { p_affiliate_id?: string }
+        Returns: {
+          affiliate_id: string
+          attributed_sessions: number
+          internal_sessions: number
+          total_sessions: number
+        }[]
+      }
       get_alex_score_reveal_session: {
         Args: { _session_token: string }
         Returns: {
