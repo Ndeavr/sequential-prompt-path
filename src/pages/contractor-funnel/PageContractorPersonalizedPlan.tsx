@@ -202,13 +202,9 @@ export default function PageContractorPersonalizedPlan() {
   const checkoutOutcome = searchParams.get("checkout");
   useEffect(() => {
     if (!quote || !checkoutOutcome) return;
-    if (checkoutOutcome === "success") {
-      void trackFunnelStep("payment_succeeded", {
-        subjectId: quote.id,
-        contractorId: quote.contractor_id ?? null,
-        metadata: { source: "stripe_return" },
-      });
-    } else if (checkoutOutcome === "canceled") {
+    // A redirect is not payment evidence. Payment/activation events belong
+    // exclusively to the verified server webhook, including TEST separation.
+    if (checkoutOutcome === "canceled") {
       void trackFunnelFailure("checkout_created", "checkout_canceled_by_user", {
         subjectId: quote.id,
       });

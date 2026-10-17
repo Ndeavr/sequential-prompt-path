@@ -60,7 +60,7 @@ describe("câblage", () => {
     expect(plan).not.toContain("Rien n'a été facturé");
     expect(plan).toContain("Paiement TEST confirmé");
     expect(plan).toContain("Votre profil est déjà activé.");
-    expect(co).toContain('status: dup ? "duplicate_payment" : "already_active"');
+    expect(co).toContain('if (dup) return json({ status: "duplicate_payment", livemode });');
     expect(co).toContain('payload->data->object->metadata->>user_id');
     expect(plan).toContain("i < 20");
     expect(plan).toContain("La page de paiement a expiré");
