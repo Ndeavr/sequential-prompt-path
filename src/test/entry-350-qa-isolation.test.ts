@@ -96,6 +96,15 @@ describe('invited receipt retry',()=>{
   });
 });
 describe('personalized interrupted recovery/attribution',()=>{
+  it('personalized referral token never falls through into invited activation/subscription',async()=>{
+    qa.peripheral.set('verified_prospect_tokens',[{token:'local-referral-token',prospect_id:'00000000-0000-4000-8000-000000000020',expires_at:new Date(Date.now()+3600000).toISOString()}]);
+    const r=await qa.checkout('personal',{entryActivation:true,quoteId:Q,activationToken:'local-referral-token'},qa.ownerToken);
+    expect(r.status).toBe(200);
+    expect((await qa.deliver(qa.sessions[0])).status).toBe(200);
+    expect(await plan()).toBe('presence');
+    expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
+    expect(qa.calls).not.toContain('activate_contractor_unified');
+  });
   it('role failure retries same signed event with one original receipt and quote ownership preserved',async()=>{
     const s=await create('personal');qa.failNext('user_roles');
     expect((await qa.deliver(s)).status).toBe(500);
