@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Authorized isolated QA: two synthetic owners, real local SQL roles/RLS, actual checkout/webhook handlers, local Stripe HMAC, mocked provider only; test both entry circuits and document release gaps. No production writes or deployment.
 - [x] Strict paid 350 collection gate: both entry circuits reject unpaid/free/underpaid events before paid telemetry or activation. 72/72 targeted tests + 13/13 mocked checkout checks, automatic build OK; details in entry-350 recovery audit.
 - [ ] RELEASE BLOCKED: authorize isolated authenticated QA backend with dedicated owner/other-owner accounts for no-charge full-stack E2E; current preview shares production and is signed out. No deployment/outreach.
 - [x] P0 2026-10-17 bounded repair: signing-secret absence fails closed; interrupted same-session entry activation resumes without another ledger receipt; redirect no longer emits payment_completed. 58 focused tests + 13 mocked checkout handler checks pass; real router 360/390/1280 offer/cancel/unmatched return passes with all external requests intercepted; harness build OK. No remote writes, sends or publication.
