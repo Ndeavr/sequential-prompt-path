@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Four-issues repair: RBQ gazon/gaz, explicit Clara homeowner transition, signed-out address access, read-only active AI model inventory. Preserve payment repairs; no release/outreach. Audit four-issues-first-revenue-2026-10-17.md.
 - [x] Authorized local isolated QA: 87/87 targeted tests, including 15 SQL-role/RLS and signed-handler scenarios; 13 mocked Checkout checks, 63 browser checks. Invited perpetual-subscription and personalized-token fallthrough repaired locally; report docs/audits/entry-350-qa-isolation-2026-10-17.md. No remote writes, payments, sends or deployment.
 - [x] Strict paid 350 collection gate: both entry circuits reject unpaid/free/underpaid events before paid telemetry or activation. 72/72 targeted tests + 13/13 mocked checkout checks, automatic build OK; details in entry-350 recovery audit.
 - [ ] RELEASE BLOCKED: free isolated Auth/PostgREST/Edge stack with full schema/RLS and both mobile routes unavailable; local adapters are not hosted full-stack E2E. Full-router invited mobile check redirects to https://localhost and remains unverified. No deployment/outreach.
