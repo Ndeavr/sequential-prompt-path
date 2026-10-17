@@ -81,7 +81,7 @@ describe.each(['personal','invited'] as const)('%s actual creation → signed ha
     expect((await qa.queryAs(token,'select * from contractor_entitlements')).rows).toHaveLength(1);
     expect((await qa.queryAs(kind==='personal'?qa.otherToken:qa.ownerToken,'select * from contractor_entitlements')).rows).toHaveLength(0);
     await expect(qa.queryAs(null,'select * from contractor_entitlements')).rejects.toThrow(/permission denied/);
-    expect((await qa.db.query("select has_function_privilege('anon','contractor_plan_code(uuid)','EXECUTE') allowed")).rows[0].allowed).toBe(false);
+    expect((await qa.db.query<{allowed:boolean}>("select has_function_privilege('anon','contractor_plan_code(uuid)','EXECUTE') allowed")).rows[0].allowed).toBe(false);
   });
 });
 describe('invited receipt retry',()=>{
