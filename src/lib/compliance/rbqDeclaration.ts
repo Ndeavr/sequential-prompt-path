@@ -108,5 +108,5 @@ export function getRbqDashboardState(p: {
   if (app.status === "rbq_needs_clarification") {
     return { kind: "clarify", marker: "INFERRED", title: "Vérifions les travaux que vous offrez", detail: "Précisez vos travaux ou votre situation RBQ. Les travaux réglementés restent en attente d'une licence vérifiée.", isNextAction: true, regulatedEligible: false };
   }
-  return { kind: "not_required_inferred", marker: "INFERRED", title: "Aucune licence RBQ requise selon vos activités déclarées", detail: "Estimation selon vos activités; UNPRO peut la revoir.", isNextAction: false, regulatedEligible: false };
+  return { kind: "not_required_inferred", marker: "INFERRED", title: "Ma profession ne requiert pas de licence RBQ", detail: "Selon vos activités déclarées seulement, sous réserve de véritables travaux réglementés. Ce statut ne vérifie aucune licence.", isNextAction: false, regulatedEligible: false };
 }

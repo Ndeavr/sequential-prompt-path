@@ -227,15 +227,20 @@ export function getRbqApplicability(input: {
     return { status: "rbq_needs_clarification", certainty: "low", matched: [], source: RBQ_SOURCE,
       reasonFr: "Aucune activité déclarée : impossible de savoir si une licence RBQ est requise." };
   }
-  const required = raw.filter((a) => REQUIRED_KEYWORDS.some((k) => a.includes(k)));
+  // Gas is a complete métier token, never the beginning of « gazon ».
+  const required = raw.filter((a) => REQUIRED_KEYWORDS.some((k) => k === "gaz"
+    ? /\bgaz\b|\bpropane\b|\bgazeux\b/.test(a) : a.includes(k)));
   if (required.length > 0) {
     return { status: "rbq_required", certainty: "high", matched: required, source: RBQ_SOURCE,
       reasonFr: "Au moins une activité déclarée est un travail de construction visé par la RBQ." };
   }
-  const allExempt = raw.every((a) => EXEMPT_KEYWORDS.some((k) => a.includes(k)));
+  // Split mixed declarations: an unknown extra activity cannot inherit exemption.
+  const activities = raw.flatMap(a => a.split(/\s+(?:et|and)\s+|[,;/+&]/).map(s => s.trim()).filter(Boolean));
+  const lawnMaintenance = /^(?:(?:entretien|tonte)(?:\s+(?:de|du|des|la|le))?\s+(?:gazon|pelouse)|tonte|gazon|pelouse|paysagement|entretien paysager)$/;
+  const allExempt = activities.every((a) => lawnMaintenance.test(a) || EXEMPT_KEYWORDS.some((k) => a.includes(k)));
   if (allExempt) {
     return { status: "rbq_not_required", certainty: "high", matched: raw, source: RBQ_SOURCE,
-      reasonFr: "Les activités déclarées relèvent de l'entretien ménager de propreté, exempté par la RBQ." };
+      reasonFr: "Les activités déclarées relèvent de l'entretien courant sans travaux de construction réglementés." };
   }
   return { status: "rbq_needs_clarification", certainty: "low", matched: raw, source: RBQ_SOURCE,
     reasonFr: "Les activités déclarées doivent être précisées pour savoir si une licence RBQ est requise." };

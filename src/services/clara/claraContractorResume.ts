@@ -3,6 +3,13 @@ import { getClaraSessionToken, peekClaraSessionToken } from "./claraSession";
 // Extend the existing in-chat flow memory; never use a business profile as a
 // signal that a new homeowner conversation belongs to a contractor.
 const FLOW_KEY = "unpro_clara_contractor_flow";
+export const CLARA_HOMEOWNER_REQUEST_EVENT = "unpro:clara-homeowner-request";
+export function hasExplicitHomeownerFlow(): boolean {
+  try {
+    const flow = JSON.parse(sessionStorage.getItem(FLOW_KEY) || "{}");
+    return flow.homeowner === true && flow.session_token === peekClaraSessionToken();
+  } catch { return false; }
+}
 
 export function hasActiveContractorFlow(): boolean {
   try {
@@ -20,7 +27,7 @@ export function rememberActiveContractorFlow(active: boolean): void {
     const flow = JSON.parse(sessionStorage.getItem(FLOW_KEY) || "{}");
     const token = getClaraSessionToken();
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      ...(flow.session_token === token ? flow : {}), active, session_token: token,
+      ...(flow.session_token === token ? flow : {}), active, homeowner: false, session_token: token,
     }));
   } catch { /* The canonical server context remains available. */ }
 }
@@ -38,7 +45,7 @@ export function isContractorContext(context: Record<string, unknown>): boolean {
 export function pauseActiveContractorFlow(): void {
   try {
     const flow = JSON.parse(sessionStorage.getItem(FLOW_KEY) || "{}");
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({ ...flow, active: false }));
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({ ...flow, active: false, homeowner: true, session_token: getClaraSessionToken() }));
   } catch { /* rien à suspendre */ }
 }
 
