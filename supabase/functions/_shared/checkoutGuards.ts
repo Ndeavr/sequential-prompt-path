@@ -110,3 +110,14 @@ export function webhookConfirmationFailed(row: WebhookEventRow | null, nowMs = D
   }
   return false;
 }
+
+/** Pack d'entrée invité : raison de blocage, ou null si LIVE exact 35 000 ¢ CAD. */
+export function entryPackBlockReason(i: {
+  livemode: boolean | null | undefined;
+  amountSubtotal: number | null | undefined;
+  currency: string | null | undefined;
+}): "ignored_test" | "ignored_amount_mismatch" | null {
+  if (i.livemode !== true) return "ignored_test";
+  if (i.amountSubtotal !== 35000 || (i.currency ?? "").toLowerCase() !== "cad") return "ignored_amount_mismatch";
+  return null;
+}
