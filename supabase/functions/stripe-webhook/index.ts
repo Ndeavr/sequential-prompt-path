@@ -337,7 +337,11 @@ Deno.serve(async (req) => {
             await supabase.from("stripe_webhook_events").update({
               processing_status: block,
             }).eq("stripe_event_id", event.id);
-            break;
+            await supabase.from("integration_audit_logs").update({ status: "ignored" })
+              .eq("integration_name", "stripe").eq("action_name", event.id);
+            return new Response(JSON.stringify({ received: true, ignored: block }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
           }
         }
         const contractorId = session.metadata?.contractor_id;
