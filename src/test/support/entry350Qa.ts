@@ -29,6 +29,7 @@ export async function createQa(taxApproved = true) {
   const sessions: Row[] = [];
   const configs: Row[] = [];
   const calls: string[] = [];
+  let deliveryLive = true;
   let failTable: string | null = null;
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
@@ -243,7 +244,7 @@ export async function createQa(taxApproved = true) {
       const tax=item.tax_rates ? Math.round(subtotal*0.05)+Math.round(subtotal*0.09975):0;
       const s={id:`cs_test_local${sessions.length.toString().padStart(12,'0')}`,object:'checkout.session',status:'open',payment_status:'unpaid',mode:config.mode,currency:item.price_data.currency,amount_subtotal:subtotal,amount_total:subtotal+tax,total_details:{amount_tax:tax,amount_discount:0},metadata:config.metadata,customer_email:config.customer_email,customer_details:{email:config.customer_email},payment_intent:`pi_local_${sessions.length}`,url:`${LOCAL_ORIGIN}/mock-checkout/${sessions.length}`};
       sessions.push(s);return s;
-    },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:true}),
+    },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:deliveryLive}),
     listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
   }
   async function load(name:string) {
@@ -272,6 +273,7 @@ export async function createQa(taxApproved = true) {
     return {status:r.status,body:await r.json()};
   }
   async function deliver(s:Row,opts:{live?:boolean;type?:string;eventId?:string;signature?:'bad'|'missing'|'test';object?:Row}={}) {
+    deliveryLive = opts.live !== false;
     const event={id:opts.eventId ?? `evt_local_${sessions.indexOf(s)}`,type:opts.type ?? 'checkout.session.completed',livemode:opts.live!==false,api_version:'2018-02-28',data:{object:opts.object ?? {...s,status:'complete',payment_status:'paid'}}};
     const payload=JSON.stringify(event);
     const signature=Stripe.webhooks.generateTestHeaderString({payload,secret:opts.signature==='test'?testSecret:secret});

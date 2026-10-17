@@ -1,4 +1,5 @@
 // Pure guards shared by checkout + webhook (no Deno APIs: unit-tested in vitest).
+import { ENTRY350_AMOUNTS, ENTRY350_TAX_CONTRACT } from "./entry350Tax.ts";
 
 const ALLOWED_HOSTS = new Set([
   "unpro.ca", "www.unpro.ca", "app.unpro.ca", "unpro.lovable.app",
@@ -41,8 +42,7 @@ export function isSessionPaid(s: { payment_status?: string | null; status?: stri
 }
 
 /** Entry offers only: no free/discounted Checkout may grant a paid activation.
- * Personalized entry charges the existing exclusive GST/QST rates; invited
- * entry currently has no configured tax. Preserve both creation contracts.
+ * Versioned contracts share exclusive GST/QST; preserve unversioned historical contracts.
  */
 export function entry350PaymentBlockReason(s: {
   payment_status?: string | null;
@@ -55,9 +55,9 @@ export function entry350PaymentBlockReason(s: {
 }): "ignored_unpaid" | "ignored_amount_mismatch" | null {
   if (s.payment_status !== "paid") return "ignored_unpaid";
   if (s.metadata?.entry_tax_contract) {
-    if (s.metadata.entry_tax_contract !== "qc-exclusive-v1" || s.mode !== "payment" ||
-        s.currency !== "cad" || s.amount_subtotal !== 35000 || s.amount_total !== 40241 ||
-        s.total_details?.amount_tax !== 5241) return "ignored_amount_mismatch";
+    if (s.metadata.entry_tax_contract !== ENTRY350_TAX_CONTRACT || s.mode !== "payment" ||
+        s.currency !== "cad" || s.amount_subtotal !== ENTRY350_AMOUNTS.subtotal || s.amount_total !== ENTRY350_AMOUNTS.total ||
+        s.total_details?.amount_tax !== ENTRY350_AMOUNTS.tax) return "ignored_amount_mismatch";
     return null;
   }
   const tax = s.total_details?.amount_tax ?? 0;

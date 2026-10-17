@@ -334,6 +334,11 @@ Deno.serve(async (req) => {
             session.metadata?.offer === "entry_pack_350" ||
             session.metadata?.offer_kind === "pack_350") {
           if (session.metadata?.entry_tax_contract && session.payment_status === "paid") {
+            const preliminary = entry350PaymentBlockReason({ ...session, total_details: session.total_details ?? { amount_tax: 5241 } });
+            if (preliminary) {
+              await supabase.from("stripe_webhook_events").update({ processing_status: preliminary }).eq("stripe_event_id", event.id);
+              return new Response(JSON.stringify({ received: true, ignored: preliminary }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
             session = await verifyEntry350TaxContract(stripe, session, event.livemode === true, isReplay);
           }
           const block = entry350PaymentBlockReason(session);
