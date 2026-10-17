@@ -101,7 +101,8 @@ import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowu
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
 import { logQuestion } from "@/services/popularQuestions";
-import { canRunClaraAction, contractorSuggestionsFor, filterSuggestionsForRole } from "@/services/clara/claraRoleGuard";
+import { canRunClaraAction, contractorSuggestionsWithScore, filterSuggestionsForRole, resolveContractorJourneyState } from "@/services/clara/claraRoleGuard";
+import { useContractorProfile } from "@/hooks/useContractor";
 
 const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
@@ -281,6 +282,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const { data: ownContractor } = useContractorProfile();
   const [openingPage, setOpeningPage] = useState(false);
   const openingPageRef = useRef(false);
 
@@ -1889,8 +1891,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             )}
             {!contractorFlow && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
               <div className="home-clara-quick" role="group" aria-label="Choix entrepreneur" data-audience="contractor">
-                {contractorSuggestionsFor("visitor").map((option) => (
-                  <button key={option.label} type="button" onClick={() => { if ("route" in option) window.location.assign(option.route); else void chooseContractorSuggestion(option.label, option.choice); }}>
+                {contractorSuggestionsWithScore(
+                  resolveContractorJourneyState({ hasProfile: !!ownContractor, publicStatus: (ownContractor as { public_status?: string | null } | null)?.public_status ?? null, flowStarted: hasActiveContractorFlow() }),
+                  (() => { try { return !!window.sessionStorage.getItem("unpro_audit_ia_result"); } catch { return false; } })(),
+                ).map((option) => (
+                  <button key={option.label} type="button" onClick={() => { if ("route" in option) navigate(option.route); else void chooseContractorSuggestion(option.label, option.choice); }}>
                     {option.label}
                   </button>
                 ))}

@@ -59,3 +59,14 @@ export function contractorSuggestionsFor(state: ContractorJourneyState, lang: "f
       return [{ label: l.manage, route: "/pro" }, { label: l.rdv, route: "/pro" }];
   }
 }
+
+/** État réel : profil du compte (lu sous RLS) > parcours commencé > visiteur. */
+export function resolveContractorJourneyState(input: { publicStatus?: string | null; hasProfile: boolean; flowStarted: boolean }): ContractorJourneyState {
+  if (input.hasProfile) return input.publicStatus && input.publicStatus !== "unpublished" ? "activated" : "registered";
+  return input.flowStarted ? "started" : "visitor";
+}
+
+/** « Voir mon score IA » n'apparaît que si un score réel existe. */
+export function contractorSuggestionsWithScore(state: ContractorJourneyState, hasRealScore: boolean, lang: "fr" | "en" = "fr"): ContractorSuggestion[] {
+  return contractorSuggestionsFor(state, lang).filter((o) => hasRealScore || !("choice" in o && o.choice === "score"));
+}
