@@ -477,6 +477,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       window.requestAnimationFrame(() => {
         const scroller = getScroller();
         if (!scroller) return;
+        if (rootRef.current?.querySelector(".home-clara-examples")) return;
         scroller.scrollTo({ top: scroller.scrollHeight - scroller.clientHeight, behavior });
       });
     },
@@ -713,7 +714,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   useEffect(() => keepComposerVisible(), [messages, busy, composerText, keepComposerVisible]);
 
   useEffect(() => {
-    if (!quickReplies || busy) return;
+    if (!quickReplies || busy || messages.length === 0 || !isNearBottom()) return;
     // Les choix apparaissent après la réponse : si le lecteur suivait déjà le
     // bas, leur dernière ligne doit rester atteignable au-dessus du composeur.
     let secondFrame = 0;
@@ -724,7 +725,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
     };
-  }, [busy, quickReplies, scrollToLatest]);
+  }, [busy, quickReplies, messages.length, isNearBottom, scrollToLatest]);
 
   useEffect(() => {
     trackCopilotEvent("clara_chat_opened", { surface: "home_clara_box" });
@@ -1760,7 +1761,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       className={`home-clara-shell mx-auto w-full text-left${openingPage ? " is-opening-page" : ""}${contextVisible ? " has-context" : ""}${isConversationActive ? " is-conversation-active" : ""}`}
       aria-label="Conversation avec Clara"
     >
-      <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
+      <div className={`home-clara-main home-clara-glass relative overflow-hidden border border-border${showIntentSuggestions ? " has-intent-suggestions" : ""}`}>
         <div className="home-clara-command-row" data-chat-row="commands">
           <div className={`home-clara-presence${busy ? " is-active" : ""}`} data-state={busy ? "working" : "idle"}>
             <span aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" />
@@ -1842,8 +1843,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Conversation className="home-clara-conversation min-h-0" initial="instant" resize="instant">
-          <ConversationViewportFollow />
+        <Conversation className="home-clara-conversation min-h-0" initial={messages.length > 0 ? "instant" : false} resize="instant">
+          {messages.length > 0 && <ConversationViewportFollow />}
           {/* Les messages commencent en haut, juste sous la barre d'outils :
               aucune zone vide artificielle avant le premier échange. */}
           <ConversationContent className="flex flex-col justify-start gap-3 px-5 py-3 sm:px-6">
@@ -1975,7 +1976,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                onClick={() => void chooseIntentSuggestion(suggestion)}
              >
                <span className="home-clara-example-number" aria-hidden="true">0{index + 1}</span>
-               <span className="home-clara-example-label" style={{ animationDelay: `${index * 1150 + 250}ms` }}>{suggestion.label}</span>
+               <span className="home-clara-example-label" style={{ animationDelay: `${index * 120}ms` }}>{suggestion.label}</span>
                <span className="home-clara-example-arrow" aria-hidden="true">↗</span>
              </button>
            ))}
