@@ -8,6 +8,7 @@ import * as identity from "../../../supabase/functions/_shared/contractorIdentit
 import * as fallback from "../../../supabase/functions/_shared/fallbackCredit350";
 import { revokeEntry350 } from "../../../supabase/functions/_shared/entry350Revocation";
 import { OFFER } from "../../../supabase/functions/_shared/offerCopy";
+import * as entryTax from "../../../supabase/functions/_shared/entry350Tax";
 
 export const OWNER = "00000000-0000-4000-8000-000000000001";
 export const OTHER = "00000000-0000-4000-8000-000000000002";
@@ -18,7 +19,7 @@ type Row = Record<string, any>;
 // Test-only environment. Never reads process.env or .env, never connects remotely.
 // PGlite enforces actual Postgres roles/RLS; auth and peripheral RPCs are adapters,
 // not a hosted Auth/PostgREST/Edge stack. Stripe uses its actual HMAC verifier.
-export async function createQa() {
+export async function createQa(taxApproved = true) {
   const db = new PGlite();
   const secret = randomBytes(32).toString("hex");
   const testSecret = randomBytes(32).toString("hex");
@@ -28,6 +29,7 @@ export async function createQa() {
   const sessions: Row[] = [];
   const configs: Row[] = [];
   const calls: string[] = [];
+  let deliveryLive = true;
   let failTable: string | null = null;
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
@@ -235,21 +237,22 @@ export async function createQa() {
   const env:Row={SUPABASE_URL:LOCAL_ORIGIN,SUPABASE_SERVICE_ROLE_KEY:serviceKey,SUPABASE_ANON_KEY:'local-anon',STRIPE_SECRET_KEY:'sk_live_local_fixture_only',STRIPE_TEST_SECRET_KEY:'sk_test_local_fixture_only',STRIPE_WEBHOOK_SECRET:secret,STRIPE_TEST_WEBHOOK_SECRET:testSecret};
   class LocalStripe {
     webhooks=new Stripe('sk_test_local_fixture_only').webhooks;
-    taxRates={list:async()=>({data:[{id:'tax_gst',metadata:{unpro_tax:'gst_5'},inclusive:false},{id:'tax_qst',metadata:{unpro_tax:'qst_9975'},inclusive:false}]})};
+    taxRates={list:async()=>({data:[{id:'tax_gst',metadata:{unpro_tax:'gst_5'},inclusive:false,percentage:5,country:'CA'},{id:'tax_qst',metadata:{unpro_tax:'qst_9975'},inclusive:false,percentage:9.975,country:'CA',state:'QC'}]})};
     checkout={sessions:{create:async(config:Row)=>{
       configs.push(config);
       const item=config.line_items[0];const subtotal=item.price_data.unit_amount;
       const tax=item.tax_rates ? Math.round(subtotal*0.05)+Math.round(subtotal*0.09975):0;
-      const s={id:`cs_test_local${sessions.length.toString().padStart(12,'0')}`,object:'checkout.session',status:'open',payment_status:'unpaid',mode:config.mode,currency:item.price_data.currency,amount_subtotal:subtotal,amount_total:subtotal+tax,total_details:{amount_tax:tax},metadata:config.metadata,customer_email:config.customer_email,customer_details:{email:config.customer_email},payment_intent:`pi_local_${sessions.length}`,url:`${LOCAL_ORIGIN}/mock-checkout/${sessions.length}`};
+      const s={id:`cs_test_local${sessions.length.toString().padStart(12,'0')}`,object:'checkout.session',status:'open',payment_status:'unpaid',mode:config.mode,currency:item.price_data.currency,amount_subtotal:subtotal,amount_total:subtotal+tax,total_details:{amount_tax:tax,amount_discount:0},metadata:config.metadata,customer_email:config.customer_email,customer_details:{email:config.customer_email},payment_intent:`pi_local_${sessions.length}`,url:`${LOCAL_ORIGIN}/mock-checkout/${sessions.length}`};
       sessions.push(s);return s;
-    }}};
+    },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:deliveryLive}),
+    listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
   }
   async function load(name:string) {
     const path=`supabase/functions/${name}/index.ts`;
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,revokeEntry350,OFFER,
+    const imports={...guards,...identity,...fallback,...entryTax,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
@@ -270,6 +273,7 @@ export async function createQa() {
     return {status:r.status,body:await r.json()};
   }
   async function deliver(s:Row,opts:{live?:boolean;type?:string;eventId?:string;signature?:'bad'|'missing'|'test';object?:Row}={}) {
+    deliveryLive = opts.live !== false;
     const event={id:opts.eventId ?? `evt_local_${sessions.indexOf(s)}`,type:opts.type ?? 'checkout.session.completed',livemode:opts.live!==false,api_version:'2018-02-28',data:{object:opts.object ?? {...s,status:'complete',payment_status:'paid'}}};
     const payload=JSON.stringify(event);
     const signature=Stripe.webhooks.generateTestHeaderString({payload,secret:opts.signature==='test'?testSecret:secret});

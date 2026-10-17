@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { transform } from "esbuild";
 import * as guards from "../../supabase/functions/_shared/checkoutGuards";
+import { verifyEntry350TaxContract } from "../../supabase/functions/_shared/entry350Tax";
 
 const source = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
 
@@ -41,8 +42,8 @@ async function run(session: Record<string, unknown>, livemode = true) {
     serve: (fn: typeof handler) => { handler = fn; },
   };
   const { code } = await transform(source.replace(/^import[^\n]*\n/gm, ""), { loader: "ts", target: "es2022" });
-  new Function("Deno", "Stripe", "createClient", ...Object.keys(guards), "revokeEntry350", code)(
-    deno, StripeFixture, () => db, ...Object.values(guards), () => { throw new Error("Unexpected revocation"); },
+  new Function("Deno", "Stripe", "createClient", ...Object.keys(guards), "revokeEntry350", "verifyEntry350TaxContract", code)(
+    deno, StripeFixture, () => db, ...Object.values(guards), () => { throw new Error("Unexpected revocation"); }, verifyEntry350TaxContract,
   );
   if (!handler) throw new Error("Handler missing");
   const response = await handler(new Request("https://fixture.invalid", {

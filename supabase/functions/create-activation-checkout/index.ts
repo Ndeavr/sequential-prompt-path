@@ -6,6 +6,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { OFFER } from "../_shared/offerCopy.ts";
 import { resolveStripeEnv, stripeKeyFor } from "../_shared/stripeEnv.ts";
+import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT, ENTRY350_AMOUNTS } from "../_shared/entry350Tax.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,7 @@ Deno.serve(async (req) => {
       slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string; test_mode?: boolean;
     };
     const stripeEnv = resolveStripeEnv(test_mode);
+    if (!entry350TaxCollectionApproved()) return json({ error: "L'admissibilité fiscale de cette offre doit être confirmée avant le paiement.", code: "tax_registration_unconfirmed" }, 503);
 
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side
@@ -241,6 +243,7 @@ Deno.serve(async (req) => {
       landing_token: landing_token ?? "",
       activation_token: activation_token ?? "",
       offer: "entry_pack_350",
+      entry_tax_contract: ENTRY350_TAX_CONTRACT,
       // Consumed by stripe-unpro-webhook to persist the calculated guarantee.
       offer_kind: resolvedQuoteId ? "pack_350" : "",
       source: source ?? (isOutreach ? "sms_outreach" : ""),
@@ -276,6 +279,7 @@ Deno.serve(async (req) => {
         mode: "payment",
         line_items: [{
           quantity: 1,
+          tax_rates: await ensureQuebecTaxRates(stripe),
           price_data: {
             currency: "cad",
             unit_amount: packPriceCents,
@@ -290,7 +294,7 @@ Deno.serve(async (req) => {
         },
         custom_text: {
           submit: {
-            message: `Paiement unique de ${priceLabel} CA. Aucun abonnement. ${guaranteeLine}.`,
+            message: `350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement. ${guaranteeLine}.`,
           },
         },
       });
@@ -339,7 +343,7 @@ Deno.serve(async (req) => {
     try {
       await supabase.from("billing_checkout_sessions").insert({
         stripe_checkout_session_id: session.id,
-        amount_total: packPriceCents,
+        amount_total: session.amount_total,
         currency: "cad",
         checkout_status: "open",
         payment_status: "unpaid",
@@ -350,6 +354,9 @@ Deno.serve(async (req) => {
         attribution_key: attr.attribution_key,
         prospect_id: prospectId || null,
         metadata_json: {
+          entry_tax_contract: ENTRY350_TAX_CONTRACT,
+          amount_subtotal: ENTRY350_AMOUNTS.subtotal,
+          amount_tax: ENTRY350_AMOUNTS.tax,
           prospect_id: prospectId || null,
           activation_token: activation_token ?? null,
           landing_token: landing_token ?? null,

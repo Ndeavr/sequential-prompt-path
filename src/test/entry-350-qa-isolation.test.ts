@@ -31,7 +31,7 @@ describe.each(['personal','invited'] as const)('%s actual creation → signed ha
   it('paid receipt grants only presence, duplicate does not extend, refund+dispute revoke',async()=>{
     const s=await create(kind);const target=kind==='personal'?OWNER:OTHER;const token=kind==='personal'?qa.ownerToken:qa.otherToken;
     expect(s.mode).toBe('payment');expect(s.currency).toBe('cad');expect(s.amount_subtotal).toBe(35000);
-    expect(s.amount_total).toBe(kind==='personal'?40241:35000);
+    expect(s.amount_total).toBe(40241);
     expect(qa.configs[0].discounts).toBeUndefined();
     expect((await qa.deliver(s)).status).toBe(200);
     expect(await plan(token,target)).toBe('presence');

@@ -1,5 +1,6 @@
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
+import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -326,12 +327,20 @@ Deno.serve(async (req) => {
 
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        let session = event.data.object as Stripe.Checkout.Session;
         // Before paid telemetry, provisioning, roles, subscriptions or flags.
         // Keep legacy/free offers unchanged; only the two paid entry circuits.
         if (session.metadata?.offer === "entry_activation_350" ||
             session.metadata?.offer === "entry_pack_350" ||
             session.metadata?.offer_kind === "pack_350") {
+          if (session.metadata?.entry_tax_contract && session.payment_status === "paid") {
+            const preliminary = entry350PaymentBlockReason({ ...session, total_details: session.total_details ?? { amount_tax: 5241 } });
+            if (preliminary) {
+              await supabase.from("stripe_webhook_events").update({ processing_status: preliminary }).eq("stripe_event_id", event.id);
+              return new Response(JSON.stringify({ received: true, ignored: preliminary }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
+            session = await verifyEntry350TaxContract(stripe, session, event.livemode === true, isReplay);
+          }
           const block = entry350PaymentBlockReason(session);
           if (block) {
             await supabase.from("stripe_webhook_events").update({
