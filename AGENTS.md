@@ -16,7 +16,7 @@ Applies repo-wide.
 3. Consult [docs/architecture.md](docs/architecture.md) and the linked architecture documents before changing a core model or domain boundary.
 4. Inspect the current branch, working tree, and relevant recent changes. Preserve concurrent Lovable and user edits.
 
-The user's current instruction and verified live state override these documents. Keep public documentation free of sensitive operational details; store those only in `.codex-private/`, which must remain untracked.
+Current instructions and verified live state override these documents. Sensitive operational details go only in untracked `.codex-private/`.
 
 ## Communication and autonomy
 
@@ -24,7 +24,7 @@ The user's current instruction and verified live state override these documents.
 - Lead with the result, current state, or blocker. Distinguish verified facts from assumptions.
 - Never say that something is live, deployed, restored, delivered, or successful without direct evidence.
 - Complete safe, reversible work end to end and minimize interruptions.
-- Ask the user only when credentials must be entered, a destructive or irreversible remote action is required, the exact remote target is uncertain, or a material business choice cannot be inferred safely.
+- Ask only for credentials, destructive/irreversible remote actions, an uncertain remote target, or a business choice that cannot be inferred.
 - Never ask users to paste secrets, private URLs, dumps or customer data into chat.
 - When blocked, preserve completed work, state the single blocker clearly, and give one exact next action.
 
