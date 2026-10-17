@@ -5,7 +5,7 @@
  * and removing the need to load the Google Maps JS SDK on the client.
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
@@ -68,10 +68,12 @@ export default function GooglePlacesInput({
     onChange(pred.description);
     setIsOpen(false);
     const result = await fetchDetails(pred.place_id);
-    reset();
     // A failed details request never becomes a confirmed/located address.
-    if (result) onPlaceSelect?.({ address: result.fullAddress, city: result.city,
-      lat: result.latitude ?? undefined, lng: result.longitude ?? undefined, postalCode: result.postalCode });
+    if (result) {
+      reset();
+      onPlaceSelect?.({ address: result.fullAddress, city: result.city,
+        lat: result.latitude ?? undefined, lng: result.longitude ?? undefined, postalCode: result.postalCode });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
