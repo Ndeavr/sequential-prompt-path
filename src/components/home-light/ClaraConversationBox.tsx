@@ -1965,9 +1965,6 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
         {showIntentSuggestions && (
          <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
-           <p className="home-clara-examples-heading">
-             {popularQuestions.source === "trending" ? "Populaire cette semaine · 7 derniers jours" : "Pour commencer, par exemple…"}
-           </p>
            {intentSuggestions.map((suggestion, index) => (
              <button
                key={`${suggestion.source}-${suggestion.label}`}
@@ -1987,7 +1984,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <ConversationScrollButton title="Revenir au dernier message" className="home-clara-scroll-latest" />
         </Conversation>
 
-      <div className="home-clara-input-row" data-chat-row="composer">
+      <div className={`home-clara-input-row${showIntentSuggestions && mediaItems.length === 0 && !voiceActive ? " is-initial-empty" : ""}`} data-chat-row="composer">
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
           {mediaItems.map((item) => (
