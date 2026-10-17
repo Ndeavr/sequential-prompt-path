@@ -28,6 +28,7 @@ Treat every Supabase project as live infrastructure.
 ## Contractor publication, funnel and entitlements
 
 - Both paid 350 entry circuits reject free, unpaid, non-payment and underpaid sessions before paid telemetry or provisioning, using each existing creation contract's taxes. Why: a discounted Checkout can complete without collecting money.
+- Invited one-time entry passes no subscription plan to activate_contractor_unified; personalized entry tokens never enter invited provisioning. Why: perpetual subscriptions bypass 12-month expiry/refund and token fallthrough attempts duplicate accounts.
 
 - Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
 - Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 entreprise confirmée, 2 objectif annuel + RDV du mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.

@@ -906,7 +906,7 @@ Deno.serve(async (req) => {
         // payment is invisible to the cockpit. "activation_7d" is the legacy 1 $
         // offer, kept only so in-flight sessions still reconcile.
         if (
-          session.metadata?.activation_token ||
+          (session.metadata?.activation_token && session.metadata?.offer !== "entry_activation_350") ||
           session.metadata?.offer === "entry_pack_350" ||
           session.metadata?.offer_kind === "pack_350" ||
           session.metadata?.offer === "activation_7d"
@@ -1115,7 +1115,10 @@ Deno.serve(async (req) => {
                 await supabase.rpc("activate_contractor_unified", {
                   p_contractor_id: activatedContractorId,
                   p_source: "stripe_entry_pack_350",
-                  p_plan_id: session.metadata?.plan_code || "entry_pack_350",
+                  // A one-time entry is not a perpetual paid subscription.
+                  // Its time-bound access comes only from the verified ledger.
+                  p_plan_id: session.metadata?.offer === "entry_pack_350"
+                    ? null : session.metadata?.plan_code || "entry_pack_350",
                   p_actor: null,
                   p_metadata: {
                     checkout_session_id: session.id,
