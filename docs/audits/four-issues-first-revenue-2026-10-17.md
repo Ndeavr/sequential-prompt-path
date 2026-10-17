@@ -59,7 +59,8 @@ Inventaire lexical de tous les fichiers Edge (sites source, pas trafic runtime) 
 
 - Première exécution : 58/58 sur six fichiers (RBQ, rôles Clara, adresses).
 - Régression avec QA 350 $ isolé : 65/65 sur sept fichiers, dont 15 scénarios handlers signés/RLS SQL du harness existant; ceci ne devient pas un E2E Auth/PostgREST/Edge hébergé.
-- Build automatique : dernier signal lu avant rapport `build OK` à 21:17:27Z. Aucun build/typecheck manuel (le harness les gère); aucune preuve de typecheck autonome, lint complet ou de compilation distante.
+- Dernière régression après ajustement de l'échec de détails : 44/44 sur quatre fichiers.
+- Build automatique : dernier signal lu `build OK` à 21:32:32Z. Aucun build/typecheck manuel (le harness les gère); aucune preuve de typecheck autonome, lint complet ou de compilation distante.
 - Test mobile logique avec fixtures : succès 360/390, **clic tactile de section non réussi** (voir ci-dessus). Aucun test physique, voix réelle ni fournisseur Google.
 
 **Aucune publication.** Prochaine action exacte : valider l'accès tactile au CTA propriétaire et les trois formulaires d'adresse en QA isolée; le release gate 350 $ exige toujours ensuite une stack Auth/PostgREST/Edge complète gratuite avec deux identités synthétiques, sans données production ni paiement.
