@@ -41,3 +41,15 @@ describe("Clara — boutons entrepreneur selon l'état", () => {
     expect(contractorSuggestionsFor("visitor", "en")[0].label).toBe("View my AI score");
   });
 });
+
+import { resolveContractorJourneyState, contractorSuggestionsWithScore } from "@/services/clara/claraRoleGuard";
+describe("Clara — état entrepreneur réel", () => {
+  it("déduit l'état du compte et masque le score sans score réel", () => {
+    expect(resolveContractorJourneyState({ hasProfile: false, flowStarted: false })).toBe("visitor");
+    expect(resolveContractorJourneyState({ hasProfile: false, flowStarted: true })).toBe("started");
+    expect(resolveContractorJourneyState({ hasProfile: true, publicStatus: "unpublished", flowStarted: true })).toBe("registered");
+    expect(resolveContractorJourneyState({ hasProfile: true, publicStatus: "verified_active", flowStarted: false })).toBe("activated");
+    expect(contractorSuggestionsWithScore("visitor", false).map((o) => o.label)).toEqual(["Vérifier ma visibilité IA", "M'inscrire comme entrepreneur"]);
+    expect(contractorSuggestionsWithScore("visitor", true)[0].label).toBe("Voir mon score IA");
+  });
+});
