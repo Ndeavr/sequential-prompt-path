@@ -79,3 +79,4 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 - Verify the runtime route/component and public asset revision before user-facing edits; require targeted real-DOM mobile smoke tests and clean harness build/type output. Why: inactive-source checks cannot prove usability.
 - The shared keyboard hook owns visible height/offset and field visibility; existing StickToBottom owns Clara following. Why: competing document/message scrolling clips controls and overrides manual reading.
 <!-- LOVABLE:END -->
+- The CA$350 entry's 12-month Présence IA is resolved only by `contractor_plan_code()`: earliest `entry_activation_350_paid` ledger row cross-checked against a LIVE signed `stripe_webhook_events` payload (paid, 35000 CAD subtotal), voided by a `deactivated` stripe_webhook row (refund/dispute); subscriptions take precedence. Why: one entitlement source, no TEST/forged/replay extension.
