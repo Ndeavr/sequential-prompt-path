@@ -2,15 +2,12 @@
 
 Applies repo-wide.
 
-
 ## Canonical source and branch hygiene
 
 - The production project is `ba1eabf3-fd1c-40fe-9856-3812a70f9869` in repository `Ndeavr/sequential-prompt-path`. Its active Lovable integration branch is `lovable-sync`.
 - Before editing, fetch `origin/lovable-sync`, inspect the project's current commit and run `npm run verify:source`. Start feature branches from the verified active commit, never from a stale default branch.
-- `main` is a discoverability mirror, not a second development line. Reconcile it by fast-forwarding to commits containing both histories; never replace the live tree with legacy April code or force-push.
-- Target feature PRs to `lovable-sync`; preserve concurrent Lovable changes before merging. The existing critical-path workflow mirrors verified `lovable-sync` pushes to `main` by fast-forward only. A divergence fails closed for reconciliation; `main` pushes do not run a duplicate verification pipeline.
-- Timestamped `lovable-sync-*` branches are historical snapshots, not work targets. Retire feature branches only after their commits are included in the active branch and their PR is merged. Preserve unmerged work.
-- An inactive-source test or a GitHub commit is not proof of a production release. Verify the deployed revision separately.
+- `main` is a fast-forward-only mirror of verified `lovable-sync` (never force-push or restore legacy trees); target PRs to `lovable-sync`, preserving concurrent Lovable edits.
+- `lovable-sync-*` branches are historical snapshots; retire feature branches only after merge. A commit or inactive-source test is not proof of release: verify the deployed revision.
 
 ## Start every task with the durable context
 
@@ -63,20 +60,14 @@ The user's current instruction and verified live state override these documents.
 
 ## Remote data and backend rules
 
-See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments).
-
+See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments, contractor publication, funnel and 350 $ entitlement rules).
 
 ## Source-of-truth discipline
 
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, DB metadata, provider receipts and test output over chat history.
 
-
-- Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
-- Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 entreprise confirmée, 2 objectif annuel + RDV du mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.
-
 <!-- LOVABLE:BEGIN -->
 - Verify the runtime route/component and public asset revision before user-facing edits; require targeted real-DOM mobile smoke tests and clean harness build/type output. Why: inactive-source checks cannot prove usability.
 - The shared keyboard hook owns visible height/offset and field visibility; existing StickToBottom owns Clara following. Why: competing document/message scrolling clips controls and overrides manual reading.
 <!-- LOVABLE:END -->
-- The CA$350 entry's 12-month Présence IA is resolved only by `contractor_plan_code()`: earliest `entry_activation_350_paid` ledger row cross-checked against a LIVE signed `stripe_webhook_events` payload (paid, 35000 CAD subtotal), voided by a `deactivated` stripe_webhook row (refund/dispute); subscriptions take precedence. Why: one entitlement source, no TEST/forged/replay extension.
