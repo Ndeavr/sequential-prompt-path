@@ -43,3 +43,4 @@
 - [ ] Vérification registre RBQ de l'employeur (active, sous-catégories, nom/NEQ concordants) + règles CCQ/CMEQ/CMMTQ.
 - [ ] Statut EMPLOYER_AFFILIATION_VERIFIED, affichage « Membre autorisé de [société] », contrat/paiement au nom de la société titulaire.
 - [ ] Écran admin d'examen des déclarations RBQ (exemption, incertain, autre, employeur, indépendant).
+- [blocked: founder] Stripe live endpoint must subscribe to charge.refunded, charge.dispute.created, checkout.session.async_payment_succeeded; then deploy stripe-webhook + publish after authenticated E2E.

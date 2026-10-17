@@ -1,4 +1,5 @@
-import { shouldSkipRedelivery, entryActivationDecision } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason } from "../_shared/checkoutGuards.ts";
+import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -303,6 +304,22 @@ Deno.serve(async (req) => {
       }
     } catch (bookingErr) {
       console.error("[stripe-webhook][booking] handler error:", String(bookingErr));
+    }
+
+    // ── RÉVOCATION 350 $ : remboursement ou litige ─────────────────────
+    // Un remboursement ou un litige retire les 12 mois de Présence IA
+    // (contractor_plan_code ignore toute session révoquée). Idempotent.
+    if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+      const obj = event.data.object as any;
+      const piId = typeof obj?.payment_intent === "string" ? obj.payment_intent : obj?.payment_intent?.id ?? null;
+      if (piId) {
+        await revokeEntry350(supabase, {
+          paymentIntentId: piId,
+          eventId: event.id,
+          livemode: event.livemode === true,
+          reason: event.type === "charge.refunded" ? "refunded" : "disputed",
+        });
+      }
     }
 
     switch (event.type) {
@@ -893,7 +910,30 @@ Deno.serve(async (req) => {
             console.log("[stripe-webhook] entry_pack session not paid yet", session.id, session.payment_status);
             break;
           }
+          // Pack 350 $ : seul un paiement LIVE exact (35 000 ¢ CAD hors taxes)
+          // crée ou active un compte. TEST ou montant inattendu = aucune activation.
+          if (session.metadata?.offer === "entry_pack_350") {
+            const block = entryPackBlockReason({
+              livemode: event.livemode,
+              amountSubtotal: session.amount_subtotal,
+              currency: session.currency,
+            });
+            if (block) {
+              await supabase.from("stripe_webhook_events").update({ processing_status: block }).eq("stripe_event_id", event.id);
+              await supabase.from("admin_notifications").insert({
+                type: `entry_pack_350_${block}`,
+                severity: block === "ignored_amount_mismatch" ? "critical" : "warning",
+                title: block === "ignored_amount_mismatch"
+                  ? "Pack 350 $ : montant inattendu — activation bloquée"
+                  : "Pack 350 $ TEST — aucune activation",
+                body: "Aucun compte ni droit n'a été créé.",
+                payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null, amount_subtotal: session.amount_subtotal, currency: session.currency },
+              });
+              break;
+            }
+          }
 
+          let entryPackFatal: Error | null = null;
           try {
 
             // 1 — close the checkout session record (cockpit truth).
@@ -1067,6 +1107,32 @@ Deno.serve(async (req) => {
                   },
                 }).then(() => {}, (e: unknown) =>
                   console.warn("[stripe-webhook] activate_contractor_unified soft-fail", String(e)));
+                // Reçu canonique des 12 mois de Présence IA (même registre que le
+                // parcours plan personnalisé). Index unique par session : une
+                // relivraison n'ajoute rien et ne prolonge jamais la période.
+                if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
+                  const { error: ledErr } = await supabase.from("contractor_activation_ledger").insert({
+                    contractor_id: activatedContractorId,
+                    action: "entry_activation_350_paid",
+                    source: "stripe_webhook",
+                    after_state: { activation_status: "active", presence_ia_months: 12 },
+                    metadata: {
+                      stripe_session_id: session.id,
+                      stripe_event_id: event.id,
+                      stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
+                      amount_cents: session.amount_total ?? null,
+                      livemode: true,
+                      offer: "entry_pack_350",
+                      prospect_id: vProspectId,
+                      ref: session.metadata?.ref ?? null,
+                    },
+                  });
+                  if (ledErr && !/duplicate key|uq_ledger_entry350_session/i.test(ledErr.message)) {
+                    entryPackFatal = new Error(`entry_pack_350 ledger: ${ledErr.message}`);
+                  }
+                }
+              } else if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
+                entryPackFatal = new Error("entry_pack_350 paid but no contractor could be provisioned");
               }
             }
 
@@ -1205,6 +1271,8 @@ Deno.serve(async (req) => {
           } catch (e) {
             console.error("[stripe-webhook] entry_pack_350 handling failed", (e as Error).message);
           }
+          // A LIVE paid 350 $ without its entitlement receipt must be retried, not marked processed.
+          if (entryPackFatal) throw entryPackFatal;
           break;
         }
 

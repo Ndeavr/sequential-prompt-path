@@ -2,15 +2,12 @@
 
 Applies repo-wide.
 
-
 ## Canonical source and branch hygiene
 
 - The production project is `ba1eabf3-fd1c-40fe-9856-3812a70f9869` in repository `Ndeavr/sequential-prompt-path`. Its active Lovable integration branch is `lovable-sync`.
 - Before editing, fetch `origin/lovable-sync`, inspect the project's current commit and run `npm run verify:source`. Start feature branches from the verified active commit, never from a stale default branch.
-- `main` is a discoverability mirror, not a second development line. Reconcile it by fast-forwarding to commits containing both histories; never replace the live tree with legacy April code or force-push.
-- Target feature PRs to `lovable-sync`; preserve concurrent Lovable changes before merging. The existing critical-path workflow mirrors verified `lovable-sync` pushes to `main` by fast-forward only. A divergence fails closed for reconciliation; `main` pushes do not run a duplicate verification pipeline.
-- Timestamped `lovable-sync-*` branches are historical snapshots, not work targets. Retire feature branches only after their commits are included in the active branch and their PR is merged. Preserve unmerged work.
-- An inactive-source test or a GitHub commit is not proof of a production release. Verify the deployed revision separately.
+- `main` is a fast-forward-only mirror of verified `lovable-sync` (never force-push or restore legacy trees); target PRs to `lovable-sync`, preserving concurrent Lovable edits.
+- `lovable-sync-*` branches are historical snapshots; retire feature branches only after merge. A commit or inactive-source test is not proof of release: verify the deployed revision.
 
 ## Start every task with the durable context
 
@@ -19,7 +16,7 @@ Applies repo-wide.
 3. Consult [docs/architecture.md](docs/architecture.md) and the linked architecture documents before changing a core model or domain boundary.
 4. Inspect the current branch, working tree, and relevant recent changes. Preserve concurrent Lovable and user edits.
 
-The user's current instruction and verified live state override these documents. Keep public documentation free of sensitive operational details; store those only in `.codex-private/`, which must remain untracked.
+Current instructions and verified live state override these documents. Sensitive operational details go only in untracked `.codex-private/`.
 
 ## Communication and autonomy
 
@@ -27,7 +24,7 @@ The user's current instruction and verified live state override these documents.
 - Lead with the result, current state, or blocker. Distinguish verified facts from assumptions.
 - Never say that something is live, deployed, restored, delivered, or successful without direct evidence.
 - Complete safe, reversible work end to end and minimize interruptions.
-- Ask the user only when credentials must be entered, a destructive or irreversible remote action is required, the exact remote target is uncertain, or a material business choice cannot be inferred safely.
+- Ask only for credentials, destructive/irreversible remote actions, an uncertain remote target, or a business choice that cannot be inferred.
 - Never ask users to paste secrets, private URLs, dumps or customer data into chat.
 - When blocked, preserve completed work, state the single blocker clearly, and give one exact next action.
 
@@ -63,17 +60,12 @@ The user's current instruction and verified live state override these documents.
 
 ## Remote data and backend rules
 
-See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments).
-
+See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments, contractor publication, funnel and 350 $ entitlement rules).
 
 ## Source-of-truth discipline
 
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, DB metadata, provider receipts and test output over chat history.
-
-
-- Contractor public state = generated column `contractors.public_status` (unpublished / published_pending_verification / verified_active = verified + admin_verified); Clara recommendations require verified_active; publishing auto-syncs `contractor_public_pages` via trigger. Why: publish right after payment without implying verification.
-- Parcours entrepreneur = 3 étapes + confirmation : /entrepreneur/devis-personnalise (1 entreprise confirmée, 2 objectif annuel + RDV du mois prochain) → /entrepreneur/plan-personnalise/:id (3 entente de départ = plus petit plan couvrant la capacité du mois prochain, prix serveur) → confirmation webhook pricing_status=paid → /pro. Why: première entente rapide, pas forfait maximal.
 
 <!-- LOVABLE:BEGIN -->
 - Verify the runtime route/component and public asset revision before user-facing edits; require targeted real-DOM mobile smoke tests and clean harness build/type output. Why: inactive-source checks cannot prove usability.
