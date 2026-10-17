@@ -225,7 +225,7 @@ export async function createQa() {
               }
               return {data:single ? result.rows[0] ?? null : result.rows,error:null};
             });
-          }catch(e){return {data:null,error:{message:e instanceof Error?e.message:String(e)}};}
+          }catch(e){console.error('isolated SQL adapter',table,operation,e instanceof Error?e.message:String(e));return {data:null,error:{message:e instanceof Error?e.message:String(e)}};}
         }
         return q;
       },
