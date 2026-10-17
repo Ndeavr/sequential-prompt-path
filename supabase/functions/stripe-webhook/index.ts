@@ -1105,6 +1105,32 @@ Deno.serve(async (req) => {
                   },
                 }).then(() => {}, (e: unknown) =>
                   console.warn("[stripe-webhook] activate_contractor_unified soft-fail", String(e)));
+                // Reçu canonique des 12 mois de Présence IA (même registre que le
+                // parcours plan personnalisé). Index unique par session : une
+                // relivraison n'ajoute rien et ne prolonge jamais la période.
+                if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
+                  const { error: ledErr } = await supabase.from("contractor_activation_ledger").insert({
+                    contractor_id: activatedContractorId,
+                    action: "entry_activation_350_paid",
+                    source: "stripe_webhook",
+                    after_state: { activation_status: "active", presence_ia_months: 12 },
+                    metadata: {
+                      stripe_session_id: session.id,
+                      stripe_event_id: event.id,
+                      stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
+                      amount_cents: session.amount_total ?? null,
+                      livemode: true,
+                      offer: "entry_pack_350",
+                      prospect_id: vProspectId,
+                      ref: session.metadata?.ref ?? null,
+                    },
+                  });
+                  if (ledErr && !/duplicate key|uq_ledger_entry350_session/i.test(ledErr.message)) {
+                    entryPackFatal = new Error(`entry_pack_350 ledger: ${ledErr.message}`);
+                  }
+                }
+              } else if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
+                entryPackFatal = new Error("entry_pack_350 paid but no contractor could be provisioned");
               }
             }
 
