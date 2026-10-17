@@ -220,7 +220,7 @@ export async function createQa() {
                 result=await db.query<Row>(`UPDATE public.${table} SET ${keys.map(k=>`${k}=${bind(row[k])}`).join(',')}${where()} RETURNING *`,args);
               } else {
                 // Columns retain production shape; only simple selectors supported.
-                if(columns!=='*')columns.split(',').forEach(col);
+                if(columns!=='*')columns.split(',').map(k=>k.trim()).forEach(col);
                 result=await db.query<Row>(`SELECT ${columns} FROM public.${table}${where()} LIMIT ${limit}`,args);
               }
               return {data:single ? result.rows[0] ?? null : result.rows,error:null};
