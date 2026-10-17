@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Current release gate: reject unpaid/free/underpaid 350 entry events before paid telemetry or activation; exercise real handler + isolated entitlement SQL. No deployment until authenticated true-stack no-charge QA is available; outbound stays closed.
 - [x] P0 2026-10-17 bounded repair: signing-secret absence fails closed; interrupted same-session entry activation resumes without another ledger receipt; redirect no longer emits payment_completed. 58 focused tests + 13 mocked checkout handler checks pass; real router 360/390/1280 offer/cancel/unmatched return passes with all external requests intercepted; harness build OK. No remote writes, sends or publication.
 - [ ] P0 release BLOCKED: included 12-month Presence IA is stored only in the ledger, while canonical plan/access resolver requires a subscription; existing access-rule change is outside the no-permissions-change scope. Authenticated complete checkout/entitlement E2E and invited-entry legacy error/TEST isolation remain unverified. Do not publish or unlock outreach based on mocked QA.
 - [x] Ultra-targeted homepage follow-up: exact homeowner FR/EN text, conversion disclaimer removed, one canonical native call pill at bottom. 10 focused tests pass; browser / and /index, 360/390/1280, CTA destinations and reduced-motion verified; harness build OK. Preview only. Physical keyboard/devices and actual calls untested.
@@ -43,4 +44,4 @@
 - [ ] Vérification registre RBQ de l'employeur (active, sous-catégories, nom/NEQ concordants) + règles CCQ/CMEQ/CMMTQ.
 - [ ] Statut EMPLOYER_AFFILIATION_VERIFIED, affichage « Membre autorisé de [société] », contrat/paiement au nom de la société titulaire.
 - [ ] Écran admin d'examen des déclarations RBQ (exemption, incertain, autre, employeur, indépendant).
-- [blocked: founder] Stripe live endpoint must subscribe to charge.refunded, charge.dispute.created, checkout.session.async_payment_succeeded; then deploy stripe-webhook + publish after authenticated E2E.
+- [ ] Stripe eight-event subscription reported resolved by founder; independently read endpoint, then keep release blocked until authenticated E2E.

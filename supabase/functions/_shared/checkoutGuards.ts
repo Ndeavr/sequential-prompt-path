@@ -40,6 +40,32 @@ export function isSessionPaid(s: { payment_status?: string | null; status?: stri
   return s.payment_status === "paid" || s.payment_status === "no_payment_required";
 }
 
+/** Entry offers only: no free/discounted Checkout may grant a paid activation.
+ * Personalized entry charges the existing exclusive GST/QST rates; invited
+ * entry currently has no configured tax. Preserve both creation contracts.
+ */
+export function entry350PaymentBlockReason(s: {
+  payment_status?: string | null;
+  mode?: string | null;
+  currency?: string | null;
+  amount_subtotal?: number | null;
+  amount_total?: number | null;
+  total_details?: { amount_tax?: number | null } | null;
+  metadata?: Record<string, string> | null;
+}): "ignored_unpaid" | "ignored_amount_mismatch" | null {
+  if (s.payment_status !== "paid") return "ignored_unpaid";
+  const tax = s.total_details?.amount_tax ?? 0;
+  const minimumTax = s.metadata?.offer === "entry_activation_350"
+    ? Math.round(35000 * 0.05) + Math.round(35000 * 0.09975) : 0;
+  if (s.mode !== "payment" || (s.currency ?? "").toLowerCase() !== "cad" ||
+      s.amount_subtotal !== 35000 || !Number.isSafeInteger(tax) || tax < 0 ||
+      !Number.isSafeInteger(s.amount_total) ||
+      (s.amount_total ?? 0) < 35000 + Math.max(minimumTax, tax)) {
+    return "ignored_amount_mismatch";
+  }
+  return null;
+}
+
 /** Strict Stripe Checkout Session id format (cs_test_… / cs_live_…). */
 export function isValidCheckoutSessionId(v: unknown): v is string {
   return typeof v === "string" && /^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(v);

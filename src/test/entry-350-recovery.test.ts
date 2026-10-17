@@ -44,7 +44,7 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
   const { code } = await transform(branch, { loader: "ts", target: "es2022" });
   const { entryActivationDecision } = await import("../../supabase/functions/_shared/checkoutGuards");
   const runBranch = new Function("supabase", "session", "event", "entryActivationDecision", `return (async () => { ${code} })()`);
-  const session = { id: "cs_fixture", amount_subtotal: 35000, amount_total: 40241, currency: "cad", payment_status: "paid", metadata: { offer: "entry_activation_350", contractor_id: "fixture-contractor", quote_id: "fixture-quote" } };
+  const session = { id: "cs_fixture", mode: "payment", amount_subtotal: 35000, amount_total: 40241, currency: "cad", payment_status: "paid", metadata: { offer: "entry_activation_350", contractor_id: "fixture-contractor", quote_id: "fixture-quote" } };
   return { state, session, run: () => runBranch(db, session, { id: "evt_fixture", livemode: options.live !== false }, entryActivationDecision) };
 }
 
