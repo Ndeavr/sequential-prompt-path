@@ -204,14 +204,15 @@ export async function createQa() {
             return await asRole(uid,role,async()=>{
               const args: unknown[]=[];
               const bind=(v:unknown)=>{args.push(v!==null && typeof v==='object'?JSON.stringify(v):v);return `$${args.length}`;};
-              const col=(k:string)=>{if(!/^[a-z_]+(->>[a-z_]+)*$/.test(k))throw new Error('Unsafe identifier');const [base,...parts]=k.split('->>');return base+parts.map(p=>`->>'${p}'`).join('');};
+              const col=(k:string)=>{if(!/^[a-z_]+(->>?[a-z_]+)*$/.test(k))throw new Error('Unsafe identifier');return k.replace(/(->>?)([a-z_]+)/g,"$1'$2'");};
               const where=()=>filters.length ? ' WHERE '+filters.map(([k,op,v])=>op==='is'?`${col(k)} IS NULL`:`${col(k)} ${op} ${bind(v)}`).join(' AND ') : '';
               let result: any;
               if(operation==='insert'||operation==='upsert') {
                 const values=Array.isArray(payload)?payload:[payload ?? {}]; const all:Row[]=[];
                 for(const row of values) {
                   const keys=Object.keys(row); keys.forEach(col);args.length=0;
-                  const update=conflict ? ` ON CONFLICT (${conflict}) DO UPDATE SET ${keys.filter(k=>!conflict.split(',').includes(k)).map(k=>`${k}=excluded.${k}`).join(',')}` : '';
+                  const updates=keys.filter(k=>!conflict.split(',').includes(k));
+                  const update=conflict ? ` ON CONFLICT (${conflict}) ${updates.length ? 'DO UPDATE SET '+updates.map(k=>`${k}=excluded.${k}`).join(',') : 'DO NOTHING'}` : '';
                   const r=await db.query<Row>(`INSERT INTO public.${table}(${keys.join(',')}) VALUES(${keys.map(k=>bind(row[k])).join(',')})${update} RETURNING *`,args);all.push(...r.rows);
                 }
                 result={rows:all};
