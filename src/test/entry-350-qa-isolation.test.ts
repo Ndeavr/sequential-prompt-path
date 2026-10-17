@@ -104,6 +104,7 @@ describe('personalized interrupted recovery/attribution',()=>{
     expect(await plan()).toBe('presence');
     expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
     expect(qa.calls).not.toContain('activate_contractor_unified');
+    expect(qa.calls).not.toContain('record_engagement_event');
   });
   it('role failure retries same signed event with one original receipt and quote ownership preserved',async()=>{
     const s=await create('personal');qa.failNext('user_roles');

@@ -906,7 +906,7 @@ Deno.serve(async (req) => {
         // payment is invisible to the cockpit. "activation_7d" is the legacy 1 $
         // offer, kept only so in-flight sessions still reconcile.
         if (
-          session.metadata?.activation_token ||
+          (session.metadata?.activation_token && session.metadata?.offer !== "entry_activation_350") ||
           session.metadata?.offer === "entry_pack_350" ||
           session.metadata?.offer_kind === "pack_350" ||
           session.metadata?.offer === "activation_7d"
