@@ -211,15 +211,13 @@ Deno.serve(async (req) => {
         const { data: led } = await serviceClient.from("contractor_activation_ledger")
           .select("metadata").eq("action", "entry_activation_350_paid")
           .eq("contractor_id", rq.contractor_id).limit(1).maybeSingle();
-        const { data: activation } = led ? await serviceClient.from("contractors")
-          .select("activation_status").eq("id", rq.contractor_id).eq("user_id", userId).maybeSingle() : { data: null };
         // A receipt can precede a failed role/profile/quote write. In that case
         // continue to the authenticated Stripe event replay, not already_active.
-        if (led && (activation?.activation_status === "activated" || activation?.activation_status === "active")) {
+        if (led) {
           const m = (led.metadata ?? {}) as Record<string, unknown>;
           const livemode = m.livemode === true;
           const dup = !!sid && sid !== m.stripe_session_id;
-          return json({ status: dup ? "duplicate_payment" : "already_active", livemode });
+          if (dup) return json({ status: "duplicate_payment", livemode });
         }
       }
       if (!sid) return json({ status: "no_session" });
