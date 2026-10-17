@@ -1,5 +1,6 @@
 import { contractorIdentityFromQuote, missingContractorIdentity } from "../_shared/contractorIdentity.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT } from "../_shared/entry350Tax.ts";
 import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -25,44 +26,6 @@ const corsHeaders = {
 // ── Taxes du Québec : TPS 5 % + TVQ 9,975 % ──
 // Source de vérité serveur. Les taux Stripe sont créés une seule fois par clé
 // (test ou live) puis retrouvés par leur metadata unpro_tax.
-const QUEBEC_TAX_DEFS = [
-  { key: "gst_5", display_name: "TPS", percentage: 5, jurisdiction: "CA" },
-  { key: "qst_9975", display_name: "TVQ", percentage: 9.975, jurisdiction: "CA-QC" },
-] as const;
-
-const quebecTaxRateCache = new Map<string, string[]>();
-
-async function ensureQuebecTaxRates(stripe: Stripe): Promise<string[]> {
-  const cacheKey = "quebec";
-  const cached = quebecTaxRateCache.get(cacheKey);
-  if (cached) return cached;
-
-  const existing = await stripe.taxRates.list({ active: true, limit: 100 });
-  const ids: string[] = [];
-
-  for (const def of QUEBEC_TAX_DEFS) {
-    const found = existing.data.find(
-      (r) => r.metadata?.unpro_tax === def.key && r.inclusive === false,
-    );
-    if (found) {
-      ids.push(found.id);
-      continue;
-    }
-    const created = await stripe.taxRates.create({
-      display_name: def.display_name,
-      description: `${def.display_name} (${def.percentage} %)`,
-      percentage: def.percentage,
-      inclusive: false,
-      country: "CA",
-      state: def.jurisdiction === "CA-QC" ? "QC" : undefined,
-      metadata: { unpro_tax: def.key },
-    });
-    ids.push(created.id);
-  }
-
-  quebecTaxRateCache.set(cacheKey, ids);
-  return ids;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -308,7 +271,9 @@ Deno.serve(async (req) => {
         }
         identityQuote = q;
       }
-
+      if (isEntryActivation && !entry350TaxCollectionApproved()) {
+        return new Response(JSON.stringify({ error: "L'admissibilité fiscale de cette offre doit être confirmée avant le paiement.", code: "tax_registration_unconfirmed" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
 
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
       // doublon sur double-clic ou nouvelle tentative (user_id est unique).
@@ -454,6 +419,7 @@ Deno.serve(async (req) => {
           ...(isEntryActivation
             ? {
                 amount_cents: String(amountCents),
+                entry_tax_contract: ENTRY350_TAX_CONTRACT,
                 presence_ia_months: "12",
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
               }
@@ -467,6 +433,8 @@ Deno.serve(async (req) => {
           ...(sourceMeta && { source: sourceMeta }),
         },
       };
+
+      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
 
       if (isEmbeddedFallback) {
         fallbackConfig.ui_mode = "embedded";

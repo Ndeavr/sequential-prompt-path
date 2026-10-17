@@ -24,7 +24,7 @@ export const OFFER_350 = {
   ctaActivate: "Activer ma garantie — 350 $",
   disclaimer:
     "Le nombre réel varie selon votre domaine, votre territoire et la capacité disponible.",
-  paymentNote: "Paiement unique. Aucun abonnement.",
+  paymentNote: "350 $ CA avant taxes. TPS/TVQ en sus si applicables : total de 402,41 $. Paiement unique. Aucun abonnement.",
 
   card: {
     eyebrow: "À partir de 350 $",
@@ -75,6 +75,6 @@ export const ENTRY_350 = {
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
     "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
-  paymentNote: "Paiement unique de 350 $ + TPS (5 %) et TVQ (9,975 %), soit 402,41 $. Aucun abonnement. Activation dès la confirmation du paiement par Stripe.",
+  paymentNote: "350 $ CA avant taxes. Si applicables : TPS 17,50 $ + TVQ 34,91 $, total 402,41 $ CA. Paiement unique, aucun abonnement. Admissibilité fiscale à confirmer avant paiement.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;

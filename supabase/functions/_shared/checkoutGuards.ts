@@ -54,6 +54,12 @@ export function entry350PaymentBlockReason(s: {
   metadata?: Record<string, string> | null;
 }): "ignored_unpaid" | "ignored_amount_mismatch" | null {
   if (s.payment_status !== "paid") return "ignored_unpaid";
+  if (s.metadata?.entry_tax_contract) {
+    if (s.metadata.entry_tax_contract !== "qc-exclusive-v1" || s.mode !== "payment" ||
+        s.currency !== "cad" || s.amount_subtotal !== 35000 || s.amount_total !== 40241 ||
+        s.total_details?.amount_tax !== 5241) return "ignored_amount_mismatch";
+    return null;
+  }
   const tax = s.total_details?.amount_tax ?? 0;
   const minimumTax = s.metadata?.offer === "entry_activation_350"
     ? Math.round(35000 * 0.05) + Math.round(35000 * 0.09975) : 0;
