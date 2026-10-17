@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 import { getMatchingSessionKey } from "@/lib/matching/sessionKey";
 import type { ClaraContractorQualification } from "./claraContractorQualification";
 
@@ -23,14 +23,16 @@ function auditContext() {
   } catch { return {}; }
 }
 export async function persistClaraQualification(value: ClaraContractorQualification): Promise<void> {
-  const { data, error } = await supabase.functions.invoke("matching-profile", { body: {
+  const { data, error } = await invokeMatchingProfile({
     action: "save", session_key: getMatchingSessionKey(), ...auditContext(), answers: qualificationMatchingAnswers(value),
     business_name: value.business_name || undefined, city: value.business_city || undefined, trade: value.primary_trade || undefined,
-  } });
+  });
+  if (data?.error === "authentication_required") throw error;
   if (error || data?.ok !== true) throw new Error("Le profil n’a pas pu être sauvegardé. Vos critères restent dans ce navigateur; réessayez.");
 }
 export async function loadClaraQualification(): Promise<ClaraContractorQualification | null> {
-  const { data, error } = await supabase.functions.invoke("matching-profile", { body: { action: "get", session_key: getMatchingSessionKey(), ...auditContext() } });
+  const { data, error } = await invokeMatchingProfile({ action: "get", session_key: getMatchingSessionKey(), ...auditContext() });
+  if (data?.error === "authentication_required") throw error;
   if (error || data?.ok !== true) throw new Error("La reprise du profil est indisponible.");
   const value = data.profile?.answers?.clara_qualification;
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;

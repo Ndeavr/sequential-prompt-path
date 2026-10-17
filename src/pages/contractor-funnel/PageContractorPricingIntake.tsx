@@ -1,4 +1,5 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
+import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 import { CLARA_QUALIFICATION_UPDATED_EVENT, getClaraQualification, hydrateClaraQualification } from "@/services/clara/claraContractorQualification";
 import { ATTRIBUTION_PARAMS } from "@/config/contractorFunnel";
 import CreditCampaignNotice from "@/components/contractor/CreditCampaignNotice";
@@ -178,9 +179,7 @@ export default function PageContractorPricingIntake() {
     let cancelled = false;
     void (async () => {
       try {
-        const { data: res } = await supabase.functions.invoke("matching-profile", {
-          body: { action: "get", session_key: sessionKey, audit_id: auditId, audit_token: auditToken },
-        });
+        const { data: res } = await invokeMatchingProfile({ action: "get", session_key: sessionKey, audit_id: auditId, audit_token: auditToken });
         if (cancelled) return;
         const resolved = (res as { audit?: AuditContext | null } | null)?.audit ?? null;
         if (resolved) {
@@ -226,9 +225,7 @@ export default function PageContractorPricingIntake() {
       let answers: Record<string, unknown> = {};
       const qualificationAtStart = getClaraQualification().updated_at;
       try {
-        const { data: res } = await supabase.functions.invoke("matching-profile", {
-          body: { action: "get", session_key: sessionKey },
-        });
+        const { data: res } = await invokeMatchingProfile({ action: "get", session_key: sessionKey });
         const profile = (res as { profile?: { answers?: Record<string, unknown> } | null } | null)?.profile;
         answers = profile?.answers ?? {};
         if (answers.clara_qualification && getClaraQualification().updated_at === qualificationAtStart) {

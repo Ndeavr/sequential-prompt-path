@@ -1,4 +1,5 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
+import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -141,15 +142,13 @@ export default function PageMatchingProfileWizard() {
     let cancelled = false;
     void (async () => {
       try {
-        const profileRequest = await supabase.functions.invoke("matching-profile", {
-          body: {
+        const profileRequest = await invokeMatchingProfile({
             action: "get",
             session_key: sessionKey,
             // L'audit est revalidé côté serveur : l'entreprise affichée ici est
             // celle qui vient d'être analysée, jamais une valeur de l'URL.
             audit_id: auditId,
             audit_token: auditToken,
-          },
         });
         if (cancelled) return;
 
@@ -213,13 +212,11 @@ export default function PageMatchingProfileWizard() {
   const save = useCallback(
     async (next: Answers, complete = false, nextStep?: number) => {
       setSaving(true);
-      const { data, error } = await supabase.functions.invoke("matching-profile", {
-        body: {
+      const { data, error } = await invokeMatchingProfile({
           ...context,
           action: complete ? "complete" : "save",
           answers: next,
           current_step: nextStep,
-        },
       });
       setSaving(false);
       const response = data as MatchingProfileResponse | null;
