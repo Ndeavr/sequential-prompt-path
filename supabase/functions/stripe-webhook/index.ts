@@ -64,7 +64,13 @@ Deno.serve(async (req) => {
 
     let event: Stripe.Event;
 
-    if (webhookSecret && !isReplay) {
+    if (!webhookSecret && !isReplay) {
+      return new Response(JSON.stringify({ error: "Webhook verification unavailable" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!isReplay) {
       const sig = req.headers.get("stripe-signature");
       if (!sig) {
         return new Response(JSON.stringify({ error: "Missing signature" }), {
@@ -76,7 +82,7 @@ Deno.serve(async (req) => {
       // test-mode events can be verified for real (never forged, never skipped).
       try {
         try {
-          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret ?? "");
         } catch (liveErr) {
           if (!testWebhookSecret) throw liveErr;
           event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
@@ -357,15 +363,15 @@ Deno.serve(async (req) => {
             });
           }
           if (entryContractorId && paid && amountOk) {
-            const { data: already } = await supabase
+            const { data: already, error: alreadyError } = await supabase
               .from("contractor_activation_ledger")
               .select("id")
               .eq("action", "entry_activation_350_paid")
               .eq("metadata->>stripe_session_id", session.id)
               .maybeSingle();
-            const { data: ownerRow } = await supabase
+            const { data: ownerRow, error: ownerError } = await supabase
               .from("contractors").select("user_id, activation_status").eq("id", entryContractorId).maybeSingle();
-            const { data: otherSession } = await supabase
+            const { data: otherSession, error: otherError } = await supabase
               .from("contractor_activation_ledger")
               .select("id")
               .eq("action", "entry_activation_350_paid")
@@ -373,6 +379,9 @@ Deno.serve(async (req) => {
               .neq("metadata->>stripe_session_id", session.id)
               .limit(1)
               .maybeSingle();
+            if (alreadyError || ownerError || otherError || !ownerRow?.user_id) {
+              throw new Error("entry_activation_350 ownership or ledger lookup failed");
+            }
             // Séparation TEST/LIVE : un événement de test n'active qu'un compte QA marqué.
             let isQaAccount = false;
             if (event.livemode !== true && ownerRow?.user_id) {
@@ -399,12 +408,12 @@ Deno.serve(async (req) => {
                 payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null },
               });
             }
-            if (decision === "activate") {
+            if (decision === "activate" || decision === "already_processed") {
               const nowIso = new Date().toISOString();
               const presenceUntil = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
               const guaranteed = Number(session.metadata?.guaranteed_appointments ?? 0) || 0;
               // Le registre d'abord : s'il échoue, rien d'autre n'est modifié.
-              const { error: ledgerErr } = await supabase.from("contractor_activation_ledger").insert({
+              const { error: ledgerErr } = decision === "already_processed" ? { error: null } : await supabase.from("contractor_activation_ledger").insert({
                 contractor_id: entryContractorId,
                 action: "entry_activation_350_paid",
                 source: "stripe_webhook",
@@ -428,7 +437,10 @@ Deno.serve(async (req) => {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
               }
-              if (!concurrentDup) {
+              // A ledger receipt is not proof that every entitlement write succeeded.
+              // Replay the same-session upserts after an interrupted delivery;
+              // never insert another receipt or extend the original presence period.
+              {
                 const must = (label: string, r: { error: { message: string } | null }) => {
                   if (r.error) throw new Error(`entry_activation_350 ${label}: ${r.error.message}`);
                 };
@@ -452,6 +464,7 @@ Deno.serve(async (req) => {
                       .eq("metadata_json->>quote_id", String(session.metadata.quote_id));
                   }
                 }
+                if (decision === "activate" && !concurrentDup) {
                 await supabase.from("contractor_funnel_events").insert({
                   contractor_id: entryContractorId,
                   event_type: "entry_350_payment_success",
@@ -465,6 +478,7 @@ Deno.serve(async (req) => {
                   body: "Un entrepreneur a activé son profil (350 $, 12 mois de Présence IA).",
                   payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, ref: session.metadata?.ref ?? null, quote_id: session.metadata?.quote_id ?? null, guaranteed_appointments: guaranteed },
                 });
+                }
               }
             }
           }
