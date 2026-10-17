@@ -73,6 +73,27 @@ describe.each(['personal','invited'] as const)('%s actual creation → signed ha
     expect((await qa.queryAs(token,'select * from contractor_subscriptions')).rows).toHaveLength(1);
     expect((await qa.queryAs(kind==='personal'?qa.otherToken:qa.ownerToken,'select * from contractor_subscriptions')).rows).toHaveLength(0);
   });
+  it('owner entitlements visible, other owner and anon blocked by actual SQL privileges/RLS',async()=>{
+    const s=await create(kind);await qa.deliver(s);
+    const target=kind==='personal'?OWNER:OTHER;const token=kind==='personal'?qa.ownerToken:qa.otherToken;
+    const c=(await qa.db.query<any>('select id from contractors where user_id=$1',[target])).rows[0].id;
+    await qa.db.query("insert into contractor_entitlements values($1,'qa-read-probe')",[c]);
+    expect((await qa.queryAs(token,'select * from contractor_entitlements')).rows).toHaveLength(1);
+    expect((await qa.queryAs(kind==='personal'?qa.otherToken:qa.ownerToken,'select * from contractor_entitlements')).rows).toHaveLength(0);
+    await expect(qa.queryAs(null,'select * from contractor_entitlements')).rejects.toThrow(/permission denied/);
+    expect((await qa.db.query("select has_function_privilege('anon','contractor_plan_code(uuid)','EXECUTE') allowed")).rows[0].allowed).toBe(false);
+  });
+});
+describe('invited receipt retry',()=>{
+  it('failed ledger delivery stays failed, retry grants presence without permanent subscription',async()=>{
+    const s=await create('invited');qa.failNext('contractor_activation_ledger');
+    expect((await qa.deliver(s)).status).toBe(500);
+    expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
+    expect((await qa.deliver(s)).status).toBe(200);
+    expect(await plan(qa.otherToken,OTHER)).toBe('presence');
+    expect((await qa.db.query("select * from contractor_activation_ledger where action='entry_activation_350_paid'")).rows).toHaveLength(1);
+    expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
+  });
 });
 describe('personalized interrupted recovery/attribution',()=>{
   it('role failure retries same signed event with one original receipt and quote ownership preserved',async()=>{
