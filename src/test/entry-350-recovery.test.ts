@@ -49,6 +49,20 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
 }
 
 describe("350 CAD — interrupted real webhook branch", () => {
+  it("rejects an unsigned webhook even when its signing secret is missing, before DB access", async () => {
+    let handler: ((request: Request) => Promise<Response>) | undefined;
+    let dbCalls = 0;
+    const raw = source.replace(/^import[^\n]*\n/gm, "");
+    const { code } = await transform(raw, { loader: "ts", target: "es2022" });
+    class StripeFixture {}
+    const deno = { env: { get: (name: string) => name === "STRIPE_SECRET_KEY" ? "fixture" : undefined }, serve: (fn: typeof handler) => { handler = fn; } };
+    const guards = await import("../../supabase/functions/_shared/checkoutGuards");
+    new Function("Deno", "Stripe", "createClient", "shouldSkipRedelivery", "entryActivationDecision", code)(deno, StripeFixture, () => { dbCalls++; throw new Error("DB forbidden"); }, guards.shouldSkipRedelivery, guards.entryActivationDecision);
+    if (!handler) throw new Error("Handler not registered");
+    const result = await handler(new Request("https://fixture.invalid", { method: "POST", body: "{}" }));
+    expect(result.status).toBe(503);
+    expect(dbCalls).toBe(0);
+  });
   it("resumes after a role failure without a second receipt or extending 12-month presence", async () => {
     const f = await fixture({ failRole: true });
     await expect(f.run()).rejects.toThrow("role write unavailable");
