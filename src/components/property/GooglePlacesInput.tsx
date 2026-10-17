@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
 import { cn } from "@/lib/utils";
 
 interface PlaceSelection {
@@ -42,12 +42,9 @@ export default function GooglePlacesInput({
 }: GooglePlacesInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<number | null>(null);
-  const reqIdRef = useRef(0);
-
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const { predictions, isLoading, error, search, fetchDetails, reset } = useAddressAutocomplete();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
   const [activeIndex, setActiveIndex] = useState(-1);
 
   // Close dropdown on outside click
@@ -59,65 +56,22 @@ export default function GooglePlacesInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Debounced query
-  const queryPredictions = useCallback(async (input: string) => {
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    if (input.trim().length < 3) {
-      setPredictions([]);
-      setIsOpen(false);
-      return;
-    }
-    debounceRef.current = window.setTimeout(async () => {
-      const reqId = ++reqIdRef.current;
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
-          body: { input, types: "address", region: "ca", language: "fr" },
-        });
-        if (reqId !== reqIdRef.current) return; // stale
-        if (error) {
-          setPredictions([]);
-          setIsOpen(false);
-          return;
-        }
-        const preds: Prediction[] = data?.predictions || [];
-        setPredictions(preds);
-        setIsOpen(preds.length > 0);
-        setActiveIndex(-1);
-      } finally {
-        if (reqId === reqIdRef.current) setIsLoading(false);
-      }
-    }, 250);
-  }, []);
+  useEffect(() => { setIsOpen(predictions.length > 0); setActiveIndex(-1); }, [predictions]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     onChange(v);
-    queryPredictions(v);
+    search(v);
   };
 
   const handleSelect = async (pred: Prediction) => {
     onChange(pred.description);
     setIsOpen(false);
-    setPredictions([]);
-    try {
-      const { data } = await supabase.functions.invoke("google-places-autocomplete", {
-        body: { place_id: pred.place_id },
-      });
-      const r = data?.result;
-      if (r) {
-        onPlaceSelect?.({
-          address: r.address || pred.description,
-          city: r.city || "",
-          // lat/lng/postal_code not currently returned by the edge function;
-          // can be added there later without changing this component's contract
-        });
-      } else {
-        onPlaceSelect?.({ address: pred.description });
-      }
-    } catch {
-      onPlaceSelect?.({ address: pred.description });
-    }
+    const result = await fetchDetails(pred.place_id);
+    reset();
+    // A failed details request never becomes a confirmed/located address.
+    if (result) onPlaceSelect?.({ address: result.fullAddress, city: result.city,
+      lat: result.latitude ?? undefined, lng: result.longitude ?? undefined, postalCode: result.postalCode });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -150,6 +104,8 @@ export default function GooglePlacesInput({
         className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-10 shadow-sm w-full"
         autoComplete="off"
       />
+      {error && <p role="status" className="mt-2 text-sm text-muted-foreground">Les suggestions sont indisponibles. Votre adresse reste à confirmer.</p>}
+      {!error && !isLoading && value.trim().length >= 4 && predictions.length === 0 && <p role="status" className="mt-2 text-sm text-muted-foreground">Aucune adresse proposée pour le moment.</p>}
       {isLoading && (
         <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
       )}
