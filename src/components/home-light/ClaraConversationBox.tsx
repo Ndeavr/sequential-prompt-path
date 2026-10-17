@@ -95,7 +95,7 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
-import { hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
+import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
@@ -642,8 +642,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         // Context and qualification must be restored with the messages.
         // A local marker only applies to this exact canonical conversation.
         hydrateClaraQualification(state.context.workflow as Record<string, unknown> | undefined);
-        const contractor = isContractorContext(state.context)
-          || (!state.context.current_intent && hasActiveContractorFlow());
+        const contractor = !hasExplicitHomeownerFlow() && (isContractorContext(state.context)
+          || (!state.context.current_intent && hasActiveContractorFlow()));
         setAudience(contractor ? "contractor" : "homeowner");
         setContractorFlow(contractor);
         rememberActiveContractorFlow(contractor);
@@ -660,6 +660,28 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       }
     })();
   }, [lang, setAudience]);
+
+  useEffect(() => {
+    const switchToHomeowner = () => {
+      closeAlex();
+      pauseActiveContractorFlow();
+      qualificationStepRef.current = null;
+      contractorTransitionRef.current = false;
+      setContractorFlow(false);
+      setQuickReplies(null);
+      setTransitionPause(false);
+      setBusy(false);
+      setAudience("homeowner");
+      setMode("PROJECT");
+      lastIntentRef.current = "homeowner_problem";
+      workflowRef.current = nextWorkflowState(null, "homeowner_problem").state;
+      rememberWorkflow(workflowRef.current);
+      rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+      focusComposer();
+    };
+    window.addEventListener(CLARA_HOMEOWNER_REQUEST_EVENT, switchToHomeowner);
+    return () => window.removeEventListener(CLARA_HOMEOWNER_REQUEST_EVENT, switchToHomeowner);
+  }, [closeAlex, focusComposer, setAudience]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -1102,7 +1124,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // dans le parcours entrepreneur — jamais de Dossier maison.
       const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
       const contractorTurn = audienceRef.current === "contractor"
-        || isContractorConversationTurn(text, lastAssistantText);
+        || (!hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
 
       // Situation RBQ : mêmes 6 statuts que « Mon profil », jamais une 2e validation.
       if (contractorTurn && (mentionsRbq(lastAssistantText) || mentionsRbq(text))) {
@@ -1194,6 +1216,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         isAlive: () => mountedRef.current,
       });
       try {
+        const requestAudience = audienceRef.current;
         const res = await fetch(`${SUPABASE_URL}/functions/v1/alex-chat`, {
           method: "POST",
           headers: {
@@ -1202,7 +1225,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             Authorization: `Bearer ${SUPABASE_KEY}`,
           },
           body: JSON.stringify({
-            messages: history
+            messages: (hasExplicitHomeownerFlow() ? [{ role: "user" as const, text }] : history)
               .map((m) => ({ role: m.role, content: m.text })),
             context: {
               surface: "home_clara_box",
@@ -1215,6 +1238,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             },
           }),
         });
+
+        if (audienceRef.current !== requestAudience) return;
 
         if (!res.ok || !res.body) throw new Error(`alex-chat ${res.status}`);
 
