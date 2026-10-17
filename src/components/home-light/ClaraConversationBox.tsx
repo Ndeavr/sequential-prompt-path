@@ -1255,6 +1255,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
         for (;;) {
           const { done, value } = await reader.read();
+          if (audienceRef.current !== requestAudience) { await reader.cancel(); return; }
           if (done) break;
           buf += decoder.decode(value, { stream: true });
           const lines = buf.split("\n");
