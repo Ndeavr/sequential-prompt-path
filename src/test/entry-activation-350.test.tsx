@@ -25,7 +25,7 @@ describe("Activation d'entrée 350 $", () => {
     expect(co).toMatch(/code: "already_active"/);
     expect(co).toMatch(/offer: isEntryActivation \? "entry_activation_350"/);
     const wh = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
-    const i = wh.indexOf('offer === "entry_activation_350"');
+    const i = wh.indexOf('if (session.metadata?.offer === "entry_activation_350")');
     expect(i).toBeGreaterThan(0);
     const branch = wh.slice(i, i + 4000);
     expect(branch).toMatch(/payment_status === "paid"/);

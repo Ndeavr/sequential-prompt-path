@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
@@ -327,6 +327,23 @@ Deno.serve(async (req) => {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        // Before paid telemetry, provisioning, roles, subscriptions or flags.
+        // Keep legacy/free offers unchanged; only the two paid entry circuits.
+        if (session.metadata?.offer === "entry_activation_350" ||
+            session.metadata?.offer === "entry_pack_350" ||
+            session.metadata?.offer_kind === "pack_350") {
+          const block = entry350PaymentBlockReason(session);
+          if (block) {
+            await supabase.from("stripe_webhook_events").update({
+              processing_status: block,
+            }).eq("stripe_event_id", event.id);
+            await supabase.from("integration_audit_logs").update({ status: "ignored" })
+              .eq("integration_name", "stripe").eq("action_name", event.id);
+            return new Response(JSON.stringify({ received: true, ignored: block }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
         const planCode = session.metadata?.plan_code;
