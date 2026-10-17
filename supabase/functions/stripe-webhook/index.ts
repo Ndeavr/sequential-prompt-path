@@ -305,6 +305,22 @@ Deno.serve(async (req) => {
       console.error("[stripe-webhook][booking] handler error:", String(bookingErr));
     }
 
+    // ── RÉVOCATION 350 $ : remboursement ou litige ─────────────────────
+    // Un remboursement ou un litige retire les 12 mois de Présence IA
+    // (contractor_plan_code ignore toute session révoquée). Idempotent.
+    if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+      const obj = event.data.object as any;
+      const piId = typeof obj?.payment_intent === "string" ? obj.payment_intent : obj?.payment_intent?.id ?? null;
+      if (piId) {
+        await revokeEntry350(supabase, {
+          paymentIntentId: piId,
+          eventId: event.id,
+          livemode: event.livemode === true,
+          reason: event.type === "charge.refunded" ? "refunded" : "disputed",
+        });
+      }
+    }
+
     switch (event.type) {
 
       case "checkout.session.async_payment_succeeded":
@@ -892,6 +908,28 @@ Deno.serve(async (req) => {
             }).eq("stripe_event_id", event.id);
             console.log("[stripe-webhook] entry_pack session not paid yet", session.id, session.payment_status);
             break;
+          }
+          // Pack 350 $ : seul un paiement LIVE exact (35 000 ¢ CAD hors taxes)
+          // crée ou active un compte. TEST ou montant inattendu = aucune activation.
+          if (session.metadata?.offer === "entry_pack_350") {
+            const block = entryPackBlockReason({
+              livemode: event.livemode,
+              amountSubtotal: session.amount_subtotal,
+              currency: session.currency,
+            });
+            if (block) {
+              await supabase.from("stripe_webhook_events").update({ processing_status: block }).eq("stripe_event_id", event.id);
+              await supabase.from("admin_notifications").insert({
+                type: `entry_pack_350_${block}`,
+                severity: block === "ignored_amount_mismatch" ? "critical" : "warning",
+                title: block === "ignored_amount_mismatch"
+                  ? "Pack 350 $ : montant inattendu — activation bloquée"
+                  : "Pack 350 $ TEST — aucune activation",
+                body: "Aucun compte ni droit n'a été créé.",
+                payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null, amount_subtotal: session.amount_subtotal, currency: session.currency },
+              });
+              break;
+            }
           }
 
           try {
