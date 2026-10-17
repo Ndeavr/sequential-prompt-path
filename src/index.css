@@ -2514,6 +2514,11 @@ html[data-theme-ready="true"] .glass-btn {
 @media (max-width: 1023px) {
   html[data-keyboard-open="true"] .home-light .home-clara-command-row { padding: 0 .55rem; }
   html[data-keyboard-open="true"] .home-light .home-clara-presence strong { font-size: .9rem; }
+  html:not([data-keyboard-open="true"]) .home-light .home-clara-input-row.is-initial-empty .home-clara-textarea {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px;
+  }
 }
 @media (max-width: 1024px) and (max-height: 500px) {
   html[data-keyboard-open="true"] .home-light .home-clara-textarea { min-height: 32px !important; max-height: 48px; padding-block: .3rem; overflow-y: auto; }
@@ -2528,12 +2533,6 @@ html[data-theme-ready="true"] .glass-btn {
   width: 100%;
   gap: .55rem;
   padding: .5rem 1rem 1rem;
-}
-.home-light .home-clara-examples-heading {
-  margin: 0 0 .2rem;
-  color: hsl(var(--muted-foreground));
-  font-size: .72rem;
-  letter-spacing: .025em;
 }
 .home-light .home-clara-examples button {
   display: flex;
