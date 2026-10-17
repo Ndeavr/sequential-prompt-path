@@ -1,4 +1,5 @@
-import { shouldSkipRedelivery, entryActivationDecision } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason } from "../_shared/checkoutGuards.ts";
+import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -932,6 +933,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          let entryPackFatal: Error | null = null;
           try {
 
             // 1 — close the checkout session record (cockpit truth).
@@ -1269,6 +1271,8 @@ Deno.serve(async (req) => {
           } catch (e) {
             console.error("[stripe-webhook] entry_pack_350 handling failed", (e as Error).message);
           }
+          // A LIVE paid 350 $ without its entitlement receipt must be retried, not marked processed.
+          if (entryPackFatal) throw entryPackFatal;
           break;
         }
 
