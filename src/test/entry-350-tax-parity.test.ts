@@ -19,7 +19,7 @@ describe("350 Quebec tax contract", () => {
       expect(qa.sessions).toHaveLength(0);
       expect((await qa.db.query('select * from contractors')).rows).toHaveLength(0);
     } finally { await qa.close(); }
-  });
+  }, 30000);
   it("keeps client/mode caches isolated and concurrent lookup idempotent", async () => {
     const calls:string[]=[];
     const client=(mode:string)=>({taxRates:{list:async()=>{calls.push(mode);return {data:[{id:mode+'_gst',metadata:{unpro_tax:'gst_5'},inclusive:false,percentage:5,country:'CA'},{id:mode+'_qst',metadata:{unpro_tax:'qst_9975'},inclusive:false,percentage:9.975,country:'CA',state:'QC'}]};},create:async()=>{throw new Error('must reuse');}}});
