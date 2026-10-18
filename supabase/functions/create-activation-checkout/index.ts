@@ -202,8 +202,8 @@ Deno.serve(async (req) => {
 
     // ── Offre d'entrée 350 $ (paiement unique) ─────────────────────────────
     // L'offre 1 $ est OBSOLÈTE et interdite en recrutement. Toute activation
-    // passe désormais par le pack d'entrée 350 $ : jusqu'à 5 rendez-vous
-    // exclusifs garantis, aucun abonnement, aucun renouvellement automatique.
+    // passe désormais par le pack d'entrée 350 $ : profil + 12 mois de Présence IA, 0 rendez-vous
+    // inclus, aucun abonnement, aucun renouvellement automatique.
     const resolvedQuoteId = quote_id ?? "";
     let guaranteedAppointments: number | null = null;
     let packPriceCents = OFFER.price_cents;
