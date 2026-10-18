@@ -11,6 +11,9 @@ describe("changement explicite et droits RBQ", () => {
     pauseActiveContractorFlow();
     expect(hasActiveContractorFlow()).toBe(false);
     expect(hasExplicitHomeownerFlow()).toBe(true);
+    rememberActiveContractorFlow(false);
+    expect(hasExplicitHomeownerFlow()).toBe(true);
+    expect(getClaraSessionToken()).toBe(token);
     expect(JSON.parse(sessionStorage.getItem("unpro_clara_contractor_flow") || "{}").priority).toBe("visibility");
     rememberActiveContractorFlow(true);
     expect(hasExplicitHomeownerFlow()).toBe(false);

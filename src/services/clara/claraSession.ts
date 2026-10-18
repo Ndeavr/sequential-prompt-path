@@ -290,6 +290,7 @@ export async function appendClaraMessage(input: {
   text: string;
   messageType?: string;
   clientMessageId?: string;
+  audience?: "homeowner" | "contractor";
 }): Promise<void> {
   if (!input.text.trim()) return;
   // Un message réel n'est jamais perdu parce que la session n'était pas encore prête.
@@ -301,7 +302,7 @@ export async function appendClaraMessage(input: {
     session_token: token,
     role: input.role,
     text: input.text,
-    message_type: input.messageType,
+    message_type: input.audience ?? input.messageType,
     client_message_id: input.clientMessageId,
   });
 }

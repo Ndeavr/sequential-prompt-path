@@ -17,6 +17,7 @@
  * donnée privée dans l'URL, aucun envoi sortant.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { buildClaraHistory } from "../_shared/claraConversationHistory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -759,7 +760,10 @@ Deno.serve(async (req) => {
     // Aucune nouvelle session, aucune copie métier : uniquement l'état courant,
     // les derniers tours utiles et la question réellement en attente.
     if (action === "brief") {
-      const all = await loadMessages(session.id);
+      const context = (session.context_json ?? {}) as Record<string, unknown>;
+      const audience = String(context.detected_role ?? "").toLowerCase() === "contractor" ? "contractor" : "homeowner";
+      const scoped = buildClaraHistory(await loadMessages(session.id), audience);
+      const all = scoped.messages.map(m => ({ role: m.role, text: m.content }));
       const recent = all.slice(-6);
       const lastAssistant = [...all].reverse().find((m) => m.role === "assistant") ?? null;
       const lastIndex = lastAssistant ? all.lastIndexOf(lastAssistant) : -1;
@@ -769,7 +773,6 @@ Deno.serve(async (req) => {
           ? lastAssistant.text.trim()
           : null;
 
-      const context = (session.context_json ?? {}) as Record<string, unknown>;
       const refs: Record<string, unknown> = {};
       for (const key of CONTEXT_KEYS) {
         if (context[key]) refs[key] = context[key];
@@ -782,12 +785,13 @@ Deno.serve(async (req) => {
         has_conversation: all.length > 0,
         current_step: session.current_step,
         last_intent: session.last_intent,
-        project_type: session.project_type,
-        project_city: session.project_city,
+        project_type: audience === "homeowner" ? session.project_type : null,
+        project_city: audience === "homeowner" ? session.project_city : null,
         language: session.language,
-        role: session.resolved_role,
+        role: audience,
         pending_question: pendingQuestion,
         recent,
+        summary: scoped.summary,
         refs,
       });
     }

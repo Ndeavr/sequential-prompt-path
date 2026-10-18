@@ -21,7 +21,12 @@ export function hasActiveContractorFlow(): boolean {
 export function rememberActiveContractorFlow(active: boolean): void {
   try {
     if (!active) {
-      sessionStorage.removeItem(FLOW_KEY);
+      // Hydration is not a user-requested reset. Preserve the explicit home
+      // marker and suspended PRO answers for this exact conversation.
+      const flow = JSON.parse(sessionStorage.getItem(FLOW_KEY) || "{}");
+      if (flow.session_token === peekClaraSessionToken()) {
+        sessionStorage.setItem(FLOW_KEY, JSON.stringify({ ...flow, active: false }));
+      } else sessionStorage.removeItem(FLOW_KEY);
       return;
     }
     const flow = JSON.parse(sessionStorage.getItem(FLOW_KEY) || "{}");

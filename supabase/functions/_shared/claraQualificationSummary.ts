@@ -1,4 +1,5 @@
 /** Compact contractor declarations only; never verification or payment state. */
+import { CLARA_EXTRACTION_MODEL } from "./claraModelSelection.ts";
 export const SUMMARY_TEXT_FIELDS = ["primary_trade", "customer_type", "business_city", "preferred_duration", "availability"] as const;
 export const SUMMARY_LIST_FIELDS = ["service_areas", "goals", "preferred_work", "excluded_work", "excluded_areas", "preferred_project_sizes"] as const;
 export type QualificationSummary = Partial<Record<typeof SUMMARY_TEXT_FIELDS[number], string> & Record<typeof SUMMARY_LIST_FIELDS[number], string[]>>;
@@ -15,7 +16,7 @@ export async function summarizeContractorAnswer(body: any, apiKey: string, cors:
   if (typeof body.answer !== "string" || !body.answer.trim() || body.answer.length > 6000) return json({ error: "Réponse invalide." }, 400);
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "google/gemini-2.5-flash", response_format: { type: "json_object" }, messages: [
+    body: JSON.stringify({ model: CLARA_EXTRACTION_MODEL, response_format: { type: "json_object" }, messages: [
       { role: "system", content: `Tu résumes une réponse d'entrepreneur québécois pour Clara. JSON uniquement: {"patch":{},"clarification":null}.
 Champs courts autorisés: ${SUMMARY_TEXT_FIELDS.join(", ")}. Listes courtes: ${SUMMARY_LIST_FIELDS.join(", ")}.
 Extrais seulement ce que la nouvelle réponse déclare, pas toute sa transcription. Préserve le sens des négations. Ne déduis pas de seuil monétaire, score, vérification ou capacité.

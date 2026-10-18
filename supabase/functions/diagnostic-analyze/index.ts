@@ -2,6 +2,7 @@
 // Returns risk score, cost range, likely causes, next actions, recommended contractors.
 // Persists into public.visual_analyses + property_memory_events (best-effort).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { CLARA_EXTRACTION_MODEL } from "../_shared/claraModelSelection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,7 +100,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: CLARA_EXTRACTION_MODEL,
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: contentBlocks },

@@ -31,6 +31,7 @@ export interface ClaraVoiceBrief {
   pending_question: string | null;
   recent: Array<{ role: "user" | "assistant"; text: string }>;
   refs: Record<string, unknown>;
+  summary?: string;
 }
 
 export const CLARA_VOICE_MESSAGE_EVENT = "clara-voice-message";
@@ -90,6 +91,7 @@ export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string |
     "Interprète la prochaine phrase du client comme une réponse ou une continuation.",
   ];
   if (facts.length > 0) lines.push(`État connu — ${facts.join(" · ")}`);
+  if (brief.summary) lines.push(`Contexte antérieur déclaré :\n${brief.summary}`);
   if (turns) lines.push(`Derniers échanges :\n${turns}`);
   if (brief.pending_question) {
     lines.push(
@@ -179,6 +181,7 @@ export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): v
         role,
         text,
         messageType: "voice",
+        audience: hasActiveContractorFlow() ? "contractor" : "homeowner",
         clientMessageId,
       }),
     )

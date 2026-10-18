@@ -2,6 +2,7 @@
 // Per turn: extract -> merge -> score -> either next_question or qualified recommendation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { loadOwnedDesignBrief } from "../_shared/designBrief.ts";
+import { CLARA_EXTRACTION_MODEL } from "../_shared/claraModelSelection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -139,7 +140,7 @@ N'invente RIEN. Si l'utilisateur n'a pas dit l'info, ne mets pas le champ.`;
       method: "POST",
       headers: { "Authorization": `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: CLARA_EXTRACTION_MODEL,
         messages: [
           { role: "system", content: sys },
           { role: "user", content: `${ctx}\n\nMessage utilisateur: ${userMessage}` },
