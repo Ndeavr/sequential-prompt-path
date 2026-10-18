@@ -12,12 +12,12 @@
 export const OFFER = {
   price_label: "350 $",
   price_cents: 35000,
-  max_appointments: 5,
-  headline: "Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $",
-  payment_note: "Paiement unique. Aucun abonnement.",
+  max_appointments: 0,
+  headline: "Profil UNPRO + 12 mois de Présence IA sur UNPRO — 350 $ + taxes",
+  payment_note: "350 $ + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $. Paiement unique. Aucun abonnement. Aucun rendez-vous inclus par défaut.",
   disclaimer:
-    "Le nombre réel de rendez-vous garantis dépend de votre domaine, de votre territoire et de la capacité disponible.",
-  cta: "Voir ce que 350 $ peut me garantir",
+    "Aucun rendez-vous ni résultat n'est promis. Des rendez-vous ne sont offerts que via un devis séparé confirmé avant paiement.",
+  cta: "Activer mon profil — 350 $ + taxes",
 } as const;
 
 /**
