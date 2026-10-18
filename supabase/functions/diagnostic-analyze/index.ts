@@ -214,6 +214,10 @@ Deno.serve(async (req) => {
         .select("id,slug,business_name,city,rating,is_published,is_discoverable")
         .eq("is_published", true)
         .eq("is_discoverable", true)
+        // Only verified_active (verified + admin_verified) may ever be recommended;
+        // paid/pending/unverified/rejected profiles are excluded.
+        .eq("public_status", "verified_active")
+        .eq("account_status", "active")
         .limit(3);
       if (body.city) q = q.ilike("city", `%${body.city}%`);
       const { data } = await q;
