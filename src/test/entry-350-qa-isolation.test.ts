@@ -84,6 +84,24 @@ describe.each(['personal','invited'] as const)('%s actual creation → signed ha
     expect((await qa.db.query<{allowed:boolean}>("select has_function_privilege('anon','contractor_plan_code(uuid)','EXECUTE') allowed")).rows[0].allowed).toBe(false);
   });
 });
+describe.each(['personal','invited'] as const)('%s — fenêtre exacte des 12 mois, sans publication',kind=>{
+  it('présence valide juste avant +12 mois, expirée juste après; profil privé, aucun abonnement',async()=>{
+    const s=await create(kind);const target=kind==='personal'?OWNER:OTHER;const token=kind==='personal'?qa.ownerToken:qa.otherToken;
+    expect((await qa.deliver(s)).status).toBe(200);
+    expect(await plan(token,target)).toBe('presence');
+    await qa.db.query("update contractor_activation_ledger set created_at=now()-interval '12 months'+interval '1 hour' where action='entry_activation_350_paid'");
+    expect(await plan(token,target)).toBe('presence');
+    await qa.db.query("update contractor_activation_ledger set created_at=now()-interval '12 months'-interval '1 hour' where action='entry_activation_350_paid'");
+    expect(await plan(token,target)).toBeNull();
+    expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
+    for(const row of (await qa.db.query<any>('select is_published,is_discoverable,verification_status from contractors')).rows){
+      expect(row.is_published).not.toBe(true);expect(row.is_discoverable).not.toBe(true);expect(row.verification_status).not.toBe('verified');
+    }
+    // Isolation : l'autre compte ne voit pas ce droit.
+    const other=kind==='personal'?qa.otherToken:qa.ownerToken;
+    expect(await plan(other,target)).toBeNull();
+  });
+});
 describe('invited receipt retry',()=>{
   it('failed ledger delivery stays failed, retry grants presence without permanent subscription',async()=>{
     const s=await create('invited');qa.failNext('contractor_activation_ledger');
