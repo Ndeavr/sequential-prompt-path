@@ -1484,7 +1484,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         setBusy(false);
       }
     },
-    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send, setAudience],
+    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, send, setAudience],
   );
 
   /** Choix entrepreneur : l'audit ne s'ouvre qu'après texte complet + 3 pulsations. */
@@ -1796,6 +1796,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             <small>{busy ? "Analyse en cours…" : voiceActive ? "Mode vocal" : "Disponible"}</small>
           </div>
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
+            {audience === "contractor" && (
+              <Button type="button" variant="ghost" size="icon" aria-label="Trouver mon entrepreneur" title="Trouver mon entrepreneur"
+                onClick={() => window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT))}>
+                <Home aria-hidden="true" />
+              </Button>
+            )}
             <DropdownMenu open={historyOpen} onOpenChange={(next) => { setHistoryOpen(next); if (next) void openHistory(); }}>
               <DropdownMenuTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" className="home-clara-history-open" title="Conversations" aria-label="Voir mes conversations">

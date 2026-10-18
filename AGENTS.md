@@ -2,6 +2,12 @@
 
 Applies repo-wide.
 
+<!-- LOVABLE:BEGIN -->
+- Clara uses one bounded audience-history selector over canonical messages; role switches suspend workflows without rotating sessions. Why: preserve follow-ups without audience leakage.
+- Public addresses reuse guest ownership and the existing quota RPC, explicit origins and minimal fields. Why: no open Google proxy.
+- Active extraction calls share a server-only model selector and preserve endpoint/caps/modalities. Why: no silent price or protocol regression.
+<!-- LOVABLE:END -->
+
 ## Canonical source and branch hygiene
 
 - The production project is `ba1eabf3-fd1c-40fe-9856-3812a70f9869` in repository `Ndeavr/sequential-prompt-path`. Its active Lovable integration branch is `lovable-sync`.
