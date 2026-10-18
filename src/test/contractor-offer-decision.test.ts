@@ -46,7 +46,7 @@ describe("normalisation des catégories", () => {
 describe("phrase de rareté", () => {
   it("n'invente jamais un nombre de places", () => {
     expect(freeOfferScarcitySentence(null, "Laval")).not.toMatch(/\d+ places? à/);
-    expect(freeOfferScarcitySentence(null, "Laval")).toContain("selon disponibilité");
+    expect(freeOfferScarcitySentence(null, "Laval")).toBe("");
   });
 
   it("affiche le nombre réel fourni par le serveur", () => {

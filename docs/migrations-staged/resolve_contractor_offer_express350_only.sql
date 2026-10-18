@@ -1,0 +1,9 @@
+-- STAGED, NOT APPLIED (applies live instantly; needs explicit founder go-live).
+-- New contractors: express_350 only. Existing founder_memberships rows and
+-- claim_local_service_free_year history stay untouched (no revocation).
+-- Apply by replacing the free_founding RETURN in public.resolve_contractor_offer:
+--   IF v_city_remaining > 0 AND eligible THEN RETURN 'free_founding' ...
+-- with a single:
+--   RETURN jsonb_build_object('offer','express_350','category_group','local_service',
+--     'city_remaining', NULL, 'reason', 'new_contractors_start_with_activation_350');
+-- Rollback: re-run the previous definition (pg_get_functiondef captured 2026-10-18).

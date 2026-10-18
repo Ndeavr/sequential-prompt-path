@@ -17,20 +17,21 @@ export const CONTRACTOR_OFFER = {
   cityLimit: 10,
 
   headline: "Activez votre profil d'entreprise sur UNPRO.",
-  subheadline: "L'offre applicable à votre entreprise est calculée après l'analyse.",
+  subheadline: "Activation unique de 350 $ + taxes : votre profil et 12 mois de Présence IA sur UNPRO.",
   supporting:
-    "Rendez-vous exclusifs, jamais partagés. Aucune carte de crédit et aucun paiement avant l'activation de votre profil.",
+    "Aucun rendez-vous inclus par défaut. Prix et taxes affichés avant le paiement.",
 
-  ctaPrimary: "Activer gratuitement mon profil",
-  ctaClaim: "Réclamer mon profil gratuitement",
+  ctaPrimary: "Activer mon profil — 350 $ + taxes",
+  ctaClaim: "Réclamer mon profil",
   ctaSecondary: "Voir mon analyse gratuite",
 
-  noPaymentNote: "Gratuit pour commencer · aucune carte requise",
+  noPaymentNote: "Activation unique 350 $ + taxes · profil + 12 mois de Présence IA sur UNPRO · aucun rendez-vous inclus par défaut",
   planNote:
     "Votre plan personnalisé est calculé après l'activation, selon votre territoire et vos objectifs.",
 
   /** Rareté sans chiffre — utilisée quand aucune donnée de quota fiable n'existe. */
-  scarcityGeneric: "Places limitées aux 10 premiers entrepreneurs par ville, selon disponibilité.",
+  /** Aucune rareté publique tant qu'aucun quota serveur n'est fourni. */
+  scarcityGeneric: "",
 } as const;
 
 /**
