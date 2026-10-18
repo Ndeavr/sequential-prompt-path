@@ -1,5 +1,5 @@
-/** Pending founder verification of BOTH registrations; never accept a client flag. */
-export function entry350TaxCollectionApproved(): boolean { return false; }
+/** Founder confirmed GST+QST registration (2026-10-18). Never accept a client flag. */
+export function entry350TaxCollectionApproved(): boolean { return true; }
 
 export const ENTRY350_TAX_CONTRACT = "qc-exclusive-v1";
 export const ENTRY350_AMOUNTS = { subtotal: 35000, gst: 1750, qst: 3491, tax: 5241, total: 40241 } as const;
