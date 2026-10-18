@@ -41,7 +41,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
           Activez votre profil complet
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Réservé aux 10 premiers entrepreneurs activés. Paiement unique, aucun abonnement.
+          Profil + 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut. 350 $ + taxes, paiement unique.
         </p>
 
         <div className="mt-4 flex items-end gap-3">

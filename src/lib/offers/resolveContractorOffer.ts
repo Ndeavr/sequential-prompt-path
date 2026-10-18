@@ -106,7 +106,7 @@ export function freeOfferScarcitySentence(
 ): string {
   const place = city ? ` à ${city}` : "";
   if (cityRemaining == null || !Number.isFinite(cityRemaining)) {
-    return `Offre de lancement réservée aux 10 premières entreprises admissibles${place}, selon disponibilité.`;
+    return "";
   }
   if (cityRemaining <= 0) return `Les 10 places de lancement${place} sont comblées.`;
   if (cityRemaining === 1) return `12 mois gratuits — il reste 1 place${place}.`;
