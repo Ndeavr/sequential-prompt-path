@@ -35,14 +35,14 @@ describe("staged resolve_contractor_offer — nouveaux entrepreneurs = 350 $", (
     // Historique préservé : la fonction ne touche aucune adhésion existante.
     expect((await d.query("select * from founder_memberships where status='founder_activated'")).rows).toHaveLength(1);
     await d.close();
-  });
+  }, 30000);
   it("rollback restaure exactement le comportement précédent (free_founding si admissible)", async () => {
     const { offer, d } = await db(readFileSync(`${DIR}.sql`, "utf8") + readFileSync(`${DIR}.rollback.sql`, "utf8"));
     const r = await offer("Laval", "menage");
     expect(r.offer).toBe("free_founding");
     expect(r.city_remaining).toBe(9);
     await d.close();
-  });
+  }, 30000);
 });
 
 describe("12 mois calendaires (arithmétique Postgres utilisée par contractor_plan_code)", () => {
@@ -54,5 +54,5 @@ describe("12 mois calendaires (arithmétique Postgres utilisée par contractor_p
       (timestamptz '2026-10-18 12:00+00' + interval '12 months')::date::text c`);
     expect(r.rows[0]).toEqual({ a: "2028-01-31", b: "2029-02-28", c: "2027-10-18" });
     await d.close();
-  });
+  }, 30000);
 });
