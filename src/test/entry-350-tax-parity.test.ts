@@ -10,8 +10,12 @@ describe("350 Quebec tax contract", () => {
     expect(Math.round(35000 * .09975)).toBe(3491);
     expect(ENTRY350_AMOUNTS).toEqual({ subtotal:35000,gst:1750,qst:3491,tax:5241,total:40241 });
   });
-  it("harness still fails closed when registration gate is off", async () => {
-    expect(entry350TaxCollectionApproved()).toBe(true);
+  it("LIVE checkout gate is closed by default; only a server secret opens it", async () => {
+    expect(entry350TaxCollectionApproved()).toBe(false);
+    expect(entry350TaxCollectionApproved('live',()=>undefined)).toBe(false);
+    expect(entry350TaxCollectionApproved('live',()=> 'yes')).toBe(false);
+    expect(entry350TaxCollectionApproved('live',k=>k==='ENTRY350_LIVE_CHECKOUT_RELEASED'?'true':undefined)).toBe(true);
+    expect(entry350TaxCollectionApproved('test',()=>undefined)).toBe(true);
     const qa=await createQa(false);
     try {
       expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(503);
