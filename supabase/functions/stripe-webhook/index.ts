@@ -1093,8 +1093,9 @@ Deno.serve(async (req) => {
                       account_status: "active",
                       activation_status: "active",
                       onboarding_status: "payment_completed",
-                      is_published: true,
-                      is_discoverable: true,
+                      // Paid != verified: private until RBQ/identity review.
+                      is_published: false,
+                      is_discoverable: false,
                     })
                     .select("id")
                     .maybeSingle();
@@ -1109,8 +1110,7 @@ Deno.serve(async (req) => {
                   account_status: "active",
                   activation_status: "active",
                   onboarding_status: "payment_completed",
-                  is_published: true,
-                  is_discoverable: true,
+                  // Publication flags untouched: payment never publishes.
                   updated_at: new Date().toISOString(),
                 }).eq("id", existing.id);
               }
@@ -1121,7 +1121,14 @@ Deno.serve(async (req) => {
                   .from("billing_checkout_sessions")
                   .update({ contractor_id: activatedContractorId })
                   .eq("stripe_checkout_session_id", session.id);
-                await supabase.rpc("activate_contractor_unified", {
+// Entry 350 = one-time: activate_contractor_unified would publish the
+                // profile, so the prospect is marked paid directly instead.
+                if (session.metadata?.offer === "entry_pack_350") {
+                  await supabase.from("contractor_prospects")
+                    .update({ activation_status: "activated", payment_status: "paid" })
+                    .eq("contractor_id", activatedContractorId);
+                } else {
+                                await supabase.rpc("activate_contractor_unified", {
                   p_contractor_id: activatedContractorId,
                   p_source: "stripe_entry_pack_350",
                   // A one-time entry is not a perpetual paid subscription.
@@ -1136,6 +1143,7 @@ Deno.serve(async (req) => {
                   },
                 }).then(() => {}, (e: unknown) =>
                   console.warn("[stripe-webhook] activate_contractor_unified soft-fail", String(e)));
+                }
                 // Reçu canonique des 12 mois de Présence IA (même registre que le
                 // parcours plan personnalisé). Index unique par session : une
                 // relivraison n'ajoute rien et ne prolonge jamais la période.
