@@ -53,8 +53,9 @@
 - [x] Stripe authenticated LIVE read confirms enabled endpoint and all eight events at 2026-10-17 20:48 UTC; delivery and full authenticated E2E remain unverified.
 
 ## P0 — five concrete alerts, local-only repair
-- [ ] Address ownership/origins and three visitor forms; real Google blocked from sandbox verification.
-- [ ] Canonical two-turn home history and atomic contractor/homeowner transition.
-- [ ] RBQ whole-token FR/EN regression coverage.
-- [ ] Confirmed deprecated model replacement and protocol tests.
-- [ ] Focused tests, lint, automatic build, intercepted mobile browser and audit.
+- [x] Address ownership/origins and three visitor forms tested locally with simulated responses. Real Google remains unverified; authorized-origin validation and later deployment require approval.
+- [x] Canonical bounded home history and contractor/homeowner transition; four viewport browser flows with simulated services passed.
+- [x] RBQ whole-token FR/EN regression coverage; no new verified licence or entitlement.
+- [x] Four active text/vision extraction sites migrated from catalog-deprecated 2.5 Flash to supported lower-token-price 3.1 Flash Lite; protocol mocks passed.
+- [ ] Remaining deprecated image/voice/other models: protocol, cost and actual deployed activity must be verified before replacement; no paid probe authorized.
+- [x] Focused tests (90), lint (zero errors; two preexisting warnings), automatic build OK, intercepted mobile browser and audit. No hosted E2E or manual build/typecheck claimed.

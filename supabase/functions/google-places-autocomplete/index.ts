@@ -115,7 +115,7 @@ serve(async (req) => {
         console.error("[google-places][details] status=", google_status, "msg=", error_message);
         return json({
           error: google_status || "DETAILS_FAILED",
-          message: error_message || "Google Places details error",
+          message: "L’adresse reste à confirmer. Votre saisie manuelle est conservée.",
           source,
         }, 200);
       }

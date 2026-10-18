@@ -12,6 +12,8 @@ export interface ConversationTurn {
 export function buildClaraHistory(turns: readonly ConversationTurn[], audience: ConversationAudience) {
   let current: ConversationAudience = "homeowner";
   const scoped = turns.filter(turn => {
+    if (turn.role !== "user" && turn.role !== "assistant") return false;
+    if (typeof (turn.text ?? turn.content) !== "string") return false;
     const text = turn.text ?? turn.content ?? "";
     if (turn.audience) current = turn.audience;
     else if (turn.type === "homeowner" || turn.type === "contractor") current = turn.type;

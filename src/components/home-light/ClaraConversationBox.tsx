@@ -1495,8 +1495,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       const userMessageId = uid();
       setError(null);
       setQuickReplies(null);
-      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: label }]);
-      void appendClaraMessage({ role: "user", text: label, clientMessageId: userMessageId }).catch(() => undefined);
+      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: label, audience: "contractor" }]);
+      void appendClaraMessage({ role: "user", text: label, clientMessageId: userMessageId, audience: "contractor" }).catch(() => undefined);
       scrollToLatest("smooth");
       if (choice === "score") {
         await beginTextContractorTransition(label, CLARA_CONTRACTOR_SCORE_TEXT);
