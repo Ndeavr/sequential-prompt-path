@@ -5,6 +5,9 @@
 import { AlertOctagon, DollarSign } from "lucide-react";
 import type { FirstRevenueSnapshot } from "@/hooks/useOutreachCommandCenter";
 
+/** Affiché tant qu'aucune source d'encaissement Stripe LIVE rapprochée n'existe. */
+export const REVENUE_UNAVAILABLE = "Non disponible";
+
 interface Props {
   snapshot: FirstRevenueSnapshot | null | undefined;
   isLoading?: boolean;
@@ -22,8 +25,8 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 }
 
 export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
-  const monthlyRevenueEstimate = (snapshot?.paid_plans_active ?? 0) * 349; // conservative Pro-plan mean
-  const todayRevenue = (snapshot?.activations_today ?? 0) * 350; // 350 $ one-time activation
+  // Aucun montant n'est déduit d'un compte d'activations : cette vue n'expose
+  // aucun encaissement Stripe LIVE rapproché (hors taxes, frais, remboursements).
   const alert = snapshot?.alert_no_activation_48h ?? true;
 
   return (
@@ -52,8 +55,8 @@ export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="Activations aujourd'hui" value={snapshot.activations_today} tone="revenue" />
-          <Stat label="Revenu aujourd'hui" value={`${todayRevenue.toLocaleString("fr-CA")} $`} tone="revenue" />
-          <Stat label="MRR estimé (30j)" value={`${monthlyRevenueEstimate.toLocaleString("fr-CA")} $`} tone="revenue" />
+          <Stat label="Revenu encaissé aujourd'hui" value={REVENUE_UNAVAILABLE} tone="muted" />
+          <Stat label="Revenu récurrent (30j)" value={REVENUE_UNAVAILABLE} tone="muted" />
           <Stat label="Plans payants actifs" value={snapshot.paid_plans_active} />
           <Stat label="Contactés (7j)" value={snapshot.contacted_7d} tone="muted" />
           <Stat label="Inscriptions (7j)" value={snapshot.registrations_7d} tone="muted" />
