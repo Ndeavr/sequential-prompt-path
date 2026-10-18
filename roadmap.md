@@ -51,3 +51,10 @@
 - [ ] Statut EMPLOYER_AFFILIATION_VERIFIED, affichage « Membre autorisé de [société] », contrat/paiement au nom de la société titulaire.
 - [ ] Écran admin d'examen des déclarations RBQ (exemption, incertain, autre, employeur, indépendant).
 - [x] Stripe authenticated LIVE read confirms enabled endpoint and all eight events at 2026-10-17 20:48 UTC; delivery and full authenticated E2E remain unverified.
+
+## P0 — five concrete alerts, local-only repair
+- [ ] Address ownership/origins and three visitor forms; real Google blocked from sandbox verification.
+- [ ] Canonical two-turn home history and atomic contractor/homeowner transition.
+- [ ] RBQ whole-token FR/EN regression coverage.
+- [ ] Confirmed deprecated model replacement and protocol tests.
+- [ ] Focused tests, lint, automatic build, intercepted mobile browser and audit.

@@ -200,16 +200,16 @@ export interface RbqApplicabilityResult {
 const RBQ_SOURCE = "https://www.rbq.gouv.qc.ca/foire-aux-questions-faq/constructeur-proprietaire/licence/";
 
 const REQUIRED_KEYWORDS = [
-  "toiture", "couvreur", "roofing", "fondation", "coffrage", "excavation", "plomb", "plumbing",
-  "electri", "hvac", "ventilation", "chauffage", "climatisation", "thermopompe", "isolation",
+  "toiture", "couvreur", "roofing", "fondation", "fondations", "coffrage", "excavation", "plomberie", "plombier", "plumbing",
+  "electricite", "electricien", "electrical", "electrician", "hvac", "ventilation", "chauffage", "heating", "climatisation", "thermopompe", "isolation",
   "renovation", "cuisine", "salle de bain", "carrelage", "ceramique", "charpent", "menuiserie",
-  "entrepreneur general", "gaz", "structur", "impermeabilisation", "waterproofing", "maconnerie",
+  "entrepreneur general", "gaz", "gas", "propane", "gazeux", "structure", "structural", "impermeabilisation", "waterproofing", "maconnerie",
   "gypse", "fenetre", "porte", "revetement", "drain",
 ];
 const EXEMPT_KEYWORDS = ["entretien menager", "menage", "nettoyage residentiel", "cirage", "conciergerie"];
 
 function norm(s: string): string {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[-’']/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function getRbqApplicability(input: {
@@ -228,16 +228,15 @@ export function getRbqApplicability(input: {
       reasonFr: "Aucune activité déclarée : impossible de savoir si une licence RBQ est requise." };
   }
   // Gas is a complete métier token, never the beginning of « gazon ».
-  const required = raw.filter((a) => REQUIRED_KEYWORDS.some((k) => k === "gaz"
-    ? /\bgaz\b|\bpropane\b|\bgazeux\b/.test(a) : a.includes(k)));
+  const required = raw.filter((a) => REQUIRED_KEYWORDS.some((k) => new RegExp(`\\b${k}\\b`).test(a)));
   if (required.length > 0) {
     return { status: "rbq_required", certainty: "high", matched: required, source: RBQ_SOURCE,
       reasonFr: "Au moins une activité déclarée est un travail de construction visé par la RBQ." };
   }
   // Split mixed declarations: an unknown extra activity cannot inherit exemption.
   const activities = raw.flatMap(a => a.split(/\s+(?:et|and)\s+|[,;/+&]/).map(s => s.trim()).filter(Boolean));
-  const lawnMaintenance = /^(?:(?:entretien|tonte)(?:\s+(?:de|du|des|la|le))?\s+(?:gazon|pelouse)|tonte|gazon|pelouse|paysagement|entretien paysager)$/;
-  const allExempt = activities.every((a) => lawnMaintenance.test(a) || EXEMPT_KEYWORDS.some((k) => a.includes(k)));
+  const lawnMaintenance = /^(?:(?:entretien|tonte)(?:\s+(?:de|du|des|la|le))*\s+(?:gazon|pelouse)|tonte|gazon|pelouse|paysagement|entretien paysager|lawn care|lawn maintenance|lawn mowing|grass cutting|mowing)$/;
+  const allExempt = activities.every((a) => lawnMaintenance.test(a) || EXEMPT_KEYWORDS.includes(a));
   if (allExempt) {
     return { status: "rbq_not_required", certainty: "high", matched: raw, source: RBQ_SOURCE,
       reasonFr: "Les activités déclarées relèvent de l'entretien courant sans travaux de construction réglementés." };

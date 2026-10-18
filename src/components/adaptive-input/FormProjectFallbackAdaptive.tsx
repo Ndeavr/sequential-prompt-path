@@ -7,6 +7,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Camera, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 
 const PROJECT_TYPES = [
   "Toiture", "Isolation", "Fondation", "Plomberie", "Électricité",
@@ -28,11 +29,13 @@ interface Props {
 export default function FormProjectFallbackAdaptive({ prefillData, onSubmit }: Props) {
   const [projectType, setProjectType] = useState(prefillData?.projectType || "");
   const [city, setCity] = useState(prefillData?.city || "");
+  const [address, setAddress] = useState(prefillData?.address || "");
+  const [placeId, setPlaceId] = useState("");
   const [description, setDescription] = useState(prefillData?.lastMessage || "");
   const [urgency, setUrgency] = useState(prefillData?.urgency || "not_urgent");
 
   const handleSubmit = () => {
-    onSubmit?.({ projectType, city, description, urgency });
+    onSubmit?.({ projectType, city, description, urgency, address, placeId, addressProvenance: placeId ? "google_places" : "declared" });
   };
 
   const hasAlexData = !!(prefillData?.lastMessage || prefillData?.projectType || prefillData?.city);
@@ -80,6 +83,11 @@ export default function FormProjectFallbackAdaptive({ prefillData, onSubmit }: P
         </div>
 
         {/* City */}
+        <div>
+          <label className="text-sm font-medium text-foreground mb-1.5 block">Adresse du projet</label>
+          <GooglePlacesInput value={address} onChange={value => { setAddress(value); setPlaceId(""); }}
+            onPlaceSelect={place => { setAddress(place.address); setCity(place.city ?? ""); setPlaceId(place.placeId); }} />
+        </div>
         <div>
           <label className="text-sm font-medium text-foreground mb-1.5 block">Ville</label>
           <input

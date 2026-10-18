@@ -14,4 +14,14 @@ describe("RBQ applicabilité", () => {
   it("à clarifier si vide", () => expect(f({ specialty: null }).status).toBe("rbq_needs_clarification"));
   it("à clarifier si ambigu", () => expect(f({ specialty: "Pavage et asphalte" }).status).toBe("rbq_needs_clarification"));
   it("tableau de métiers", () => expect(f({ specialty: ["Électricien"] }).status).toBe("rbq_required"));
+  it.each(["Lawn care", "lawn-care", "Lawn maintenance", "Lawn mowing", "Grass cutting", "Tonte de la pelouse"])("entretien FR/EN sans licence inférée pour %s", specialty => {
+    expect(f({ specialty }).status).toBe("rbq_not_required");
+  });
+  it.each(["Gas heating", "Gas connection", "Lawn care and gas installation", "Raccordement gaz"])("garde gaz conservée pour %s", specialty => {
+    expect(f({ specialty }).status).toBe("rbq_required");
+  });
+  it("scope inconnu ne prend jamais une exemption par substring", () => {
+    expect(f({ specialty: "Entretien ménager et autres travaux" }).status).toBe("rbq_needs_clarification");
+    expect(f({ specialty: "Lawn care", services: ["other work"] }).status).toBe("rbq_needs_clarification");
+  });
 });

@@ -25,7 +25,7 @@ describe("adresse visiteur — protocole existant", () => {
     const selected=vi.fn();render(<Field onSelect={selected} />);
     fireEvent.change(screen.getByRole("textbox"),{target:{value:"123 rue QA"}});
     fireEvent.mouseDown(await screen.findByRole("option"));
-    await waitFor(() => expect(selected).toHaveBeenCalledWith({address:"123 rue QA",city:"Laval",lat:45,lng:-73,postalCode:"H7A 1A1"}));
+    await waitFor(() => expect(selected).toHaveBeenCalledWith({placeId:"qa-place",provenance:"google_places",address:"123 rue QA",city:"Laval",lat:45,lng:-73,postalCode:"H7A 1A1"}));
     for(const [,options] of mocks.invoke.mock.calls) expect(options.body.session_token).toBe("confirmed-guest-session");
   });
   it("détails échoués ne fabriquent aucune adresse confirmée", async () => {

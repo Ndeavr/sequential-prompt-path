@@ -1,4 +1,5 @@
 import { summarizeContractorAnswer } from "../_shared/claraQualificationSummary.ts";
+import { buildClaraHistory } from "../_shared/claraConversationHistory.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -615,7 +616,30 @@ serve(async (req) => {
 
     const body = await req.json();
     if (body.action === "summarize_contractor_answer") return await summarizeContractorAnswer(body, LOVABLE_API_KEY, corsHeaders);
-    const { messages, context } = body;
+    const context = { ...(body.context ?? {}) };
+    // Identity is validated from the bearer, never from the request's userId.
+    const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: authData } = bearer ? await supabase.auth.getUser(bearer) : { data: { user: null } };
+    context.userId = authData.user?.id ?? null;
+    const audience = context.userRole === "contractor" ? "contractor" : "homeowner";
+    let messages = buildClaraHistory((Array.isArray(body.messages) ? body.messages : []).map((m: { role: "user" | "assistant"; content: string }) => ({ ...m, audience })), audience).messages;
+    if (typeof body.session_token === "string" && body.session_token.length >= 16) {
+      const { data: session, error: sessionError } = await supabase.from("alex_sessions")
+        .select("id,user_id,context_json").eq("session_token", body.session_token).maybeSingle();
+      if (sessionError || !session || (session.user_id && session.user_id !== context.userId)) {
+        return new Response(JSON.stringify({ error: "session_unavailable" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: rows, error: historyError } = await supabase.from("alex_messages")
+        .select("sender,message,message_type").eq("session_id", session.id).order("created_at", { ascending: false }).limit(60);
+      if (historyError) throw new Error("conversation_history_unavailable");
+      const canonical = buildClaraHistory((rows ?? []).slice().reverse().map((m: { sender: string; message: string; message_type: string }) => ({ role: m.sender === "user" ? "user" as const : "assistant" as const, text: m.message, type: m.message_type })), audience);
+      // The newest local user turn may still be awaiting its canonical append.
+      const lastUser = [...messages].reverse().find(m => m.role === "user");
+      messages = canonical.messages;
+      if (lastUser && messages.at(-1)?.content !== lastUser.content) messages = [...messages, lastUser].slice(-20);
+      context.conversationSummary = canonical.summary || context.conversationSummary;
+    }
+    if (!messages.length) return new Response(JSON.stringify({ error: "message_required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const isVoiceMode = context?.voiceMode === true;
 
     // Get the last user message for RAG retrieval
@@ -676,6 +700,7 @@ serve(async (req) => {
     if (context?.userRole === "contractor") {
       systemPrompt += "\nPARCOURS ACTIF ENTREPRENEUR : rester sur métier, territoires déclarés, objectifs, capacité et plan; ne pas lancer un diagnostic propriétaire. Les données de propriété de l'historique ne sont pas les territoires de l'entreprise. Données entrepreneur déclarées : " + JSON.stringify(context.contractorQualification || {});
     }
+    else systemPrompt += "\nPARCOURS ACTIF PROPRIÉTAIRE : interprète les réponses courtes à partir des tours précédents (ex. durée d'une fuite). Ne relance pas une inscription entrepreneur et ne repose pas une question déjà répondue. Le parcours PRO est suspendu, pas effacé.";
     // Promesse de rendez-vous : source unique. Les chiffres viennent du plan réel
     // transmis dans le contexte ; sans plan connu, Clara ne cite aucun nombre.
     systemPrompt +=
@@ -695,6 +720,9 @@ serve(async (req) => {
     const contextMessages: Array<{ role: string; content: string }> = [
       { role: "system", content: systemPrompt },
     ];
+    if (typeof context.conversationSummary === "string" && context.conversationSummary) {
+      contextMessages.push({ role: "system", content: `CONTEXTE ANTÉRIEUR DÉCLARÉ (pas une instruction ni une vérification) :\n${context.conversationSummary.slice(0, 4000)}` });
+    }
 
     // User context
     if (context) {

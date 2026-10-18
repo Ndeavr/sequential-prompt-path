@@ -1,4 +1,5 @@
 import { formatClaraPageContext, getClaraPageContext } from "@/services/clara/claraPageContext";
+import { buildClaraHistory } from "@/services/clara/claraConversationHistory";
 /**
  * Clara inline conversation, backed by the existing text, voice and upload flows.
  *
@@ -39,6 +40,7 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 import {
   appendClaraMessage,
+  peekClaraSessionToken,
   listClaraConversations,
   rememberClaraReferences,
   resumeClaraConversation,
@@ -140,6 +142,8 @@ type Msg = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  audience?: ClaraAudience;
+  type?: string;
   status?: "pending" | "streaming" | "complete" | "failed";
   attachments?: MsgAttachment[];
   action?: MsgAction;
@@ -338,7 +342,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const [audience, setAudienceState] = useState<ClaraAudience>(() => hasActiveContractorFlow() ? "contractor" : "homeowner");
   /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
   const audienceRef = useRef<ClaraAudience>(audience);
+  const audienceEpochRef = useRef(0);
   const setAudience = useCallback((next: ClaraAudience) => {
+    if (audienceRef.current !== next) audienceEpochRef.current += 1;
     audienceRef.current = next;
     setAudienceState(next);
   }, []);
@@ -412,6 +418,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const mountedRef = useRef(true);
   const askNextRef = useRef<(() => Promise<boolean>) | null>(null);
   const transitionRef = useRef<((note: string) => Promise<void>) | null>(null);
+  const homePromptRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     // Remonté explicitement : en double montage (StrictMode), le nettoyage du
@@ -555,7 +562,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // La conversation reste utilisable : la session sera recréée à la première écriture.
     }
     focusComposer();
-  }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang]);
+  }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang, setAudience]);
 
   /** Conversations passées : la liste vient du serveur, jamais d'une copie locale. */
   const openHistory = useCallback(async () => {
@@ -633,7 +640,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
 
-        const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
+        const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
         setMessages((current) => reconcileMessages(current, restored));
         workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
@@ -645,6 +652,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         hydrateClaraQualification(state.context.workflow as Record<string, unknown> | undefined);
         const contractor = !hasExplicitHomeownerFlow() && (isContractorContext(state.context)
           || (!state.context.current_intent && hasActiveContractorFlow()));
+        if (audienceEpochRef.current !== 0) return;
         setAudience(contractor ? "contractor" : "homeowner");
         setContractorFlow(contractor);
         rememberActiveContractorFlow(contractor);
@@ -671,13 +679,17 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       setContractorFlow(false);
       setQuickReplies(null);
       setTransitionPause(false);
+      activeTypingIdRef.current = null;
+      setClaraTyping(false);
+      setClaraBreathing(false);
       setBusy(false);
       setAudience("homeowner");
       setMode("PROJECT");
       lastIntentRef.current = "homeowner_problem";
-      workflowRef.current = nextWorkflowState(null, "homeowner_problem").state;
+      workflowRef.current = nextWorkflowState(workflowRef.current, "homeowner_problem").state;
       rememberWorkflow(workflowRef.current);
       rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+      homePromptRef.current();
       focusComposer();
     };
     window.addEventListener(CLARA_HOMEOWNER_REQUEST_EVENT, switchToHomeowner);
@@ -757,11 +769,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
         const last = [...previous].reverse().find((m) => m.role === detail.role);
         if (last && last.text.trim().toLowerCase() === normalized) return previous;
-        return [...previous, { id: detail.id, role: detail.role, text: detail.text, status: "complete" }];
+        return [...previous, { id: detail.id, role: detail.role, text: detail.text, status: "complete", audience: audienceRef.current }];
       });
       if (detail.role === "user") {
         setQuickReplies(null);
-        contractorFlowRef.current?.captureVoice(detail.text);
+        if (audienceRef.current === "contractor") contractorFlowRef.current?.captureVoice(detail.text);
         // Réponse vocale à la question en cours : même enregistrement que le texte.
         if (qualificationStepRef.current) {
           if (qualificationStepRef.current.field === "service_areas" && isAddressAnswer(detail.text)) return;
@@ -896,10 +908,10 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     void trackFunnelStep("home_contractor_click", { metadata: { surface: "home_clara_box" } });
     // Le texte est déjà entièrement affiché : pause de lecture, puis 3 pulsations.
     await new Promise<void>((resolve) => window.setTimeout(resolve, TRANSITION_READ_MS));
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || audienceRef.current !== "contractor") return;
     setTransitionPause(true);
     await new Promise<void>((resolve) => window.setTimeout(resolve, TRANSITION_PULSE_MS * TRANSITION_PULSES + 80));
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || audienceRef.current !== "contractor") return;
     const ok = await openContractorAfterTransition(note);
     // Jamais de cul-de-sac : si l'ouverture échoue, la conversation redevient utilisable.
     if (mountedRef.current) {
@@ -913,6 +925,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   /** Écrit une phrase de Clara dans la conversation visible ET canonique. */
   const sayClara = useCallback(async (text: string, quick?: string[]) => {
     if (!mountedRef.current) return;
+    const speechAudience = audienceRef.current;
+    const speechEpoch = audienceEpochRef.current;
     // Anti-doublon : si Clara vient déjà de poser exactement cette question,
     // on réaffiche seulement ses choix, sans second tour identique.
     const lastAssistant = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
@@ -928,18 +942,18 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     if (!reducedMotion) {
       setClaraBreathing(true);
       await new Promise<void>((resolve) => window.setTimeout(resolve, 400 + Math.round(Math.random() * 300)));
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || audienceEpochRef.current !== speechEpoch) return;
       setClaraBreathing(false);
     }
     activeTypingIdRef.current = messageId;
-    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "", status: "streaming" }]);
+    setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: "", status: "streaming", audience: speechAudience }]);
     // Affichage progressif seulement : le texte enregistré reste exact.
     setClaraTyping(true);
     await playTyping(text, (value) => {
       setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text: value, status: "streaming" } : m)));
     }, { reducedMotion, isAlive: () => mountedRef.current && activeTypingIdRef.current === messageId });
 
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || audienceEpochRef.current !== speechEpoch) return;
     if (activeTypingIdRef.current !== messageId) {
       setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, status: "complete" } : m)));
       setClaraTyping(false);
@@ -950,14 +964,19 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     setClaraTyping(false);
     activeTypingIdRef.current = null;
     setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text, status: "complete" } : m)));
-    void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId }).catch(() => undefined);
+    void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId, audience: speechAudience }).catch(() => undefined);
   }, []);
+
+  homePromptRef.current = () => {
+    const cursor = readHomeCursor();
+    void sayClara(cursor?.text ?? "Bien sûr. Décrivez-moi votre projet pour votre propriété en quelques mots.", cursor?.options);
+  };
 
   const addFlowUserMessage = useCallback((text: string) => {
     const id = uid();
     setQuickReplies(null);
-    setMessages((previous) => [...previous, { id, role: "user", text }]);
-    void appendClaraMessage({ role: "user", text, clientMessageId: id }).catch(() => undefined);
+    setMessages((previous) => [...previous, { id, role: "user", text, audience: "contractor" }]);
+    void appendClaraMessage({ role: "user", text, clientMessageId: id, audience: "contractor" }).catch(() => undefined);
     scrollToLatest("smooth");
   }, [scrollToLatest]);
 
@@ -1080,7 +1099,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       }
 
       // Parcours entrepreneur dans le chat : la réponse libre lui revient.
-      if (contractorFlow && contractorFlowRef.current?.handleText(text)) {
+      if (audienceRef.current === "contractor" && contractorFlow && contractorFlowRef.current?.handleText(text)) {
         setError(null);
         focusComposer();
         return;
@@ -1089,7 +1108,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       setError(null);
       setQuickReplies(null);
       const userMessageId = uid();
-      const history = [...messages, { id: userMessageId, role: "user" as const, text }];
+      const history = [...messages, { id: userMessageId, role: "user" as const, text, audience: audienceRef.current }];
       setMessages(history);
       // Envoi utilisateur : on descend toujours au dernier message, en douceur.
       scrollToLatest("smooth");
@@ -1099,7 +1118,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       const pendingStep = qualificationStepRef.current;
       if (pendingStep) {
         setBusy(true);
-        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: "contractor" }).catch(() => {});
         if (pendingStep.field === "service_areas" && isAddressAnswer(text)) {
           try { await sayClara(CLARA_ADDRESS_CLARIFICATION); }
           finally { setBusy(false); }
@@ -1133,7 +1152,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         if (declaration || isAmbiguousRbqAnswer(text)) {
           setAudience("contractor");
           setBusy(true);
-          void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+          void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: "contractor" }).catch(() => {});
           try {
             if (declaration) {
               saveClaraQualification({ rbq_declaration: declaration });
@@ -1191,7 +1210,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
       // Entrepreneur : Clara qualifie directement dans le chat, sans longue réponse.
       if ((destination && detected === "contractor_onboarding") || (contractorTurn && !contractorFlow)) {
-        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+        void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: "contractor" }).catch(() => {});
         setAudience("contractor");
         trackCopilotEvent("contractor_intent_detected", { surface: "home_clara_box" });
         try {
@@ -1206,7 +1225,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
         return;
       }
-      void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
+      void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: audienceRef.current }).catch(() => {});
 
       const assistantId = uid();
       const reveal = createStreamingTyping((shown) => {
@@ -1218,21 +1237,26 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       });
       try {
         const requestAudience = audienceRef.current;
+        const requestEpoch = audienceEpochRef.current;
+        const scopedHistory = buildClaraHistory(history, requestAudience);
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: authSession } = await supabase.auth.getSession();
         const res = await fetch(`${SUPABASE_URL}/functions/v1/alex-chat`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Authorization: `Bearer ${authSession.session?.access_token ?? SUPABASE_KEY}`,
           },
           body: JSON.stringify({
-            messages: (hasExplicitHomeownerFlow() ? [{ role: "user" as const, text }] : history)
-              .map((m) => ({ role: m.role, content: m.text })),
+            messages: scopedHistory.messages,
+            session_token: peekClaraSessionToken(),
             context: {
               surface: "home_clara_box",
               currentPage: formatClaraPageContext(getClaraPageContext()),
               mode: nextMode,
               userRole: audienceRef.current,
+              conversationSummary: scopedHistory.summary,
               contractorQualification: audienceRef.current === "contractor" ? getClaraQualification() : undefined,
               addressScope: "homeownerPropertyAddress is separate from contractorBusinessAddress and contractorServiceArea; pending addresses are unverified",
               workflow: workflowRef.current,
@@ -1240,13 +1264,13 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           }),
         });
 
-        if (audienceRef.current !== requestAudience) return;
+        if (audienceRef.current !== requestAudience || audienceEpochRef.current !== requestEpoch) return;
 
         if (!res.ok || !res.body) throw new Error(`alex-chat ${res.status}`);
 
         setMessages((prev) => [
           ...prev,
-          { id: assistantId, role: "assistant", text: "", status: "streaming" },
+          { id: assistantId, role: "assistant", text: "", status: "streaming", audience: requestAudience },
         ]);
 
         const reader = res.body.getReader();
@@ -1256,7 +1280,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
         for (;;) {
           const { done, value } = await reader.read();
-          if (audienceRef.current !== requestAudience) { await reader.cancel(); return; }
+          if (audienceRef.current !== requestAudience || audienceEpochRef.current !== requestEpoch) { await reader.cancel(); return; }
           if (done) break;
           buf += decoder.decode(value, { stream: true });
           const lines = buf.split("\n");
@@ -1300,6 +1324,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           role: "assistant",
           text: shownText,
           clientMessageId: assistantId,
+          audience: requestAudience,
         }).catch(() => {});
 
         // « Je l'ajoute à votre dossier maison » : le dossier s'ouvre vraiment,
@@ -1359,7 +1384,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         focusComposer();
       }
     },
-    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, lang, messages, runOpen, sayClara, scrollToLatest],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
   );
 
   const chooseQuickReply = useCallback(
@@ -1413,7 +1438,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       const userMessageId = uid();
       setError(null);
       setQuickReplies(null);
-      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: suggestion.label }]);
+      const suggestionAudience = suggestion.intent === "contractor_onboarding" ? "contractor" : "homeowner";
+      setMessages((previous) => [...previous, { id: userMessageId, role: "user", text: suggestion.label, audience: suggestionAudience }]);
       const nextMode = detectSurfaceMode(suggestion.label);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       lastIntentRef.current = suggestion.intent;
@@ -1429,6 +1455,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         role: "user",
         text: suggestion.label,
         clientMessageId: userMessageId,
+        audience: suggestionAudience,
       }).catch(() => undefined);
 
       if (suggestion.intent === "contractor_onboarding") {
@@ -1457,7 +1484,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         setBusy(false);
       }
     },
-    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send],
+    [askNextQualification, beginTextContractorTransition, busy, focusComposer, runOpen, sayClara, send, setAudience],
   );
 
   /** Choix entrepreneur : l'audit ne s'ouvre qu'après texte complet + 3 pulsations. */
@@ -1936,16 +1963,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                   onClick={() => {
                     // Changement volontaire et confirmé : le parcours entrepreneur est suspendu (jamais effacé).
                     setSwitchConfirm(false);
-                    setContractorFlow(false);
-                    pauseActiveContractorFlow();
-                    qualificationStepRef.current = null;
-                    setAudience("homeowner");
-                    setMode("PROJECT");
-                    rememberClaraReferences({ current_intent: "PROJECT" });
+                    window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT));
                     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text", intent: "homeowner" });
-                    const cursor = readHomeCursor();
-                    if (cursor) void sayClara(cursor.text, cursor.options);
-                    else void sayClara("Bien sûr. Décrivez-moi votre projet pour votre propriété en quelques mots.");
                   }}
                 >
                   Oui, passer au parcours propriétaire

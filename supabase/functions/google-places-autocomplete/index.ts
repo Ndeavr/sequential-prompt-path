@@ -1,23 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { addressCors, guestAddressSessionAllowed } from "../_shared/addressRequestPolicy.ts";
 import {
   getGoogleMapsCredentials,
   googleConnectorAvailable,
   placeDetails,
   placesAutocomplete,
 } from "../_shared/googleMapsConnector.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Expose-Headers": "Retry-After",
-};
-
-const json = (payload: unknown, status = 200) =>
-  new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 
 // Plafonds partagés (base de données, fenêtre glissante 10 min, atomiques).
 export const LIMITS = {
@@ -35,9 +24,13 @@ async function sha(v: string) {
 }
 
 serve(async (req) => {
+  const corsHeaders = addressCors(req.headers.get("origin"));
+  if (!corsHeaders) return new Response(JSON.stringify({ error: "ORIGIN_NOT_ALLOWED" }), { status: 403, headers: { "Content-Type": "application/json" } });
+  const json = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
 
   // Accès : compte connecté OU session invitée Clara vérifiée en base.
   // Jamais d'inscription forcée; quota borné par appelant (anti-abus).
@@ -48,25 +41,27 @@ serve(async (req) => {
   if (!url || !anonKey || !serviceKey) return json({ error: "SERVICE_FAILED" }, 500);
   const body = await req.json().catch(() => ({}));
   let callerKey: string | null = null;
+  let userId: string | null = null;
   const bearer = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (bearer && bearer !== anonKey && bearer.split(".").length === 3) {
     const { data } = await createClient(url, anonKey).auth.getUser(bearer);
-    if (data?.user) callerKey = `u:${data.user.id}`;
+    if (data?.user) { userId = data.user.id; callerKey = `u:${userId}`; }
   }
   if (!callerKey) {
     const guest = typeof body.session_token === "string" ? body.session_token.trim() : "";
     if (guest.length >= 16 && guest.length <= 100) {
       const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
       const since = new Date(Date.now() - 30 * 864e5).toISOString();
-      const { data } = await admin.from("alex_sessions").select("id")
+      const { data } = await admin.from("alex_sessions").select("id,user_id")
         .eq("session_token", guest).gte("updated_at", since).limit(1).maybeSingle();
-      if (data?.id) callerKey = `g:${data.id}`;
+      if (data?.id && guestAddressSessionAllowed(data, userId)) callerKey = `g:${data.id}`;
     }
   }
   if (!callerKey) {
     return json({ error: "SESSION_REQUIRED", message: "Session invitée introuvable. Réessayez dans un instant." }, 401);
   }
   const isDetails = !!body.place_id;
+  if (isDetails && (typeof body.place_id !== "string" || !/^[A-Za-z0-9_-]{1,255}$/.test(body.place_id))) return json({ error: "INVALID_PLACE_ID" }, 400);
   const normInput = typeof body.input === "string" ? body.input.trim().toLowerCase().replace(/\s+/g, " ") : "";
   const cacheKey = `${callerKey}|${normInput}|${body.region ?? "ca"}|${body.language ?? "fr"}`;
   if (!isDetails) {
@@ -95,7 +90,7 @@ serve(async (req) => {
   }
 
   const creds = getGoogleMapsCredentials();
-  if (!googleConnectorAvailable(creds) && !creds.serverKey && !creds.legacyKey) {
+  if (!googleConnectorAvailable(creds)) {
     console.error("[google-places] no Google Maps credentials configured");
     return json({
       predictions: [],
@@ -113,6 +108,7 @@ serve(async (req) => {
       const { data, source, google_status, error_message } = await placeDetails(body.place_id, {
         language: "fr",
         sessionToken,
+        fields: "id,formattedAddress,addressComponents,location",
       });
 
       if (!data) {
@@ -148,15 +144,15 @@ serve(async (req) => {
     }
 
     // ---------- Autocomplete ----------
-    const { input, types, region, language } = body;
+    const { input } = body;
     if (!input || typeof input !== "string" || input.trim().length < 3 || input.length > 200) {
       return json({ predictions: [] });
     }
 
     const { data, source, google_status, error_message } = await placesAutocomplete(input.trim(), {
-      types: types || "address",
-      region: region || "ca",
-      language: language || "fr",
+      types: "address",
+      region: "ca",
+      language: "fr",
       sessionToken,
     });
 
@@ -170,7 +166,7 @@ serve(async (req) => {
       return json({
         predictions: [],
         error: google_status || "AUTOCOMPLETE_FAILED",
-        message: error_message || "Google Places autocomplete error",
+        message: "Les suggestions sont indisponibles. Votre saisie manuelle reste à confirmer.",
         source,
       }, 200);
     }

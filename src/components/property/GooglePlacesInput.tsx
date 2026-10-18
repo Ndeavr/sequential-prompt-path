@@ -12,6 +12,8 @@ import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
 import { cn } from "@/lib/utils";
 
 interface PlaceSelection {
+  placeId: string;
+  provenance: "google_places";
   address: string;
   lat?: number;
   lng?: number;
@@ -46,6 +48,8 @@ export default function GooglePlacesInput({
   const [isOpen, setIsOpen] = useState(false);
 
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [detailsFailed, setDetailsFailed] = useState(false);
+  const selectionEpoch = useRef(0);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -60,20 +64,25 @@ export default function GooglePlacesInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
+    selectionEpoch.current += 1;
+    setDetailsFailed(false);
     onChange(v);
     search(v);
   };
 
   const handleSelect = async (pred: Prediction) => {
+    const epoch = ++selectionEpoch.current;
     onChange(pred.description);
     setIsOpen(false);
     const result = await fetchDetails(pred.place_id);
+    if (epoch !== selectionEpoch.current) return;
     // A failed details request never becomes a confirmed/located address.
     if (result) {
       reset();
-      onPlaceSelect?.({ address: result.fullAddress, city: result.city,
+      onChange(result.fullAddress);
+      onPlaceSelect?.({ placeId: result.placeId, provenance: "google_places", address: result.fullAddress, city: result.city,
         lat: result.latitude ?? undefined, lng: result.longitude ?? undefined, postalCode: result.postalCode });
-    }
+    } else setDetailsFailed(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -106,7 +115,7 @@ export default function GooglePlacesInput({
         className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-10 shadow-sm w-full"
         autoComplete="off"
       />
-      {error && <p role="status" className="mt-2 text-sm text-muted-foreground">Les suggestions sont indisponibles. Votre adresse reste à confirmer.</p>}
+      {(error || detailsFailed) && <p role="status" className="mt-2 text-sm text-muted-foreground">Les suggestions sont indisponibles. Vous pouvez saisir votre adresse manuellement; elle reste à confirmer.</p>}
       {!error && !isLoading && value.trim().length >= 4 && predictions.length === 0 && <p role="status" className="mt-2 text-sm text-muted-foreground">Aucune adresse proposée pour le moment.</p>}
       {isLoading && (
         <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
