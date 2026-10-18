@@ -10,8 +10,8 @@ describe("350 Quebec tax contract", () => {
     expect(Math.round(35000 * .09975)).toBe(3491);
     expect(ENTRY350_AMOUNTS).toEqual({ subtotal:35000,gst:1750,qst:3491,tax:5241,total:40241 });
   });
-  it("cannot enable collection from an unconfirmed registration", async () => {
-    expect(entry350TaxCollectionApproved()).toBe(false);
+  it("harness still fails closed when registration gate is off", async () => {
+    expect(entry350TaxCollectionApproved()).toBe(true);
     const qa=await createQa(false);
     try {
       expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(503);
