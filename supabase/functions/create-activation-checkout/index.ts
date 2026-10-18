@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string; test_mode?: boolean;
     };
     const stripeEnv = resolveStripeEnv(test_mode);
-    if (!entry350TaxCollectionApproved()) return json({ error: "L'admissibilité fiscale de cette offre doit être confirmée avant le paiement.", code: "tax_registration_unconfirmed" }, 503);
+    if (!entry350TaxCollectionApproved(stripeEnv === "test" && stripeKeyFor("test") ? "test" : "live")) return json({ error: "Le paiement de cette offre n'est pas encore ouvert. Rien n'a été facturé.", code: "entry350_live_not_released" }, 503);
 
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side

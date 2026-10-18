@@ -271,8 +271,8 @@ Deno.serve(async (req) => {
         }
         identityQuote = q;
       }
-      if (isEntryActivation && !entry350TaxCollectionApproved()) {
-        return new Response(JSON.stringify({ error: "L'admissibilité fiscale de cette offre doit être confirmée avant le paiement.", code: "tax_registration_unconfirmed" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (isEntryActivation && !entry350TaxCollectionApproved(useTestMode && stripeTestKey.startsWith("sk_test_") ? "test" : "live")) {
+        return new Response(JSON.stringify({ error: "Le paiement de cette offre n'est pas encore ouvert. Rien n'a été facturé.", code: "entry350_live_not_released" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de

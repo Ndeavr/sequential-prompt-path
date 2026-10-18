@@ -1,5 +1,13 @@
-/** Founder confirmed GST+QST registration (2026-10-18). Never accept a client flag. */
-export function entry350TaxCollectionApproved(): boolean { return true; }
+/** Founder confirmed GST+QST registration (2026-10-18).
+ * Release gate, default CLOSED for LIVE: a LIVE 350 Checkout (and any LIVE tax-rate
+ * creation) is allowed only when the server secret ENTRY350_LIVE_CHECKOUT_RELEASED
+ * is exactly "true". TEST mode is allowed only because the caller already
+ * resolved a server-held sk_test_ key. Never accept a client flag here. */
+export function entry350TaxCollectionApproved(mode: "live" | "test" = "live", read: (k: string) => string | undefined =
+  (k) => (globalThis as any).Deno?.env?.get?.(k)): boolean {
+  if (mode === "test") return true;
+  return read("ENTRY350_LIVE_CHECKOUT_RELEASED") === "true";
+}
 
 export const ENTRY350_TAX_CONTRACT = "qc-exclusive-v1";
 export const ENTRY350_AMOUNTS = { subtotal: 35000, gst: 1750, qst: 3491, tax: 5241, total: 40241 } as const;
