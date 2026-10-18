@@ -1,57 +1,52 @@
 /**
  * UNPRO — Offre d'entrée 350 $ (paiement unique).
  *
- * SOURCE UNIQUE de la formulation publique. Avant calcul, l'offre est toujours
- * annoncée « jusqu'à 5 ». Après calcul, seul le nombre réellement garanti par
- * le moteur est affiché — jamais le maximum public.
- *
- * Interdit : « 5 rendez-vous pour 350 $ » (promesse non calculée).
+ * SOURCE UNIQUE de la formulation publique : profil + 12 mois de Présence IA
+ * sur UNPRO, 0 rendez-vous inclus par défaut, aucune visibilité IA externe promise.
  */
 
 export const OFFER_350 = {
   price_cents: 35000,
   price_label: "350 $",
-  max_appointments: 5,
-  duration_months: 6,
-  duration_label: "jusqu'à 6 mois",
+  /** Aucun rendez-vous inclus par défaut; seul un devis serveur peut en garantir. */
+  max_appointments: 0,
+  duration_months: 12,
+  duration_label: "12 mois",
 
-  /** Avant calcul — annonce publique */
-  title: "Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $",
+  title: "Activer mon profil UNPRO — 350 $ + taxes",
   subtitle:
-    "Le nombre de rendez-vous que nous pouvons garantir dépend de votre domaine, de votre territoire et de la capacité disponible.",
-  ctaPrimary: "Voir ce que 350 $ peut me garantir",
-  ctaCalculate: "Calculer ma garantie",
-  ctaActivate: "Activer ma garantie — 350 $",
+    "Paiement unique : votre profil entrepreneur et 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut.",
+  ctaPrimary: "Activer mon profil — 350 $ + taxes",
+  ctaCalculate: "Voir mon activation",
+  ctaActivate: "Activer mon profil — 350 $ + taxes",
   disclaimer:
-    "Le nombre réel varie selon votre domaine, votre territoire et la capacité disponible.",
-  paymentNote: "350 $ CA avant taxes. TPS/TVQ en sus si applicables : total de 402,41 $. Paiement unique. Aucun abonnement.",
+    "Aucun rendez-vous ni résultat n'est promis. Des rendez-vous ne sont offerts que si un devis les confirme avant le paiement.",
+  paymentNote: "350 $ CA avant taxes + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique. Aucun abonnement.",
 
   card: {
-    eyebrow: "À partir de 350 $",
-    title: "Jusqu'à 5 rendez-vous exclusifs garantis",
+    eyebrow: "Nouvel entrepreneur · Paiement unique",
+    title: "Profil + 12 mois de Présence IA sur UNPRO",
     bullets: [
-      "Rendez-vous exclusifs, jamais partagés",
-      "Selon vos critères de projet",
-      "Territoire défini avec vous",
-      "Durée de livraison déterminée",
-      "Garantie calculée avant le paiement",
+      "Profil entrepreneur UNPRO",
+      "12 mois de Présence IA sur UNPRO",
+      "Aucun rendez-vous inclus par défaut",
+      "Publication après vérification (RBQ si requise)",
+      "Paiement unique, aucun abonnement",
     ],
   },
 
-  /** Après calcul — vérité contractuelle */
   resultTitle: "Votre offre UNPRO",
-  resultMaxLabel: "Maximum public",
-  resultMaxValue: "jusqu'à 5",
-  resultGuaranteeLabel: "Garantie contractuelle calculée",
-  analysisRequired: "Analyse du territoire requise",
+  resultMaxLabel: "Rendez-vous inclus",
+  resultMaxValue: "aucun par défaut",
+  resultGuaranteeLabel: "Rendez-vous confirmés par votre devis",
+  analysisRequired: "Aucun rendez-vous inclus",
   analysisRequiredHelp:
-    "Nous n'avons pas encore assez de signaux vérifiés sur ce territoire pour garantir un nombre de rendez-vous. Notre équipe complète l'analyse avant toute promesse.",
+    "L'activation 350 $ n'inclut aucun rendez-vous. Si vous en voulez, UNPRO calcule un devis séparé, avec prix et volume explicites avant tout paiement.",
 
-  /** Alex — avant / après calcul */
   alexBeforeCalculation:
-    "Les forfaits commencent à 350 $ et peuvent inclure jusqu'à 5 rendez-vous exclusifs garantis, selon votre domaine et votre territoire.",
+    "L'activation coûte 350 $ plus taxes, une seule fois : votre profil et 12 mois de Présence IA sur UNPRO. Aucun rendez-vous n'est inclus par défaut.",
   alexAfterCalculation: (appts: number, priceLabel: string, duration: string) =>
-    `Selon votre domaine, votre territoire et la capacité actuellement disponible, UNPRO peut vous garantir ${appts} rendez-vous exclusifs pour ${priceLabel} sur une période maximale de ${duration}.`,
+    `Votre devis confirme ${appts} rendez-vous exclusifs pour ${priceLabel}, sur ${duration}. Ce volume est distinct de l'activation 350 $.`,
 } as const;
 
 export function guaranteeSentence(appointments: number): string {
@@ -75,6 +70,6 @@ export const ENTRY_350 = {
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
     "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
-  paymentNote: "350 $ CA avant taxes. Si applicables : TPS 17,50 $ + TVQ 34,91 $, total 402,41 $ CA. Paiement unique, aucun abonnement. Admissibilité fiscale à confirmer avant paiement.",
+  paymentNote: "350 $ CA avant taxes + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique, aucun abonnement. Aucun rendez-vous inclus par défaut.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;
