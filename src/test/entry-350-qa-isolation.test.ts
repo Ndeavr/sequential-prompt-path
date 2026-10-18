@@ -93,6 +93,10 @@ describe('invited receipt retry',()=>{
     expect(await plan(qa.otherToken,OTHER)).toBe('presence');
     expect((await qa.db.query("select * from contractor_activation_ledger where action='entry_activation_350_paid'")).rows).toHaveLength(1);
     expect((await qa.db.query('select * from contractor_subscriptions')).rows).toHaveLength(0);
+    // Paid != verified: payment never publishes nor makes the profile discoverable.
+    expect(qa.calls).not.toContain('activate_contractor_unified');
+    const c=(await qa.db.query<any>('select * from contractors')).rows;
+    for(const row of c){ if('is_discoverable' in row) expect(row.is_discoverable).not.toBe(true); if('is_published' in row) expect(row.is_published).not.toBe(true); }
   });
 });
 describe('personalized interrupted recovery/attribution',()=>{
