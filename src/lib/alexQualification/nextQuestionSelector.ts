@@ -3,6 +3,7 @@
  * Skips questions whose answer is already stored in the homeowner's compat DNA.
  */
 import type { QualificationGraph } from "./qualificationGraph";
+import { nextInsulationQuestion } from "../../../supabase/functions/_shared/insulationProject";
 import { getCategoryTree } from "./categoryDecisionTrees";
 import { isFieldKnown, type KnownDnaFacts } from "./dnaGate";
 
@@ -139,6 +140,9 @@ export function pickNextQuestion(
       options: tree.sub_types,
     };
   }
+
+  const insulation = nextInsulationQuestion(g.project_context, g.problem.category, g.problem.sub_type);
+  if (insulation) return { field: insulation.field, question_fr: insulation.q, why_fr: insulation.why, ui_hint: "choice", options: insulation.options };
 
   // 3b. Questions métier propres au corps de métier (une à la fois)
   if (tree?.extra_questions?.length) {

@@ -97,3 +97,5 @@ export function anyPrequalLabel(criterion: string): string {
   }
   return criterion;
 }
+
+export { resolveCompatibilityPack } from "../../supabase/functions/_shared/compatibilityPackPolicy";
