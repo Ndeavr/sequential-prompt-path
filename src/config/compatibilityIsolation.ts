@@ -13,8 +13,9 @@ export const ISOLATION_SERVICES: readonly ServiceDef[] = Object.freeze([
   { slug: "isolation_entretoit", label: "Isolation d'entretoit", unlocks: ["attic", "envelope"] },
   { slug: "ajout_isolant_souffle", label: "Ajout d'isolant soufflé", unlocks: ["attic"] },
   { slug: "fibre_verre_soufflee", label: "Fibre de verre soufflée", unlocks: ["attic"] },
-  { slug: "retrait_isolant", label: "Retrait d'isolant existant", unlocks: ["attic", "contamination"] },
+  { slug: "retrait_isolant", label: "Retrait complet d’isolant existant (fibre de verre / cellulose)", unlocks: ["attic", "contamination"] },
   { slug: "decontamination_moisissure", label: "Décontamination de moisissure", unlocks: ["contamination"] },
+  { slug: "amiante", label: "Amiante soupçonné (évaluation / gestion spécialisée)", unlocks: ["contamination"] },
   { slug: "vermiculite", label: "Vermiculite (retrait / gestion)", unlocks: ["contamination"] },
   { slug: "etancheite_air", label: "Étanchéité à l'air / calfeutrage", unlocks: ["envelope"] },
   { slug: "pare_vapeur_scellage", label: "Pare-vapeur et scellage", unlocks: ["envelope", "attic"] },
@@ -46,6 +47,7 @@ export const ISOLATION_PROJECT_QUESTIONS: readonly ProjectQuestion[] = Object.fr
   { dimension: "attic", key: "trusses_or_obstructed", label: "Fermes de toit / entretoit encombré", requires: ["attic"] },
   { dimension: "attic", key: "top_up_only", label: "Ajout d'isolant seulement (sans retrait)", requires: ["attic"] },
   { dimension: "attic", key: "removal_before_install", label: "Retrait complet avant nouvelle isolation", requires: ["attic"] },
+  { dimension: "attic", key: "remediation_assessment", label: "Évaluation ou remise en état ciblée d’isolant endommagé / contaminé", requires: ["attic", "contamination"] },
   { dimension: "attic", key: "occupied_home", label: "Maison occupée pendant les travaux", requires: [] },
 
   // Superficie (bornes du mandat, sans exiger de chiffre précis)

@@ -13,6 +13,7 @@
  *    entrepreneur fictif.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sanitizeInsulationContext } from "../_shared/insulationProject.ts";
 import { loadOwnedDesignBrief, designAccessAction } from "../_shared/designBrief.ts";
 
 const corsHeaders = {
@@ -38,6 +39,8 @@ import {
 
 interface Body {
   action?: string;
+  project_context?: Record<string, unknown>;
+  session_token?: string;
   match_id?: string;
   design_context?: Record<string, unknown>;
   description?: string;
@@ -181,7 +184,14 @@ Deno.serve(async (req) => {
       estimatePayload = est.value;
     }
 
+    let insulationContext = sanitizeInsulationContext(body.project_context);
+    if (body.session_token) {
+      const { data: conversation, error: conversationError } = await supabase.from("alex_sessions").select("user_id,context_json").eq("session_token", body.session_token).maybeSingle();
+      if (conversationError || !conversation || conversation.user_id !== userId) return json({ error: "session_owner_mismatch" }, 403);
+      insulationContext = { ...sanitizeInsulationContext(conversation.context_json?.homeowner_insulation), ...insulationContext };
+    }
     const payload = {
+      project_context: insulationContext,
       first_name: firstName,
       email: text(body.email, 160),
       consent_marketing: body.consent_marketing === true,

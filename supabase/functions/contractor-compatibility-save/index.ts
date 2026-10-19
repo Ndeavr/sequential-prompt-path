@@ -11,6 +11,8 @@ import {
 } from "../_shared/contractorCompatibility.ts";
 
 
+import { validateCompatibilityPack } from "../_shared/compatibilityPackPolicy.ts";
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -60,12 +62,21 @@ Deno.serve(async (req) => {
     }
     if (!contractorId) return json({ error: "Aucune fiche entrepreneur rattachée à ce compte." }, 404);
 
-    const { data: existing } = await admin
+    const { data: existing, error: existingError } = await admin
       .from("contractor_compatibility_profiles")
       .select("answers, status, current_step, trade_pack")
       .eq("contractor_id", contractorId)
       .maybeSingle();
     const previous = sanitizeAnswers(existing?.answers);
+    if (existingError) throw existingError;
+    if (existing === undefined) throw new Error("compatibility_profile_read_failed");
+    const { data: domain, error: domainError } = await admin.from("contractors").select("specialty").eq("id", contractorId).single();
+    if (domainError) throw domainError;
+    const { data: domainServices, error: servicesError } = await admin.from("contractor_services").select("service_name_fr").eq("contractor_id", contractorId).eq("is_active", true);
+    if (servicesError) throw servicesError;
+    let tradePack: string;
+    try { tradePack = validateCompatibilityPack(body?.trade_pack, existing?.trade_pack, domain?.specialty, (domainServices ?? []).map((s: { service_name_fr: string }) => s.service_name_fr), actorIsAdmin); }
+    catch (e) { return json({ error: e instanceof Error ? e.message : "invalid_trade_pack" }, 400); }
     const answers = mergeAnswers(existing?.answers, body?.answers);
     // Mode admin : correction ciblée d'une fiche existante, sans revenir en brouillon.
     const adminPatch = body?.mode === "admin_patch" && actorIsAdmin;
@@ -85,10 +96,7 @@ Deno.serve(async (req) => {
       {
         contractor_id: contractorId,
         // REPAIR: never clobber the pack of a multi-trade profile (isolation, etc.).
-        trade_pack:
-          (typeof body?.trade_pack === "string" && body.trade_pack) ||
-          existing?.trade_pack ||
-          "excavation_fondation",
+        trade_pack: tradePack,
         status: adminPatch || wasFinalized ? (existing?.status ?? "draft") : "draft",
         completion_pct: completion,
         current_step: currentStep,
@@ -110,7 +118,7 @@ Deno.serve(async (req) => {
     // matching (pas seulement le mode `admin_patch`). La régénération est
     // atomique et idempotente : `materialize` désactive puis réécrit les règles
     // déclarées via des upserts sur clé stable.
-    const shouldRegenerateRules = wasFinalized && (adminPatch || actorIsAdmin);
+    const shouldRegenerateRules = wasFinalized;
     await materialize(admin, contractorId, answers, { finalize: shouldRegenerateRules });
 
     if (actorIsAdmin && changes.length) {

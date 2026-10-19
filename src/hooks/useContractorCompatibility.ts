@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import { resolveCompatibilityPack } from "../../supabase/functions/_shared/compatibilityPackPolicy";
 import {
   TOTAL_COMPAT_STEPS,
   type PrequalLevel,
@@ -100,22 +101,25 @@ export function useContractorCompatibility(options: Options = {}) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrated = useRef(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error: loadError } = useQuery({
     queryKey: ["contractor-compatibility", contractorId ?? user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      if (!user?.id) throw new Error("authentication_required");
       let cid = contractorId ?? null;
+      const { data: domain, error: domainError } = await supabase.from("contractors").select("id, specialty").eq(contractorId ? "id" : "user_id", contractorId ?? user.id).maybeSingle();
+      if (domainError) throw domainError;
       if (!cid) {
         const { data: c } = await supabase
           .from("contractors")
           .select("id, city, service_areas")
-          .eq("user_id", user!.id)
+          .eq("user_id", user.id)
           .maybeSingle();
         cid = c?.id ?? null;
       }
       if (!cid) return { contractor_id: null, profile: null, areas: [] as any[] };
 
-      const [{ data: profile }, { data: areas }] = await Promise.all([
+      const [profileResult, areasResult] = await Promise.all([
         supabase
           .from("contractor_compatibility_profiles")
           .select("*")
@@ -126,7 +130,9 @@ export function useContractorCompatibility(options: Options = {}) {
           .select("id, city_name")
           .eq("contractor_id", cid),
       ]);
-      return { contractor_id: cid, profile, areas: areas ?? [] };
+      if (profileResult.error) throw profileResult.error;
+      if (areasResult.error) throw areasResult.error;
+      return { contractor_id: cid, profile: profileResult.data, areas: areasResult.data ?? [], trade_pack: resolveCompatibilityPack(profileResult.data?.trade_pack, domain?.specialty) };
     },
   });
 
@@ -145,9 +151,9 @@ export function useContractorCompatibility(options: Options = {}) {
       try {
         const { data: res, error } = await supabase.functions.invoke(
           finalize ? "contractor-compatibility-finalize" : "contractor-compatibility-save",
-          { body: { contractor_id: contractorId ?? null, answers: next, current_step: nextStep } },
+          { body: { contractor_id: contractorId ?? null, trade_pack: data?.trade_pack, answers: next, current_step: nextStep } },
         );
-        if (error) throw error;
+        if (error || !res?.ok) throw error ?? new Error("save_failed");
         setSavedAt(new Date());
         if (finalize) {
           qc.invalidateQueries({ queryKey: ["contractor-compatibility"] });
@@ -160,7 +166,7 @@ export function useContractorCompatibility(options: Options = {}) {
         setSaving(false);
       }
     },
-    [contractorId, qc],
+    [contractorId, data?.trade_pack, qc],
   );
 
   /** Mise à jour + autosave debounce (1,2 s). */
@@ -196,6 +202,8 @@ export function useContractorCompatibility(options: Options = {}) {
   return {
     contractorId: data?.contractor_id ?? null,
     profile: data?.profile ?? null,
+    tradePack: data?.trade_pack,
+    loadError,
     existingAreas: (data?.areas ?? []) as { id: string; city_name: string }[],
     answers,
     update,
@@ -263,7 +271,7 @@ export function useCompatibilityAdminPatch(contractorId?: string | null) {
         setSaving(false);
       }
     },
-    [contractorId, qc],
+    [contractorId, data?.trade_pack, qc],
   );
 
   return { patch, saving };

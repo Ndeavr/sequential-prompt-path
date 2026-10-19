@@ -4,6 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { loadOwnedDesignBrief } from "../_shared/designBrief.ts";
 import { CLARA_EXTRACTION_MODEL } from "../_shared/claraModelSelection.ts";
 
+import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext } from "../_shared/insulationProject.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -98,6 +100,8 @@ function pickNext(g: Graph) {
   if (!g.problem.category) return NEXT_QUESTIONS.problem_category;
   if (!g.property.confirmed || !g.property.address) return NEXT_QUESTIONS.property_address;
   if (!g.problem.sub_type) return NEXT_QUESTIONS.problem_sub_type;
+  const insulationQuestion = nextInsulationQuestion(g.project_context, g.problem.category, g.problem.sub_type);
+  if (insulationQuestion) return insulationQuestion;
   if (!g.urgency) return NEXT_QUESTIONS.urgency;
   if (!g.property.type) return NEXT_QUESTIONS.property_type;
   if (g.project_context.design_brief && (!g.budget || g.budget === "unknown")) return {
@@ -220,9 +224,12 @@ Deno.serve(async (req) => {
     // Extract & merge
     let extracted: Partial<Graph> = {};
     if (user_message) {
+      const priorQuestion = pickNext(graph);
+      const insulationContext = captureInsulationTurn(sanitizeInsulationContext(graph.project_context), user_message, priorQuestion?.q);
       extracted = await extractWithLLM(user_message, graph);
       graph = {
         ...graph,
+        project_context: { ...graph.project_context, ...insulationContext },
         homeowner: { ...graph.homeowner, ...(extracted.homeowner ?? {}) },
         property: { ...graph.property, ...(extracted.property ?? {}) },
         problem: { ...graph.problem, ...(extracted.problem ?? {}) },
@@ -253,6 +260,11 @@ Deno.serve(async (req) => {
       graph.ready_for_match = false;
       breakdown.ready_for_match = false;
       graph.missing_dimensions.push("budget");
+    }
+
+    if (nextInsulationQuestion(graph.project_context, graph.problem.category, graph.problem.sub_type)) {
+      graph.ready_for_match = false;
+      breakdown.ready_for_match = false;
     }
 
     // Persist session + turn
@@ -407,6 +419,7 @@ async function createDossier(
     budget_min: budgetMin,
     budget_max: budgetMax,
     source_page: "clara_qualification",
+    project_context: sanitizeInsulationContext(graph.project_context),
     ...(graph.project_context.design_brief ? { design_context: graph.project_context.design_brief, ...(graph.project_context.design_address as Record<string, unknown> ?? {}) } : {}),
   };
 

@@ -3,6 +3,8 @@
 // Filters to recommendation-eligible pros only, then ranks.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+import { evaluateInsulationRules } from "../_shared/insulationProject.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -18,6 +20,7 @@ interface LeadRow {
   budget_min: number | null;
   budget_max: number | null;
   language: string | null;
+  payload?: { project_context?: unknown };
 }
 
 interface ContractorRow {
@@ -448,6 +451,10 @@ Deno.serve(async (req) => {
           return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [] };
         }
         const base = scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+        const projectFit = evaluateInsulationRules(typedLead.payload?.project_context, (compatRules ?? []).filter((r: any) => r.contractor_id === c.id));
+        if (!projectFit.eligible) return { ...base, score: 0, reasons: projectFit.reasons };
+        base.score = Math.min(100, base.score + projectFit.boost);
+        base.reasons.push(...projectFit.reasons);
 
 
         // ── Profil de compatibilité ───────────────────────────────────

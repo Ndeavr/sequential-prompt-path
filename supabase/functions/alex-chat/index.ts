@@ -601,6 +601,8 @@ L'utilisateur signale un problème urgent. Tu dois :
 - Exemple : "Compris. Une photo de la zone m'aiderait à aller plus vite."`;
 }
 
+import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext } from "../_shared/insulationProject.ts";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -622,6 +624,7 @@ serve(async (req) => {
     const { data: authData } = bearer ? await supabase.auth.getUser(bearer) : { data: { user: null } };
     context.userId = authData.user?.id ?? null;
     const audience = context.userRole === "contractor" ? "contractor" : "homeowner";
+    let canonicalSession: { id: string; context_json: Record<string, unknown> | null } | null = null;
     let messages = buildClaraHistory((Array.isArray(body.messages) ? body.messages : []).map((m: { role: "user" | "assistant"; content: string }) => ({ ...m, audience })), audience).messages;
     if (typeof body.session_token === "string" && body.session_token.length >= 16) {
       const { data: session, error: sessionError } = await supabase.from("alex_sessions")
@@ -629,6 +632,7 @@ serve(async (req) => {
       if (sessionError || !session || (session.user_id && session.user_id !== context.userId)) {
         return new Response(JSON.stringify({ error: "session_unavailable" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+      canonicalSession = session;
       const { data: rows, error: historyError } = await supabase.from("alex_messages")
         .select("sender,message,message_type").eq("session_id", session.id).order("created_at", { ascending: false }).limit(60);
       if (historyError) throw new Error("conversation_history_unavailable");
@@ -642,6 +646,18 @@ serve(async (req) => {
     if (!messages.length) return new Response(JSON.stringify({ error: "message_required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const isVoiceMode = context?.voiceMode === true;
 
+    let insulationContext = sanitizeInsulationContext(audience === "homeowner" ? canonicalSession?.context_json?.homeowner_insulation : null);
+    if (audience === "homeowner") {
+      let previousQuestion = "";
+      for (const m of messages) {
+        if (m.role === "assistant") previousQuestion = m.content;
+        else insulationContext = captureInsulationTurn(insulationContext, m.content, previousQuestion);
+      }
+      if (canonicalSession) {
+        const { error: contextError } = await supabase.from("alex_sessions").update({ context_json: { ...canonicalSession.context_json, homeowner_insulation: insulationContext } }).eq("id", canonicalSession.id);
+        if (contextError) throw new Error("project_context_save_failed");
+      }
+    }
     // Get the last user message for RAG retrieval
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
 
@@ -701,6 +717,11 @@ serve(async (req) => {
       systemPrompt += "\nPARCOURS ACTIF ENTREPRENEUR : rester sur métier, territoires déclarés, objectifs, capacité et plan; ne pas lancer un diagnostic propriétaire. Les données de propriété de l'historique ne sont pas les territoires de l'entreprise. Données entrepreneur déclarées : " + JSON.stringify(context.contractorQualification || {});
     }
     else systemPrompt += "\nPARCOURS ACTIF PROPRIÉTAIRE : interprète les réponses courtes à partir des tours précédents (ex. durée d'une fuite). Ne relance pas une inscription entrepreneur et ne repose pas une question déjà répondue. Le parcours PRO est suspendu, pas effacé.";
+    if (audience === "homeowner" && insulationContext.insulation_zone === "attic") {
+      const next = nextInsulationQuestion(insulationContext);
+      systemPrompt += "\nISOLATION : état connu et souhait déclaré sont distincts. Humidité, glace et moisissure ne prouvent jamais la nécessité de tout retirer. Un isolant sec et sain peut rester. Vermiculite/amiante soupçonné : évaluation spécialisée, aucune recommandation de retrait sans expertise vérifiée. Contexte déclaré : " + JSON.stringify(insulationContext);
+      if (next) systemPrompt += "\nPose UNE seule question neutre, sans autre question : " + next.q + " Choix naturels et Je ne sais pas. Ne repose pas les faits déjà connus.";
+    }
     // Promesse de rendez-vous : source unique. Les chiffres viennent du plan réel
     // transmis dans le contexte ; sans plan connu, Clara ne cite aucun nombre.
     systemPrompt +=

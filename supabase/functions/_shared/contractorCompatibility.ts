@@ -321,6 +321,8 @@ export async function materialize(
   for (const [k, v] of Object.entries(a.projects ?? {})) {
     if (v.answer === "no") {
       rules.push({ rule_type: "hard_exclusion", rule_key: `project:${k}`, payload: { condition: k } });
+    } else if (v.answer === "yes") {
+      rules.push({ rule_type: "priority", rule_key: `project:${k}`, payload: { condition: k, boost: 10 } });
     } else if (v.answer === "depends") {
       rules.push({
         rule_type: "soft_preference",
@@ -350,14 +352,15 @@ export async function materialize(
   }
 
   // Désactiver les anciennes règles déclarées, puis réécrire.
-  await supabase
+  const { error: disableError } = await supabase
     .from("contractor_matching_rules")
     .update({ is_active: false, updated_at: now })
     .eq("contractor_id", contractorId)
     .eq("source", "declared");
+  if (disableError) throw disableError;
 
   if (rules.length) {
-    await supabase.from("contractor_matching_rules").upsert(
+    const { error: rulesError } = await supabase.from("contractor_matching_rules").upsert(
       rules.map((r) => ({
         ...r,
         contractor_id: contractorId,
@@ -368,6 +371,7 @@ export async function materialize(
       })),
       { onConflict: "contractor_id,rule_type,rule_key" },
     );
+    if (rulesError) throw rulesError;
   }
 
   // Exclusions dures confirmées → table canonique existante.
