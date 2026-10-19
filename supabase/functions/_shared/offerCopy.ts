@@ -1,23 +1,18 @@
 /**
- * UNPRO — Miroir serveur de `src/lib/copy/offer350.ts`.
- *
- * SOURCE UNIQUE de la formulation sortante (SMS + courriel).
- * Avant calcul, l'offre est toujours annoncée « jusqu'à 5 » — jamais
- * « 5 rendez-vous pour 350 $ », qui serait une promesse non calculée.
- *
- * INTERDIT dans tout message sortant : « 1 $ », « activation 1 $ »,
- * « 7 jours pour 1 $ ». L'offre d'entrée est le pack 350 $, paiement unique.
+ * Copie de l'offre de base des NOUVEAUX entrepreneurs (activation unique).
+ * 350 $ avant taxes applicables, profil + 12 mois de présence IA sur UNPRO.
+ * ZÉRO rendez-vous inclus par défaut. Un ancien devis peut être soumis à un
+ * plafond historique distinct : max_appointments ne crée aucun droit.
+ * Conserver les droits antérieurs uniquement quand leur provenance est vérifiée.
  */
-
 export const OFFER = {
   price_label: "350 $",
   price_cents: 35000,
-  max_appointments: 5,
-  headline: "Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $",
-  payment_note: "Paiement unique. Aucun abonnement.",
-  disclaimer:
-    "Le nombre réel de rendez-vous garantis dépend de votre domaine, de votre territoire et de la capacité disponible.",
-  cta: "Voir ce que 350 $ peut me garantir",
+  max_appointments: 5, // Plafond rétrocompatible de DEVIS historiques, jamais une prestation de base.
+  headline: "Profil entrepreneur et 12 mois de présence IA sur UNPRO — 350 $ + taxes",
+  payment_note: "Paiement unique. Aucun abonnement automatique.",
+  disclaimer: "Aucun rendez-vous inclus dans l'activation de base. Rendez-vous supplémentaires seulement par entente distincte.",
+  cta: "Activer ma présence IA — 350 $ + taxes",
 } as const;
 
 /**

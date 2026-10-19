@@ -1,62 +1,54 @@
-/**
- * UNPRO — Offre d'entrée 350 $ (paiement unique).
- *
- * SOURCE UNIQUE de la formulation publique. Avant calcul, l'offre est toujours
- * annoncée « jusqu'à 5 ». Après calcul, seul le nombre réellement garanti par
- * le moteur est affiché — jamais le maximum public.
- *
- * Interdit : « 5 rendez-vous pour 350 $ » (promesse non calculée).
+/** 
+ * Offre de base pour les NOUVEAUX entrepreneurs UNPRO.
+ * Paiement unique 350 $ avant taxes applicables.
+ * Profil + 12 mois de présence IA sur UNPRO à compter du paiement confirmé.
+ * Aucun rendez-vous inclus dans cette activation de base. Les droits historiques
+ * et les ententes personnalisées sont déterminés séparément côté serveur.
+ * Cette copie ne constitue jamais une garantie de référencement externe.
  */
-
 export const OFFER_350 = {
   price_cents: 35000,
   price_label: "350 $",
-  max_appointments: 5,
-  duration_months: 6,
-  duration_label: "jusqu'à 6 mois",
-
-  /** Avant calcul — annonce publique */
-  title: "Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $",
-  subtitle:
-    "Le nombre de rendez-vous que nous pouvons garantir dépend de votre domaine, de votre territoire et de la capacité disponible.",
-  ctaPrimary: "Voir ce que 350 $ peut me garantir",
-  ctaCalculate: "Calculer ma garantie",
-  ctaActivate: "Activer ma garantie — 350 $",
-  disclaimer:
-    "Le nombre réel varie selon votre domaine, votre territoire et la capacité disponible.",
-  paymentNote: "Paiement unique. Aucun abonnement.",
+  max_appointments: 0,
+  duration_months: 12,
+  duration_label: "12 mois",
+  title: "Activez votre présence IA sur UNPRO pendant 12 mois",
+  subtitle: "Créez votre profil d'entrepreneur et définissez les services, territoires et projets qui vous conviennent.",
+  ctaPrimary: "Activer mon profil — 350 $ + taxes",
+  ctaCalculate: "Découvrir les options de rendez-vous",
+  ctaActivate: "Activer mon profil — 350 $ + taxes",
+  disclaimer: "Aucun rendez-vous inclus dans l'activation de base. Toute offre de rendez-vous additionnels est distincte et précisée avant paiement.",
+  paymentNote: "Paiement unique. Aucun abonnement ni renouvellement automatique.",
 
   card: {
-    eyebrow: "À partir de 350 $",
-    title: "Jusqu'à 5 rendez-vous exclusifs garantis",
+    eyebrow: "Activation unique · 350 $ + taxes applicables",
+    title: "Votre profil UNPRO et 12 mois de présence IA",
     bullets: [
-      "Rendez-vous exclusifs, jamais partagés",
-      "Selon vos critères de projet",
-      "Territoire défini avec vous",
-      "Durée de livraison déterminée",
-      "Garantie calculée avant le paiement",
+      "Profil entrepreneur sur UNPRO",
+      "12 mois de présence IA sur UNPRO après paiement confirmé",
+      "Services et territoires définis selon vos préférences",
+      "Rendez-vous additionnels uniquement par entente distincte",
+      "Aucune promesse de visibilité sur une IA externe",
     ],
   },
 
-  /** Après calcul — vérité contractuelle */
-  resultTitle: "Votre offre UNPRO",
-  resultMaxLabel: "Maximum public",
-  resultMaxValue: "jusqu'à 5",
-  resultGuaranteeLabel: "Garantie contractuelle calculée",
-  analysisRequired: "Analyse du territoire requise",
-  analysisRequiredHelp:
-    "Nous n'avons pas encore assez de signaux vérifiés sur ce territoire pour garantir un nombre de rendez-vous. Notre équipe complète l'analyse avant toute promesse.",
-
-  /** Alex — avant / après calcul */
-  alexBeforeCalculation:
-    "Les forfaits commencent à 350 $ et peuvent inclure jusqu'à 5 rendez-vous exclusifs garantis, selon votre domaine et votre territoire.",
-  alexAfterCalculation: (appts: number, priceLabel: string, duration: string) =>
-    `Selon votre domaine, votre territoire et la capacité actuellement disponible, UNPRO peut vous garantir ${appts} rendez-vous exclusifs pour ${priceLabel} sur une période maximale de ${duration}.`,
+  resultTitle: "Votre activation UNPRO",
+  resultMaxLabel: "Rendez-vous inclus dans l'offre de base",
+  resultMaxValue: "0",
+  resultGuaranteeLabel: "Rendez-vous additionnels",
+  analysisRequired: "Une proposition distincte est nécessaire.",
+  analysisRequiredHelp: "Un volume de rendez-vous exclusifs peut être proposé séparément, selon votre métier, votre territoire et la capacité vérifiée.",
+  claraBeforeCalculation:
+    "L'activation de 350 $ plus taxes comprend votre profil et 12 mois de présence IA sur UNPRO. Aucun rendez-vous n'est inclus dans cette offre de base.",
+  claraAfterCalculation: (appts: number, priceLabel: string, duration: string) =>
+    appts > 0
+      ? `Une proposition distincte pourrait comprendre ${appts} rendez-vous exclusifs pour ${priceLabel} sur ${duration}, sous réserve des conditions confirmées avant paiement.`
+      : "Aucun rendez-vous n'est inclus dans l'activation de base de 350 $ plus taxes.",
 } as const;
 
 export function guaranteeSentence(appointments: number): string {
-  if (appointments <= 0) return OFFER_350.analysisRequired;
-  return `${appointments} rendez-vous exclusif${appointments > 1 ? "s" : ""} garanti${appointments > 1 ? "s" : ""}`;
+  if (appointments <= 0) return "Aucun rendez-vous inclus dans l'activation de base.";
+  return `${appointments} rendez-vous exclusif${appointments > 1 ? "s" : ""} uniquement si une entente distincte et un droit serveur les confirment.`;
 }
 
 /**
@@ -74,7 +66,7 @@ export const ENTRY_350 = {
   appointments: (n: number) =>
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
-    "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
+    "Aucun rendez-vous inclus dans l'activation de base. Tout nombre de rendez-vous additionnels sera confirmé après l'analyse dans une entente distincte, avant paiement.",
   paymentNote: "Paiement unique de 350 $ + TPS (5 %) et TVQ (9,975 %), soit 402,41 $. Aucun abonnement. Activation dès la confirmation du paiement par Stripe.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;
