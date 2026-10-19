@@ -8,7 +8,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { rememberClaraReferences } from "@/services/clara/claraSession";
+import { rememberClaraReferences, peekClaraSessionToken } from "@/services/clara/claraSession";
 
 export interface CreateProjectInput {
   description: string;
@@ -36,7 +36,7 @@ export function useCreateProject() {
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
         "create-project-unified",
-        { body: input },
+        { body: { ...input, session_token: peekClaraSessionToken() } },
       );
       if (fnError) throw fnError;
       const result = data as CreateProjectResult;

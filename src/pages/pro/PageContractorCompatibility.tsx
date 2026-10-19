@@ -58,7 +58,7 @@ function ChoiceRow({
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((o) => (
-        <button
+        <Button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
@@ -70,7 +70,7 @@ function ChoiceRow({
           )}
         >
           {o.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -87,6 +87,8 @@ export default function PageContractorCompatibility() {
   const {
     contractorId,
     profile,
+    tradePack,
+    loadError,
     answers,
     update,
     step,
@@ -101,7 +103,7 @@ export default function PageContractorCompatibility() {
   const [done, setDone] = useState(false);
   const [newCity, setNewCity] = useState("");
 
-  const pack = useMemo(() => getCompatPack((profile as { trade_pack?: string | null } | null)?.trade_pack), [profile]);
+  const pack = useMemo(() => getCompatPack(tradePack), [tradePack]);
   const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
   const { taxonomy } = useTradeTaxonomy();
   const prefilled = useRef(false);
@@ -220,6 +222,13 @@ export default function PageContractorCompatibility() {
     water: "Eau et intérieur",
     drainage: "Drainage",
     access: "Accès et contraintes",
+    attic: "Entretoit et intervention",
+    contamination: "Contamination et matériaux particuliers",
+    size: "Superficie",
+    ventilation: "Ventilation",
+    envelope: "Enveloppe et diagnostics",
+    roof_special: "Toits particuliers",
+    availability: "Disponibilité",
   };
 
   const progress = Math.round(((step - 1) / TOTAL_COMPAT_STEPS) * 100);
@@ -231,6 +240,8 @@ export default function PageContractorCompatibility() {
       </div>
     );
   }
+
+  if (loadError) return <div className="mx-auto max-w-lg px-4 py-20 text-center text-foreground">Impossible de charger vos critères. Réessayez sans modifier vos réponses.</div>;
 
   if (!contractorId) {
     return (
@@ -504,13 +515,13 @@ export default function PageContractorCompatibility() {
                   <CardContent className="space-y-3 p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-foreground">{t.city_name}</p>
-                      <button
+                      <Button
                         type="button"
                         aria-label={`Retirer ${t.city_name}`}
                         onClick={() => update((a) => ({ ...a, territories: a.territories.filter((_, j) => j !== i) }))}
                       >
                         <X className="h-4 w-4 text-muted-foreground" />
-                      </button>
+                      </Button>
                     </div>
                     <ChoiceRow
                       options={TIERS.map((tier) => ({ value: tier, label: TERRITORY_TIER_LABEL[tier] }))}
