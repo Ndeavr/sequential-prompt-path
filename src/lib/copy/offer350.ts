@@ -21,7 +21,7 @@ export const OFFER_350 = {
   ctaActivate: "Activer mon profil — 350 $ + taxes",
   disclaimer:
     "Aucun rendez-vous ni résultat n'est promis. Des rendez-vous ne sont offerts que si un devis les confirme avant le paiement.",
-  paymentNote: "350 $ CA avant taxes + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique. Aucun abonnement.",
+  paymentNote: "350 $ CA avant taxes. Si les taxes du Québec s'appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique. Aucun abonnement.",
 
   card: {
     eyebrow: "Nouvel entrepreneur · Paiement unique",
@@ -56,8 +56,8 @@ export function guaranteeSentence(appointments: number): string {
 
 /**
  * Activation d'entrée 350 $ — paiement unique pour un nouvel entrepreneur.
- * « 588 $ » = 12 × 49 $ (prix mensuel Présence du catalogue). Le nombre de
- * rendez-vous n'est affiché que s'il est garanti par le devis serveur.
+ * Le nombre de rendez-vous n'est affiché que s'il est confirmé par le devis
+ * contractuel serveur avant le paiement; les droits historiques sont conservés.
  */
 export const ENTRY_350 = {
   eyebrow: "Nouvel entrepreneur · Paiement unique",
@@ -65,11 +65,11 @@ export const ENTRY_350 = {
   cta: "Activer mon profil — 350 $ + taxes",
   ctaMore: "J'aimerais plus de rendez-vous dès maintenant",
   profile: "Votre profil entrepreneur UNPRO",
-  presence: "12 mois de Présence IA (valeur de 588 $, soit 12 × 49 $)",
+  presence: "12 mois de Présence IA sur UNPRO",
   appointments: (n: number) =>
     `${n} rendez-vous qualifié${n > 1 ? "s" : ""} exclusif${n > 1 ? "s" : ""}, jamais partagé${n > 1 ? "s" : ""}`,
   appointmentsPending:
-    "Rendez-vous qualifiés exclusifs : le nombre sera confirmé après l'analyse de votre territoire. Aucun chiffre n'est promis avant.",
-  paymentNote: "350 $ CA avant taxes + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique, aucun abonnement. Aucun rendez-vous inclus par défaut.",
+    "Aucun rendez-vous inclus, sauf droit contractuel calculé et confirmé avant le paiement.",
+  paymentNote: "350 $ CA avant taxes. Si les taxes du Québec s'appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique, aucun abonnement.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
 } as const;

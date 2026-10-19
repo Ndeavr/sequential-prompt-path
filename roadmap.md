@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] Minimal P0 follow-up: remove undefined admin hook dependency and align active entry-offer copy only; preserve Checkout/webhook and historical rights. Automatic compilation verification pending; no production actions authorized.
 - [ ] Authorized P1 isolation interventions: repair pack persistence/finalize, exact declared scope matching and active Clara lead payload; synthetic local QA only, no deployment or production writes.
 - [ ] Entry 350 tax parity: shared exclusive rates, mode-isolated cache, versioned signed Checkout contract, strict webhook tax validation, isolated QA and audit; release blocked pending founder GST/QST registration confirmation and full isolated authenticated E2E.
 - [x] Targeted Clara mobile suggestion clipping: 48 real-DOM scenarios at 320/360/375/390/412/1280 and 24 regression tests pass; initial suggestions intrinsic-sized, no empty-thread bottom follow. Physical Android keyboard unverified; no publication while authenticated 350 QA remains blocked. See clara-suggestion-clipping-2026-10-17.md.

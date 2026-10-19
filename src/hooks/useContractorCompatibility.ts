@@ -271,7 +271,7 @@ export function useCompatibilityAdminPatch(contractorId?: string | null) {
         setSaving(false);
       }
     },
-    [contractorId, data?.trade_pack, qc],
+    [contractorId, qc],
   );
 
   return { patch, saving };
