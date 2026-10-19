@@ -10,12 +10,11 @@ import { Button } from "@/components/ui/button";
 import { OFFER_350 } from "@/lib/copy/offer350";
 
 const BENEFITS = [
-  "Activation immédiate du profil",
-  "Accès complet au tableau de bord",
-  "Connexion de votre agenda",
-  "Visibilité IA dans votre territoire",
-  "Conversations avec Clara incluses",
-  "Premières opportunités envoyées",
+  "Profil entrepreneur sur UNPRO, après validation du paiement",
+  "12 mois de présence IA sur UNPRO",
+  "Services et territoires configurables",
+  "Aucun rendez-vous inclus dans l'activation de base",
+  "Rendez-vous additionnels sur proposition distincte",
 ];
 
 interface Props {
@@ -26,7 +25,6 @@ interface Props {
 
 export default function TrialActivationCard({
   onActivateTrial,
-  onSkipToStandard,
   loading,
 }: Props) {
   return (
@@ -47,7 +45,7 @@ export default function TrialActivationCard({
             <Sparkles className="h-4.5 w-4.5 text-white" />
           </div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-            Offre sans risque
+            Activation unique
           </span>
         </div>
 
@@ -83,18 +81,12 @@ export default function TrialActivationCard({
           >
             {OFFER_350.ctaActivate}
           </Button>
-          <button
-            type="button"
-            onClick={onSkipToStandard}
-            className="w-full text-[12px] text-muted-foreground hover:text-foreground transition-colors py-1.5"
-          >
-            Voir l'abonnement complet
-          </button>
+
         </div>
 
         <div className="mt-3 flex items-center justify-center gap-1.5 text-[10.5px] text-muted-foreground">
           <Shield className="h-3 w-3" />
-          Paiement sécurisé Stripe · Aucun engagement
+          Paiement unique · Taxes applicables avant validation
         </div>
       </div>
     </motion.div>
