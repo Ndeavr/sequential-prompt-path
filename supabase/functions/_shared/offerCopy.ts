@@ -2,8 +2,9 @@
  * UNPRO — Miroir serveur de `src/lib/copy/offer350.ts`.
  *
  * SOURCE UNIQUE de la formulation sortante (SMS + courriel).
- * Avant calcul, l'offre est toujours annoncée « jusqu'à 5 » — jamais
- * « 5 rendez-vous pour 350 $ », qui serait une promesse non calculée.
+ * Avant calcul, aucun rendez-vous n'est promis : l'offre de base est le profil
+ * + 12 mois de Présence IA sur UNPRO. Seul un devis serveur confirmé avant le
+ * paiement peut garantir des rendez-vous, dans la limite de `max_appointments`.
  *
  * INTERDIT dans tout message sortant : « 1 $ », « activation 1 $ »,
  * « 7 jours pour 1 $ ». L'offre d'entrée est le pack 350 $, paiement unique.
@@ -12,7 +13,9 @@
 export const OFFER = {
   price_label: "350 $",
   price_cents: 35000,
-  max_appointments: 0,
+  /** Plafond de rétrocompatibilité des devis serveur historiques — jamais une
+   *  promesse de base : l'offre d'entrée inclut 0 rendez-vous par défaut. */
+  max_appointments: 5,
   headline: "Profil UNPRO + 12 mois de Présence IA sur UNPRO — 350 $ + taxes",
   payment_note: "350 $ + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $. Paiement unique. Aucun abonnement. Aucun rendez-vous inclus par défaut.",
   disclaimer:
