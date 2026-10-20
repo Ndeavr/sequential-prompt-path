@@ -20,6 +20,6 @@ export function buildActivation350Links(sp: URLSearchParams) {
   activate.set("from", "activation_350");
   return {
     activate: `/entrepreneur/devis-personnalise?${activate}`,
-    audit: `/entrepreneurs/audit-ia${audit.size ? `?${audit}` : ""}`,
+    audit: `/entrepreneurs/audit-ia${audit.toString() ? `?${audit}` : ""}`,
   };
 }
