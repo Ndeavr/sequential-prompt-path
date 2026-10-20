@@ -114,10 +114,6 @@ import { Conversation, ConversationContent, ConversationScrollButton, Conversati
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
-  PromptInputActionMenu,
-  PromptInputActionMenuContent,
-  PromptInputActionMenuItem,
-  PromptInputActionMenuTrigger,
   PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
