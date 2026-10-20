@@ -2097,6 +2097,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 onChoosePhoto={() => photoLibraryRef.current?.click()}
                 onTakeVideo={() => videoCameraRef.current?.click()}
                 onChooseVideo={() => videoLibraryRef.current?.click()}
+                onChooseDocument={() => docLibraryRef.current?.click()}
               />
               <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} aria-label={copy.camera} title={copy.camera} className="home-clara-tool touch-manipulation rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
