@@ -2166,8 +2166,7 @@ interface MediaMenuProps {
  * directement au-dessus du bouton et chaque choix ouvre son sélecteur natif
  * dans le même geste utilisateur.
  */
-function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
-  const attachments = usePromptInputAttachments();
+function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo, onChooseDocument }: MediaMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -2190,11 +2189,11 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
     { key: "cp", icon: ImageIcon, text: "Ajouter une photo", run: onChoosePhoto },
     { key: "tp", icon: Camera, text: "Prendre une photo", run: onTakePhoto },
-    { key: "doc", icon: FileText, text: "Joindre un document", run: () => attachments.openFileDialog() },
+    { key: "doc", icon: FileText, text: "Joindre un document", run: onChooseDocument },
     { key: "cv", icon: Video, text: "Ajouter une vidéo", run: onChooseVideo },
     { key: "tv", icon: Video, text: "Prendre une vidéo", run: onTakeVideo },
-    { key: "quote", icon: FileText, text: "Téléverser les soumissions", run: () => attachments.openFileDialog() },
-    { key: "plan", icon: FileText, text: "Importer un plan", run: () => attachments.openFileDialog() },
+    { key: "quote", icon: FileText, text: "Téléverser les soumissions", run: onChooseDocument },
+    { key: "plan", icon: FileText, text: "Importer un plan", run: onChooseDocument },
   ];
 
   return (
