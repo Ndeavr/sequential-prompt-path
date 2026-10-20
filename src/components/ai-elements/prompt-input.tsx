@@ -570,6 +570,11 @@ export const PromptInput = ({
           const prefix = pattern.slice(0, -1);
           return f.type.startsWith(prefix);
         }
+        // Extension pattern (".pdf"): a File's MIME type never equals the
+        // extension, so match against the file name instead (HTML spec).
+        if (pattern.startsWith(".")) {
+          return f.name.toLowerCase().endsWith(pattern.toLowerCase());
+        }
         return f.type === pattern;
       });
     },
