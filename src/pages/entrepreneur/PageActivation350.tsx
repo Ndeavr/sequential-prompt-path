@@ -23,12 +23,12 @@ export default function PageActivation350() {
 
   useEffect(() => {
     captureAttribution(sp);
-    void logFunnelEvent({ event_type: "activation_350_landing_viewed", metadata: { ref } });
+    void logFunnelEvent({ event_type: "activation_page_viewed", metadata: { ref, surface: "activation_350" } });
     if (ref) void trackReferralEvent("landing_view", ref, { role: "contractor", targetType: "activation_350" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onActivate = () => void logFunnelEvent({ event_type: "activation_350_cta_clicked", metadata: { ref } });
+  const onActivate = () => void logFunnelEvent({ event_type: "activation_cta_clicked", metadata: { ref, surface: "activation_350" } });
 
   return (
     <main className="min-h-screen bg-background text-foreground">
