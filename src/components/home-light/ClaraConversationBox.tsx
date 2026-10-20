@@ -2160,35 +2160,80 @@ interface MediaMenuProps {
 }
 
 /**
- * Menu média tactile : chaque choix ouvre son sélecteur natif directement
- * dans le même geste (pas de fermeture asynchrone ni d'infobulle), ce qui
- * évite les boutons « morts » sur Chrome Android et Safari iOS.
+ * Menu média tactile : panneau interne au composer (pas de portal ni de
+ * positionnement automatique). Le menu Radix précédent s'ouvrait hors de
+ * l'écran sur Android (mesure d'ancre faussée par le viewport clavier), ce
+ * qui rendait le bouton « + » apparemment mort. Ici le panneau est ancré
+ * directement au-dessus du bouton et chaque choix ouvre son sélecteur natif
+ * dans le même geste utilisateur.
  */
 function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
-    { key: "cp", icon: ImageIcon, text: "Photo", run: onChoosePhoto },
-    { key: "cv", icon: Video, text: "Vidéo", run: onChooseVideo },
-    { key: "doc", icon: FileText, text: "Document", run: () => attachments.openFileDialog() },
+    { key: "cp", icon: ImageIcon, text: "Ajouter une photo", run: onChoosePhoto },
     { key: "tp", icon: Camera, text: "Prendre une photo", run: onTakePhoto },
+    { key: "doc", icon: FileText, text: "Joindre un document", run: () => attachments.openFileDialog() },
+    { key: "cv", icon: Video, text: "Ajouter une vidéo", run: onChooseVideo },
     { key: "tv", icon: Video, text: "Prendre une vidéo", run: onTakeVideo },
-    { key: "quote", icon: FileText, text: "Importer une soumission", run: () => attachments.openFileDialog() },
+    { key: "quote", icon: FileText, text: "Téléverser les soumissions", run: () => attachments.openFileDialog() },
     { key: "plan", icon: FileText, text: "Importer un plan", run: () => attachments.openFileDialog() },
   ];
 
   return (
-    <PromptInputActionMenu>
-      <PromptInputActionMenuTrigger data-media-suggested={suggested ? "true" : undefined} aria-label={label} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+    <div ref={rootRef} className="relative">
+      <PromptInputButton
+        type="button"
+        data-media-suggested={suggested ? "true" : undefined}
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={label}
+        onClick={() => setOpen((value) => !value)}
+        className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
+      >
         <Plus className="h-5 w-5" />
-      </PromptInputActionMenuTrigger>
-      <PromptInputActionMenuContent side="top" sideOffset={8} collisionPadding={12} className="home-clara-media-menu w-56">
-        {items.map(({ key, icon: Icon, text, run }) => (
-            <PromptInputActionMenuItem key={key} onSelect={run} className="min-h-11 touch-manipulation gap-2">
-              <Icon className="h-4 w-4" /> {text}
-            </PromptInputActionMenuItem>
-        ))}
-      </PromptInputActionMenuContent>
-    </PromptInputActionMenu>
+      </PromptInputButton>
+      {open && (
+        <div
+          role="menu"
+          aria-label={label}
+          className="home-clara-media-menu absolute bottom-[calc(100%+8px)] left-0 z-[60] w-56 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+        >
+          {items.map(({ key, icon: Icon, text, run }) => (
+            <button
+              key={key}
+              type="button"
+              role="menuitem"
+              className="flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+              onClick={() => {
+                setOpen(false);
+                run();
+              }}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" /> {text}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
