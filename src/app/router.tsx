@@ -680,6 +680,7 @@ const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
 const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
+const PageActivation350 = lazyWithRetry(() => import("@/pages/entrepreneur/PageActivation350"));
 const PageMatchingProfileWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageMatchingProfileWizard"));
 const PageForfaitGrowthCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageForfaitGrowthCalculator"));
 
@@ -1120,6 +1121,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/calculateur-forfait" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        <Route path="/entrepreneurs/activation-350" element={<Suspense fallback={<LazyFallback />}><PageActivation350 /></Suspense>} />
         {/* Profil de matching — complétion progressive avant les forfaits */}
         <Route path="/entrepreneurs/profil" element={<Suspense fallback={<LazyFallback />}><PageMatchingProfileWizard /></Suspense>} />
         {/* Founder offer — local services & professionals (12 mois gratuits, puis 350 $/an) */}
