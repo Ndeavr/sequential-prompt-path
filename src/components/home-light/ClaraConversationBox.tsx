@@ -2155,6 +2155,7 @@ interface MediaMenuProps {
   onChoosePhoto: () => void;
   onTakeVideo: () => void;
   onChooseVideo: () => void;
+  onChooseDocument: () => void;
 }
 
 /**
