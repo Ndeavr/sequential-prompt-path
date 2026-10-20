@@ -383,6 +383,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const videoCameraRef = useRef<HTMLInputElement>(null);
   const photoLibraryRef = useRef<HTMLInputElement>(null);
   const videoLibraryRef = useRef<HTMLInputElement>(null);
+  const docLibraryRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -2048,6 +2049,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" className="hidden" aria-label="Prendre une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={photoLibraryRef} type="file" accept="image/*" multiple className="hidden" aria-label="Choisir une photo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <input ref={videoLibraryRef} type="file" accept="video/*" className="hidden" aria-label="Choisir une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={docLibraryRef} type="file" accept=".pdf,.doc,.docx,image/*" multiple className="hidden" aria-label="Joindre un document" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         {voiceTip && <div className="home-clara-input-tip" role="note"><span>{voiceTip}</span><button type="button" aria-label="Fermer la suggestion de microphone" onClick={() => { setVoiceTip(null); setVoiceGlow(false); }}><X className="h-4 w-4" /></button></div>}
         {inputSuggestion && !voiceTip && <div className="home-clara-input-tip" role="note">
           <div>
