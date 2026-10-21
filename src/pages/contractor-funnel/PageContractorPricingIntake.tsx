@@ -31,6 +31,7 @@ import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 import { setActiveActivationToken } from "@/lib/checkoutUrl";
 import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 import { avgTicketFor, closeRateFor } from "@/config/scanCapacityTickets";
+import { formatQuebecNumber, parseQuebecNumber } from "@/lib/formatting";
 
 type Step = {
   key: string;
@@ -610,7 +611,7 @@ export default function PageContractorPricingIntake() {
       const calc = sim.ok ? sim : null;
       const confirmed = Boolean(g.avg_sale || g.conversion_pct || typeof g.margin_pct === "number");
       const setG = (p: Partial<GoalFields>) => set(p as Partial<PricingIntakeInput>);
-      const money = (n: number) => `${Math.round(n).toLocaleString("fr-CA")} $`;
+      const money = (n: number) => formatQuebecNumber(n, "$");
       const simMessage: Record<string, string> = {
         missing_margin: "Indiquez votre marge bénéficiaire estimée pour calculer un objectif de profit.",
         invalid_margin: "La marge doit être supérieure à 0 % et au plus 100 % pour un objectif de profit.",
@@ -621,6 +622,7 @@ export default function PageContractorPricingIntake() {
         <div className="space-y-3">
           <NumberInput
             label="Montant supplémentaire ($)"
+            unit="$"
             value={g.goal_amount ?? null}
             onChange={(v) => setG({ goal_amount: v ?? undefined })}
             min={500}
@@ -652,11 +654,12 @@ export default function PageContractorPricingIntake() {
                 Hypothèses {confirmed ? "(modifiées par vous)" : "à confirmer — estimations UNPRO, non sourcées"}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <NumberInput label="Vente moyenne ($)" value={g.avg_sale ?? avgTicketFor(d.trade_primary)} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
-                <NumberInput label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={100} />
+                <NumberInput unit="$" label="Vente moyenne ($)" value={g.avg_sale ?? avgTicketFor(d.trade_primary)} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
+                <NumberInput unit="%" label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={100} />
                 <div className="col-span-2">
                   <NumberInput
                     label="Marge bénéficiaire estimée (%)"
+                    unit="%"
                     value={g.margin_pct ?? null}
                     onChange={(v) => setG({ margin_pct: v ?? undefined })}
                     min={0}
@@ -919,7 +922,7 @@ function TextInput({
  * remplace réellement la valeur et les zéros de tête sont normalisés
  * (« 075 » → 75, « 04 » → 4, « 03000 » → 3000).
  */
-function NumberInput({
+export function NumberInput({
   label,
   value,
   onChange,
@@ -928,6 +931,7 @@ function NumberInput({
   step = 1,
   placeholder,
   hint,
+  unit,
 }: {
   label: string;
   value: number | null | undefined;
@@ -937,17 +941,28 @@ function NumberInput({
   step?: number;
   placeholder?: string;
   hint?: string;
+  unit?: "$" | "%";
 }) {
-  const external = typeof value === "number" && Number.isFinite(value) ? String(value) : "";
+  const external = typeof value === "number" && Number.isFinite(value)
+    ? unit ? formatQuebecNumber(value, unit) : String(value)
+    : "";
   const [draft, setDraft] = useState(external);
   const [focused, setFocused] = useState(false);
 
   // Hors saisie, la valeur affichée suit toujours le dossier.
   useEffect(() => {
     if (!focused) setDraft(external);
-  }, [external, focused]);
+    // Focus changes must not restore a cleared field's estimated default.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [external]);
 
   const commit = (raw: string) => {
+    if (unit) {
+      // Keep the exact draft and caret; only the calculation gets a number.
+      setDraft(raw);
+      onChange(parseQuebecNumber(raw));
+      return;
+    }
     const cleaned = raw.replace(/[^\d.]/g, "");
     if (cleaned === "") {
       setDraft("");
@@ -967,9 +982,9 @@ function NumberInput({
       </span>
       <input
         type="text"
-        inputMode="numeric"
+        inputMode={unit ? "decimal" : "numeric"}
         data-clara-field={claraFieldKeyForLabel(label)}
-        pattern="[0-9]*"
+        pattern={unit ? undefined : "[0-9]*"}
         value={draft}
         placeholder={placeholder ?? "—"}
         onFocus={(e) => {
@@ -980,11 +995,11 @@ function NumberInput({
           setFocused(false);
           const raw = e.currentTarget.value.trim();
           if (raw === "") return;
-          let parsed = Number(raw.replace(/^0+(?=\d)/, ""));
-          if (!Number.isFinite(parsed)) { onChange(null); setDraft(""); return; }
+          let parsed = unit ? parseQuebecNumber(raw) : Number(raw.replace(/^0+(?=\d)/, ""));
+          if (parsed === null || !Number.isFinite(parsed)) { onChange(null); setDraft(""); return; }
           if (typeof min === "number" && parsed < min) parsed = min;
           if (typeof max === "number" && parsed > max) parsed = max;
-          setDraft(String(parsed));
+          setDraft(unit ? formatQuebecNumber(parsed, unit) : String(parsed));
           onChange(parsed);
         }}
         onChange={(e) => commit(e.target.value)}
