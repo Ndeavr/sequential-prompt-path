@@ -132,21 +132,33 @@ Deno.serve(async (req) => {
       await append("delivered_webhook", "pass", `confirmed via Resend API (last_event=${lastResendStatus})`);
     } else {
       // Do NOT mark failedStep — the send succeeded, only observability is missing.
+      // But this IS a critical skip: the gate must not open on an unverified delivery.
+      criticalSkips.push("delivered_webhook");
       await append(
         "delivered_webhook", "skip",
         `send accepted (resend_id=${resendId}) but no delivery confirmation within 30s · last_event=${lastResendStatus ?? "unknown"} · configure webhook → ${SUPABASE_URL}/functions/v1/resend-events`
       );
     }
 
-    // STEP 4 — simulate click via /r/ tracker (use the first tracked URL in the body)
+    // STEP 4 — click via the PUBLIC anonymous path: resolve the /r/ token with
+    // the anon key (like PageShortLinkRedirect does), then follow the redirect.
+    // Fetching unpro.ca/r/... directly only proves the SPA served HTTP 200.
     const firstTracked = v.cta_urls.find(u => /\/r\//.test(u));
-    if (firstTracked) {
-      const r = await fetch(firstTracked, { method: "GET", redirect: "manual" });
-      const ok = r.status >= 300 && r.status < 400;
-      await append("click_redirect", ok ? "pass" : "fail", `status=${r.status}`);
+    const trackedToken = firstTracked?.split("/r/")[1]?.split(/[?#]/)[0] ?? "";
+    if (trackedToken && ANON_KEY) {
+      const resolve = await fetch(`${SUPABASE_URL}/functions/v1/outreach-shortlink-resolve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ token: trackedToken, prefetch: true }),
+      });
+      const resolved = await resolve.json().catch(() => ({}));
+      const dest = (resolved as any)?.redirect_url as string | undefined;
+      const ok = resolve.ok && !!dest;
+      await append("click_redirect", ok ? "pass" : "fail", ok ? `resolved anonymously → ${dest}` : `HTTP ${resolve.status} ${JSON.stringify(resolved).slice(0, 200)}`);
       if (!ok) failedStep ||= "click_redirect";
     } else {
-      await append("click_redirect", "skip", "no tracked URL found");
+      criticalSkips.push("click_redirect");
+      await append("click_redirect", "skip", firstTracked ? "SUPABASE_ANON_KEY missing" : "no tracked URL found");
     }
 
     // STEP 5 — simulate reply (insert directly to confirm the funnel writes)
