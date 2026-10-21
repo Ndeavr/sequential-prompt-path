@@ -62,6 +62,9 @@ serve(async (req) => {
         user_agent: req.headers.get("user-agent"),
         referer: req.headers.get("referer"),
         campaign: link.campaign,
+        // Propagate the E2E run_group (when the link carries one) so the
+        // selftest can verify funnel events coherently per run.
+        run_group: (link as any).metadata?.run_group ?? null,
       },
     });
 

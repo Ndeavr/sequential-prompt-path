@@ -14,6 +14,7 @@ const cors = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
@@ -50,6 +51,9 @@ Deno.serve(async (req) => {
 
   let failedStep: string | null = null;
   let resendId: string | null = null;
+  // Critical steps that were skipped/unverified MUST block the autopilot gate:
+  // a selftest that never confirmed delivery or the click path is not a pass.
+  const criticalSkips: string[] = [];
 
   try {
     // STEP 1 — render + wrap + validate
@@ -128,29 +132,42 @@ Deno.serve(async (req) => {
       await append("delivered_webhook", "pass", `confirmed via Resend API (last_event=${lastResendStatus})`);
     } else {
       // Do NOT mark failedStep — the send succeeded, only observability is missing.
+      // But this IS a critical skip: the gate must not open on an unverified delivery.
+      criticalSkips.push("delivered_webhook");
       await append(
         "delivered_webhook", "skip",
         `send accepted (resend_id=${resendId}) but no delivery confirmation within 30s · last_event=${lastResendStatus ?? "unknown"} · configure webhook → ${SUPABASE_URL}/functions/v1/resend-events`
       );
     }
 
-    // STEP 4 — simulate click via /r/ tracker (use the first tracked URL in the body)
+    // STEP 4 — click via the PUBLIC anonymous path: resolve the /r/ token with
+    // the anon key (like PageShortLinkRedirect does), then follow the redirect.
+    // Fetching unpro.ca/r/... directly only proves the SPA served HTTP 200.
     const firstTracked = v.cta_urls.find(u => /\/r\//.test(u));
-    if (firstTracked) {
-      const r = await fetch(firstTracked, { method: "GET", redirect: "manual" });
-      const ok = r.status >= 300 && r.status < 400;
-      await append("click_redirect", ok ? "pass" : "fail", `status=${r.status}`);
+    const trackedToken = firstTracked?.split("/r/")[1]?.split(/[?#]/)[0] ?? "";
+    if (trackedToken && ANON_KEY) {
+      const resolve = await fetch(`${SUPABASE_URL}/functions/v1/outreach-shortlink-resolve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ token: trackedToken, prefetch: true }),
+      });
+      const resolved = await resolve.json().catch(() => ({}));
+      const dest = (resolved as any)?.redirect_url as string | undefined;
+      const ok = resolve.ok && !!dest;
+      await append("click_redirect", ok ? "pass" : "fail", ok ? `resolved anonymously → ${dest}` : `HTTP ${resolve.status} ${JSON.stringify(resolved).slice(0, 200)}`);
       if (!ok) failedStep ||= "click_redirect";
     } else {
-      await append("click_redirect", "skip", "no tracked URL found");
+      criticalSkips.push("click_redirect");
+      await append("click_redirect", "skip", firstTracked ? "SUPABASE_ANON_KEY missing" : "no tracked URL found");
     }
 
     // STEP 5 — simulate reply (insert directly to confirm the funnel writes)
     await recordEmailEvent(resendId, "replied", { recipient: emailTo, source: "selftest" });
     await append("reply_path", "pass", "synthesized OUI reply");
 
-    // STEP 6 — open gate if everything passed
-    const allPassed = !failedStep;
+    // STEP 6 — open gate only if everything passed AND no critical step was
+    // skipped/unverified (delivery confirmation, click path).
+    const allPassed = !failedStep && criticalSkips.length === 0;
     if (allPassed && autoOpen) {
       await sb.from("outreach_autopilot_gate").update({
         gated: false,
@@ -160,7 +177,10 @@ Deno.serve(async (req) => {
       }).eq("id", 1);
       await append("open_gate", "pass");
     } else if (!allPassed) {
-      await append("open_gate", "skip", "selftest failed — gate stays closed");
+      const why = failedStep
+        ? `selftest failed at ${failedStep} — gate stays closed`
+        : `critical steps unverified (${criticalSkips.join(", ")}) — gate stays closed`;
+      await append("open_gate", "skip", why);
     }
 
     await sb.from("acq_e2e_test_runs").update({
