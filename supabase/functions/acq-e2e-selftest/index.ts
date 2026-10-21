@@ -165,8 +165,9 @@ Deno.serve(async (req) => {
     await recordEmailEvent(resendId, "replied", { recipient: emailTo, source: "selftest" });
     await append("reply_path", "pass", "synthesized OUI reply");
 
-    // STEP 6 — open gate if everything passed
-    const allPassed = !failedStep;
+    // STEP 6 — open gate only if everything passed AND no critical step was
+    // skipped/unverified (delivery confirmation, click path).
+    const allPassed = !failedStep && criticalSkips.length === 0;
     if (allPassed && autoOpen) {
       await sb.from("outreach_autopilot_gate").update({
         gated: false,
