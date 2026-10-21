@@ -46,6 +46,22 @@ export async function assertOutreachEnabled(sb: MinimalClient): Promise<Outreach
   }
 }
 
+/** Commercial senders require BOTH switches; never invoke the mutating evaluator. */
+export async function assertCommercialOutreachAllowed(sb: MinimalClient): Promise<OutreachGate> {
+  const master = await assertOutreachEnabled(sb);
+  if (!master.allowed) return master;
+  try {
+    const { data, error } = await sb.from("outreach_autopilot_gate")
+      .select("gated").eq("id", "1").maybeSingle();
+    if (error || !data || (data as { gated?: unknown }).gated !== false) {
+      return { allowed: false, reason: "OUTREACH_AUTOPILOT_GATED" };
+    }
+    return master;
+  } catch {
+    return { allowed: false, reason: "OUTREACH_AUTOPILOT_UNREADABLE" };
+  }
+}
+
 /**
  * NARROW exemption list — P0 audit requirement.
  *

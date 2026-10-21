@@ -29,7 +29,7 @@ import {
 import { categoryName } from "../_shared/localServiceCategories.ts";
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
-import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import { assertCommercialOutreachAllowed } from "../_shared/outreachGate.ts";
 import { sendSms } from "../_shared/twilioSend.ts";
 
 /**
@@ -557,7 +557,7 @@ Deno.serve(async (req) => {
     // No provider (Twilio / Resend) may be invoked while OUTREACH_ENABLED is
     // false, missing or unreadable. Every candidate is returned as a truthful
     // skip so the caller advances its queue instead of recycling the batch.
-    const gate = await assertOutreachEnabled(supabase as any);
+    const gate = await assertCommercialOutreachAllowed(supabase as any);
     if (!gate.allowed) {
       return jsonResponse({
         ok: true,
@@ -731,9 +731,9 @@ Deno.serve(async (req) => {
       if (shouldTryEmail) {
         // Unified suppression / opt-out gate (same suppression_index the
         // commercial-send-gate uses). A suppressed address is never emailed.
-        const { data: isSuppressed } = await supabase
+        const { data: isSuppressed, error: suppressionError } = await supabase
           .rpc("is_email_suppressed", { p_email: p.email });
-        if (isSuppressed === true) {
+        if (suppressionError || isSuppressed !== false) {
           results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "email_suppressed", channel_used: null });
           continue;
         }

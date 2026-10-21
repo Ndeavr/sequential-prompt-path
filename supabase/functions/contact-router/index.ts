@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAdminCaller, validateOnlyResponse } from "../_shared/requireAdminCaller.ts";
+import { assertCommercialOutreachAllowed } from "../_shared/outreachGate.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,9 @@ serve(async (req) => {
 
     const body = (await req.json()) as Body;
     if (!body.template_key) return json({ error: "template_key required" }, 400);
+    const gate = await assertCommercialOutreachAllowed(supa as any);
+    if (!gate.allowed) return json({ ok: false, reason: gate.reason }, 403);
+    if (!body.idempotency_key?.trim()) return json({ ok: false, reason: "idempotency_key_required" }, 400);
 
     // ── 1. Resolve / upsert contact ──
     let contactId = body.contact_id;
@@ -80,7 +84,7 @@ serve(async (req) => {
           phone: body.contact.phone ?? null,
           phone_e164: e164,
           sms_consent: body.contact.sms_consent ?? false,
-          email_consent: body.contact.email_consent ?? true,
+          email_consent: body.contact.email_consent ?? false,
         }).select("*").single();
         if (error) return json({ error: "contact_create_failed", details: error.message }, 500);
         contact = data;
@@ -169,7 +173,7 @@ serve(async (req) => {
     }
 
     const canSendPrimary =
-      (primary === "sms" && contact.phone_e164 && contact.sms_consent) ||
+      (primary === "sms" && contact.phone_e164 && contact.sms_consent && contact.phone_verified === true && ["mobile", "nonFixedVoip"].includes(contact.phone_type)) ||
       (primary === "email" && contact.email && contact.email_consent);
 
     if (!canSendPrimary) {
@@ -181,19 +185,18 @@ serve(async (req) => {
       return json({ ok: false, reason: "no_eligible_channel", log_id: logRow?.id });
     }
 
-    // ── 4. Idempotency check ──
-    if (body.idempotency_key) {
-      const { data: existing } = await supa.from("communication_logs")
-        .select("id,delivery_status").eq("contact_id", contact.id)
-        .eq("template_key", body.template_key).eq("idempotency_key", body.idempotency_key)
-        .maybeSingle();
-      if (existing) return json({ ok: true, duplicate: true, log_id: existing.id, status: existing.delivery_status });
-    }
+    // Reserve BEFORE sending using existing uq_comm_logs_idem. Uncertain sends
+    // stay reserved for manual reconciliation, never automatically fan out.
+    const { data: reserved, error: reserveError } = await supa.from("communication_logs").insert({
+      contact_id: contact.id, channel: primary, template_key: body.template_key,
+      idempotency_key: body.idempotency_key, delivery_status: "pending",
+    }).select("id").single();
+    if (reserveError || !reserved) return json({ ok: false, duplicate: reserveError?.code === "23505", reason: "send_not_reserved" }, 409);
 
     // ── 5. Send primary ──
     const sendResult = await dispatch(supa, primary, contact, body);
 
-    const { data: log } = await supa.from("communication_logs").insert({
+    const { data: log } = await supa.from("communication_logs").update({
       contact_id: contact.id,
       channel: primary,
       template_key: body.template_key,
@@ -204,16 +207,16 @@ serve(async (req) => {
       idempotency_key: body.idempotency_key ?? null,
       sent_at: sendResult.ok ? new Date().toISOString() : null,
       payload: { rule: rule.rule_name },
-    }).select().single();
+    }).eq("id", reserved.id).select().single();
 
     await supa.from("contacts").update({ last_channel_used: primary }).eq("id", contact.id);
 
     // ── 6. Schedule fallback if applicable ──
     let fallbackQueued = false;
-    if (sendResult.ok && primary === "sms" && fallback === "email" && contact.email) {
+    if (sendResult.ok && log && primary === "sms" && fallback === "email" && contact.email && contact.email_consent === true) {
       const when = new Date(Date.now() + (rule.delay_before_fallback_minutes ?? 60) * 60000).toISOString();
       await supa.from("communication_fallback_queue").insert({
-        contact_id: contact.id, parent_log_id: log!.id,
+        contact_id: contact.id, parent_log_id: log.id,
         fallback_channel: "email", template_key: body.template_key,
         scheduled_for: when,
         payload: { sms_body: body.sms_body, email_subject: body.email_subject, email_html: body.email_html, template_data: body.template_data },
@@ -222,7 +225,7 @@ serve(async (req) => {
     }
 
     // immediate fallback if primary failed
-    if (!sendResult.ok && fallback && fallback !== primary) {
+    if (false && !sendResult.ok && fallback && fallback !== primary) {
       const r2 = await dispatch(supa, fallback, contact, body);
       await supa.from("communication_logs").insert({
         contact_id: contact.id, channel: fallback, template_key: body.template_key,
@@ -275,6 +278,18 @@ async function sendSms(contact: any, body: Body) {
 }
 
 async function sendEmail(supa: any, contact: any, body: Body) {
+  const { data: suppressed, error: suppressionError } = await supa.rpc("is_email_suppressed", { p_email: contact.email });
+  if (suppressionError || suppressed !== false || contact.email_consent !== true) {
+    return { ok: false, provider: "lovable_email", error: "email_suppressed_or_unverified" };
+  }
+  const { data: evidence, error: evidenceError } = await supa.from("casl_consent_evidence")
+    .select("id,lawful_basis,source_url,retrieved_at,expires_at,refusal_statement_found")
+    .eq("destination_type", "email").eq("destination_normalized", contact.email.trim().toLowerCase())
+    .eq("is_valid", true).not("reviewer_id", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (evidenceError || !evidence?.lawful_basis || !evidence.source_url || !evidence.retrieved_at || evidence.refusal_statement_found === true ||
+    (evidence.expires_at && !(new Date(evidence.expires_at).getTime() > Date.now()))) {
+    return { ok: false, provider: "lovable_email", error: "email_legal_basis_unverified" };
+  }
   // Try Lovable transactional first if a template exists; otherwise generic invoke.
   try {
     const { data, error } = await supa.functions.invoke("send-transactional-email", {
@@ -289,7 +304,8 @@ async function sendEmail(supa: any, contact: any, body: Body) {
       // Fallback: if template not registered, mark as failure (no raw HTML send path yet).
       return { ok: false, provider: "lovable_email", error: error.message ?? "send_failed" };
     }
-    return { ok: true, provider: "lovable_email", providerMessageId: (data as any)?.message_id ?? null };
+    const accepted = data?.success === true && typeof data?.message_id === "string";
+    return { ok: accepted, provider: "lovable_email", providerMessageId: accepted ? data.message_id : undefined, error: accepted ? undefined : "email_acceptance_unverified" };
   } catch (e) {
     return { ok: false, provider: "lovable_email", error: String((e as Error).message ?? e) };
   }
