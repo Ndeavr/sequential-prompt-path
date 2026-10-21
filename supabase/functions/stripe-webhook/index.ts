@@ -1,5 +1,6 @@
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
+import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
@@ -320,6 +321,19 @@ Deno.serve(async (req) => {
           livemode: event.livemode === true,
           reason: event.type === "charge.refunded" ? "refunded" : "disputed",
         });
+        // Commission affiliée : LIVE seulement; jamais bloquant pour le reste.
+        try {
+          await reverseEntry350Commission(supabase, {
+            paymentIntentId: piId,
+            eventId: event.id,
+            livemode: event.livemode === true,
+            reason: event.type === "charge.refunded" ? "refunded" : "disputed",
+            partial: event.type === "charge.refunded" && typeof obj?.amount === "number" &&
+              typeof obj?.amount_refunded === "number" && obj.amount_refunded < obj.amount,
+          });
+        } catch (e) {
+          console.error("[stripe-webhook][entry_350] commission reversal failed", piId, String(e));
+        }
       }
     }
 
@@ -530,6 +544,10 @@ Deno.serve(async (req) => {
                 });
                 if (commissionArgs) {
                   try {
+                    // Remboursement/litige déjà reçu pour cette session : aucune commission.
+                    if (await entry350SessionRevoked(supabase, session.id)) {
+                      throw new Error("session_revoked_before_commission");
+                    }
                     const affRes = await supabase.rpc("record_affiliate_payment_conversion", commissionArgs);
                     if (affRes.error) throw new Error(affRes.error.message);
                   } catch (e) {
