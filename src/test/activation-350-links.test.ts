@@ -25,9 +25,13 @@ describe("Page activation 350 $ — liens", () => {
 
 describe("Page activation 350 $ — textes", () => {
   const src = readFileSync("src/pages/entrepreneur/PageActivation350.tsx", "utf8");
-  it("taxes exactes et rendez-vous exclus avant paiement", () => {
-    expect(src).toContain("350 $ + TPS/TVQ, soit 402,41 $ au Québec · Sans abonnement ni renouvellement automatique");
-    expect(src).toContain("les rendez-vous se choisissent séparément et ne sont pas compris dans cette activation");
+  it("marketing sans calcul fiscal; total et 0 RDV au récapitulatif", () => {
+    expect(src).not.toContain("402,41");
+    expect(src).not.toContain("se choisissent séparément");
+    expect(src).toContain("Aucun rendez-vous, recommandation ou résultat n'est garanti");
+    const offer = readFileSync("src/lib/copy/offer350.ts", "utf8");
+    expect(offer).toContain("= 402,41 $ CA");
+    expect(offer).toContain("Aucun rendez-vous inclus, sauf droit contractuel");
   });
   it("retire l'ancien eyebrow, le titre Clara et la carte de non-garanties", () => {
     expect(src).not.toMatch(/Paiement unique/);
