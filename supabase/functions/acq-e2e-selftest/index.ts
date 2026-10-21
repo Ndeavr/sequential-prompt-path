@@ -14,6 +14,7 @@ const cors = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
@@ -50,6 +51,9 @@ Deno.serve(async (req) => {
 
   let failedStep: string | null = null;
   let resendId: string | null = null;
+  // Critical steps that were skipped/unverified MUST block the autopilot gate:
+  // a selftest that never confirmed delivery or the click path is not a pass.
+  const criticalSkips: string[] = [];
 
   try {
     // STEP 1 — render + wrap + validate
