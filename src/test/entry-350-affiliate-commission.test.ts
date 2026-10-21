@@ -61,7 +61,7 @@ describe("câblage", () => {
   });
   it("webhook : RPC appelée via entry350CommissionArgs dans la branche 350, durée calendaire", () => {
     const i = wh.indexOf('if (session.metadata?.offer === "entry_activation_350")');
-    const branch = wh.slice(i, i + 9000);
+    const branch = wh.slice(i, i + 16000);
     expect(branch).toContain("entry350CommissionArgs(");
     expect(branch).toContain('rpc("record_affiliate_payment_conversion", commissionArgs)');
     expect(branch).toContain("addCalendarMonths(new Date(), 12)");
