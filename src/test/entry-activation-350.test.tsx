@@ -12,8 +12,12 @@ const base = { quoteId: "q1", successUrl: "/s", cancelUrl: "/c", onLogin: () => 
 describe("Activation d'entrée 350 $", () => {
   it("n'affiche aucun chiffre sans garantie serveur", () => {
     render(<EntryActivation350Card {...base} guaranteedAppointments={null} />);
-    expect(screen.getByTestId("entry-350-appointments").textContent).toMatch(/confirmé après l'analyse/);
-    expect(screen.getAllByText("Activer mon profil — 350 $").length).toBeGreaterThan(0);
+    // Message véridique actuel (ENTRY_350.appointmentsPending) : zéro rendez-vous inclus.
+    const appts = screen.getByTestId("entry-350-appointments").textContent ?? "";
+    expect(appts).toContain("Aucun rendez-vous inclus");
+    expect(appts).toContain("confirmé avant le paiement");
+    // CTA actuel : « + taxes » explicite (paiement unique 350 $ + taxes).
+    expect(screen.getAllByText("Activer mon profil — 350 $ + taxes").length).toBeGreaterThan(0);
     expect(screen.getByText("J'aimerais plus de rendez-vous dès maintenant")).toBeTruthy();
   });
   it("affiche exactement le nombre garanti par le serveur", () => {
