@@ -19,9 +19,9 @@ import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
 
 export const ACTIVATION_350_BILLING =
-  "350 $ + TPS/TVQ, soit 402,41 $ au Québec · Sans abonnement ni renouvellement automatique";
+  "Taxes calculées et total exact affichés avant le paiement.";
 export const ACTIVATION_350_APPT_DISCLOSURE =
-  "L'activation Présence IA à 350 $ couvre le profil et la visibilité UNPRO; les rendez-vous se choisissent séparément et ne sont pas compris dans cette activation.";
+  "Profil + 12 mois de présence UNPRO.";
 
 const BENEFITS = [
   {
@@ -33,8 +33,8 @@ const BENEFITS = [
     d: "Nous optimisons et maintenons votre profil UNPRO pendant 12 mois pour mieux présenter votre entreprise aux propriétaires et aux outils IA.",
   },
   {
-    t: "Considéré dans les jumelages exclusifs UNPRO",
-    d: "Une fois vos licences requises (RBQ ou autres) vérifiées, votre profil peut être recommandé par Clara, l'assistante UNPRO, aux propriétaires dont le projet vous correspond.",
+    t: "Considéré pour les jumelages exclusifs UNPRO",
+    d: "Clara aide à rapprocher les propriétaires et les entrepreneurs selon le type de projet, les spécialités et le territoire. Admissibilité : licences requises (RBQ ou autres) vérifiées.",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function PageActivation350() {
     <main className="min-h-screen bg-background pb-28 text-foreground sm:pb-10">
       <Helmet>
         <title>Activer ma visibilité IA — 350 $ + taxes | UNPRO</title>
-        <meta name="description" content="Rendez votre entreprise plus facile à comprendre pour les moteurs de recherche et les assistants IA. Profil UNPRO + 12 mois d'optimisation, 350 $ + taxes, sans abonnement." />
+        <meta name="description" content="Rendez votre entreprise plus facile à comprendre pour les moteurs de recherche et les assistants IA. Profil UNPRO + 12 mois d'optimisation, 350 $ + taxes." />
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -70,7 +70,7 @@ export default function PageActivation350() {
           Vos prochains clients cherchent avec l'IA. Votre entreprise est-elle prête à être trouvée?
         </h1>
         <p className="mt-4 text-base text-muted-foreground">
-          UNPRO rend vos services et spécialités plus faciles à comprendre pour Google, ChatGPT et les autres assistants IA — et rend votre profil admissible aux jumelages exclusifs UNPRO une fois vos licences requises vérifiées.
+          UNPRO met en valeur vos spécialités et votre savoir-faire pour aider les propriétaires et les outils IA à mieux découvrir votre entreprise.
         </p>
 
         <div className="mt-6 space-y-3">
@@ -100,7 +100,7 @@ export default function PageActivation350() {
           </ul>
 
           <p className="mt-5 rounded-2xl bg-muted p-4 text-sm">
-            <strong>Notre engagement :</strong> mise en place et optimisation de votre profil UNPRO, accessible pendant 12 mois à partir du paiement confirmé, sous réserve d'admissibilité.
+            <strong>Notre engagement :</strong> Votre profil professionnel UNPRO, optimisé et présent pendant 12 mois.
           </p>
 
           <div className="mt-5 border-t border-border pt-5">
