@@ -28,6 +28,9 @@ describe("Page activation 350 $ — textes", () => {
   it("marketing sans calcul fiscal; total et 0 RDV au récapitulatif", () => {
     expect(src).not.toContain("402,41");
     expect(src).not.toContain("se choisissent séparément");
+    expect(src).not.toContain("activation-350-tax");
+    expect(src).not.toContain("Taxes calculées");
+    expect(src).toContain("350 $ + taxes");
     expect(src).toContain("Aucun rendez-vous, recommandation ou résultat n'est garanti");
     const offer = readFileSync("src/lib/copy/offer350.ts", "utf8");
     expect(offer).toContain("= 402,41 $ CA");

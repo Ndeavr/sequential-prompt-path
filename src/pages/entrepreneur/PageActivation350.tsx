@@ -18,8 +18,6 @@ import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
 
-export const ACTIVATION_350_BILLING =
-  "Taxes calculées et total exact affichés avant le paiement.";
 export const ACTIVATION_350_APPT_DISCLOSURE =
   "Profil + 12 mois de présence UNPRO.";
 
@@ -105,7 +103,6 @@ export default function PageActivation350() {
 
           <div className="mt-5 border-t border-border pt-5">
             <p className="text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes</span></p>
-            <p className="mt-1 text-sm text-muted-foreground" data-testid="activation-350-tax">{ACTIVATION_350_BILLING}</p>
             <p className="mt-2 text-xs text-muted-foreground">Valeur de référence : l'ancien forfait Présence (49 $/mois) totalisait 588 $ sur 12 mois.</p>
           </div>
 
