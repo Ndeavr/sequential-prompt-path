@@ -42,7 +42,7 @@ async function run(session: Record<string, unknown>, livemode = true) {
     serve: (fn: typeof handler) => { handler = fn; },
   };
   const { code } = await transform(source.replace(/^import[^\n]*\n/gm, ""), { loader: "ts", target: "es2022" });
-  new Function("Deno", "Stripe", "createClient", ...Object.keys(guards), "revokeEntry350", "verifyEntry350TaxContract", code)(
+  new Function("Deno", "Stripe", "createClient", ...Object.keys(guards), "revokeEntry350", "verifyEntry350TaxContract", "reverseEntry350Commission", "entry350SessionRevoked", code)(
     deno, StripeFixture, () => db, ...Object.values(guards), () => { throw new Error("Unexpected revocation"); }, verifyEntry350TaxContract,
   );
   if (!handler) throw new Error("Handler missing");

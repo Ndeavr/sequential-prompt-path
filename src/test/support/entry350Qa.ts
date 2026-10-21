@@ -7,6 +7,7 @@ import * as guards from "../../../supabase/functions/_shared/checkoutGuards";
 import * as identity from "../../../supabase/functions/_shared/contractorIdentity";
 import * as fallback from "../../../supabase/functions/_shared/fallbackCredit350";
 import { revokeEntry350 } from "../../../supabase/functions/_shared/entry350Revocation";
+import { reverseEntry350Commission, entry350SessionRevoked } from "../../../supabase/functions/_shared/entry350CommissionReversal";
 import { OFFER } from "../../../supabase/functions/_shared/offerCopy";
 import * as entryTax from "../../../supabase/functions/_shared/entry350Tax";
 
@@ -252,7 +253,7 @@ export async function createQa(taxApproved = true) {
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,OFFER,
+    const imports={...guards,...identity,...fallback,...entryTax,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
