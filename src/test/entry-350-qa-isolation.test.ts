@@ -136,7 +136,7 @@ describe('personalized interrupted recovery/attribution',()=>{
     expect((await qa.db.query("select * from contractor_activation_ledger where action='entry_activation_350_paid'")).rows).toHaveLength(1);
     expect((await qa.queryAs(qa.ownerToken,'select pricing_status from contractor_pricing_quotes')).rows[0].pricing_status).toBe('paid');
     expect(qa.configs[0].cancel_url).toContain('ref=LOCAL-QA');
-    expect(qa.configs[0].metadata.ref).toBe('LOCAL-QA');
+    expect(qa.configs[0].metadata.ref).toBeUndefined(); // ref non résolu à une affiliée active : jamais écrit pour la commission
     expect(await plan()).toBe('presence');
   });
 });

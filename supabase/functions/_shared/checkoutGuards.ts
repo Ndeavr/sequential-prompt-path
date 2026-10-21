@@ -153,3 +153,51 @@ export function entryPackBlockReason(i: {
   if (i.amountSubtotal !== 35000 || (i.currency ?? "").toLowerCase() !== "cad") return "ignored_amount_mismatch";
   return null;
 }
+
+/** Code affilié normalisé (A-Z, 0-9, tiret, 2-64), sinon null. Jamais une preuve d'affiliée active. */
+export function normalizeAffiliateRef(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const v = raw.trim().toUpperCase();
+  return /^[A-Z0-9-]{2,64}$/.test(v) ? v : null;
+}
+
+/** Ajoute n mois calendaires (UTC), borné au dernier jour du mois cible (31 janv. → 28/29 févr.). */
+export function addCalendarMonths(from: Date, n: number): Date {
+  const d = new Date(from.getTime());
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, last));
+  return d;
+}
+
+/**
+ * Arguments de record_affiliate_payment_conversion pour l'activation 350 $,
+ * ou null : seulement LIVE, payé, 35000 avant taxes, avec une affiliée résolue
+ * côté serveur au checkout (affiliate_id + ref présents dans les metadata).
+ */
+export function entry350CommissionArgs(i: {
+  livemode: boolean | null | undefined;
+  decision: string;
+  session: { id: string; payment_status?: string | null; amount_subtotal?: number | null; metadata?: Record<string, unknown> | null };
+  contractorId: string;
+}): Record<string, unknown> | null {
+  if (i.livemode !== true) return null;
+  if (i.decision !== "activate" && i.decision !== "already_processed") return null;
+  if (i.session.payment_status !== "paid" || i.session.amount_subtotal !== 35000) return null;
+  const md = i.session.metadata ?? {};
+  const ref = normalizeAffiliateRef(md.ref);
+  const affiliateId = typeof md.affiliate_id === "string" && /^[0-9a-f-]{36}$/i.test(md.affiliate_id) ? md.affiliate_id : null;
+  if (!ref || !affiliateId) return null;
+  return {
+    p_prospect_id: (md.prospect_id as string) || null,
+    p_contractor_id: i.contractorId,
+    p_user_id: null,
+    p_amount_pretax_cents: 35000,
+    p_stripe_session_id: i.session.id,
+    p_affiliate_id: affiliateId,
+    p_referral_code: ref,
+    p_metadata: { offer: "entry_activation_350", quote_id: md.quote_id ?? null },
+  };
+}

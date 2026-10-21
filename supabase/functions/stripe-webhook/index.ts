@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
             }
             if (decision === "activate" || decision === "already_processed") {
               const nowIso = new Date().toISOString();
-              const presenceUntil = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString();
+              const presenceUntil = addCalendarMonths(new Date(), 12).toISOString();
               const guaranteed = Number(session.metadata?.guaranteed_appointments ?? 0) || 0;
               // Le registre d'abord : s'il échoue, rien d'autre n'est modifié.
               const { error: ledgerErr } = decision === "already_processed" ? { error: null } : await supabase.from("contractor_activation_ledger").insert({
@@ -521,6 +521,26 @@ Deno.serve(async (req) => {
                   body: "Un entrepreneur a activé son profil (350 $, 12 mois de Présence IA).",
                   payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, ref: session.metadata?.ref ?? null, quote_id: session.metadata?.quote_id ?? null, guaranteed_appointments: guaranteed },
                 });
+                }
+                // Commission affiliée : LIVE payé 35000 seulement, affiliée résolue
+                // au checkout. RPC idempotente par session (relivraison = no-op).
+                // N'empêche jamais l'activation; échec = alerte, Stripe peut relivrer.
+                const commissionArgs = entry350CommissionArgs({
+                  livemode: event.livemode, decision, session, contractorId: entryContractorId,
+                });
+                if (commissionArgs) {
+                  try {
+                    const affRes = await supabase.rpc("record_affiliate_payment_conversion", commissionArgs);
+                    if (affRes.error) throw new Error(affRes.error.message);
+                  } catch (e) {
+                    console.error("[stripe-webhook][entry_activation_350] affiliate conversion failed", session.id, String(e));
+                    await supabase.from("admin_notifications").insert({
+                      type: "entry_activation_350_commission_failed", severity: "critical", contractor_id: entryContractorId,
+                      title: "Commission affiliée non inscrite (350 $)",
+                      body: "Activation conservée. Commission à réinscrire (idempotente par session).",
+                      payload_json: { stripe_session_id: session.id, affiliate_id: commissionArgs.p_affiliate_id, error: String(e) },
+                    });
+                  }
                 }
               }
             }
