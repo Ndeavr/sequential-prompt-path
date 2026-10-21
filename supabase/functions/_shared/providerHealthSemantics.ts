@@ -103,10 +103,14 @@ export function classifySmsChannel(input: {
   const window = input.recentWindowMs ?? 24 * 60 * 60 * 1000;
   const lastSend = input.lastSuccessfulSendAt ? new Date(input.lastSuccessfulSendAt).getTime() : null;
   const recentSend = lastSend !== null && Number.isFinite(lastSend) && now - lastSend < window;
-  if (recentSend) return { level: "green", code: "OK", hard_block: false, introspection_available: true, message: "Envoi SMS confirmé récemment." };
   const lastCb = input.lastCallbackAt ? new Date(input.lastCallbackAt).getTime() : null;
-  const staleCb = lastCb === null || now - lastCb >= window;
-  return { level: "yellow", code: staleCb ? "WEBHOOK_STALE" : "NO_RECENT_SEND", hard_block: false, introspection_available: true, message: "Aucun envoi récent : système au repos, pas une panne." };
+  if (recentSend) {
+    const callbackConfirmed = lastCb !== null && Number.isFinite(lastCb) && lastCb >= (lastSend ?? now) && lastCb <= now;
+    return callbackConfirmed
+      ? { level: "green", code: "OK", hard_block: false, introspection_available: true, message: "Envoi et rappel SMS confirmés récemment." }
+      : { level: "yellow", code: "CALLBACK_UNVERIFIED", hard_block: false, introspection_available: true, message: "Envoi récent : réception du rappel SMS à vérifier." };
+  }
+  return { level: "yellow", code: "NO_RECENT_SEND", hard_block: false, introspection_available: true, message: "Aucun envoi récent : système au repos, pas une panne." };
 }
 
 /**
