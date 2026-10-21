@@ -1,7 +1,7 @@
 import { contractorIdentityFromQuote, missingContractorIdentity } from "../_shared/contractorIdentity.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT } from "../_shared/entry350Tax.ts";
-import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed } from "../_shared/checkoutGuards.ts";
+import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed, normalizeAffiliateRef } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   assertCompensationAllowed,
@@ -386,6 +386,24 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Activation 350 $ : le ref n'est jamais cru tel quel. Seule une affiliée
+      // ACTIVE résolue ici est écrite (code + id réel) pour la commission.
+      let entryAffRef = "";
+      let entryAffId = "";
+      const entryRefNorm = isEntryActivation ? normalizeAffiliateRef(ref) : null;
+      if (entryRefNorm) {
+        const { data: aff } = await serviceClient
+          .from("affiliates")
+          .select("id, referral_code")
+          .eq("referral_code", entryRefNorm)
+          .eq("status", "active")
+          .maybeSingle();
+        if (aff?.id) {
+          entryAffRef = String(aff.referral_code).toUpperCase();
+          entryAffId = String(aff.id);
+        }
+      }
+
       const fallbackConfig: Record<string, unknown> = {
         mode: "payment",
         locale: "fr",
@@ -427,7 +445,9 @@ Deno.serve(async (req) => {
           ...(quoteId && { quote_id: String(quoteId) }),
           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
           ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
-          ...(typeof ref === "string" && ref.trim() && { ref: ref.trim() }),
+          ...(isEntryActivation
+            ? (entryAffId ? { ref: entryAffRef, affiliate_id: entryAffId } : {})
+            : (typeof ref === "string" && ref.trim() && { ref: ref.trim() })),
           ...(auditIdMeta && { audit_id: auditIdMeta }),
           ...(campaignMeta && { campaign: campaignMeta }),
           ...(sourceMeta && { source: sourceMeta }),
