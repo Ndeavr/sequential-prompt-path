@@ -177,7 +177,10 @@ Deno.serve(async (req) => {
       }).eq("id", 1);
       await append("open_gate", "pass");
     } else if (!allPassed) {
-      await append("open_gate", "skip", "selftest failed — gate stays closed");
+      const why = failedStep
+        ? `selftest failed at ${failedStep} — gate stays closed`
+        : `critical steps unverified (${criticalSkips.join(", ")}) — gate stays closed`;
+      await append("open_gate", "skip", why);
     }
 
     await sb.from("acq_e2e_test_runs").update({
