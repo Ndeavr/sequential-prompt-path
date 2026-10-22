@@ -288,7 +288,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   const copy = lang === "fr"
     ? {
-        placeholder: "Que voulez-vous faire ?",
+        placeholder: "Décrivez votre projet…",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara vous écoute…",
         attach: "Ajouter une photo ou un document",
@@ -304,7 +304,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
       }
     : {
-        placeholder: "Que voulez-vous faire ?",
+        placeholder: "Describe your project…",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara is listening…",
         attach: "Ajouter une photo ou un document",
@@ -1728,6 +1728,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     [createLocalPreview, enqueueMedia],
   );
 
+  const composerPlaceholder = voiceActive
+    ? copy.listening
+    : audience === "contractor"
+      ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
+      : conversationStarted ? copy.placeholderActive : copy.placeholder;
+
   return (
     <section
       ref={rootRef}
@@ -1738,7 +1744,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         <div className="home-clara-command-row" data-chat-row="commands">
           <div className={`home-clara-presence${busy ? " is-active" : ""}`} data-state={busy ? "working" : "idle"}>
             <span aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" />
-            <strong>Clara</strong>
+            <strong>{surface === "home" ? (lang === "fr" ? "Discutez avec Clara" : "Chat with Clara") : "Clara"}</strong>
             <small>{busy ? "Analyse en cours…" : voiceActive ? "Mode vocal" : "Disponible"}</small>
           </div>
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
@@ -1824,7 +1830,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
-                  <MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>
+                  <MessageResponse>{audience === "contractor"
+                     ? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?")
+                     : (lang === "fr" ? "Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?" : "Hello! What would you like to improve, renovate or repair?")}</MessageResponse>
                 </MessageContent>
               </Message>
             )}
@@ -2023,8 +2031,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         >
           <PromptInputTextarea
             ref={textareaRef}
-            aria-label={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
-            placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
+            aria-label={composerPlaceholder}
+            placeholder={composerPlaceholder}
              rows={1}
              value={composerText}
              onChange={(event) => handleComposerChange(event.currentTarget.value)}
