@@ -1,6 +1,6 @@
 # Roadmap — P0 contractor acquisition golden path
 - [x] 2026-10-22 homepage only: selective PR #28 reuse; 50 regressions, scoped lint and harness build OK; 360/390/430/desktop, simulated keyboard, English and synthetic contractor context checked. Physical keyboard/live AI unverified; no merge, deployment or publication. See docs/audits/clara-home-mobile-2026-10-22.md.
-- [ ] Constrained outreach P0 repair: inspect active wiring; fix provider-health and safe send guards with mocked regressions; no sends, remote writes, release or deployment.
+- [ ] Constrained outreach P0 repair (2026-10-22): restricted Resend introspection + strict delivery/funnel/payment assertions; read-only campaign eligibility audit and local mocked QA; no sends, remote writes, release or deployment.
 - [x] Minimal P0 follow-up: remove undefined admin hook dependency and align active entry-offer copy only; preserve Checkout/webhook and historical rights. Automatic compilation verification pending; no production actions authorized.
 - [ ] Authorized P1 isolation interventions: repair pack persistence/finalize, exact declared scope matching and active Clara lead payload; synthetic local QA only, no deployment or production writes.
 - [ ] Entry 350 tax parity: shared exclusive rates, mode-isolated cache, versioned signed Checkout contract, strict webhook tax validation, isolated QA and audit; release blocked pending founder GST/QST registration confirmation and full isolated authenticated E2E.
