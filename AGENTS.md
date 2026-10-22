@@ -67,6 +67,7 @@ Current instructions and verified live state override these documents. Sensitive
 ## Remote data and backend rules
 
 See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments, contractor publication, funnel and 350 $ entitlement rules).
+- Outreach SMS health reads delivered/callback evidence from canonical `sms_events_v2`; idle history never triggers webhook recreation. Why: account reachability and inactivity do not establish delivery or configuration failure.
 
 ## Source-of-truth discipline
 

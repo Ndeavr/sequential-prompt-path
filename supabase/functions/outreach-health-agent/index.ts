@@ -3,7 +3,7 @@
 // Cron: every 15 minutes. Also callable on-demand from /admin/outreach-health.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { classifyResendProbe } from "../_shared/providerHealthSemantics.ts";
+import { classifyResendProbe, classifySmsChannel } from "../_shared/providerHealthSemantics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,14 +48,12 @@ async function readResendBody(r: Response): Promise<{ name?: string; message?: s
 
 async function probeResend(): Promise<Probe> {
   const trimmed = (RESEND_KEY ?? "").trim();
-  const keyLen = (RESEND_KEY ?? "").length;
   const hasWs = !!RESEND_KEY && RESEND_KEY !== trimmed;
-  const prefix = "[redacted]";
 
   if (!trimmed) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing", repair_action: "manual_required" };
 
   // Persist diag basics every probe
-  const baseDiag = { id: 1, resend_key_prefix: prefix, resend_key_length: keyLen, resend_last_checked_at: new Date().toISOString() };
+  const baseDiag = { id: 1, resend_last_checked_at: new Date().toISOString() };
 
   // Lovable connector keys (lovc_…) are VALID and must be routed via the Lovable gateway.
   // Treat them like a normal Resend key here, but call the gateway endpoint.
@@ -67,14 +65,14 @@ async function probeResend(): Promise<Probe> {
       message: "LOVABLE_API_KEY missing — required to route lovc_ key through Lovable gateway", repair_action: "manual_required" };
   }
   if (!isGatewayKey && !trimmed.startsWith("re_")) {
-    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `bad_format prefix=${prefix}` });
+    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: "unsupported_credential_mapping" });
     return { provider: "resend", status: "red", failure_reason: "WRONG_VARIABLE_MAPPING",
-      message: `Key does not start with re_ or lovc_ · prefix=${prefix} · len=${keyLen}`, repair_action: "update_secret" };
+      message: "Resend credential mapping unsupported", repair_action: "update_secret" };
   }
   if (hasWs) {
     await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: "whitespace_in_secret" });
     return { provider: "resend", status: "red", failure_reason: "WHITESPACE_CORRUPTION",
-      message: `Secret contains whitespace/newline · raw_len=${keyLen} trimmed=${trimmed.length}`, repair_action: "update_secret" };
+      message: "Resend credential configuration requires owner review", repair_action: "update_secret" };
   }
 
   const fetchResend = (path: string) => isGatewayKey
@@ -95,9 +93,9 @@ async function probeResend(): Promise<Probe> {
       const b = await readResendBody(auth);
       const msg = (b.message ?? "").toLowerCase();
       if (msg.includes("invalid") || msg.includes("api key")) {
-        await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `auth 400 ${b.message} · prefix=${prefix} len=${keyLen}` });
+        await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `auth 400 ${b.message}` });
         return { provider: "resend", status: "red", failure_reason: "RESEND_AUTH_ERROR",
-          message: `HTTP 400 — ${b.message ?? "API key is invalid"} · prefix=${prefix} len=${keyLen}`, repair_action: "rotate_secret" };
+          message: `HTTP 400 — ${b.message ?? "API key is invalid"}`, repair_action: "rotate_secret" };
       }
     } else if (auth.ok) {
       const b = await readResendBody(auth);
@@ -131,13 +129,13 @@ async function probeResend(): Promise<Probe> {
       await supabase.from("outreach_health_state").upsert({
         ...baseDiag,
         resend_account_id: accountId,
-        resend_last_error: `domains HTTP ${dom.status}: ${b.message ?? b.raw.slice(0,200)} · prefix=${prefix} len=${keyLen}`,
+        resend_last_error: `domains HTTP ${dom.status}: ${b.message ?? b.raw.slice(0,200)}`,
       });
       return {
         provider: "resend",
         status: "red",
         failure_reason: isAuthLike ? "RESEND_AUTH_ERROR" : "RESEND_PROVIDER_ERROR",
-        message: `HTTP ${dom.status} — ${b.message ?? b.name ?? b.raw.slice(0,200)} · prefix=${prefix}`,
+        message: `HTTP ${dom.status} — ${b.message ?? b.name ?? b.raw.slice(0,200)}`,
         repair_action: isAuthLike ? "rotate_secret" : "manual_required",
       };
     }
@@ -152,7 +150,7 @@ async function probeResend(): Promise<Probe> {
       resend_last_error: verified ? null : "NO_VERIFIED_DOMAIN",
     });
     if (!verified) return { provider: "resend", status: "red", failure_reason: "NO_VERIFIED_DOMAIN",
-      message: `No verified domain (found ${domains.length}) · prefix=${prefix}`, repair_action: "manual_required" };
+      message: `No verified domain (found ${domains.length})`, repair_action: "manual_required" };
 
     // 3) Honest cap — require a real send within 24h before going green.
     const { data: state } = await supabase.from("outreach_health_state").select("resend_last_send_status,resend_last_send_at").eq("id", 1).maybeSingle();
@@ -160,7 +158,7 @@ async function probeResend(): Promise<Probe> {
     const sendFresh = state?.resend_last_send_status === "sent" && lastSendAt <= Date.now() && (Date.now() - lastSendAt < 24 * 3600 * 1000);
     if (!sendFresh) {
       return { provider: "resend", status: "yellow", failure_reason: "NO_RECENT_SEND",
-        message: `API ok · sender ${verified.name} · prefix=${prefix} · no real send <24h`, repair_action: "run_send_test" };
+        message: `API ok · sender ${verified.name} · no real send <24h`, repair_action: "run_send_test" };
     }
 
     // 4) Webhook freshness (informational — yellow only)
@@ -170,7 +168,7 @@ async function probeResend(): Promise<Probe> {
       return { provider: "resend", status: "yellow", failure_reason: "WEBHOOK_STALE",
         message: `last event ${last} · sender ${verified.name}`, repair_action: "recreate_webhook" };
     }
-    return { provider: "resend", status: "green", message: `API ok · sender ${verified.name} · prefix=${prefix}` };
+    return { provider: "resend", status: "green", message: `API ok · sender ${verified.name}` };
   } catch (e) {
     return { provider: "resend", status: "red", failure_reason: "EXTERNAL_TIMEOUT", message: String(e) };
   }
@@ -185,12 +183,21 @@ async function probeTwilio(): Promise<Probe> {
     });
     if (r.status === 401) return { provider: "twilio", status: "red", failure_reason: "TWILIO_AUTH_ERROR", message: "401 Unauthorized — TWILIO_AUTH_TOKEN changed", repair_action: "rotate_secret" };
     if (!r.ok) return { provider: "twilio", status: "yellow", failure_reason: "TWILIO_PROVIDER_ERROR", message: `HTTP ${r.status}` };
-    const { data } = await supabase.from("outreach_sms_events").select("created_at").order("created_at",{ascending:false}).limit(1);
-    const last = data?.[0]?.created_at;
-    if (last && Date.now() - new Date(last).getTime() > 60 * 60 * 1000) {
-      return { provider: "twilio", status: "yellow", failure_reason: "WEBHOOK_STALE", message: `last sms event ${last}`, repair_action: "recreate_webhook" };
-    }
-    return { provider: "twilio", status: "green", message: "API ok" };
+    // Canonical sender callbacks land in sms_events_v2. Idle history is not
+    // proof of a broken webhook, and API reachability never proves delivery.
+    const { data, error } = await supabase.from("sms_events_v2")
+      .select("delivered_at,webhook_received_at")
+      .not("delivered_at", "is", null)
+      .order("delivered_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) return { provider: "twilio", status: "yellow", failure_reason: "DELIVERY_EVIDENCE_UNAVAILABLE",
+      message: "SMS delivery evidence unavailable", repair_action: "manual_required" };
+    const verdict = classifySmsChannel({
+      credentialsPresent: true,
+      lastSuccessfulSendAt: data?.delivered_at ?? null,
+      lastCallbackAt: data?.webhook_received_at ?? null,
+    });
+    return { provider: "twilio", status: verdict.level, failure_reason: verdict.code === "OK" ? undefined : verdict.code,
+      message: verdict.message, repair_action: verdict.level === "green" ? undefined : "manual_required" };
   } catch (e) {
     return { provider: "twilio", status: "red", failure_reason: "EXTERNAL_TIMEOUT", message: String(e) };
   }
