@@ -10,8 +10,8 @@ const drawer = readFileSync("src/components/navigation/DrawerNavigationMobileInt
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Discutons de votre projet.");
-    expect(hero).toContain("rénover");
+    expect(hero).toContain("Un projet en tête ?");
+    expect(hero).not.toContain("home-hero-subtitle");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
     expect(hero).not.toContain("AnimatePresence");
@@ -24,8 +24,8 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("openAlex(\"home_hero\"");
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
-    expect(clara).toContain("<MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>");
-    expect(clara).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(clara).toContain("Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?");
+    expect(clara).toContain('placeholder: "Décrivez votre projet…"');
     expect(clara).toContain('const [composerText, setComposerText] = useState("")');
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");

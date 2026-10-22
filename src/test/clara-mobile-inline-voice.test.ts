@@ -33,8 +33,9 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
     expect(box).not.toContain("max-h-[38vh]");
   });
 
-  it("porte les menus hors du conteneur coupé et les borne au viewport visible", () => {
-    expect(box).toContain("PromptInputActionMenuContent");
+  it("garde le menu média ancré au composer et les menus bornés au viewport", () => {
+    expect(box).toContain("function MediaMenu(");
+    expect(box).toContain('aria-expanded={open}');
     expect(box).toContain("DropdownMenuContent");
     expect(box).not.toContain('role="menu" className="absolute bottom-full');
     expect(css).toContain("var(--app-visible-height, 100dvh)");
@@ -80,7 +81,7 @@ describe("Clara — retour au projet maison sans perte d’état", () => {
     expect(box2).not.toContain("Où en étions-nous");
     expect(box2).toContain("readHomeCursor()");
     expect(box2).toContain("pauseActiveContractorFlow()");
-    expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT" })');
+    expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" })');
   });
   it("évite les tours identiques consécutifs de Clara", () => {
     expect(box2).toContain("lastAssistant.text.trim() === text.trim()");

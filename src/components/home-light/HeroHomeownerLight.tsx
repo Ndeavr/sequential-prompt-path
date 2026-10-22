@@ -2,13 +2,14 @@
 import { useState } from "react";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function HeroHomeownerLight() {
+  const { lang } = useLanguage();
   const [isConversationActive, setIsConversationActive] = useState(false);
   // Hauteur visible publiée globalement par useKeyboardAwareViewport (App).
   const copy = {
-    title: "Discutons de votre projet.",
-    subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",
+    title: lang === "fr" ? "Un projet en tête ?" : "Have a project in mind?",
   };
 
   return (
@@ -20,9 +21,6 @@ export default function HeroHomeownerLight() {
             <h1 className="home-hero-title max-w-5xl font-semibold text-foreground">
               {copy.title}
             </h1>
-            <p className="home-hero-subtitle mx-auto max-w-3xl text-muted-foreground">
-              {copy.subtitle}
-            </p>
           </div>
         )}
 
