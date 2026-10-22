@@ -5474,6 +5474,7 @@ export type Database = {
       affiliate_import_batches: {
         Row: {
           affiliate_id: string
+          batch_hash: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -5489,6 +5490,7 @@ export type Database = {
         }
         Insert: {
           affiliate_id: string
+          batch_hash?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -5504,6 +5506,7 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string
+          batch_hash?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -100308,6 +100311,19 @@ export type Database = {
       affiliate_offer_public_state: {
         Args: { _offer_id?: string; _promo_code?: string }
         Returns: Json
+      }
+      affiliate_stage_import: {
+        Args: {
+          p_batch_hash: string
+          p_file_name: string
+          p_rows: Json
+          p_source_type: string
+        }
+        Returns: {
+          next_action: string
+          row_index: number
+          status: string
+        }[]
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       apply_lead_normalization: { Args: { payload: Json }; Returns: number }

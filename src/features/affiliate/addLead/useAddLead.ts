@@ -1,6 +1,6 @@
 /**
- * useAddLead — orchestrator: dedupe → insert into contractor_leads.
- * All leads created by an affiliate: source_type='affiliate_manual', both created_by_ and assigned_ set.
+ * useAddLead — types de brouillon + insertion héritée (sans auto-attribution).
+ * Les écrans affiliés passent par stageImport (brouillon serveur, dédoublonnage fail-closed).
  */
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneStorage, digitsOnly } from "../lib/phoneUtils";
@@ -28,34 +28,6 @@ export interface DraftLead {
   source_label?: string;
 }
 
-export interface DedupeResponse {
-  match: {
-    id: string;
-    company_name: string | null;
-    phone_e164: string | null;
-    email: string | null;
-    lead_status: string;
-    assigned_affiliate_id: string | null;
-    similarity: number;
-    reasons: string[];
-  } | null;
-  candidates?: any[];
-}
-
-export async function checkDuplicate(draft: DraftLead): Promise<DedupeResponse> {
-  const { data, error } = await supabase.functions.invoke("lead-dedupe-check", {
-    body: {
-      phone: draft.phone || draft.mobile_phone,
-      email: draft.email,
-      website_url: draft.website_url,
-      company_name: draft.company_name,
-      city: draft.city,
-    },
-  });
-  if (error) throw error;
-  return data as DedupeResponse;
-}
-
 export async function insertLead(draft: DraftLead, affiliateId: string) {
   const phoneRaw = draft.phone || draft.mobile_phone || "";
   const phoneE164 = formatPhoneStorage(phoneRaw);
@@ -80,7 +52,8 @@ export async function insertLead(draft: DraftLead, affiliateId: string) {
     postal_code: draft.postal_code || null,
     category_primary: draft.category_primary || null,
     created_by_affiliate_id: affiliateId,
-    assigned_affiliate_id: affiliateId,
+    // Jamais d'auto-attribution : la réservation relève d'une décision serveur/admin.
+    assigned_affiliate_id: null,
     consent_channel: draft.consent_channel || null,
     consent_to_contact: draft.consent_to_contact || "unknown",
     business_card_url: draft.business_card_url || null,

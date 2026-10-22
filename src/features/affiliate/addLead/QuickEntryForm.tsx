@@ -114,7 +114,7 @@ export function QuickEntryForm({ initial, onSubmit, submitting }: Props) {
       </div>
 
       <Button type="submit" className="w-full h-12 text-base" disabled={!canSubmit || submitting}>
-        {submitting ? "Enregistrement…" : "Enregistrer le prospect"}
+        {submitting ? "Enregistrement…" : "Enregistrer et vérifier"}
       </Button>
     </form>
   );
