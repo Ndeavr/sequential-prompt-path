@@ -57,6 +57,7 @@ export default function AuthOverlayPremium() {
 
   // Determine context (contractor vs default) for copy
   const preloginRole = isOpen ? readPreloginRole() : null;
+  const propertyRegistration = pendingAction?.action === "register_property";
   const contractorContext =
     preloginRole === "contractor" ||
     preloginRole === "professional" ||
@@ -177,10 +178,12 @@ export default function AuthOverlayPremium() {
                   </div>
                 </div>
                 <h2 className="text-xl font-bold text-foreground font-display">
-                  {contractorContext ? "Connexion à UNPRO" : "Trouvez le bon pro. Plus vite."}
+                  {propertyRegistration ? "Créer mon compte gratuit" : contractorContext ? "Connexion à UNPRO" : "Trouvez le bon pro. Plus vite."}
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-                  {contractorContext
+                  {propertyRegistration
+                    ? "Créez votre compte ou connectez-vous pour enregistrer votre propriété."
+                    : contractorContext
                     ? "Connectez-vous pour créer votre profil entrepreneur."
                     : "Connexion rapide et sécurisée. Aucun mot de passe requis."}
                 </p>
