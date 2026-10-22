@@ -2559,3 +2559,33 @@ html[data-theme-ready="true"] .glass-btn {
 @media (prefers-reduced-motion: reduce) {
   .home-light .home-clara-example-label { animation: none; clip-path: none; }
 }
+
+/* Homepage only: conversation-first layout. Preserve embedded Clara and active keyboard layout. */
+.home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-shell {
+  margin-top: clamp(.75rem, 2vw, 1.5rem);
+}
+@media (max-width: 767px) and (min-height: 501px) {
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-hero-content {
+    justify-content: flex-start;
+    padding-top: .85rem;
+    padding-bottom: .4rem;
+  }
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-hero-title {
+    max-width: 100%;
+    font-size: clamp(1.75rem, 7.7vw, 2.3rem);
+    line-height: 1.12;
+  }
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-shell,
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-shell.has-context {
+    margin-top: .7rem;
+  }
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-main {
+    height: clamp(350px, calc(100dvh - 145px), 660px);
+    min-height: 0;
+    max-height: none;
+  }
+  .home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-examples {
+    padding-top: .3rem;
+    padding-bottom: .6rem;
+  }
+}
