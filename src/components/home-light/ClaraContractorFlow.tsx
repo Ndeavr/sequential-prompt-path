@@ -15,7 +15,7 @@ import ClaraQualificationPreview from "./ClaraQualificationPreview";
  */
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { declaredVoiceNumber } from "@/services/clara/claraNextStep";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle2, ExternalLink, MapPin, Phone, Star } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +27,11 @@ import {
   saveClaraQualification,
   type ClaraProvenance,
 } from "@/services/clara/claraContractorQualification";
-import { computePricingQuote, formatCAD, type PricingQuote } from "@/services/contractorPricingQuoteService";
+import { OFFER_350 } from "@/lib/copy/offer350";
+import { Button } from "@/components/ui/button";
+import { prepareClaraPricingDraft } from "@/services/clara/claraNextStep";
+import { activationCloseAnswer, claraActivationLinks } from "@/services/clara/claraActivationClose";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 
 type Candidate = {
@@ -124,13 +128,15 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   ref,
 ) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [opening, setOpening] = useState(false);
+  const openingRef = useRef(false);
   const [step, setStep] = useState<Step>("name");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [lastQuery, setLastQuery] = useState("");
   const [goals, setGoals] = useState<GoalKey[]>([]);
   const [freeGoal, setFreeGoal] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditResult | null>(null);
-  const [quote, setQuote] = useState<PricingQuote | null>(null);
   const proposalReadyRef = useRef(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -154,9 +160,9 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     void (async () => {
     try { await resumeClaraQualification(); } catch { setSummaryError("La reprise serveur est indisponible. Vos informations locales sont conservées."); }
     const known = getClaraQualification();
-    if (known.google_place_id && known.business_name) {
+    if (known.business_name) {
       void (async () => {
-        await say(`Je reprends avec ${known.business_name}, déjà confirmée.`);
+        await say(`Je reprends avec ${known.business_name}. Vos informations précédentes sont conservées.`);
         if (known.goals?.length && readFlow().priority) {
           await runAudit();
         } else {
@@ -253,7 +259,9 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   }, [addUser, go]);
 
   const choosePriority = useCallback(async (key: GoalKey) => {
-    addUser(GOALS.find((g) => g.key === key)!.label);
+    const goal = GOALS.find((g) => g.key === key);
+    if (!goal) return;
+    addUser(goal.label);
     writeFlow({ priority: key });
     await runAudit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,8 +287,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       const res = data as AuditResult | null;
       if (error || !res?.ok) {
         setRetry(() => () => void runAudit());
-        await say("L’analyse n’a pas pu se terminer. Vous pouvez réessayer.");
-        setStep("failed");
+        await say("Les données sont insuffisantes pour présenter des constats fiables. Nous pouvons poursuivre sans inventer de score.");
+        await nextQuestion();
         return;
       }
       try { sessionStorage.setItem("unpro_audit_ia_result", JSON.stringify(res)); } catch { /* */ }
@@ -297,27 +305,16 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   /* --------------------------------- 6. Questions strictement nécessaires */
   const nextQuestion = useCallback(async () => {
     const k = getClaraQualification();
-    const f = readFlow();
-    if (!k.preferences_captured) return go("preferences", "Décrivez-moi le contrat idéal pour vous : qu’est-ce qui vous donne envie de le prendre?");
     if (!k.primary_trade || k.provenance?.primary_trade !== "declared") {
       return go("trade", k.primary_trade
         ? `Google indique « ${k.primary_trade} ». Quel est votre métier principal?`
         : "Quel est votre métier principal?");
     }
-    if (!k.customer_type) return go("customer", "Travaillez-vous surtout au résidentiel, au commercial, ou les deux?");
     if (!k.service_areas?.length) {
       return go("areas", k.business_city
         ? `Votre entreprise est à ${k.business_city}. Dans quelles villes acceptez-vous des mandats?`
         : "Dans quelles villes acceptez-vous des mandats?");
     }
-    if (f.priority === "contracts" && f.contract_goal == null) return go("goal_detail", "Combien de contrats de plus visez-vous par mois?");
-    if (f.priority === "matching" && !f.prefer && !k.preferred_work?.length) return go("goal_detail", "Quels mandats aimeriez-vous recevoir en priorité?");
-    if (f.priority === "matching" && !f.avoid) return go("goal_detail2", "Et quels mandats préférez-vous éviter?");
-    if (f.priority === "time" && !f.time_sink) return go("goal_detail", "Quelle tâche vous prend le plus de temps?");
-    if (!k.preferences_confirmed) return go("preferences_review", "Voici ce que j’ai compris. Vous pouvez corriger les critères, puis les valider.");
-    if (f.appointments == null) return go("appointments", "Combien de rendez-vous pourriez-vous accueillir le mois prochain?");
-    if (f.appointments === 0) return go("appointments", "Votre capacité enregistrée est de 0. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
-    if (f.avg_value == null) return go("avg_value", "Quelle est la valeur moyenne d’un contrat?");
     return buildProposal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [go]);
@@ -389,45 +386,29 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   /* ------------------------------------------------ 7. Proposition */
   const buildProposal = useCallback(async () => {
-    const k = getClaraQualification();
-    const f = readFlow();
-    if (f.appointments === 0) {
-      return go("appointments", "Votre capacité enregistrée est de 0. Combien de rendez-vous pourrez-vous accueillir lorsque vous serez disponible?");
-    }
-    const city = k.service_areas?.[0] ?? k.business_city ?? "";
-    setStep("quoting");
-    onBusy(true);
+    proposalReadyRef.current = true;
+    setStep("proposal");
+    void trackFunnelStep("plan_presented", { offer: "entry_activation_350", metadata: { surface: "home_clara_chat" } });
+    await say(`${OFFER_350.alexBeforeCalculation} Prêt à activer votre profil pour 350 $ + taxes?`);
+  }, [say]);
+
+  const openActivation = async (more = false) => {
+    if (openingRef.current) return;
+    openingRef.current = true;
+    setOpening(true);
+    setSummaryError(null);
     try {
-      const q = await computePricingQuote({
-        trade_primary: k.primary_trade ?? "",
-        city,
-        target_monthly_appointments: f.appointments ?? 1,
-        monthly_capacity: f.appointments ?? 1,
-        contract_goal_value: f.contract_goal,
-        contract_goal_unit: f.contract_goal ? "month" : undefined,
-        average_project_value: f.avg_value ?? 3500,
-        close_rate_estimate: 0.4,
-        seasonal_priority: "all",
-        desired_growth_level: "growth",
-        service_radius_km: 50,
-        company_name: k.business_name ?? null,
-        website_url: k.website ?? null,
-        current_ai_visibility_score: audit?.baseline.matched.merged_sources.length ? audit.readiness_score ?? undefined : undefined,
-      });
-      setQuote(q);
-      proposalReadyRef.current = true;
-      void trackFunnelStep("quote_computed", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
-      void trackFunnelStep("plan_presented", { subjectId: q.id, metadata: { surface: "home_clara_chat" } });
-      await say("Voici un résumé et l’entente de départ la plus adaptée à votre capacité du mois prochain.");
-      setStep("proposal");
+      prepareClaraPricingDraft();
+      const links = claraActivationLinks(location.search);
+      void logFunnelEvent({ event_type: "activation_cta_clicked", metadata: { surface: "home_clara_chat", option: more ? "appointments" : "base", ref: new URLSearchParams(location.search).get("ref") } });
+      navigate(more ? links.more : links.activate, { state: { fromClara: true, claraIntent: "contractor_onboarding" } });
     } catch {
-      setRetry(() => () => void buildProposal());
-      await say("Je n’ai pas pu calculer votre proposition. Vous pouvez réessayer.");
-      setStep("failed");
+      setSummaryError("Vos informations sont conservées. Réessayez pour ouvrir votre activation.");
     } finally {
-      onBusy(false);
+      openingRef.current = false;
+      setOpening(false);
     }
-  }, [audit, go, onBusy, say]);
+  };
 
   /* --------------------------------------------- réponses libres (composer) */
   useImperativeHandle(ref, () => ({
@@ -437,6 +418,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) await nextQuestion();
     },
     captureVoice: (text: string) => {
+      const close = activationCloseAnswer(text);
+      if (close) { setStep("proposal"); proposalReadyRef.current = true; return; }
       const current = stepRef.current;
       if (["appointments", "avg_value"].includes(current) || (current === "goal_detail" && readFlow().priority === "contracts")) {
         const token = peekClaraSessionToken();
@@ -471,6 +454,15 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     resumeAfterVoice: () => { if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) void Promise.resolve(pendingVoiceSummary.current).then(() => nextQuestion()); },
     handleText: (text: string) => {
       const s = stepRef.current;
+      const close = activationCloseAnswer(text);
+      if (close) {
+        addUser(text);
+        setStep("proposal");
+        proposalReadyRef.current = true;
+        void trackFunnelStep("plan_presented", { offer: "entry_activation_350", metadata: { surface: "home_clara_chat" } });
+        void say(close);
+        return true;
+      }
       if (isAddressAnswer(text)) { addUser(text); void say(CLARA_ADDRESS_CLARIFICATION); return true; }
       if (s === "name" || s === "pick") { addUser(text); void search(text); return true; }
       if (s === "goals") {
@@ -545,7 +537,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   if (step === "priority") {
     return (
       <div className="home-clara-quick" role="group" aria-label="Objectif prioritaire">
-        {goals.map((k) => <button key={k} type="button" onClick={() => void choosePriority(k)}>{GOALS.find((g) => g.key === k)!.label}</button>)}
+        {goals.map((k) => <button key={k} type="button" onClick={() => void choosePriority(k)}>{GOALS.find((g) => g.key === k)?.label}</button>)}
       </div>
     );
   }
@@ -569,19 +561,18 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       {auditCard}
       {quick[step]?.length ? (
         <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-          {quick[step]!.map((o) => <button key={o} type="button" onClick={() => void pick(o, step)}>{o}</button>)}
+          {quick[step]?.map((o) => <button key={o} type="button" onClick={() => void pick(o, step)}>{o}</button>)}
         </div>
       ) : null}
       {step === "failed" && retry && (
         <div className="home-clara-quick"><button type="button" onClick={() => retry()}>Réessayer</button></div>
       )}
-      {step === "proposal" && quote && (
+      {step === "proposal" && (
         <ProposalCard
-          quote={quote}
           known={known}
-          flow={flow}
-          onActivate={() => navigate(`/entrepreneur/plan-personnalise/${quote.id}`)}
-          onDetails={() => navigate("/entrepreneurs/audit-ia")}
+          opening={opening}
+          onActivate={() => void openActivation()}
+          onMore={() => void openActivation(true)}
         />
       )}
     </div>
@@ -590,7 +581,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
 function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typeof getClaraQualification> }) {
   const isPublic = known.provenance?.business_name === "public";
-  const partial = !audit.baseline.matched.merged_sources.length;
+  const partial = !audit.baseline.matched.merged_sources.length || audit.readiness_score == null;
   const priorities = [...audit.gaps].sort((a, b) => (a.impact === "high" ? -1 : 0) - (b.impact === "high" ? -1 : 0)).slice(0, 3);
   const clear = audit.baseline.missions.filter((m) => m.status === "confirmed");
   const sources = Array.from(new Set(audit.baseline.facts.map((f) => f.source).filter(Boolean)));
@@ -624,17 +615,15 @@ function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typ
   );
 }
 
-function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
-  quote: PricingQuote;
+function ProposalCard({ known, opening, onActivate, onMore }: {
   known: ReturnType<typeof getClaraQualification>;
-  flow: FlowMemory;
+  opening: boolean;
   onActivate: () => void;
-  onDetails: () => void;
+  onMore: () => void;
 }) {
   const p = known.provenance ?? {};
   const row = (label: string, value: string | null | undefined, key: string) =>
     value ? <li key={key}><span>{label}</span> <strong>{value}</strong> <em>{PROVENANCE_LABEL[p[key] ?? "declared"]}</em></li> : null;
-  const PLAN: Record<string, string> = { presence: "Présence", depart: "Départ", local: "Départ", croissance_v2: "Croissance", croissance: "Croissance", pro_v2: "Pro", pro: "Pro", elite_v2: "Élite", signature_v2: "Signature" };
   return (
     <article className="home-clara-card" aria-label="Résumé et proposition">
       <p className="home-clara-card-title">Résumé</p>
@@ -644,16 +633,13 @@ function ProposalCard({ quote, known, flow, onActivate, onDetails }: {
         {row("Clientèle", known.customer_type, "customer_type")}
         {row("Siège", known.business_city, "business_city")}
         {row("Territoires", known.service_areas?.join(", "), "service_areas")}
-        {flow.appointments != null && <li><span>RDV le mois prochain</span> <strong>{flow.appointments}</strong> <em>Déclaré</em></li>}
-        {flow.avg_value_label && <li><span>Valeur moyenne</span> <strong>{flow.avg_value_label}</strong> <em>Déclaré (tranche)</em></li>}
-        <li><span>Taux de conclusion</span> <strong>40 %</strong> <em>Estimation UNPRO</em></li>
       </ul>
-      <p className="home-clara-card-title">Entente de départ : {PLAN[quote.recommended_plan] ?? quote.recommended_plan}</p>
-      <p className="home-clara-card-meta">Jusqu’à {flow.appointments ?? quote.target_monthly_appointments} rendez-vous exclusifs par mois selon la demande, jamais partagés.</p>
-      <p className="home-clara-card-price">{formatCAD(quote.recommended_monthly_price)} / mois <small>+ TPS 5 % et TVQ 9,975 %</small></p>
-      <p className="home-clara-card-meta">Conditions : le détail et le total taxes incluses s’affichent avant le paiement. Le paiement active l’entente, mais ne remplace pas la vérification RBQ exigée avant de recevoir des mandats.</p>
-      <button type="button" className="home-clara-card-primary" onClick={onActivate}>Voir ma proposition</button>
-      <button type="button" className="home-clara-card-link" onClick={onDetails}>Voir les détails de l’analyse</button>
+      <p className="home-clara-card-title">{OFFER_350.card.title}</p>
+      <p className="home-clara-card-meta">Vos services, vos spécialités et votre territoire, présentés clairement sur UNPRO pendant 12 mois. Pas un achat de clics ni de leads partagés.</p>
+      <p className="home-clara-card-price">{OFFER_350.price_label} <small>+ taxes · une seule fois</small></p>
+      <p className="home-clara-card-meta">Aucun rendez-vous inclus. Aucune apparition garantie dans ChatGPT. Le paiement ne remplace pas la vérification des licences requises.</p>
+      <Button type="button" size="lg" className="home-clara-card-primary h-auto min-h-11 w-full whitespace-normal py-3" disabled={opening} onClick={onActivate}>{opening ? "Préparation de votre activation…" : OFFER_350.ctaActivate}</Button>
+      <Button type="button" variant="link" className="h-auto min-h-11 w-full whitespace-normal" disabled={opening} onClick={onMore}>Je veux aussi des rendez-vous exclusifs</Button>
     </article>
   );
 }
