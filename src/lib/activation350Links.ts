@@ -18,13 +18,14 @@ export function buildActivation350Links(sp: URLSearchParams) {
   const audit = new URLSearchParams(carry);
   const activate = new URLSearchParams(carry);
   activate.set("from", "activation_350");
+  activate.set("activate", "1");
   // Option rendez-vous : même parcours existant, ouvert sur la vue personnalisée
   // (prix et volume calculés par le serveur, consentement séparé).
   const more = new URLSearchParams(carry);
   more.set("from", "activation_350_more");
   more.set("view", "personalized");
   return {
-    activate: `/entrepreneur/devis-personnalise?${activate}`,
+    activate: `/entrepreneurs/activation-350?${activate}`,
     more: `/entrepreneur/devis-personnalise?${more}`,
     audit: `/entrepreneurs/audit-ia${audit.toString() ? `?${audit}` : ""}`,
   };
