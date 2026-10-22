@@ -49,7 +49,7 @@ describe("prelaunch evidence — no external provider or database", () => {
   it.each([401, 403])("actual health agent classifies send-only HTTP %s yellow without recent send", async status => {
     const context: Record<string, unknown> = {
       createClient: () => database([]), classifyResendProbe,
-      Deno: { env: { get: (key: string) => ({ SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", RESEND_API_KEY: "re_fixture_only" })[key] }, serve() {} },
+      Deno: { env: { get: (key: string) => ({ SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", RESEND_API_KEY: "re_fixture_only" } as Record<string, string>)[key] }, serve() {} },
       fetch: async () => new Response(JSON.stringify({ message: "This API key is restricted to only send emails" }), { status }),
       Response, Date, console: { log() {} },
     };
@@ -62,7 +62,7 @@ describe("prelaunch evidence — no external provider or database", () => {
   it("actual health agent retains red for an invalid key", async () => {
     const context: Record<string, unknown> = {
       createClient: () => database([]), classifyResendProbe,
-      Deno: { env: { get: (key: string) => ({ SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", RESEND_API_KEY: "re_fixture_only" })[key] }, serve() {} },
+      Deno: { env: { get: (key: string) => ({ SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", RESEND_API_KEY: "re_fixture_only" } as Record<string, string>)[key] }, serve() {} },
       fetch: async () => new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 }),
       Response, Date, console: { log() {} },
     };
