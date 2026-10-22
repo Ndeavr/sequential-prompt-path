@@ -13,13 +13,14 @@
 //  - The click path is exercised ANONYMOUSLY (anon key + public resolver),
 //    exactly like a recipient's phone — never with the service role.
 //  - Delivery states are honest: email "sent" = provider-accepted (labeled as
-//    such); SMS passes only on Twilio-confirmed sent/delivered — "queued" fails.
+//    such); SMS passes only on Twilio-confirmed delivered — queued/sent fail.
 //  - Stripe step requires a TEST key and creates/retrieves/expires a real TEST
-//    Checkout Session. A live key or a mere balance GET never counts as pass.
+//    Checkout Session. Connectivity NEVER proves a signed payment E2E pass.
 //  - Funnel verification fails when 0 events carry the run_group.
 //  - cleanup_completed is true only when the deferred-cleanup stamp is verified.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { smsDeliveryConfirmed, funnelIncrementConfirmed, paymentProofError } from "./assertions.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -27,8 +28,8 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
@@ -264,7 +265,7 @@ Deno.serve(async (req) => {
       });
       const j = await r.json().catch(() => ({}));
       lastStatus = (j as any)?.status ?? "unknown";
-      if (lastStatus === "sent" || lastStatus === "delivered") {
+      if (smsDeliveryConfirmed(r.ok, lastStatus)) {
         return { payload: { sid: prev.sid, status: lastStatus, delivery_state: lastStatus } };
       }
       if (lastStatus === "failed" || lastStatus === "undelivered") {
@@ -310,7 +311,7 @@ Deno.serve(async (req) => {
     for (let i = 0; i < 4; i++) {
       const { data } = await sb.from("acquisition_events").select("id,event_type")
         .eq("event_type", "clicked").eq("tracking_id", trackerId).limit(1);
-      if ((data ?? []).length) return { payload: { event_count: data!.length } };
+      if (data?.length) return { payload: { event_count: data.length } };
       await new Promise(r => setTimeout(r, 1000));
     }
     return { error: "no clicked event recorded", repair: "Verify r-redirect logs acquisition_events" };
@@ -328,7 +329,7 @@ Deno.serve(async (req) => {
   // 12 — Stripe TEST checkout: create + retrieve + expire a real TEST Checkout
   // Session. A live key or a mere balance GET never counts as a pass.
   await step(11, async () => {
-    if (!STRIPE_TEST_KEY) return {
+    if (!STRIPE_TEST_KEY.startsWith("sk_test_")) return {
       error: "no Stripe TEST key available (STRIPE_TEST_SECRET_KEY missing and STRIPE_SECRET_KEY is not sk_test_*)",
       repair: "Add STRIPE_TEST_SECRET_KEY (sk_test_...) — live keys are refused in this selftest",
     };
@@ -350,11 +351,16 @@ Deno.serve(async (req) => {
     if ((cj as any).livemode !== false) return { error: "checkout session created in LIVE mode — aborting", repair: "Use a sk_test_ key only" };
     const sid = (cj as any).id as string;
     const got = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sid}`, { headers: auth });
+    await got.text();
     if (!got.ok) return { error: `Stripe retrieve HTTP ${got.status}`, repair: "Check Stripe test connectivity" };
     const exp = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sid}/expire`, { method: "POST", headers: auth });
     const ej = await exp.json().catch(() => ({}));
     if (!exp.ok) return { error: `Stripe expire HTTP ${exp.status}`, repair: "Expire the test session manually in Stripe dashboard" };
-    return { payload: { session_id: sid, livemode: false, final_status: (ej as any)?.status ?? "expired", charged: false } };
+    return {
+      error: paymentProofError(),
+      repair: "Run isolated QA with a completed TEST payment and a genuinely received signed webhook; connectivity alone cannot release outreach",
+      payload: { session_id: sid, livemode: false, final_status: (ej as any)?.status ?? "expired", charged: false, connectivity_verified: true, signed_payment_verified: false },
+    };
   });
 
   // 13 — verify funnel increment: run_group-tagged events MUST exist (>0)
@@ -362,7 +368,7 @@ Deno.serve(async (req) => {
     const { count, error } = await sb.from("acquisition_events").select("id", { count: "exact", head: true })
       .contains("metadata", { run_group } as any);
     if (error) return { error: error.message, repair: "Inspect acquisition_events read policy" };
-    if (!count || count < 1) return {
+    if (!funnelIncrementConfirmed(count)) return {
       error: "0 acquisition_events carry this run_group — funnel events are not coherent",
       repair: "Verify r-redirect propagates link metadata.run_group into acquisition_events",
       payload: { event_rows: 0 },

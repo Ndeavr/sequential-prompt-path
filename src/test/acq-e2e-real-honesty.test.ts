@@ -55,7 +55,7 @@ describe("acq-e2e-real — destination synthétique réelle et parcours public a
 describe("acq-e2e-real — états de livraison honnêtes", () => {
   it("le SMS queued ne compte jamais comme livré", () => {
     expect(e2e).toContain("sms_not_delivered");
-    expect(e2e).toContain('lastStatus === "sent" || lastStatus === "delivered"');
+    expect(e2e).toContain("smsDeliveryConfirmed(r.ok, lastStatus)");
     expect(e2e).toContain("TWILIO_TEST_TO");
   });
 

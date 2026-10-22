@@ -3,6 +3,7 @@
 // Cron: every 15 minutes. Also callable on-demand from /admin/outreach-health.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { classifyResendProbe } from "../_shared/providerHealthSemantics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,8 +21,8 @@ interface Probe {
   payload?: Record<string, unknown>;
 }
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
 const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -47,10 +48,9 @@ async function readResendBody(r: Response): Promise<{ name?: string; message?: s
 
 async function probeResend(): Promise<Probe> {
   const trimmed = (RESEND_KEY ?? "").trim();
-  const prefix = trimmed.slice(0, 8);
   const keyLen = (RESEND_KEY ?? "").length;
   const hasWs = !!RESEND_KEY && RESEND_KEY !== trimmed;
-  console.log("[resend.probe] prefix=", prefix, "len=", keyLen, "ws=", hasWs, "starts_re_=", trimmed.startsWith("re_"));
+  const prefix = "[redacted]";
 
   if (!trimmed) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing", repair_action: "manual_required" };
 
@@ -88,7 +88,8 @@ async function probeResend(): Promise<Probe> {
     const auth = await fetchResend("/api-keys");
     let accountId: string | null = null;
     if (auth.status === 401 || auth.status === 403) {
-      // Sending-only keys hit here; do NOT fail yet — fall through to /domains which works for sending keys too.
+      // Introspection may be restricted; only an explicit response body proves it.
+      await auth.text();
       console.log("[resend.probe] api-keys", auth.status, "(likely sending-only scope) — continuing");
     } else if (auth.status === 400) {
       const b = await readResendBody(auth);
@@ -103,10 +104,28 @@ async function probeResend(): Promise<Probe> {
       try { accountId = JSON.parse(b.raw)?.data?.[0]?.id ?? null; } catch {}
     }
 
-    // 2) Domains — source of truth for verified sender (works with sending-access keys)
+    // 2) Domains — unavailable to send-only keys; never treat that as bad auth.
     const dom = await fetchResend("/domains");
     if (!dom.ok) {
       const b = await readResendBody(dom);
+      const { data: sendState, error: sendError } = await supabase.from("outreach_health_state")
+        .select("resend_last_send_status,resend_last_send_at").eq("id", 1).maybeSingle();
+      const verdict = classifyResendProbe({
+        keyPresent: true, httpStatus: dom.status, responseBody: b.raw,
+        lastSuccessfulSendAt: !sendError && sendState?.resend_last_send_status === "sent"
+          ? sendState.resend_last_send_at : null,
+        recentWindowMs: 24 * 3600 * 1000,
+      });
+      if (verdict.code === "SENDING_CAPABLE_RESTRICTED_KEY") {
+        await supabase.from("outreach_health_state").upsert({
+          ...baseDiag, resend_account_id: accountId, resend_last_error: verdict.message,
+        });
+        return {
+          provider: "resend", status: verdict.level, failure_reason: verdict.code,
+          message: verdict.message, repair_action: "manual_required",
+          payload: { http_status: dom.status, introspection_available: false, send_confirmed_recently: verdict.level === "green" },
+        };
+      }
       const msg = (b.message ?? "").toLowerCase();
       const isAuthLike = dom.status === 401 || dom.status === 403 || (dom.status === 400 && (msg.includes("invalid") || msg.includes("api key")));
       await supabase.from("outreach_health_state").upsert({
@@ -138,7 +157,7 @@ async function probeResend(): Promise<Probe> {
     // 3) Honest cap — require a real send within 24h before going green.
     const { data: state } = await supabase.from("outreach_health_state").select("resend_last_send_status,resend_last_send_at").eq("id", 1).maybeSingle();
     const lastSendAt = state?.resend_last_send_at ? new Date(state.resend_last_send_at).getTime() : 0;
-    const sendFresh = state?.resend_last_send_status === "sent" && (Date.now() - lastSendAt < 24 * 3600 * 1000);
+    const sendFresh = state?.resend_last_send_status === "sent" && lastSendAt <= Date.now() && (Date.now() - lastSendAt < 24 * 3600 * 1000);
     if (!sendFresh) {
       return { provider: "resend", status: "yellow", failure_reason: "NO_RECENT_SEND",
         message: `API ok · sender ${verified.name} · prefix=${prefix} · no real send <24h`, repair_action: "run_send_test" };
