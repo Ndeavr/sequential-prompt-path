@@ -7,15 +7,23 @@ const page = readFileSync("src/pages/PageHomeLight.tsx", "utf8");
 const layout = readFileSync("src/layouts/MainLayout.tsx", "utf8");
 const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8");
 const drawer = readFileSync("src/components/navigation/DrawerNavigationMobileIntent.tsx", "utf8");
+const css = readFileSync("src/index.css", "utf8");
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Discutons de votre projet.");
-    expect(hero).toContain("rénover");
+    expect(hero).toContain("Un projet en tête ?");
+    expect(hero).not.toContain("home-hero-subtitle");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
     expect(hero).not.toContain("AnimatePresence");
     expect(hero).not.toContain("motion.");
+  });
+
+  it("gives the mobile chat room without changing an active keyboard session", () => {
+    expect(css).toContain("Homepage only: conversation-first layout");
+    expect(css).toContain("height: clamp(350px, calc(100dvh - 145px), 660px)");
+    expect(css).toContain(".home-glossy-hero:not(.is-conversation-active) .home-clara-main");
+    expect(css).toContain("@media (max-width: 767px) and (min-height: 501px)");
   });
 
   it("keeps Clara text, voice and attachment actions real", () => {
@@ -24,8 +32,10 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("openAlex(\"home_hero\"");
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
-    expect(clara).toContain("<MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>");
-    expect(clara).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(clara).toContain("Discutez avec Clara");
+    expect(clara).toContain("Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?");
+    expect(clara).toContain('placeholder: "Décrivez votre projet…"');
+    expect(clara).toContain("composerPlaceholder");
     expect(clara).toContain('const [composerText, setComposerText] = useState("")');
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");
