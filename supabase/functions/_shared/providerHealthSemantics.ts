@@ -55,7 +55,7 @@ export function classifyResendProbe(input: {
   const now = input.nowMs ?? Date.now();
   const window = input.recentWindowMs ?? 7 * 24 * 60 * 60 * 1000;
   const lastSend = input.lastSuccessfulSendAt ? new Date(input.lastSuccessfulSendAt).getTime() : null;
-  const recentSend = lastSend !== null && Number.isFinite(lastSend) && now - lastSend < window;
+  const recentSend = lastSend !== null && Number.isFinite(lastSend) && lastSend <= now && now - lastSend < window;
 
   if (status === 401 || status === 403) {
     if (isRestrictedSendOnlyBody(input.responseBody)) {
