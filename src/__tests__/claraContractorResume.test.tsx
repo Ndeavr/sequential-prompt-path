@@ -127,7 +127,8 @@ describe("contractor continuity", () => {
     expect(mocks.quote).not.toHaveBeenCalled();
     fireEvent.click(cta);
     const destination = new URL(view.getByTestId("destination").textContent ?? "", "https://unpro.ca");
-    expect(destination.pathname).toBe("/entrepreneur/devis-personnalise");
+    expect(destination.pathname).toBe("/entrepreneurs/activation-350");
+    expect(destination.searchParams.get("activate")).toBe("1");
     expect(Object.fromEntries(destination.searchParams)).toMatchObject({ from: "activation_350", ref: "LORRAINE-UNPRO", utm_source: "sms", utm_campaign: "authorized", source: "affiliate" });
     expect(say.mock.calls.some(([text]) => text.startsWith("Quels sont vos objectifs"))).toBe(false);
   });

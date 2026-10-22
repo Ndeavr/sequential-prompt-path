@@ -7,7 +7,8 @@ describe("Page activation 350 $ — liens", () => {
     const l = buildActivation350Links(new URLSearchParams("ref=lorraine-unpro&utm_source=sms"));
     expect(l.activate).toContain("ref=LORRAINE-UNPRO");
     expect(l.activate).toContain("from=activation_350");
-    expect(l.activate.startsWith("/entrepreneur/devis-personnalise?")).toBe(true);
+    expect(l.activate.startsWith("/entrepreneurs/activation-350?")).toBe(true);
+    expect(new URL(l.activate, "https://unpro.ca").searchParams.get("activate")).toBe("1");
     expect(l.audit).toBe("/entrepreneurs/audit-ia?utm_source=sms&ref=LORRAINE-UNPRO");
   });
   it("option rendez-vous : parcours personnalisé existant, ref et utm conservés", () => {
