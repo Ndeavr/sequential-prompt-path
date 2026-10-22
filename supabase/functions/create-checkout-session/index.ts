@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
       activationToken,
       fallbackCredit,
       entryActivation,
+      declaredCompanyName,
       auditId,
       campaign,
       source,
@@ -288,11 +289,26 @@ Deno.serve(async (req) => {
       };
 
       let fbContractor = await findContractor();
+      // Name is DECLARED, never marked RBQ-verified. Quote-free entry must not
+      // silently create a company whose name is just the login email.
+      const entryDeclaredName = isEntryActivation && typeof declaredCompanyName === "string"
+        ? declaredCompanyName.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 160)
+        : "";
+      const knownQuoteName = typeof identityQuote?.company_name === "string"
+        ? identityQuote.company_name.trim() : "";
+      const knownOwnedName = typeof fbContractor?.business_name === "string"
+        && fbContractor.business_name.trim() !== userEmail
+        ? fbContractor.business_name.trim() : "";
+      if (isEntryActivation && !knownQuoteName && !knownOwnedName && entryDeclaredName.length < 2) {
+        return new Response(JSON.stringify({ error: "Confirmez le nom de votre entreprise avant le paiement.", code: "business_name_required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       if (!fbContractor) {
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
-          .insert({ user_id: userId, ...contractorIdentityFromQuote(identityQuote, userEmail) })
+          .insert({ user_id: userId, ...contractorIdentityFromQuote(identityQuote, userEmail), ...(isEntryActivation && !knownQuoteName && entryDeclaredName ? { business_name: entryDeclaredName } : {}) })
           .select("id")
           .maybeSingle();
 
@@ -321,6 +337,9 @@ Deno.serve(async (req) => {
       }
 
       const identityPatch = missingContractorIdentity(fbContractor, identityQuote, userEmail);
+      if (isEntryActivation && !knownQuoteName && entryDeclaredName && fbContractor.business_name === userEmail) {
+        identityPatch.business_name = entryDeclaredName;
+      }
       if (Object.keys(identityPatch).length) {
         const { error } = await serviceClient.from("contractors").update(identityPatch).eq("id", fbContractor.id).eq("user_id", userId);
         if (error) throw error;
