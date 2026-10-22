@@ -54,7 +54,7 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
-    expect(box).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(box).toContain('placeholder: "Décrivez votre projet…"');
     expect(box).toContain('const [composerText, setComposerText] = useState("")');
     expect(box).toContain("value={composerText}");
     expect(box).toContain("setComposerText(\"\")");
