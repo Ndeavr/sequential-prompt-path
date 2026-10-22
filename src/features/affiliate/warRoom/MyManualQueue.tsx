@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ManualContactPanel from "@/components/crm/ManualContactPanel";
 import { OUTCOME_LABELS } from "@/hooks/useManualContactQueue";
+import { ProspectDetailSheet } from "./ProspectDetailSheet";
 
 type Row = {
   prospect_id: string;
@@ -33,6 +34,7 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data, error: err } = await (supabase as any).rpc("manual_queue_for_me");
@@ -74,7 +76,7 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
                 {[r.city, r.category].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
-            <span className="text-sm font-bold tabular-nums">{r.priority_score ?? 0}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums" title="Priorité interne de file, pas une note commerciale">Priorité {r.priority_score ?? 0}</span>
           </div>
 
           <div className="flex flex-wrap gap-1">
@@ -95,8 +97,8 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
 
           {r.queue === "onboarding_recovery" && (
             <p className="text-[11px] text-amber-600">
-              Onboarding à reprendre. Aucun message n'a été envoyé en votre nom. Le contact ouvre
-              seulement après vérification de la conformité.
+              Onboarding à reprendre : paiement non reçu, aucun achat confirmé. Coordonnées dans « Fiche prospect »
+              pour vérification manuelle; appel, SMS, courriel et lien d'activation restent bloqués jusqu'à la vérification de conformité.
             </p>
           )}
 
@@ -116,9 +118,13 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
               blocked_reason: r.blocked_reason,
             }}
             onDone={load}
+            onOpenDetail={() => setDetailId(r.prospect_id)}
           />
         </div>
       ))}
+      {detailId && (
+        <ProspectDetailSheet prospectId={detailId} open onOpenChange={(o) => !o && setDetailId(null)} />
+      )}
     </div>
   );
 }

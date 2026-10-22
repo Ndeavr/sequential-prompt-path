@@ -50,12 +50,15 @@ export default function ManualContactPanel({
   canLogOutcome = true,
   onDone,
   compact = false,
+  onOpenDetail,
 }: {
   target: ManualContactTarget;
   policy?: ManualContactPolicy;
   canLogOutcome?: boolean;
   onDone?: () => void;
   compact?: boolean;
+  /** Prospect non inscrit : ouvre la fiche prospect au lieu du profil entrepreneur. */
+  onOpenDetail?: () => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [outcomeOpen, setOutcomeOpen] = useState(false);
