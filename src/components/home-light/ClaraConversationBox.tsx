@@ -243,7 +243,7 @@ type IntentSuggestion = {
 const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
   { label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem", source: "default" },
   { label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem", source: "default" },
-  { label: "Je suis entrepreneur", intent: "contractor_onboarding", source: "default" },
+  { label: "J’aimerais rénover ma salle de bain", intent: "homeowner_problem", source: "default" },
 ];
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
@@ -288,7 +288,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   const copy = lang === "fr"
     ? {
-        placeholder: "Que voulez-vous faire ?",
+        placeholder: "Décrivez votre projet…",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara vous écoute…",
         attach: "Ajouter une photo ou un document",
@@ -304,14 +304,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
       }
     : {
-        placeholder: "Que voulez-vous faire ?",
-        placeholderActive: "Répondez à Clara…",
+        placeholder: "Describe your project…",
+        placeholderActive: "Reply to Clara…",
         listening: "Clara is listening…",
-        attach: "Ajouter une photo ou un document",
-        camera: "Prendre une photo",
+        attach: "Add a photo or document",
+        camera: "Take a photo",
         voice: "Talk to Clara",
         send: "Send",
-        working: "Analyse en cours…",
+        working: "Analyzing…",
         fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
         reset: "New conversation",
         resetConfirm: "Start a new conversation?",
@@ -619,11 +619,17 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   // Entrepreneur : Clara pose les questions dans le chat, aucun formulaire dessous.
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING", "CONTRACTOR"].includes(mode);
   const popularQuestions = usePopularQuestions(3);
-  const intentSuggestions: IntentSuggestion[] = popularQuestions.source === "trending"
-    ? popularQuestions.items.slice(0, 3).map((item) => ({
+  const homeownerTrending = popularQuestions.items.filter((item) => item.intent !== "contractor");
+  const intentSuggestions: IntentSuggestion[] = lang === "en"
+    ? [
+        { label: "I’d like to remodel my kitchen", intent: "homeowner_problem", source: "default" },
+        { label: "I have ice dams on my roof", intent: "homeowner_problem", source: "default" },
+        { label: "I’d like to renovate my bathroom", intent: "homeowner_problem", source: "default" },
+      ]
+    : popularQuestions.source === "trending" && homeownerTrending.length >= 3
+    ? homeownerTrending.slice(0, 3).map((item) => ({
         label: item.label,
-        intent: item.intent === "contractor" ? "contractor_onboarding"
-          : item.intent === "comparison" ? "quote_comparison" : "homeowner_problem",
+        intent: item.intent === "comparison" ? "quote_comparison" : "homeowner_problem",
         source: "trending",
       }))
     : DEFAULT_INTENT_SUGGESTIONS;
@@ -1779,6 +1785,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     [createLocalPreview, enqueueMedia],
   );
 
+  const composerPlaceholder = voiceActive
+    ? copy.listening
+    : audience === "contractor"
+      ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
+      : conversationStarted ? copy.placeholderActive : copy.placeholder;
+
   return (
     <section
       ref={rootRef}
@@ -1789,8 +1801,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         <div className="home-clara-command-row" data-chat-row="commands">
           <div className={`home-clara-presence${busy ? " is-active" : ""}`} data-state={busy ? "working" : "idle"}>
             <span aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" />
-            <strong>Clara</strong>
-            <small>{busy ? "Analyse en cours…" : voiceActive ? "Mode vocal" : "Disponible"}</small>
+            <strong>{surface === "home" ? (lang === "fr" ? "Discutez avec Clara" : "Chat with Clara") : "Clara"}</strong>
+            <small>{busy ? copy.working : voiceActive ? (lang === "fr" ? "Mode vocal" : "Voice mode") : (lang === "fr" ? "Disponible" : "Available")}</small>
           </div>
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
             {audience === "contractor" && (
@@ -1881,7 +1893,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
-                  <MessageResponse>Bonjour ! Que puis-je faire pour vous ?</MessageResponse>
+                  <MessageResponse>{audience === "contractor"
+                    ? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?")
+                    : (lang === "fr" ? "Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?" : "Hello! What would you like to improve, renovate or repair?")}</MessageResponse>
                 </MessageContent>
               </Message>
             )}
@@ -2070,8 +2084,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         >
           <PromptInputTextarea
             ref={textareaRef}
-            aria-label={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
-            placeholder={voiceActive ? copy.listening : conversationStarted ? copy.placeholderActive : copy.placeholder}
+            aria-label={composerPlaceholder}
+            placeholder={composerPlaceholder}
              rows={1}
              value={composerText}
              onChange={(event) => handleComposerChange(event.currentTarget.value)}

@@ -54,7 +54,7 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
-    expect(box).toContain('placeholder: "Que voulez-vous faire ?"');
+    expect(box).toContain('placeholder: "Décrivez votre projet…"');
     expect(box).toContain('const [composerText, setComposerText] = useState("")');
     expect(box).toContain("value={composerText}");
     expect(box).toContain("setComposerText(\"\")");
@@ -68,7 +68,8 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("remplace les phrases arbitraires par des intentions réelles", () => {
-    expect(box).toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
+    expect(box).not.toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
+    expect(box).toContain('label: "J’aimerais rénover ma salle de bain", intent: "homeowner_problem"');
     expect(box).toContain('label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem"');
     expect(box).toContain('label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem"');
     expect(box).toContain("chooseIntentSuggestion(suggestion)");

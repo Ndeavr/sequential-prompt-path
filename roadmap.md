@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] 2026-10-22 homepage only: reuse PR #28 selectively over newer editor fixes; verify 360/390/430/desktop, composer/keyboard simulation and persona regressions; no merge, deployment or publication.
 - [ ] Constrained outreach P0 repair: inspect active wiring; fix provider-health and safe send guards with mocked regressions; no sends, remote writes, release or deployment.
 - [x] Minimal P0 follow-up: remove undefined admin hook dependency and align active entry-offer copy only; preserve Checkout/webhook and historical rights. Automatic compilation verification pending; no production actions authorized.
 - [ ] Authorized P1 isolation interventions: repair pack persistence/finalize, exact declared scope matching and active Clara lead payload; synthetic local QA only, no deployment or production writes.
