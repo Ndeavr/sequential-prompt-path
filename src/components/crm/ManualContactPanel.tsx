@@ -177,10 +177,16 @@ export default function ManualContactPanel({
           onClick={() => openChannel("email")}>
           <Mail className="h-3.5 w-3.5 mr-1" /> Courriel
         </Button>
-        <Button size="sm" variant="outline" className={size}
-          onClick={() => window.open(profileHref(target.prospect_id), "_blank")}>
-          <ExternalLink className="h-3.5 w-3.5 mr-1" /> Profil
-        </Button>
+        {onOpenDetail ? (
+          <Button size="sm" variant="outline" className={size} onClick={onOpenDetail}>
+            <ExternalLink className="h-3.5 w-3.5 mr-1" /> Fiche prospect
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className={size}
+            onClick={() => window.open(profileHref(target.prospect_id), "_blank")}>
+            <ExternalLink className="h-3.5 w-3.5 mr-1" /> Profil
+          </Button>
+        )}
         <Button size="sm" className={size} disabled={locked || busy !== null}
           onClick={() => sendLink(target.email ? "email" : "sms")}>
           {busy ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
