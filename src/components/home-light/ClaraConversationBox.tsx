@@ -214,7 +214,7 @@ export function shouldSuggestVoice(input: {
  * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
  * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
  */
-export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
+export const CHOICE_MARKER = /\[\[\s*(?:CHOIX|CHOICE)\s*:([^\]]*)\]\]/i;
 
 export function extractQuickReplies(raw: string): { text: string; options: string[] } {
   const match = raw.match(CHOICE_MARKER);
