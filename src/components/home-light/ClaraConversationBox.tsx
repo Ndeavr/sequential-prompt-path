@@ -97,7 +97,7 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
-import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
+import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, resolveClaraContractorEntry, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
@@ -275,9 +275,16 @@ interface ClaraConversationBoxProps {
   onConversationActiveChange?: (active: boolean) => void;
   surface?: "home" | "embedded";
   onDestinationOpened?: () => void;
+  /** Arrivée directe sur une page entrepreneur : le rôle est fixé avant toute salutation. */
+  forcedAudience?: "contractor";
+  /** Première question du parcours entrepreneur, seulement pour une nouvelle entreprise. */
+  contractorOpening?: string;
+  heading?: string;
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading }: ClaraConversationBoxProps) {
+  const forcedContractor = forcedAudience === "contractor";
+  // Rôle établi synchronement avant le premier rendu, donc avant toute salutation.
   const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
@@ -325,7 +332,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   messagesRef.current = messages;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ClaraSurfaceMode>(() => hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
+  const [mode, setMode] = useState<ClaraSurfaceMode>(() => forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
@@ -335,7 +342,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudienceState] = useState<ClaraAudience>(() => hasActiveContractorFlow() ? "contractor" : "homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>(() => forcedContractor || hasActiveContractorFlow() ? "contractor" : "homeowner");
   /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
   const audienceRef = useRef<ClaraAudience>(audience);
   const audienceEpochRef = useRef(0);
@@ -546,8 +553,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     setError(null);
     setQuoteCount(0);
     setContextStatus(null);
-    setMode("IDLE");
-    setAudience("homeowner");
+    setMode(forcedContractor ? "CONTRACTOR" : "IDLE");
+    setAudience(forcedContractor ? "contractor" : "homeowner");
     qualificationStepRef.current = null;
     setContractorFlow(false);
     rememberActiveContractorFlow(false);
@@ -555,11 +562,16 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
       await startNewClaraSession({ language: lang, entrypoint: "home_clara_box" });
+      if (forcedContractor) {
+        rememberActiveContractorFlow(true);
+        rememberClaraReferences({ current_intent: "contractor_onboarding", detected_role: "CONTRACTOR" });
+        setContractorFlow(true);
+      }
     } catch {
       // La conversation reste utilisable : la session sera recréée à la première écriture.
     }
     focusComposer();
-  }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, lang, setAudience]);
+  }, [clearLocalPreviews, clearMedia, closeAlex, focusComposer, forcedContractor, lang, setAudience]);
 
   /** Conversations passées : la liste vient du serveur, jamais d'une copie locale. */
   const openHistory = useCallback(async () => {
@@ -643,7 +655,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
 
-        const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
+        const resumedContractor = !hasExplicitHomeownerFlow() && isContractorContext(state.context);
+        // Lien entrepreneur : un fil propriétaire existant reste sur le serveur
+        // (historique), mais n'est jamais affiché ni hérité dans ce parcours.
+        const restored = forcedContractor && !resumedContractor
+          ? []
+          : state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
         setMessages((current) => reconcileMessages(current, restored));
         workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
@@ -653,9 +670,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         // Context and qualification must be restored with the messages.
         // A local marker only applies to this exact canonical conversation.
         hydrateClaraQualification(state.context.workflow as Record<string, unknown> | undefined);
-        const contractor = !hasExplicitHomeownerFlow() && (isContractorContext(state.context)
-          || (!state.context.current_intent && hasActiveContractorFlow()));
+        const contractor = resolveClaraContractorEntry(state.context, forcedAudience);
         if (audienceEpochRef.current !== 0) return;
+        if (forcedContractor && !resumedContractor) {
+          rememberClaraReferences({ current_intent: "contractor_onboarding", detected_role: "CONTRACTOR" });
+        }
         setAudience(contractor ? "contractor" : "homeowner");
         setContractorFlow(contractor);
         rememberActiveContractorFlow(contractor);
@@ -668,10 +687,13 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
-        if (hasActiveContractorFlow()) setContractorFlow(true);
+        if (forcedContractor || hasActiveContractorFlow()) {
+          rememberActiveContractorFlow(true);
+          setContractorFlow(true);
+        }
       }
     })();
-  }, [lang, setAudience]);
+  }, [forcedAudience, forcedContractor, lang, setAudience]);
 
   useEffect(() => {
     const switchToHomeowner = () => {
@@ -1640,7 +1662,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       uploading: uploadingMedia || busy,
       voiceActive,
     });
-    if (!recommended || busy || voiceActive || uploadingMedia) {
+    if (forcedContractor || !recommended || busy || voiceActive || uploadingMedia) {
       setVoiceGlow(false);
       setVoiceTip(null);
       return;
@@ -1659,7 +1681,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       trackCopilotEvent("clara_voice_suggestion_dismissed", { surface: "home_clara_box" });
     }, 10_000);
     return () => window.clearTimeout(timer);
-  }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang, contractorFlow]);
+  }, [lastAssistantText, lastUserText, userMessageCount, uploadingMedia, busy, voiceActive, lang, contractorFlow, forcedContractor]);
 
 
   useEffect(() => {
@@ -1801,7 +1823,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         <div className="home-clara-command-row" data-chat-row="commands">
           <div className={`home-clara-presence${busy ? " is-active" : ""}`} data-state={busy ? "working" : "idle"}>
             <span aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" />
-            <strong>{surface === "home" ? (lang === "fr" ? "Discutez avec Clara" : "Chat with Clara") : "Clara"}</strong>
+            <strong>{heading ?? (surface === "home" ? (lang === "fr" ? "Discutez avec Clara" : "Chat with Clara") : "Clara")}</strong>
             <small>{busy ? copy.working : voiceActive ? (lang === "fr" ? "Mode vocal" : "Voice mode") : (lang === "fr" ? "Disponible" : "Available")}</small>
           </div>
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
@@ -1894,7 +1916,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
                   <MessageResponse>{audience === "contractor"
-                    ? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?")
+                    ? (contractorOpening ?? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?"))
                     : (lang === "fr" ? "Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?" : "Hello! What would you like to improve, renovate or repair?")}</MessageResponse>
                 </MessageContent>
               </Message>
@@ -1958,6 +1980,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 say={(text) => sayClara(text)}
                 addUser={addFlowUserMessage}
                 onBusy={setBusy}
+                opening={contractorOpening}
               />
             )}
             {!contractorFlow && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (

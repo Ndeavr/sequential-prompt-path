@@ -7,19 +7,23 @@
  * create-checkout-session entry_activation_350 → webhook signé).
  * Le code ?ref est conservé dans l'URL à chaque étape et résolu côté serveur.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Check, ArrowRight, ChevronDown, CalendarCheck } from "lucide-react";
+import { Check, ArrowRight, ChevronDown, CalendarCheck, Minus, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { captureAttribution, trackReferralEvent } from "@/hooks/useReferralAttribution";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
-import { CallUnproLink } from "@/components/contact/CallUnproLink";
+import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
 
 export const ACTIVATION_350_APPT_DISCLOSURE =
   "Profil + 12 mois de présence UNPRO.";
+
+export const ACTIVATION_350_CLARA_OPENING =
+  "Bonjour! Je peux regarder comment votre entreprise est présentée aux propriétaires et aux IA. Quel est le nom de votre entreprise ou son site Web?";
 
 const BENEFITS = [
   {
@@ -40,6 +44,7 @@ export default function PageActivation350() {
   const [sp] = useSearchParams();
   const ref = normalizeRef(sp.get("ref"));
   const links = useMemo(() => buildActivation350Links(sp), [sp]);
+  const [chatOpen, setChatOpen] = useState(true);
 
   useEffect(() => {
     captureAttribution(sp);
@@ -53,32 +58,47 @@ export default function PageActivation350() {
     "flex min-h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-primary px-5 py-3 text-center font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none";
 
   return (
-    <main className="min-h-screen bg-background pb-28 text-foreground sm:pb-10">
+    <main className="home-light activation-clara-page min-h-screen bg-background pb-28 text-foreground sm:pb-10">
       <Helmet>
         <title>Activer ma visibilité IA — 350 $ + taxes | UNPRO</title>
         <meta name="description" content="Rendez votre entreprise plus facile à comprendre pour les moteurs de recherche et les assistants IA. Profil UNPRO + 12 mois d'optimisation, 350 $ + taxes." />
         <meta name="robots" content="noindex" />
       </Helmet>
 
-      <div className="mx-auto w-full max-w-xl px-4 pt-6 sm:pt-10">
+      <div className="mx-auto w-full max-w-xl px-4 pt-4 sm:pt-6">
         <UnproLogo size={110} variant="primary" animated={false} />
 
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Visibilité IA</p>
-        <h1 className="mt-3 text-[2rem] font-bold leading-[1.1] tracking-tight sm:text-4xl">
-          Vos prochains clients cherchent avec l'IA. Votre entreprise est-elle prête à être trouvée?
-        </h1>
-        <p className="mt-4 text-base text-muted-foreground">
-          UNPRO met en valeur vos spécialités et votre savoir-faire pour aider les propriétaires et les outils IA à mieux découvrir votre entreprise.
-        </p>
+        <div className="mt-5 flex items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold leading-tight sm:text-3xl">Discutez avec Clara</h1>
+          <Button variant="ghost" size="icon" className="min-h-11 min-w-11" aria-label={chatOpen ? "Réduire Clara" : "Reprendre avec Clara"} aria-expanded={chatOpen} aria-controls="activation-clara-chat" onClick={() => setChatOpen((open) => !open)}>
+            {chatOpen ? <Minus aria-hidden /> : <MessageCircle aria-hidden />}
+          </Button>
+        </div>
+        <div id="activation-clara-chat" className="activation-clara-chat mt-3" hidden={!chatOpen}>
+          <ClaraConversationBox
+            forcedAudience="contractor"
+            contractorOpening={ACTIVATION_350_CLARA_OPENING}
+            heading="Discutez avec Clara"
+          />
+        </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 space-y-3">
           <Link to={links.activate} onClick={onActivate} className={ctaCls} data-testid="activation-350-cta">
-            Activer ma visibilité IA — 350 $ + taxes <ArrowRight className="h-4 w-4" aria-hidden />
+            Activer mon profil — 350 $ + taxes <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
           <Link to={links.audit} className="flex min-h-11 w-full items-center justify-center rounded-[18px] border border-border px-5 py-3 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             Voir mon audit IA gratuit
           </Link>
         </div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Visibilité IA</p>
+        <h2 className="mt-3 text-[2rem] font-bold leading-[1.1] sm:text-4xl">
+          Vos prochains clients cherchent avec l'IA. Votre entreprise est-elle prête à être trouvée?
+        </h2>
+        <p className="mt-4 text-base text-muted-foreground">
+          UNPRO met en valeur vos spécialités et votre savoir-faire pour aider les propriétaires et les outils IA à mieux découvrir votre entreprise.
+        </p>
+
       </div>
 
       <div className="mt-6" aria-label="Vidéo de présentation UNPRO">
@@ -132,13 +152,11 @@ export default function PageActivation350() {
           </Link>
         </section>
 
-        {ref && <p className="mt-6 text-center text-xs text-muted-foreground">Recommandé par un partenaire UNPRO · code {ref}</p>}
-        <div className="mt-4 flex justify-center"><CallUnproLink context="activation_350_landing" label="Une question? Appeler UNPRO" compact /></div>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
         <Link to={links.activate} onClick={onActivate} className={ctaCls}>
-          Activer ma visibilité IA — 350 $ + taxes
+          Activer mon profil — 350 $ + taxes
         </Link>
       </div>
     </main>

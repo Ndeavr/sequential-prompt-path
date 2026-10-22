@@ -2494,6 +2494,30 @@ html[data-theme-ready="true"] .glass-btn {
 .home-light .home-clara-conversation .home-clara-qualification-preview input { color: hsl(var(--card-foreground)); }
 .home-light .home-clara-conversation .home-clara-qualification-preview label { color: hsl(var(--muted-foreground)); }
 
+/* Direct activation links embed the canonical text session, never the home
+   full-page lock. Keep a bounded thread and visible composer on both sizes. */
+.activation-clara-page .activation-clara-chat .home-clara-shell,
+.activation-clara-page .activation-clara-chat .home-clara-shell.is-conversation-active {
+  margin-top: 0;
+  height: 420px;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+.activation-clara-page .activation-clara-chat .home-clara-main,
+.activation-clara-page .activation-clara-chat .home-clara-shell.is-conversation-active .home-clara-main {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+.activation-clara-page .home-context-slot { display: none; }
+@media (max-width: 639px) {
+  .activation-clara-page .activation-clara-chat .home-clara-shell,
+  .activation-clara-page .activation-clara-chat .home-clara-shell.is-conversation-active {
+    height: min(400px, calc(var(--app-visible-height, 100dvh) - 200px));
+    min-height: 220px;
+  }
+}
+
 /* Clara: one midnight material, restrained highlights and accessible controls. */
 .home-light .home-clara-glass { border: 1px solid hsl(var(--border)); border-radius: 28px; box-shadow: 0 24px 72px -30px #000a, inset 0 1px 0 #ffffff0b; }
 .home-light .home-clara-command-row { padding: .6rem .8rem; background: transparent; }
