@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
       // Name is DECLARED, never marked RBQ-verified. Quote-free entry must not
       // silently create a company whose name is just the login email.
       const entryDeclaredName = isEntryActivation && typeof declaredCompanyName === "string"
-        ? declaredCompanyName.trim().replace(/[\\u0000-\\u001F\\u007F]/g, "").slice(0, 160)
+        ? declaredCompanyName.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 160)
         : "";
       const knownQuoteName = typeof identityQuote?.company_name === "string"
         ? identityQuote.company_name.trim() : "";
