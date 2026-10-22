@@ -6,7 +6,8 @@ import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSumm
  * Toutes les données affichées sont réelles (aucune statistique inventée).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Phone, Send, Search, LineChart, Trophy, Loader2, Plus, SkipForward,
@@ -81,6 +82,7 @@ function StepCard({
 }
 
 export default function PageAffiliateActionMode() {
+  const navigate = useNavigate();
   const { data: affiliate, isLoading: loadingAffiliate } = useAffiliateSelf();
   const { loading, error, next, skip } = useNextProspect();
   const refreshStats = useRefreshStats();
@@ -92,6 +94,7 @@ export default function PageAffiliateActionMode() {
   const [permissions, setPermissions] = useState<ContactPermissions | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
   const [emptyReason, setEmptyReason] = useState<string | null>(null);
+  const [assignedReviewCount, setAssignedReviewCount] = useState<number | null>(null);
   const [called, setCalled] = useState(false);
   const [sending, setSending] = useState<"sms" | "email" | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -116,6 +119,22 @@ export default function PageAffiliateActionMode() {
     },
     [next]
   );
+
+  // Les dossiers CRM sont distincts de la file d'appels contractor_leads.
+  // RPC serveur avec RLS : ne lit QUE les dossiers attribués à cet affilié.
+  // Un dossier assigné n'est jamais automatiquement une permission de contacter.
+  useEffect(() => {
+    if (!affiliate?.id) { setAssignedReviewCount(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("manual_queue_for_me");
+      if (cancelled) return;
+      setAssignedReviewCount(error ? null : (data ?? []).filter(
+        (r: { queue?: string }) => r.queue === "manual_contact" || r.queue === "onboarding_recovery"
+      ).length);
+    })();
+    return () => { cancelled = true; };
+  }, [affiliate?.id]);
 
   // Permissions absentes = refusées (jamais permissives par défaut).
   const canCall = permissions?.can_call === true;
@@ -346,9 +365,20 @@ export default function PageAffiliateActionMode() {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                {emptyReason === "no_eligible_prospect" ? "Aucun prospect à contacter maintenant. Ajoutez-en un pour continuer." : error ?? "Aucun prospect disponible."}
+                {emptyReason === "no_eligible_prospect"
+                  ? "Aucun prospect admissible à un contact immédiat. Les dossiers à vérifier restent accessibles séparément."
+                  : error ?? "Aucun prospect disponible."}
               </p>
-              <Button onClick={() => setAddOpen(true)} className="h-12 w-full gap-2 rounded-2xl"><Plus className="h-4 w-4" />Ajouter un prospect</Button>
+              {assignedReviewCount !== null && assignedReviewCount > 0 && (
+                <div data-testid="affiliate-assigned-review-count" className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                  <p className="text-sm font-medium">{assignedReviewCount} dossier{assignedReviewCount > 1 ? "s" : ""} attribué{assignedReviewCount > 1 ? "s" : ""} à examiner.</p>
+                  <p className="text-xs text-muted-foreground">Ces dossiers ne sont pas nécessairement autorisés pour appel, SMS ou courriel.</p>
+                  <Button asChild variant="outline" className="h-11 w-full rounded-xl">
+                    <Link to="/affiliate/crm">Voir mes dossiers à vérifier</Link>
+                  </Button>
+                </div>
+              )}
+              <Button onClick={() => setAddOpen(true)} className="h-12 w-full gap-2 rounded-2xl"><Plus className="h-4 w-4" />Importer ou ajouter un prospect</Button>
             </div>
           )}
         </StepCard>
@@ -537,14 +567,17 @@ export default function PageAffiliateActionMode() {
             className="h-16 w-full gap-2 rounded-2xl text-base font-bold"
             disabled={loading}
             onClick={() => {
-              if (!prospect) { void loadNext(); return; }
+              if (!prospect) {
+                if (assignedReviewCount !== null && assignedReviewCount > 0) { navigate("/affiliate/crm"); return; }
+                void loadNext(); return;
+              }
               // Échec fermé : jamais d'appel si la permission n'est pas accordée.
               if (!called && canCall) { void onCall(); return; }
               void loadNext(prospect.id);
             }}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && canCall ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
-            {!prospect ? "TROUVER UN PROSPECT" : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
+            {!prospect ? (assignedReviewCount !== null && assignedReviewCount > 0 ? "VOIR MES DOSSIERS À VÉRIFIER" : "TROUVER UN PROSPECT") : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
           </Button>
         </div>
       </div>
