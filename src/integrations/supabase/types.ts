@@ -101026,6 +101026,44 @@ export type Database = {
         }
         Returns: Json
       }
+      manual_prospect_detail_for_me: {
+        Args: { p_prospect_id: string }
+        Returns: {
+          assigned_at: string
+          assignment_status: string
+          attempts: number
+          business_name: string
+          category: string
+          city: string
+          delivery_status: string
+          due_at: string
+          email: string
+          email_failure_reason: string
+          email_sent_at: string
+          google_business_url: string
+          last_attempt_at: string
+          last_outcome: string
+          last_outcome_at: string
+          legal_name: string
+          next_action: string
+          outreach_sent_at: string
+          outreach_status: string
+          phone_e164: string
+          phone_line_type: string
+          phone_secondary: string
+          phone_validation_status: string
+          prospect_id: string
+          queue: string
+          rbq_number: string
+          rbq_source_url: string
+          region: string
+          sms_eligible: boolean
+          sms_error_code: string
+          source: string
+          source_table: string
+          website_url: string
+        }[]
+      }
       manual_queue_for_me: {
         Args: never
         Returns: {
