@@ -23,6 +23,9 @@ export default function HeroHomeownerLight() {
             <p className="home-hero-subtitle mx-auto max-w-3xl text-muted-foreground">
               {copy.subtitle}
             </p>
+            <p className="mx-auto mt-2 max-w-3xl text-sm font-medium text-foreground/80">
+              Le bon entrepreneur pour votre situation, sans multiplier les soumissions et les visites inutiles.
+            </p>
           </div>
         )}
 

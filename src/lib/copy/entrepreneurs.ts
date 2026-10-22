@@ -32,9 +32,9 @@ export const entrepreneurMessaging = {
           "UNPRO recommande votre entreprise aux bons propriétaires, au bon moment — selon votre métier, votre secteur et vos disponibilités.",
       },
       B: {
-        title: "Soyez recommandé aux bons propriétaires, au bon moment.",
+        title: "Besoin de plus de contrats? Ça prend de vrais rendez-vous.",
         subtitle:
-          "L'IA d'UNPRO oriente les propriétaires sérieux vers les entrepreneurs les plus compatibles. Pas de comparateur. Pas d'enchère. Une recommandation.",
+          "Des rendez-vous qualifiés, avec les bons clients, dans votre territoire. Chaque rendez-vous attribué est exclusif et jamais partagé avec plusieurs entrepreneurs.",
       },
       C: {
         title: "Arrêtez de courir après les contrats.",
@@ -55,7 +55,7 @@ export const entrepreneurMessaging = {
       },
     },
     default: "B" as const,
-    promise: "Des rendez-vous exclusifs garantis. Pas des leads partagés.",
+    promise: "Des projets qualifiés. Des rendez-vous exclusifs, jamais partagés.",
   },
 
   onboarding: {

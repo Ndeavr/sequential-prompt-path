@@ -155,13 +155,13 @@ export default function PageVisibiliteIA() {
             </span>
 
             <h1 className="mt-6 text-balance font-display text-[clamp(2.7rem,7vw,6.6rem)] font-semibold leading-[0.95] text-foreground">
-              Est-ce que l’IA comprend votre entreprise?
+              Augmentez vos chances d’être recommandé par l’IA.
             </h1>
 
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               De plus en plus de propriétaires demandent directement à ChatGPT, Gemini et aux autres
-              assistants IA quel entrepreneur choisir. UNPRO aide votre entreprise à devenir plus
-              facile à comprendre, à vérifier et à recommander.
+              assistants IA quel entrepreneur choisir. UNPRO vous aide à améliorer vos chances d’être trouvé, compris et recommandé
+              grâce à des informations structurées sur vos services, votre territoire et votre expertise.
             </p>
 
             <p className="mt-3 text-sm font-medium text-foreground">Pas besoin de remplacer votre site Web.</p>

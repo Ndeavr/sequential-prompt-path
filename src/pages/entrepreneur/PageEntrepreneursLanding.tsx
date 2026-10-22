@@ -33,7 +33,7 @@ const PageEntrepreneursLanding = () => {
         <title>Entrepreneurs — UNPRO | Rendez-vous avec des clients sérieux</title>
         <meta
           name="description"
-          content="Pas des leads partagés. Des rendez-vous avec des clients sérieux. UNPRO connecte les entrepreneurs résidentiels du Québec à des propriétaires prêts à avancer. Places limitées par territoire."
+          content="Besoin de plus de contrats? UNPRO vise des rendez-vous qualifiés avec les bons propriétaires, dans votre territoire, exclusifs et jamais partagés. Découvrez aussi votre visibilité IA."
         />
       </Helmet>
 

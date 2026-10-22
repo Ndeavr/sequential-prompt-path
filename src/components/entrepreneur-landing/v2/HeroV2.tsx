@@ -118,9 +118,9 @@ export default function HeroV2({ onTrackCta }: Props) {
         transition={{ delay: 0.6 }}
         className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground"
       >
-        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> Recommandé par l'IA</span>
-        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> Visibilité IA activable</span>
-        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> Exclusivité territoriale</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> Admissibilité évaluée par Clara</span>
+        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> Améliorez vos chances d’être recommandé par l’IA</span>
+        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> Rendez-vous exclusifs, non partagés</span>
       </motion.div>
     </section>
   );

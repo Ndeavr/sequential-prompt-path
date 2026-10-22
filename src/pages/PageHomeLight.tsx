@@ -33,24 +33,24 @@ export default function PageHomeLight() {
     <AlexProvider>
       <MainLayout hideMemorySection>
         <Helmet>
-          <title>UNPRO | Clara, votre intelligence résidentielle</title>
+          <title>UNPRO | Le bon entrepreneur pour votre situation</title>
           <meta
             name="description"
-            content="Montrez ou décrivez votre besoin à Clara. Elle vous aide à comprendre, vérifier ou améliorer votre propriété."
+            content="Le bon entrepreneur pour votre situation, sans multiplier les soumissions et visites inutiles. Clara analyse votre projet et vos préférences pour un jumelage compatible."
           />
-          <meta property="og:title" content="UNPRO — Parlez à Clara" />
+          <meta property="og:title" content="UNPRO — Moins de soumissions. De meilleures rencontres." />
           <meta
             property="og:description"
-            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
+            content="Clara vous aide à identifier l'entrepreneur compatible avec votre projet, vos besoins et vos disponibilités."
           />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://unpro.ca/" />
           <meta property="og:image" content={DEFAULT_OG_IMAGE} />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="UNPRO — Parlez à Clara" />
+          <meta name="twitter:title" content="UNPRO — Moins de soumissions. De meilleures rencontres." />
           <meta
             name="twitter:description"
-            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
+            content="Clara vous aide à identifier l'entrepreneur compatible avec votre projet, vos besoins et vos disponibilités."
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
           <meta name="theme-color" content="#050816" />
