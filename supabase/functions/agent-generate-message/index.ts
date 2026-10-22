@@ -42,10 +42,11 @@ Deno.serve(async (req) => {
       if (generated >= limit) break;
       if (!isDraftEligible(lead)) { skipped_ineligible++; continue; }
 
-      const { count: open } = await db.from("agent_outreach_messages")
+      const { count: open, error: openError } = await db.from("agent_outreach_messages")
         .select("id", { count: "exact", head: true })
         .eq("lead_id", lead.id).in("status", ["pending", "draft", "generating"]);
-      if ((open ?? 0) > 0) { skipped_existing++; continue; }
+      if (openError || open === null) throw new Error("agent_queue_open_check_unavailable");
+      if (open > 0) { skipped_existing++; continue; }
 
       // Atomic reservation — the unique index decides the single winner.
       const key = idempotencyKey(lead.id, now);

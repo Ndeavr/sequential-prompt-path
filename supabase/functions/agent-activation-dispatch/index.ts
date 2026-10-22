@@ -5,6 +5,7 @@
  */
 import { corsHeaders, recordAgentRun } from "../_shared/agentRun.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { agentQueueEmissionStop, assertAgentQueueEmissionStopped } from "../agent-send-outreach/quarantine.ts";
 
 function pickPlan(saturation: number, competitors: number): { slug: string; price: number } {
   if (saturation < 30 && competitors < 3) return { slug: "recrue", price: 149 };
@@ -13,6 +14,7 @@ function pickPlan(saturation: number, competitors: number): { slug: string; pric
 }
 
 async function dispatchOne(lead_id: string, triggered_by: string) {
+  assertAgentQueueEmissionStopped(); // no Checkout creation or pending insert
   return await recordAgentRun("activation-dispatch", async (db) => {
     const { data: lead } = await db.from("contractor_leads").select("*").eq("id", lead_id).maybeSingle();
     if (!lead) throw new Error("lead not found");
@@ -61,6 +63,7 @@ async function dispatchOne(lead_id: string, triggered_by: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  return agentQueueEmissionStop();
   const payload = await req.json().catch(() => ({}));
   const { lead_id, triggered_by = "manual", max_batch = 10 } = payload;
 
@@ -73,7 +76,7 @@ Deno.serve(async (req) => {
   }
 
   // Batch mode (cron): pick interested leads not yet dispatched
-  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   const { data: leads } = await db.from("contractor_leads")
     .select("id")
     .in("lead_status", ["interested", "ready_to_activate"])

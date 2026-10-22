@@ -4,7 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend } from "./smsGuard.ts";
 import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
-import { assertOutreachEnabled, isTransactionalMessageType } from "./outreachGate.ts";
+import { assertCommercialOutreachAllowed, isTransactionalMessageType } from "./outreachGate.ts";
 import { validateSmsBody } from "./smsGreeting.ts";
 
 // Map sendSms message_type to the central send-window MessageClass.
@@ -131,7 +131,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     input.strict_admin_override === true && input.bypass_guard === true &&
     !input.prospect_id && !input.lead_id && !input.campaign_id;
   if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
-    const gate = await assertOutreachEnabled(supabase as any);
+    const gate = await assertCommercialOutreachAllowed(supabase as any);
     if (!gate.allowed) {
       const body_hash_gate = await hashBody(input.body);
       const { data: gated } = await supabase

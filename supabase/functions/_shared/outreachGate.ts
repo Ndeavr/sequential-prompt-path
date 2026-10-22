@@ -52,9 +52,13 @@ export async function assertCommercialOutreachAllowed(sb: MinimalClient): Promis
   if (!master.allowed) return master;
   try {
     const { data, error } = await sb.from("outreach_autopilot_gate")
-      .select("gated").eq("id", "1").maybeSingle();
+      .select("gated,operational_score").eq("id", "1").maybeSingle();
     if (error || !data || (data as { gated?: unknown }).gated !== false) {
       return { allowed: false, reason: "OUTREACH_AUTOPILOT_GATED" };
+    }
+    const score = (data as { operational_score?: unknown }).operational_score;
+    if (typeof score !== "number" || !Number.isFinite(score) || score < 95) {
+      return { allowed: false, reason: "OUTREACH_OPERATIONAL_SCORE_BELOW_95" };
     }
     return master;
   } catch {
