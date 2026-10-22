@@ -7,6 +7,7 @@
  * - Only consumes quota on real success
  */
 import { assertSmsHealthy } from "../_shared/smsHealth.ts";
+import { agentQueueEmissionStop, assertAgentQueueEmissionStopped } from "./quarantine.ts";
 import { corsHeaders, adminClient } from "../_shared/agentRun.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -61,6 +62,7 @@ import { sendSms as sharedSendSms } from "../_shared/twilioSend.ts";
 import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 async function sendTwilioSms(to: string, body: string, ctx?: { lead_id?: string }): Promise<{ ok: boolean; status: number; sid?: string; code?: string | number; message?: string; raw: unknown }> {
+  assertAgentQueueEmissionStopped(); // final SMS boundary, including direct calls
   const res = await sharedSendSms({
     to, body, message_type: "outreach", template_key: "agent_send_outreach",
     lead_id: ctx?.lead_id, metadata: { source: "agent-send-outreach" },
@@ -77,6 +79,7 @@ async function sendTwilioSms(to: string, body: string, ctx?: { lead_id?: string 
 }
 
 async function sendResendEmail(to: string, subject: string, html: string): Promise<{ ok: boolean; status: number; id?: string; message?: string; raw: unknown }> {
+  assertAgentQueueEmissionStopped(); // primary email AND SMS-failure fallback
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
   if (!lovableKey || !resendKey) {
@@ -102,6 +105,8 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // Independent of all flags; no selection, status update, quota or provider call.
+  return agentQueueEmissionStop();
   // P0 fail-closed outreach gate — no provider call while OUTREACH_ENABLED is off.
   const __gsb = adminClient();
   const __gate = await assertOutreachEnabled(__gsb as any);
