@@ -169,6 +169,20 @@
       "when": 1792268563747,
       "tag": "0023_entry_350_presence_entitlement",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792684484141,
+      "tag": "0024_migration",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792684673601,
+      "tag": "0025_migration",
+      "breakpoints": true
     }
   ]
 }
