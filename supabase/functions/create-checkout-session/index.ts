@@ -293,7 +293,7 @@ Deno.serve(async (req) => {
       // devis ne doit pas créer silencieusement une entreprise dont le nom
       // est seulement le courriel de connexion.
       const entryDeclaredName = isEntryActivation && typeof declaredCompanyName === "string"
-        ? declaredCompanyName.trim().replace(/[ -]/g, "").slice(0, 160)
+        ? declaredCompanyName.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 160)
         : "";
       const knownQuoteName = typeof identityQuote?.company_name === "string"
         ? identityQuote.company_name.trim() : "";
