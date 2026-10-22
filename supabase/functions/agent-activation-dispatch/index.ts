@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
   }
 
   // Batch mode (cron): pick interested leads not yet dispatched
-  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   const { data: leads } = await db.from("contractor_leads")
     .select("id")
     .in("lead_status", ["interested", "ready_to_activate"])

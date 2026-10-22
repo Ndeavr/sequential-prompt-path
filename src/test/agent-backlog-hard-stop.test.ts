@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { agentQueueEmissionStop, assertAgentQueueEmissionStopped, AGENT_QUEUE_QUARANTINE_REASON } from "../../supabase/functions/agent-send-outreach/quarantine";
+import { assertCommercialOutreachAllowed } from "../../supabase/functions/_shared/outreachGate";
 
 // Real handler + real final-send functions, synthetic adapters; no network/DB.
 function harness(file = "agent-send-outreach", gateGreen = true, providerStatus = 201) {
@@ -37,6 +38,17 @@ function harness(file = "agent-send-outreach", gateGreen = true, providerStatus 
 }
 
 describe("legacy agent backlog circuit breaker (isolated)", () => {
+  it.each([30, 94, null, "100", NaN])("commercial gate rejects unsafe score %s even if gated=false", async score => {
+    const client = { from: (table: string) => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: table === "system_flags" ? { value: true } : { gated: false, operational_score: score } }) }) }) }) };
+    const result = await assertCommercialOutreachAllowed(client as never);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe("OUTREACH_OPERATIONAL_SCORE_BELOW_95");
+  });
+  it("95 permits only the general gate, never releases the legacy queue", async () => {
+    const client = { from: (table: string) => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: table === "system_flags" ? { value: true } : { gated: false, operational_score: 95 } }) }) }) }) };
+    expect((await assertCommercialOutreachAllowed(client as never)).allowed).toBe(true);
+    expect(agentQueueEmissionStop().status).toBe(423);
+  });
   it("all 5698 pending rows remain unsent even with a green gate", async () => {
     const h = harness();
     const pending = Array.from({ length: 5698 }, (_, id) => ({ id, status: "pending", lead_id: "same-fixture" }));

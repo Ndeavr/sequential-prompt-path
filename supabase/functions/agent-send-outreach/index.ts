@@ -121,7 +121,8 @@ Deno.serve(async (req) => {
   const { data: run } = await db.from("agent_runs")
     .insert({ agent_name: "send-outreach", status: "running", input: { limit }, triggered_by: triggeredBy })
     .select("id").single();
-  const runId = run!.id as string;
+  if (!run?.id) throw new Error("agent_run_not_created");
+  const runId = run.id as string;
   const t0 = Date.now();
   const founder = await getFounderOverride(db);
   const RETRY_DELAYS_MIN = [5, 30, 120];
@@ -206,15 +207,17 @@ Deno.serve(async (req) => {
 
       if (useChannel === "sms") {
         provider = "twilio";
-        recipient = normalized!;
-        attempt = await sendTwilioSms(normalized!, m.body, { lead_id: lead.id });
+        if (!normalized) throw new Error("sms_destination_missing");
+        recipient = normalized;
+        attempt = await sendTwilioSms(normalized, m.body, { lead_id: lead.id });
         providerMessageId = (attempt as any).sid;
       } else {
         provider = "resend";
-        recipient = lead.email!;
+        if (!lead.email) throw new Error("email_destination_missing");
+        recipient = lead.email;
         const subject = m.subject || `${lead.first_name || lead.company_name || "Bonjour"} — UNPRO`;
         const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;color:#0F172A">${m.body.replace(/\n/g, "<br/>")}</div>`;
-        attempt = await sendResendEmail(lead.email!, subject, html);
+        attempt = await sendResendEmail(lead.email, subject, html);
         providerMessageId = (attempt as any).id;
       }
 
@@ -271,7 +274,8 @@ Deno.serve(async (req) => {
         if (eq.ok) {
           const subject = `${lead.first_name || lead.company_name || "Bonjour"} — UNPRO`;
           const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;color:#0F172A">${m.body.replace(/\n/g, "<br/>")}</div>`;
-          const fb = await sendResendEmail(lead.email!, subject, html);
+          if (!lead.email) throw new Error("email_fallback_destination_missing");
+          const fb = await sendResendEmail(lead.email, subject, html);
           await logDelivery(db, {
             lead_id: lead.id, message_id: m.id, channel: "email", provider: "resend",
             recipient_raw: lead.email, recipient_normalized: lead.email,
