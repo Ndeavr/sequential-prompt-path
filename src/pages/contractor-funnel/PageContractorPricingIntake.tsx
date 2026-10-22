@@ -656,9 +656,16 @@ export default function PageContractorPricingIntake() {
               <div className="grid grid-cols-2 gap-2">
                 <NumberInput unit="$" label="Vente moyenne ($)" value={g.avg_sale ?? avgTicketFor(d.trade_primary)} onChange={(v) => setG({ avg_sale: v ?? undefined })} min={100} max={1000000} step={100} />
                 <NumberInput unit="%" label="Conversion RDV → contrat (%)" value={g.conversion_pct ?? Math.round(closeRateFor(d.trade_primary) * 100)} onChange={(v) => setG({ conversion_pct: v ?? undefined })} min={1} max={100} />
-                <div className="col-span-2">
-                  <NumberInput
+                <div className="col-span-2 space-y-2">
+                  <ChoiceGroup
                     label="Marge bénéficiaire estimée (%)"
+                    value={g.margin_other || (typeof g.margin_pct === "number" && !(MARGIN_PRESETS as readonly number[]).includes(g.margin_pct)) ? "other" : typeof g.margin_pct === "number" ? String(g.margin_pct) : ""}
+                    onChange={(v) => v === "other" ? setG({ margin_other: true }) : setG({ margin_pct: Number(v), margin_other: false })}
+                    options={[...MARGIN_PRESETS.map((m) => ({ v: String(m), l: formatQuebecNumber(m, "%") })), { v: "other", l: "Autre" }]}
+                  />
+                  {(g.margin_other || (typeof g.margin_pct === "number" && !(MARGIN_PRESETS as readonly number[]).includes(g.margin_pct))) && (
+                  <NumberInput
+                    label="Votre marge (%)"
                     unit="%"
                     value={g.margin_pct ?? null}
                     onChange={(v) => setG({ margin_pct: v ?? undefined })}
@@ -667,6 +674,7 @@ export default function PageContractorPricingIntake() {
                     placeholder="Ex. 30"
                     hint="Marge après les coûts directs des travaux, avant les frais UNPRO, les autres frais non inclus et les impôts."
                   />
+                  )}
                 </div>
               </div>
               {calc ? (
@@ -693,14 +701,53 @@ export default function PageContractorPricingIntake() {
               </p>
             </div>
           )}
-          <NumberInput
-            label="Pour commencer, combien de rendez-vous pourriez-vous accueillir le mois prochain?"
-            value={g.next_month_appointments ?? null}
-            onChange={(v) => setG({ next_month_appointments: v ?? undefined })}
-            min={1}
-            max={200}
-            placeholder={calc ? `Ex. ${calc.cadence}` : "Ex. 4"}
-          />
+          {(() => {
+            const range: CapacityRange | "" = g.capacity_range ?? (typeof g.next_month_appointments === "number" ? "other" : "");
+            const bounds = capacityBounds(g);
+            const warn = calc ? capacityWarning(calc.cadence, bounds) : null;
+            return (
+              <div className="space-y-2" data-testid="capacity-choice">
+                <ChoiceGroup
+                  label="Pour commencer, combien de rendez-vous pourriez-vous accueillir le mois prochain?"
+                  value={range}
+                  onChange={(v) => {
+                    const r = v as CapacityRange;
+                    if (r === "other") setG({ capacity_range: "other" });
+                    else setG({ capacity_range: r, next_month_appointments: CAPACITY_RANGES[r].min });
+                  }}
+                  options={[
+                    ...(Object.keys(CAPACITY_RANGES) as Exclude<CapacityRange, "other">[]).map((k) => ({ v: k, l: CAPACITY_RANGES[k].label })),
+                    { v: "other", l: "Autre" },
+                  ]}
+                />
+                {range === "other" && (
+                  <NumberInput
+                    label="Nombre de rendez-vous le mois prochain"
+                    value={g.next_month_appointments ?? null}
+                    onChange={(v) => setG({ next_month_appointments: v ?? undefined })}
+                    min={1}
+                    max={200}
+                    placeholder={calc ? `Ex. ${calc.cadence}` : "Ex. 4"}
+                  />
+                )}
+                {bounds?.isRange && (
+                  <p className="text-[11px] text-white/60" data-testid="capacity-basis">
+                    Plage déclarée {bounds.min} à {bounds.max}. Base prudente utilisée pour votre entente de départ : {bounds.min} rendez-vous (borne basse).
+                  </p>
+                )}
+                {warn === "low_end" && (
+                  <p className="text-[11px] text-amber-300" data-testid="capacity-warning">
+                    Votre objectif demande environ {calc!.cadence} rendez-vous par mois : votre capacité pourrait être insuffisante au bas de votre plage.
+                  </p>
+                )}
+                {warn === "insufficient" && (
+                  <p className="text-[11px] text-amber-300" data-testid="capacity-warning">
+                    Votre objectif demande environ {calc!.cadence} rendez-vous par mois, au-delà de la capacité déclarée.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
           <p className="text-[11px] text-white/50">
             Ce sont des rencontres avec des clients, pas des chantiers. Votre entente de départ se base sur ce nombre.
           </p>
@@ -1035,6 +1082,7 @@ function ChoiceGroup({
             key={o.v}
             type="button"
             onClick={() => onChange(o.v)}
+            aria-pressed={value === o.v}
             className={`px-4 py-2 rounded-full text-sm border transition-colors ${
               value === o.v
                 ? "border-amber-400 bg-amber-500/20 text-amber-100"
@@ -1101,7 +1149,35 @@ export type GoalFields = {
   conversion_pct?: number;
   /** Rendez-vous que l'entrepreneur peut accueillir le mois prochain. */
   next_month_appointments?: number;
+  /** Plage déclarée (UI). Une plage n'est jamais une valeur exacte : la borne basse sert de base prudente. */
+  capacity_range?: CapacityRange;
+  /** « Autre » choisi pour la marge : la saisie libre reste visible. */
+  margin_other?: boolean;
 };
+
+export type CapacityRange = "1-9" | "10-15" | "16-20" | "other";
+export const CAPACITY_RANGES: Record<Exclude<CapacityRange, "other">, { min: number; max: number; label: string }> = {
+  "1-9": { min: 1, max: 9, label: "Moins de 10" },
+  "10-15": { min: 10, max: 15, label: "10 à 15" },
+  "16-20": { min: 16, max: 20, label: "16 à 20" },
+};
+export const MARGIN_PRESETS = [20, 25, 30, 35, 40] as const;
+
+/** Plage déclarée : borne basse prudente (affichée) et borne haute; « Autre » = valeur exacte saisie. */
+export function capacityBounds(g: GoalFields): { min: number; max: number; isRange: boolean } | null {
+  const r = g.capacity_range;
+  if (r && r !== "other") return { ...CAPACITY_RANGES[r], isRange: true };
+  const n = g.next_month_appointments;
+  return typeof n === "number" && n >= 1 ? { min: n, max: n, isRange: false } : null;
+}
+
+/** Compare la cadence calculée à la capacité déclarée. Jamais une promesse de volume. */
+export function capacityWarning(cadence: number, b: { min: number; max: number; isRange: boolean } | null): "ok" | "low_end" | "insufficient" | null {
+  if (!b || !cadence) return null;
+  if (cadence > b.max) return "insufficient";
+  if (cadence > b.min) return "low_end";
+  return "ok";
+}
 
 /** Mois restants d'ici la fin de l'année (mois courant exclu, minimum 1). */
 export function monthsToYearEnd(now = new Date()): number {
