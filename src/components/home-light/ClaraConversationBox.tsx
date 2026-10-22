@@ -99,6 +99,7 @@ import {
 } from "@/services/clara/claraDossier";
 import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, resolveClaraContractorEntry, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
+import RegisterPropertyCTA from "@/components/home-light/RegisterPropertyCTA";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
@@ -2043,6 +2044,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <ConversationScrollButton title="Revenir au dernier message" className="home-clara-scroll-latest" />
         </Conversation>
 
+      {audience === "homeowner" && <RegisterPropertyCTA lang={lang} />}
       <div className={`home-clara-input-row${showIntentSuggestions && mediaItems.length === 0 && !voiceActive ? " is-initial-empty" : ""}`} data-chat-row="composer">
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
