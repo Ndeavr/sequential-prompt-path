@@ -1281,7 +1281,7 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
     startAppointments,
     assumptionsConfirmed: Boolean(g.avg_sale || g.conversion_pct || (kind === "profit" && g.margin_pct)),
     payload: {
-      ...d,
+      ...(({ capacity_range: _r, margin_other: _m, ...rest }) => rest)(d as GoalFields & Partial<PricingIntakeInput>),
       contract_goal_value: contracts,
       contract_goal_unit: "year",
       average_project_value: avgSale,
