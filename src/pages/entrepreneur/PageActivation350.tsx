@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { captureAttribution, trackReferralEvent } from "@/hooks/useReferralAttribution";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
+import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
 import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
@@ -45,6 +46,7 @@ export default function PageActivation350() {
   const ref = normalizeRef(sp.get("ref"));
   const links = useMemo(() => buildActivation350Links(sp), [sp]);
   const [chatOpen, setChatOpen] = useState(true);
+  const reviewOpen = sp.get("activate") === "1";
 
   useEffect(() => {
     captureAttribution(sp);
@@ -90,6 +92,8 @@ export default function PageActivation350() {
             Voir mon audit IA gratuit
           </Link>
         </div>
+
+        {reviewOpen && <Entry350FastCheckout query={sp} />}
 
         <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Visibilité IA</p>
         <h2 className="mt-3 text-[2rem] font-bold leading-[1.1] sm:text-4xl">
