@@ -466,7 +466,17 @@ Deno.serve(async (req) => {
         fallbackConfig.cancel_url = cancelUrl || `${origin}/pro/billing?credit=canceled`;
       }
 
-      const fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never);
+      // Identical entry requests (double click, concurrent tabs, network retry)
+      // must resolve to the same Stripe session before any paid webhook exists.
+      // Hash the complete server-built contract: never trust a client key, and
+      // never reuse a key with different redirect, quote or attribution params.
+      let entryRequestOptions: { idempotencyKey: string } | undefined;
+      if (isEntryActivation) {
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(fallbackConfig)));
+        const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+        entryRequestOptions = { idempotencyKey: `entry350-v1-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
+      }
+      const fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
 
       console.info("[checkout:fallback_credit_350:created]", {
         user_id: userId,
