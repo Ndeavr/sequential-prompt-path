@@ -22,6 +22,9 @@ import {
   evaluateCandidate,
   matchAffiliate,
   matchAffiliateFor,
+  applyFallback,
+  checkoutEvidence,
+  isArtificialName,
   computeLearnedBoosts,
   normalizeCity,
   normalizeCategory,
@@ -102,7 +105,10 @@ Deno.serve(async (req) => {
 
     if (!rule) return json({ error: "rule_missing", rule_key: RECOVERY_RULE_KEY }, 409);
     const cfg = mergeConfig(rule.config_json);
-    if (!rule.is_active) {
+    // Pilote : un admin authentifié (jamais le cron) peut exécuter la cohorte CRM
+    // une fois avec la règle inactive, plafonnée par max_new_per_affiliate_per_cycle.
+    const pilot = body.pilot === true && actor !== "system" && actor !== "cron";
+    if (!rule.is_active && !pilot) {
       // Même forme de schéma qu'une exécution normale : l'UI ne doit jamais
       // déréférencer un champ absent quand la règle est en pause.
       return json({
@@ -283,7 +289,7 @@ Deno.serve(async (req) => {
     // dossier éligible plus ancien à fort potentiel.
     // =====================================================================
     const inactivityCutoff = new Date(now - cfg.inactivity_hours * 3600 * 1000).toISOString();
-    const leads = (ok(
+    const leads = pilot ? [] as LeadRow[] : (ok(
       await admin
         .from("contractor_leads")
         .select(
@@ -410,10 +416,10 @@ Deno.serve(async (req) => {
       ? ((ok(
           await admin
             .from("contractor_leads")
-            .select("id, source_prospect_id, do_not_contact, unsubscribed_at, compliance_review_required, compliance_review_reason")
+            .select("id, source_prospect_id, do_not_contact, unsubscribed_at, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id, paid_at")
             .in("source_prospect_id", crmIds),
           "lecture pont contractor_leads",
-        ) ?? []) as Array<{ id: string; source_prospect_id: string; do_not_contact: boolean | null; unsubscribed_at: string | null; compliance_review_required: boolean | null; compliance_review_reason: string | null }>)
+        ) ?? []) as Array<{ id: string; source_prospect_id: string; do_not_contact: boolean | null; unsubscribed_at: string | null; compliance_review_required: boolean | null; compliance_review_reason: string | null; assigned_affiliate_id: string | null; created_by_affiliate_id: string | null; paid_at: string | null }>)
       : [];
     const bridgeByProspect = new Map(bridged.map((b) => [b.source_prospect_id, b]));
     const eligibility = bridged.length
@@ -426,6 +432,35 @@ Deno.serve(async (req) => {
         ) ?? []) as SendEligibilityRow[])
       : [];
     const eligByLead = new Map(eligibility.map((e) => [e.contractor_lead_id, e]));
+
+    // Preuves Checkout (sessions Stripe réelles) et anciens propriétaires.
+    const checkoutEvents = crmIds.length
+      ? ((ok(
+          await admin.from("pipeline_engagement_events")
+            .select("prospect_id, destination_url, occurred_at")
+            .eq("event_type", "checkout_opened")
+            .in("prospect_id", crmIds),
+          "lecture preuves checkout",
+        ) ?? []) as Array<{ prospect_id: string; destination_url: string | null; occurred_at: string }>)
+      : [];
+    const checkoutByProspect = new Map<string, Array<{ destination_url: string | null; occurred_at: string }>>();
+    for (const e of checkoutEvents) {
+      const arr = checkoutByProspect.get(e.prospect_id) ?? [];
+      arr.push(e); checkoutByProspect.set(e.prospect_id, arr);
+    }
+    const priorOwners = crmIds.length
+      ? ((ok(
+          await admin.from("crm_manual_assignments").select("prospect_id, affiliate_id").in("prospect_id", crmIds),
+          "lecture anciens propriétaires",
+        ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null }>)
+      : [];
+    const ownersByProspect = new Map<string, Set<string>>();
+    for (const o of priorOwners) {
+      if (!o.affiliate_id) continue;
+      const set = ownersByProspect.get(o.prospect_id) ?? new Set<string>();
+      set.add(o.affiliate_id); ownersByProspect.set(o.prospect_id, set);
+    }
+    const cycleCount: Record<string, number> = {};
 
     // Idempotence : reprises déjà journalisées pour cette version de règle.
     const priorActions = (ok(
@@ -481,7 +516,39 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const match = matchAffiliateFor(row.city, row.category, cfg, affiliates, workload, learning.boosts);
+      // Portes de preuve supplémentaires (conservatrices).
+      const extraSkip: string[] = [];
+      if (isArtificialName(row.business_name, cfg)) extraSkip.push("artificial_or_qa_record");
+      if (bridge?.paid_at) extraSkip.push("already_paid");
+      let checkoutProof: ReturnType<typeof checkoutEvidence> | null = null;
+      if (stage === "checkout_opened" && cfg.require_live_checkout_evidence) {
+        checkoutProof = checkoutEvidence(checkoutByProspect.get(row.prospect_id) ?? [], cfg, now);
+        if (!checkoutProof.ok) extraSkip.push(checkoutProof.reason!);
+      }
+      // Attribution historique : jamais réattribuer une relation existante.
+      const historical = bridge?.assigned_affiliate_id ?? bridge?.created_by_affiliate_id ?? null;
+      const owners = ownersByProspect.get(row.prospect_id);
+      if (owners && owners.size > 0 && (!historical || ![...owners].every((o) => o === historical))) {
+        extraSkip.push("prior_owner_exists");
+      }
+      if (extraSkip.length) {
+        crmSkipped += 1;
+        crmResults.push({ cohort: CRM_SOURCE, prospect_id: row.prospect_id, business_name: row.business_name, status: "skipped", skip_reasons: extraSkip, current_stage: stage, checkout_evidence: checkoutProof });
+        continue;
+      }
+
+      let match = matchAffiliateFor(row.city, row.category, cfg, affiliates, workload, learning.boosts);
+      if (historical) {
+        const h = affiliates.find((a) => a.id === historical);
+        match = h && !h.archived_at && !h.suspended_at && h.status === "active"
+          ? { affiliate_id: h.id, affiliate_label: [h.first_name, h.last_name].filter(Boolean).join(" ") || h.name || h.id, reasons: ["historical_attribution_verified"], rejected: match.rejected }
+          : { affiliate_id: null, affiliate_label: null, reasons: [], rejected: [...match.rejected, { affiliate_id: historical, reason: "historical_owner_inactive" }] };
+      } else {
+        match = applyFallback(match, cfg, affiliates, workload);
+      }
+      if (match.affiliate_id && (cycleCount[match.affiliate_id] ?? 0) >= cfg.max_new_per_affiliate_per_cycle) {
+        match = { affiliate_id: null, affiliate_label: null, reasons: [], rejected: [...match.rejected, { affiliate_id: match.affiliate_id, reason: "cycle_cap_reached" }] };
+      }
       const base = {
         cohort: CRM_SOURCE,
         prospect_id: row.prospect_id,
@@ -497,6 +564,7 @@ Deno.serve(async (req) => {
         proposed_affiliate_id: match.affiliate_id,
         proposed_affiliate: match.affiliate_label,
         contact_permissions: perms,
+        checkout_evidence: checkoutProof,
       };
 
       if (!match.affiliate_id) {
@@ -505,6 +573,7 @@ Deno.serve(async (req) => {
         continue;
       }
       if (dryRun) {
+        cycleCount[match.affiliate_id] = (cycleCount[match.affiliate_id] ?? 0) + 1;
         crmResults.push({ ...base, status: "would_route" });
         continue;
       }
@@ -527,7 +596,9 @@ Deno.serve(async (req) => {
             affiliate_id: match.affiliate_id,
             match_reasons: match.reasons,
             interesting_reasons: evaluation.interesting_reasons,
-            evidence: evaluation.evidence,
+            evidence: { ...evaluation.evidence, checkout: checkoutProof },
+            label: "Reprise après outreach — paiement non confirmé",
+            pilot,
             contact_permissions: perms,
             hours_since_last_activity: row.hours_since_last_activity ?? null,
             notification_sent: false,
@@ -545,13 +616,14 @@ Deno.serve(async (req) => {
       }
 
       priorKeys.add(key);
+      cycleCount[match.affiliate_id] = (cycleCount[match.affiliate_id] ?? 0) + 1;
       workload[match.affiliate_id] = (workload[match.affiliate_id] ?? 0) + 1;
       crmRouted += 1;
       crmResults.push({ ...base, status: "routed", assignment_id: rpcCrm?.assignment_id ?? null });
     }
 
     // --- Rollup d'apprentissage (résultats réels uniquement, dimensionné)
-    if (!dryRun && Object.keys(dimRollups).length > 0) {
+    if (!dryRun && !pilot && Object.keys(dimRollups).length > 0) {
       const windowStart = new Date(now - 90 * 86400000).toISOString();
       const windowEnd = new Date(now).toISOString();
       for (const r of Object.values(dimRollups)) {
@@ -597,6 +669,7 @@ Deno.serve(async (req) => {
     return json({
       ok: true,
       dry_run: dryRun,
+      pilot,
       rule_version: cfg.version,
       config: {
         inactivity_hours: cfg.inactivity_hours,
