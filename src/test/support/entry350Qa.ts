@@ -236,15 +236,25 @@ export async function createQa(taxApproved = true) {
     };
   }
   const env:Row={SUPABASE_URL:LOCAL_ORIGIN,SUPABASE_SERVICE_ROLE_KEY:serviceKey,SUPABASE_ANON_KEY:'local-anon',STRIPE_SECRET_KEY:'sk_live_local_fixture_only',STRIPE_TEST_SECRET_KEY:'sk_test_local_fixture_only',STRIPE_WEBHOOK_SECRET:secret,STRIPE_TEST_WEBHOOK_SECRET:testSecret};
+  // Stripe's request-key contract, isolated from any provider or credentials.
+  const checkoutRequests = new Map<string, { config: string; session: Row }>();
   class LocalStripe {
     webhooks=new Stripe('sk_test_local_fixture_only').webhooks;
     taxRates={list:async()=>({data:[{id:'tax_gst',metadata:{unpro_tax:'gst_5'},inclusive:false,percentage:5,country:'CA'},{id:'tax_qst',metadata:{unpro_tax:'qst_9975'},inclusive:false,percentage:9.975,country:'CA',state:'QC'}]})};
-    checkout={sessions:{create:async(config:Row)=>{
+    checkout={sessions:{create:async(config:Row, options:Row={})=>{
+      const key = options.idempotencyKey;
+      const previous = typeof key === 'string' ? checkoutRequests.get(key) : undefined;
+      if (previous) {
+        if (previous.config !== JSON.stringify(config)) throw new Error('idempotency_parameters_mismatch');
+        return previous.session;
+      }
       configs.push(config);
       const item=config.line_items[0];const subtotal=item.price_data.unit_amount;
       const tax=item.tax_rates ? Math.round(subtotal*0.05)+Math.round(subtotal*0.09975):0;
       const s={id:`cs_test_local${sessions.length.toString().padStart(12,'0')}`,object:'checkout.session',status:'open',payment_status:'unpaid',mode:config.mode,currency:item.price_data.currency,amount_subtotal:subtotal,amount_total:subtotal+tax,total_details:{amount_tax:tax,amount_discount:0},metadata:config.metadata,customer_email:config.customer_email,customer_details:{email:config.customer_email},payment_intent:`pi_local_${sessions.length}`,url:`${LOCAL_ORIGIN}/mock-checkout/${sessions.length}`};
-      sessions.push(s);return s;
+      sessions.push(s);
+      if (typeof key === 'string') checkoutRequests.set(key, { config: JSON.stringify(config), session: s });
+      return s;
     },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:deliveryLive}),
     listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
   }

@@ -11,6 +11,15 @@ async function create(kind:'personal'|'invited'){
   expect(result.status).toBe(200);return qa.sessions[qa.sessions.length-1];
 }
 describe('isolated SQL/session safety',()=>{
+  it('identical entry350 retries reuse one Stripe session before any payment', async()=>{
+    const first=await create('personal');
+    const retry=await create('personal');
+    expect(retry.id).toBe(first.id);
+    expect(qa.sessions).toHaveLength(1);
+    expect(qa.configs).toHaveLength(1);
+    expect(await plan()).toBeNull();
+    expect((await qa.db.query('select * from contractor_activation_ledger')).rows).toHaveLength(0);
+  });
   it('two signed synthetic sessions, invalid token/anon denied and owner quote RLS enforced',async()=>{
     expect((await qa.queryAs(qa.ownerToken,'select * from contractor_pricing_quotes')).rows).toHaveLength(1);
     expect((await qa.queryAs(qa.otherToken,'select * from contractor_pricing_quotes')).rows).toHaveLength(0);
