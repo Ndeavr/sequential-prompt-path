@@ -43,6 +43,13 @@ export function isContractorContext(context: Record<string, unknown>): boolean {
   return String(context.detected_role ?? "").toLowerCase() === "contractor";
 }
 
+/** An explicit entrepreneur entry wins over a suspended homeowner cursor.
+ * Other pages retain the existing session-based audience decision. */
+export function resolveClaraContractorEntry(context: Record<string, unknown>, forcedAudience?: "contractor"): boolean {
+  return forcedAudience === "contractor" || (!hasExplicitHomeownerFlow() &&
+    (isContractorContext(context) || (!context.current_intent && hasActiveContractorFlow())));
+}
+
 /**
  * Retour au projet maison : le parcours entrepreneur est SUSPENDU, jamais
  * effacé. Entreprise, objectifs et réponses déjà données restent disponibles.

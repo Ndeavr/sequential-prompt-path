@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
-import { hasActiveContractorFlow, isContractorContext, rememberActiveContractorFlow } from "@/services/clara/claraContractorResume";
+import { hasActiveContractorFlow, isContractorContext, rememberActiveContractorFlow, pauseActiveContractorFlow, resolveClaraContractorEntry } from "@/services/clara/claraContractorResume";
 import { activationCloseAnswer, claraActivationLinks } from "@/services/clara/claraActivationClose";
 
 const mocks = vi.hoisted(() => ({
@@ -57,10 +57,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 function Destination() { const location = useLocation(); return <output data-testid="destination">{location.pathname}{location.search}</output>; }
-function mountFlow(search = "") {
+function mountFlow(search = "", opening?: string) {
   const say = vi.fn(async (_text: string) => {});
   const ref = createRef<ClaraContractorFlowHandle>();
-  const view = render(<MemoryRouter initialEntries={[`/${search}`]}><ClaraContractorFlow ref={ref} say={say} addUser={vi.fn()} onBusy={vi.fn()} /><Destination /></MemoryRouter>);
+  const view = render(<MemoryRouter initialEntries={[`/${search}`]}><ClaraContractorFlow ref={ref} say={say} addUser={vi.fn()} onBusy={vi.fn()} opening={opening} /><Destination /></MemoryRouter>);
   return { ...view, say, ref };
 }
 
@@ -79,6 +79,35 @@ describe("contractor continuity", () => {
     expect(isContractorContext({ current_intent: "contractor_onboarding" })).toBe(true);
     expect(isContractorContext({ detected_role: "CONTRACTOR" })).toBe(true);
     expect(isContractorContext({ current_intent: "contractor_verification", detected_role: "CONTRACTOR" })).toBe(false);
+  });
+
+  it("enters contractor from a direct activation link despite a homeowner session, without rotating its token", () => {
+    pauseActiveContractorFlow();
+    expect(resolveClaraContractorEntry({ current_intent: "PROJECT", detected_role: "HOMEOWNER" }, "contractor")).toBe(true);
+    expect(resolveClaraContractorEntry({ current_intent: "PROJECT", detected_role: "HOMEOWNER" })).toBe(false);
+    rememberActiveContractorFlow(true);
+    expect(mocks.token).toBe("session-a");
+    expect(resolveClaraContractorEntry({ current_intent: "contractor_onboarding" })).toBe(true);
+  });
+
+  it("retains contractor audience on remount/auth and keeps invalid attribution out of the purchase URL", () => {
+    rememberActiveContractorFlow(true);
+    expect(resolveClaraContractorEntry({})).toBe(true);
+    expect(resolveClaraContractorEntry({ detected_role: "CONTRACTOR" })).toBe(true);
+    const link = new URL(claraActivationLinks("?ref=%3Cscript%3E&utm_source=sms").activate, "https://unpro.ca");
+    expect(link.searchParams.has("ref")).toBe(false);
+    expect(link.searchParams.get("utm_source")).toBe("sms");
+  });
+
+  it("starts the direct-link business question once and allows a price answer without a lookup", async () => {
+    mocks.qualification = {};
+    const opening = "Bonjour! Quel est le nom de votre entreprise ou son site Web?";
+    const view = mountFlow("?ref=LORRAINE-UNPRO&utm_source=sms", opening);
+    await waitFor(() => expect(view.say).toHaveBeenCalledWith(opening));
+    expect(view.say.mock.calls.filter(([text]) => text === opening)).toHaveLength(1);
+    await act(async () => { expect(view.ref.current?.handleText("Comment commencer?")).toBe(true); });
+    await view.findByRole("button", { name: "Activer mon profil — 350 $ + taxes" });
+    expect(mocks.quote).not.toHaveBeenCalled();
   });
 
   it("requires explicit confirmation of an inferred Google trade", async () => {

@@ -121,10 +121,11 @@ interface Props {
   say: (text: string) => Promise<void>;
   addUser: (text: string) => void;
   onBusy: (busy: boolean) => void;
+  opening?: string;
 }
 
 const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(function ClaraContractorFlow(
-  { say, addUser, onBusy },
+  { say, addUser, onBusy, opening: openingText },
   ref,
 ) {
   const navigate = useNavigate();
@@ -171,7 +172,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       })();
       return;
     }
-    void go("name", "Quel est le nom de votre entreprise ou son site Web?");
+    void go("name", openingText ?? "Quel est le nom de votre entreprise ou son site Web?");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
