@@ -25,6 +25,16 @@ export interface RecoveryConfig {
   crm_eligible_stages: string[];
   /** Étapes observées mais volontairement non routées (visibles en simulation). */
   crm_future_stages: string[];
+  /** Affilié de revue contrôlée (UUID explicite) quand aucun affilié configuré ne correspond. Jamais par config vide. */
+  fallback_affiliate_id: string | null;
+  /** Plafond de NOUVEAUX dossiers par affilié et par cycle (pilote = 3). */
+  max_new_per_affiliate_per_cycle: number;
+  /** Délai minimal (h) après le dernier Checkout ouvert avant reprise. */
+  checkout_min_hours: number;
+  /** Exige une session Stripe LIVE (cs_live_) prouvée pour l'étape checkout_opened. */
+  require_live_checkout_evidence: boolean;
+  /** Motifs de noms artificiels (QA, démo) toujours exclus. */
+  exclude_name_patterns: string[];
 }
 
 /** Arrondissements de Montréal — normalisation géographique documentée. */
@@ -59,6 +69,11 @@ export const DEFAULT_RECOVERY_CONFIG: RecoveryConfig = {
   learning: { min_sample: 30, min_terminal: 10, max_boost: 10 },
   crm_eligible_stages: ["checkout_opened", "otp_verified", "registered"],
   crm_future_stages: ["landing_viewed", "clicked", "invited", "not_started"],
+  fallback_affiliate_id: null,
+  max_new_per_affiliate_per_cycle: 3,
+  checkout_min_hours: 48,
+  require_live_checkout_evidence: true,
+  exclude_name_patterns: ["qa ", "qa-", "golden path", "ne pas contacter", "test", "demo", "démo"],
   city_normalization: Object.fromEntries(MONTREAL_BOROUGHS.map((b) => [b, "montreal"])),
   category_aliases: {
     toiture: "toiture",
@@ -340,4 +355,53 @@ export function computeLearnedBoosts(
     boosts[id] = clampBoost(Math.round((rate - mean) * 100), cfg);
   }
   return { boosts, applied: true, sample, terminal };
+}
+
+/** Nom de dossier artificiel (QA / démo) — jamais routé. */
+export function isArtificialName(name: string | null | undefined, cfg: RecoveryConfig): boolean {
+  const n = ` ${String(name ?? "").toLowerCase()} `;
+  return cfg.exclude_name_patterns.some((p) => {
+    const pat = p.toLowerCase();
+    return /^[a-zà-ÿ]+$/.test(pat) ? new RegExp(`[^a-zà-ÿ]${pat}[^a-zà-ÿ]`).test(n) : n.includes(pat);
+  });
+}
+
+/**
+ * Preuve de Checkout réel : au moins une session Stripe LIVE, la plus récente
+ * ouverte depuis au moins `checkout_min_hours`. Une session TEST ne compte jamais.
+ */
+export function checkoutEvidence(
+  events: Array<{ destination_url: string | null; occurred_at: string }>,
+  cfg: RecoveryConfig,
+  now: number,
+): { ok: boolean; reason: string | null; live_sessions: number; last_checkout_at: string | null } {
+  const live = events.filter((e) => /\/cs_live_[A-Za-z0-9]+/.test(String(e.destination_url ?? "")));
+  const last = live.map((e) => e.occurred_at).sort().pop() ?? null;
+  if (live.length === 0) return { ok: false, reason: "no_live_checkout_evidence", live_sessions: 0, last_checkout_at: null };
+  const ageH = (now - new Date(last!).getTime()) / 3600000;
+  if (!(ageH >= cfg.checkout_min_hours)) return { ok: false, reason: "checkout_too_recent", live_sessions: live.length, last_checkout_at: last };
+  return { ok: true, reason: null, live_sessions: live.length, last_checkout_at: last };
+}
+
+/**
+ * Repli de revue contrôlée : UNIQUEMENT l'UUID explicitement configuré, actif,
+ * sous quota et sous plafond de cycle. Aucune autre config vide n'est éligible.
+ */
+export function applyFallback(
+  match: MatchResult,
+  cfg: RecoveryConfig,
+  affiliates: AffiliateRow[],
+  workload: Record<string, number>,
+): MatchResult {
+  if (match.affiliate_id || !cfg.fallback_affiliate_id) return match;
+  const a = affiliates.find((x) => x.id === cfg.fallback_affiliate_id);
+  if (!a || a.archived_at || a.suspended_at || String(a.status ?? "") !== "active") {
+    return { ...match, rejected: [...match.rejected, { affiliate_id: cfg.fallback_affiliate_id, reason: "fallback_unavailable" }] };
+  }
+  const load = workload[a.id] ?? 0;
+  if (a.daily_quota != null && load >= a.daily_quota) {
+    return { ...match, rejected: [...match.rejected, { affiliate_id: a.id, reason: "fallback_daily_quota_reached" }] };
+  }
+  const label = [a.first_name, a.last_name].filter(Boolean).join(" ").trim() || a.name || a.id;
+  return { affiliate_id: a.id, affiliate_label: label, reasons: ["admin_fallback_review_queue", `workload_today:${load}`], rejected: match.rejected };
 }
