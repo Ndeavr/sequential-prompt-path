@@ -16,7 +16,7 @@
 - Deno check checkout and webhook: initially six errors; after fixes exit 0.
 - Six focused Vitest files: initially 16 failures (missing auth helper in test adapter plus parallel PGlite timeout); adapter repaired, sequential execution with 30s per test; final observed 53/53 pass, exit 0. No assertions weakened. These are local synthetic SQL/HMAC checks, not commercial hosted QA.
 - Harness compilation latest observed 09:13:56 UTC: build OK. Manual frontend build/typecheck not executed under sandbox restrictions; standalone typecheck and latest GitHub CI remain unverified.
-- Intercepted 390x844 browser: persisted marker hidden, short review CAD40241, missing identity rejected, declared identity retained, login return stored with ref/UTM; zero page errors and zero actual checkout requests. Screenshots inspected. Auth/login/payment hosted not exercised. Final restored-choice rendering requires separate rerun.
+- Intercepted 390x844 browser final rerun: persisted marker hidden and Durabilité button visible, short review CAD40241, missing identity rejected, declared identity retained, login return stored with ref/UTM; exit 0, zero page errors and zero actual checkout requests. Screenshots inspected. Auth/login/payment hosted not exercised. Final two frontend test files rerun: 15/15 pass, exit 0 (subset of 53, not additional tests).
 - LIVE Stripe endpoint read-only: enabled canonical webhook targets this commercial backend, configured for completed/async-success/refund/dispute; API version 2018-02-28. Enabled endpoint is not proof of valid deployed signature handling or receipt provisioning.
 - Existing security results are stale: database scanner 83 error and 222 warning findings. Not a clean security result; no policies modified.
 
@@ -27,5 +27,7 @@
 4. Verify commercial hosted auth return, success/cancel/reload and signed event readback, one ledger, 12 calendar months via canonical resolver, duplicate/pending protection, refund/dispute revocation and cross-account permissions. Sandbox proof does not establish these on commercial backend.
 5. Verify paid profile stays private/pending verification, zero included appointments, licence eligibility separate. Keep suppression/opt-outs and outreach closed; no outbound smoke sends.
 6. Only after all conditions: controlled source/function release and frontend publish, then separately authorized LIVE base checkout release. PROMO LIVE remains disabled/unprovisioned. No real charges performed by this audit.
+
+- Final validation revision observed: `87662c91636e767d909942ca32809e2a4902eaa8`; harness build OK at 09:18:21 UTC, diff check exit 0. This evidence-only report update follows that revision.
 
 **Decision: STOP before publish or LIVE gate. No first commercial sale established.**
