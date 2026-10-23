@@ -29,7 +29,7 @@ export interface WebhookEventRow { processing_status?: string | null; received_a
 export function shouldSkipRedelivery(row: WebhookEventRow | null, nowMs = Date.now()): boolean {
   if (!row) return true; // unknown state: keep historical behaviour
   const s = row.processing_status ?? "";
-  if (s === "processed" || s === "ignored" || s === "ignored_unpaid" || s === "success") return true;
+  if (s === "processed" || s === "duplicate_promo_redemption" || s === "ignored" || s === "ignored_unpaid" || s === "success") return true;
   if (s === "processing") {
     const t = row.received_at ? Date.parse(row.received_at) : nowMs;
     return nowMs - t < 5 * 60_000;
@@ -207,4 +207,13 @@ export function entry350CommissionArgs(i: {
     p_referral_code: ref,
     p_metadata: { offer: "entry_activation_350", quote_id: md.quote_id ?? null },
   };
+}
+
+/** Classify an entry-350 ledger insert error. The promo index must win over the generic
+ * duplicate-key match: a second session redeeming PROMO is NEVER an idempotent replay. */
+export function entry350LedgerConflict(message: string | null | undefined): "promo_already_redeemed" | "same_session" | null {
+  if (!message) return null;
+  if (/uq_entry350_single_promo_redemption/i.test(message)) return "promo_already_redeemed";
+  if (/duplicate key|uq_ledger_entry350_session/i.test(message)) return "same_session";
+  return null;
 }

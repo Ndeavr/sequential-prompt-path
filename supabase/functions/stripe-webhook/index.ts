@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
@@ -507,8 +507,27 @@ Deno.serve(async (req) => {
                   campaign: session.metadata?.campaign ?? null,
                 },
               });
-              // Livraison concurrente déjà inscrite (index unique) = idempotent.
-              const concurrentDup = ledgerErr && /duplicate key|uq_ledger_entry350_session/i.test(ledgerErr.message);
+              // PROMO déjà encaissé par une AUTRE session (index uq_entry350_single_promo_redemption) :
+              // aucun droit, aucune commission, alerte remboursement, accusé de réception seulement.
+              if (ledgerErr && entry350LedgerConflict(ledgerErr.message) === "promo_already_redeemed") {
+                const { data: original } = await supabase.from("contractor_activation_ledger")
+                  .select("contractor_id, metadata").eq("action", "entry_activation_350_paid")
+                  .eq("metadata->>promo_code_id", String(promoCodeId)).limit(1).maybeSingle();
+                const originalSession = (original?.metadata as Record<string, unknown> | null)?.stripe_session_id ?? null;
+                await supabase.from("admin_notifications").insert({
+                  type: "entry_activation_350_promo_duplicate", severity: "critical", contractor_id: entryContractorId,
+                  title: event.livemode ? "Code PROMO déjà utilisé — paiement réel à rembourser" : "Code PROMO déjà utilisé (TEST) — à rembourser",
+                  body: "Deuxième paiement avec le code PROMO à usage unique. Aucune activation, aucun droit, aucune commission. Rembourser cette session.",
+                  payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, original_stripe_session_id: originalSession,
+                    original_contractor_id: original?.contractor_id ?? null, promo_code_id: promoCodeId, amount_total: session.amount_total ?? null, livemode: event.livemode ?? null },
+                });
+                await supabase.from("stripe_webhook_events").update({ processing_status: "duplicate_promo_redemption" }).eq("stripe_event_id", event.id);
+                return new Response(JSON.stringify({ received: true, activated: false, ignored: "duplicate_promo_redemption" }), {
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+              // Livraison concurrente de la MÊME session déjà inscrite (index unique) = idempotent.
+              const concurrentDup = ledgerErr && entry350LedgerConflict(ledgerErr.message) === "same_session";
               if (ledgerErr && !concurrentDup) {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
