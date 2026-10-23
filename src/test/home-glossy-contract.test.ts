@@ -7,15 +7,23 @@ const page = readFileSync("src/pages/PageHomeLight.tsx", "utf8");
 const layout = readFileSync("src/layouts/MainLayout.tsx", "utf8");
 const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8");
 const drawer = readFileSync("src/components/navigation/DrawerNavigationMobileIntent.tsx", "utf8");
+const css = readFileSync("src/index.css", "utf8");
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Un projet en tête ?");
+    expect(hero).toContain("Un projet de rénovation en tête?");
     expect(hero).not.toContain("home-hero-subtitle");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
     expect(hero).not.toContain("AnimatePresence");
     expect(hero).not.toContain("motion.");
+  });
+
+  it("uses a lightweight live UNPRO background with reduced-motion support", () => {
+    expect(css).toContain("@keyframes unpro-ambient-drift");
+    expect(css).toContain("@keyframes unpro-ambient-rise");
+    expect(css).toContain(".home-light .home-clara-ambient::before");
+    expect(css).toMatch(/prefers-reduced-motion:[\s\S]*home-clara-ambient::before[\s\S]*animation: none/);
   });
 
   it("keeps Clara text, voice and attachment actions real", () => {
