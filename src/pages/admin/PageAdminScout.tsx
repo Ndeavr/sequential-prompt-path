@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Copy, RefreshCw, Radar } from "lucide-react";
+import { ScoutSignalIntake, ScoutCaptureReview, SIGNAL_LABEL } from "@/components/admin/scout/ScoutSignalTools";
 
 type Capture = {
   id: string;
@@ -34,6 +35,8 @@ type Capture = {
   source_url: string | null;
   captured_at: string;
   error: string | null;
+  signal_type: string | null;
+  review_status: string;
 };
 
 export default function PageAdminScout() {
@@ -111,7 +114,7 @@ export default function PageAdminScout() {
   }
 
   return (
-    <div className="admin-theme min-h-screen p-6 space-y-6">
+    <div className="admin-theme min-h-screen p-4 sm:p-6 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -130,6 +133,8 @@ export default function PageAdminScout() {
           </Button>
         </div>
       </header>
+
+      <ScoutSignalIntake onDone={() => captures.refetch()} />
 
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
@@ -204,9 +209,9 @@ export default function PageAdminScout() {
         <div className="flex flex-wrap gap-2">
           <Input placeholder="Filtrer par groupe" value={group} onChange={(e) => setGroup(e.target.value)} className="max-w-[220px]" />
           <Input placeholder="Ville" value={city} onChange={(e) => setCity(e.target.value)} className="max-w-[160px]" />
-          {["all", "new", "duplicate", "error"].map((s) => (
+          {["all", "review", "new", "duplicate", "error"].map((s) => (
             <Button key={s} size="sm" variant={status === s ? "default" : "outline"} onClick={() => setStatus(s)}>
-              {s === "all" ? "Tous" : s === "new" ? "Nouveaux" : s === "duplicate" ? "Doublons" : "Erreurs"}
+              {s === "all" ? "Tous" : s === "review" ? "En révision" : s === "new" ? "Nouveaux" : s === "duplicate" ? "Doublons" : "Erreurs"}
             </Button>
           ))}
           <Button size="sm" variant={onlyHighIntent ? "default" : "outline"} onClick={() => setOnlyHighIntent((v) => !v)}>
@@ -223,8 +228,10 @@ export default function PageAdminScout() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{c.company_name ?? c.author_name ?? "Entrepreneur à confirmer"}</span>
                   <Badge variant={c.dedupe_status === "new" ? "default" : c.dedupe_status === "duplicate" ? "secondary" : "destructive"}>
-                    {c.dedupe_status === "new" ? "Nouveau" : c.dedupe_status === "duplicate" ? `Doublon (${c.dedupe_signal})` : "Erreur"}
+                    {c.dedupe_status === "new" ? "Nouveau" : c.dedupe_status === "duplicate" ? `Doublon (${c.dedupe_signal})` : c.dedupe_status === "review" ? "En révision" : c.dedupe_status === "skipped" ? "Ignoré" : "Erreur"}
                   </Badge>
+                  {c.signal_type && <Badge variant="outline">{SIGNAL_LABEL[c.signal_type] ?? c.signal_type}</Badge>}
+                  {c.review_status === "dismissed" && <Badge variant="secondary">Classé</Badge>}
                   <Badge variant="outline">{c.extraction_mode === "image" ? "Carte image" : c.extraction_mode === "manual" ? "Manuel" : "Texte affiché"}</Badge>
                   {c.intent_score >= 40 && <Badge className="bg-emerald-600">Intention {c.intent_score}</Badge>}
                   <span className="text-xs text-muted-foreground ml-auto">{new Date(c.captured_at).toLocaleString("fr-CA")}</span>
@@ -243,7 +250,7 @@ export default function PageAdminScout() {
                   className="text-xs underline mt-2 text-muted-foreground"
                   onClick={() => setExpanded(expanded === c.id ? null : c.id)}
                 >
-                  {expanded === c.id ? "Masquer la provenance" : "Voir la provenance"}
+                  {expanded === c.id ? "Masquer la fiche" : "Ouvrir la fiche signal"}
                 </button>
                 {expanded === c.id && (
                   <div className="mt-2 text-xs space-y-1">
@@ -252,6 +259,7 @@ export default function PageAdminScout() {
                     {c.prospect_id && <div className="text-muted-foreground">Prospect : {c.prospect_id}</div>}
                     {c.error && <div className="text-rose-400">Erreur : {c.error}</div>}
                     <pre className="whitespace-pre-wrap bg-muted/30 p-2 rounded-lg max-h-48 overflow-auto">{c.raw_text}</pre>
+                    <ScoutCaptureReview captureId={c.id} author={c.author_name} city={c.city} reviewStatus={c.review_status} />
                   </div>
                 )}
               </div>

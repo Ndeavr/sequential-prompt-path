@@ -83795,18 +83795,23 @@ export type Database = {
           error: string | null
           extracted: Json
           extraction_mode: string
+          fingerprint: string | null
           group_name: string | null
           id: string
           intent_evidence: string | null
           intent_score: number
           phone_e164: string | null
+          post_context: string | null
           post_url: string | null
           prospect_id: string | null
           raw_text: string | null
           rbq_number: string | null
+          review_status: string
           session_id: string | null
+          signal_type: string | null
           source_platform: string
           source_url: string | null
+          updated_at: string
           user_id: string
           website_url: string | null
         }
@@ -83825,18 +83830,23 @@ export type Database = {
           error?: string | null
           extracted?: Json
           extraction_mode?: string
+          fingerprint?: string | null
           group_name?: string | null
           id?: string
           intent_evidence?: string | null
           intent_score?: number
           phone_e164?: string | null
+          post_context?: string | null
           post_url?: string | null
           prospect_id?: string | null
           raw_text?: string | null
           rbq_number?: string | null
+          review_status?: string
           session_id?: string | null
+          signal_type?: string | null
           source_platform?: string
           source_url?: string | null
+          updated_at?: string
           user_id: string
           website_url?: string | null
         }
@@ -83855,18 +83865,23 @@ export type Database = {
           error?: string | null
           extracted?: Json
           extraction_mode?: string
+          fingerprint?: string | null
           group_name?: string | null
           id?: string
           intent_evidence?: string | null
           intent_score?: number
           phone_e164?: string | null
+          post_context?: string | null
           post_url?: string | null
           prospect_id?: string | null
           raw_text?: string | null
           rbq_number?: string | null
+          review_status?: string
           session_id?: string | null
+          signal_type?: string | null
           source_platform?: string
           source_url?: string | null
+          updated_at?: string
           user_id?: string
           website_url?: string | null
         }
@@ -83925,6 +83940,126 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "scout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_entity_links: {
+        Row: {
+          capture_id: string
+          city: string | null
+          company_name: string
+          created_at: string
+          evidence: string | null
+          evidence_url: string | null
+          id: string
+          person_name: string | null
+          prospect_id: string | null
+          public_email: string | null
+          public_phone: string | null
+          public_website: string | null
+          relation: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          capture_id: string
+          city?: string | null
+          company_name: string
+          created_at?: string
+          evidence?: string | null
+          evidence_url?: string | null
+          id?: string
+          person_name?: string | null
+          prospect_id?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          public_website?: string | null
+          relation: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          capture_id?: string
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          evidence?: string | null
+          evidence_url?: string | null
+          id?: string
+          person_name?: string | null
+          prospect_id?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          public_website?: string | null
+          relation?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_entity_links_capture_id_fkey"
+            columns: ["capture_id"]
+            isOneToOne: false
+            referencedRelation: "scout_captures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_next_action"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_entity_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
         ]

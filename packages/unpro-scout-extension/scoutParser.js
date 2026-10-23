@@ -40,6 +40,39 @@
     return "+1" + d;
   }
 
+
+  /* Radar classification — mirror of supabase/functions/_shared/scoutRadar.ts (classifySignal). */
+  const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+  const C_PHRASES = [
+    [/\bje cherche (des |de nouveaux )?contrats\b/, 55], [/\bcherche (des )?contrats\b/, 50],
+    [/\b(nous sommes|on est|je suis) specialises?\b/, 45], [/\b(je suis|nous sommes|on est) disponibles?\b/, 45],
+    [/\b(pv|pm|mp) moi\b/, 35], [/\b(ecris|ecrivez|texte|textez|appelle|appelez)[- ]moi\b/, 30],
+    [/\bcontactez[- ]moi\b/, 20], [/\bsous[- ]traitance\b/, 40], [/\bpartenariat\b/, 35],
+    [/\bsoumission gratuite\b/, 20], [/\ben prive\b/, 10],
+  ];
+  const H_PHRASES = [
+    [/\bje cherche (un|une|quelqu'un)\b/, 45], [/\b(besoin d'un|besoin d'une|j'ai besoin)\b/, 40],
+    [/\b(quelqu'un|qqn|qq1) (connait|aurait|peut)\b/, 40], [/\brecommand(ation|ez|er)\b/, 35],
+    [/\bcombien (ca )?(coute|couterait|charge)\b/, 30],
+    [/\b(qui (est|serait) disponible|(etes|es)[- ]vous disponibles?|est-ce que .* disponible)\b/, 45],
+    [/\bma (maison|toiture|cuisine|salle de bain|fondation)\b/, 20],
+  ];
+  const BARE = /^(moi|moi aussi|dispo|disponible|disponibles|toujours disponible|disponible ici)\s*[!.]*$/;
+  function classifySignal(text) {
+    const t = norm(text); const q = /\?/.test(text || "");
+    let c = 0, h = 0;
+    for (const [re, w] of C_PHRASES) if (re.test(t)) c += w;
+    for (const [re, w] of H_PHRASES) if (re.test(t)) h += w;
+    const stripped = t.replace(/^[^:]{1,60}:\s*/, "");
+    if (BARE.test(stripped)) c += 40;
+    else if (/\bdispo(nible)?s?\b/.test(t) && !q && h === 0) c += 25;
+    let type = "uncertain";
+    if (h > 0 && c === 0) type = "homeowner_request";
+    else if (c > 0 && h === 0) type = q && c < 40 ? "uncertain" : "contractor_offer";
+    else if (c > 0 && h > 0) type = c >= h + 20 ? "contractor_offer" : "uncertain";
+    return { signal_type: type, contractor_score: Math.min(100, c), homeowner_score: Math.min(100, h) };
+  }
+
   function parseScoutText(text, authorName) {
     text = String(text || "");
     const lower = text.toLowerCase();
@@ -86,8 +119,9 @@
       intent_evidence: hits.length ? hits.map((h) => h[0]).join(" | ") : null,
       confidence: Number(confidence.toFixed(2)),
       has_contact: Boolean(phone_e164 || email || website_url),
+      signal_type: classifySignal(text).signal_type,
     };
   }
 
-  window.UnproScoutParser = { parseScoutText, toE164 };
+  window.UnproScoutParser = { parseScoutText, toE164, classifySignal };
 })();

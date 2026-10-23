@@ -17,6 +17,10 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseScoutText, toE164, normalizeDomain, normalizeEmail, hasContactPoint } from "../_shared/scoutParser.ts";
+import {
+  authorizeScoutAdmin, captureFingerprint, classifySignal, decideCaptureRoute,
+  extractAffiliations, validateLinkReview, type Affiliation,
+} from "../_shared/scoutRadar.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -43,19 +47,23 @@ Deno.serve(async (req) => {
   try {
     /* ── 1. Authentication: a real UNPRO admin session is mandatory ── */
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return json({ error: "unauthorized", message: "Missing bearer token" }, 401);
-    }
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    const user = userData?.user;
-    if (userErr || !user) return json({ error: "unauthorized", message: "Invalid session" }, 401);
-
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (!isAdmin) return json({ error: "forbidden", message: "Admin role required" }, 403);
+    const gate = await authorizeScoutAdmin({
+      bearer: authHeader,
+      getUser: async () => {
+        const { data, error } = await userClient.auth.getUser();
+        return error || !data?.user ? null : { id: data.user.id };
+      },
+      isAdmin: async (id) => {
+        const { data } = await admin.rpc("has_role", { _user_id: id, _role: "admin" });
+        return data === true;
+      },
+    });
+    if (!gate.ok) return json({ error: gate.error }, gate.status);
+    const user = { id: gate.userId };
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action ?? "capture");
@@ -96,6 +104,90 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (error) throw error;
       return json({ stats: data });
+    }
+
+    /* ── 2b. Radar review actions (admin-only, no outbound side effect) ── */
+    if (action === "add_candidate") {
+      const name = String(body.company_name ?? "").trim();
+      if (!body.capture_id || name.length < 2 || name.length > 160) return json({ error: "invalid_candidate" }, 400);
+      const { data: cap } = await admin.from("scout_captures").select("id,contact_name,city").eq("id", body.capture_id).maybeSingle();
+      if (!cap) return json({ error: "capture_not_found" }, 404);
+      const { data, error } = await admin.from("scout_entity_links").insert({
+        capture_id: cap.id, person_name: cap.contact_name, company_name: name, relation: "candidate_manual",
+        status: "pending", source: "admin_manual", evidence: body.evidence ? String(body.evidence).slice(0, 500) : null,
+        city: cap.city,
+      }).select("id").single();
+      if (error) {
+        if ((error as { code?: string }).code === "23505") return json({ status: "already_linked" });
+        throw error;
+      }
+      return json({ status: "pending", link_id: data.id });
+    }
+
+    if (action === "review_link") {
+      const v = validateLinkReview({ decision: body.decision, evidence_url: body.evidence_url });
+      if (!v.ok) return json({ error: v.error }, 400);
+      const patch: Record<string, unknown> = {
+        status: v.status, evidence_url: v.evidence_url, reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      };
+      if (v.status === "verified") {
+        // Public professional coordinates only, and only alongside the cited source.
+        if (body.public_phone) patch.public_phone = toE164(body.public_phone);
+        if (body.public_email) patch.public_email = normalizeEmail(body.public_email);
+        if (body.public_website) patch.public_website = normalizeDomain(body.public_website);
+        if (body.city) patch.city = String(body.city).slice(0, 80);
+      }
+      const { error } = await admin.from("scout_entity_links").update(patch).eq("id", body.link_id);
+      if (error) throw error;
+      return json({ status: v.status });
+    }
+
+    if (action === "promote_link") {
+      const { data: link } = await admin.from("scout_entity_links").select("*").eq("id", body.link_id).maybeSingle();
+      if (!link) return json({ error: "link_not_found" }, 404);
+      if (link.status !== "verified") return json({ error: "link_not_verified" }, 409);
+      if (link.prospect_id) return json({ status: "already_promoted", prospect_id: link.prospect_id });
+      const src = {
+        source: "unpro_scout", platform: "facebook_group", url: link.evidence_url,
+        capture_id: link.capture_id, captured_at: new Date().toISOString(),
+      };
+      const match = await findProspect(admin, {
+        phone: link.public_phone, email: link.public_email, domain: link.public_website,
+        name: link.company_name, city: link.city,
+      });
+      let prospectId: string;
+      if (match) {
+        // Attach provenance only — never overwrite an existing/historical record.
+        const { data: ex } = await admin.from("verified_contractor_prospects").select("source_urls").eq("id", match.id).maybeSingle();
+        const prev = Array.isArray(ex?.source_urls) ? ex!.source_urls as unknown[] : [];
+        await admin.from("verified_contractor_prospects").update({ source_urls: [...prev, src] }).eq("id", match.id);
+        prospectId = match.id;
+      } else {
+        const { data: created, error } = await admin.from("verified_contractor_prospects").insert({
+          business_name: link.company_name, category: "general", city: link.city,
+          phone_primary: link.public_phone, phone_e164: link.public_phone, phone_validation_status: "unverified",
+          sms_eligible: false, email: link.public_email,
+          website_url: link.public_website ? `https://${link.public_website}` : null,
+          rbq_number: null, verification_status: "needs_enrichment", source: "facebook_group",
+          outreach_status: "none", data_quality_score: 0, source_urls: [src],
+        }).select("id").single();
+        if (error) throw error;
+        prospectId = created.id;
+      }
+      await admin.from("scout_entity_links").update({ prospect_id: prospectId, updated_at: new Date().toISOString() }).eq("id", link.id);
+      await logAcquisitionEvent(admin, prospectId, link.id, {
+        kind: match ? "scout_link_attached" : "scout_link_promoted", capture_id: link.capture_id, signal: match?.signal ?? null,
+      }, "scout_entity_links");
+      return json({ status: match ? "attached_existing" : "created", prospect_id: prospectId, signal: match?.signal ?? null });
+    }
+
+    if (action === "set_capture_review") {
+      const rs = String(body.review_status ?? "");
+      if (!["pending", "dismissed", "clara_followup", "reviewed"].includes(rs)) return json({ error: "invalid_review_status" }, 400);
+      const { error } = await admin.from("scout_captures").update({ review_status: rs, updated_at: new Date().toISOString() }).eq("id", body.capture_id);
+      if (error) throw error;
+      return json({ status: rs });
     }
 
     if (action !== "capture") return json({ error: "unknown_action", action }, 400);
@@ -182,12 +274,58 @@ Deno.serve(async (req) => {
       captured_at: body.captured_at ?? new Date().toISOString(),
     };
 
-    if (!hasContactPoint(signals)) {
-      // Not an error — chit-chat with no contact point is the common case in a
-      // group feed. Recorded as 'skipped' so the operator stats stay honest.
-      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "skipped", error: "no_contact_point" });
+    /* ── 3b. Radar: classify, fingerprint, affiliations (never sends anything) ── */
+    const postContext = body.post_context ? String(body.post_context).slice(0, 2000) : null;
+    const classification = classifySignal(rawText, postContext);
+    const affiliations = extractAffiliations(rawText);
+    const fingerprint = captureFingerprint({
+      source_url: body.source_url, post_url: body.post_url, author_name: body.author_name, raw_text: rawText,
+    });
+    captureRow.signal_type = classification.signal_type;
+    captureRow.fingerprint = fingerprint;
+    captureRow.post_context = postContext;
+    captureRow.extracted = { ...(captureRow.extracted as object), classification, affiliations };
+    if (classification.signal_type === "contractor_offer") {
+      captureRow.intent_score = Math.max(signals.intent_score, classification.contractor_score);
+      signals.intent_score = captureRow.intent_score as number;
+      signals.intent_evidence = signals.intent_evidence ?? classification.evidence.join(" | ");
+      captureRow.intent_evidence = signals.intent_evidence;
+    } else if (classification.signal_type === "homeowner_request") {
+      captureRow.intent_score = 0; // homeowner demand is not contractor intent
+      signals.intent_score = 0;
+    }
+
+    const { data: already } = await admin.from("scout_captures")
+      .select("id,dedupe_status,prospect_id").eq("fingerprint", fingerprint).maybeSingle();
+    if (already) {
+      return json({ status: "already_captured", capture_id: already.id, prospect_id: already.prospect_id });
+    }
+
+    // An employee's declaration never makes them the employer, nor carries the employer's licence.
+    if (affiliations.some((a) => a.relation === "employee_declared")) {
+      signals.company_name = null;
+      signals.rbq_number = null;
+    }
+
+    const route = decideCaptureRoute(classification, hasContactPoint(signals));
+    if (route !== "prospect") {
+      const { data: rc, error: rcErr } = await admin.from("scout_captures").insert({
+        ...captureRow, dedupe_status: "review", review_status: "pending",
+        error: hasContactPoint(signals) ? null : "no_contact_point",
+      }).select("id").single();
+      if (rcErr) {
+        if ((rcErr as { code?: string }).code === "23505") return json({ status: "already_captured" });
+        throw rcErr;
+      }
+      await insertLinks(admin, rc.id, signals.contact_name, affiliations, signals.city);
       await bumpSession(admin, sessionId, { captured: 1 });
-      return json({ status: "skipped", reason: "no_contact_point" });
+      return json({
+        status: route === "homeowner_review" ? "homeowner_review" : "review",
+        capture_id: rc.id,
+        signal_type: classification.signal_type,
+        evidence: classification.evidence,
+        links: affiliations.length,
+      });
     }
 
     /* ── 4. Dedupe against the existing acquisition universe ── */
@@ -249,6 +387,7 @@ Deno.serve(async (req) => {
       // Canonical acquisition event. `channel`/`event_type` are constrained by
       // acquisition_events_*_check — Scout uses the allowed 'system'/'scraped'
       // pair and carries its own semantics in metadata.kind.
+      if (dupCapture?.id) await insertLinks(admin, dupCapture.id, signals.contact_name, affiliations, signals.city);
       await logAcquisitionEvent(admin, existingId, dupCapture?.id, {
         kind: "scout_rediscovered", signal, group_name: body.group_name ?? null,
         intent_score: signals.intent_score, extraction_mode: mode,
@@ -299,6 +438,7 @@ Deno.serve(async (req) => {
     const { data: newCapture } = await admin.from("scout_captures").insert({
       ...captureRow, dedupe_status: "new", prospect_id: created.id,
     }).select("id").single();
+    if (newCapture?.id) await insertLinks(admin, newCapture.id, signals.contact_name, affiliations, signals.city);
     await logAcquisitionEvent(admin, created.id, newCapture?.id, {
       kind: "scout_discovered", group_name: body.group_name ?? null, extraction_mode: mode,
       intent_score: signals.intent_score, intent_evidence: signals.intent_evidence,
@@ -313,7 +453,7 @@ Deno.serve(async (req) => {
 });
 
 async function bumpSession(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   sessionId: string | null,
   d: { captured?: number; created?: number; duplicate?: number; error?: number },
 ) {
@@ -337,17 +477,18 @@ async function bumpSession(
  * satisfies uq_acq_events_source (source_table, source_row_id, event_type).
  */
 async function logAcquisitionEvent(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   prospectId: string,
   captureId: string | undefined,
   metadata: Record<string, unknown>,
+  sourceTable = "scout_captures",
 ) {
   const { error } = await admin.from("acquisition_events").insert({
     prospect_id: prospectId,
     channel: "system",
     event_type: "scraped",
     provider: "system",
-    source_table: "scout_captures",
+    source_table: sourceTable,
     source_row_id: captureId ?? null,
     metadata: { source: "unpro_scout", platform: "facebook_group", ...metadata },
   });
@@ -355,3 +496,40 @@ async function logAcquisitionEvent(
   if (error) console.error("[scout-ingest] acquisition_event insert failed", error.message);
 }
 
+
+/** Declared affiliations become `inferred` links only — never a company record. */
+async function insertLinks(
+  admin: Admin,
+  captureId: string,
+  personName: string | null,
+  affiliations: Affiliation[],
+  city: string | null,
+) {
+  if (!affiliations.length) return;
+  const { error } = await admin.from("scout_entity_links").insert(affiliations.map((a) => ({
+    capture_id: captureId, person_name: personName, company_name: a.company_name,
+    relation: a.relation, status: "inferred", source: "comment_text", evidence: a.evidence, city,
+  })));
+  if (error) console.error("[scout-ingest] entity link insert failed", error.message);
+}
+
+/** Canonical prospect dedupe: phone → email → domain → name+city. Read-only. */
+async function findProspect(
+  admin: Admin,
+  k: { phone?: string | null; email?: string | null; domain?: string | null; name?: string | null; city?: string | null },
+): Promise<{ id: string; signal: string } | null> {
+  const t = admin.from("verified_contractor_prospects");
+  if (k.phone) { const { data } = await t.select("id").eq("phone_e164", k.phone).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "phone_e164" }; }
+  if (k.email) { const { data } = await admin.from("verified_contractor_prospects").select("id").ilike("email", k.email).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "email" }; }
+  if (k.domain) { const { data } = await admin.from("verified_contractor_prospects").select("id").ilike("website_url", `%${k.domain}%`).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "domain" }; }
+  if (k.name) {
+    let q = admin.from("verified_contractor_prospects").select("id").ilike("business_name", k.name);
+    if (k.city) q = q.ilike("city", k.city);
+    const { data } = await q.limit(1).maybeSingle();
+    if (data) return { id: data.id, signal: k.city ? "name_city" : "name" };
+  }
+  return null;
+}
+
+// deno-lint-ignore no-explicit-any
+type Admin = any;

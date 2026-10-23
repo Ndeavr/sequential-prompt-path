@@ -130,6 +130,13 @@ Deno.serve(async (req) => {
       collected.push(...ocr);
     }
 
+    // Radar preview: return parsed comments for admin review in /admin/scout, write nothing.
+    if ((body as { preview_only?: boolean }).preview_only === true) {
+      return new Response(JSON.stringify({ comments: collected, count: collected.length, preview_only: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const rows = collected.map((c) => ({ campaign_id, ...c, status: "extracted" }));
     let inserted: any[] = [];
     if (rows.length) {
