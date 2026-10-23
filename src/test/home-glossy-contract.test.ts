@@ -12,6 +12,12 @@ const css = readFileSync("src/index.css", "utf8");
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
     expect(hero).toContain("Un projet de rénovation en tête?");
+    expect(hero).toContain("Have a renovation project in mind?");
+    expect(hero).toContain('className="home-hero-badge"');
+    expect(hero).toContain("<UnproLogo");
+    expect(hero).toContain('markShape="bare"');
+    expect(hero).toContain("unsized");
+    expect(hero).toContain("copy.accent");
     expect(hero).not.toContain("home-hero-subtitle");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
