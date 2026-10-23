@@ -106,6 +106,90 @@ Deno.serve(async (req) => {
       return json({ stats: data });
     }
 
+    /* ── 2b. Radar review actions (admin-only, no outbound side effect) ── */
+    if (action === "add_candidate") {
+      const name = String(body.company_name ?? "").trim();
+      if (!body.capture_id || name.length < 2 || name.length > 160) return json({ error: "invalid_candidate" }, 400);
+      const { data: cap } = await admin.from("scout_captures").select("id,contact_name,city").eq("id", body.capture_id).maybeSingle();
+      if (!cap) return json({ error: "capture_not_found" }, 404);
+      const { data, error } = await admin.from("scout_entity_links").insert({
+        capture_id: cap.id, person_name: cap.contact_name, company_name: name, relation: "candidate_manual",
+        status: "pending", source: "admin_manual", evidence: body.evidence ? String(body.evidence).slice(0, 500) : null,
+        city: cap.city,
+      }).select("id").single();
+      if (error) {
+        if ((error as { code?: string }).code === "23505") return json({ status: "already_linked" });
+        throw error;
+      }
+      return json({ status: "pending", link_id: data.id });
+    }
+
+    if (action === "review_link") {
+      const v = validateLinkReview({ decision: body.decision, evidence_url: body.evidence_url });
+      if (!v.ok) return json({ error: v.error }, 400);
+      const patch: Record<string, unknown> = {
+        status: v.status, evidence_url: v.evidence_url, reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      };
+      if (v.status === "verified") {
+        // Public professional coordinates only, and only alongside the cited source.
+        if (body.public_phone) patch.public_phone = toE164(body.public_phone);
+        if (body.public_email) patch.public_email = normalizeEmail(body.public_email);
+        if (body.public_website) patch.public_website = normalizeDomain(body.public_website);
+        if (body.city) patch.city = String(body.city).slice(0, 80);
+      }
+      const { error } = await admin.from("scout_entity_links").update(patch).eq("id", body.link_id);
+      if (error) throw error;
+      return json({ status: v.status });
+    }
+
+    if (action === "promote_link") {
+      const { data: link } = await admin.from("scout_entity_links").select("*").eq("id", body.link_id).maybeSingle();
+      if (!link) return json({ error: "link_not_found" }, 404);
+      if (link.status !== "verified") return json({ error: "link_not_verified" }, 409);
+      if (link.prospect_id) return json({ status: "already_promoted", prospect_id: link.prospect_id });
+      const src = {
+        source: "unpro_scout", platform: "facebook_group", url: link.evidence_url,
+        capture_id: link.capture_id, captured_at: new Date().toISOString(),
+      };
+      const match = await findProspect(admin, {
+        phone: link.public_phone, email: link.public_email, domain: link.public_website,
+        name: link.company_name, city: link.city,
+      });
+      let prospectId: string;
+      if (match) {
+        // Attach provenance only — never overwrite an existing/historical record.
+        const { data: ex } = await admin.from("verified_contractor_prospects").select("source_urls").eq("id", match.id).maybeSingle();
+        const prev = Array.isArray(ex?.source_urls) ? ex!.source_urls as unknown[] : [];
+        await admin.from("verified_contractor_prospects").update({ source_urls: [...prev, src] }).eq("id", match.id);
+        prospectId = match.id;
+      } else {
+        const { data: created, error } = await admin.from("verified_contractor_prospects").insert({
+          business_name: link.company_name, category: "general", city: link.city,
+          phone_primary: link.public_phone, phone_e164: link.public_phone, phone_validation_status: "unverified",
+          sms_eligible: false, email: link.public_email,
+          website_url: link.public_website ? `https://${link.public_website}` : null,
+          rbq_number: null, verification_status: "needs_enrichment", source: "facebook_group",
+          outreach_status: "none", data_quality_score: 0, source_urls: [src],
+        }).select("id").single();
+        if (error) throw error;
+        prospectId = created.id;
+      }
+      await admin.from("scout_entity_links").update({ prospect_id: prospectId, updated_at: new Date().toISOString() }).eq("id", link.id);
+      await logAcquisitionEvent(admin, prospectId, link.capture_id, {
+        kind: match ? "scout_link_attached" : "scout_link_promoted", link_id: link.id, signal: match?.signal ?? null,
+      });
+      return json({ status: match ? "attached_existing" : "created", prospect_id: prospectId, signal: match?.signal ?? null });
+    }
+
+    if (action === "set_capture_review") {
+      const rs = String(body.review_status ?? "");
+      if (!["pending", "dismissed", "clara_followup", "reviewed"].includes(rs)) return json({ error: "invalid_review_status" }, 400);
+      const { error } = await admin.from("scout_captures").update({ review_status: rs, updated_at: new Date().toISOString() }).eq("id", body.capture_id);
+      if (error) throw error;
+      return json({ status: rs });
+    }
+
     if (action !== "capture") return json({ error: "unknown_action", action }, 400);
 
     /* ── 3. Extraction ── */
