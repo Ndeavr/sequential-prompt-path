@@ -2,6 +2,7 @@
 // Aggregates existing tables — no writes, no side effects.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { classifyTrackingLinks, unverifiedPayments } from "./indicatorTruth.ts";
 
 interface Stage {
   key: string;
@@ -276,16 +277,22 @@ function json(body: unknown, status = 200) {
 // Reads only real rows. No writes. Returns a 20-stage snapshot with counts,
 // last_at, oldest stuck record, and a top exception reason per stage.
 async function computeRealPipeline(admin: any, since: string) {
-  const [prospectsR, leadsR, smsR, evidenceR, tracksR, repliesR, checkoutsR, webhooksR] = await Promise.all([
-    admin.from("contractor_prospects").select("id,phone,email,business_name,category,city,created_at,updated_at").limit(100000),
+  const [prospectsR, leadsR, smsR, evidenceR, tracksR, repliesR, checkoutsR, webhooksR, contractorsR] = await Promise.all([
+    admin.from("contractor_prospects").select("id,phone,email,business_name,category_slug,city,created_at,updated_at,source,source_name,raw_data").limit(100000),
     admin.from("contractor_leads").select("id,business_name,company_name,phone,mobile_phone,lead_status,sms_status,last_sms_at,pipeline_status,unsubscribed_at,source_prospect_id,contractor_id,created_at").limit(100000),
     admin.from("sms_events_v2").select("id,lead_id,twilio_sid,status,error_code,error_message,normalized_phone,created_at,sent_at,delivered_at,failed_at,clicked_at").gte("created_at", since).limit(100000),
     admin.from("casl_consent_evidence").select("id,contractor_lead_id,destination_type,is_valid").eq("is_valid", true).limit(100000),
-    admin.from("acquisition_tracking_links").select("id,contractor_id,prospect_id,click_count,first_click_at,created_at").limit(100000),
+    admin.from("acquisition_tracking_links").select("id,contractor_id,prospect_id,campaign,metadata,click_count,first_click_at,created_at").limit(100000),
     admin.from("outreach_replies").select("id,lead_id,intent,created_at").gte("created_at", since).limit(50000),
     admin.from("billing_checkout_sessions").select("id,contractor_id,checkout_status,payment_status,amount_total,created_at").gte("created_at", since).limit(50000),
     admin.from("billing_webhook_events").select("id,event_type,delivery_status,received_at").gte("received_at", since).limit(50000),
+    admin.from("contractors").select("id,business_name,email").limit(100000),
   ]);
+
+  // A failed source query must not look like a verified empty commercial funnel.
+  for (const result of [prospectsR, tracksR, checkoutsR, contractorsR]) {
+    if (result.error) throw new Error("funnel_indicator_source_unavailable");
+  }
 
   const prospects = prospectsR.data ?? [];
   const leads = leadsR.data ?? [];
@@ -315,12 +322,11 @@ async function computeRealPipeline(admin: any, since: string) {
   const smsAccepted = sms.filter((s: any) => ["sent", "delivered"].includes(s.status));
   const smsDelivered = sms.filter((s: any) => s.status === "delivered");
   const smsFailed = sms.filter((s: any) => ["failed", "undelivered", "invalid_phone"].includes(s.status));
-  const smsClicked = sms.filter((s: any) => !!s.clicked_at);
-  const clickedTracks = tracks.filter((t: any) => (t.click_count ?? 0) > 0);
+  const trackingTruth = classifyTrackingLinks(tracks, prospects, contractorsR.data ?? []);
   const positiveReplies = replies.filter((r: any) => ["positive", "contractor_intent", "homeowner_intent", "appointment_request", "general"].includes(r.intent));
   const stopReplies = replies.filter((r: any) => r.intent === "stop");
   const checkoutsOpen = checkouts;
-  const checkoutsPaid = checkouts.filter((c: any) => c.payment_status === "paid" || c.checkout_status === "complete");
+  const paymentTruth = unverifiedPayments(checkouts);
   const webhooksReceived = webhooks;
   const webhooksVerified = webhooks.filter((w: any) => w.delivery_status === "processed" || w.delivery_status === "verified");
   const activatedLeads = leads.filter((l: any) => l.pipeline_status === "activated" || l.lead_status === "activated" || l.lead_status === "ACTIVATED");
@@ -337,12 +343,12 @@ async function computeRealPipeline(admin: any, since: string) {
     { key: "9_sms_provider_accepted", label: "9. SMS accepté par Twilio", count: smsAccepted.length },
     { key: "10_sms_delivered", label: "10. Livrés (delivered)", count: smsDelivered.length, top_error: null },
     { key: "10b_sms_failed", label: "10b. Échoués/undelivered/invalid", count: smsFailed.length },
-    { key: "11_clicked", label: "11. Liens cliqués", count: Math.max(smsClicked.length, clickedTracks.length) },
+    { key: "11_clicked", label: "11. Liens commerciaux liés cliqués (humain non vérifié)", count: trackingTruth.commercial_clicked_links, verification_status: "not_verified" },
     { key: "12_replied", label: "12. Réponses (dont positives + STOP)", count: replies.length, positive: positiveReplies.length, stop: stopReplies.length },
     { key: "13_onboarding_started", label: "13. Onboarding commencé", count: leads.filter((l: any) => ["engaged", "replied", "onboarding"].includes(l.pipeline_status ?? "")).length },
     { key: "14_otp_completed", label: "14. OTP complété (contractor_id lié)", count: leads.filter((l: any) => !!l.contractor_id).length },
     { key: "15_stripe_checkout_started", label: "15. Stripe checkout créé", count: checkoutsOpen.length },
-    { key: "16_payment_succeeded", label: "16. Paiement réussi", count: checkoutsPaid.length },
+    { key: "16_payment_succeeded", label: "16. Paiements LIVE 350 $ — non vérifiés", ...paymentTruth },
     { key: "17_webhook_received", label: "17. Webhook reçu (30j)", count: webhooksReceived.length },
     { key: "17b_webhook_verified", label: "17b. Webhook vérifié / traité", count: webhooksVerified.length },
     { key: "18_contractor_activated", label: "18. Compte activé", count: activatedLeads.length },
@@ -371,7 +377,9 @@ async function computeRealPipeline(admin: any, since: string) {
 
   return {
     generated_at: new Date().toISOString(),
-    source: "contractor_leads pipeline (real production data)",
+    source: "contractor_leads pipeline (raw activity and separately classified commercial indicators)",
+    tracking_metrics: trackingTruth,
+    payment_verification: paymentTruth,
     stages,
     top_sms_failure_reasons: topSmsFailures,
     reconciliation_gap: {
