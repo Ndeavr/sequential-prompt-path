@@ -77,3 +77,4 @@
 - [x] Four active text/vision extraction sites migrated from catalog-deprecated 2.5 Flash to supported lower-token-price 3.1 Flash Lite; protocol mocks passed.
 - [ ] Remaining deprecated image/voice/other models: protocol, cost and actual deployed activity must be verified before replacement; no paid probe authorized.
 - [x] Focused tests (90), lint (zero errors; two preexisting warnings), automatic build OK, intercepted mobile browser and audit. No hosted E2E or manual build/typecheck claimed.
+- [x] Radar V1 (Scout): Disponible/PV moi capture, homeowner split, N↔M links, admin review, preview OCR — edge functions not deployed (awaiting approval).
