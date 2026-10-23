@@ -60,22 +60,27 @@ Deno.serve(async (req) => {
     const body = await req.text();
     rawBody = body;
 
-    // Replay mode: internal reprocessing bypasses Stripe signature check.
-    // Requires x-replay-token header matching SERVICE_ROLE_KEY.
-    const replayToken = req.headers.get("x-replay-token");
-    const isReplay =
-      !!replayToken &&
-      replayToken === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Fail-closed entry decision (shared, unit-tested):
+    // - missing STRIPE_WEBHOOK_SECRET => external requests rejected (503);
+    // - replay bypasses the signature check ONLY with an exact, non-empty
+    //   SERVICE_ROLE_KEY match in x-replay-token;
+    // - everything else must pass real Stripe signature verification.
+    const decision = webhookEntryDecision({
+      liveSecret: webhookSecret,
+      testSecret: testWebhookSecret,
+      replayToken: req.headers.get("x-replay-token"),
+      serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    });
 
     let event: Stripe.Event;
 
-    if (!webhookSecret && !isReplay) {
+    if (decision === "reject_unavailable") {
       return new Response(JSON.stringify({ error: "Webhook verification unavailable" }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!isReplay) {
+    if (decision === "verify_signature") {
       const sig = req.headers.get("stripe-signature");
       if (!sig) {
         return new Response(JSON.stringify({ error: "Missing signature" }), {
@@ -87,7 +92,7 @@ Deno.serve(async (req) => {
       // test-mode events can be verified for real (never forged, never skipped).
       try {
         try {
-          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret ?? "");
+          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret!);
         } catch (liveErr) {
           if (!testWebhookSecret) throw liveErr;
           event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
@@ -101,6 +106,7 @@ Deno.serve(async (req) => {
         });
       }
     } else {
+      // decision === "replay": authenticated internal reprocessing only.
       event = JSON.parse(body) as Stripe.Event;
     }
 
