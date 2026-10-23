@@ -509,11 +509,20 @@ Deno.serve(async (req) => {
               });
               // PROMO déjà encaissé par une AUTRE session (index uq_entry350_single_promo_redemption) :
               // aucun droit, aucune commission, alerte remboursement, accusé de réception seulement.
+              let promoOriginal: { contractor_id?: string | null; metadata?: unknown } | null = null;
+              let promoOriginalSession: unknown = null;
               if (ledgerErr && entry350LedgerConflict(ledgerErr.message) === "promo_already_redeemed") {
-                const { data: original } = await supabase.from("contractor_activation_ledger")
+                const { data: original, error: origErr } = await supabase.from("contractor_activation_ledger")
                   .select("contractor_id, metadata").eq("action", "entry_activation_350_paid")
                   .eq("metadata->>promo_code_id", String(promoCodeId)).limit(1).maybeSingle();
-                const originalSession = (original?.metadata as Record<string, unknown> | null)?.stripe_session_id ?? null;
+                if (origErr || !original) throw new Error("entry_activation_350 promo original lookup failed");
+                promoOriginal = original;
+                promoOriginalSession = (original.metadata as Record<string, unknown> | null)?.stripe_session_id ?? null;
+              }
+              // Same session hitting the promo index first = concurrent redelivery, stays idempotent.
+              if (promoOriginal && promoOriginalSession !== session.id) {
+                const original = promoOriginal;
+                const originalSession = promoOriginalSession;
                 await supabase.from("admin_notifications").insert({
                   type: "entry_activation_350_promo_duplicate", severity: "critical", contractor_id: entryContractorId,
                   title: event.livemode ? "Code PROMO déjà utilisé — paiement réel à rembourser" : "Code PROMO déjà utilisé (TEST) — à rembourser",
@@ -527,7 +536,7 @@ Deno.serve(async (req) => {
                 });
               }
               // Livraison concurrente de la MÊME session déjà inscrite (index unique) = idempotent.
-              const concurrentDup = ledgerErr && entry350LedgerConflict(ledgerErr.message) === "same_session";
+              const concurrentDup = ledgerErr && (entry350LedgerConflict(ledgerErr.message) === "same_session" || promoOriginalSession === session.id);
               if (ledgerErr && !concurrentDup) {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
