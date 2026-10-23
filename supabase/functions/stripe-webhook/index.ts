@@ -1817,6 +1817,19 @@ Deno.serve(async (req) => {
           .update({ checkout_status: "expired" })
           .eq("external_checkout_id", session.id);
 
+        // Activation ledger: reflect Stripe's verified expiry on the exact
+        // session row only. Never touches a row already settled (paid/complete).
+        if (session.status === "expired" && session.payment_status !== "paid") {
+          const { error: bcsErr } = await supabase
+            .from("billing_checkout_sessions")
+            .update({ checkout_status: "expired", payment_status: "unpaid" })
+            .eq("stripe_checkout_session_id", session.id)
+            .eq("checkout_status", "open")
+            .eq("payment_status", "unpaid");
+          if (bcsErr) throw new Error(`billing_checkout_sessions expire failed: ${bcsErr.message}`);
+        }
+
+
         // Reverse promo reservation so user can try again
         if (redemptionId) {
           await supabase
