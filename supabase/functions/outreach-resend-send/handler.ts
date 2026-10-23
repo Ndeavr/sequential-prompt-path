@@ -32,14 +32,15 @@ export interface Deps {
   hasProviderKey: boolean;
   outreachEnabled: () => Promise<boolean>;
   autopilotOpen: () => Promise<{ allowed: boolean; reason: string | null }>;
-  senderDomainVerified: (domain: string) => Promise<boolean>;
+  /** "unknown" = cannot be proven (e.g. send-only key gets 401 on /domains). Only "verified" passes. */
+  senderDomainVerified: (domain: string) => Promise<DomainProof>;
   isSuppressed: (email: string) => Promise<boolean>; // must throw/true on read error
   hasReviewedEmailConsent: (email: string) => Promise<boolean>;
   createUnsubscribeToken: (email: string) => Promise<string>;
   claim: (key: string, email: string, campaign: string) => Promise<string>;
   settle: (key: string, status: "sent" | "failed_retryable" | "failed_final", providerId: string | null, error: string | null) => Promise<void>;
   sha256: (s: string) => Promise<string>;
-  providerSend: (payload: Record<string, unknown>) => Promise<{ status: number; body: any }>;
+  providerSend: (payload: Record<string, unknown>, idempotencyKey: string | null) => Promise<{ status: number; body: any }>;
   log: (row: Record<string, unknown>) => Promise<void>;
 }
 
@@ -96,14 +97,17 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
 
   let claimKey: string | null = null;
   const headers: Record<string, string> = {};
+  let text = body.text ?? htmlToText(html);
   if (commercial) {
-    if (FORBIDDEN_COPY.some((r) => r.test(html) || r.test(body.subject))) return block(422, "FORBIDDEN_OFFER_COPY");
+    if (FORBIDDEN_COPY.some((r) => r.test(html) || r.test(body.subject) || r.test(text))) return block(422, "FORBIDDEN_OFFER_COPY");
     const campaign = (body.campaign ?? body.template_name ?? "").trim();
     if (!campaign) return block(422, "MISSING_CAMPAIGN");
     if (!(await d.outreachEnabled().catch(() => false))) return block(423, "OUTREACH_DISABLED");
     const gate = await d.autopilotOpen().catch(() => ({ allowed: false, reason: "gate_unreadable" }));
     if (!gate.allowed) return block(423, "AUTOPILOT_GATED", gate.reason ?? "");
-    if (!(await d.senderDomainVerified(d.senderDomain).catch(() => false))) return block(423, "SENDER_DOMAIN_NOT_VERIFIED", d.senderDomain);
+    const domain = await d.senderDomainVerified(d.senderDomain).catch(() => "unknown" as const);
+    if (domain === "unknown") return block(423, "SENDER_DOMAIN_UNKNOWN", d.senderDomain);
+    if (domain !== "verified") return block(423, "SENDER_DOMAIN_NOT_VERIFIED", d.senderDomain);
     if (!d.postalAddress.trim()) return block(423, "SENDER_POSTAL_ADDRESS_MISSING");
     if (await d.isSuppressed(to).catch(() => true)) return block(409, "RECIPIENT_SUPPRESSED");
     if (!(await d.hasReviewedEmailConsent(to).catch(() => false))) return block(423, "NO_REVIEWED_CASL_EVIDENCE");
@@ -114,7 +118,9 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
 
     let unsubUrl: string;
     try {
+      // Must reuse the same unused token (≤60 days) so retries send a byte-identical payload.
       const t = await d.createUnsubscribeToken(to);
+      if (!/^[A-Za-z0-9_-]{16,}$/.test(t)) throw new Error("bad_token");
       unsubUrl = `${d.unsubscribeBaseUrl}?token=${encodeURIComponent(t)}`;
     } catch {
       await d.settle(claimKey, "failed_retryable", null, "unsubscribe_token_failed");
@@ -124,20 +130,22 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
       `Vous recevez ce message parce que votre adresse professionnelle est publiée sur votre site. ` +
       `<a href="${unsubUrl}">Se désabonner</a></p>`;
     html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${footer}</body>`) : html + footer;
+    text = `${text}\n\n--\nUNPRO · ${d.postalAddress}\nVous recevez ce message parce que votre adresse professionnelle est publiée sur votre site.\nSe désabonner : ${unsubUrl}`;
     headers["List-Unsubscribe"] = `<${unsubUrl}>`;
     headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
   }
 
-  const text = body.text ?? htmlToText(html);
   const payload: Record<string, unknown> = { from: d.senderFrom, to: [to], subject: body.subject, html, text, tags: body.tags };
   if (Object.keys(headers).length) payload.headers = headers;
 
   let resp: { status: number; body: any };
   try {
-    resp = await d.providerSend(payload);
+    // Provider-side Idempotency-Key = claim key: Resend dedupes the same request for 24h.
+    resp = await d.providerSend(payload, claimKey);
   } catch (e) {
-    if (claimKey) await d.settle(claimKey, "failed_retryable", null, String(e).slice(0, 300));
-    return block(502, "RESEND_NETWORK_ERROR", String(e).slice(0, 200));
+    // The provider may have accepted it: state unknown → never auto-resent.
+    if (claimKey) await d.settle(claimKey, "failed_final", null, `needs_review:network:${String(e).slice(0, 200)}`);
+    return block(502, "PROVIDER_STATE_UNKNOWN", String(e).slice(0, 200));
   }
   if (resp.status < 200 || resp.status >= 300) {
     const retryable = resp.status === 429 || resp.status >= 500;
@@ -145,7 +153,11 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
     if (claimKey) await d.settle(claimKey, retryable ? "failed_retryable" : "failed_final", null, detail);
     return block(502, "RESEND_PROVIDER_ERROR", detail);
   }
-  const id = resp.body?.id ?? null;
+  const id = typeof resp.body?.id === "string" && resp.body.id ? resp.body.id : null;
+  if (!id) {
+    if (claimKey) await d.settle(claimKey, "failed_final", null, "needs_review:accepted_without_provider_id");
+    return block(502, "PROVIDER_STATE_UNKNOWN", "accepted_without_provider_id");
+  }
   if (claimKey) await d.settle(claimKey, "sent", id, null);
   await d.log({ message_id: messageId, template_name: body.template_name ?? "outreach-resend-send", recipient_email: to,
     status: "sent", metadata: { resend_id: id, sender: d.senderFrom, commercial } });
