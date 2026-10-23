@@ -513,7 +513,7 @@ Deno.serve(async (req) => {
       if (entryPromo) {
         fallbackConfig.discounts = [{ promotion_code: entryPromo.promotionCodeId }];
         // Une session non payée expire vite : le code n'est jamais consommé par un abandon.
-        fallbackConfig.expires_at = Math.floor(Date.now() / 1800_000) * 1800 + 3600;
+        fallbackConfig.expires_at = Math.floor(Date.now() / 1800_000) * 1800 + 3720; // ≥ 31 min, stable within a 30-min bucket for idempotency
       }
 
       if (isEmbeddedFallback) {
