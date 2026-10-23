@@ -1,0 +1,23 @@
+# SMS attribution — staged only
+
+## Verified scope
+
+Read-only hosted inspection confirmed the existing RPC omits `prospect_id` on insert and never completes attribution on update. Aggregate audit: 82 events, 82 without either identity, 43 exact SID matches, 39 unmatched. These counts and stored statuses do not establish provider delivery. `OUTREACH_ENABLED=false`, `gated=true` were independently read; no legacy queue was selected or modified.
+
+The replacement keeps the existing signature, owner, ACL, table and unique SID key. Only trusted service callers may supply attribution; this RPC does not authenticate Twilio signatures or establish consent. Existing callback authentication remains mandatory. UUIDs must match the entire canonical hexadecimal form; recipients must be E.164. Only NULL IDs and NULL/blank/`unknown` recipients are completed. Any conflicting nonempty identity or recipient blocks all attribution completion for that callback. A row lock serializes reconciliation after the unique SID insert. First event timestamps and the UUID receipt remain idempotent. Existing status handling is preserved, not promoted to provider proof.
+
+No new arbitrary payload, body, error text, phone, identity, email or token copies enter metadata. Existing historical metadata is not purged. The recipient column remains private personal data; no raw values are output by the preview. Payload timestamps retain existing behavior: invalid timestamps fail and roll back the call.
+
+## Exact files and order (future isolated QA only)
+
+1. `20261023_sms_event_attribution.preflight.sql`: SELECT-only definition/ACL snapshot, unique SID index, duplicates and closed switches. Verify exact isolated target and save the current definition/ACL privately. Stop unless anonymous/authenticated execute is false, service execute true, unique SID exists and both switches remain closed. No permission widening is prepared.
+2. `20261023_sms_event_attribution.preview.sql`: SELECT-only strict SID matching. Exactly one total log, both test/simulation flags explicitly false, real SM/MM format, no existing identity conflicts. Reports aggregate `eligible_preview`, `identity_conflict`, `unresolved`; no body, phone, UUID or SID disclosure. The 43 matching SIDs are candidates, NOT automatically 43 authorized repairs; ambiguity/flags/invalid data can reduce eligibility. The 39 unmatched remain unresolved. No fuzzy match, provider lookup or backfill RPC invocation.
+3. `20261023_sms_event_attribution.sql`: staged CREATE OR REPLACE only; never auto-applied. Run only in an isolated local/test database after the preflight. No backfill statement exists. Reject AU/non-provider SIDs. Validate synthetic callbacks, conflicts, duplicates, ACL and rollback. A change in ACL, schema, function definition or target invalidates this review.
+4. `20261023_sms_event_attribution.rollback.sql`: restores the audited original function definition only, preserving owner/ACL and all rows. Before use compare the private snapshot against this original definition; stop if intervening changes exist. Rollback does not remove correctly restored attribution and reintroduces the old limitation. Any data reversal requires a separate reviewed plan; none is supplied here.
+5. Before production: separate explicit authorization, verified backup/restore integrity, maintenance/quiescence for callback writers without weakening signature checks, fresh preflight, isolated signed callback QA and revised preview. Production application, deployment of previous callback fixes and any reviewed data backfill are separate actions, all still blocked.
+
+## Checks actually run
+
+`bunx vitest run src/test/sms-event-attribution-staged.test.ts src/test/sms-attribution.test.ts`: 12/12 passing (7 isolated PGlite SQL tests + 5 existing attribution tests). New SID, existing generic SID, malformed/incomplete payload, conflicting identities/recipient, concurrent double callback, read-only preview with ambiguous/test/unmatched rows, PII minimization and rollback preservation are exercised against the actual staged SQL.
+
+This is local PostgreSQL-compatible QA, not hosted concurrency/load or signed-provider delivery proof. Full CI, full suite and manual build/typecheck were not rerun for this SQL/document-only change. No remote RPC/migration/backfill, provider call, SMS/email, checkout/payment, queue activation or publication occurred. Stripe/PROMO code is unchanged.
