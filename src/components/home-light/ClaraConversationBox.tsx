@@ -215,7 +215,7 @@ export function shouldSuggestVoice(input: {
  * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
  * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
  */
-export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
+export const CHOICE_MARKER = /\[\[\s*(?:CHOIX|CHOICE)\s*:([^\]]*)\]\]/i;
 
 export function extractQuickReplies(raw: string): { text: string; options: string[] } {
   const match = raw.match(CHOICE_MARKER);
@@ -1945,7 +1945,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                       ))}
                     </ul>
                   )}
-                  <MessageResponse>{message.text}</MessageResponse>
+                  <MessageResponse>{message.role === "assistant" ? extractQuickReplies(message.text).text : message.text}</MessageResponse>
                   {message.action && (
                     <div className="home-clara-quick" role="group" aria-label="Action proposée">
                       <button type="button" onClick={() => void runOpen(message.action!.intent as ClaraWorkflowIntent)}>
