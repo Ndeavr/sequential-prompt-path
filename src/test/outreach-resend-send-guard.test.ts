@@ -26,7 +26,7 @@ function deps(over: Partial<Deps> = {}) {
       if (!c) { claims.set(key, { status: "sending", attempts: 1 }); return "claimed"; }
       if (c.status === "sent") return "duplicate_sent";
       if (c.status === "sending") return "duplicate_in_flight";
-      if (c.attempts >= 3) return "retry_exhausted";
+      if (c.status === "failed_final" || c.attempts >= 3) return "retry_exhausted";
       c.status = "sending"; c.attempts++; return "claimed_retry";
     },
     settle: async (key, status) => { claims.get(key)!.status = status; },
