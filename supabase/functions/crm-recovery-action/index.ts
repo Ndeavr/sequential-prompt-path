@@ -301,12 +301,15 @@ Deno.serve(async (req) => {
         if (needsLink.includes(action)) {
           const { data: tok, error: tokenReadError } = await sb
             .from("verified_prospect_tokens")
-            .select("token")
+            .select("token, expires_at, revoked_at")
             .eq("prospect_id", pid)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
           if (tokenReadError) throw new Error("token_lookup_failed");
+          if (tok?.revoked_at || (tok?.expires_at && (!Number.isFinite(Date.parse(tok.expires_at)) || Date.parse(tok.expires_at) <= Date.now()))) {
+            throw new Error("inactive_activation_token");
+          }
           let token = tok?.token as string | undefined;
           if (!token || action === "new_checkout") {
             token = randToken();

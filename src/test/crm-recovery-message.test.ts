@@ -9,7 +9,7 @@ import { OFFER_350 } from '../lib/copy/offer350';
 const actions = ['send_email', 'onboarding_email', 'payment_email', 'send_activation_link'];
 const token = 'synthetic0123456789abcdef';
 const pid = '00000000-0000-4000-8000-000000000001';
-function harness(options: { token?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean } = {}) {
+function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean } = {}) {
   const calls: { name: string; body: any }[] = [];
   const writes: { table: string; value: unknown }[] = [];
   let handler: ((req: Request) => Promise<Response>) | undefined;
@@ -23,7 +23,7 @@ function harness(options: { token?: string; lookupError?: boolean; delivered?: b
         data: table === 'verified_contractor_prospects' ? { id: pid, business_name: 'Entreprise synthétique', email: 'info@example.test', outreach_status: options.delivered ? 'delivered' : 'not_started' }
         : table === 'contractor_leads' ? {id:'synthetic-lead'}
         : table === 'v_commercial_send_eligibility' ? {}
-        : table === 'verified_prospect_tokens' ? {token:options.token ?? token}
+        : table === 'verified_prospect_tokens' ? {token:options.token ?? token, expires_at:options.expires_at, revoked_at:options.revoked_at}
         : table === 'crm_action_log' && options.prior ? {id:'prior'} : null });
       chain.maybeSingle = async () => result();
       chain.then = (resolve: any) => Promise.resolve(result()).then(resolve);
@@ -76,6 +76,10 @@ describe('actual CRM entry-activation branches — synthetic adapters only', () 
     const h=harness({lookupError:true});const r=await h.run('send_email');
     expect(r.body.results[0].result).toBe('token_lookup_failed');expect(h.calls).toHaveLength(0);
     expect(h.writes.filter(w=>w.table==='verified_prospect_tokens')).toHaveLength(0);
+  });
+  it.each([{expires_at:'2000-01-01T00:00:00Z'},{expires_at:'invalid'},{revoked_at:'2026-01-01T00:00:00Z'}])('inactive token blocks without replacement',async options=>{
+    const h=harness(options);expect((await h.run('send_email')).body.results[0].result).toBe('inactive_activation_token');
+    expect(h.calls).toHaveLength(0);expect(h.writes.filter(w=>w.table==='verified_prospect_tokens')).toHaveLength(0);
   });
   it('anonymous requests are 401 with no writes or calls',async()=>{
     const h=harness();expect((await h.run('send_email',null)).status).toBe(401);expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
