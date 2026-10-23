@@ -1,6 +1,7 @@
 import { contractorIdentityFromQuote, missingContractorIdentity } from "../_shared/contractorIdentity.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT } from "../_shared/entry350Tax.ts";
+import { ENTRY350_PROMO_TAX_CONTRACT, ENTRY350_PROMO_AMOUNTS, normalizePromoInput, resolveEntry350Promo } from "../_shared/entry350Promo.ts";
 import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed, normalizeAffiliateRef } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -84,6 +85,8 @@ Deno.serve(async (req) => {
       fallbackCredit,
       entryActivation,
       declaredCompanyName,
+      entryPromoCode,
+      entryPromoPreview,
       auditId,
       campaign,
       source,
@@ -276,6 +279,31 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: "Le paiement de cette offre n'est pas encore ouvert. Rien n'a été facturé.", code: "entry350_live_not_released" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      // ── PROMO entrée (Stripe natif, usage unique global) ─────────────────
+      // Le serveur résout le code avec la clé du mode actif; jamais de montant
+      // client. LIVE exige en plus ENTRY350_PROMO_LIVE_RELEASED === "true".
+      const entryMode = useTestMode && stripeTestKey.startsWith("sk_test_") ? "test" : "live";
+      const promoInput = isEntryActivation ? normalizePromoInput(entryPromoCode) : null;
+      let entryPromo: { promotionCodeId: string; couponId: string; productId: string } | null = null;
+      if (promoInput) {
+        const promoRefuse = (code: string, status = 409) => new Response(JSON.stringify({ code, error:
+          code === "promo_invalid" ? "Ce code n'est pas valide." : code === "promo_used" ? "Ce code a déjà été utilisé." : "Ce code n'est pas disponible pour le moment. Rien n'a été facturé." }),
+          { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (entryMode === "live" && Deno.env.get("ENTRY350_PROMO_LIVE_RELEASED") !== "true") return promoRefuse("promo_unavailable", 503);
+        const r = await resolveEntry350Promo(stripeFallback, promoInput, entryMode === "live");
+        if (!r.ok) return promoRefuse(r.code, r.code === "promo_invalid" ? 400 : 409);
+        // Déjà consommé chez UNPRO par un paiement vérifié (tout compte) : refus.
+        const { data: usedRow, error: usedErr } = await serviceClient.from("contractor_activation_ledger")
+          .select("id").eq("action", "entry_activation_350_paid").eq("metadata->>promo_code_id", r.promotionCodeId).limit(1).maybeSingle();
+        if (usedErr) return promoRefuse("promo_unavailable", 503);
+        if (usedRow) return promoRefuse("promo_used");
+        entryPromo = r;
+      }
+      if (isEntryActivation && entryPromoPreview === true) {
+        if (!entryPromo) return new Response(JSON.stringify({ code: "promo_invalid", error: "Ce code n'est pas valide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ code: "promo_valid", amounts: ENTRY350_PROMO_AMOUNTS }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       // Rattachement idempotent : une fiche entrepreneur par compte, jamais de
       // doublon sur double-clic ou nouvelle tentative (user_id est unique).
       const findContractor = async () => {
@@ -435,7 +463,9 @@ Deno.serve(async (req) => {
             price_data: {
               currency: "cad",
               unit_amount: amountCents,
-              product_data: isEntryActivation
+              // Promo : la ligne utilise le seul produit Stripe autorisé par le coupon.
+              ...(entryPromo ? { product: entryPromo.productId } : {}),
+              ...(entryPromo ? {} : { product_data: isEntryActivation
                 ? {
                     name: "Activation du profil UNPRO",
                     description: entryGuaranteed
@@ -446,7 +476,7 @@ Deno.serve(async (req) => {
                     name: FALLBACK_CREDIT_PRODUCT_NAME,
                     description:
                       "Crédit UNPRO applicable à vos futurs achats admissibles.",
-                  },
+                  } }),
             },
             quantity: 1,
             ...(isEntryActivation && { tax_rates: await ensureQuebecTaxRates(stripeFallback) }),
@@ -459,7 +489,8 @@ Deno.serve(async (req) => {
           ...(isEntryActivation
             ? {
                 amount_cents: String(amountCents),
-                entry_tax_contract: ENTRY350_TAX_CONTRACT,
+                entry_tax_contract: entryPromo ? ENTRY350_PROMO_TAX_CONTRACT : ENTRY350_TAX_CONTRACT,
+                ...(entryPromo ? { promo_code: "PROMO", promo_code_id: entryPromo.promotionCodeId, promo_coupon_id: entryPromo.couponId, promo_discount_cents: String(ENTRY350_PROMO_AMOUNTS.discount) } : {}),
                 presence_ia_months: "12",
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
               }
@@ -476,7 +507,14 @@ Deno.serve(async (req) => {
         },
       };
 
-      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
+      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: entryPromo
+        ? "350 $ CA − code PROMO 349 $ = 1,00 $ avant taxes. TPS : 0,05 $; TVQ : 0,10 $; total : 1,15 $ CA. Paiement unique."
+        : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
+      if (entryPromo) {
+        fallbackConfig.discounts = [{ promotion_code: entryPromo.promotionCodeId }];
+        // Une session non payée expire vite : le code n'est jamais consommé par un abandon.
+        fallbackConfig.expires_at = Math.floor(Date.now() / 1800_000) * 1800 + 3600;
+      }
 
       if (isEmbeddedFallback) {
         fallbackConfig.ui_mode = "embedded";
@@ -496,7 +534,7 @@ Deno.serve(async (req) => {
       if (isEntryActivation) {
         const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(fallbackConfig)));
         const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-        entryRequestOptions = { idempotencyKey: `entry350-v1-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
+        entryRequestOptions = { idempotencyKey: `${entryPromo ? `entry350-promo349-v1-${entryPromo.promotionCodeId}` : "entry350-v1"}-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
       }
       const fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
 
