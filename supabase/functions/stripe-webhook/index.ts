@@ -3,6 +3,7 @@ import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
+import { webhookEntryDecision } from "../_shared/webhookAuth.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -59,22 +60,29 @@ Deno.serve(async (req) => {
     const body = await req.text();
     rawBody = body;
 
-    // Replay mode: internal reprocessing bypasses Stripe signature check.
-    // Requires x-replay-token header matching SERVICE_ROLE_KEY.
-    const replayToken = req.headers.get("x-replay-token");
-    const isReplay =
-      !!replayToken &&
-      replayToken === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Fail-closed entry decision (shared, unit-tested):
+    // - missing STRIPE_WEBHOOK_SECRET => external requests rejected (503);
+    // - replay bypasses the signature check ONLY with an exact, non-empty
+    //   SERVICE_ROLE_KEY match in x-replay-token;
+    // - everything else must pass real Stripe signature verification.
+    const decision = webhookEntryDecision({
+      liveSecret: webhookSecret,
+      testSecret: testWebhookSecret,
+      replayToken: req.headers.get("x-replay-token"),
+      serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    });
+
+    const isReplay = decision === "replay";
 
     let event: Stripe.Event;
 
-    if (!webhookSecret && !isReplay) {
+    if (decision === "reject_unavailable") {
       return new Response(JSON.stringify({ error: "Webhook verification unavailable" }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!isReplay) {
+    if (decision === "verify_signature") {
       const sig = req.headers.get("stripe-signature");
       if (!sig) {
         return new Response(JSON.stringify({ error: "Missing signature" }), {
@@ -86,7 +94,7 @@ Deno.serve(async (req) => {
       // test-mode events can be verified for real (never forged, never skipped).
       try {
         try {
-          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret ?? "");
+          event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret!);
         } catch (liveErr) {
           if (!testWebhookSecret) throw liveErr;
           event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
@@ -100,6 +108,7 @@ Deno.serve(async (req) => {
         });
       }
     } else {
+      // decision === "replay": authenticated internal reprocessing only.
       event = JSON.parse(body) as Stripe.Event;
     }
 
