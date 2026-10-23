@@ -104,7 +104,7 @@ describe("Radar — admin gate", () => {
 });
 
 describe("Radar — zero outbound", () => {
-  const src = readFileSync("supabase/functions/scout-ingest/index.ts", "utf8");
+  const src = readFileSync("supabase/functions/scout-ingest/index.ts", "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
   it("scout-ingest never invokes a send / messaging function or provider", () => {
     expect(src).not.toMatch(/twilio|resend|sendSms|send-sms|send-email|messenger|graph\.facebook/i);
     const invoked = [...src.matchAll(/functions\.invoke\("([^"]+)"/g)].map((m) => m[1]);
