@@ -67214,6 +67214,42 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_email_claims: {
+        Row: {
+          attempts: number
+          campaign: string
+          created_at: string
+          idempotency_key: string
+          last_error: string | null
+          provider_message_id: string | null
+          recipient_email: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          campaign: string
+          created_at?: string
+          idempotency_key: string
+          last_error?: string | null
+          provider_message_id?: string | null
+          recipient_email: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          campaign?: string
+          created_at?: string
+          idempotency_key?: string
+          last_error?: string | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       outreach_email_events: {
         Row: {
           bounced_at: string | null
@@ -100569,6 +100605,10 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_outreach_email: {
+        Args: { p_campaign: string; p_key: string; p_recipient: string }
+        Returns: string
+      }
       claim_outreach_target: {
         Args: { p_id: string; p_token: string }
         Returns: undefined
@@ -101611,6 +101651,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      settle_outreach_email: {
+        Args: {
+          p_error: string
+          p_key: string
+          p_provider_id: string
+          p_status: string
+        }
+        Returns: undefined
       }
       sms_body_issues: { Args: { p_body: string }; Returns: string[] }
       sms_infrastructure_score: { Args: never; Returns: Json }

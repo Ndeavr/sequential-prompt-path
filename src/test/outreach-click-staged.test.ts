@@ -5,24 +5,7 @@ import ts from "typescript";
 import Stripe from "stripe";
 
 function stagedSource() {
-  const lines = readFileSync("supabase/functions/acq-e2e-selftest/index.ts", "utf8").split("\n");
-  const patch = readFileSync("docs/audits/20261023-outreach-click-qa.staged.patch", "utf8").split("\n");
-  let offset = 0;
-  for (let i = 0; i < patch.length; i++) {
-    const match = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/.exec(patch[i]);
-    if (!match) continue;
-    const old: string[] = [], next: string[] = [];
-    while (i + 1 < patch.length && !patch[i + 1].startsWith("@@")) {
-      const line = patch[++i];
-      if (line.startsWith(" ") || line.startsWith("-")) old.push(line.slice(1));
-      if (line.startsWith(" ") || line.startsWith("+")) next.push(line.slice(1));
-    }
-    const at = Number(match[1]) - 1 + offset;
-    expect(lines.slice(at, at + old.length)).toEqual(old);
-    lines.splice(at, old.length, ...next);
-    offset += next.length - old.length;
-  }
-  return lines.join("\n");
+  return readFileSync("supabase/functions/acq-e2e-selftest/index.ts", "utf8");
 }
 
 async function runCase(mode: string) {

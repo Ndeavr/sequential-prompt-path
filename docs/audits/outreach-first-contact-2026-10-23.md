@@ -17,7 +17,7 @@ Aucun envoi. Aucun appel fournisseur, paiement, migration, déploiement ni modif
 
 Les diagnostics Resend restricted/send-only et SMS au repos sont déjà corrigés dans la source actuelle; aucun second correctif identique. Aucun score artificiellement relevé.
 
-Le selftest actuel accepte toute `redirect_url` non vide après résolution sans charger la cible : faux positif reproductible. Correctif **staged seulement** dans `20261023-outreach-click-qa.staged.patch` : même handler, lien synthétique vers la fixture QA existante, correspondance exacte puis chargement et marqueur `Fixture QA UNPRO`. Aucune fonction active modifiée. Il ne valide pas un vrai clic humain ni un paiement, ne remplace pas le véritable E2E et ne doit pas servir à ouvrir une gate.
+Le selftest actuel accepte toute `redirect_url` non vide après résolution sans charger la cible : faux positif reproductible. Correctif désormais **actif** dans `supabase/functions/acq-e2e-selftest/index.ts` (non déployé) : même handler, lien synthétique vers la fixture QA existante, correspondance exacte puis chargement et marqueur `Fixture QA UNPRO`. Aucune fonction active modifiée. Il ne valide pas un vrai clic humain ni un paiement, ne remplace pas le véritable E2E et ne doit pas servir à ouvrir une gate.
 
 Autres obstacles d'envoi constatés dans la source, non réparés par ce patch :
 - `send-verified-batch` transmet un lien direct et un identifiant horodaté au sender email; preuve d'un claim atomique/quota/idempotence fournisseur et contrôle CASL email complet non établie.
@@ -38,3 +38,8 @@ Autres obstacles d'envoi constatés dans la source, non réparés par ce patch :
 Effectuer la revue humaine documentée des deux sources officielles admissibles, confirmer adresse postale/opt-out/claim email et terminer QA hébergée réellement isolée avant autorisation de déploiement. Aucun test hébergé actuel exécuté : ils écrivent des fixtures, envoient via fournisseurs, créent un Checkout TEST et évaluent la gate sur le backend partagé. Les mocks locaux ne lèvent jamais ces verrous. Le master switch ne s'ouvre pas naturellement après les tests; il reste false.
 
 Patch/test commit observé : `7891fb02894c86d4c2d62fadab6c813becfbf5fc`; la présente documentation est enregistrée séparément automatiquement. Système non approuvé pour envoi (Autonomous QA Auditor).
+## Mise à jour — déblocage email-first (code actif, non déployé)
+
+- `outreach-resend-send` : service role exact (401 sinon); tout destinataire externe = commercial et passe OUTREACH_ENABLED → gate → domaine Resend vérifié via API → `UNPRO_SENDER_POSTAL_ADDRESS` → suppression (suppression_index + suppressed_emails) → preuve CASL email revue par un humain → claim atomique `claim_outreach_email` (1 par destinataire+campagne, 7 j, 3 essais, 25/jour) → fournisseur. Pied de page adresse + lien de désabonnement à jeton + List-Unsubscribe ajoutés par le serveur.
+- `send-verified-batch` : copie 350 $ + taxes, 12 mois Présence IA, zéro RDV; envoi marqué commercial.
+- Lacune trouvée : `/unsubscribe` écrivait `suppressed_emails`, absent de `suppression_index`; le sender lit désormais les deux.

@@ -62,7 +62,7 @@ export function clickRecoverySms(businessName: string): string {
 }
 
 export function emailSubject(businessName: string): string {
-  return `${nm(businessName, 60)} — votre proposition UNPRO`;
+  return `${nm(businessName, 60)} — activer votre profil UNPRO`;
 }
 
 export function emailHtml(businessName: string, link: string): string {
@@ -76,15 +76,16 @@ export function emailHtml(businessName: string, link: string): string {
         <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;padding:32px;max-width:560px;">
           <tr><td>
             <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">Bonjour ${name},</h1>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO vise des rendez-vous exclusifs adaptés à vos services et à votre territoire — moins de soumissions perdues et de déplacements inutiles, jamais de demandes partagées entre plusieurs entrepreneurs.</p>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 24px 0;">Vous confirmez votre entreprise et vos objectifs; UNPRO calcule ensuite l'entente de départ adaptée à votre capacité du mois prochain, avec le prix exact avant tout paiement.</p>
+            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO jumelle les propriétaires québécois avec l'entrepreneur le plus compatible avec leur projet — jamais de demandes partagées entre plusieurs entrepreneurs.</p>
+            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">Activation de votre profil UNPRO : 350 $ + taxes (402,41 $ avec TPS et TVQ), paiement unique. Inclut votre profil et 12 mois de Présence IA sur UNPRO.</p>
+            <p style="font-size:14px;line-height:1.55;margin:0 0 24px 0;color:#444;">Aucun rendez-vous n'est inclus par défaut ni garanti. Des rendez-vous ne sont offerts que par une entente distincte, au prix confirmé avant tout paiement.</p>
             <p style="margin:0 0 24px 0;">
-              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Voir ma proposition</a>
+              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Activer mon profil — 350 $ + taxes</a>
             </p>
             <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 12px 0;">Ou copiez ce lien :<br /><a href="${link}" style="color:#666;">${link}</a></p>
           </td></tr>
         </table>
-        <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca · Pour ne plus recevoir nos messages, répondez « STOP ».</p>
+        <p style="font-size:12px;color:#777;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
       </td></tr>
     </table>
   </body>
