@@ -1029,6 +1029,20 @@ Deno.serve(async (req) => {
 
 
     // ------------------------------------------------------------------
+    // P0 fail-closed gate — read BEFORE the first side effect. When the
+    // flag is false or unreadable: no repair, no enqueue, no state change,
+    // no Twilio Lookup, no provider call. dry_run stays read-only either way.
+    // ------------------------------------------------------------------
+    const outreachGate = await assertOutreachEnabled(supabase as any);
+    if (workerSideEffectDecision(outreachGate, dryRun) === "blocked") {
+      return jsonResponse({
+        ok: true, dry_run: false, blocked: true,
+        reason: outreachGate.reason,
+        run_id: ctx.run_id, mode: ctx.mode, processed: 0, sent: 0,
+      });
+    }
+
+    // ------------------------------------------------------------------
     // Autonomous side-tasks (dead-queue repair + queue enqueue) — skipped
     // in dry-run to keep zero writes.
     // ------------------------------------------------------------------

@@ -31,6 +31,18 @@ type MinimalClient = {
   };
 };
 
+/**
+ * Queue-worker entry decision, taken BEFORE the first side effect.
+ * Gate closed/unreadable + live run => "blocked" (zero mutation, zero
+ * provider call). dry_run stays read-only either way. Open gate => normal.
+ */
+export type WorkerSideEffectDecision = "blocked" | "dry_run_preview" | "proceed";
+
+export function workerSideEffectDecision(gate: OutreachGate, dryRun: boolean): WorkerSideEffectDecision {
+  if (!gate.allowed) return dryRun ? "dry_run_preview" : "blocked";
+  return dryRun ? "dry_run_preview" : "proceed";
+}
+
 /** Reads public.system_flags.OUTREACH_ENABLED, fail-closed on any error. */
 export async function assertOutreachEnabled(sb: MinimalClient): Promise<OutreachGate> {
   try {
