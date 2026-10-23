@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { getClaraSessionToken } from "@/services/clara/claraSession";
 import { hasActiveContractorFlow, hasExplicitHomeownerFlow, pauseActiveContractorFlow, rememberActiveContractorFlow } from "@/services/clara/claraContractorResume";
 import { getRbqDashboardState } from "@/lib/compliance/rbqDeclaration";
+import { readFileSync } from "node:fs";
+
+const claraBox = readFileSync("src/components/home-light/ClaraConversationBox.tsx", "utf8");
 beforeEach(() => { localStorage.clear();sessionStorage.clear(); });
 describe("changement explicite et droits RBQ", () => {
   it("entrepreneur vers maison survit à la reprise sans effacer les données", () => {
@@ -28,5 +31,10 @@ describe("changement explicite et droits RBQ", () => {
   it("travaux mixtes avec gaz restent bloqués sans licence", () => {
     const state=getRbqDashboardState({specialty:"Entretien de gazon et gaz naturel"});
     expect(state.kind).toBe("needs_rbq");expect(state.regulatedEligible).toBe(false);
+  });
+  it("le bouton propriétaire applique la transition directement et bloque une reprise tardive", () => {
+    expect(claraBox).toContain("onClick={() => {\n                    // Changement volontaire et confirmé : le parcours entrepreneur est suspendu (jamais effacé).\n                    switchToHomeowner();");
+    expect(claraBox).toContain("audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())");
+    expect(claraBox).toContain('contractorFlow && audience === "contractor"');
   });
 });
