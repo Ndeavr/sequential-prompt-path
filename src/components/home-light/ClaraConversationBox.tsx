@@ -688,7 +688,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
-        if (forcedContractor || hasActiveContractorFlow()) {
+        // An explicit role change made while hydration was pending always wins.
+        if (audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())) {
           rememberActiveContractorFlow(true);
           setContractorFlow(true);
         }
@@ -696,31 +697,34 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     })();
   }, [forcedAudience, forcedContractor, lang, setAudience]);
 
+  const switchToHomeowner = useCallback(() => {
+    // Persist first so a remount/hydration cannot restore the contractor view.
+    pauseActiveContractorFlow();
+    try { closeAlex(); } catch { /* aucune session vocale active */ }
+    qualificationStepRef.current = null;
+    contractorTransitionRef.current = false;
+    setContractorFlow(false);
+    setQuickReplies(null);
+    setTransitionPause(false);
+    activeTypingIdRef.current = null;
+    setClaraTyping(false);
+    setClaraBreathing(false);
+    setBusy(false);
+    setAudience("homeowner");
+    setMode("PROJECT");
+    lastIntentRef.current = "homeowner_problem";
+    workflowRef.current = nextWorkflowState(workflowRef.current, "homeowner_problem").state;
+    rememberWorkflow(workflowRef.current);
+    rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+    setSwitchConfirm(false);
+    homePromptRef.current();
+    focusComposer();
+  }, [closeAlex, focusComposer, setAudience]);
+
   useEffect(() => {
-    const switchToHomeowner = () => {
-      closeAlex();
-      pauseActiveContractorFlow();
-      qualificationStepRef.current = null;
-      contractorTransitionRef.current = false;
-      setContractorFlow(false);
-      setQuickReplies(null);
-      setTransitionPause(false);
-      activeTypingIdRef.current = null;
-      setClaraTyping(false);
-      setClaraBreathing(false);
-      setBusy(false);
-      setAudience("homeowner");
-      setMode("PROJECT");
-      lastIntentRef.current = "homeowner_problem";
-      workflowRef.current = nextWorkflowState(workflowRef.current, "homeowner_problem").state;
-      rememberWorkflow(workflowRef.current);
-      rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
-      homePromptRef.current();
-      focusComposer();
-    };
     window.addEventListener(CLARA_HOMEOWNER_REQUEST_EVENT, switchToHomeowner);
     return () => window.removeEventListener(CLARA_HOMEOWNER_REQUEST_EVENT, switchToHomeowner);
-  }, [closeAlex, focusComposer, setAudience]);
+  }, [switchToHomeowner]);
 
   useEffect(() => {
     const composer = composerRef.current;
@@ -1835,7 +1839,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
             {audience === "contractor" && (
               <Button type="button" variant="ghost" size="icon" aria-label="Trouver mon entrepreneur" title="Trouver mon entrepreneur"
-                onClick={() => window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT))}>
+                onClick={switchToHomeowner}>
                 <Home aria-hidden="true" />
               </Button>
             )}
@@ -1980,7 +1984,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
               </div>
             )}
             {nextStepRetry && <button type="button" className="home-clara-card-primary" onClick={() => void continuePricingRef.current()}>Reprendre ma proposition</button>}
-            {contractorFlow && (
+            {contractorFlow && audience === "contractor" && (
               <ClaraContractorFlow
                 ref={contractorFlowRef}
                 say={(text) => sayClara(text)}
@@ -2008,8 +2012,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                   data-testid="clara-confirm-switch-homeowner"
                   onClick={() => {
                     // Changement volontaire et confirmé : le parcours entrepreneur est suspendu (jamais effacé).
-                    setSwitchConfirm(false);
-                    window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT));
+                    switchToHomeowner();
                     trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "text", intent: "homeowner" });
                   }}
                 >
