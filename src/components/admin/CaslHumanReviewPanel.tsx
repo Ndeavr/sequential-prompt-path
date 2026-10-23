@@ -46,7 +46,28 @@ export default function CaslHumanReviewPanel() {
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, { note: string; opened: boolean; date: string }>>({});
+  const [observations, setObservations] = useState<Record<string, any>>({});
   const today = new Date().toISOString().slice(0, 10);
+  const machine = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("enrich-official-website", { body: { action: "verify_casl", evidence_id: id } });
+      if (error || !data?.ok || !data.observation) throw new Error("Vérification non disponible. La décision humaine reste intacte.");
+      return data.observation;
+    },
+    onSuccess: (o) => setObservations(previous => ({ ...previous, [o.evidence_id]: o })),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  useQuery({
+    queryKey: ["casl-machine-observations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("official_site_crawl_runs" as any).select("summary,finished_at").not("summary->casl_machine", "is", null).order("finished_at", { ascending: false }).limit(500);
+      if (error) throw error;
+      const latest: Record<string, any> = {};
+      for (const run of data ?? []) { const o = (run as any).summary?.casl_machine; if (o?.evidence_id && !latest[o.evidence_id]) latest[o.evidence_id] = o; }
+      setObservations(previous => ({ ...latest, ...previous }));
+      return latest;
+    },
+  });
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["casl-review"],
@@ -153,6 +174,21 @@ export default function CaslHumanReviewPanel() {
                     {r.optedOut && <Badge variant="destructive">STOP</Badge>}
                   </div>
                   <p>Pertinence : {r.business_relevance_explanation ?? "non documentée"}</p>
+                  {!r.isPhone && r.source_type === "company_website" && <div className="space-y-2 border-t border-border pt-2">
+                    <Button variant="outline" className="min-h-11 w-full" disabled={machine.isPending} onClick={() => machine.mutate(r.id)}>
+                      {machine.isPending && machine.variables === r.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Vérification en cours…</> : "Vérifier automatiquement"}
+                    </Button>
+                    {observations[r.id] && <div className="space-y-2 break-words" role="status">
+                      <Badge variant={observations[r.id].status === "rejected" ? "destructive" : "outline"}>{observations[r.id].status === "machine_verified" ? "Publication observée — revue humaine requise" : observations[r.id].status === "rejected" ? "Opposition détectée" : "Vérification en attente"}</Badge>
+                      <p>{observations[r.id].business_name} · {observations[r.id].building_service}</p>
+                      <p>Contrôle : {new Date(observations[r.id].checked_at).toLocaleString("fr-CA")}</p>
+                      <p>Signature humaine inchangée · Envois désactivés</p>
+                      {(observations[r.id].pages ?? []).map((p: any) => <div key={p.url} className="space-y-1 border-l border-border pl-2">
+                        <a className="underline text-primary break-all" href={p.url} target="_blank" rel="noopener noreferrer">{p.url}</a>
+                        <p>{p.snippet}</p><p className="font-mono break-all">SHA-256 : {p.page_sha256}</p>
+                      </div>)}
+                    </div>}
+                  </div>}
                   <p>Captée le {r.retrieved_at ? new Date(r.retrieved_at).toLocaleDateString("fr-CA") : "?"} · base proposée : publication bien visible (consentement implicite, à confirmer)</p>
                   {r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer" className="underline text-primary inline-flex min-h-11 items-center">Ouvrir la source ({host(r.source_url)})</a>}
                   <p>Voie : {r.isPhone ? "SMS bloqué tant que le mobile n'est pas vérifié · Appel B2B à examiner (règles de télémarketing, liste interne d'exclusion)" : "Courriel à examiner (LCAP) — envois globaux désactivés"}</p>
