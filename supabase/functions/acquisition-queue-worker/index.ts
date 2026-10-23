@@ -22,7 +22,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { CATEGORY_SYNONYMS, normalizeCategoryInput } from "../_shared/acquisitionPipeline.ts";
 import { PENDING_CATEGORY, resolveIdentity } from "../_shared/sparseLead.ts";
-import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import { assertOutreachEnabled, workerSideEffectDecision } from "../_shared/outreachGate.ts";
 import {
   hasPublicProvenance,
   isVerificationFresh,
@@ -1137,9 +1137,9 @@ Deno.serve(async (req) => {
     };
     const preparedIds: string[] = [];
     const perProspect: any[] = [];
-    // P0 fail-closed gate — read once per run. Blocks every provider call
-    // (Twilio Lookup included) when OUTREACH_ENABLED is false/unreadable.
-    const outreachGate = await assertOutreachEnabled(supabase as any);
+    // P0 fail-closed gate — read once per run, BEFORE the first side effect
+    // (see above). Blocks every provider call (Twilio Lookup included) when
+    // OUTREACH_ENABLED is false/unreadable.
     (counts as any).provenance_blocked = 0;
     (counts as any).gate_blocked = 0;
     (counts as any).queue_due_prepared = 0;
