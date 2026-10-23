@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
         return json({ status: sess.status === "expired" ? "expired" : sess.status === "open" ? "open" : "unpaid" });
       }
       const events = await rs.events.list({ type: "checkout.session.completed", created: { gte: sess.created - 60 }, limit: 100 });
-      const ev = events.data.find((e) => (e.data.object as { id?: string }).id === sid);
+      const ev = events.data.find((e: Stripe.Event) => (e.data.object as { id?: string }).id === sid);
       if (!ev) return json({ status: "webhook_pending" });
       const { data: evRow } = await serviceClient.from("stripe_webhook_events")
         .select("processing_status").eq("stripe_event_id", ev.id).maybeSingle();
@@ -338,7 +338,7 @@ Deno.serve(async (req) => {
         const { data: created, error: createErr } = await serviceClient
           .from("contractors")
           .insert({ user_id: userId, ...contractorIdentityFromQuote(identityQuote, userEmail), ...(isEntryActivation && !knownQuoteName && entryDeclaredName ? { business_name: entryDeclaredName } : {}) })
-          .select("id")
+          .select("id,business_name,city,specialty,website,phone,address,province")
           .maybeSingle();
 
         if (created) {

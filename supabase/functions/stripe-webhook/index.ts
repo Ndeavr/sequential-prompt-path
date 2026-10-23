@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
         retry_count: 0 as any, // will be incremented below via RPC-safe update
       }).eq("stripe_event_id", event.id);
       // Increment retry_count safely
-      await supabase.rpc("increment_stripe_event_retry", { p_event_id: event.id }).then(() => {}).catch(() => {});
+      await supabase.rpc("increment_stripe_event_retry", { p_event_id: event.id }).then(() => {}, () => {});
     } else {
       const { error: insertErr } = await supabase.from("stripe_webhook_events").insert({
         stripe_event_id: event.id,
@@ -1279,7 +1279,6 @@ Deno.serve(async (req) => {
               amount_cents: session.amount_total ?? null,
               currency: session.currency ?? "cad",
               metadata: {
-                activation_token: activationToken,
                 source: session.metadata?.source ?? null,
                 slug: session.metadata?.prospect_slug ?? null,
                 contractor_id: activatedContractorId,
@@ -1373,8 +1372,6 @@ Deno.serve(async (req) => {
                 _metadata: {
                   amount_cents: session.amount_total ?? null,
                   offer_code: session.metadata?.offer_code ?? null,
-                  activation_token: activationToken,
-                  landing_token: session.metadata?.landing_token ?? null,
                   contractor_id: activatedContractorId,
                   ...aiAttribution,
                 },
