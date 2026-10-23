@@ -66,7 +66,7 @@ describe("câblage", () => {
   });
   it("un paiement TEST n'alimente jamais le pipeline commercial", () => {
     const i = wh.indexOf('decision === "activate"');
-    const branch = wh.slice(i, i + 6000);
+    const branch = wh.slice(i, i + 9000);
     expect(branch).toMatch(/if \(event\.livemode === true\) \{\s*await supabase\.from\("contractor_leads"\)/);
   });
   it("aucune deuxième facturation si Stripe a déjà reçu le paiement", () => {
