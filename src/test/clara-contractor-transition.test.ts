@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { getClaraSessionToken } from "@/services/clara/claraSession";
+import { pauseActiveContractorFlow, rememberActiveContractorFlow, resolveClaraContractorEntry } from "@/services/clara/claraContractorResume";
 
 const box = readFileSync("src/components/home-light/ClaraConversationBox.tsx", "utf8");
 const voice = readFileSync("src/components/voice/OverlayAlexVoiceFullScreen.tsx", "utf8");
@@ -30,12 +32,26 @@ describe("Clara — transition entrepreneur", () => {
 });
 describe("Clara — choix entrepreneur pilotés par l'audience", () => {
   it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
-    // Propriétaire par défaut, sauf reprise d'un parcours entrepreneur de la même conversation.
-    expect(box).toContain('useState<ClaraAudience>(() => hasActiveContractorFlow() ? "contractor" : "homeowner")');
+    // Propriétaire par défaut, sauf entrée entrepreneur forcée ou reprise de la même conversation.
+    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
     expect(box).toContain("Vérifier mon score IA");
     expect(box).toContain("Obtenir plus de contrats");
     expect(box).toContain("Compléter mon profil");
     expect(box).toContain("TRANSITION_PULSE_MS * TRANSITION_PULSES");
     expect(box.indexOf("TRANSITION_READ_MS));")).toBeLessThan(box.indexOf("setTransitionPause(true)"));
+  });
+});
+
+describe("Clara — séparation des rôles (sémantique actuelle)", () => {
+  it("propriétaire par défaut, entrepreneur seulement si forcé ou reprise explicite", () => {
+    sessionStorage.clear(); localStorage.clear();
+    expect(resolveClaraContractorEntry({})).toBe(false);
+    expect(resolveClaraContractorEntry({}, "contractor")).toBe(true);
+    getClaraSessionToken();
+    rememberActiveContractorFlow(true);
+    expect(resolveClaraContractorEntry({})).toBe(true);
+    pauseActiveContractorFlow();
+    expect(resolveClaraContractorEntry({ detected_role: "contractor" })).toBe(false);
+    expect(resolveClaraContractorEntry({ current_intent: "homeowner" }, "contractor")).toBe(true);
   });
 });

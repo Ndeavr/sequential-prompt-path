@@ -1,18 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { transform } from "esbuild";
 import * as guards from "../../supabase/functions/_shared/checkoutGuards";
-import { verifyEntry350TaxContract } from "../../supabase/functions/_shared/entry350Tax";
-
-const source = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
+import { loadWebhookHandler } from "./support/stripeWebhookHarness";
 
 // Execute the complete real handler; only Stripe verification and DB I/O are
 // adapters. No network, accounts, payments or production database writes.
-async function run(session: Record<string, unknown>, livemode = true) {
+async function run(session: Record<string, unknown>, livemode = true, badSignature = false) {
   const writes: { table: string; value: Record<string, unknown> }[] = [];
   let sensitiveCalls = 0;
-  let handler: ((req: Request) => Promise<Response>) | undefined;
   const sensitive = new Set(["contractors", "user_roles", "contractor_subscriptions", "contractor_activation_ledger", "billing_checkout_sessions", "verified_contractor_prospects"]);
   const db = {
     auth: { admin: { createUser: () => { sensitiveCalls++; throw new Error("Provisioning forbidden"); } } },
@@ -35,17 +30,18 @@ async function run(session: Record<string, unknown>, livemode = true) {
   };
   const event = { id: "evt_fixture", type: "checkout.session.completed", livemode, data: { object: session } };
   class StripeFixture {
-    webhooks = { constructEventAsync: async () => event };
+    webhooks = { constructEventAsync: async () => { if (badSignature) throw new Error("No signatures found matching the expected signature"); return event; } };
   }
-  const deno = {
-    env: { get: () => "fixture-only" },
-    serve: (fn: typeof handler) => { handler = fn; },
-  };
-  const { code } = await transform(source.replace(/^import[^\n]*\n/gm, ""), { loader: "ts", target: "es2022" });
-  new Function("Deno", "Stripe", "createClient", ...Object.keys(guards), "revokeEntry350", "verifyEntry350TaxContract", "reverseEntry350Commission", "entry350SessionRevoked", code)(
-    deno, StripeFixture, () => db, ...Object.values(guards), () => { throw new Error("Unexpected revocation"); }, verifyEntry350TaxContract, async () => "test_ignored", async () => false,
-  );
-  if (!handler) throw new Error("Handler missing");
+  // Real shared helpers (auth decision, guards, tax/promo contracts) are injected;
+  // only side-effecting revocation/commission helpers are inert fixtures.
+  const handler = await loadWebhookHandler({
+    Deno: { env: { get: () => "fixture-only" } }, Stripe: StripeFixture, createClient: () => db,
+    overrides: {
+      revokeEntry350: () => { throw new Error("Unexpected revocation"); },
+      reverseEntry350Commission: async () => "test_ignored",
+      entry350SessionRevoked: async () => false,
+    },
+  });
   const response = await handler(new Request("https://fixture.invalid", {
     method: "POST", headers: { "stripe-signature": "fixture-only" }, body: "{}",
   }));
@@ -80,6 +76,15 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
   });
   it("accepts its actual creation contract payable amount", () => {
     expect(guards.entry350PaymentBlockReason(session(offer))).toBeNull();
+  });
+});
+
+describe("signature gate", () => {
+  it("rejects an invalid Stripe signature before any write or activation", async () => {
+    const result = await run(session("entry_activation_350"), true, true);
+    expect(result.status).toBe(400);
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes).toHaveLength(0);
   });
 });
 
