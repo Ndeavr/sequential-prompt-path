@@ -30,6 +30,23 @@ describe("existing persistence and signed evidence", () => {
     return { sb, writes, tables };
   }
   it("append-only observations preserve signed rows and have no provider/claims", async () => { const d = database(); await recheckCasl(d.sb, id, io(), false); expect(d.writes).toHaveLength(1); expect(d.writes[0].table).toBe("official_site_crawl_runs"); expect(d.writes[0].row.summary.casl_machine.status).toBe("machine_verified"); expect(d.tables).toEqual(["casl_consent_evidence", "contractor_leads", "official_site_crawl_runs"]); expect(JSON.stringify(d.writes)).not.toContain("reviewer_id"); });
+  it("rechecks a signed contractor_prospect_id without any contractor_lead_id", async () => {
+    const written: any[] = [];
+    const prospect = { business_name: "Maple Wood Painting & Home Improvement", website_url: "https://www.maplewoodpainting.ca", trade: null, trade_category: null, category_slug: null };
+    const ev = { ...evidence, contractor_lead_id: null, contractor_prospect_id: id, destination_normalized: "info@maplewoodpainting.ca", source_url: "https://www.maplewoodpainting.ca/", source_publisher: prospect.business_name, reviewer_id: "human-signature", reviewer_notes: "immutable" };
+    const doc = '<h1>Maple Wood Painting & Home Improvement</h1><p>Interior painting services. info@maplewoodpainting.ca</p><a href="/contact">Contact</a><a href="/privacy">Privacy</a>';
+    const sb = { from: (table: string) => {
+      const q: any = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: table === "casl_consent_evidence" ? ev : prospect, error: null }), insert: async (row: any) => { written.push({ table, row }); return { error: null }; } };
+      return q;
+    } };
+    const result = await recheckCasl(sb, id, io({ fetch: async (url: any) => new Response(String(url).endsWith("robots.txt") ? "User-agent: *\nDisallow:" : doc, { headers: { "content-type": String(url).endsWith("robots.txt") ? "text/plain" : "text/html" } }) }), false);
+    expect(result.status).toBe("machine_verified");
+    expect(result.legal_consent_established).toBe(false);
+    expect(written).toHaveLength(1);
+    expect(written[0].row.prospect_id).toBe(id);
+    expect(written[0].row.contractor_lead_id).toBeNull();
+    expect(JSON.stringify(written)).not.toContain("reviewer_id");
+  });
   it("dry run never writes", async () => { const d = database(); await recheckCasl(d.sb, id, io(), true); expect(d.writes).toHaveLength(0); });
   it("duplicate links are fetched once", async () => { const d = io({ fetch: vi.fn(async (u: any) => new Response(String(u).endsWith("robots.txt") ? "" : html + '<a href="/contact">Contact</a>', { headers: { "content-type": String(u).endsWith("robots.txt") ? "text/plain" : "text/html" } })) }); const r = await observeFirstParty(evidence, company, d); expect(r.pages).toHaveLength(3); expect(d.fetch).toHaveBeenCalledTimes(4); });
 });
