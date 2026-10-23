@@ -3,8 +3,8 @@ import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT
 
 export const POLICY = { version: "first-party-observation-v1", auto_eligibility_enabled: false, maxPages: 6, maxBytes: 250_000, timeoutMs: 4_000, freshMs: 300_000 } as const;
 export type Observation = { status: "machine_verified" | "pending" | "rejected"; reason: string; checked_at: string; evidence_id: string; business_name: string; building_service: string; relevance: string; pages: { url: string; page_sha256: string; snippet: string; refusal: boolean }[]; policy: typeof POLICY; legal_consent_established: false };
-type Target = { id: string; destination_type: string; destination_normalized: string; source_type: string; source_url: string; source_publisher?: string; business_relevance_explanation?: string; contractor_lead_id?: string; reviewer_id?: string };
-type Company = { business_name: string; website_url?: string; official_domain?: string; category_primary?: string; specialty?: string; category?: string };
+type Target = { id: string; destination_type: string; destination_normalized: string; source_type: string; source_url: string; source_publisher?: string; business_relevance_explanation?: string; contractor_lead_id?: string; contractor_prospect_id?: string; reviewer_id?: string };
+type Company = { business_name: string; website_url?: string; official_domain?: string; category_primary?: string; specialty?: string; category?: string; trade?: string; trade_category?: string; category_slug?: string };
 type IO = { fetch: typeof fetch; resolve: (host: string) => Promise<string[]>; now?: () => number };
 
 export function publicAddress(ip: string): boolean {
@@ -45,11 +45,38 @@ async function read(raw: string, io: IO, host: string, plain = false): Promise<s
   } finally { clearTimeout(timer); }
 }
 
+/** Only objectively present trade terms are eligible for automated corroboration. */
+function serviceHint(company: Company): string {
+  const declared = company.category_primary || company.specialty || company.category || company.trade || company.trade_category || company.category_slug;
+  if (declared) return declared;
+  const name = norm(company.business_name ?? "");
+  if (/\b(painting|peinture|painter|peintre)\b/.test(name)) return "painting";
+  if (/\b(excavation|excavations)\b/.test(name)) return "excavation";
+  if (/\b(roofing|toiture|couvreur)\b/.test(name)) return "roofing";
+  if (/\b(isolation|insulation)\b/.test(name)) return "insulation";
+  return "";
+}
+function serviceVisible(visible: string, service: string): boolean {
+  const normalized = norm(visible);
+  const declared = norm(service);
+  const aliases: Record<string, RegExp> = {
+    peinture: /\b(peinture|peintre|painting|painters?)\b/,
+    painting: /\b(peinture|peintre|painting|painters?)\b/,
+    toiture: /\b(toiture|couvreur|roofing|roofers?)\b/,
+    roofing: /\b(toiture|couvreur|roofing|roofers?)\b/,
+    isolation: /\b(isolation|insulation)\b/,
+    insulation: /\b(isolation|insulation)\b/,
+  };
+  return (aliases[declared]?.test(normalized)) ?? normalized.includes(declared);
+}
+
 export async function observeFirstParty(e: Target, company: Company, io: IO): Promise<Observation> {
-  const result: Observation = { status: "pending", reason: "not_checked", evidence_id: e.id, business_name: company.business_name ?? "", building_service: company.category_primary ?? company.specialty ?? company.category ?? "", relevance: "", checked_at: new Date(io.now?.() ?? Date.now()).toISOString(), pages: [], policy: POLICY, legal_consent_established: false };
+  const result: Observation = { status: "pending", reason: "not_checked", evidence_id: e.id, business_name: company.business_name ?? "", building_service: serviceHint(company), relevance: "", checked_at: new Date(io.now?.() ?? Date.now()).toISOString(), pages: [], policy: POLICY, legal_consent_established: false };
   try {
     if (e.destination_type !== "email" || e.source_type !== "company_website") throw new Error("first_party_email_required");
-    const source = safeUrl(e.source_url); const official = safeUrl(company.official_domain ?? company.website_url ?? "");
+    const source = safeUrl(e.source_url);
+    const rawOfficial = company.official_domain ?? company.website_url ?? "";
+    const official = safeUrl(/^https:\/\//i.test(rawOfficial) ? rawOfficial : `https://${rawOfficial}`);
     const email = normalizeCaslDestination("email", e.destination_normalized);
     if (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || email.split("@")[1] !== source.hostname.replace(/^www\./, "")) throw new Error("official_identity_ambiguous");
     if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
@@ -61,7 +88,7 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
       if (!isAllowedByRobots(rules, u.pathname)) throw new Error("robots_blocked");
       const html = await read(u.toString(), io, source.hostname); const visible = text(html); const lower = norm(visible);
       const addresses = visible.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? []; const found = addresses.some(a => a.toLowerCase() === email);
-      exact ||= found; name ||= lower.includes(norm(company.business_name)); service ||= lower.includes(norm(result.building_service));
+      exact ||= found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
       const refused = refusal(visible); const at = found ? visible.toLowerCase().indexOf(email) : 0;
       result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
       if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
@@ -86,10 +113,14 @@ export async function recheckCasl(sb: any, id: string, io: IO, dryRun: boolean) 
   if (error || !e) throw new Error("evidence_lookup_failed");
   const { data: lead, error: le } = e.contractor_lead_id ? await sb.from("contractor_leads").select("business_name,website_url,official_domain,category_primary").eq("id", e.contractor_lead_id).maybeSingle() : { data: null, error: null };
   if (le) throw new Error("company_lookup_failed");
-  const company = lead ?? { business_name: e.source_publisher ?? "", website_url: "", category: "" };
+  const { data: prospect, error: pe } = e.contractor_prospect_id
+    ? await sb.from("contractor_prospects").select("business_name,website_url,trade,trade_category,category_slug").eq("id", e.contractor_prospect_id).maybeSingle()
+    : { data: null, error: null };
+  if (pe) throw new Error("company_lookup_failed");
+  const company = lead ?? prospect ?? { business_name: e.source_publisher ?? "", website_url: "", category: "" };
   const observation = await observeFirstParty(e, company, io);
   if (!dryRun) {
-    const { error: writeError } = await sb.from("official_site_crawl_runs").insert({ contractor_lead_id: e.contractor_lead_id ?? null, canonical_domain: e.source_url ? new URL(e.source_url).origin : "", status: observation.status === "machine_verified" ? "complete_with_contact" : "blocked", reason: observation.reason, pages_attempted: observation.pages.length, pages_ok: observation.pages.length, finished_at: observation.checked_at, summary: { casl_machine: observation } });
+    const { error: writeError } = await sb.from("official_site_crawl_runs").insert({ contractor_lead_id: e.contractor_lead_id ?? null, prospect_id: e.contractor_prospect_id ?? null, canonical_domain: e.source_url ? new URL(e.source_url).origin : "", status: observation.status === "machine_verified" ? "complete_with_contact" : "blocked", reason: observation.reason, pages_attempted: observation.pages.length, pages_ok: observation.pages.length, finished_at: observation.checked_at, summary: { casl_machine: observation } });
     if (writeError) throw new Error("observation_write_failed");
   }
   return observation;
