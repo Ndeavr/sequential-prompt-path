@@ -176,9 +176,9 @@ Deno.serve(async (req) => {
         prospectId = created.id;
       }
       await admin.from("scout_entity_links").update({ prospect_id: prospectId, updated_at: new Date().toISOString() }).eq("id", link.id);
-      await logAcquisitionEvent(admin, prospectId, link.capture_id, {
-        kind: match ? "scout_link_attached" : "scout_link_promoted", link_id: link.id, signal: match?.signal ?? null,
-      });
+      await logAcquisitionEvent(admin, prospectId, link.id, {
+        kind: match ? "scout_link_attached" : "scout_link_promoted", capture_id: link.capture_id, signal: match?.signal ?? null,
+      }, "scout_entity_links");
       return json({ status: match ? "attached_existing" : "created", prospect_id: prospectId, signal: match?.signal ?? null });
     }
 
@@ -481,13 +481,14 @@ async function logAcquisitionEvent(
   prospectId: string,
   captureId: string | undefined,
   metadata: Record<string, unknown>,
+  sourceTable = "scout_captures",
 ) {
   const { error } = await admin.from("acquisition_events").insert({
     prospect_id: prospectId,
     channel: "system",
     event_type: "scraped",
     provider: "system",
-    source_table: "scout_captures",
+    source_table: sourceTable,
     source_row_id: captureId ?? null,
     metadata: { source: "unpro_scout", platform: "facebook_group", ...metadata },
   });
@@ -495,3 +496,37 @@ async function logAcquisitionEvent(
   if (error) console.error("[scout-ingest] acquisition_event insert failed", error.message);
 }
 
+
+/** Declared affiliations become `inferred` links only — never a company record. */
+async function insertLinks(
+  admin: ReturnType<typeof createClient>,
+  captureId: string,
+  personName: string | null,
+  affiliations: Affiliation[],
+  city: string | null,
+) {
+  if (!affiliations.length) return;
+  const { error } = await admin.from("scout_entity_links").insert(affiliations.map((a) => ({
+    capture_id: captureId, person_name: personName, company_name: a.company_name,
+    relation: a.relation, status: "inferred", source: "comment_text", evidence: a.evidence, city,
+  })));
+  if (error) console.error("[scout-ingest] entity link insert failed", error.message);
+}
+
+/** Canonical prospect dedupe: phone → email → domain → name+city. Read-only. */
+async function findProspect(
+  admin: ReturnType<typeof createClient>,
+  k: { phone?: string | null; email?: string | null; domain?: string | null; name?: string | null; city?: string | null },
+): Promise<{ id: string; signal: string } | null> {
+  const t = admin.from("verified_contractor_prospects");
+  if (k.phone) { const { data } = await t.select("id").eq("phone_e164", k.phone).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "phone_e164" }; }
+  if (k.email) { const { data } = await admin.from("verified_contractor_prospects").select("id").ilike("email", k.email).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "email" }; }
+  if (k.domain) { const { data } = await admin.from("verified_contractor_prospects").select("id").ilike("website_url", `%${k.domain}%`).limit(1).maybeSingle(); if (data) return { id: data.id, signal: "domain" }; }
+  if (k.name) {
+    let q = admin.from("verified_contractor_prospects").select("id").ilike("business_name", k.name);
+    if (k.city) q = q.ilike("city", k.city);
+    const { data } = await q.limit(1).maybeSingle();
+    if (data) return { id: data.id, signal: k.city ? "name_city" : "name" };
+  }
+  return null;
+}
