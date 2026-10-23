@@ -1,5 +1,6 @@
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
+import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
@@ -353,7 +354,9 @@ Deno.serve(async (req) => {
               await supabase.from("stripe_webhook_events").update({ processing_status: preliminary }).eq("stripe_event_id", event.id);
               return new Response(JSON.stringify({ received: true, ignored: preliminary }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
             }
-            session = await verifyEntry350TaxContract(stripe, session, event.livemode === true, isReplay);
+            session = session.metadata.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT
+              ? await verifyEntry350PromoContract(stripe, session, event.livemode === true, isReplay)
+              : await verifyEntry350TaxContract(stripe, session, event.livemode === true, isReplay);
           }
           const block = entry350PaymentBlockReason(session);
           if (block) {
@@ -439,6 +442,17 @@ Deno.serve(async (req) => {
             if (alreadyError || ownerError || otherError || !ownerRow?.user_id) {
               throw new Error("entry_activation_350 ownership or ledger lookup failed");
             }
+            // PROMO usage unique global : une autre session déjà payée avec ce code
+            // (tout compte) = aucune activation, alerte remboursement.
+            const promoCodeId = session.metadata?.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT ? session.metadata?.promo_code_id : null;
+            let promoAlreadyRedeemed = false;
+            if (promoCodeId) {
+              const { data: pr, error: prErr } = await supabase.from("contractor_activation_ledger").select("id")
+                .eq("action", "entry_activation_350_paid").eq("metadata->>promo_code_id", promoCodeId)
+                .neq("metadata->>stripe_session_id", session.id).limit(1).maybeSingle();
+              if (prErr) throw new Error("entry_activation_350 promo lookup failed");
+              promoAlreadyRedeemed = !!pr;
+            }
             // Séparation TEST/LIVE : un événement de test n'active qu'un compte QA marqué.
             let isQaAccount = false;
             if (event.livemode !== true && ownerRow?.user_id) {
@@ -450,7 +464,7 @@ Deno.serve(async (req) => {
               livemode: event.livemode,
               isQaAccount,
               sessionAlreadyInLedger: !!already,
-              activatedByOtherSession: !!otherSession,
+              activatedByOtherSession: !!otherSession || promoAlreadyRedeemed,
             });
             console.log("[stripe-webhook][entry_activation_350] decision", { event: event.id, session: session.id, livemode: event.livemode, decision });
             if (decision === "test_on_non_qa" || decision === "duplicate_payment") {
@@ -481,6 +495,11 @@ Deno.serve(async (req) => {
                   stripe_event_id: event.id,
                   stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
                   amount_cents: session.amount_total ?? 35000,
+                  amount_subtotal_cents: session.amount_subtotal ?? null,
+                  amount_discount_cents: session.total_details?.amount_discount ?? 0,
+                  amount_tax_cents: session.total_details?.amount_tax ?? null,
+                  entry_tax_contract: session.metadata?.entry_tax_contract ?? null,
+                  ...(promoCodeId ? { promo_code: "PROMO", promo_code_id: promoCodeId, promo_coupon_id: session.metadata?.promo_coupon_id ?? null, stripe_customer: session.customer ? String(session.customer) : null } : {}),
                   livemode: event.livemode ?? null,
                   quote_id: session.metadata?.quote_id ?? null,
                   prospect_id: session.metadata?.prospect_id ?? null,

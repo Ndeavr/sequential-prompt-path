@@ -1,5 +1,6 @@
 // Pure guards shared by checkout + webhook (no Deno APIs: unit-tested in vitest).
 import { ENTRY350_AMOUNTS, ENTRY350_TAX_CONTRACT } from "./entry350Tax.ts";
+import { ENTRY350_PROMO_TAX_CONTRACT, entry350PromoAmountsOk } from "./entry350Promo.ts";
 
 const ALLOWED_HOSTS = new Set([
   "unpro.ca", "www.unpro.ca", "app.unpro.ca", "unpro.lovable.app",
@@ -50,10 +51,14 @@ export function entry350PaymentBlockReason(s: {
   currency?: string | null;
   amount_subtotal?: number | null;
   amount_total?: number | null;
-  total_details?: { amount_tax?: number | null } | null;
+  total_details?: { amount_tax?: number | null; amount_discount?: number | null } | null;
   metadata?: Record<string, string> | null;
 }): "ignored_unpaid" | "ignored_amount_mismatch" | null {
   if (s.payment_status !== "paid") return "ignored_unpaid";
+  // Separate versioned promo contract: never weakens the full-price checks below.
+  if (s.metadata?.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT) {
+    return entry350PromoAmountsOk(s) ? null : "ignored_amount_mismatch";
+  }
   if (s.metadata?.entry_tax_contract) {
     if (s.metadata.entry_tax_contract !== ENTRY350_TAX_CONTRACT || s.mode !== "payment" ||
         s.currency !== "cad" || s.amount_subtotal !== ENTRY350_AMOUNTS.subtotal || s.amount_total !== ENTRY350_AMOUNTS.total ||
@@ -187,6 +192,8 @@ export function entry350CommissionArgs(i: {
   if (i.decision !== "activate" && i.decision !== "already_processed") return null;
   if (i.session.payment_status !== "paid" || i.session.amount_subtotal !== 35000) return null;
   const md = i.session.metadata ?? {};
+  // Promo 349 $: 1 $ really collected, never a commission on a fictitious 350 $.
+  if (md.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT) return null;
   const ref = normalizeAffiliateRef(md.ref);
   const affiliateId = typeof md.affiliate_id === "string" && /^[0-9a-f-]{36}$/i.test(md.affiliate_id) ? md.affiliate_id : null;
   if (!ref || !affiliateId) return null;

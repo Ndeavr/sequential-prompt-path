@@ -41,7 +41,7 @@ describe("350 Quebec tax contract", () => {
   it("both actual creators emit exclusive lines, same version, billing preserves subtotal separately",async()=>{
     const qa=await createQa();
     try {
-      expect((await qa.checkout('personal',{entryActivation:true},qa.ownerToken)).status).toBe(200);
+      expect((await qa.checkout('personal',{entryActivation:true,declaredCompanyName:'Atelier QA'},qa.ownerToken)).status).toBe(200);
       expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(200);
       for(const config of qa.configs) {
         expect(config.mode).toBe('payment'); expect(config.line_items).toHaveLength(1);

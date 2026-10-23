@@ -26,8 +26,44 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   const [busy, setBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // Code promo facultatif : jamais pré-rempli depuis l'URL; seul le serveur le valide.
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ state: "idle" | "checking" | "valid" | "refused"; code?: string; message?: string }>({ state: "idle" });
   const outcome = query.get("checkout");
   const ref = normalizeRef(query.get("ref"));
+
+  const readReply = async (data: unknown, error: unknown) => {
+    let reply = data as { code?: string; error?: string; url?: string } | null;
+    if (!reply && error) {
+      const context = (error as { context?: Response }).context;
+      if (context && typeof context.clone === "function") {
+        try { reply = await context.clone().json(); } catch { /* réseau */ }
+      }
+    }
+    return reply;
+  };
+
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code || promo.state === "checking") return;
+    setPromo({ state: "checking" });
+    try {
+      const { data: auth } = await supabase.auth.getSession();
+      if (!auth.session) { setPromo({ state: "refused", message: "Connectez-vous pour vérifier ce code. Rien n'a été facturé." }); return; }
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { entryActivation: true, entryPromoPreview: true, entryPromoCode: code, declaredCompanyName: company.trim() || undefined },
+      });
+      const reply = await readReply(data, error);
+      if (reply?.code === "promo_valid") { setPromo({ state: "valid", code }); return; }
+      const message = reply?.code === "promo_used" ? "Ce code a déjà été utilisé."
+        : reply?.code === "promo_invalid" ? "Ce code n'est pas valide."
+        : reply?.code === "already_active" ? "Ce compte a déjà une activation enregistrée."
+        : "Ce code n'est pas disponible pour le moment. Rien n'a été facturé.";
+      setPromo({ state: "refused", message });
+    } catch {
+      setPromo({ state: "refused", message: "Vérification impossible pour le moment. Rien n'a été facturé." });
+    }
+  };
 
   const begin = async () => {
     if (busy) return;
@@ -56,6 +92,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         body: {
           entryActivation: true,
           declaredCompanyName: name,
+          ...(promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
           ...(ref ? { ref } : {}),
           ...(query.get("t") ? { activationToken: query.get("t") } : {}),
           ...(query.get("utm_source") ? { source: query.get("utm_source") } : {}),
@@ -64,12 +101,10 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
           cancelUrl: cancel.toString(),
         },
       });
-      let reply = data as { code?: string; error?: string; url?: string } | null;
-      if (!reply && error) {
-        const context = (error as { context?: Response }).context;
-        if (context && typeof context.clone === "function") {
-          try { reply = await context.clone().json(); } catch { /* erreur réseau conservée */ }
-        }
+      const reply = await readReply(data, error);
+      if (reply?.code === "promo_used" || reply?.code === "promo_invalid" || reply?.code === "promo_unavailable") {
+        setPromo({ state: "refused", message: reply.code === "promo_used" ? "Ce code a déjà été utilisé. Retirez-le pour payer le prix normal." : "Ce code n'est plus disponible. Retirez-le pour payer le prix normal." });
+        return;
       }
       if (reply?.code === "already_active" || reply?.code === "already_paid") {
         setInfo("Ce compte a déjà une activation enregistrée. Consultez vos droits avant tout nouveau paiement.");
@@ -107,7 +142,27 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         value={company} onChange={e => { setCompany(e.target.value); setErrorText(null); }} maxLength={160}
         placeholder="Nom de votre entreprise"
         className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-foreground" />
-      <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>. Aucun abonnement.</p>
+      {promo.state === "valid"
+        ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
+        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>. Aucun abonnement.</p>}
+      <div className="mt-4">
+        <label htmlFor="activation350-promo" className="block text-sm font-semibold">Code promo (facultatif)</label>
+        <div className="mt-2 flex gap-2">
+          <input id="activation350-promo" data-testid="entry-350-promo-input" value={promoInput} maxLength={40} autoComplete="off"
+            onChange={e => { setPromoInput(e.target.value); if (promo.state !== "idle") setPromo({ state: "idle" }); }}
+            aria-describedby="activation350-promo-status"
+            className="h-12 min-w-0 flex-1 rounded-xl border border-border bg-background px-3 uppercase text-foreground" />
+          {promo.state === "valid"
+            ? <Button type="button" variant="outline" className="min-h-12" onClick={() => { setPromo({ state: "idle" }); setPromoInput(""); }}>Retirer</Button>
+            : <Button type="button" variant="outline" className="min-h-12" data-testid="entry-350-promo-apply"
+                disabled={!promoInput.trim() || promo.state === "checking"} onClick={() => void applyPromo()}>
+                {promo.state === "checking" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Appliquer"}
+              </Button>}
+        </div>
+        <p id="activation350-promo-status" role="status" aria-live="polite" className={`mt-2 text-sm ${promo.state === "refused" ? "text-destructive" : "text-primary"}`}>
+          {promo.state === "valid" ? "Code accepté : rabais unique de 349,00 $." : promo.state === "refused" ? promo.message : ""}
+        </p>
+      </div>
       {outcome === "success" && <p role="status" className="mt-3 text-sm text-primary">Retour de Stripe détecté. Ce retour ne prouve pas le paiement; seul le serveur peut confirmer votre activation. Vérifiez votre espace entrepreneur.</p>}
       {outcome === "canceled" && <p role="status" className="mt-3 text-sm">Paiement annulé : vos réponses sont conservées.</p>}
       {errorText && <p role="alert" className="mt-3 text-sm text-destructive">{errorText}</p>}
