@@ -34,7 +34,7 @@ function fakeDb(rows: Row[]) {
 
 const run = async (session: unknown, db: unknown) => {
   const fn = await compileWebhookBranch(
-    "const redemptionId = session.metadata?.redemption_id;",
+    "// Mark checkout as expired",
     "// Reverse promo reservation",
     ["session", "supabase"],
   );
