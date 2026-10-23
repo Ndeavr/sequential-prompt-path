@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { OFFER } from "../_shared/offerCopy.ts";
 import { resolveStripeEnv, stripeKeyFor } from "../_shared/stripeEnv.ts";
 import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT, ENTRY350_AMOUNTS } from "../_shared/entry350Tax.ts";
+import { resolveInvitedCheckoutOrigin } from "../_shared/checkoutGuards.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,7 +185,8 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
 
-    const origin = req.headers.get("origin") || "https://unpro.ca";
+    // Never trust a caller-supplied Origin for LIVE Stripe success/cancel URLs.
+    const origin = resolveInvitedCheckoutOrigin(req.headers.get("origin"), stripeEnv);
     const successPath = activation_token
       ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`
       : isOutreach
