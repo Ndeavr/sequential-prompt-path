@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 function harness(status: number | null) {
   let handler: ((r: Request) => Promise<Response>) | undefined;
-  const createClient = vi.fn(() => ({})); const recheckCasl = vi.fn(async () => ({ status: "pending", legal_consent_established: false })); const fetch = vi.fn();
+  const createClient = vi.fn(() => ({})); const recheckCasl = vi.fn(async (..._args: any[]) => ({ status: "pending", legal_consent_established: false })); const fetch = vi.fn();
   const guardSource = readFileSync("supabase/functions/_shared/requireAdminCaller.ts", "utf8").replace(/^import .*;\n/gm, "");
   const guardContext: any = { exports: {}, Deno: { env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "synthetic-service" : k === "SUPABASE_ANON_KEY" ? "synthetic-anon" : "https://synthetic.test" } }, Response, atob, createClient: () => ({ auth: { getUser: async () => ({ data: { user: status === 401 ? null : { id: "synthetic-user" } } }) }, from: () => { const q: any = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: status === 403 ? null : { role: "admin" }, error: null }) }; return q; } }) };
   runInNewContext(ts.transpileModule(guardSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, guardContext);
