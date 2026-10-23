@@ -182,12 +182,58 @@ Deno.serve(async (req) => {
       captured_at: body.captured_at ?? new Date().toISOString(),
     };
 
-    if (!hasContactPoint(signals)) {
-      // Not an error — chit-chat with no contact point is the common case in a
-      // group feed. Recorded as 'skipped' so the operator stats stay honest.
-      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "skipped", error: "no_contact_point" });
+    /* ── 3b. Radar: classify, fingerprint, affiliations (never sends anything) ── */
+    const postContext = body.post_context ? String(body.post_context).slice(0, 2000) : null;
+    const classification = classifySignal(rawText, postContext);
+    const affiliations = extractAffiliations(rawText);
+    const fingerprint = captureFingerprint({
+      source_url: body.source_url, post_url: body.post_url, author_name: body.author_name, raw_text: rawText,
+    });
+    captureRow.signal_type = classification.signal_type;
+    captureRow.fingerprint = fingerprint;
+    captureRow.post_context = postContext;
+    captureRow.extracted = { ...(captureRow.extracted as object), classification, affiliations };
+    if (classification.signal_type === "contractor_offer") {
+      captureRow.intent_score = Math.max(signals.intent_score, classification.contractor_score);
+      signals.intent_score = captureRow.intent_score as number;
+      signals.intent_evidence = signals.intent_evidence ?? classification.evidence.join(" | ");
+      captureRow.intent_evidence = signals.intent_evidence;
+    } else if (classification.signal_type === "homeowner_request") {
+      captureRow.intent_score = 0; // homeowner demand is not contractor intent
+      signals.intent_score = 0;
+    }
+
+    const { data: already } = await admin.from("scout_captures")
+      .select("id,dedupe_status,prospect_id").eq("fingerprint", fingerprint).maybeSingle();
+    if (already) {
+      return json({ status: "already_captured", capture_id: already.id, prospect_id: already.prospect_id });
+    }
+
+    // An employee's declaration never makes them the employer, nor carries the employer's licence.
+    if (affiliations.some((a) => a.relation === "employee_declared")) {
+      signals.company_name = null;
+      signals.rbq_number = null;
+    }
+
+    const route = decideCaptureRoute(classification, hasContactPoint(signals));
+    if (route !== "prospect") {
+      const { data: rc, error: rcErr } = await admin.from("scout_captures").insert({
+        ...captureRow, dedupe_status: "review", review_status: "pending",
+        error: hasContactPoint(signals) ? null : "no_contact_point",
+      }).select("id").single();
+      if (rcErr) {
+        if ((rcErr as { code?: string }).code === "23505") return json({ status: "already_captured" });
+        throw rcErr;
+      }
+      await insertLinks(admin, rc.id, signals.contact_name, affiliations, signals.city);
       await bumpSession(admin, sessionId, { captured: 1 });
-      return json({ status: "skipped", reason: "no_contact_point" });
+      return json({
+        status: route === "homeowner_review" ? "homeowner_review" : "review",
+        capture_id: rc.id,
+        signal_type: classification.signal_type,
+        evidence: classification.evidence,
+        links: affiliations.length,
+      });
     }
 
     /* ── 4. Dedupe against the existing acquisition universe ── */
