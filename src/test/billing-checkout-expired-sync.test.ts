@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from "vitest";
 import { compileWebhookBranch, webhookSource } from "./support/stripeWebhookHarness";
 import { webhookEntryDecision } from "../../supabase/functions/_shared/webhookAuth";
