@@ -30,6 +30,7 @@ import {
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { recheckCasl } from "./caslFirstParty.ts";
+import { pinnedPublicFetch } from "./pinnedPublicFetch.ts";
 import { z } from "https://esm.sh/zod@3.25.76";
 
 const FN = "enrich-official-website";
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
       const parsed = z.object({ action: z.literal("verify_casl"), evidence_id: z.string().uuid(), dry_run: z.boolean().default(false) }).strict().safeParse(body);
       if (!parsed.success) return jr({ ok: false, code: "invalid_casl_request" }, 400, rid);
       const observation = await recheckCasl(supabase, parsed.data.evidence_id, {
-        fetch,
+        fetch: pinnedPublicFetch,
         resolve: async (host) => {
           try { return await Deno.resolveDns(host, "A"); } catch { return []; }
         },
