@@ -45,6 +45,6 @@ describe("Funnel audit — no uncorroborated LIVE sale", () => {
   it("keeps old status candidates separate, without mutating history", () => {
     const rows = Object.freeze([Object.freeze({ checkout_status: "complete" }), Object.freeze({ payment_status: "paid" })]);
     expect(unverifiedPayments([...rows])).toMatchObject({ count: 0, raw_status_candidates: 2 });
-    expect(rows[0].checkout_status).toBe("complete");
+    expect(rows[0]).toEqual({ checkout_status: "complete" });
   });
 });
