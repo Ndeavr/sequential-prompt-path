@@ -37,10 +37,11 @@ describe("acquisition-queue-worker — décision d'entrée (avant tout effet de 
 
 describe("acquisition-queue-worker — ordre de vérification dans le code", () => {
   it("le verrou est lu et appliqué AVANT la réparation et le premier upsert", () => {
-    const gateRead = workerSrc.indexOf("workerSideEffectDecision(outreachGate, dryRun)");
-    const earlyReturn = workerSrc.indexOf('=== "blocked"');
-    const repair = workerSrc.indexOf("detectAndRepairDeadQueue(supabase)");
-    const firstUpsert = workerSrc.indexOf('.from("acquisition_queue").upsert(');
+    const handler = workerSrc.slice(workerSrc.indexOf("Deno.serve("));
+    const gateRead = handler.indexOf("workerSideEffectDecision(outreachGate, dryRun)");
+    const earlyReturn = handler.indexOf('=== "blocked"');
+    const repair = handler.indexOf("detectAndRepairDeadQueue(supabase)");
+    const firstUpsert = handler.indexOf('.from("acquisition_queue").upsert(');
     expect(gateRead).toBeGreaterThan(-1);
     expect(earlyReturn).toBeGreaterThan(-1);
     expect(repair).toBeGreaterThan(-1);
@@ -67,8 +68,10 @@ describe("acquisition-queue-worker — ordre de vérification dans le code", () 
   });
 
   it("les garde-fous existants sont préservés (423 agent-send-outreach, webhook fail-closed)", () => {
+    const quarantine = readFileSync("supabase/functions/agent-send-outreach/quarantine.ts", "utf8");
+    expect(quarantine).toContain("status: 423");
     const sendOutreach = readFileSync("supabase/functions/agent-send-outreach/index.ts", "utf8");
-    expect(sendOutreach).toContain("423");
+    expect(sendOutreach).toContain("assertOutreachEnabled");
     const webhook = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
     expect(webhook).toContain("webhookEntryDecision");
     // Le garde-fou d'envoi tardif du worker (lookups/envois) reste en place.
