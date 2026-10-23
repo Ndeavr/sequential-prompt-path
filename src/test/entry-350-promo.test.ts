@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { entry350PaymentBlockReason, entry350CommissionArgs } from "../../supabase/functions/_shared/checkoutGuards";
 import {
-  ENTRY350_PROMO_TAX_CONTRACT, ENTRY350_PROMO_COUPON_MARKER, resolveEntry350Promo, verifyEntry350PromoContract,
+  ENTRY350_PROMO_TAX_CONTRACT, ENTRY350_PROMO_COUPON_MARKER, resolveEntry350Promo, verifyEntry350PromoContract, promotionCodeRefusal,
 } from "../../supabase/functions/_shared/entry350Promo";
 
 const coupon = (o: Record<string, unknown> = {}) => ({ id: "co_1", livemode: false, valid: true, amount_off: 34900, currency: "cad",
@@ -58,6 +58,11 @@ describe("PROMO 349 $ — entrée 350 $", () => {
     await expect(verifyEntry350PromoContract(fakeStripe(twoDiscounts), twoDiscounts, false, false)).rejects.toThrow();
     const forged = paidSession();
     await expect(verifyEntry350PromoContract(fakeStripe(forged, [line], pc({}, coupon({ amount_off: 30000 }))), forged, false, false)).rejects.toThrow();
+  });
+
+  it("expiration exacte du code : refusé à la limite, sans consommation", () => {
+    expect(promotionCodeRefusal(pc({ expires_at: 1000 }), coupon(), false, 1000)).toBe("promo_used");
+    expect(promotionCodeRefusal(pc({ expires_at: 1001 }), coupon(), false, 1000)).toBeNull();
   });
 
   it("aucune commission affiliée calculée sur un faux 350 $ pour une vente PROMO", () => {
