@@ -23,5 +23,8 @@
 6. Rollback is never automatic: close PROMO first, quiesce all sessions/events, rerun preflight and verify exact index definition. If receipts exist, retain protection; forward repair only. The prepared rollback must reject absent/wrong index and any promo history.
 
 ## Local checks
+- Final focused run: 70/70 tests across `entry-350-promo-single-redemption`, `entry-350-promo`, `entry-350-recovery`, `entry-350-presence-entitlement`, `payment-return-guards`, `entry-350-paid-collection`, `stripe-webhook-fail-closed` (all under `src/test`, suffix `.test.ts`).
+- Prepared rollback exercised only in temporary PGlite: exact empty index dropped; receipt present, wrong index and absent index all rejected. Four expected outcomes; no hosted SQL writes.
+- `git diff --check` passed; automatic compilation log reports build OK. No standalone typecheck, full suite or GitHub CI verification in this targeted audit.
 - Focused tests cover PGlite index arbitration with stale reads for two real webhook-branch workers, exact original-session alert, same-session retry, zero LIVE receipts from TEST, signature rejection, 35000/40241 amounts, refund/dispute, 12-month expiry, ownership and UI/expired-session guards.
 - No hosted checkout, webhook replay, migration, deployment, SMS/email, customer write or pending-message update was performed.
