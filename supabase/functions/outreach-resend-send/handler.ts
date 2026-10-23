@@ -22,6 +22,30 @@ export interface SendInput {
   purpose?: "commercial_outreach" | "internal_test";
 }
 
+export type DomainProof = "verified" | "unverified" | "unknown";
+
+/**
+ * Sender-domain proof, fail-closed.
+ * 1. GET /domains 200 → verified only if that exact domain has status "verified".
+ * 2. 401/403 (send-only key) → "unknown", unless an owner-approved proof
+ *    `RESEND_DOMAIN_PROOF="<domain>|<ISO date checked in the Resend account>"`
+ *    names this exact domain and is at most 30 days old. A 401 is never "verified".
+ * 3. Anything else → "unknown". The stale outreach_health_state value is never used.
+ */
+export function resolveDomainProof(domain: string, apiStatus: number | null, apiBody: any, approvedProof: string, now = Date.now()): DomainProof {
+  if (apiStatus === 200) {
+    const list = Array.isArray(apiBody?.data) ? apiBody.data : [];
+    const hit = list.find((x: any) => x?.name === domain);
+    return hit?.status === "verified" ? "verified" : "unverified";
+  }
+  const [pDomain, pDate] = (approvedProof ?? "").split("|").map((s) => s.trim());
+  const t = Date.parse(pDate ?? "");
+  if ((apiStatus === 401 || apiStatus === 403) && pDomain === domain && Number.isFinite(t) && t <= now && now - t <= 30 * 86400_000) {
+    return "verified";
+  }
+  return "unknown";
+}
+
 export interface Deps {
   serviceRoleKey: string;
   founderEmail: string;
