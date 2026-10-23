@@ -1814,6 +1814,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
       : conversationStarted ? copy.placeholderActive : copy.placeholder;
 
+  const lastMessage = messages[messages.length - 1];
+  const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
+  const visibleQuickReplies = quickReplies ?? (lastMessage && restoredOptions.length >= 2
+    ? { messageId: lastMessage.id, options: restoredOptions } : null);
+
   return (
     <section
       ref={rootRef}
@@ -1956,11 +1961,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 </MessageContent>
               </Message>
             ))}
-            {quickReplies && !busy && (
+            {visibleQuickReplies && !busy && (
               <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-                {filterSuggestionsForRole(audience, quickReplies.options).map((option, index) => (
+                {filterSuggestionsForRole(audience, visibleQuickReplies.options).map((option, index) => (
                   <button
-                    key={`${quickReplies.messageId}:${option}`}
+                    key={`${visibleQuickReplies.messageId}:${option}`}
                     type="button"
                     disabled={busy}
                     data-stagger="true"
