@@ -214,6 +214,8 @@ export function entry350CommissionArgs(i: {
 export function entry350LedgerConflict(message: string | null | undefined): "promo_already_redeemed" | "same_session" | null {
   if (!message) return null;
   if (/uq_entry350_single_promo_redemption/i.test(message)) return "promo_already_redeemed";
-  if (/duplicate key|uq_ledger_entry350_session/i.test(message)) return "same_session";
+  // An unrelated unique violation is not proof that THIS Stripe session exists.
+  // Fail closed rather than provisioning without its receipt.
+  if (/uq_ledger_entry350_session/i.test(message)) return "same_session";
   return null;
 }
