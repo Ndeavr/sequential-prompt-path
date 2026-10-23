@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
-import { safeRedirectUrl, shouldSkipRedelivery, isSessionPaid } from "../../supabase/functions/_shared/checkoutGuards";
+import { safeRedirectUrl, resolveInvitedCheckoutOrigin, shouldSkipRedelivery, isSessionPaid } from "../../supabase/functions/_shared/checkoutGuards";
 
 describe("checkout redirect allowlist", () => {
   it("keeps our origins and rejects others", () => {
@@ -11,6 +11,50 @@ describe("checkout redirect allowlist", () => {
     expect(safeRedirectUrl("https://evil.com/x", "F")).toBe("F");
     expect(safeRedirectUrl("https://unpro.ca.evil.com/x", "F")).toBe("F");
     expect(safeRedirectUrl("javascript:alert(1)", "F")).toBe("F");
+  });
+});
+
+describe("public invited Checkout return origin", () => {
+  const canonical = "https://unpro.ca";
+  it.each([
+    [null], [""], ["https://evil.example"],
+    ["https://unpro.ca.evil.example"], ["https://unpro.ca@evil.example"],
+    ["javascript:alert(1)"], ["http://localhost:8080"],
+    ["https://id-preview--ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovable.app"],
+    ["https://unpro.ca"], ["https://www.unpro.ca"],
+  ])("LIVE always uses canonical origin, never the client Origin: %s", (origin) => {
+    expect(resolveInvitedCheckoutOrigin(origin, "live")).toBe(canonical);
+  });
+
+  it("permits exact, vetted TEST preview/local origins only", () => {
+    expect(resolveInvitedCheckoutOrigin("http://localhost:8080", "test")).toBe("http://localhost:8080");
+    expect(resolveInvitedCheckoutOrigin(
+      "https://id-preview--ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovable.app", "test",
+    )).toBe("https://id-preview--ba1eabf3-fd1c-40fe-9856-3812a70f9869.lovable.app");
+    expect(resolveInvitedCheckoutOrigin("https://www.unpro.ca", "test")).toBe("https://www.unpro.ca");
+  });
+
+  it.each([
+    "https://attacker.lovable.app",
+    "https://unpro.ca.evil.example",
+    "https://unpro.ca@evil.example",
+    "http://unpro.ca",
+    "javascript:alert(1)",
+    "https://unpro.ca/redirect",
+    "https://unpro.ca/?token=123",
+    "https://unpro.ca#fragment",
+    "http://localhost:8080/?session_id=unsafe",
+    "https://unpro.ca\\evil.example",
+  ])("rejects unsafe or non-origin input in TEST: %s", (origin) => {
+    expect(resolveInvitedCheckoutOrigin(origin, "test")).toBe(canonical);
+  });
+
+  it("wires the guard into the real invited Checkout before Stripe session creation", () => {
+    const invited = readFileSync("supabase/functions/create-activation-checkout/index.ts", "utf8");
+    expect(invited).toContain('resolveInvitedCheckoutOrigin(req.headers.get("origin"), stripeEnv)');
+    expect(invited).not.toContain('const origin = req.headers.get("origin") ||');
+    expect(invited).toContain('success_url: `${origin}${successPath}`');
+    expect(invited).toContain('cancel_url: `${origin}${cancelPath}`');
   });
 });
 
