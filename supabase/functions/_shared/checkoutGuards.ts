@@ -19,6 +19,29 @@ export function safeRedirectUrl(url: unknown, fallback: string): string {
   return fallback;
 }
 
+/**
+ * Resolve the return origin for the public invited CA$350 Checkout.
+ * In LIVE, always return the canonical domain: request Origin is user-controlled
+ * and must never receive a Stripe session ID. For Stripe TEST, allow only
+ * explicitly allowlisted preview/local origins so isolated QA stays usable.
+ * Accept an origin only, never a path, credentials, query, or fragment.
+ */
+export function resolveInvitedCheckoutOrigin(
+  rawOrigin: unknown,
+  stripeEnv: "live" | "test",
+): string {
+  const canonical = "https://unpro.ca";
+  if (stripeEnv !== "test" || typeof rawOrigin !== "string") return canonical;
+  if (safeRedirectUrl(rawOrigin, "") !== rawOrigin) return canonical;
+  try {
+    const url = new URL(rawOrigin);
+    if (url.username || url.password || url.pathname !== "/" || url.search || url.hash) return canonical;
+    return url.origin;
+  } catch {
+    return canonical;
+  }
+}
+
 export interface WebhookEventRow { processing_status?: string | null; received_at?: string | null }
 
 /**
