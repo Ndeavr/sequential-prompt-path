@@ -3,6 +3,7 @@ import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
+import { webhookEntryDecision } from "../_shared/webhookAuth.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
