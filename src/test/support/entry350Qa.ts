@@ -11,6 +11,7 @@ import { reverseEntry350Commission, entry350SessionRevoked } from "../../../supa
 import { OFFER } from "../../../supabase/functions/_shared/offerCopy";
 import * as entryTax from "../../../supabase/functions/_shared/entry350Tax";
 import * as entryPromo from "../../../supabase/functions/_shared/entry350Promo";
+import * as webhookAuth from "../../../supabase/functions/_shared/webhookAuth";
 
 export const OWNER = "00000000-0000-4000-8000-000000000001";
 export const OTHER = "00000000-0000-4000-8000-000000000002";
@@ -264,7 +265,7 @@ export async function createQa(taxApproved = true) {
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
+    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,

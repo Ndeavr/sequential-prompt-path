@@ -38,6 +38,11 @@ describe("Clara — finalisation du tour de conversation", () => {
 });
 
 describe("Clara — réponses rapides", () => {
+  it.each(["CHOICE", "choice", "CHOIX"])("interprète %s sur le même parseur, y compris un message sauvegardé", (marker) => {
+    const persistedText = JSON.parse(JSON.stringify({ text: `Votre priorité ? [[${marker}: Durabilité | Rapidité]]` })).text;
+    expect(extractQuickReplies(persistedText)).toEqual({ text: "Votre priorité ?", options: ["Durabilité", "Rapidité"] });
+  });
+
   it("extrait les choix fermés et retire le marqueur du texte affiché", () => {
     const { text, options } = extractQuickReplies(
       "Votre balcon est en quel matériau ?\n[[CHOIX: Bois | Béton | Fibre de verre | Je ne sais pas]]",

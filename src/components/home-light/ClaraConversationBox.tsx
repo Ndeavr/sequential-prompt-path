@@ -215,7 +215,7 @@ export function shouldSuggestVoice(input: {
  * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
  * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
  */
-export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
+export const CHOICE_MARKER = /\[\[\s*(?:CHOIX|CHOICE)\s*:([^\]]*)\]\]/i;
 
 export function extractQuickReplies(raw: string): { text: string; options: string[] } {
   const match = raw.match(CHOICE_MARKER);
@@ -1814,6 +1814,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
       : conversationStarted ? copy.placeholderActive : copy.placeholder;
 
+  const lastMessage = messages[messages.length - 1];
+  const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
+  const visibleQuickReplies = quickReplies ?? (lastMessage && restoredOptions.length >= 2
+    ? { messageId: lastMessage.id, options: restoredOptions } : null);
+
   return (
     <section
       ref={rootRef}
@@ -1945,7 +1950,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                       ))}
                     </ul>
                   )}
-                  <MessageResponse>{message.text}</MessageResponse>
+                  <MessageResponse>{message.role === "assistant" ? extractQuickReplies(message.text).text : message.text}</MessageResponse>
                   {message.action && (
                     <div className="home-clara-quick" role="group" aria-label="Action proposée">
                       <button type="button" onClick={() => void runOpen(message.action!.intent as ClaraWorkflowIntent)}>
@@ -1956,11 +1961,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 </MessageContent>
               </Message>
             ))}
-            {quickReplies && !busy && (
+            {visibleQuickReplies && !busy && (
               <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-                {filterSuggestionsForRole(audience, quickReplies.options).map((option, index) => (
+                {filterSuggestionsForRole(audience, visibleQuickReplies.options).map((option, index) => (
                   <button
-                    key={`${quickReplies.messageId}:${option}`}
+                    key={`${visibleQuickReplies.messageId}:${option}`}
                     type="button"
                     disabled={busy}
                     data-stagger="true"
