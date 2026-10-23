@@ -9,7 +9,7 @@ export default function HeroHomeownerLight() {
   const [isConversationActive, setIsConversationActive] = useState(false);
   // Hauteur visible publiée globalement par useKeyboardAwareViewport (App).
   const copy = {
-    title: lang === "fr" ? "Un projet en tête ?" : "Have a project in mind?",
+    title: lang === "fr" ? "Un projet de rénovation en tête?" : "Have a renovation project in mind?",
   };
 
   return (
