@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
 });
 
 async function bumpSession(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   sessionId: string | null,
   d: { captured?: number; created?: number; duplicate?: number; error?: number },
 ) {
@@ -477,7 +477,7 @@ async function bumpSession(
  * satisfies uq_acq_events_source (source_table, source_row_id, event_type).
  */
 async function logAcquisitionEvent(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   prospectId: string,
   captureId: string | undefined,
   metadata: Record<string, unknown>,
@@ -499,7 +499,7 @@ async function logAcquisitionEvent(
 
 /** Declared affiliations become `inferred` links only — never a company record. */
 async function insertLinks(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   captureId: string,
   personName: string | null,
   affiliations: Affiliation[],
@@ -515,7 +515,7 @@ async function insertLinks(
 
 /** Canonical prospect dedupe: phone → email → domain → name+city. Read-only. */
 async function findProspect(
-  admin: ReturnType<typeof createClient>,
+  admin: Admin,
   k: { phone?: string | null; email?: string | null; domain?: string | null; name?: string | null; city?: string | null },
 ): Promise<{ id: string; signal: string } | null> {
   const t = admin.from("verified_contractor_prospects");
@@ -530,3 +530,6 @@ async function findProspect(
   }
   return null;
 }
+
+// deno-lint-ignore no-explicit-any
+type Admin = any;
