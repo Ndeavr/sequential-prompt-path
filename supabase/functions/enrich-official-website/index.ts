@@ -28,6 +28,9 @@ import {
   type TrustState,
 } from "../_shared/officialSiteCrawler.ts";
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { recheckCasl } from "./caslFirstParty.ts";
+import { z } from "https://esm.sh/zod@3.25.76";
 
 const FN = "enrich-official-website";
 
@@ -49,12 +52,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const caller = await requireAdminCaller(req, corsHeaders);
+    if (!caller.ok) return caller.response;
+    if (req.method !== "POST") return jr({ ok: false, code: "method_not_allowed" }, 405, rid);
     const url = Deno.env.get("SUPABASE_URL");
     const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !svc) return jr({ ok: false, code: "missing_backend_credentials" }, 500, rid);
     const supabase = createClient(url, svc);
 
     const body = await req.json().catch(() => ({}));
+    if (body.action === "verify_casl") {
+      const parsed = z.object({ action: z.literal("verify_casl"), evidence_id: z.string().uuid(), dry_run: z.boolean().default(false) }).strict().safeParse(body);
+      if (!parsed.success) return jr({ ok: false, code: "invalid_casl_request" }, 400, rid);
+      const observation = await recheckCasl(supabase, parsed.data.evidence_id, {
+        fetch,
+        resolve: async (host) => {
+          try { return await Deno.resolveDns(host, "A"); } catch { return []; }
+        },
+      }, parsed.data.dry_run);
+      return jr({ ok: true, observation, dry_run: parsed.data.dry_run, sent: 0 }, 200, rid);
+    }
     const { lead_id, prospect_id, website_url, dry_run = false, max_pages } = body ?? {};
     if (!lead_id && !prospect_id && !website_url) {
       return jr({ ok: false, code: "missing_target", message: "lead_id, prospect_id or website_url required" }, 400, rid);
