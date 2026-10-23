@@ -42,13 +42,14 @@
     if (!state.active) return;
     for (const el of visibleUnits()) {
       const text = textOf(el);
-      if (text.length < 12) continue;
+      if (text.length < 4) continue;
       const key = keyFor(text);
       if (state.seen.has(key)) continue;
       state.seen.add(key);
 
       const parsed = window.UnproScoutParser.parseScoutText(text, authorFor(el));
-      if (!parsed.has_contact && parsed.intent_score < 35) continue; // nothing actionable
+      // Keep bare availability ("Disponible") and homeowner requests for human review.
+      if (!parsed.has_contact && parsed.intent_score < 35 && parsed.signal_type === "uncertain") continue;
 
       chrome.runtime.sendMessage({
         type: "SCOUT_CAPTURE",
