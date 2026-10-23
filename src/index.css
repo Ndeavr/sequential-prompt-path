@@ -393,17 +393,68 @@
   .home-light .home-minimal-header .home-header-icon { border: 1px solid hsl(var(--foreground) / 0.2); }
 
   .home-light .home-glossy-hero {
+    position: relative;
     min-height: calc(100dvh - 68px);
-    background: hsl(var(--background));
+    background:
+      radial-gradient(120% 88% at 50% 110%, hsl(216 100% 50% / 0.22), transparent 58%),
+      linear-gradient(145deg, hsl(226 72% 4%), hsl(222 66% 7%) 48%, hsl(229 72% 3%));
     overflow-x: clip;
     overflow-y: visible;
   }
   .home-light .home-clara-ambient {
     position: absolute;
     inset: 0;
+    overflow: hidden;
+    isolation: isolate;
     background:
-      radial-gradient(42% 36% at 50% 68%, hsl(var(--primary) / 0.09), transparent 72%),
-      linear-gradient(180deg, hsl(var(--background)), hsl(225 68% 3%));
+      radial-gradient(70% 52% at 8% 4%, hsl(216 100% 58% / 0.2), transparent 70%),
+      radial-gradient(58% 48% at 92% 24%, hsl(190 88% 48% / 0.13), transparent 72%),
+      radial-gradient(62% 52% at 50% 92%, hsl(216 100% 52% / 0.2), transparent 74%),
+      linear-gradient(180deg, hsl(226 68% 4% / 0.96), hsl(224 66% 6% / 0.9) 52%, hsl(228 75% 3%));
+  }
+  .home-light .home-clara-ambient::before,
+  .home-light .home-clara-ambient::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .home-light .home-clara-ambient::before {
+    width: 112%;
+    height: 76%;
+    left: -22%;
+    top: 9%;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 54% 48%, hsl(216 100% 61% / 0.2), transparent 54%),
+      conic-gradient(from 218deg at 50% 50%, transparent 0 31%, hsl(216 100% 56% / 0.18) 39%, hsl(190 88% 54% / 0.1) 45%, transparent 56% 100%);
+    filter: blur(34px);
+    opacity: 0.78;
+    transform: translate3d(0, 0, 0) rotate(-7deg) scale(1.05);
+    animation: unpro-ambient-drift 16s cubic-bezier(.45, 0, .55, 1) infinite alternate;
+  }
+  .home-light .home-clara-ambient::after {
+    width: 104%;
+    height: 88%;
+    right: -30%;
+    bottom: -34%;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 42% 44%, hsl(216 100% 56% / 0.26), transparent 52%),
+      radial-gradient(ellipse at 62% 58%, hsl(190 88% 48% / 0.12), transparent 60%);
+    filter: blur(46px);
+    opacity: 0.72;
+    transform: translate3d(0, 0, 0) rotate(8deg) scale(1.02);
+    animation: unpro-ambient-rise 20s cubic-bezier(.45, 0, .55, 1) infinite alternate;
+  }
+  @keyframes unpro-ambient-drift {
+    0% { transform: translate3d(-2%, -2%, 0) rotate(-8deg) scale(1.02); opacity: 0.62; }
+    55% { opacity: 0.82; }
+    100% { transform: translate3d(13%, 7%, 0) rotate(2deg) scale(1.15); opacity: 0.7; }
+  }
+  @keyframes unpro-ambient-rise {
+    0% { transform: translate3d(3%, 8%, 0) rotate(8deg) scale(1.02); opacity: 0.56; }
+    100% { transform: translate3d(-10%, -12%, 0) rotate(-4deg) scale(1.17); opacity: 0.78; }
   }
   .home-light .home-hero-content {
     min-height: calc(100dvh - 68px);
@@ -1170,6 +1221,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .home-light .home-clara-ambient::before,
+    .home-light .home-clara-ambient::after { animation: none; }
     .home-light .home-clara-presence span,
     .home-light .home-clara-presence i { animation: none; }
     .home-light .home-clara-transition-pause i { animation: none; }
