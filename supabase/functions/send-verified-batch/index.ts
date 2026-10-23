@@ -203,8 +203,12 @@ async function sendEmailViaResend(
         subject: EMAIL_SUBJECT(args.businessName, args.freeYear),
         html: EMAIL_HTML(args.businessName, args.link, args.freeYear),
         cta_url: args.link,
-        template_name: args.freeYear ? "local_service_free_year_v1" : "acquisition_onboarding_v1",
-        message_id: `acq-${args.prospectId}-${Date.now()}`,
+        template_name: args.freeYear ? "local_service_free_year_v1" : "acquisition_activation_350_v1",
+        // Commercial: the sender enforces gate, sender domain, postal address,
+        // suppression, reviewed CASL evidence and an atomic per-recipient claim.
+        purpose: "commercial_outreach",
+        campaign: args.freeYear ? "local_service_free_year_v1" : "acquisition_activation_350_v1",
+        message_id: `acq-${args.prospectId}`,
         tags: {
           prospect_id: args.prospectId,
           template: args.freeYear ? "local_service_free_year_v1" : "acquisition_onboarding_v1",
