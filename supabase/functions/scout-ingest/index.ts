@@ -249,6 +249,7 @@ Deno.serve(async (req) => {
       // Canonical acquisition event. `channel`/`event_type` are constrained by
       // acquisition_events_*_check — Scout uses the allowed 'system'/'scraped'
       // pair and carries its own semantics in metadata.kind.
+      if (dupCapture?.id) await insertLinks(admin, dupCapture.id, signals.contact_name, affiliations, signals.city);
       await logAcquisitionEvent(admin, existingId, dupCapture?.id, {
         kind: "scout_rediscovered", signal, group_name: body.group_name ?? null,
         intent_score: signals.intent_score, extraction_mode: mode,
@@ -299,6 +300,7 @@ Deno.serve(async (req) => {
     const { data: newCapture } = await admin.from("scout_captures").insert({
       ...captureRow, dedupe_status: "new", prospect_id: created.id,
     }).select("id").single();
+    if (newCapture?.id) await insertLinks(admin, newCapture.id, signals.contact_name, affiliations, signals.city);
     await logAcquisitionEvent(admin, created.id, newCapture?.id, {
       kind: "scout_discovered", group_name: body.group_name ?? null, extraction_mode: mode,
       intent_score: signals.intent_score, intent_evidence: signals.intent_evidence,
