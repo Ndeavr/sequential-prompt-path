@@ -17,6 +17,10 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseScoutText, toE164, normalizeDomain, normalizeEmail, hasContactPoint } from "../_shared/scoutParser.ts";
+import {
+  authorizeScoutAdmin, captureFingerprint, classifySignal, decideCaptureRoute,
+  extractAffiliations, validateLinkReview, type Affiliation,
+} from "../_shared/scoutRadar.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -43,19 +47,23 @@ Deno.serve(async (req) => {
   try {
     /* ── 1. Authentication: a real UNPRO admin session is mandatory ── */
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return json({ error: "unauthorized", message: "Missing bearer token" }, 401);
-    }
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    const user = userData?.user;
-    if (userErr || !user) return json({ error: "unauthorized", message: "Invalid session" }, 401);
-
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (!isAdmin) return json({ error: "forbidden", message: "Admin role required" }, 403);
+    const gate = await authorizeScoutAdmin({
+      bearer: authHeader,
+      getUser: async () => {
+        const { data, error } = await userClient.auth.getUser();
+        return error || !data?.user ? null : { id: data.user.id };
+      },
+      isAdmin: async (id) => {
+        const { data } = await admin.rpc("has_role", { _user_id: id, _role: "admin" });
+        return data === true;
+      },
+    });
+    if (!gate.ok) return json({ error: gate.error }, gate.status);
+    const user = { id: gate.userId };
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action ?? "capture");
