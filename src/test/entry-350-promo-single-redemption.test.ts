@@ -17,7 +17,8 @@ const insert = (db: PGlite, contractor: string, session: string, promo?: string)
     [contractor, JSON.stringify({ stripe_session_id: session, amount_cents: promo ? 115 : 40241, ...(promo ? { promo_code_id: promo } : {}) })])
     .then(() => null, (e: Error) => entry350LedgerConflict(e.message));
 
-describe("PROMO : un seul reçu global", () => {
+// In-memory Postgres boot takes ~3 s alone; allow headroom under the full parallel suite.
+describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
   it("deux sessions payées concurrentes, deux comptes, même code : une seule inscrite, l'autre bloquée", async () => {
     const db = await setup();
     const results = await Promise.all([

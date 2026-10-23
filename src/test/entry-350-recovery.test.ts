@@ -1,10 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { transform } from "esbuild";
-
-const source = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
-const branch = source.slice(source.indexOf('if (session.metadata?.offer === "entry_activation_350")'), source.indexOf("// ── OFFRE DE REPLI"));
+import { compileWebhookBranch, loadWebhookHandler, realSharedImports } from "./support/stripeWebhookHarness";
 
 // Execute the real production branch with in-memory adapters only.
 async function fixture(options: { failRole?: boolean; lookupError?: boolean; live?: boolean; qa?: boolean } = {}) {
@@ -41,25 +37,23 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
       return query;
     },
   };
-  const { code } = await transform(branch, { loader: "ts", target: "es2022" });
-  const { entryActivationDecision, addCalendarMonths, entry350CommissionArgs } = await import("../../supabase/functions/_shared/checkoutGuards");
-  // Le vrai webhook importe addCalendarMonths et entry350CommissionArgs (checkoutGuards) : on les injecte dans la portée de la branche extraite.
-  const runBranch = new Function("supabase", "session", "event", "entryActivationDecision", "addCalendarMonths", "entry350CommissionArgs", "entry350SessionRevoked", `return (async () => { ${code} })()`);
+  // Real branch compiled as a function body (it may `return` a Response); every
+  // real shared helper it references is injected, only DB/side effects are adapters.
+  const shared = await realSharedImports(undefined, { entry350SessionRevoked: async () => false });
+  const params = ["supabase", "session", "event", "corsHeaders", ...Object.keys(shared)];
+  const runBranch = await compileWebhookBranch('if (session.metadata?.offer === "entry_activation_350")', "// ── OFFRE DE REPLI", params);
   const session = { id: "cs_fixture", mode: "payment", amount_subtotal: 35000, amount_total: 40241, currency: "cad", payment_status: "paid", metadata: { offer: "entry_activation_350", contractor_id: "fixture-contractor", quote_id: "fixture-quote" } };
-  return { state, session, run: () => runBranch(db, session, { id: "evt_fixture", livemode: options.live !== false }, entryActivationDecision, addCalendarMonths, entry350CommissionArgs, async () => false) };
+  return { state, session, run: () => runBranch(db, session, { id: "evt_fixture", livemode: options.live !== false }, {}, ...Object.values(shared)) };
 }
 
 describe("350 CAD — interrupted real webhook branch", () => {
   it("rejects an unsigned webhook even when its signing secret is missing, before DB access", async () => {
-    let handler: ((request: Request) => Promise<Response>) | undefined;
     let dbCalls = 0;
-    const raw = source.replace(/^import[^\n]*\n/gm, "");
-    const { code } = await transform(raw, { loader: "ts", target: "es2022" });
-    class StripeFixture {}
-    const deno = { env: { get: (name: string) => name === "STRIPE_SECRET_KEY" ? "fixture" : undefined }, serve: (fn: typeof handler) => { handler = fn; } };
-    const guards = await import("../../supabase/functions/_shared/checkoutGuards");
-    new Function("Deno", "Stripe", "createClient", "shouldSkipRedelivery", "entryActivationDecision", code)(deno, StripeFixture, () => { dbCalls++; throw new Error("DB forbidden"); }, guards.shouldSkipRedelivery, guards.entryActivationDecision);
-    if (!handler) throw new Error("Handler not registered");
+    class StripeFixture { webhooks = { constructEventAsync: async () => { throw new Error("must not verify without secret"); } }; }
+    const handler = await loadWebhookHandler({
+      Deno: { env: { get: (name: string) => name === "STRIPE_SECRET_KEY" ? "fixture" : undefined } },
+      Stripe: StripeFixture, createClient: () => { dbCalls++; throw new Error("DB forbidden"); },
+    });
     const result = await handler(new Request("https://fixture.invalid", { method: "POST", body: "{}" }));
     expect(result.status).toBe(503);
     expect(dbCalls).toBe(0);
