@@ -17,7 +17,7 @@ export const OFFER = {
    *  promesse de base : l'offre d'entrée inclut 0 rendez-vous par défaut. */
   max_appointments: 5,
   headline: "Profil UNPRO + 12 mois de Présence IA sur UNPRO — 350 $ + taxes",
-  payment_note: "350 $ + TPS 17,50 $ + TVQ 34,91 $ = 402,41 $. Paiement unique. Aucun abonnement. Aucun rendez-vous inclus par défaut.",
+  payment_note: "350 $ CA avant taxes. Si les taxes du Québec s’appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique. Aucun abonnement. Aucun rendez-vous inclus par défaut.",
   disclaimer:
     "Aucun rendez-vous ni résultat n'est promis. Des rendez-vous ne sont offerts que via un devis séparé confirmé avant paiement.",
   cta: "Activer mon profil — 350 $ + taxes",
@@ -65,27 +65,40 @@ export function emailSubject(businessName: string): string {
   return `${nm(businessName, 60)} — activer votre profil UNPRO`;
 }
 
+export function escapeOfferHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => {
+    const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return entities[c] ?? c;
+  });
+}
+
+/** Plain text mirrors the base offer; a separate server quote remains separate. */
+export function emailText(businessName: string, link: string): string {
+  return `Bonjour ${nm(businessName, 80)},\n\n${OFFER.headline}.\n${OFFER.payment_note}\n${OFFER.disclaimer}\n\n${OFFER.cta} : ${link}\n\nClara d'UNPRO`;
+}
+
 export function emailHtml(businessName: string, link: string): string {
-  const name = nm(businessName, 80);
+  const name = escapeOfferHtml(nm(businessName, 80));
+  const safeLink = escapeOfferHtml(link);
   return `
 <!doctype html>
 <html lang="fr">
   <body style="margin:0;padding:0;background:#f5f5f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f5f0;padding:32px 16px;">
       <tr><td align="center">
-        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;padding:32px;max-width:560px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;padding:24px;max-width:560px;overflow-wrap:anywhere;">
           <tr><td>
             <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">Bonjour ${name},</h1>
             <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO jumelle les propriétaires québécois avec l'entrepreneur le plus compatible avec leur projet — jamais de demandes partagées entre plusieurs entrepreneurs.</p>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">Activation de votre profil UNPRO : 350 $ + taxes (402,41 $ avec TPS et TVQ), paiement unique. Inclut votre profil et 12 mois de Présence IA sur UNPRO.</p>
+            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">${OFFER.headline}. ${OFFER.payment_note}</p>
             <p style="font-size:14px;line-height:1.55;margin:0 0 24px 0;color:#444;">Aucun rendez-vous n'est inclus par défaut ni garanti. Des rendez-vous ne sont offerts que par une entente distincte, au prix confirmé avant tout paiement.</p>
             <p style="margin:0 0 24px 0;">
-              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Activer mon profil — 350 $ + taxes</a>
+              <a href="${safeLink}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">${OFFER.cta}</a>
             </p>
-            <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 12px 0;">Ou copiez ce lien :<br /><a href="${link}" style="color:#666;">${link}</a></p>
+            <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 12px 0;">Ou copiez ce lien :<br /><a href="${safeLink}" style="color:#666;">${safeLink}</a></p>
           </td></tr>
         </table>
-        <p style="font-size:12px;color:#777;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
+        <p style="font-size:12px;color:#777;margin:16px 0 0 0;">Clara d'UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
       </td></tr>
     </table>
   </body>
