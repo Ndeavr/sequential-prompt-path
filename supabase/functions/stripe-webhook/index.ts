@@ -72,6 +72,8 @@ Deno.serve(async (req) => {
       serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
     });
 
+    const isReplay = decision === "replay";
+
     let event: Stripe.Event;
 
     if (decision === "reject_unavailable") {
