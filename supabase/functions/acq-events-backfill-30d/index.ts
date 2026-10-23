@@ -3,6 +3,7 @@
 // Idempotent (relies on ON CONFLICT in record_*_event helpers).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { recordEmailEvent, recordSmsEvent } from "../_shared/outreachEvents.ts";
+import { ACQ_SMS_LOG_COLUMNS, backfillSmsPayload, type AcqSmsLogRow } from "../_shared/smsAttribution.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -59,26 +60,28 @@ Deno.serve(async (req) => {
     }
   }
 
-  // acq_sms_logs (or sms_events_v2)
-  const { data: smsLogs } = await sb
+  // acq_sms_logs — real columns; read errors are surfaced, never a silent empty backfill.
+  const { data: smsLogs, error: smsReadError } = await sb
     .from("acq_sms_logs")
-    .select("id, contractor_id, phone, status, twilio_sid, sent_at, body, error_code, error_message")
+    .select(ACQ_SMS_LOG_COLUMNS)
     .gte("sent_at", since)
     .limit(5000);
-  for (const r of smsLogs ?? []) {
-    const sid = (r as any).twilio_sid || (r as any).id;
-    if (!sid) continue;
-    await recordSmsEvent(sid, "sent", {
-      recipient: (r as any).phone,
-      contractor_id: (r as any).contractor_id,
-      body: (r as any).body,
-      status: (r as any).status,
-      error_code: (r as any).error_code,
-      error: (r as any).error_message,
-      ts: (r as any).sent_at,
-      backfilled: true,
+  if (smsReadError) {
+    return new Response(JSON.stringify({ ok: false, error: "acq_sms_logs_read_failed", detail: smsReadError.message, emails_backfilled: emails }), {
+      status: 500, headers: { ...cors, "Content-Type": "application/json" },
     });
-    smses++;
+  }
+  let smsSkipped = 0, smsFailed = 0;
+  for (const r of (smsLogs ?? []) as AcqSmsLogRow[]) {
+    const item = backfillSmsPayload(r);
+    if (!item) { smsSkipped++; continue; }
+    const id = await recordSmsEvent(item.sid, "sent", item.payload);
+    if (id) smses++; else smsFailed++;
+  }
+  if (smsFailed > 0) {
+    return new Response(JSON.stringify({ ok: false, error: "sms_event_write_failed", sms_failed: smsFailed, sms_backfilled: smses, sms_skipped: smsSkipped, since }), {
+      status: 500, headers: { ...cors, "Content-Type": "application/json" },
+    });
   }
 
   return new Response(JSON.stringify({ ok: true, emails_backfilled: emails, sms_backfilled: smses, since }), {

@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { recordSmsEvent } from "../_shared/outreachEvents.ts";
+import { attributionFromLog } from "../_shared/smsAttribution.ts";
 import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts";
 
 const corsHeaders = {
@@ -141,7 +142,19 @@ Deno.serve(async (req) => {
         : (mapped === "failed" || mapped === "undelivered") ? "failed"
         : "sent";
       // Aucun échec silencieux : l'événement est journalisé, sinon la panne est tracée.
+      // Attribution only from the exact SID's log row; unknown SID → none (never invented).
+      let attribution: Record<string, string> = {};
+      const { data: logRow, error: logErr } = await supabase
+        .from("acq_sms_logs")
+        .select("provider_message_id, recipient_phone, prospect_id, contractor_id, campaign_id")
+        .eq("provider_message_id", sid)
+        .limit(1)
+        .maybeSingle();
+      if (logErr) console.error("[twilio-status-v2] attribution lookup failed", logErr.message);
+      else attribution = attributionFromLog(sid, logRow);
+      if (!attribution.prospect_id && prospectId) attribution.prospect_id = prospectId;
       await recordSmsEvent(sid, kind as "sent" | "delivered" | "failed", {
+        ...attribution,
         status: mapped,
         error_code: errorCode,
         error: errorMessage,
