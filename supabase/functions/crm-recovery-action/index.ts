@@ -12,6 +12,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
 import { callCommercialSendGate, gateBlockMessage, type GateDecision } from "../_shared/commercialSendGate.ts";
 
+import { emailHtml, emailText, emailSubject } from "../_shared/offerCopy.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BASE = "https://unpro.ca";
@@ -83,25 +85,13 @@ ${body}
 </div>`;
 }
 
-function outreachHtml(name: unknown, city: unknown, category: unknown, link: string) {
-  return shell(
-    `<h2 style="margin:0 0 12px">Bonjour ${esc(name ?? "")}</h2>
-<p>Nous recevons des demandes en ${esc(category ?? "services résidentiels")} à ${esc(city ?? "votre région")} et votre entreprise correspond au profil recherché.</p>
-<p>Voyez combien de rendez-vous exclusifs UNPRO peut vous garantir : <strong>jusqu'à 5 dès 350 $</strong> (paiement unique). Le nombre exact est calculé avant le paiement.</p>`,
-    "Calculer ma garantie",
-    link,
-  );
+/** Stored tokens are used only after an exact prospect lookup, never from request payload. */
+function activationLink(token: unknown): string {
+  if (typeof token !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(token)) {
+    throw new Error("invalid_activation_token");
+  }
+  return `${BASE}/unpro/activate/${token}`;
 }
-
-function checkoutHtml(name: unknown, link: string) {
-  return shell(
-    `<h2 style="margin:0 0 12px">${esc(name ?? "Votre entreprise")} — il reste une étape</h2>
-<p>Votre calcul de garantie UNPRO n'a pas été complété. L'offre d'entrée est de <strong>350 $ CA</strong>, paiement unique, jusqu'à 5 rendez-vous exclusifs garantis.</p>`,
-    "Terminer mon activation",
-    link,
-  );
-}
-
 
 async function invokeFn(name: string, body: unknown) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
@@ -263,6 +253,12 @@ Deno.serve(async (req) => {
 
         await assertProspectAccess(pid);
 
+        // Never re-invite a prospect with already recorded delivery evidence.
+        if (["send_email", "onboarding_email", "payment_email", "send_activation_link"].includes(action) && p.outreach_status === "delivered") {
+          results.push({ prospect_id: pid, action, status: "skipped", result: "already_delivered" });
+          continue;
+        }
+
         // Porte LCAP canonique avant tout message électronique commercial.
         const commercialKind = COMMERCIAL_CHANNEL[action];
         if (commercialKind) await assertCommercialSendAllowed(pid, commercialKind, p);
@@ -303,20 +299,24 @@ Deno.serve(async (req) => {
 
         let link = "";
         if (needsLink.includes(action)) {
-          const { data: tok } = await sb
+          const { data: tok, error: tokenReadError } = await sb
             .from("verified_prospect_tokens")
-            .select("token")
+            .select("token, expires_at, revoked_at")
             .eq("prospect_id", pid)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
+          if (tokenReadError) throw new Error("token_lookup_failed");
+          if (tok?.revoked_at || (tok?.expires_at && (!Number.isFinite(Date.parse(tok.expires_at)) || Date.parse(tok.expires_at) <= Date.now()))) {
+            throw new Error("inactive_activation_token");
+          }
           let token = tok?.token as string | undefined;
           if (!token || action === "new_checkout") {
             token = randToken();
             const { error } = await sb.from("verified_prospect_tokens").insert({ token, prospect_id: pid });
             if (error) throw new Error(`token_create_failed: ${error.message}`);
           }
-          link = `${BASE}/unpro/activate/${token}`;
+          link = activationLink(token);
         }
 
         switch (action) {
@@ -350,11 +350,14 @@ Deno.serve(async (req) => {
             // dead-letter silently, so it is never used for recruitment email.
             result = await invokeFn("outreach-resend-send", {
               to: p.email,
-              subject: `${p.business_name ?? "Votre entreprise"} — votre activation UNPRO est prête`,
+              subject: emailSubject(p.business_name ?? "Votre entreprise"),
               message_id: `crm-${idem}`,
               template_name: "prospect-outreach",
               cta_url: link,
-              html: outreachHtml(p.business_name, p.city, p.category, link),
+              html: emailHtml(p.business_name ?? "Votre entreprise", link),
+              text: emailText(p.business_name ?? "Votre entreprise", link),
+              purpose: "commercial_outreach",
+              campaign: "crm_activation_350",
               tags: { campaign: "crm_recovery", action },
             });
             break;
@@ -364,11 +367,14 @@ Deno.serve(async (req) => {
             if (!p.email) throw new Error("no_email");
             result = await invokeFn("outreach-resend-send", {
               to: p.email,
-              subject: "Il reste une étape : calculez votre garantie",
+              subject: emailSubject(p.business_name ?? "Votre entreprise"),
               message_id: `crm-${idem}`,
               template_name: "incomplete-checkout-followup",
               cta_url: link,
-              html: checkoutHtml(p.business_name, link),
+              html: emailHtml(p.business_name ?? "Votre entreprise", link),
+              text: emailText(p.business_name ?? "Votre entreprise", link),
+              purpose: "commercial_outreach",
+              campaign: "crm_activation_350",
               tags: { campaign: "crm_recovery", action },
             });
             break;
@@ -585,11 +591,14 @@ Deno.serve(async (req) => {
               if (!p.email) throw new Error("no_email");
               result = await invokeFn("outreach-resend-send", {
                 to: p.email,
-                subject: "Votre garantie UNPRO — dès 350 $",
+                subject: emailSubject(p.business_name ?? "Votre entreprise"),
                 message_id: `crm-${idem}`,
                 template_name: "incomplete-checkout-followup",
                 cta_url: link,
-                html: checkoutHtml(p.business_name, link),
+                html: emailHtml(p.business_name ?? "Votre entreprise", link),
+              text: emailText(p.business_name ?? "Votre entreprise", link),
+              purpose: "commercial_outreach",
+              campaign: "crm_activation_350",
                 tags: { campaign: "crm_manual_queue", action },
               });
             } else {
