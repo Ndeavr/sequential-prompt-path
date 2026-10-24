@@ -1,12 +1,16 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from "vitest";
-import { observeFirstParty, recheckCasl, publicAddress, safeUrl, POLICY } from "../../supabase/functions/enrich-official-website/caslFirstParty";
+import { observeFirstParty, recheckCasl, publicAddress, safeUrl, POLICY, PINNED_TRANSPORT } from "../../supabase/functions/enrich-official-website/caslFirstParty";
 const id = "11111111-1111-4111-8111-111111111111";
 const evidence = { id, destination_type: "email", destination_normalized: "info@synthetic-roof.ca", source_type: "company_website", source_url: "https://synthetic-roof.ca/", business_relevance_explanation: "Présence IA UNPRO 350 $ plus taxes, pertinente aux services de toiture de cette entreprise.", contractor_lead_id: id, reviewer_id: "human-signature" };
 const company = { business_name: "Synthetic Roof", category_primary: "toiture", website_url: "https://synthetic-roof.ca" };
 const html = '<h1>Synthetic Roof</h1><p>Service de toiture info@synthetic-roof.ca</p><a href="/contact">Contact</a><a href="/privacy">Confidentialité</a>';
 function io(overrides: Record<string, any> = {}) {
-  return { resolve: vi.fn(async () => ["93.184.216.34"]), fetch: vi.fn(async (url: any) => new Response(String(url).endsWith("robots.txt") ? "User-agent: *\nDisallow:" : html, { headers: { "content-type": String(url).endsWith("robots.txt") ? "text/plain" : "text/html" } })), ...overrides };
+  const o: Record<string, any> = { resolve: vi.fn(async () => ["93.184.216.34"]), fetch: vi.fn(async (url: any) => new Response(String(url).endsWith("robots.txt") ? "User-agent: *\nDisallow:" : html, { headers: { "content-type": String(url).endsWith("robots.txt") ? "text/plain" : "text/html" } })), ...overrides };
+  // Synthetic fetches stand in for the pinned transport; the unpinned-transport
+  // test below deliberately removes this marker.
+  o.fetch[PINNED_TRANSPORT] = true;
+  return o;
 }
 describe("first-party mechanical observations, never consent", () => {
   it("observes exact visible first party email and hashes every page", async () => { const r = await observeFirstParty(evidence, company, io()); expect(r.status).toBe("machine_verified"); expect(r.pages).toHaveLength(3); expect(r.pages[0].page_sha256).toMatch(/^[a-f0-9]{64}$/); expect(r.legal_consent_established).toBe(false); expect(r.policy.auto_eligibility_enabled).toBe(false); });
