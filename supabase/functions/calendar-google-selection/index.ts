@@ -115,7 +115,8 @@ Deno.serve(async (req) => {
       if (saveError) return json({ error: "calendar_selection_save_failed" }, 503);
       // Old cached busy windows must not masquerade as those of the newly selected calendar.
       const { error: clearError } = await admin.from("calendar_busy_periods")
-        .delete().eq("calendar_connection_id", connection.id);
+        .delete().eq("calendar_connection_id", connection.id)
+        .gte("ends_at", new Date().toISOString());
       if (clearError) return json({ error: "calendar_cache_clear_failed", selection_saved: true }, 503);
     }
     return json({ connected: true, selected_id: selectedId, selection_status: unchanged ? "connected" : "pending_sync" });
