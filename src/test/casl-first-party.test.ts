@@ -26,6 +26,31 @@ describe("first-party mechanical observations, never consent", () => {
   it("missing policy stays pending", async () => { const d = io({ fetch: async (u: any) => new Response(String(u).endsWith("robots.txt") ? "" : html.replace('<a href="/privacy">Confidentialité</a>', ""), { headers: { "content-type": String(u).endsWith("robots.txt") ? "text/plain" : "text/html" } }) }); expect((await observeFirstParty(evidence, company, d)).reason).toBe("contact_or_policy_missing"); });
   it("professional relevance is mandatory", async () => { expect((await observeFirstParty(evidence, { ...company, category_primary: "" }, io())).reason).toBe("professional_relevance_missing"); });
   it("volume limit stays pending", async () => { expect((await observeFirstParty(evidence, company, io({ fetch: async () => new Response("a".repeat(POLICY.maxBytes + 1), { headers: { "content-type": "text/plain" } }) }))).reason).toBe("volume_limit"); });
+  it("refuses an unpinned transport even when DNS looks public (rebinding guard)", async () => {
+    const d = io();
+    delete d.fetch[PINNED_TRANSPORT];
+    const r = await observeFirstParty(evidence, company, d);
+    expect(r.reason).toBe("unpinned_transport");
+    expect(r.status).toBe("pending");
+    expect(d.fetch).not.toHaveBeenCalled();
+  });
+  it("fails closed when DNS answers change between checks", async () => {
+    let call = 0;
+    const d = io({ resolve: vi.fn(async () => (++call > 1 ? ["93.184.216.35"] : ["93.184.216.34"])) });
+    const r = await observeFirstParty(evidence, company, d);
+    expect(r.reason).toBe("dns_changed");
+    expect(r.status).toBe("pending");
+  });
+  it("pinned transport rejects private DNS before opening any socket", async () => {
+    const { pinnedPublicFetch } = await import("../../supabase/functions/enrich-official-website/pinnedPublicFetch");
+    vi.stubGlobal("Deno", { resolveDns: async () => ["10.0.0.1"] });
+    await expect(pinnedPublicFetch("https://synthetic-roof.ca/")).rejects.toThrow("unsafe_dns");
+    vi.unstubAllGlobals();
+  });
+  it("pinned transport carries the fail-closed marker", async () => {
+    const { pinnedPublicFetch } = await import("../../supabase/functions/enrich-official-website/pinnedPublicFetch");
+    expect((pinnedPublicFetch as any)[PINNED_TRANSPORT]).toBe(true);
+  });
 });
 describe("existing persistence and signed evidence", () => {
   function database() {
