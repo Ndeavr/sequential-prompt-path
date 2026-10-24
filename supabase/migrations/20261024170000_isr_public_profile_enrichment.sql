@@ -2,7 +2,8 @@
 -- Source: https://isroyal.ca/info ; https://isroyal.ca/about/isolation-solution-royal
 -- Historical Google review counts differ across sources; deliberately no rating/review_count edits.
 -- RBQ 5834-9101-01 is DECLARED on official website, NOT VERIFIED in current RBQ registry.
--- Owner's Oct 2026 instruction overrides the site copy that still promotes Montreal as covered.
+-- Owner's Oct 2026 clarification: West Island, Montreal-Est and Pointe-aux-Trembles accepted;
+-- the remaining Montreal territory is not accepted by default. Never block all Montreal.
 -- No pricing, payment, activation, verification badges, or appointment settings changed.
 
 BEGIN;
@@ -28,25 +29,57 @@ UPDATE public.contractors SET
   specialty = 'Isolation et ventilation d''entretoit',
   description = 'Isolation Solution Royal, exploitée par 9480-0976 Québec inc., est spécialisée en isolation d''entretoit résidentiel, ventilation, étanchéité à l''air, décontamination de moisissures et vermiculite. Fibre de verre soufflée R-51 à R-60. Inspection sur place, estimation sans pression et garantie annoncée de 25 ans selon les conditions applicables.',
   services_structured = ARRAY['Isolation d''entretoit R-51 à R-60', 'Mise à niveau d''isolation d''entretoit', 'Étanchéité à l''air d''entretoit', 'Calfeutrage et trappe d''accès', 'Ventilation d''entretoit', 'Déblocage de soffites', 'Décontamination de moisissures', 'Vermiculite : inspection et décontamination', 'Inspection et diagnostic d''entretoit', 'Correction de condensation dans l''entretoit', 'Prévention des barrages de glace'],
-  service_areas = ARRAY['Laval', 'Saint-Eustache', 'Repentigny', 'Joliette', 'Rosemère', 'Boisbriand', 'Blainville', 'Mirabel', 'Saint-Jérôme', 'Sainte-Thérèse', 'Terrebonne', 'Mascouche'],
+  service_areas = ARRAY['Laval', 'Saint-Eustache', 'Repentigny', 'Joliette', 'Rosemère', 'Boisbriand', 'Blainville', 'Mirabel', 'Saint-Jérôme', 'Sainte-Thérèse', 'Terrebonne', 'Mascouche', 'Baie-D''Urfé', 'Beaconsfield', 'Dollard-des-Ormeaux', 'Dorval', 'Kirkland', 'Pointe-Claire', 'Sainte-Anne-de-Bellevue', 'Senneville', 'Pierrefonds', 'Roxboro', 'Pierrefonds-Roxboro', 'L''Île-Bizard', 'Sainte-Geneviève', 'L''Île-Bizard–Sainte-Geneviève', 'Montréal-Est', 'Pointe-aux-Trembles'],
   updated_at = now()
 WHERE id = '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid AND slug = 'isolation-solution-royal';
 
--- Remove Montreal from active territories; Montreal-Est is not automatically included.
+-- Montreal generic is NOT a supported area. Exact approved localities remain serviceable.
+-- Montreal-Est is an independent municipality; Pointe-aux-Trembles is part of
+-- Montreal. West Island municipalities/boroughs need locality-level evidence.
+-- If the lead only says "Montreal", do NOT infer an allowed borough.
 DELETE FROM public.contractor_service_areas
 WHERE contractor_id = '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid
-  AND (lower(city_name) = 'montréal' OR lower(city_name) = 'montreal');
+  AND city_slug = 'montreal';
 
--- Data-layer safeguard: the matching engine requires confirmed_by_contractor=true
--- for hard exclusions. Founder directive reports ISR installer refusal for Montreal.
-INSERT INTO public.contractor_matching_rules
-  (contractor_id,rule_type,rule_key,payload,is_active,confirmed_by_contractor,source)
-SELECT '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid, 'hard_exclusion','territory:montreal',
-  '{"city_slug":"montreal","tier":"blocked","reason":"ISR installers decline Montreal jobs; Montreal-Est exception requires explicit city match"}'::jsonb,
-  true,true,'founder_instruction'
+-- Prevent old blanket-Montreal hard exclusions from hiding legitimate West Island,
+-- Montreal-Est, and Pointe-aux-Trembles opportunities.
+UPDATE public.contractor_matching_rules
+SET is_active = false, updated_at = now()
+WHERE contractor_id = '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid
+  AND rule_key = 'territory:montreal'
+  AND rule_type = 'hard_exclusion';
+
+-- Add the explicit permitted subregions; do not mark them RBQ-verified.
+-- The standard match gate requires an exact locality. For a postal address that
+-- resolves only to Montreal, Clara must ask for the district before matching.
+WITH authorized(city_name,city_slug) AS (
+  VALUES
+  ('Baie-D''Urfé','baie-d-urfe'),
+  ('Beaconsfield','beaconsfield'),
+  ('Dollard-des-Ormeaux','dollard-des-ormeaux'),
+  ('Dorval','dorval'),
+  ('Kirkland','kirkland'),
+  ('Pointe-Claire','pointe-claire'),
+  ('Sainte-Anne-de-Bellevue','sainte-anne-de-bellevue'),
+  ('Senneville','senneville'),
+  ('Pierrefonds','pierrefonds'),
+  ('Roxboro','roxboro'),
+  ('Pierrefonds-Roxboro','pierrefonds-roxboro'),
+  ('L''Île-Bizard','l-ile-bizard'),
+  ('Sainte-Geneviève','sainte-genevieve'),
+  ('L''Île-Bizard–Sainte-Geneviève','l-ile-bizard-sainte-genevieve'),
+  ('Montréal-Est','montreal-est'),
+  ('Pointe-aux-Trembles','pointe-aux-trembles')
+)
+INSERT INTO public.contractor_service_areas
+  (contractor_id,city_name,city_slug,province,data_source,validation_status)
+SELECT '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid, a.city_name, a.city_slug, 'QC',
+       'founder_instruction', 'pending'
+FROM authorized a
 WHERE NOT EXISTS (
-  SELECT 1 FROM public.contractor_matching_rules
-  WHERE contractor_id = '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid AND rule_key = 'territory:montreal' AND is_active = true
+  SELECT 1 FROM public.contractor_service_areas s
+  WHERE s.contractor_id = '0abadcb7-3524-4db0-92ff-a73db8a443be'::uuid
+    AND (s.city_slug = a.city_slug OR lower(s.city_name) = lower(a.city_name))
 );
 
 WITH proposed(service_name_fr,description_fr,is_primary,display_order) AS (
@@ -84,8 +117,8 @@ VALUES
   ('0abadcb7-3524-4db0-92ff-a73db8a443be','services_public','["Isolation d''entretoit R-51 à R-60","Mise à niveau d''isolation d''entretoit","Étanchéité à l''air d''entretoit","Calfeutrage et trappe d''accès","Ventilation d''entretoit","Déblocage de soffites","Décontamination de moisissures","Vermiculite : inspection et décontamination","Inspection et diagnostic d''entretoit","Correction de condensation dans l''entretoit","Prévention des barrages de glace"]'::jsonb,'public_source','https://isroyal.ca/about/isolation-solution-royal'),
   ('0abadcb7-3524-4db0-92ff-a73db8a443be','services_non_offerts','["Isolation des murs, planchers ou sous-sols","Toits plats ou cathédrales","Uréthane giclé","Cellulose soufflée","Commercial/industriel"]'::jsonb,'public_source','https://isroyal.ca/about/isolation-solution-royal'),
   ('0abadcb7-3524-4db0-92ff-a73db8a443be','services_a_confirmer','[]'::jsonb,'public_source','https://isroyal.ca/about/isolation-solution-royal'),
-  ('0abadcb7-3524-4db0-92ff-a73db8a443be','territories_public','["Laval","Saint-Eustache","Repentigny","Joliette","Rosemère","Boisbriand","Blainville","Mirabel","Saint-Jérôme","Sainte-Thérèse","Terrebonne","Mascouche"]'::jsonb,'public_source',NULL),
-  ('0abadcb7-3524-4db0-92ff-a73db8a443be','territories_excluded_for_matching','["Montréal, sauf exception explicite Montréal-Est (à paramétrer précisément)","Rive-Sud"]'::jsonb,'public_source',NULL),
+  ('0abadcb7-3524-4db0-92ff-a73db8a443be','territories_public','["Laval","Saint-Eustache","Repentigny","Joliette","Rosemère","Boisbriand","Blainville","Mirabel","Saint-Jérôme","Sainte-Thérèse","Terrebonne","Mascouche","Baie-D''Urfé","Beaconsfield","Dollard-des-Ormeaux","Dorval","Kirkland","Pointe-Claire","Sainte-Anne-de-Bellevue","Senneville","Pierrefonds","Roxboro","Pierrefonds-Roxboro","L''Île-Bizard","Sainte-Geneviève","L''Île-Bizard–Sainte-Geneviève","Montréal-Est","Pointe-aux-Trembles"]'::jsonb,'confirmed_by_company',NULL),
+  ('0abadcb7-3524-4db0-92ff-a73db8a443be','territories_excluded_for_matching','["Montréal sans secteur précis : validation de quartier obligatoire","Centre-ville / Ville-Marie : exclu","Autres secteurs de Montréal hors West Island, Montréal-Est et Pointe-aux-Trembles : exclus","Rive-Sud : exclue"]'::jsonb,'confirmed_by_company',NULL),
   ('0abadcb7-3524-4db0-92ff-a73db8a443be','reviews_sync_status','"Source Google reliée par URL; aucune note ni nombre d''avis importés sans vérification indépendante"'::jsonb,'public_source',NULL)
 ON CONFLICT (contractor_id,field_key) DO UPDATE SET
   field_value = EXCLUDED.field_value,
