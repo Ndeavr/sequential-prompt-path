@@ -33,18 +33,24 @@ export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
     <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <DollarSign className="w-5 h-5 text-emerald-400" />
-        <h2 className="text-base font-semibold text-readable">First Revenue Tracker</h2>
+        <h2 className="text-base font-semibold text-readable">First Revenue Tracker — historique interne</h2>
       </div>
+
+      <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100/90">
+        Les chiffres d'activation et de plans proviennent de statuts internes historiques. Ils ne prouvent pas
+        un paiement unique de 350 $ CA hors taxes. Une vente exige un paiement Stripe LIVE réglé,
+        une preuve webhook serveur, une attribution entrepreneur et l'absence de remboursement.
+      </p>
 
       {alert && (
         <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/50 bg-red-500/15 p-3">
           <AlertOctagon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
           <div>
             <div className="text-sm font-bold text-red-300 uppercase tracking-wide">
-              AUCUNE ACTIVATION DEPUIS 48 HEURES
+              AUCUN NOUVEAU SIGNAL D'ACTIVATION INTERNE DEPUIS 48 H
             </div>
             <div className="text-xs text-red-200/80 mt-0.5">
-              Le funnel ne convertit pas. Vérifier livraison SMS, priorisation, et taux de clic ci-dessous.
+              Aucune vente LIVE à 350 $ ne peut être déduite de ce signal. Vérifier les preuves Stripe et webhook sur le serveur.
             </div>
           </div>
         </div>
@@ -54,14 +60,14 @@ export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
         <div className="text-sm text-readable-muted">Chargement…</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="Activations aujourd'hui" value={snapshot.activations_today} tone="revenue" />
+          <Stat label="Activations déclarées aujourd'hui (non vérifiées)" value={snapshot.activations_today} tone="muted" />
           <Stat label="Revenu encaissé aujourd'hui" value={REVENUE_UNAVAILABLE} tone="muted" />
           <Stat label="Revenu récurrent (30j)" value={REVENUE_UNAVAILABLE} tone="muted" />
-          <Stat label="Plans payants actifs" value={snapshot.paid_plans_active} />
+          <Stat label="Plans indiqués payants (non vérifiés)" value={snapshot.paid_plans_active} tone="muted" />
           <Stat label="Contactés (7j)" value={snapshot.contacted_7d} tone="muted" />
           <Stat label="Inscriptions (7j)" value={snapshot.registrations_7d} tone="muted" />
           <Stat label="Profils complétés (7j)" value={snapshot.profiles_completed_7d} tone="muted" />
-          <Stat label="Activations 350 $ (7j)" value={snapshot.activations_7d} tone="muted" />
+          <Stat label="Activations déclarées (7j, non vérifiées)" value={snapshot.activations_7d} tone="muted" />
         </div>
       )}
     </div>
