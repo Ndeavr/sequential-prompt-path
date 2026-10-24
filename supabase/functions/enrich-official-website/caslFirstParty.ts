@@ -7,6 +7,13 @@ type Target = { id: string; destination_type: string; destination_normalized: st
 type Company = { business_name: string; website_url?: string; official_domain?: string; category_primary?: string; specialty?: string; category?: string; trade?: string; trade_category?: string; category_slug?: string };
 type IO = { fetch: typeof fetch; resolve: (host: string) => Promise<string[]>; now?: () => number };
 
+/**
+ * A before/after DNS resolve does NOT control which IP fetch() actually
+ * dials (DNS rebinding / TOCTOU). Only a transport that pins the socket to
+ * the validated address is accepted; anything else fails closed.
+ */
+export const PINNED_TRANSPORT = Symbol.for("unpro.pinned-public-transport");
+
 export function publicAddress(ip: string): boolean {
   // Fail closed on IPv6 (including mapped IPv4) until a pinned IPv6 transport is available.
   if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return false;
@@ -27,6 +34,7 @@ function text(html: string) {
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const refusal = (s: string) => /(?:no|not|unsolicited|do not).{0,60}(?:solicitation|marketing|commercial|spam)|(?:pas|aucun|refus|interdit|ne.{0,12}pas).{0,70}(?:sollicit|publicit|commercial|prospect)|(?:sollicit|publicit).{0,50}(?:interdit|refus)/i.test(norm(s));
 async function read(raw: string, io: IO, host: string, plain = false): Promise<string> {
+  if ((io.fetch as unknown as Record<symbol, unknown>)[PINNED_TRANSPORT] !== true) throw new Error("unpinned_transport");
   const u = safeUrl(raw, host);
   const before = (await io.resolve(u.hostname)).sort();
   if (!before.length || before.some(ip => !publicAddress(ip))) throw new Error("unsafe_dns");

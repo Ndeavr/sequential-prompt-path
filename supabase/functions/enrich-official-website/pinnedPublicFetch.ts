@@ -1,5 +1,7 @@
 import { request } from "node:https";
-import { publicAddress, safeUrl, POLICY } from "./caslFirstParty.ts";
+import { publicAddress, safeUrl, POLICY, PINNED_TRANSPORT } from "./caslFirstParty.ts";
+
+declare const Deno: any;
 
 /** TLS retains the official hostname; socket connects only to the validated public IPv4.
  * No redirects, cookies, auth, paid proxy or environment-selected proxy.
@@ -37,3 +39,7 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
     req.end();
   });
 }
+
+// Declares that this transport pins the socket to the validated public IP.
+// caslFirstParty.read() refuses any fetch without this marker (fail closed).
+(pinnedPublicFetch as unknown as Record<symbol, unknown>)[PINNED_TRANSPORT] = true;
