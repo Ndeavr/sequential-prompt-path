@@ -41,6 +41,8 @@ type ContractorRecord = {
   legal_name?: string | null;
   website?: string | null;
   phone?: string | null;
+  google_business_url?: string | null;
+  rbq_compliance_status?: string | null;
   rating?: number | null;
   review_count?: number | null;
 };
@@ -70,6 +72,17 @@ type Props = {
 function publicWebsite(value?: string | null) {
   if (!value) return null;
   try { const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`); return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
+}
+
+/** Link provenance is separate from Google review synchronization. */
+function publicGoogleListing(value?: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return null;
+    if (!["www.google.com", "google.com", "maps.google.com", "maps.app.goo.gl"].includes(url.hostname.toLowerCase())) return null;
+    return url.href;
+  } catch { return null; }
 }
 
 const tabs = [
@@ -111,8 +124,13 @@ export default function ContractorPublicExperience({ profileData, compact = fals
     .join("")
     .toUpperCase();
   const googleSource = reviewSources.find((source) => source.source_name.toLowerCase().includes("google"));
+  // The public RPC exposes google_business_url, while review_sources is owner-only by RLS.
+  const googleListingUrl = publicGoogleListing(contractor.google_business_url)
+    ?? publicGoogleListing(googleSource?.profile_url);
   const unproRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null;
-  const hasGoogleAggregate = !!googleSource && contractor.rating != null && (contractor.review_count ?? 0) > 0;
+  const hasGoogleAggregate = googleSource?.sync_status === "synced"
+    && contractor.rating != null && contractor.rating > 0
+    && (contractor.review_count ?? 0) > 0;
 
   const selectTab = (id: (typeof tabs)[number]["id"]) => {
     setActiveTab(id);
@@ -184,8 +202,8 @@ export default function ContractorPublicExperience({ profileData, compact = fals
         </div>
       </nav>
 
-      <div className="space-y-4 px-4 py-5 sm:px-6">
-        {(contractor.description || contractor.legal_name || website || phone) && <section className="rounded-xl border border-border bg-card p-4" aria-label="À propos"><h2 className="font-semibold">À propos de {contractor.business_name}</h2>{contractor.description && <p className="mt-2 whitespace-pre-line break-words text-sm text-text-secondary">{contractor.description}</p>}{contractor.legal_name && <p className="mt-2 text-xs text-muted-foreground">Nom légal : {contractor.legal_name}</p>}<div className="mt-3 flex flex-wrap gap-3 text-sm">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary underline">Site web de l’entreprise<ExternalLink className="h-3 w-3" /></a>}{phone && <a href={`tel:${phone}`} className="text-primary underline">{contractor.phone}</a>}</div></section>}
+      <div className="space-y-4 px-4 pt-5 pb-36 sm:px-6 sm:pb-10">
+        {(contractor.description || contractor.legal_name || website || phone) && <section className="rounded-xl border border-border bg-card p-4" aria-label="À propos"><h2 className="font-semibold">À propos de {contractor.business_name}</h2>{contractor.description && <p className="mt-2 whitespace-pre-line break-words text-sm text-text-secondary">{contractor.description}</p>}{contractor.legal_name && <p className="mt-2 text-xs text-muted-foreground">Nom légal : {contractor.legal_name}</p>}{contractor.rbq_number && <p className="mt-2 text-xs text-muted-foreground">RBQ déclaré : {contractor.rbq_number} · {contractor.rbq_compliance_status === "verified" ? "Vérification UNPRO enregistrée" : "Statut non encore vérifié par UNPRO"}</p>}<div className="mt-3 flex flex-wrap gap-3 text-sm">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary underline">Site web de l’entreprise<ExternalLink className="h-3 w-3" /></a>}{phone && <a href={`tel:${phone}`} className="text-primary underline">{contractor.phone}</a>}</div></section>}
         <section aria-labelledby="compatibility-title">
           <Button
             type="button"
@@ -252,8 +270,8 @@ export default function ContractorPublicExperience({ profileData, compact = fals
               title="Avis Google"
               rating={hasGoogleAggregate ? contractor.rating : null}
               count={hasGoogleAggregate ? contractor.review_count : 0}
-              provenance={googleSource ? "Source : fiche Google liée" : "Source Google non liée"}
-              href={googleSource?.profile_url}
+              provenance={googleListingUrl ? "Fiche Google liée · avis non synchronisés si note absente" : "Source Google non liée"}
+              href={googleListingUrl}
             />
           </div>
           {reviews.length > 0 && (
@@ -284,7 +302,8 @@ function ReviewSource({ title, rating, count, provenance, href }: { title: strin
         <strong className="text-sm text-text-strong">{title}</strong>
         {href && <a href={href} target="_blank" rel="noreferrer" aria-label={`Ouvrir ${title}`} className="text-primary"><ExternalLink className="h-4 w-4" /></a>}
       </div>
-      {rating != null && count > 0 ? <p className="mt-2 text-lg font-bold text-text-strong">{rating.toFixed(1)} <span className="text-xs font-normal text-text-muted-2">· {count} avis</span></p> : <p className="mt-2 text-sm text-text-muted-2">Aucun avis public disponible.</p>}
+      {rating != null && count > 0 ? <p className="mt-2 text-lg font-bold text-text-strong">{rating.toFixed(1)} <span className="text-xs font-normal text-text-muted-2">· {count} avis</span></p> : <p className="mt-2 text-sm text-text-muted-2">{href ? "Consultez les avis authentiques sur Google." : "Aucun avis public disponible."}</p>}
+      {href && <a href={href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline">Voir les avis Google <ExternalLink className="h-3 w-3" /></a>
       <p className="mt-1 text-[11px] text-text-muted-2">{provenance}</p>
     </div>
   );
