@@ -293,7 +293,7 @@ function ReviewSource({ title, rating, count, provenance, href }: { title: strin
         {href && <a href={href} target="_blank" rel="noreferrer" aria-label={`Ouvrir ${title}`} className="text-primary"><ExternalLink className="h-4 w-4" /></a>}
       </div>
       {rating != null && count > 0 ? <p className="mt-2 text-lg font-bold text-text-strong">{rating.toFixed(1)} <span className="text-xs font-normal text-text-muted-2">· {count} avis</span></p> : <p className="mt-2 text-sm text-text-muted-2">{href ? "Consultez les avis authentiques sur Google." : "Aucun avis public disponible."}</p>}
-      {href && <a href={href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline">Voir les avis Google <ExternalLink className="h-3 w-3" /></a>
+      {href && <a href={href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline">Voir les avis Google <ExternalLink className="h-3 w-3" /></a>}
       <p className="mt-1 text-[11px] text-text-muted-2">{provenance}</p>
     </div>
   );
