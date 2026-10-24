@@ -110,7 +110,16 @@ Deno.serve(async (req) => {
           .eq("connection_status", "connected")
           .maybeSingle();
 
-        if (connection) {
+        // Provider event writes are allowed only after the owner explicitly
+        // selected a writable Google calendar and its busy sync succeeded.
+        const { data: selectedIntegration, error: selectedError } = await admin
+          .from("booking_calendar_integrations")
+          .select("selected_calendar_id")
+          .eq("contractor_id", contractorId).eq("provider", "google")
+          .eq("status", "connected").eq("sync_write_events", true)
+          .maybeSingle();
+        if (selectedError) throw new Error("calendar_selection_lookup_failed");
+        if (connection && selectedIntegration?.selected_calendar_id) {
           const secret = Deno.env.get("CALENDAR_TOKEN_ENCRYPTION_KEY") ||
             Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") || "";
           const accessToken = await getGoogleAccessToken(admin, connection, secret);
@@ -120,7 +129,7 @@ Deno.serve(async (req) => {
             location: [clean(body.address_line1), clean(body.city, 120)].filter(Boolean).join(", ") || undefined,
             start,
             end,
-          });
+          }, selectedIntegration.selected_calendar_id);
           if (eventId) {
             await admin.from("smart_bookings")
               .update({ google_calendar_event_id: eventId })
