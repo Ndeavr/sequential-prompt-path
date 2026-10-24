@@ -68,6 +68,24 @@ Deno.serve(async (req) => {
     }
     if (!connections?.length) return json({ synced: false, reason: "no_connection", results: [] });
 
+    // Calendar choice is explicit. Never silently read the personal "primary" calendar.
+    const { data: owned, error: ownedError } = await admin.from("contractors")
+      .select("id").eq("user_id", user.id);
+    if (ownedError) return json({ error: "contractor_lookup_failed" }, 503);
+    const ownedIds = (owned ?? []).map((c) => c.id);
+    const { data: selections, error: selectionError } = ownedIds.length
+      ? await admin.from("booking_calendar_integrations")
+        .select("contractor_id, selected_calendar_id")
+        .in("contractor_id", ownedIds)
+        .eq("provider", "google").eq("sync_read_busy", true)
+        .in("status", ["pending_sync", "connected"])
+      : { data: [], error: null };
+    if (selectionError) return json({ error: "calendar_selection_lookup_failed" }, 503);
+    const selectedIds = [...new Set((selections ?? []).map((x) => x.selected_calendar_id).filter(Boolean))];
+    // Existing cache is keyed by user/connection, not contractor; multiple different
+    // choices on one Google account cannot safely coexist until cache is scoped.
+    const selectedCalendarId = selectedIds.length === 1 ? selectedIds[0] : null;
+
     const results: Array<{ provider: string; status: string; imported: number; reason?: string }> = [];
 
     for (const connection of connections) {
@@ -75,8 +93,12 @@ Deno.serve(async (req) => {
       let windows: BusyWindow[] = [];
       try {
         if (connection.provider === "google") {
+          if (!selectedCalendarId) {
+            results.push({ provider: "google", status: "skipped", imported: 0, reason: "calendar_choice_required_or_ambiguous" });
+            continue;
+          }
           const accessToken = await getGoogleAccessToken(admin, connection, secret);
-          windows = await fetchGoogleBusy(accessToken, from.toISOString(), to.toISOString());
+          windows = await fetchGoogleBusy(accessToken, from.toISOString(), to.toISOString(), selectedCalendarId);
         } else if (connection.external_ics_url) {
           const res = await fetch(connection.external_ics_url, { redirect: "follow" });
           if (!res.ok) throw new Error(`ics_fetch_failed:${res.status}`);
@@ -145,6 +167,13 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (connection.provider === "google" && selectedCalendarId && ownedIds.length) {
+        const { error: readyError } = await admin.from("booking_calendar_integrations")
+          .update({ status: "connected" }).in("contractor_id", ownedIds)
+          .eq("provider", "google").eq("selected_calendar_id", selectedCalendarId)
+          .in("status", ["pending_sync", "connected"]);
+        if (readyError) return json({ error: "calendar_readiness_save_failed" }, 503);
+      }
       await admin.from("calendar_connections").update({
         last_synced_at: new Date().toISOString(),
         last_error_message: null,
