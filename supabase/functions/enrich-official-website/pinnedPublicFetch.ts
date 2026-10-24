@@ -1,5 +1,5 @@
 import { request } from "node:https";
-import { publicAddress, safeUrl, POLICY } from "./caslFirstParty.ts";
+import { publicAddress, safeUrl, POLICY, PINNED_TRANSPORT } from "./caslFirstParty.ts";
 
 /** TLS retains the official hostname; socket connects only to the validated public IPv4.
  * No redirects, cookies, auth, paid proxy or environment-selected proxy.
