@@ -84,8 +84,11 @@ Deno.serve(async (req) => {
     const selectedIds = [...new Set((selections ?? []).map((x) => x.selected_calendar_id).filter(Boolean))];
     // Existing cache is keyed by user/connection, not contractor; multiple different
     // choices on one Google account cannot safely coexist until cache is scoped.
-    const selectedCalendarId = selectedIds.length === 1 && (selections ?? []).length === ownedIds.length
-      ? selectedIds[0] : null;
+    // Homeowner-only accounts retain their existing private calendar behavior.
+    // Contractor accounts require an explicit, unambiguous selected calendar.
+    const selectedCalendarId = ownedIds.length === 0 ? "primary"
+      : selectedIds.length === 1 && (selections ?? []).length === ownedIds.length
+        ? selectedIds[0] : null;
 
     const results: Array<{ provider: string; status: string; imported: number; reason?: string }> = [];
 
