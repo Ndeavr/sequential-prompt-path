@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useContractorPublicPage";
 import { usePublicContractorReviews } from "@/hooks/usePublicContractors";
 import type { Json } from "@/integrations/supabase/types";
+import { publicGoogleListing } from "@/lib/publicGoogleListing";
 
 type ContractorRecord = {
   id?: string;
@@ -72,17 +73,6 @@ type Props = {
 function publicWebsite(value?: string | null) {
   if (!value) return null;
   try { const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`); return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
-}
-
-/** Link provenance is separate from Google review synchronization. */
-function publicGoogleListing(value?: string | null) {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "https:") return null;
-    if (!["www.google.com", "google.com", "maps.google.com", "maps.app.goo.gl"].includes(url.hostname.toLowerCase())) return null;
-    return url.href;
-  } catch { return null; }
 }
 
 const tabs = [
