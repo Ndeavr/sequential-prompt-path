@@ -37,3 +37,7 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
     req.end();
   });
 }
+
+// Declares that this transport pins the socket to the validated public IP.
+// caslFirstParty.read() refuses any fetch without this marker (fail closed).
+(pinnedPublicFetch as unknown as Record<symbol, unknown>)[PINNED_TRANSPORT] = true;
