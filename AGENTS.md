@@ -66,6 +66,7 @@ Current instructions and verified live state override these documents. Sensitive
 
 ## Remote data and backend rules
 - CASL machine rechecks reuse enrich-official-website and append observations in official_site_crawl_runs.summary; they never mutate consent/signatures/eligibility, and any machine policy is disabled by default. Why: publication observations are not legal consent.
+- CASL first-party reads only run through pinnedPublicFetch (socket pinned to the validated public IP via custom lookup); caslFirstParty.read() fails closed with unpinned_transport for any other fetch, because a before/after DNS resolve does not control the dialed IP (rebinding/TOCTOU). Why: a blocked feature is preferable to SSRF.
 
 See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments, contractor publication, funnel and 350 $ entitlement rules).
 - Outreach SMS health reads delivered/callback evidence from canonical `sms_events_v2`; idle history never triggers webhook recreation. Why: account reachability and inactivity do not establish delivery or configuration failure.
