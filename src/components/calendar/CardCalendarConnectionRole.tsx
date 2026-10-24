@@ -4,6 +4,7 @@
 import { motion } from "framer-motion";
 import { Calendar, Sparkles } from "lucide-react";
 import ButtonConnectGoogleCalendar from "./ButtonConnectGoogleCalendar";
+import CardGoogleCalendarSelection from "./CardGoogleCalendarSelection";
 import ButtonSubscribeAppleCalendar from "./ButtonSubscribeAppleCalendar";
 import PanelCalendarConnectionBenefits from "./PanelCalendarConnectionBenefits";
 import PanelCalendarPermissionsExplainer from "./PanelCalendarPermissionsExplainer";
@@ -27,7 +28,8 @@ export default function CardCalendarConnectionRole({
   returnTo,
 }: Props) {
   const prompt = useCalendarPrompt(role, surface, lang);
-  const { primary, isConnected } = useCalendarConnections();
+  const { primary, isConnected, connections } = useCalendarConnections();
+  const hasGoogle = connections.some(c => c.provider === "google" && c.connection_status === "connected");
   const { track } = useCalendarConversionTracking();
 
   useEffect(() => {
@@ -57,16 +59,16 @@ export default function CardCalendarConnectionRole({
         {prompt?.subtext ?? "On vérifie seulement votre disponibilité."}
       </p>
 
-      {!isConnected && (
+      {!hasGoogle && (
         <div className="space-y-2.5 mb-5">
           <ButtonConnectGoogleCalendar
             surface={surface}
             role={role}
             returnTo={returnTo}
-            label={prompt?.primary_cta ?? "Connecter Google Calendar"}
+            label="Autoriser un compte Google dans UNPRO (facultatif)"
             className="w-full"
           />
-          {showAppleCTA && (
+          {!isConnected && showAppleCTA && (
             <ButtonSubscribeAppleCalendar
               surface={surface}
               role={role}
@@ -75,10 +77,12 @@ export default function CardCalendarConnectionRole({
             />
           )}
           <p className="text-xs text-muted-foreground text-center pt-1">
-            Outlook / Microsoft 365 : bientôt disponible.
+            Ce lien concerne UNPRO et non Google Calendar dans ChatGPT.
           </p>
         </div>
       )}
+
+      {role === "contractor" && <CardGoogleCalendarSelection />}
 
       {isConnected && (
         <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-5">
