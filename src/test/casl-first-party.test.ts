@@ -10,7 +10,7 @@ function io(overrides: Record<string, any> = {}) {
   // Synthetic fetches stand in for the pinned transport; the unpinned-transport
   // test below deliberately removes this marker.
   o.fetch[PINNED_TRANSPORT] = true;
-  return o;
+  return o as any;
 }
 describe("first-party mechanical observations, never consent", () => {
   it("observes exact visible first party email and hashes every page", async () => { const r = await observeFirstParty(evidence, company, io()); expect(r.status).toBe("machine_verified"); expect(r.pages).toHaveLength(3); expect(r.pages[0].page_sha256).toMatch(/^[a-f0-9]{64}$/); expect(r.legal_consent_established).toBe(false); expect(r.policy.auto_eligibility_enabled).toBe(false); });

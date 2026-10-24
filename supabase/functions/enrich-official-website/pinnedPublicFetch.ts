@@ -1,6 +1,8 @@
 import { request } from "node:https";
 import { publicAddress, safeUrl, POLICY, PINNED_TRANSPORT } from "./caslFirstParty.ts";
 
+declare const Deno: any;
+
 /** TLS retains the official hostname; socket connects only to the validated public IPv4.
  * No redirects, cookies, auth, paid proxy or environment-selected proxy.
  */
