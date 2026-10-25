@@ -7,7 +7,15 @@ import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
-import { SectionMatchingPaths } from "@/components/home-light/HomeLightSections";
+import {
+  SectionProjectTiles,
+  SectionHomeScore,
+  SectionTwoPaths,
+  SectionHowItWorks,
+  SectionTransparency,
+  SectionPasseport,
+  SectionFinalCta,
+} from "@/components/home-light/HomeLightSections";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorResume";
@@ -33,7 +41,7 @@ export default function PageHomeLight() {
     <AlexProvider>
       <MainLayout hideMemorySection>
         <Helmet>
-          <title>UNPRO | Clara, votre intelligence résidentielle</title>
+          <title>UNPRO | Un projet de rénovation en tête?</title>
           <meta
             name="description"
             content="Montrez ou décrivez votre besoin à Clara. Elle vous aide à comprendre, vérifier ou améliorer votre propriété."
@@ -53,21 +61,25 @@ export default function PageHomeLight() {
             content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-          <meta name="theme-color" content="#050816" />
           <link rel="canonical" href="https://unpro.ca/" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
 
-        <div className="home-light">
+        <div className="home-light unpro-premium-home">
           <div id="clara-home"><HeroHomeownerLight /></div>
-          <SectionMatchingPaths onStartHomeowner={() => {
+          <SectionProjectTiles />
+          <SectionHomeScore />
+          <SectionTwoPaths onStartHomeowner={() => {
             window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT));
-            const field = document.querySelector<HTMLTextAreaElement>("#clara-home textarea");
-            if (!field) return;
-            field.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-            field.focus({ preventScroll: true });
+            const target = document.querySelector<HTMLElement>("#clara-conversation");
+            target?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+            const input = target?.querySelector<HTMLTextAreaElement>("textarea");
+            input?.focus({ preventScroll: true });
           }} />
-          <div className="home-afterglow" aria-hidden="true" />
+          <SectionHowItWorks />
+          <SectionTransparency />
+          <SectionPasseport />
+          <SectionFinalCta />
         </div>
       </MainLayout>
     </AlexProvider>
