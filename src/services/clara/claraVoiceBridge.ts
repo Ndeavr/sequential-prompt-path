@@ -35,6 +35,8 @@ export interface ClaraVoiceBrief {
 }
 
 export const CLARA_VOICE_MESSAGE_EVENT = "clara-voice-message";
+/** Ephemeral text while the user speaks or Clara is audibly replying. Never saved until final. */
+export const CLARA_VOICE_PARTIAL_EVENT = "clara-voice-partial";
 export const CLARA_VOICE_CLOSED_EVENT = "clara-voice-closed";
 /** La saisie écrite met le transport vocal en pause, sans fermer la conversation. */
 export const CLARA_VOICE_TEXT_INPUT_EVENT = "clara-voice-text-input";
@@ -156,11 +158,34 @@ export function beginClaraVoiceRun(): void {
   lastAssistantText = "";
 }
 
-/**
- * Transforme une parole en message normal de la conversation canonique et
- * l'expose immédiatement dans le chat.
- */
-export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): void {
+/** Stable turn identifier shared by live preview and the canonical final write. */
+export function nextClaraVoiceTurnId(): string {
+  return `voice:${runId()}:${++sequence}`;
+}
+
+/** Show tentative STT / agent speech locally, without saving an unconfirmed turn. */
+export function previewClaraVoiceTurn(role: "user" | "assistant", text: string, id: string): void {
+  if (!text.trim() || !id || typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CLARA_VOICE_PARTIAL_EVENT, {
+    detail: { id, role, text },
+  }));
+}
+
+/** Show the final utterance when audio finishes; do not write it twice. */
+export function displayClaraVoiceTurn(role: "user" | "assistant", text: string, id: string, requiresNextStep = false): void {
+  if (!text.trim() || !id || typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CLARA_VOICE_MESSAGE_EVENT, {
+    detail: { id, role, text, requiresNextStep },
+  }));
+}
+
+/** Final voice turn: only final transcripts enter the canonical conversation. */
+export function recordClaraVoiceTurn(
+  role: "user" | "assistant",
+  raw: string,
+  clientId?: string,
+  deferDisplay = false,
+): void {
   const requiresNextStep = role === "assistant" && hasActiveContractorFlow() && promisesDeferredFollowup(raw ?? "");
   const text = requiresNextStep ? CLARA_NEXT_STEP_TEXT : (raw ?? "").trim();
   if (!text) return;
@@ -171,7 +196,7 @@ export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): v
   if (role === "user") lastUserText = text;
   else lastAssistantText = text;
 
-  const clientMessageId = `voice:${runId()}:${++sequence}`;
+  const clientMessageId = clientId || nextClaraVoiceTurnId();
 
   // Les tours parlés sont écrits en série : l'ordre chronologique réel du
   // dialogue est conservé côté serveur, même si la voix va plus vite.
@@ -190,13 +215,8 @@ export function recordClaraVoiceTurn(role: "user" | "assistant", raw: string): v
     });
 
 
-  try {
-    window.dispatchEvent(
-      new CustomEvent(CLARA_VOICE_MESSAGE_EVENT, { detail: { id: clientMessageId, role, text, requiresNextStep } }),
-    );
-  } catch {
-    /* environnement sans DOM */
-  }
+  // Agent content is only shown as complete AFTER speech, never before it.
+  if (!deferDisplay) displayClaraVoiceTurn(role, text, clientMessageId, requiresNextStep);
 }
 
 /** Signale la fermeture de la voix : le chat recharge l'état serveur. */
