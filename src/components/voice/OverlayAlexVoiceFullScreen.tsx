@@ -47,6 +47,8 @@ import {
   loadClaraVoiceBrief,
   notifyClaraVoiceClosed,
   recordClaraVoiceTurn,
+  previewClaraVoiceTurn,
+  nextClaraVoiceTurnId,
   type ClaraVoiceBrief,
 } from "@/services/clara/claraVoiceBridge";
 import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
@@ -132,6 +134,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const pauseVoiceRef = useRef<(reason: string) => void>(() => {});
   const partialUserIdRef = useRef<string | null>(null);
   const partialAlexIdRef = useRef<string | null>(null);
+  const spokenTargetRef = useRef("");
+  const spokenVisibleRef = useRef("");
+  const hasSpokenAgentRef = useRef(false);
+  const pendingAgentFinalRef = useRef<{ id: string; text: string } | null>(null);
+  const [speechFinalRevision, setSpeechFinalRevision] = useState(0);
   const contractorTransitionRef = useRef(false);
 
   transcriptsRef.current = transcripts;
@@ -273,18 +280,15 @@ export default function OverlayAlexVoiceFullScreen() {
         s.transitionTo("speaking", "first_audio_frame");
       }
     },
-    onTranscriptPartial: (text) => {
-      const s = getStore();
-      if (!s.isOverlayOpen || HALTED.has(s.machineState) || !text.trim()) return;
-      const id = partialAlexIdRef.current ?? `alex-live-${++entryIdRef.current}`;
+    onTranscriptPartial: (chunk) => {
+      const state = getStore();
+      if (!state.isOverlayOpen || HALTED.has(state.machineState) || !chunk) return;
+      const id = partialAlexIdRef.current ?? nextClaraVoiceTurnId();
       partialAlexIdRef.current = id;
       lastAlexIdRef.current = id;
-      setTranscripts((previous) => {
-        const exists = previous.some((entry) => entry.id === id);
-        return exists
-          ? previous.map((entry) => entry.id === id ? { ...entry, text } : entry)
-          : [...previous, { role: "alex" as const, text, id }];
-      });
+      // ElevenLabs supplies delta chunks; buffer until audio is being played.
+      const existing = spokenTargetRef.current;
+      spokenTargetRef.current = chunk.startsWith(existing) ? chunk : existing + chunk;
     },
     onTranscript: (text) => {
       const s = getStore();
@@ -301,26 +305,17 @@ export default function OverlayAlexVoiceFullScreen() {
         s.transitionTo("speaking", "alex_speaking");
       }
 
-      s.addTranscript("alex", text);
-      // ONE CLARA : la réponse parlée devient le même message dans le chat.
-      recordClaraVoiceTurn("assistant", text);
-
-
-      setTranscripts(prev => {
-        const partialId = partialAlexIdRef.current;
-        partialAlexIdRef.current = null;
-        if (partialId && prev.some((entry) => entry.id === partialId)) {
-          return prev.map((entry) => entry.id === partialId ? { ...entry, text } : entry);
-        }
-        const newId = `alex-${++entryIdRef.current}`;
-        lastAlexIdRef.current = newId;
-        return [...prev, { role: "alex" as const, text, id: newId }];
-      });
+      const id = partialAlexIdRef.current ?? nextClaraVoiceTurnId();
+      partialAlexIdRef.current = id;
+      spokenTargetRef.current = text;
+      // Final text stays buffered until playback finishes, never flashes ahead.
+      pendingAgentFinalRef.current = { id, text };
+      setSpeechFinalRevision((revision) => revision + 1);
     },
     onUserTranscriptPartial: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen || HALTED.has(s.machineState) || !text.trim()) return;
-      const id = partialUserIdRef.current ?? `user-live-${++entryIdRef.current}`;
+      const id = partialUserIdRef.current ?? nextClaraVoiceTurnId();
       partialUserIdRef.current = id;
       setTranscripts((previous) => {
         const exists = previous.some((entry) => entry.id === id);
@@ -328,6 +323,7 @@ export default function OverlayAlexVoiceFullScreen() {
           ? previous.map((entry) => entry.id === id ? { ...entry, text } : entry)
           : [...previous, { role: "user" as const, text, id }];
       });
+      previewClaraVoiceTurn("user", text, id);
     },
     onUserTranscript: (text) => {
       const s = getStore();
@@ -343,7 +339,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
       s.addTranscript("user", text);
       // ONE CLARA : la parole devient un message utilisateur normal du chat.
-      recordClaraVoiceTurn("user", text);
+      recordClaraVoiceTurn("user", text, partialUserIdRef.current ?? undefined);
 
       if (detectClaraWorkflowIntent(text).intent === "contractor_onboarding" && !contractorTransitionRef.current) {
         contractorTransitionRef.current = true;
@@ -465,6 +461,42 @@ export default function OverlayAlexVoiceFullScreen() {
       }
     },
   });
+
+  // Voice-first captions: never display agent text ahead of actual speech.
+  useEffect(() => {
+    if (!store.isOverlayOpen || !isSpeaking || HALTED.has(store.machineState)) return;
+    hasSpokenAgentRef.current = true;
+    const ticker = window.setInterval(() => {
+      const target = spokenTargetRef.current;
+      const visible = spokenVisibleRef.current;
+      if (!target || visible.length >= target.length) return;
+      // The SDK has no word timestamps; use restrained approximate speech pacing.
+      const next = target.slice(0, Math.min(target.length, visible.length + 3));
+      spokenVisibleRef.current = next;
+      const id = partialAlexIdRef.current;
+      if (!id) return;
+      setTranscripts((previous) => previous.some((entry) => entry.id === id)
+        ? previous.map((entry) => entry.id === id ? { ...entry, text: next } : entry)
+        : [...previous, { role: "alex" as const, text: next, id }]);
+      previewClaraVoiceTurn("assistant", next, id);
+    }, 110);
+    return () => window.clearInterval(ticker);
+  }, [isSpeaking, store.isOverlayOpen, store.machineState]);
+
+  useEffect(() => {
+    if (isSpeaking || !hasSpokenAgentRef.current) return;
+    const final = pendingAgentFinalRef.current;
+    if (!final) return;
+    pendingAgentFinalRef.current = null;
+    recordClaraVoiceTurn("assistant", final.text, final.id);
+    setTranscripts((previous) => previous.some((entry) => entry.id === final.id)
+      ? previous.map((entry) => entry.id === final.id ? { ...entry, text: final.text } : entry)
+      : [...previous, { id: final.id, role: "alex", text: final.text }]);
+    spokenTargetRef.current = "";
+    spokenVisibleRef.current = "";
+    partialAlexIdRef.current = null;
+    hasSpokenAgentRef.current = false;
+  }, [isSpeaking, speechFinalRevision]);
 
   useEffect(() => {
     const changed = (event: Event) => {
@@ -912,6 +944,12 @@ export default function OverlayAlexVoiceFullScreen() {
       ttsFallbackInProgressRef.current = false;
       autoRetryCountRef.current = 0;
       setTranscripts([]);
+      spokenTargetRef.current = "";
+      spokenVisibleRef.current = "";
+      pendingAgentFinalRef.current = null;
+      partialAlexIdRef.current = null;
+      partialUserIdRef.current = null;
+      hasSpokenAgentRef.current = false;
       setSlowToken(false);
       setShowListeningHint(false);
       entryIdRef.current = 0;
