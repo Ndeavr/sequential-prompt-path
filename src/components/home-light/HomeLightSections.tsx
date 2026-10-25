@@ -131,7 +131,7 @@ export function SectionHomeScore() {
 }
 
 /** Two conversion journeys. Contractor button only opens the real funnel. */
-export function SectionTwoPaths() {
+export function SectionTwoPaths({ onStartHomeowner }: { onStartHomeowner?: () => void }) {
   const { lang } = useLanguage();
   const en = lang === "en";
   return (
@@ -143,7 +143,7 @@ export function SectionTwoPaths() {
           <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
             {en ? "Share your project and get guidance tailored to your needs and location." : "Expliquez votre projet à Clara. UNPRO tient compte de vos besoins, de votre budget et de votre secteur."}
           </p>
-          <a href="#clara-conversation" className="unpro-home-primary-cta mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold text-white">
+          <a href="#clara-conversation" onClick={onStartHomeowner} className="unpro-home-primary-cta mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold text-white">
             {en ? "Start my project" : "Commencer mon projet"} <ArrowRight className="h-4 w-4" aria-hidden />
           </a>
           <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><BadgeCheck className="h-4 w-4 text-primary" aria-hidden />{en ? "Free. No obligation." : "Gratuit. Sans obligation."}</p>
