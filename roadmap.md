@@ -83,3 +83,4 @@
 - [ ] Remaining deprecated image/voice/other models: protocol, cost and actual deployed activity must be verified before replacement; no paid probe authorized.
 - [x] Focused tests (90), lint (zero errors; two preexisting warnings), automatic build OK, intercepted mobile browser and audit. No hosted E2E or manual build/typecheck claimed.
 - [x] Radar V1 (Scout): Disponible/PV moi capture, homeowner split, N↔M links, admin review, preview OCR — edge functions not deployed (awaiting approval).
+- [x] Discovery cron P0: acquisition-discovery-cycle now requires auth, fails closed on recruitment locks before any external call/import, and derives trigger_source from auth; 13 new regression tests, 27/27 acquisition suites green, Deno check + typecheck clean. Cron currently receives 401 until it sends a service key (owner action) — desired fail-closed while locks are off.
