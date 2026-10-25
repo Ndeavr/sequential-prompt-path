@@ -23,6 +23,7 @@ import { normalizeServiceCategory, categoryName } from "../_shared/localServiceC
 import { freeCampaignStatus } from "../_shared/freeCampaign.ts";
 import { isFlagEnabled } from "../_shared/killSwitch.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { evaluateRecruitmentLocks, resolveTriggerSource } from "../_shared/recruitmentLocks.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
