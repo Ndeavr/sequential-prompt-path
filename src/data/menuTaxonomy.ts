@@ -12,6 +12,8 @@ import {
   MapPin, DollarSign, BookOpen, Building, GraduationCap,
 } from "lucide-react";
 
+import { LOCAL_SERVICE_CATEGORIES } from "@/lib/localServices/categories";
+
 // ─── Role Cards ───
 export const ROLE_CARDS = [
   {
@@ -74,7 +76,7 @@ export interface MenuSectionDef {
 export const HOMEOWNER_SECTIONS: MenuSectionDef[] = [
   {
     slug: "renovation",
-    name: "Rénovation et projets",
+    name: "Rénovation et réparations",
     icon: Hammer,
     items: [
       { slug: "roofing", name: "Toiture", icon: Home, isPopular: true },
@@ -85,6 +87,7 @@ export const HOMEOWNER_SECTIONS: MenuSectionDef[] = [
       { slug: "windows-doors", name: "Portes et fenêtres", icon: Home },
       { slug: "masonry", name: "Maçonnerie", icon: HardHat },
       { slug: "general-renovation", name: "Rénovation générale", icon: Hammer },
+      { slug: "peinture", name: "Peintre", icon: Paintbrush },
     ],
   },
   {
@@ -92,15 +95,7 @@ export const HOMEOWNER_SECTIONS: MenuSectionDef[] = [
     name: "Entretien extérieur",
     icon: TreePine,
     items: [
-      { slug: "hedge-trimming", name: "Taille de haies", icon: Leaf, isSeasonal: true, activeMonths: [5,6,7,8,9], upcomingMonths: [4] },
-      { slug: "lawn-maintenance", name: "Entretien de pelouse", icon: TreePine, isSeasonal: true, activeMonths: [4,5,6,7,8,9,10], upcomingMonths: [3] },
-      { slug: "pool-maintenance", name: "Entretien de piscine", icon: Waves, isSeasonal: true, activeMonths: [5,6,7,8,9], upcomingMonths: [4] },
-      { slug: "pool-opening", name: "Ouverture de piscine", icon: Waves, isSeasonal: true, activeMonths: [4,5], upcomingMonths: [3] },
-      { slug: "pool-closing", name: "Fermeture de piscine", icon: Waves, isSeasonal: true, activeMonths: [9,10], upcomingMonths: [8] },
-      { slug: "snow-removal", name: "Déneigement", icon: Snowflake, isSeasonal: true, activeMonths: [11,12,1,2,3], upcomingMonths: [10] },
       { slug: "roof-snow-removal", name: "Déneigement de toiture", icon: Snowflake, isSeasonal: true, activeMonths: [12,1,2,3], upcomingMonths: [11] },
-      { slug: "gutter-cleaning", name: "Nettoyage de gouttières", icon: Droplets, isSeasonal: true, activeMonths: [4,5,10,11], upcomingMonths: [3,9] },
-      { slug: "pressure-washing", name: "Lavage à pression", icon: Droplets, isSeasonal: true, activeMonths: [4,5,6,7,8,9], upcomingMonths: [3] },
       { slug: "tree-pruning", name: "Élagage d'arbres", icon: TreePine },
       { slug: "fences-patios", name: "Clôtures et patios", icon: Fence },
     ],
@@ -126,7 +121,7 @@ export const HOMEOWNER_SECTIONS: MenuSectionDef[] = [
   },
   {
     slug: "professional",
-    name: "Services professionnels",
+    name: "Immobilier et services professionnels",
     icon: Scale,
     items: [
       { slug: "notary", name: "Notaire", icon: Scale },
@@ -185,6 +180,19 @@ export const HOMEOWNER_SECTIONS: MenuSectionDef[] = [
     ],
   },
 ];
+
+// The first three sections are the public universes; local labels/slugs come
+// from the existing canonical service catalog, not a parallel category list.
+const professionalIndex = HOMEOWNER_SECTIONS.findIndex((s) => s.slug === "professional");
+const [professionalSection] = HOMEOWNER_SECTIONS.splice(professionalIndex, 1);
+if (professionalSection) HOMEOWNER_SECTIONS.unshift(professionalSection);
+HOMEOWNER_SECTIONS.splice(1, 0, {
+  slug: "maintenance",
+  name: "Entretien et services",
+  icon: TreePine,
+  items: LOCAL_SERVICE_CATEGORIES.filter((c) => c.slug !== "autre-service-residentiel")
+    .map((c) => ({ slug: c.slug, name: c.name_fr, icon: Wrench })),
+});
 
 // ─── Seasonal helpers ───
 export function getActiveItems(month: number): MenuItemDef[] {
