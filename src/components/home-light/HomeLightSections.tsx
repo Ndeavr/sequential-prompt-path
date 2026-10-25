@@ -1,126 +1,31 @@
 /**
- * HomeLightSections — Homeowner-first light sections for the UNPRO homepage.
- * Spacious premium layout, navy text, royal-blue actions, no fabricated data.
- * Every claim is either a product behaviour or an explicit provenance label.
+ * HomeLightSections — visual conversion surfaces over the existing verified routes.
+ * Example visuals must never be mistaken for real homeowner scores or verified reviews.
  */
 import { Link } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
   Camera,
   ClipboardList,
-  Crown,
   Home,
   MessageSquare,
-  Phone,
   Search,
   Wrench,
+  Sparkles,
+  CalendarCheck2,
+  ShieldCheck,
+  HeartHandshake,
+  CircleHelp,
 } from "lucide-react";
-
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/components/ui/LanguageToggle";
-import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
-import { PUBLIC_PHONE } from "@/config/publicContact";
-import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
-
-/** Active homepage paths; existing qualification and Clara remain authoritative. */
-export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: () => void }) {
-  const { lang } = useLanguage();
-  const reduced = useReducedMotion();
-  const fr = lang === "fr";
-  const copy = fr ? {
-    lines: ["UNPRO.", "Moins de leads.", "De meilleurs matchs.", "De vrais rendez-vous."],
-    intro: "Les clics, c'est beau. Les bons clients, c'est mieux.",
-    explanation: "UNPRO utilise l'intelligence artificielle pour connecter les bons entrepreneurs aux bons propriétaires.",
-    exclusive: "Pas cinq compétiteurs sur le même lead. Pas cinq soumissions à comparer.",
-    match: "Le bon match. Du premier coup.",
-    contractor: "Vous êtes entrepreneur?",
-    contractorPromise: "Arrêtez de courir après les clients. Rencontrez ceux qui vous cherchent.",
-    contractorBody: "Soyez mieux positionné pour être découvert par ChatGPT et les autres IA. Et surtout, rencontrez des propriétaires réellement intéressés par VOS services, dans VOTRE territoire.",
-    contractorCta: "Faire connaître mon entreprise",
-    contractorMicro: "Vos services. Votre territoire. Vos clients. Aucun lead partagé.",
-    homeowner: "Vous êtes propriétaire?",
-    homeownerPromise: "Pourquoi courir après cinq entrepreneurs quand l'IA peut vous aider à trouver le bon?",
-    homeownerBody: "Décrivez votre problème ou votre projet à Clara. Téléchargez une photo ou parlez-lui du design souhaité.",
-    homeownerCta: "Trouver mon entrepreneur",
-    homeownerMicro: "Gratuit pour les propriétaires. Sans obligation. Sans cinq soumissions à gérer.",
-    difference: "Un bon entrepreneur pour le mauvais client, ça reste un mauvais match.",
-    closing: "UNPRO — Ce n'est pas une question de trouver plus. C'est une question de trouver mieux.",
-    impact: "Découvrir l’impact potentiel de l’IA",
-  } : {
-    lines: ["UNPRO.", "Fewer leads.", "Better matches.", "Real appointments."],
-    intro: "Clicks are nice. The right clients are better.",
-    explanation: "UNPRO uses artificial intelligence to connect the right contractors with the right homeowners.",
-    exclusive: "Not five competitors on the same lead. Not five quotes to compare.",
-    match: "The right match. The first time.",
-    contractor: "Are you a contractor?",
-    contractorPromise: "Stop chasing clients. Meet the people looking for you.",
-    contractorBody: "Help ChatGPT and other AI platforms discover your business. More importantly, meet homeowners genuinely interested in YOUR services, in YOUR service area.",
-    contractorCta: "Get my business discovered",
-    contractorMicro: "Your services. Your territory. Your clients. No shared leads.",
-    homeowner: "Are you a homeowner?",
-    homeownerPromise: "Why chase five contractors when AI can help you find the right one?",
-    homeownerBody: "Describe your problem or project to Clara. Upload a photo or tell her about the design you have in mind.",
-    homeownerCta: "Find my contractor",
-    homeownerMicro: "Free for homeowners. No obligation. No five quotes to manage.",
-    difference: "A good contractor for the wrong client is still a bad match.",
-    closing: "UNPRO — It’s not about finding more. It’s about finding better.",
-    impact: "Explore AI’s potential impact",
-  };
-  const reveal = (delay = 0) => ({
-    initial: reduced ? false as const : { opacity: 1, y: 12 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.15 },
-    transition: { duration: reduced ? 0 : 0.42, delay: reduced ? 0 : delay },
-  });
-  return (
-    <section aria-labelledby="home-matching-title" className="home-matching-section alex-immersive border-t border-border bg-background px-5 py-16 sm:px-8 md:py-24">
-      <div className="mx-auto max-w-5xl">
-        <h2 id="home-matching-title" className="text-3xl font-semibold leading-tight tracking-normal text-foreground sm:text-4xl md:text-5xl">
-          {copy.lines.map((line, i) => <motion.span key={i} {...reveal(i * 0.1)} className={`block ${i === 2 ? "text-primary-tint" : ""}`}>{line}</motion.span>)}
-        </h2>
-        <div className="mt-7 max-w-3xl space-y-3 text-base leading-relaxed text-muted-foreground">
-          <p className="text-xl font-medium text-foreground">{copy.intro}</p>
-          <p>{copy.explanation}</p><p>{copy.exclusive}</p>
-          <p className="font-semibold text-foreground">{copy.match}</p>
-        </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          {["contractor", "homeowner"].map((path, i) => {
-            const contractor = path === "contractor";
-            const Icon = contractor ? Wrench : Home;
-            return <motion.article key={path} {...reveal(i * 0.08)} className="flex min-w-0 flex-col rounded-3xl border border-border bg-card p-6 shadow-lg sm:p-8">
-              <Icon aria-hidden="true" className="h-7 w-7 text-primary-tint" />
-              <h3 className="mt-5 text-xl font-semibold text-foreground">{contractor ? copy.contractor : copy.homeowner}</h3>
-              <p className="mt-3 text-lg font-medium leading-relaxed text-foreground">{contractor ? copy.contractorPromise : copy.homeownerPromise}</p>
-              <p className="mt-4 text-base leading-relaxed text-muted-foreground">{contractor ? copy.contractorBody : copy.homeownerBody}</p>
-              <div className="mt-auto pt-7">
-                {contractor ? <Button asChild className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl bg-primary-strong px-4 py-3 text-base">
-                  <Link to="/entrepreneur/devis-personnalise" onClick={() => trackCopilotEvent("contractor_entry_click", { surface: "home_matching", destination: "/entrepreneur/devis-personnalise" })}>{copy.contractorCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
-                </Button> : <Button onClick={() => { trackCopilotEvent("hero_find_pro_click", { surface: "home_matching" }); onStartHomeowner(); }} variant="outline" className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl px-4 py-3 text-base">{copy.homeownerCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Button>}
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{contractor ? copy.contractorMicro : copy.homeownerMicro}</p>
-              </div>
-            </motion.article>;
-          })}
-        </div>
-        <div className="mt-12 max-w-3xl space-y-4 text-base leading-relaxed text-muted-foreground">
-          <p className="text-lg font-medium text-foreground">{copy.difference}</p>
-          <p>{copy.closing}</p>
-          <Button asChild variant="link" className="h-auto min-h-11 whitespace-normal px-0 text-left text-primary-tint"><Link to="/impact">{copy.impact} →</Link></Button>
-          <div>
-            <Button asChild className="min-h-11 rounded-full bg-primary-strong px-3.5 py-1.5 text-[13px] font-medium shadow-glow-soft hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none">
-              <a href={PUBLIC_PHONE.tel} aria-label={`${fr ? "Appeler UNPRO au" : "Call UNPRO at"} ${PUBLIC_PHONE.display}`} onClick={() => {
-                void logFunnelEvent({ event_type: "call_cta_clicked", metadata: { context: "home_bottom", route: window.location.pathname } });
-              }}><Phone aria-hidden="true" className="h-3.5 w-3.5" />{fr ? "Appeler" : "Call"}</a>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+import kitchenPhoto from "@/assets/scenes/scene-3-kitchen.jpg";
+import bathPhoto from "@/assets/hero-plomberie.jpg";
+import icePhoto from "@/assets/ice-dam-roof.jpg";
+import exteriorPhoto from "@/assets/hero-agrandissement.jpg";
 
 function useStartAlex(surface: string) {
   const { openAlex } = useAlexVoice();
@@ -130,26 +35,19 @@ function useStartAlex(surface: string) {
   };
 }
 
-function SectionWrap({
-  children,
-  tone = "base",
-}: {
+function SectionWrap({ children, tone = "base" }: {
   children: React.ReactNode;
   tone?: "base" | "tinted";
 }) {
   return (
-    <section className={tone === "tinted" ? "bg-secondary/60" : "bg-transparent"}>
-      <div className="mx-auto w-full max-w-5xl px-5 py-16 md:py-24">{children}</div>
+    <section className={tone === "tinted" ? "unpro-home-tinted" : "bg-transparent"}>
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8">{children}</div>
     </section>
   );
 }
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-primary">
-      {children}
-    </p>
-  );
+  return <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{children}</p>;
 }
 
 function Title({ children }: { children: React.ReactNode }) {
@@ -160,101 +58,109 @@ function Title({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ── 1. Trois parcours visibles ──────────────────────────────── */
-export function SectionTwoPaths() {
-  const startAlex = useStartAlex("home_paths");
-  return (
-    <SectionWrap>
-      <div className="mt-2 grid gap-5 md:grid-cols-3">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.4 }}
-          className="rounded-3xl border border-border bg-card p-7 md:p-8"
-        >
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
-            <Home className="h-5 w-5" />
-          </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes propriétaire ou gestionnaire ?</h3>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            Comprenez votre problème, documentez votre propriété et laissez Clara
-            vous orienter vers le bon professionnel — sans courir après les
-            soumissions.
-          </p>
-          <button
-            onClick={startAlex}
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
-          >
-            Parler à Clara <ArrowRight className="h-4 w-4" />
-          </button>
-        </motion.div>
+/** Four real project entrances. The existing public project-intake route owns qualification. */
+const PROJECTS = [
+  { fr: "Cuisine", en: "Kitchen", image: kitchenPhoto, key: "cuisine" },
+  { fr: "Salle de bain", en: "Bathroom", image: bathPhoto, key: "salle-de-bain" },
+  { fr: "Barrages de glace", en: "Ice dams", image: icePhoto, key: "barrages-de-glace" },
+  { fr: "Rénovation extérieure", en: "Exterior renovation", image: exteriorPhoto, key: "renovation-exterieure" },
+] as const;
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.4, delay: 0.06 }}
-          className="rounded-3xl border-2 border-primary/25 bg-card p-7 shadow-lg shadow-primary/10 md:p-8"
-        >
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <Wrench className="h-5 w-5" />
-          </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes entrepreneur ?</h3>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            L'IA de UNPRO lit les signaux publics de votre entreprise —
-            identité, spécialité, territoire, présence en ligne — et comprend
-            exactement pourquoi elle peut (ou ne peut pas encore) vous
-            recommander aux propriétaires.
-          </p>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-            L'audit vous montre ce qui est confirmé, ce qui manque, et comment
-            devenir recommandable.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+export function SectionProjectTiles() {
+  const { lang } = useLanguage();
+  return (
+    <section className="unpro-home-projects">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+          {PROJECTS.map((p) => (
             <Link
-              to="/entrepreneurs/audit-ia"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
+              key={p.key}
+              to="/decrire-mon-projet"
+              state={{ suggestedCategory: p.key }}
+              aria-label={lang === "en" ? "Plan a " + p.en + " project" : "Parler de mon projet : " + p.fr}
+              className="unpro-home-project-tile group overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30"
             >
-              Faire mon audit IA gratuit <ArrowRight className="h-4 w-4" />
+              <div className="aspect-[1.48] overflow-hidden">
+                <img src={p.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
+              </div>
+              <div className="flex min-h-12 items-center justify-between gap-2 px-3 py-3 sm:px-4">
+                <span className="text-xs font-semibold sm:text-sm">{lang === "en" ? p.en : p.fr}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Public calculator, no made-up homeowner score. */
+export function SectionHomeScore() {
+  const { lang } = useLanguage();
+  const en = lang === "en";
+  return (
+    <section className="unpro-home-score">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="unpro-home-score-panel grid items-center gap-8 rounded-[28px] border p-6 shadow-sm md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] md:px-10 md:py-9">
+          <div>
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary"><Sparkles className="h-5 w-5" aria-hidden /> {en ? "Your home, understood" : "Votre propriété, mieux comprise"}</span>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">{en ? "Discover your home AI score" : "Découvrez votre score IA"}</h2>
+            <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {en ? "Explore the condition of your property and find useful next steps. Your actual results require your property information." : "Explorez les éléments de votre propriété et les améliorations possibles. Votre véritable score nécessite vos informations."}
+            </p>
+            <Link to="/score-maison" className="unpro-home-primary-cta mt-5 inline-flex min-h-12 items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white">
+              {en ? "Discover my score" : "Découvrir mon score IA"} <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.4, delay: 0.12 }}
-          className="rounded-3xl border border-border bg-card p-7 md:p-8"
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl"
-              style={{ background: "hsl(var(--sun) / 0.25)", color: "hsl(var(--sun-foreground))" }}
-            >
-              <Crown className="h-5 w-5" />
+          <div className="unpro-home-score-illustration mx-auto flex w-full max-w-sm items-center justify-center gap-5 rounded-2xl border p-5" aria-label={en ? "Illustrative evaluation categories, no actual score" : "Catégories d’évaluation illustratives, aucun score réel"}>
+            <div className="unpro-home-score-ring flex h-28 w-28 shrink-0 items-center justify-center rounded-full">
+              <div className="unpro-home-score-ring-inside flex h-20 w-20 items-center justify-center rounded-full text-4xl font-bold text-primary"><CircleHelp className="h-10 w-10" /></div>
             </div>
-            <span
-              className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em]"
-              style={{ background: "hsl(var(--sun) / 0.2)", color: "hsl(var(--sun-foreground))" }}
-            >
-              Membre fondateur
-            </span>
+            <div className="space-y-2 text-sm text-foreground">
+              <p>{en ? "Insulation" : "Isolation"}</p>
+              <p>{en ? "Ventilation" : "Ventilation"}</p>
+              <p>{en ? "Roof" : "Toiture"}</p>
+              <p className="text-xs text-muted-foreground">{en ? "Illustration only" : "Exemple illustratif"}</p>
+            </div>
           </div>
-           <h3 className="mt-5 text-xl font-semibold text-foreground">Vous offrez des services aux propriétaires ?</h3>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-             Réservez l'une des 10 places membre fondateur de votre ville et
-             profitez de 12 mois de visibilité UNPRO sans frais, une valeur de 350 $.
-          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          <Link
-            to="/fondateurs"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
-          >
-            Réserver ma place gratuitement <ArrowRight className="h-4 w-4" />
+/** Two conversion journeys. Contractor button only opens the real funnel. */
+export function SectionTwoPaths() {
+  const { lang } = useLanguage();
+  const en = lang === "en";
+  return (
+    <SectionWrap>
+      <div className="grid gap-5 md:grid-cols-2">
+        <article className="unpro-home-path-card relative overflow-hidden rounded-[28px] border p-7 md:p-8">
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Home className="h-7 w-7" aria-hidden /></div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">{en ? "I'm a homeowner" : "Je suis propriétaire"}</h2>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {en ? "Share your project and get guidance tailored to your needs and location." : "Expliquez votre projet à Clara. UNPRO tient compte de vos besoins, de votre budget et de votre secteur."}
+          </p>
+          <a href="#clara-conversation" className="unpro-home-primary-cta mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold text-white">
+            {en ? "Start my project" : "Commencer mon projet"} <ArrowRight className="h-4 w-4" aria-hidden />
+          </a>
+          <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><BadgeCheck className="h-4 w-4 text-primary" aria-hidden />{en ? "Free. No obligation." : "Gratuit. Sans obligation."}</p>
+        </article>
+        <article className="unpro-home-path-card relative overflow-hidden rounded-[28px] border p-7 md:p-8">
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Wrench className="h-7 w-7" aria-hidden /></div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">{en ? "I'm a contractor" : "Je suis entrepreneur"}</h2>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {en ? "Present your business and the types of projects that suit your services, territory and goals." : "Présentez votre entreprise et les types de projets qui correspondent à vos services, à votre territoire et à vos objectifs."}
+          </p>
+          <Link to="/entrepreneur" className="unpro-home-primary-cta mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold text-white">
+            {en ? "Activate my profile — $350" : "Activer mon profil — 350 $"} <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
-        </motion.div>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {en ? "Base activation + applicable taxes; 12 months of AI presence. See terms before paying." : "Activation de base + taxes applicables; 12 mois de présence IA. Conditions présentées avant paiement."}
+          </p>
+        </article>
       </div>
     </SectionWrap>
   );
@@ -286,7 +192,8 @@ const STEPS = [
 
 export function SectionHowItWorks() {
   return (
-    <SectionWrap tone="tinted">
+    <section id="comment-ca-marche" className="unpro-home-tinted scroll-mt-24">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8">
       <div className="text-center">
         <Eyebrow>Comment ça fonctionne</Eyebrow>
         <Title>Quatre étapes, aucune course aux soumissions</Title>
@@ -318,7 +225,8 @@ export function SectionHowItWorks() {
           </motion.div>
         ))}
       </div>
-    </SectionWrap>
+      </div>
+    </section>
   );
 }
 
