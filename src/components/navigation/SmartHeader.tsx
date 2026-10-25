@@ -9,7 +9,7 @@ import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft, Phone } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
@@ -24,6 +24,7 @@ import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
 import UnproLogo from "@/components/brand/UnproLogo";
 import UnproIcon from "@/components/brand/UnproIcon";
 import type { UserRole } from "@/types/navigation";
+import { PUBLIC_PHONE } from "@/config/publicContact";
 
 const guestMegaKeys = [
   { key: "maison", label: "Maison", labelEn: "Home" },
@@ -106,7 +107,7 @@ const SmartHeader = () => {
               {isHome ? (
                 <UnproLogo
                   unsized
-                  tone="gradient"
+                  tone="auto"
                   className="home-brand-wordmark"
                 />
               ) : (
@@ -128,7 +129,7 @@ const SmartHeader = () => {
 
 
             {/* Zone 2 — Desktop main nav */}
-            <nav className={`${isHome ? "hidden" : "hidden lg:flex"} items-center gap-0.5 ml-6`} role="navigation" aria-label="Main">
+            <nav className="hidden lg:flex items-center gap-0.5 ml-6" role="navigation" aria-label="Main">
               {isGuest ? (
                 guestMegaKeys.map((item) => (
                   <div
@@ -189,10 +190,18 @@ const SmartHeader = () => {
             <div className="flex shrink-0 items-center gap-0 sm:gap-1.5">
               {isHome ? (
                 <>
+                  <div className="hidden lg:flex items-center gap-2 mr-3">
+                    <LanguageToggle lang={lang} onChange={setLang} />
+                    <ThemeSwitcher variant="light-dark" />
+                    <a href={PUBLIC_PHONE.tel} className="unpro-home-primary-cta inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white" aria-label={(lang === "en" ? "Call UNPRO at " : "Appeler UNPRO au ") + PUBLIC_PHONE.display}>
+                      <Phone className="h-4 w-4" aria-hidden />{lang === "en" ? "Call" : "Appeler"}
+                    </a>
+                    {ctx && <ProfileMenu />}
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="home-header-icon relative rounded-full text-foreground"
+                    className="home-header-icon lg:hidden relative rounded-full text-foreground"
                     onClick={() => navigate(ctx ? "/dashboard/notifications" : "/login")}
                     aria-label={lang === "en" ? "Alerts" : "Alertes"}
                   >
@@ -204,7 +213,7 @@ const SmartHeader = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="home-header-icon rounded-full text-foreground"
+                    className="home-header-icon lg:hidden rounded-full text-foreground"
                     onClick={() => setShareOpen(true)}
                     aria-label={lang === "en" ? "Share QR code" : "Partager par code QR"}
                   >
@@ -213,7 +222,7 @@ const SmartHeader = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="home-header-icon rounded-none text-foreground"
+                    className="home-header-icon lg:hidden rounded-none text-foreground"
                     onClick={() => setMobileOpen(!mobileOpen)}
                     aria-label="Menu"
                   >
@@ -308,7 +317,7 @@ const SmartHeader = () => {
 
         {/* Mega Menu panels */}
         <AnimatePresence>
-          {!isHome && isGuest && activeMega && (
+          {isGuest && activeMega && (
             <MegaMenuPanel menuKey={activeMega} lang={lang} onClose={handleMegaLeave} />
           )}
         </AnimatePresence>
