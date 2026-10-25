@@ -86,17 +86,24 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
 
+  // 0. Authentification obligatoire : la découverte consomme des appels
+  //    externes payants et alimente la file. Un appel anonyme ne peut rien
+  //    déclencher (fail-closed). La provenance est dérivée de l'auth, jamais
+  //    du corps client seul.
+  const caller = await requireAdminCaller(req, corsHeaders, "acquisition-discovery-cycle");
+  if (!caller.ok) return caller.response;
+
   const body = await req.json().catch(() => ({} as Record<string, unknown>));
   const dryRun = Boolean((body as any).dry_run ?? false);
-  const trigger = String((body as any).caller ?? "manual");
+  const trigger = resolveTriggerSource(caller.kind, (body as any).trigger_source ?? (body as any).caller);
   const maxSearches = Math.min(
     Math.max(Number((body as any).max_searches ?? DEFAULT_SEARCHES_PER_CYCLE), 1),
     MAX_SEARCHES_PER_CYCLE,
   );
   const perSearchLimit = Math.min(Math.max(Number((body as any).limit ?? 20), 1), 20);
 
-  // Ciblage explicite (ville + requêtes) : réservé à l'admin / au serveur.
-  // Le cycle planifié (sans ciblage) reste inchangé.
+  // Ciblage explicite (ville + requêtes) : l'authentification admin/service
+  // est déjà exigée ci-dessus pour TOUT appel, ciblé ou non.
   const targetCity = typeof (body as any).city === "string" ? String((body as any).city).trim().slice(0, 60) : "";
   const targetQueries: Array<{ slug: string; trade: string }> = Array.isArray((body as any).queries)
     ? ((body as any).queries as any[])
@@ -104,10 +111,6 @@ Deno.serve(async (req) => {
       .slice(0, MAX_SEARCHES_PER_CYCLE)
       .map((q) => ({ slug: String(q.slug).slice(0, 60), trade: String(q.trade).slice(0, 80) }))
     : [];
-  if (targetCity || targetQueries.length > 0) {
-    const caller = await requireAdminCaller(req, corsHeaders, "acquisition-discovery-cycle");
-    if (!caller.ok) return caller.response;
-  }
 
   // 1. Fail-closed : le drapeau doit exister et être vrai.
   let discoveryEnabled = false;
@@ -118,6 +121,20 @@ Deno.serve(async (req) => {
   }
   if (!discoveryEnabled) {
     return json({ ok: false, blocked: true, blocked_reason: "discovery_disabled", searches_executed: 0 });
+  }
+
+  // 1b. Verrous de recrutement : fail-closed AVANT tout appel externe, toute
+  //     écriture de run et tout import. global_enabled ou
+  //     autonomous_enqueue_enabled faux/illisible => aucune découverte.
+  //     Le dry_run reste un aperçu lecture seule et rapporte l'état du verrou.
+  const { data: controls, error: ctrlErr } = await supabase
+    .from("recruitment_controls")
+    .select("global_enabled, autonomous_enqueue_enabled")
+    .limit(1)
+    .maybeSingle();
+  const locks = evaluateRecruitmentLocks(controls, ctrlErr);
+  if (!locks.allowed && !dryRun) {
+    return json({ ok: false, blocked: true, blocked_reason: locks.reason, searches_executed: 0 });
   }
 
   // 2. Arrêt automatique de la campagne à 10 activations réelles.
