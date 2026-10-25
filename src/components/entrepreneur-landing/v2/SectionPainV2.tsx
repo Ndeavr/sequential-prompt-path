@@ -8,7 +8,7 @@ const PAINS = [
   "Leads envoyés à 5 compétiteurs",
   "Clics sans intention réelle",
   "Temps perdu à relancer",
-  "Soumissions ghostées",
+  "Demandes mal adaptées à vos services",
   "Marketing qui ne convertit pas",
 ];
 

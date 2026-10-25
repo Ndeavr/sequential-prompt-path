@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 const STEPS = [
   { n: 1, title: "On valide votre entreprise" },
   { n: 2, title: "On optimise votre profil" },
-  { n: 3, title: "On vous envoie des rendez-vous ciblés" },
-  { n: 4, title: "Vous convertissez plus" },
+  { n: 3, title: "Vous examinez votre activation" },
+  { n: 4, title: "Votre profil reste soumis aux vérifications" },
 ];
 
 export default function SectionHowItWorksV2() {
