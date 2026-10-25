@@ -11,8 +11,8 @@ const css = readFileSync("src/index.css", "utf8");
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Un projet de rénovation en tête?");
-    expect(hero).toContain("Have a renovation project in mind?");
+    expect(hero).toContain("Le bon professionnel. Pour le bon besoin.");
+    expect(hero).toContain("The right professional. For the right need.");
     expect(hero).toContain('className="home-hero-badge"');
     expect(hero).toContain("<UnproLogo");
     expect(hero).toContain('markShape="bare"');
@@ -39,7 +39,7 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
     expect(clara).toContain("Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?");
-    expect(clara).toContain('placeholder: "Décrivez votre projet…"');
+    expect(clara).toContain('placeholder: "Décrivez votre besoin…"');
     expect(clara).toContain('const [composerText, setComposerText] = useState("")');
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");
