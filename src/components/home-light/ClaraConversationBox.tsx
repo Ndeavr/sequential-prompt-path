@@ -53,6 +53,7 @@ import {
   CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
+  CLARA_VOICE_PARTIAL_EVENT,
   CLARA_VOICE_TEXT_INPUT_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import {
@@ -759,6 +760,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   useEffect(() => keepComposerVisible(), [messages, busy, composerText, keepComposerVisible]);
 
+  // Follow speech only while the reader is near the newest message.
+  useEffect(() => {
+    if (voiceActive && isNearBottom()) scrollToLatest("auto");
+  }, [messages, voiceActive, isNearBottom, scrollToLatest]);
+
   useEffect(() => {
     if (!quickReplies || busy || messages.length === 0 || !isNearBottom()) return;
     // Les choix apparaissent après la réponse : si le lecteur suivait déjà le
@@ -778,9 +784,20 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   }, []);
 
 
-  // ONE CLARA — la voix n'a pas d'historique séparé : chaque parole apparaît
-  // ici en direct, puis l'état serveur fait autorité à la fermeture.
+  // ONE CLARA: tentative text is visible immediately, never persisted as a
+  // separate turn. Only the provider's final transcript becomes canonical.
   useEffect(() => {
+    const onVoicePartial = (event: Event) => {
+      const detail = (event as CustomEvent<{ id: string; role: "user" | "assistant"; text: string }>).detail;
+      if (!detail?.id || !detail.text || audienceRef.current !== "homeowner" && !hasActiveContractorFlow()) return;
+      setMessages((previous) => previous.some((message) => message.id === detail.id)
+        ? previous.map((message) => message.id === detail.id && message.status !== "complete"
+          ? { ...message, text: detail.text, status: "streaming" } : message)
+        : [...previous, {
+            id: detail.id, role: detail.role, text: detail.text,
+            status: "streaming", audience: audienceRef.current,
+          }]);
+    };
     const onVoiceMessage = (event: Event) => {
       const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string; requiresNextStep?: boolean };
       if (!detail?.text) return;
@@ -838,9 +855,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       })();
     };
 
+    window.addEventListener(CLARA_VOICE_PARTIAL_EVENT, onVoicePartial);
     window.addEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
     window.addEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     return () => {
+      window.removeEventListener(CLARA_VOICE_PARTIAL_EVENT, onVoicePartial);
       window.removeEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
       window.removeEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     };
@@ -1693,7 +1712,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     trackCopilotEvent("clara_voice_suggested", { surface: "home_clara_box" });
     if (!voiceTipShown.current) {
       voiceTipShown.current = true;
-      setVoiceTip(lang === "fr" ? "Vous pouvez aussi utiliser le micro. Je complète votre dossier pendant que vous parlez." : "You can also use the microphone. I’ll complete your profile as you speak.");
+      setVoiceTip(lang === "fr" ? "Parlez à Clara : vos mots s’affichent pendant que vous parlez." : "Talk to Clara: your words appear as you speak.");
     }
     const timer = window.setTimeout(() => {
       setVoiceGlow(false);
@@ -1832,7 +1851,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     ? copy.listening
     : audience === "contractor"
       ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
-      : conversationStarted ? copy.placeholderActive : copy.placeholder;
+      : (lang === "fr" ? "Parlez à Clara ou écrivez…" : "Talk to Clara or type…");
 
   const lastMessage = messages[messages.length - 1];
   const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
@@ -2193,7 +2212,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 aria-label={copy.voice}
                 data-voice-suggested={voiceGlow ? "true" : undefined}
                 data-voice-listening={voiceActive ? "true" : undefined}
-                className="home-clara-tool home-clara-mic rounded-full text-muted-foreground hover:text-foreground"
+                className={`home-clara-tool home-clara-mic rounded-full touch-manipulation focus-visible:ring-2 focus-visible:ring-primary ${voiceActive ? "bg-primary/20 text-primary ring-2 ring-primary" : composerText.trim() ? "text-muted-foreground hover:text-foreground" : "bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"}`}
               >
                 <Mic className="h-5 w-5" />
               </PromptInputButton>
