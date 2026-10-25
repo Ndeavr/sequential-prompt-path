@@ -1180,6 +1180,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // ACTIVE de Clara. Une réponse à une question sur l'entreprise reste
       // dans le parcours entrepreneur — jamais de Dossier maison.
       const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
+      // The CTA can appear after a homeowner supplies an address in Clara, not before.
+      // Keep the address DECLARED until the existing registration flow validates it.
+      const addressWasRequested = /(?:adresse\s+(?:de\s+)?(?:la\s+|votre\s+)?propri[eé]t[eé]|(?:quelle|laquelle)\s+propri[eé]t[eé]|besoin\s+de\s+l.adresse)/i.test(lastAssistantText);
+      const streetAddressProvided = /\b\d{1,6}\s+(?:[\p{L}'’.-]+\s+){0,5}(?:rue|avenue|av\.|boul(?:evard)?|chemin|rang|street|road)\b/iu.test(text)
+        || /\b\d{1,6}\s+(?:rue|avenue|av\.|boul(?:evard)?|chemin|rang|street|road)\b/iu.test(text);
+      if (!isRetry && audienceRef.current === "homeowner" && addressWasRequested && streetAddressProvided) {
+        setAddressJustProvided(true);
+      }
       const contractorTurn = audienceRef.current === "contractor"
         || (!hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
 
