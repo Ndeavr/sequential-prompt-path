@@ -2806,3 +2806,253 @@ html[data-theme-ready="true"] .glass-btn {
     padding-bottom: .6rem;
   }
 }
+
+
+/* ================================================================
+   UNPRO — premium blue/cyan homeowner homepage (2026-10-25)
+   Reuses the existing Clara card, header, theme store and routes.
+   ================================================================ */
+.home-light {
+  --background: 204 100% 98%;
+  --foreground: 231 86% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 231 86% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 231 86% 15%;
+  --primary: 210 100% 49%;
+  --primary-foreground: 0 0% 100%;
+  --primary-strong: 215 100% 44%;
+  --primary-tint: 216 90% 34%;
+  --secondary: 201 92% 94%;
+  --secondary-foreground: 219 70% 24%;
+  --secondary-strong: 202 85% 88%;
+  --secondary-tint: 216 80% 28%;
+  --muted: 206 70% 95%;
+  --muted-foreground: 219 24% 33%;
+  --accent: 190 92% 48%;
+  --accent-foreground: 225 80% 10%;
+  --border: 209 50% 86%;
+  --input: 210 48% 88%;
+  --ring: 210 100% 49%;
+  --text-primary: 231 86% 15%;
+  --text-body: 224 50% 22%;
+  --text-secondary: 219 26% 31%;
+  --text-muted: 219 20% 38%;
+  --surface-primary: 0 0% 100%;
+  --surface-secondary: 202 85% 96%;
+  --glass-bg: rgba(255,255,255,.89);
+  --glass-border: rgba(25,91,160,.15);
+  --glass-highlight: linear-gradient(180deg,rgba(255,255,255,.98),rgba(235,248,255,.65));
+  --glass-surface-bg: rgba(255,255,255,.87);
+  --glass-surface-border: rgba(13,91,162,.16);
+  --glass-surface-shadow: 0 12px 32px rgba(7,47,110,.08);
+  --home-glass-shadow: 0 20px 58px -33px rgba(3,88,173,.27),0 6px 24px rgba(2,57,120,.06);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.dark .home-light {
+  --background: 226 63% 5%;
+  --foreground: 216 40% 97%;
+  --card: 223 45% 10%;
+  --card-foreground: 216 40% 97%;
+  --popover: 223 43% 9%;
+  --popover-foreground: 216 40% 97%;
+  --primary: 208 100% 61%;
+  --primary-foreground: 227 70% 8%;
+  --primary-strong: 216 100% 51%;
+  --primary-tint: 208 100% 77%;
+  --secondary: 225 50% 15%;
+  --secondary-foreground: 215 90% 88%;
+  --secondary-strong: 223 50% 19%;
+  --secondary-tint: 214 90% 84%;
+  --muted: 225 37% 16%;
+  --muted-foreground: 216 26% 80%;
+  --accent: 190 92% 56%;
+  --accent-foreground: 226 63% 5%;
+  --border: 215 40% 29%;
+  --input: 220 34% 23%;
+  --ring: 212 100% 67%;
+  --text-primary: 0 0% 100%;
+  --text-body: 216 34% 92%;
+  --text-secondary: 213 26% 84%;
+  --text-muted: 214 24% 75%;
+  --surface-primary: 223 45% 10%;
+  --surface-secondary: 225 37% 16%;
+  --glass-bg: rgba(12,23,51,.88);
+  --glass-border: rgba(169,210,255,.16);
+  --glass-highlight: linear-gradient(180deg,rgba(58,96,166,.12),rgba(10,20,44,.3));
+  --glass-surface-bg: rgba(10,20,44,.88);
+  --glass-surface-border: rgba(138,188,247,.17);
+  --glass-surface-shadow: 0 22px 52px rgba(0,0,0,.24);
+  --home-glass-shadow: 0 24px 55px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.06);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.home-light .home-minimal-header {
+  background: hsl(var(--background) / .88);
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  box-shadow: 0 6px 22px hsl(var(--foreground) / .035);
+}
+.home-light .home-minimal-header .home-language-switch button.is-active {
+  color: hsl(var(--foreground));
+}
+.home-light .home-brand-anchor {
+  width: clamp(125px, 42vw, 180px);
+  min-width: 0 !important;
+}
+.home-light .home-brand-wordmark {
+  width: clamp(125px, 42vw, 180px);
+  max-width: 100%;
+  height: auto;
+}
+.home-light .unpro-home-hero {
+  min-height: 0;
+  background: hsl(var(--background));
+  overflow-x: clip;
+  overflow-y: visible;
+}
+.home-light .unpro-home-hero-atmosphere {
+  background:
+    radial-gradient(ellipse 65% 60% at 87% 8%, rgba(5,164,245,.22), transparent 76%),
+    radial-gradient(ellipse 70% 68% at 0% 40%, rgba(51,120,242,.09), transparent 72%),
+    linear-gradient(160deg,rgba(255,255,255,.88),rgba(226,246,255,.38));
+}
+.dark .home-light .unpro-home-hero-atmosphere {
+  background:
+    radial-gradient(ellipse 65% 60% at 88% 5%, rgba(0,131,255,.19), transparent 77%),
+    radial-gradient(ellipse 80% 66% at 0% 50%, rgba(0,67,175,.2), transparent 72%),
+    linear-gradient(160deg,rgba(4,9,24,.82),rgba(2,9,26,.62));
+}
+.home-light .unpro-home-eyebrow {
+  color: hsl(var(--primary-tint));
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card) / .83);
+  box-shadow: 0 4px 22px hsl(var(--primary) / .07);
+}
+.home-light .unpro-home-headline { color: hsl(var(--foreground)); }
+.home-light .unpro-home-gradient-word {
+  background: linear-gradient(110deg,#0972f4,#02bce5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dark .home-light .unpro-home-gradient-word {
+  background: linear-gradient(110deg,#78aaff,#44d9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.home-light .unpro-home-subtitle { color: hsl(var(--text-body)); }
+.home-light .unpro-home-benefits { color: hsl(var(--text-secondary)); }
+.home-light .unpro-home-benefits > div { min-width:0; font-size:.79rem; line-height:1.35; }
+.home-light .unpro-home-benefits svg { color: hsl(var(--primary)); }
+.home-light .unpro-home-primary-cta {
+  background: linear-gradient(105deg,#056cf5 0%,#06b5ec 100%);
+  color: #fff;
+  border: 1px solid rgba(5,98,224,.12);
+  box-shadow: 0 9px 25px rgba(2,114,233,.23);
+  text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.home-light .unpro-home-primary-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(2,114,233,.29);
+}
+.home-light .unpro-home-secondary-cta {
+  background: hsl(var(--card) / .86);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  text-decoration: none;
+}
+.home-light .unpro-home-secondary-cta:hover { border-color: hsl(var(--primary) / .6); }
+.home-light .unpro-home-house-stage { isolation: isolate; }
+.home-light .unpro-home-house-frame {
+  aspect-ratio: 1.14 / 1;
+  background: hsl(var(--secondary));
+  box-shadow: 0 32px 65px -35px rgba(3,92,182,.24);
+}
+.home-light .unpro-home-house-fade {
+  background: linear-gradient(90deg,hsl(var(--background) / .04),transparent 35%),
+  linear-gradient(0deg,rgba(4,22,58,.45),transparent 46%);
+}
+.home-light .unpro-home-clara-bubble {
+  background: hsl(var(--card) / .95);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 10px 28px rgba(6,35,78,.13);
+  backdrop-filter: blur(13px);
+}
+.home-light .unpro-home-clara-chip {
+  background: hsl(var(--card) / .95);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  text-decoration: none;
+  backdrop-filter: blur(14px);
+}
+.home-light .unpro-home-clara-chip small { color: hsl(var(--muted-foreground)); }
+.home-light .unpro-home-clara-orb {
+  background: linear-gradient(145deg,#0274ff,#02c9f2);
+  box-shadow: 0 0 0 4px hsl(var(--card) / .84),0 0 25px rgba(16,153,255,.4);
+}
+.home-light .unpro-home-conversation {
+  position: relative;
+  max-width: 970px;
+  scroll-margin-top: 120px;
+}
+.home-light .unpro-home-conversation .home-clara-shell {
+  margin-top: 0 !important;
+}
+.home-light .unpro-home-project-tile,
+.home-light .unpro-home-path-card {
+  background: hsl(var(--card) / .95);
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+  box-shadow: 0 10px 28px -18px hsl(var(--foreground) / .1);
+  text-decoration: none;
+}
+.home-light .unpro-home-project-tile:hover,
+.home-light .unpro-home-path-card:hover { border-color: hsl(var(--primary) / .5); }
+.home-light .unpro-home-tinted { background: hsl(var(--secondary) / .42); }
+.home-light .unpro-home-score-panel {
+  background: linear-gradient(135deg,hsl(var(--card) / .98),hsl(var(--secondary) / .68));
+  border-color: hsl(var(--border));
+}
+.home-light .unpro-home-score-illustration {
+  background: hsl(var(--card) / .78);
+  border-color: hsl(var(--border));
+}
+.home-light .unpro-home-score-ring {
+  background: conic-gradient(#0ba8ea 0 18%,#087eff 18% 33%,hsl(var(--secondary)) 33% 100%);
+}
+.home-light .unpro-home-score-ring-inside { background: hsl(var(--card)); }
+.home-light .unpro-home-path-card { min-height: 310px; }
+.home-light .home-glossy-hero.is-conversation-active {
+  background: hsl(var(--background));
+}
+@media (max-width: 767px) {
+  .home-light .unpro-home-hero .unpro-home-headline {
+    font-size: clamp(2.1rem,8.8vw,3.25rem);
+    letter-spacing: -.045em;
+  }
+  .home-light .unpro-home-house-frame { aspect-ratio: 1.55 / 1; }
+  .home-light .unpro-home-house-stage { max-width: 100%; }
+  .home-light .unpro-home-clara-bubble {
+    max-width: min(190px, 53%);
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .home-light .unpro-home-clara-chip { padding-block: 6px; }
+  .home-light .unpro-home-clara-orb { width: 42px; height: 42px; }
+  .home-light .unpro-home-conversation { margin-top: 20px; }
+  .home-light .unpro-home-benefits { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .home-light .unpro-home-benefits > div { flex-direction: column; align-items:flex-start; font-size:.71rem; }
+  .home-light .unpro-home-benefits svg { width:22px; height:22px; }
+  .home-light .home-glossy-hero.is-conversation-active {
+    min-height: 0;
+    overflow-x: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-light .unpro-home-primary-cta,
+  .home-light .unpro-home-project-tile img { transition: none !important; transform: none !important; }
+}
