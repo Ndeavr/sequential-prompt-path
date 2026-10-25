@@ -198,6 +198,9 @@ Deno.serve(async (req) => {
     return json({
       ok: true,
       dry_run: true,
+      recruitment_locked: !locks.allowed,
+      recruitment_lock_reason: locks.allowed ? null : locks.reason,
+      trigger_source: trigger,
       circuit_blocked: circuitBlocked,
       circuit_state: circuit?.state ?? null,
       kill_switch: circuit?.kill_switch ?? null,
