@@ -11,18 +11,18 @@ export default function HeroHomeownerLight() {
   // Hauteur visible publiée globalement par useKeyboardAwareViewport (App).
   const copy = lang === "fr"
     ? {
-        eyebrow: "Projet résidentiel",
-        lead: "Un projet de",
-        accent: "rénovation",
-        tail: "en tête?",
-        title: "Un projet de rénovation en tête?",
+        eyebrow: "Immobilier · Entretien · Rénovation",
+        lead: "Le bon professionnel.",
+        accent: "Pour le bon besoin.",
+        tail: "",
+        title: "Le bon professionnel. Pour le bon besoin.",
       }
     : {
-        eyebrow: "Home project",
-        lead: "Have a",
-        accent: "renovation project",
-        tail: "in mind?",
-        title: "Have a renovation project in mind?",
+        eyebrow: "Real estate · Property care · Renovation",
+        lead: "The right professional.",
+        accent: "For the right need.",
+        tail: "",
+        title: "The right professional. For the right need.",
       };
 
   return (

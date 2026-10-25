@@ -38,6 +38,14 @@ const megaMenus: Record<string, MegaMenuConfig> = {
   maison: {
     sections: [
       {
+        title: "Votre besoin", titleEn: "Your need",
+        items: [
+          { to: "/owner-universe?universe=professional", label: "Immobilier et services professionnels", labelEn: "Real estate and professional services", icon: Building },
+          { to: "/owner-universe?universe=maintenance", label: "Entretien et services", labelEn: "Property care and services", icon: Wrench },
+          { to: "/owner-universe?universe=renovation", label: "Rénovation et réparations", labelEn: "Renovation and repairs", icon: Home },
+        ],
+      },
+      {
         title: "Mon Passeport Maison", titleEn: "My Home Passport",
         items: [
           { to: "/proprietaires/passeport-maison", label: "Créer mon Passeport", labelEn: "Create My Passport", icon: FileText, description: "Dossier intelligent de votre propriété", descriptionEn: "Smart property file" },
@@ -63,7 +71,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
         items: [
           { to: "/verifier-entrepreneur", label: "Vérifier une entreprise", labelEn: "Verify a Company", icon: ShieldCheck },
           { to: "/compare-quotes", label: "Comparer mes soumissions", labelEn: "Compare My Quotes", icon: Scale },
-          { to: "/alex", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Search },
+          { to: "/alex", label: "Trouver un professionnel", labelEn: "Find a Professional", icon: Search },
           { to: "/dashboard/appointments", label: "Réserver un appel", labelEn: "Book a Call", icon: Phone },
         ],
       },
@@ -94,9 +102,9 @@ const megaMenus: Record<string, MegaMenuConfig> = {
       {
         title: "Acquisition clients", titleEn: "Client Acquisition",
         items: [
-          { to: "/entrepreneurs", label: "Page entrepreneurs", labelEn: "Entrepreneur Landing", icon: Sparkles, description: "Découvrez comment UNPRO vous apporte des clients", descriptionEn: "See how UNPRO brings you clients" },
+          { to: "/entrepreneurs", label: "Professionnels et entreprises", labelEn: "Professionals and businesses", icon: Sparkles, description: "Immobilier, entretien et rénovation", descriptionEn: "Real estate, maintenance and renovation" },
           { to: "/entrepreneurs/calculateur", label: "Combien je perds", labelEn: "How Much Am I Losing", icon: DollarSign, description: "Calculez vos revenus perdus et le bon plan", descriptionEn: "Calculate lost revenue & the right plan", badge: "NEW" },
-          { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: CalendarDays },
+          { to: "/pro/leads", label: "Mes demandes", labelEn: "My requests", icon: CalendarDays },
           { to: "/entrepreneurs/matching", label: "Matching propriétaires", labelEn: "Homeowner Matching", icon: Heart },
           { to: "/pro/appointments", label: "Booking intelligent", labelEn: "Smart Booking", icon: CalendarDays },
           { to: "/pro/territories", label: "Demandes locales", labelEn: "Local Requests", icon: Search },

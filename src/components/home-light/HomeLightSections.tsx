@@ -25,6 +25,7 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { PUBLIC_PHONE } from "@/config/publicContact";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import ServiceUniverseLinks from "@/components/menu/ServiceUniverseLinks";
 
 /** Active homepage paths; existing qualification and Clara remain authoritative. */
 export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: () => void }) {
@@ -34,39 +35,39 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
   const copy = fr ? {
     lines: ["UNPRO.", "Moins de leads.", "De meilleurs matchs.", "De vrais rendez-vous."],
     intro: "Les clics, c'est beau. Les bons clients, c'est mieux.",
-    explanation: "UNPRO utilise l'intelligence artificielle pour connecter les bons entrepreneurs aux bons propriétaires.",
-    exclusive: "Pas cinq compétiteurs sur le même lead. Pas cinq soumissions à comparer.",
+    explanation: "UNPRO vous aide à trouver un professionnel selon votre situation, vos critères et votre région.",
+    exclusive: "En rénovation : la fin des 3 soumissions. Une recherche de compatibilité, pas des leads partagés.",
     match: "Le bon match. Du premier coup.",
-    contractor: "Vous êtes entrepreneur?",
-    contractorPromise: "Arrêtez de courir après les clients. Rencontrez ceux qui vous cherchent.",
-    contractorBody: "Soyez mieux positionné pour être découvert par ChatGPT et les autres IA. Et surtout, rencontrez des propriétaires réellement intéressés par VOS services, dans VOTRE territoire.",
+    contractor: "Vous êtes entrepreneur ou professionnel?",
+    contractorPromise: "Faites connaître vos services et votre région.",
+    contractorBody: "Courtier, professionnel de l’immobilier, entreprise d’entretien ou rénovateur : découvrez ce qu’UNPRO comprend de votre entreprise. L’inscription des professions réglementées reste sous examen.",
     contractorCta: "Faire connaître mon entreprise",
     contractorMicro: "Vos services. Votre territoire. Vos clients. Aucun lead partagé.",
     homeowner: "Vous êtes propriétaire?",
-    homeownerPromise: "Pourquoi courir après cinq entrepreneurs quand l'IA peut vous aider à trouver le bon?",
+    homeownerPromise: "Un besoin immobilier, d’entretien ou de rénovation?",
     homeownerBody: "Décrivez votre problème ou votre projet à Clara. Téléchargez une photo ou parlez-lui du design souhaité.",
-    homeownerCta: "Trouver mon entrepreneur",
+    homeownerCta: "Trouver mon professionnel",
     homeownerMicro: "Gratuit pour les propriétaires. Sans obligation. Sans cinq soumissions à gérer.",
-    difference: "Un bon entrepreneur pour le mauvais client, ça reste un mauvais match.",
+    difference: "Un bon professionnel pour le mauvais besoin, ça reste un mauvais match.",
     closing: "UNPRO — Ce n'est pas une question de trouver plus. C'est une question de trouver mieux.",
     impact: "Découvrir l’impact potentiel de l’IA",
   } : {
     lines: ["UNPRO.", "Fewer leads.", "Better matches.", "Real appointments."],
     intro: "Clicks are nice. The right clients are better.",
-    explanation: "UNPRO uses artificial intelligence to connect the right contractors with the right homeowners.",
-    exclusive: "Not five competitors on the same lead. Not five quotes to compare.",
+    explanation: "UNPRO helps you find a professional based on your situation, criteria and region.",
+    exclusive: "For renovation: the end of three quotes. Compatibility, not shared leads.",
     match: "The right match. The first time.",
-    contractor: "Are you a contractor?",
-    contractorPromise: "Stop chasing clients. Meet the people looking for you.",
-    contractorBody: "Help ChatGPT and other AI platforms discover your business. More importantly, meet homeowners genuinely interested in YOUR services, in YOUR service area.",
+    contractor: "Are you a contractor or professional?",
+    contractorPromise: "Make your services and region known.",
+    contractorBody: "Real estate broker, property professional, maintenance company or renovator: discover what UNPRO understands about your business. Registration for regulated professions remains subject to review.",
     contractorCta: "Get my business discovered",
     contractorMicro: "Your services. Your territory. Your clients. No shared leads.",
     homeowner: "Are you a homeowner?",
-    homeownerPromise: "Why chase five contractors when AI can help you find the right one?",
+    homeownerPromise: "A real estate, maintenance or renovation need?",
     homeownerBody: "Describe your problem or project to Clara. Upload a photo or tell her about the design you have in mind.",
-    homeownerCta: "Find my contractor",
+    homeownerCta: "Find my professional",
     homeownerMicro: "Free for homeowners. No obligation. No five quotes to manage.",
-    difference: "A good contractor for the wrong client is still a bad match.",
+    difference: "A good professional for the wrong need is still a bad match.",
     closing: "UNPRO — It’s not about finding more. It’s about finding better.",
     impact: "Explore AI’s potential impact",
   };
@@ -79,6 +80,7 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
   return (
     <section aria-labelledby="home-matching-title" className="home-matching-section alex-immersive border-t border-border bg-background px-5 py-16 sm:px-8 md:py-24">
       <div className="mx-auto max-w-5xl">
+        <div className="mb-10"><ServiceUniverseLinks lang={lang} /></div>
         <h2 id="home-matching-title" className="text-3xl font-semibold leading-tight tracking-normal text-foreground sm:text-4xl md:text-5xl">
           {copy.lines.map((line, i) => <motion.span key={i} {...reveal(i * 0.1)} className={`block ${i === 2 ? "text-primary-tint" : ""}`}>{line}</motion.span>)}
         </h2>
@@ -98,7 +100,7 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">{contractor ? copy.contractorBody : copy.homeownerBody}</p>
               <div className="mt-auto pt-7">
                 {contractor ? <Button asChild className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl bg-primary-strong px-4 py-3 text-base">
-                  <Link to="/entrepreneur/devis-personnalise" onClick={() => trackCopilotEvent("contractor_entry_click", { surface: "home_matching", destination: "/entrepreneur/devis-personnalise" })}>{copy.contractorCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
+                  <Link to="/entrepreneurs/audit-ia" onClick={() => trackCopilotEvent("contractor_entry_click", { surface: "home_matching", destination: "/entrepreneurs/audit-ia" })}>{copy.contractorCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
                 </Button> : <Button onClick={() => { trackCopilotEvent("hero_find_pro_click", { surface: "home_matching" }); onStartHomeowner(); }} variant="outline" className="h-auto min-h-12 w-full gap-2 whitespace-normal rounded-2xl px-4 py-3 text-base">{copy.homeownerCta} <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Button>}
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{contractor ? copy.contractorMicro : copy.homeownerMicro}</p>
               </div>
