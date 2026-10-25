@@ -789,7 +789,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   useEffect(() => {
     const onVoicePartial = (event: Event) => {
       const detail = (event as CustomEvent<{ id: string; role: "user" | "assistant"; text: string }>).detail;
-      if (!detail?.id || !detail.text || audienceRef.current !== "homeowner" && !hasActiveContractorFlow()) return;
+      if (!detail?.id || !detail.text || !useAlexVoiceLockedStore.getState().isOverlayOpen) return;
       setMessages((previous) => previous.some((message) => message.id === detail.id)
         ? previous.map((message) => message.id === detail.id && message.status !== "complete"
           ? { ...message, text: detail.text, status: "streaming" } : message)
