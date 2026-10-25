@@ -47,7 +47,8 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
     expect(box).not.toContain("scrollIntoView({ block: \"start\"");
     expect(css).toContain("100dvh");
     expect(css).toContain('html[data-clara-conversation-active="true"] body');
-    expect(hero).not.toContain("overflow-hidden");
+    expect(hero).toContain("home-glossy-hero unpro-home-hero");
+    expect(hero).toContain("onConversationActiveChange={setIsConversationActive}");
   });
 
   it("préserve les médias et la fermeture complète de la voix", () => {
