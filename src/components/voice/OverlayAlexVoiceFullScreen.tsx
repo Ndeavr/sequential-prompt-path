@@ -315,6 +315,20 @@ export default function OverlayAlexVoiceFullScreen() {
     onUserTranscriptPartial: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen || HALTED.has(s.machineState) || !text.trim()) return;
+      // Barge-in: preserve only the caption already heard, not Clara's unsaid text.
+      const interruptedAgentId = partialAlexIdRef.current;
+      const heard = spokenVisibleRef.current.trim();
+      if (hasSpokenAgentRef.current && interruptedAgentId) {
+        if (heard) {
+          recordClaraVoiceTurn("assistant", heard, interruptedAgentId);
+          setTranscripts((previous) => previous.map((entry) => entry.id === interruptedAgentId ? { ...entry, text: heard } : entry));
+        }
+        pendingAgentFinalRef.current = null;
+        spokenTargetRef.current = "";
+        spokenVisibleRef.current = "";
+        partialAlexIdRef.current = null;
+        hasSpokenAgentRef.current = false;
+      }
       const id = partialUserIdRef.current ?? nextClaraVoiceTurnId();
       partialUserIdRef.current = id;
       setTranscripts((previous) => {
