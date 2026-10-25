@@ -8,6 +8,7 @@ import { Loader2, ArrowRight, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { detectInputKind } from "@/config/contractorOnboarding";
 import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { buildContractorEntryUrl } from "@/config/contractorFunnel";
 
 export default function PageContractorJoinLive() {
   const [value, setValue] = useState("");
@@ -30,9 +31,11 @@ export default function PageContractorJoinLive() {
       if (invokeErr) throw invokeErr;
       const runId = (data as { run_id?: string })?.run_id;
       if (!runId) throw new Error("Réponse invalide du pipeline.");
-      navigate(`/contractor/analysis?run=${runId}`);
+      // Preserve invitation, affiliate and UTM context through the analysis step.
+      navigate(buildContractorEntryUrl({ run: runId }, "/contractor/analysis"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue.");
+      console.warn("[contractor/join] analysis start failed", err);
+      setError("Nous n’avons pas pu démarrer l’analyse. Vérifiez l’information et réessayez.");
       setBusy(false);
     }
   }
@@ -46,12 +49,13 @@ export default function PageContractorJoinLive() {
             <span>{CONTRACTOR_OFFER.headline} {CONTRACTOR_OFFER.subheadline}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-            Activez votre profil UNPRO en moins de 2 minutes.
+            Découvrez le potentiel de votre entreprise sur UNPRO.
           </h1>
           <p className="mt-3 text-white/75 text-[15px] leading-snug">
-            Entrez votre site web, votre RBQ, votre NEQ ou votre numéro de
-            téléphone. On extrait, on analyse et on bâtit votre profil
-            intelligent.
+            Indiquez votre site Web, votre RBQ, votre NEQ ou votre numéro de
+            téléphone. Nous préparerons une première analyse à partir des
+            informations disponibles. Vous pourrez confirmer les détails avant
+            de vous inscrire.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-3">
@@ -59,10 +63,11 @@ export default function PageContractorJoinLive() {
               <input
                 type="text"
                 value={value}
+                aria-label="Site Web, licence RBQ, NEQ ou téléphone de l’entreprise"
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="isroyal.ca"
                 autoFocus
-                inputMode="url"
+                inputMode="text"
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
@@ -77,7 +82,7 @@ export default function PageContractorJoinLive() {
             >
               {busy
                 ? <><Loader2 className="w-4 h-4 animate-spin" />Analyse en cours…</>
-                : <>Lancer l'analyse <ArrowRight className="w-4 h-4" /></>}
+                : <>Voir mon analyse <ArrowRight className="w-4 h-4" /></>}
             </button>
             {error && (
               <p className="text-sm text-red-400 text-center pt-1">{error}</p>

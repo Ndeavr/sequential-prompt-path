@@ -39,22 +39,12 @@ const STEPS: Array<{ key: string; label: string }> = [
   { key: "ready", label: "Prêt à activer" },
 ];
 
-const PLAN_LABEL: Record<string, string> = {
-  recrue: "Recrue",
-  pro: "Pro",
-  premium: "Premium",
-  elite: "Élite",
-  signature: "Signature",
-};
-function planLabel(slug: string): string {
-  return PLAN_LABEL[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
-}
-
 export default function PageContractorAnalysisLive() {
   const [params] = useSearchParams();
   const runId = params.get("run");
   const navigate = useNavigate();
   const [run, setRun] = useState<RunRow | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!runId) return;
@@ -71,15 +61,19 @@ export default function PageContractorAnalysisLive() {
       if (!active) return;
       if (error) {
         console.warn("[analysis-live] fetch error", error);
+        setLoadError(true);
         return;
       }
       if (data) {
+        setLoadError(false);
         setRun(data as unknown as RunRow);
         const status = (data as { pipeline_status?: string }).pipeline_status;
         if ((status === "ready" || status === "failed") && pollTimer) {
           clearInterval(pollTimer);
           pollTimer = null;
         }
+      } else {
+        setLoadError(true);
       }
     };
 
@@ -124,7 +118,7 @@ export default function PageContractorAnalysisLive() {
         <div className="text-center">
           <p className="text-white/70">Aucune session d'activation.</p>
           <button
-            onClick={() => navigate("/contractor/join")}
+            onClick={() => navigate(buildContractorEntryUrl({}, "/contractor/join"))}
             className="mt-4 rounded-xl bg-amber-400 text-[#060B14] px-5 py-2.5 text-sm font-semibold"
           >
             Recommencer
@@ -136,9 +130,8 @@ export default function PageContractorAnalysisLive() {
 
   const score = run?.aipp_score ?? null;
   const buckets = run?.aipp_breakdown ?? {};
-  const plan = run?.recommended_plan ?? null;
   const ready = run?.pipeline_status === "ready";
-  const projected = run?.recommendation?.projected_appointments ?? 0;
+  const failed = run?.pipeline_status === "failed";
 
   return (
     <main className="min-h-screen bg-[#060B14] text-white pb-32">
@@ -155,7 +148,7 @@ export default function PageContractorAnalysisLive() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5">
           {STEPS.map((s, i) => {
             const done = i < stepIdx;
-            const active = i === stepIdx && !ready;
+            const active = i === stepIdx && !ready && !failed;
             return (
               <div key={s.key} className="flex items-center gap-3 text-sm">
                 {done
@@ -231,40 +224,49 @@ export default function PageContractorAnalysisLive() {
           </section>
         )}
 
-        {/* Plan reco */}
-        {plan && (
+        {failed && (
+          <section role="alert" className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/[0.06] p-5">
+            <p className="font-semibold">L’analyse n’a pas pu être terminée.</p>
+            <p className="mt-2 text-sm text-white/75">Aucun paiement n’a été demandé. Vous pouvez réessayer avec une autre information d’entreprise.</p>
+            <button
+              onClick={() => navigate(buildContractorEntryUrl({}, "/contractor/join"))}
+              className="mt-4 rounded-xl bg-amber-400 px-5 py-3 text-sm font-semibold text-[#060B14]"
+            >
+              Réessayer
+            </button>
+          </section>
+        )}
+        {loadError && !run && (
+          <section role="alert" className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/[0.04] p-5">
+            <p className="font-semibold">Impossible de charger l’analyse pour le moment.</p>
+            <p className="mt-2 text-sm text-white/70">Si le problème persiste, recommencez sans perdre votre lien de provenance.</p>
+            <button
+              onClick={() => navigate(buildContractorEntryUrl({}, "/contractor/join"))}
+              className="mt-4 rounded-xl border border-white/20 px-5 py-3 text-sm"
+            >
+              Recommencer
+            </button>
+          </section>
+        )}
+        {ready && (
           <section className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/[0.04] p-5">
-            <p className="text-xs uppercase tracking-wider text-amber-300">
-              Plan recommandé
+            <p className="text-xs uppercase tracking-wider text-amber-300">Votre prochaine étape</p>
+            <p className="mt-2 text-lg font-semibold">Confirmez les renseignements de votre entreprise avec Clara.</p>
+            <p className="mt-2 text-sm text-white/75 leading-relaxed">
+              Vos métiers, vos territoires et vos préférences de projets serviront à mieux qualifier les demandes qui pourraient vous correspondre.
             </p>
-            <p className="mt-1 text-2xl font-semibold text-white">
-              UNPRO {planLabel(plan)}
-            </p>
-            <p className="mt-2 text-sm text-white/70 leading-snug">
-              {run?.recommendation?.reason}
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-3">
-              <div className="rounded-xl bg-white/[0.04] p-3">
-                <p className="text-xs text-white/50">Rendez-vous qualifiés</p>
-                <p className="text-lg font-semibold tabular-nums">
-                  {projected}/mois
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 text-xs text-white/40">
-              Le plan et son prix seront personnalisés après votre profil et vos objectifs.
-            </p>
+            <p className="mt-3 text-xs text-white/60">{CONTRACTOR_OFFER.supporting}</p>
           </section>
         )}
       </div>
 
       {/* Sticky CTA */}
-      {ready && plan && (
+      {ready && (
         <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
           <div className="max-w-2xl mx-auto">
             <ActivationButton runId={runId!} businessName={run?.domain ?? undefined} />
             <p className="mt-2 text-center text-[11px] text-white/40">
-              Fondateur UNPRO — accès privilégié activé
+              Aucun paiement confirmé à cette étape. Les conditions seront affichées avant Stripe.
             </p>
           </div>
         </div>
