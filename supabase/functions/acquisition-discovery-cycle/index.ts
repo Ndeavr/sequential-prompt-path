@@ -11,7 +11,12 @@
  *   → acquisition_queue → acquisition-queue-worker (envoi) .
  *
  * Garde-fous non contournables :
+ *  - authentification service/admin obligatoire (aucun appel anonyme) ;
  *  - fail-closed sur le drapeau system_flags.DISCOVERY_ENABLED ;
+ *  - fail-closed sur recruitment_controls (global_enabled ET
+ *    autonomous_enqueue_enabled) avant tout appel externe ou import ;
+ *  - provenance de déclenchement dérivée de l'authentification, jamais
+ *    du corps client seul ;
  *  - arrêt automatique quand la campagne gratuite atteint 10 activations ;
  *  - plafond par cycle (défaut 3 recherches) ET plafond serveur 25 appels/jour ;
  *  - aucune recherche si le cache (trade × ville) est encore frais ;
