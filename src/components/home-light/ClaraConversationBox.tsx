@@ -53,6 +53,7 @@ import {
   CLARA_CONTRACTOR_VOICE_FINISHED_EVENT,
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
+  CLARA_VOICE_PARTIAL_EVENT,
   CLARA_VOICE_TEXT_INPUT_EVENT,
 } from "@/services/clara/claraVoiceBridge";
 import {
@@ -100,6 +101,7 @@ import {
 import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, resolveClaraContractorEntry, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import RegisterPropertyCTA from "@/components/home-light/RegisterPropertyCTA";
+import { useProperties } from "@/hooks/useProperties";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
@@ -291,6 +293,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const { lang } = useLanguage();
   const navigate = useNavigate();
   const { data: ownContractor } = useContractorProfile();
+  const { data: homeownerProperties } = useProperties();
   const [openingPage, setOpeningPage] = useState(false);
   const openingPageRef = useRef(false);
 
@@ -304,7 +307,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         voice: "Parler à Clara",
         send: "Envoyer",
         working: "Analyse en cours…",
-        fallback: "Je continue ici avec vous. Reformulez en une phrase.",
+        fallback: "La réponse a été interrompue. Votre message est conservé.",
         reset: "Nouvelle conversation",
         resetConfirm: "Commencer une nouvelle conversation ?",
         resetYes: "Commencer",
@@ -320,7 +323,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         voice: "Talk to Clara",
         send: "Send",
         working: "Analyzing…",
-        fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
+        fallback: "The response was interrupted. Your message is still here.",
         reset: "New conversation",
         resetConfirm: "Start a new conversation?",
         resetYes: "Start",
@@ -333,6 +336,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   messagesRef.current = messages;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
+  const [addressJustProvided, setAddressJustProvided] = useState(false);
   const [mode, setMode] = useState<ClaraSurfaceMode>(() => forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
@@ -755,6 +760,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   useEffect(() => keepComposerVisible(), [messages, busy, composerText, keepComposerVisible]);
 
+  // Follow speech only while the reader is near the newest message.
+  useEffect(() => {
+    if (voiceActive && isNearBottom()) scrollToLatest("auto");
+  }, [messages, voiceActive, isNearBottom, scrollToLatest]);
+
   useEffect(() => {
     if (!quickReplies || busy || messages.length === 0 || !isNearBottom()) return;
     // Les choix apparaissent après la réponse : si le lecteur suivait déjà le
@@ -774,9 +784,20 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   }, []);
 
 
-  // ONE CLARA — la voix n'a pas d'historique séparé : chaque parole apparaît
-  // ici en direct, puis l'état serveur fait autorité à la fermeture.
+  // ONE CLARA: tentative text is visible immediately, never persisted as a
+  // separate turn. Only the provider's final transcript becomes canonical.
   useEffect(() => {
+    const onVoicePartial = (event: Event) => {
+      const detail = (event as CustomEvent<{ id: string; role: "user" | "assistant"; text: string }>).detail;
+      if (!detail?.id || !detail.text || !useAlexVoiceLockedStore.getState().isOverlayOpen) return;
+      setMessages((previous) => previous.some((message) => message.id === detail.id)
+        ? previous.map((message) => message.id === detail.id && message.status !== "complete"
+          ? { ...message, text: detail.text, status: "streaming" } : message)
+        : [...previous, {
+            id: detail.id, role: detail.role, text: detail.text,
+            status: "streaming", audience: audienceRef.current,
+          }]);
+    };
     const onVoiceMessage = (event: Event) => {
       const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string; requiresNextStep?: boolean };
       if (!detail?.text) return;
@@ -834,9 +855,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       })();
     };
 
+    window.addEventListener(CLARA_VOICE_PARTIAL_EVENT, onVoicePartial);
     window.addEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
     window.addEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     return () => {
+      window.removeEventListener(CLARA_VOICE_PARTIAL_EVENT, onVoicePartial);
       window.removeEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
       window.removeEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     };
@@ -1121,9 +1144,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   }, [finishContractorTransition]);
 
   const send = useCallback(
-    async (raw: string) => {
+    async (raw: string, retryLast = false) => {
       const text = raw.trim();
       if (!text || busy) return;
+      const previousUserMessage = [...messagesRef.current].reverse().find((message) => message.role === "user");
+      const isRetry = retryLast && previousUserMessage?.text === text;
       if (!messages.some((message) => message.role === "user")) {
         logQuestion(text, { source: "chat_composer", lang: lang === "fr" ? "fr-CA" : "en-CA" });
       }
@@ -1136,10 +1161,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       }
 
       setError(null);
+      setRetryMessage(null);
       setQuickReplies(null);
-      const userMessageId = uid();
-      const history = [...messages, { id: userMessageId, role: "user" as const, text, audience: audienceRef.current }];
-      setMessages(history);
+      const userMessageId = isRetry ? previousUserMessage!.id : uid();
+      const history = isRetry ? messagesRef.current : [...messages, { id: userMessageId, role: "user" as const, text, audience: audienceRef.current }];
+      if (!isRetry) setMessages(history);
       // Envoi utilisateur : on descend toujours au dernier message, en douceur.
       scrollToLatest("smooth");
 
@@ -1173,6 +1199,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // ACTIVE de Clara. Une réponse à une question sur l'entreprise reste
       // dans le parcours entrepreneur — jamais de Dossier maison.
       const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
+      // The CTA can appear after a homeowner supplies an address in Clara, not before.
+      // Keep the address DECLARED until the existing registration flow validates it.
+      const addressWasRequested = /(?:adresse\s+(?:de\s+)?(?:la\s+|votre\s+)?propri[eé]t[eé]|(?:quelle|laquelle)\s+propri[eé]t[eé]|besoin\s+de\s+l.adresse)/i.test(lastAssistantText);
+      const streetAddressProvided = /\b\d{1,6}\s+(?:[\p{L}'’.-]+\s+){0,5}(?:rue|avenue|av\.|boul(?:evard)?|chemin|rang|street|road)\b/iu.test(text)
+        || /\b\d{1,6}\s+(?:rue|avenue|av\.|boul(?:evard)?|chemin|rang|street|road)\b/iu.test(text);
+      if (!isRetry && audienceRef.current === "homeowner" && addressWasRequested && streetAddressProvided) {
+        setAddressJustProvided(true);
+      }
       const contractorTurn = audienceRef.current === "contractor"
         || (!hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
 
@@ -1255,7 +1289,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
         return;
       }
-      void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: audienceRef.current }).catch(() => {});
+      if (!isRetry) void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId, audience: audienceRef.current }).catch(() => {});
 
       const assistantId = uid();
       const reveal = createStreamingTyping((shown) => {
@@ -1344,8 +1378,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
         // Clara ne renvoie jamais l'utilisateur chercher : elle prend en charge.
         const guidedText = stripOpenAnnouncement(rewriteGuidance(finalText, destination));
-        const shownText =
-          guidedText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
+        if (!guidedText) throw new Error("empty_clara_reply");
+        const shownText = guidedText;
         // Curseur maison : dernière question propriétaire, restaurée au retour.
         if (audienceRef.current === "homeowner") {
           rememberHomeCursor({ text: shownText, options: parsed.options.length >= 2 ? parsed.options : [] });
@@ -1403,9 +1437,10 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
       } catch {
         reveal.cancel();
-        setMessages((prev) => prev.map((m) => m.id === assistantId
-          ? { ...m, text: m.text || copy.fallback, status: "failed" }
-          : m));
+        // Network/model failure is not a failure of comprehension: keep the user turn
+        // and offer retry with the same history, without inventing Clara's answer.
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+        setRetryMessage(text);
         setError(copy.fallback);
       } finally {
         reveal.cancel();
@@ -1677,7 +1712,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     trackCopilotEvent("clara_voice_suggested", { surface: "home_clara_box" });
     if (!voiceTipShown.current) {
       voiceTipShown.current = true;
-      setVoiceTip(lang === "fr" ? "Vous pouvez aussi utiliser le micro. Je complète votre dossier pendant que vous parlez." : "You can also use the microphone. I’ll complete your profile as you speak.");
+      setVoiceTip(lang === "fr" ? "Parlez à Clara : vos mots s’affichent pendant que vous parlez." : "Talk to Clara: your words appear as you speak.");
     }
     const timer = window.setTimeout(() => {
       setVoiceGlow(false);
@@ -1816,12 +1851,15 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     ? copy.listening
     : audience === "contractor"
       ? (lang === "fr" ? "Parlez-moi de votre entreprise…" : "Tell me about your business…")
-      : conversationStarted ? copy.placeholderActive : copy.placeholder;
+      : (lang === "fr" ? "Parlez à Clara ou écrivez…" : "Talk to Clara or type…");
 
   const lastMessage = messages[messages.length - 1];
   const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
   const visibleQuickReplies = quickReplies ?? (lastMessage && restoredOptions.length >= 2
     ? { messageId: lastMessage.id, options: restoredOptions } : null);
+  const propertyQuestionActive = audience === "homeowner" && lastMessage?.role === "assistant"
+    && /(?:quelle|laquelle)\s+(?:de\s+vos\s+)?propri[eé]t[eé]s?\b|pour\s+quelle\s+adresse/i.test(lastMessage.text)
+    && lastMessage.text.includes("?");
 
   return (
     <section
@@ -1893,6 +1931,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           editAddress={dossierEditAddress}
           onAddressSaved={(entry) => {
             dossierAddressSavedRef.current = true;
+            if (audienceRef.current === "homeowner") setAddressJustProvided(true);
             dossierPendingRef.current = false;
             setDossierOpen(false);
             setDossierEditAddress(false);
@@ -1983,6 +2022,18 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 ))}
               </div>
             )}
+            {propertyQuestionActive && !busy && (homeownerProperties?.length ?? 0) > 0 && (
+              <div className="home-clara-quick" role="group" aria-label="Choisir une propriété enregistrée">
+                {homeownerProperties!.map((property) => (
+                  <button type="button" key={property.id} onClick={() => void send(`C’est pour ma propriété au ${property.address}${property.city ? `, ${property.city}` : ""}.`)}>
+                    {property.address}{property.city ? `, ${property.city}` : ""}
+                  </button>
+                ))}
+                <button type="button" onClick={() => { setDossierEditAddress(true); setDossierOpen(true); }}>
+                  Autre propriété
+                </button>
+              </div>
+            )}
             {nextStepRetry && <button type="button" className="home-clara-card-primary" onClick={() => void continuePricingRef.current()}>Reprendre ma proposition</button>}
             {contractorFlow && audience === "contractor" && (
               <ClaraContractorFlow
@@ -2030,6 +2081,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             ) : busy && !claraTyping ? <p className="home-clara-working" role="status">{copy.working}</p> : null}
 
             {error && <p role="alert" className="home-clara-error">{error}</p>}
+            {error === copy.fallback && retryMessage && !busy && (
+              <button type="button" className="home-clara-card-primary" onClick={() => void send(retryMessage, true)}>
+                {lang === "fr" ? "Réessayer" : "Try again"}
+              </button>
+            )}
             {!online && <p role="status" className="home-clara-offline">Connexion interrompue. Votre message reste ici.</p>}
         {showIntentSuggestions && (
          <div className="home-clara-examples" aria-label="Intentions suggérées" data-suggestion-source={intentSuggestions[0]?.source ?? "default"}>
@@ -2052,7 +2108,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <ConversationScrollButton title="Revenir au dernier message" className="home-clara-scroll-latest" />
         </Conversation>
 
-      {audience === "homeowner" && <RegisterPropertyCTA lang={lang} />}
+      {audience === "homeowner" && addressJustProvided && (homeownerProperties?.length ?? 0) === 0 && <RegisterPropertyCTA lang={lang} />}
       <div className={`home-clara-input-row${showIntentSuggestions && mediaItems.length === 0 && !voiceActive ? " is-initial-empty" : ""}`} data-chat-row="composer">
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
@@ -2156,7 +2212,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 aria-label={copy.voice}
                 data-voice-suggested={voiceGlow ? "true" : undefined}
                 data-voice-listening={voiceActive ? "true" : undefined}
-                className="home-clara-tool home-clara-mic rounded-full text-muted-foreground hover:text-foreground"
+                className={`home-clara-tool home-clara-mic rounded-full touch-manipulation focus-visible:ring-2 focus-visible:ring-primary ${voiceActive ? "bg-primary/20 text-primary ring-2 ring-primary" : composerText.trim() ? "text-muted-foreground hover:text-foreground" : "bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"}`}
               >
                 <Mic className="h-5 w-5" />
               </PromptInputButton>

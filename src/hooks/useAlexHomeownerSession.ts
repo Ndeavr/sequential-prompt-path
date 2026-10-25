@@ -163,8 +163,8 @@ export function useAlexHomeownerSession(designContext?: DesignChatContext) {
           id: crypto.randomUUID(),
           sender: "alex",
           text: language === "fr"
-            ? "Je n'ai pas pu traiter votre dernier message. Reformulez-le et je continue."
-            : "I couldn't process your last message. Rephrase it and I'll continue.",
+            ? "La réponse a été interrompue. Votre message est conservé; vous pouvez réessayer."
+            : "The response was interrupted. Your message is saved; you can try again.",
           timestamp: new Date(),
         },
       ]);

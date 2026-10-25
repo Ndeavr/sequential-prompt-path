@@ -30,7 +30,7 @@ describe("Clara — cycle de vie stable des messages", () => {
   });
 
   it("consolide les fragments vocaux dans le tour final", () => {
-    expect(voice).toContain("onTranscriptPartial: (text)");
+    expect(voice).toContain("onTranscriptPartial: (chunk)");
     expect(voice).toContain("onUserTranscriptPartial: (text)");
     expect(voice).toContain("partialAlexIdRef.current = null");
     expect(voice).toContain("partialUserIdRef.current = null");

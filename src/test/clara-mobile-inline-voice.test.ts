@@ -17,10 +17,14 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
   });
 
   it("garde une seule conversation canonique et le transcript visible", () => {
-    expect(voice).toContain('recordClaraVoiceTurn("user", text)');
-    expect(voice).toContain('recordClaraVoiceTurn("assistant", text)');
+    expect(voice).toContain('recordClaraVoiceTurn("user", text, partialUserIdRef.current ?? undefined)');
+    expect(voice).toContain('recordClaraVoiceTurn("assistant", final.text, final.id)');
     expect(box).toContain("reconcileMessages(current");
     expect(box).toContain("CLARA_VOICE_MESSAGE_EVENT");
+    expect(box).toContain("CLARA_VOICE_PARTIAL_EVENT");
+    expect(voice).toContain('previewClaraVoiceTurn("user", text, id)');
+    expect(voice).toContain('previewClaraVoiceTurn("assistant", next, id)');
+    expect(voice).toContain("if (!store.isOverlayOpen || !isSpeaking");
     expect(box).toContain("startOrResumeClaraSession");
   });
 

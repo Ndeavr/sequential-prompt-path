@@ -94,7 +94,8 @@ async function callAlexChat(messages: AlexInlineMessage[]): Promise<string> {
     }
   }
 
-  return full.trim() || "Désolée, je n'ai pas saisi. Pouvez-vous reformuler?";
+  if (!full.trim()) throw new Error("alex-chat returned an empty response");
+  return full.trim();
 }
 
 export default forwardRef<AlexHomepageConversationHandle, Props>(
@@ -194,7 +195,7 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
         : state === "thinking"
         ? "Analyse en cours…"
         : state === "error"
-        ? "Je n'ai pas bien compris. Pouvez-vous répéter?"
+        ? "La réponse a été interrompue. Votre message reste dans la conversation."
         : null;
 
     return (

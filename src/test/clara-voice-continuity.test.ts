@@ -74,8 +74,8 @@ describe("Clara voice — transcription visible dans le chat", () => {
   it("écrit chaque tour parlé dans la conversation canonique", () => {
     expect(bridge).toContain("appendClaraMessage");
     expect(bridge).toContain("clientMessageId");
-    expect(overlay).toContain('recordClaraVoiceTurn("user", text)');
-    expect(overlay).toContain('recordClaraVoiceTurn("assistant", text)');
+    expect(overlay).toContain('recordClaraVoiceTurn("user", text, partialUserIdRef.current ?? undefined)');
+    expect(overlay).toContain('recordClaraVoiceTurn("assistant", final.text, final.id)');
   });
 
   it("n'ouvre aucune seconde session conversationnelle", () => {
