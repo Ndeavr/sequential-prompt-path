@@ -2,6 +2,7 @@
  * PageHomeLight — ONE CLARA conversation-first homepage.
  */
 import { useEffect } from "react";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Helmet } from "react-helmet-async";
 
 import MainLayout from "@/layouts/MainLayout";
@@ -13,6 +14,11 @@ import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorResume";
 
 export default function PageHomeLight() {
+  const { lang } = useLanguage();
+  const title = lang === "fr" ? "UNPRO | Le bon professionnel. Pour le bon besoin." : "UNPRO | The right professional. For the right need.";
+  const description = lang === "fr"
+    ? "UNPRO vous aide à trouver un professionnel selon votre situation, vos critères et votre région. Immobilier, entretien, rénovation et réparations au Québec."
+    : "UNPRO helps you find a professional based on your situation, criteria and region. Real estate, property care, renovation and repairs in Quebec.";
   useEffect(() => {
     trackCopilotEvent("homepage_loaded");
   }, []);
@@ -22,35 +28,35 @@ export default function PageHomeLight() {
     "@type": "Service",
     name: "UNPRO",
     description:
-      "Décrivez vos travaux à Clara. UNPRO utilise l'IA pour comprendre votre projet et vous orienter vers l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions.",
+      description,
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: "Recommandation IA d'entrepreneurs résidentiels",
+    serviceType: ["Immobilier et services professionnels", "Entretien et services", "Rénovation et réparations"],
   };
 
   return (
     <AlexProvider>
       <MainLayout hideMemorySection>
         <Helmet>
-          <title>UNPRO | Clara, votre intelligence résidentielle</title>
+          <title>{title}</title>
           <meta
             name="description"
-            content="Montrez ou décrivez votre besoin à Clara. Elle vous aide à comprendre, vérifier ou améliorer votre propriété."
+            content={description}
           />
-          <meta property="og:title" content="UNPRO — Parlez à Clara" />
+          <meta property="og:title" content={title} />
           <meta
             property="og:description"
-            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
+            content={description}
           />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://unpro.ca/" />
           <meta property="og:image" content={DEFAULT_OG_IMAGE} />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="UNPRO — Parlez à Clara" />
+          <meta name="twitter:title" content={title} />
           <meta
             name="twitter:description"
-            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
+            content={description}
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
           <meta name="theme-color" content="#050816" />

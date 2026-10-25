@@ -4,12 +4,12 @@
 import { motion } from "framer-motion";
 
 const SOLUTIONS = [
-  "Rendez-vous qualifiés",
-  "Clients déjà motivés",
+  "Demandes selon admissibilité",
+  "Services et région précisés",
   "Demandes locales ciblées",
   "Moins de temps perdu",
-  "Plus haut taux de fermeture",
-  "Croissance prévisible",
+  "Critères de compatibilité explicites",
+  "Profil documenté",
 ];
 
 export default function SectionSolutionV2() {

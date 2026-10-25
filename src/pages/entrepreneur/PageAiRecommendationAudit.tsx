@@ -482,10 +482,10 @@ export default function PageAiRecommendationAudit() {
   return (
     <div className="audit-gold audit-pro-page min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Helmet>
-        <title>Audit IA gratuit — Découvrez comment l'IA voit votre entreprise | UNPRO</title>
+        <title>Audit IA — Immobilier, entretien et rénovation | UNPRO</title>
         <meta
           name="description"
-          content="Audit IA gratuit en environ 60 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
+          content="Audit IA gratuit pour les professionnels de l’immobilier, entreprises d’entretien et rénovateurs au Québec. Profil et admissibilité évalués selon les informations disponibles."
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs/audit-ia" />
       </Helmet>
@@ -507,7 +507,7 @@ export default function PageAiRecommendationAudit() {
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
               Voyez ce que l'IA comprend de votre entreprise, ce qui manque et les actions prioritaires
-              pour devenir admissible aux recommandations UNPRO.
+              pour examiner votre admissibilité aux recommandations UNPRO. Immobilier, entretien et rénovation : un seul parcours. Les professions réglementées restent sous examen.
             </p>
 
 

@@ -20,9 +20,9 @@ describe("active homepage matching paths", () => {
     render(<MemoryRouter><SectionMatchingPaths onStartHomeowner={start} /></MemoryRouter>);
     expect(document.querySelectorAll("article")).toHaveLength(2);
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("UNPRO.Moins de leads.De meilleurs matchs.De vrais rendez-vous.");
-    expect(screen.getByRole("link", { name: /Faire connaître mon entreprise/ })).toHaveAttribute("href", "/entrepreneur/devis-personnalise");
+    expect(screen.getByRole("link", { name: /Faire connaître mon entreprise/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
     expect(screen.getByRole("link", { name: /Découvrir l’impact/ })).toHaveAttribute("href", "/impact");
-    fireEvent.click(screen.getByRole("button", { name: /Trouver mon entrepreneur/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Trouver mon professionnel/ }));
     expect(start).toHaveBeenCalledTimes(1);
     expect(document.body.textContent).not.toMatch(/Ce qu’on offre|première année offerte|1er janvier|Temps total potentiel/);
     expect(screen.queryByText(/Les plateformes d’IA restent libres/)).not.toBeInTheDocument();
@@ -38,8 +38,8 @@ describe("active homepage matching paths", () => {
     state.lang = "en";
     render(<MemoryRouter><SectionMatchingPaths onStartHomeowner={() => {}} /></MemoryRouter>);
     expect(screen.getByText("Better matches.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Get my business discovered/ })).toHaveAttribute("href", "/entrepreneur/devis-personnalise");
-    expect(screen.getByRole("button", { name: /Find my contractor/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Get my business discovered/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
+    expect(screen.getByRole("button", { name: /Find my professional/ })).toBeInTheDocument();
     expect(screen.getByText("Describe your problem or project to Clara. Upload a photo or tell her about the design you have in mind.")).toBeInTheDocument();
     expect(screen.queryByText(/AI platforms make their own/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Call UNPRO at 450-328-6776" })).toHaveAttribute("href", "tel:+14503286776");

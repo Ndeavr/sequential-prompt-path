@@ -242,9 +242,9 @@ type IntentSuggestion = {
 };
 
 const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
-  { label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem", source: "default" },
-  { label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem", source: "default" },
-  { label: "J’aimerais rénover ma salle de bain", intent: "homeowner_problem", source: "default" },
+  { label: "Je cherche un courtier immobilier", intent: "homeowner_problem", source: "default" },
+  { label: "Nettoyer mes conduits d’air", intent: "homeowner_problem", source: "default" },
+  { label: "J’ai un projet de rénovation", intent: "homeowner_problem", source: "default" },
 ];
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
@@ -296,7 +296,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   const copy = lang === "fr"
     ? {
-        placeholder: "Décrivez votre projet…",
+        placeholder: "Décrivez votre besoin…",
         placeholderActive: "Répondez à Clara…",
         listening: "Clara vous écoute…",
         attach: "Ajouter une photo ou un document",
@@ -312,7 +312,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
       }
     : {
-        placeholder: "Describe your project…",
+        placeholder: "Describe what you need…",
         placeholderActive: "Reply to Clara…",
         listening: "Clara is listening…",
         attach: "Add a photo or document",
@@ -635,11 +635,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const homeownerTrending = popularQuestions.items.filter((item) => item.intent !== "contractor");
   const intentSuggestions: IntentSuggestion[] = lang === "en"
     ? [
-        { label: "I’d like to remodel my kitchen", intent: "homeowner_problem", source: "default" },
-        { label: "I have ice dams on my roof", intent: "homeowner_problem", source: "default" },
-        { label: "I’d like to renovate my bathroom", intent: "homeowner_problem", source: "default" },
+        { label: "I’m looking for a real estate broker", intent: "homeowner_problem", source: "default" },
+        { label: "Clean my air ducts", intent: "homeowner_problem", source: "default" },
+        { label: "I have a renovation project", intent: "homeowner_problem", source: "default" },
       ]
-    : popularQuestions.source === "trending" && homeownerTrending.length >= 3
+    : surface !== "home" && popularQuestions.source === "trending" && homeownerTrending.length >= 3
     ? homeownerTrending.slice(0, 3).map((item) => ({
         label: item.label,
         intent: item.intent === "comparison" ? "quote_comparison" : "homeowner_problem",
@@ -1838,7 +1838,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           </div>
           <div className="home-clara-command-actions" aria-label="Commandes de conversation">
             {audience === "contractor" && (
-              <Button type="button" variant="ghost" size="icon" aria-label="Trouver mon entrepreneur" title="Trouver mon entrepreneur"
+              <Button type="button" variant="ghost" size="icon" aria-label="Trouver mon professionnel" title="Trouver mon professionnel"
                 onClick={switchToHomeowner}>
                 <Home aria-hidden="true" />
               </Button>

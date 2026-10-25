@@ -5,9 +5,11 @@
 import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Zap, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { campaignLink } from "@/lib/contractorCampaignLinks";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import UnproLogo from "@/components/brand/UnproLogo";
-import { useEntrepreneurMessaging } from "@/hooks/useEntrepreneurMessaging";
+
 
 interface Props {
   onTrackCta: (key: string, section: string) => void;
@@ -15,7 +17,9 @@ interface Props {
 
 export default function HeroV2({ onTrackCta }: Props) {
   const navigate = useNavigate();
-  const m = useEntrepreneurMessaging({ context: "default" });
+  const { search } = useLocation();
+  const { lang } = useLanguage();
+  const fr = lang === "fr";
 
   return (
     <section className="relative overflow-hidden px-5 pt-6 pb-10">
@@ -75,14 +79,14 @@ export default function HeroV2({ onTrackCta }: Props) {
       >
         <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground leading-[1.1] tracking-tight">
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {m.hero.active.title}
+            {fr ? "Professionnels et entreprises de services" : "Professionals and service businesses"}
           </span>
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
-          {m.hero.active.subtitle}
+          {fr ? "Courtiers, notaires, arpenteurs, entreprises d’entretien et rénovateurs : un seul parcours pour faire connaître votre entreprise, vos services et votre région." : "Brokers, notaries, surveyors, maintenance companies and renovators: one journey to make your business, services and region known."}
         </p>
         <p className="mt-3 text-xs font-semibold text-primary/90">
-          {m.hero.promise}
+          {fr ? "Immobilier · Entretien · Rénovation" : "Real estate · Property care · Renovation"}
         </p>
       </motion.div>
 
@@ -96,18 +100,18 @@ export default function HeroV2({ onTrackCta }: Props) {
         <Button
           size="lg"
           className="w-full h-14 rounded-xl text-base font-bold gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.35)]"
-          onClick={() => { onTrackCta("hero_primary_book", "hero"); document.getElementById("section-form")?.scrollIntoView({ behavior: "smooth" }); }}
+          onClick={() => { onTrackCta("hero_primary_book", "hero"); navigate(campaignLink("/entrepreneurs/audit-ia", search)); }}
         >
-          {m.cta.activateAppointments}
+          {fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}
           <ArrowRight className="w-5 h-5" />
         </Button>
         <Button
           variant="outline"
           size="lg"
           className="w-full h-12 rounded-xl text-sm border-primary/30 hover:bg-primary/5"
-          onClick={() => { onTrackCta("hero_secondary_plan_ia", "hero"); window.location.assign("/entrepreneur/plan-ia"); }}
+          onClick={() => { onTrackCta("hero_secondary_plan_ia", "hero"); navigate(campaignLink("/entrepreneurs/audit-ia", search)); }}
         >
-          {m.cta.seeOpportunities}
+          {fr ? "Découvrir mon profil UNPRO" : "Explore my UNPRO profile"}
         </Button>
       </motion.div>
 
@@ -118,9 +122,9 @@ export default function HeroV2({ onTrackCta }: Props) {
         transition={{ delay: 0.6 }}
         className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground"
       >
-        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> Recommandé par l'IA</span>
-        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> Visibilité IA activable</span>
-        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> Exclusivité territoriale</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> {fr ? "Profil sous examen" : "Profile subject to review"}</span>
+        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> {fr ? "Présence IA UNPRO" : "UNPRO AI Presence"}</span>
+        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> {fr ? "Votre région" : "Your region"}</span>
       </motion.div>
     </section>
   );

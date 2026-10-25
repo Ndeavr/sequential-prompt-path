@@ -10,6 +10,7 @@ import {
   Search, X, Sparkles, Lock, Crown, Wrench,
 } from "lucide-react";
 import UpgradeWindow from "./UpgradeWindow";
+import { HOMEOWNER_SECTIONS } from "@/data/menuTaxonomy";
 
 export interface ServiceSelection {
   primaryServices: string[];
@@ -39,6 +40,9 @@ export const SERVICE_LIMITS: Record<string, { primary: number; secondary: number
 
 /** Master service list — grouped by trade */
 const SERVICE_CATALOG: { group: string; services: string[] }[] = [
+  ...HOMEOWNER_SECTIONS.filter((s) => ["professional", "maintenance"].includes(s.slug))
+    .map((s) => ({ group: s.name, services: s.items.map((i) => i.name) })),
+  { group: "Peinture", services: ["Peinture intérieure", "Peinture extérieure"] },
   {
     group: "Toiture",
     services: [
@@ -298,6 +302,8 @@ export default function ServiceSelector({
           </div>
         </div>
       )}
+
+      <p className="text-sm leading-relaxed text-muted-foreground">Les services sont déclarés. Pour les professions réglementées, l’inscription reste sous examen; une sélection ne vaut ni vérification ni autorisation de recommandation.</p>
 
       {/* Search */}
       <div className="relative">

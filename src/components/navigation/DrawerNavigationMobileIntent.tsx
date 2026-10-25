@@ -20,6 +20,7 @@ import HeaderSearch from "./HeaderSearch";
 import SmartCTA from "@/components/cta/SmartCTA";
 import MegaMenuMobileSection from "./MobileMenu";
 import type { UserRole } from "@/types/navigation";
+import ServiceUniverseLinks from "@/components/menu/ServiceUniverseLinks";
 
 interface Props {
   onClose: () => void;
@@ -89,6 +90,7 @@ export default function DrawerNavigationMobileIntent({
           </Link>
 
           {/* Search */}
+          <div className="mb-5"><ServiceUniverseLinks lang={lang} onClose={onClose} /></div>
           <div className="mb-5">
             <HeaderSearch lang={lang} variant="mobile" onClose={onClose} />
           </div>

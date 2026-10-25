@@ -4,7 +4,7 @@
  * Intent → Seasonal suggestions → Progressive service sections → Search
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import OwnerIntentHero from "@/components/menu/OwnerIntentHero";
@@ -17,14 +17,14 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import type { MenuItemDef } from "@/data/menuTaxonomy";
 
 export default function OwnerMenuPreviewPage() {
-  const [intent, setIntent] = useState("");
-  const [showUniverse, setShowUniverse] = useState(false);
+  const [params] = useSearchParams();
+  const [intent, setIntent] = useState(params.get("universe") ?? "");
+  const [showUniverse, setShowUniverse] = useState(Boolean(params.get("universe")));
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
 
   const handleItemClick = (item: MenuItemDef) => {
-    // Future: navigate to service page or open drawer
-    console.log("Selected:", item.slug);
+    navigate(`/alex?q=${encodeURIComponent(`J’ai besoin du service suivant : ${item.name}`)}`);
   };
 
   return (
@@ -37,12 +37,14 @@ export default function OwnerMenuPreviewPage() {
               L'univers de votre propriété
             </h1>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Rénovation, entretien, experts, assurance, permis, télécoms — tout au même endroit.
+              Immobilier et services professionnels, entretien et services, rénovation et réparations.
             </p>
           </motion.div>
 
           {/* Search */}
           <SearchEverythingInput onSelect={handleItemClick} />
+          <Button variant="link" className="h-auto whitespace-normal text-left" onClick={() => navigate(`/alex?q=${encodeURIComponent("Je cherche un gestionnaire immobilier")}`)}>Gestionnaire immobilier — demande d’information</Button>
+          <p className="text-sm leading-relaxed text-muted-foreground">Professions réglementées : demande d’information sous examen, sans recommandation ni statut vérifié avant validation.</p>
 
           {/* Intent Selection */}
           <AnimatePresence mode="wait">
