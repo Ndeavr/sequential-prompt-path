@@ -3,6 +3,7 @@
  * One Clara conversation, no duplicate assistant or fabricated social proof.
  * Both palettes share this layout; semantic tokens provide light/dark contrast.
  */
+import { useState } from "react";
 import { ArrowRight, CalendarCheck2, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -12,12 +13,13 @@ import heroHouse from "@/assets/hero-house.jpg";
 export default function HeroHomeownerLight() {
   const { lang } = useLanguage();
   const english = lang === "en";
+  const [isConversationActive, setIsConversationActive] = useState(false);
 
   return (
-    <section className="unpro-home-hero relative isolate overflow-hidden" aria-label={english ? "Home renovation" : "Votre projet de rénovation"}>
+    <section className={"home-glossy-hero unpro-home-hero relative isolate overflow-hidden" + (isConversationActive ? " is-conversation-active" : "")} aria-label={english ? "Home renovation" : "Votre projet de rénovation"}>
       <div className="unpro-home-hero-atmosphere pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-9 sm:px-6 md:pb-12 md:pt-14 lg:px-8 lg:pt-16">
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,1fr)] lg:gap-7">
+        {!isConversationActive && <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,1fr)] lg:gap-7">
           <div className="unpro-home-intro relative z-10 min-w-0">
             <p className="unpro-home-eyebrow inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold sm:text-sm">
               <Sparkles className="h-4 w-4" aria-hidden />
@@ -105,10 +107,10 @@ export default function HeroHomeownerLight() {
               </span>
             </a>
           </motion.div>
-        </div>
+        </div>}
 
         <div id="clara-conversation" className="unpro-home-conversation mx-auto mt-7 max-w-4xl scroll-mt-28 sm:mt-10">
-          <ClaraConversationBox />
+          <ClaraConversationBox surface="home" onConversationActiveChange={setIsConversationActive} />
         </div>
       </div>
     </section>
