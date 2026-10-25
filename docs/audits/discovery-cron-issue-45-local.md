@@ -105,6 +105,8 @@ affaiblir la garde. Aucun rollback n’a été exécuté ici.
 - Node syntax check et git diff check réussis. Premier essai Deno avec
   `--cached-only` refusé par la version installée (option inexistante).
 - Compilation automatique : build OK. Contrôle TypeScript global séparé non
-  exécuté; contrôle Deno hors réseau rapporté séparément dans la remise.
+  exécuté. `deno check --no-remote --no-lock` du helper recruitmentLocks réussi;
+  le contrôle du handler entier est bloqué par son import distant esm.sh, interdit
+  par `--no-remote`. Aucun accès réseau effectué pour contourner cette limite.
 - Aucune validation hébergée, aucun test du socket/secret ou SQL opérationnel,
   aucune mise en production. La fonctionnalité reste fail-closed.
