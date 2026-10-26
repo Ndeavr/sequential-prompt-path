@@ -6,6 +6,7 @@ import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { recordSmsEvent } from "../_shared/outreachEvents.ts";
 import { attributionFromLog } from "../_shared/smsAttribution.ts";
 import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts";
+import { isStatusRegression, isValidTwilioSignature } from "../_shared/twilioSignature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

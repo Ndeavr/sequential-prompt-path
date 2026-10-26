@@ -27,6 +27,6 @@ const RANK: Record<string, number> = {
 export function isStatusRegression(current: string | null | undefined, next: string): boolean {
   const c = RANK[(current ?? "").toLowerCase()] ?? 0;
   const n = RANK[next] ?? 0;
-  if (c >= 5 && n <= c) return c !== n || true; // terminal: ignore duplicates and regressions
+  if (c >= 5 && n <= c) return true; // terminal: ignore duplicates and regressions
   return n < c;
 }
