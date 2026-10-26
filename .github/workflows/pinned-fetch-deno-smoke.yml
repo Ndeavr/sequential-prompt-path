@@ -1,0 +1,26 @@
+name: Pinned HTTPS - Deno runtime smoke
+
+on:
+  pull_request:
+    branches: [lovable-sync]
+    paths:
+      - "supabase/functions/enrich-official-website/pinnedPublicFetch.ts"
+      - "scripts/ci/pinned-fetch-deno-smoke.ts"
+      - ".github/workflows/pinned-fetch-deno-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check source and run first-party pinned transport with real Deno
+        run: |
+          deno check supabase/functions/enrich-official-website/pinnedPublicFetch.ts
+          deno run --allow-net scripts/ci/pinned-fetch-deno-smoke.ts
