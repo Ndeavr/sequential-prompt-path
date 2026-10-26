@@ -566,7 +566,7 @@
     box-shadow: 0 0 8px hsl(199 100% 67% / .8);
   }
   .home-light .home-hero-title {
-    font-family: var(--font-display);
+    font-family: var(--font-marketing-display);
     max-width: 860px;
     font-size: clamp(2rem, 4.2vw, 4rem);
     line-height: 1.04;
