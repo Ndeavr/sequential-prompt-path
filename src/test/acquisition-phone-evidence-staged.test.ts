@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 import { normalizePhone } from "../../supabase/functions/_shared/normalizePhone";
 import { normalizeCaslDestination, sha256Hex } from "../../supabase/functions/_shared/caslEvidence";
 import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "../../supabase/functions/_shared/officialSiteCrawler";
@@ -63,6 +62,9 @@ describe("staged first-party phone evidence — no consent or provider", () => {
     expect(h.writes[0].verification_method).toBe("first_party_phone_pending_human_review"); expect(h.writes[0]).not.toHaveProperty("reviewer_id");
   });
   it("existing evidence remains untouched", async () => { const h = moduleHarness({ existing: [{ id }] }); await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(h.writes).toHaveLength(0); });
+  it("uses the existing ten-digit evidence normalization consistently", () => { expect(normalizeCaslDestination("phone_sms", company.phone_e164)).toBe("4502345678"); expect(company.phone_e164.slice(2)).toBe("4502345678"); });
+  it.each(["(450) 234-5678", "+1 450 234 5678", "450.234.5678"])("observes exact formatting variant %s", async phone => { const h = moduleHarness({ html: document.replace("450-234-5678", phone) }); const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, true); expect(r.observation.status).toBe("machine_verified"); expect(h.writes).toHaveLength(0); });
+  it("hidden phone is not visible evidence", async () => { const h = moduleHarness({ html: document.replace("450-234-5678", "") + "<script>450-234-5678</script>" }); const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(r.observation.reason).toBe("exact_phone_not_visible"); expect(h.writes).toHaveLength(0); });
   it.each([
     { company: { do_not_contact: true } }, { opted: true }, { suppressed: true }, { duplicates: [{ id }, { id: "other" }] },
     { company: { category_slug: "roofing", rbq_verified: false } }, { company: { business_name: "Hôtel Synthetic" } },
