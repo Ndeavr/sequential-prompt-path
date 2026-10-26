@@ -9,7 +9,7 @@ declare const Deno: any;
 export async function pinnedPublicFetch(raw: string | URL | Request, init?: RequestInit): Promise<Response> {
   const u = safeUrl(String(raw));
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const addresses = await Promise.race([
+  const addresses: string[] = await Promise.race([
     Deno.resolveDns(u.hostname, "A"),
     new Promise<string[]>((_, reject) => { timer = setTimeout(() => reject(new Error("dns_timeout")), POLICY.timeoutMs); }),
   ]).finally(() => clearTimeout(timer));
