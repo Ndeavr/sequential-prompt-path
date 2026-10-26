@@ -140,26 +140,11 @@ Deno.serve(async (req) => {
       return json({ ok: false, reason: "lookup_failed" }, 500);
     }
 
-    // Messaging apps sometimes truncate the link — unambiguous prefix fallback.
-    // Le préfixe minimal est volontairement long : un préfixe court ouvrirait
-    // la porte à l'énumération de jetons.
-    let resolved = row;
-    if (!resolved && token.length >= 16) {
-      const { data: candidates, error: prefixError } = await supabase
-        .from("verified_prospect_tokens")
-        .select(cols)
-        .like("token", `${token}%`)
-        .limit(2);
-      if (prefixError) {
-        console.error("[activation-token-resolve] prefix_lookup_failed", prefixError.message);
-      } else if (candidates && candidates.length === 1) {
-        resolved = candidates[0];
-      } else if (candidates && candidates.length > 1) {
-        await logInviteEvent(supabase, "token_ambiguous", { token, outcome: "blocked" });
-        return json({ ok: false, reason: "token_ambiguous" }, 404);
-      }
-    }
-    if (!resolved) {
+    // Même contrat qu'activation-claim : ne jamais transformer un préfixe
+    // en jeton complet ni divulguer ce dernier à son détenteur.
+    // Un lien tronqué doit être rouvert depuis l'invitation complète.
+    const resolved = row;
+    if (!resolved || resolved.token !== token) {
       await logInviteEvent(supabase, "token_invalid", { token, outcome: "blocked", reason: "token_not_found" });
       return json({ ok: false, reason: "token_not_found" }, 404);
     }
@@ -172,7 +157,8 @@ Deno.serve(async (req) => {
       });
       return json({ ok: false, reason: "token_revoked" }, 410);
     }
-    if (resolved.expires_at && new Date(resolved.expires_at).getTime() <= Date.now()) {
+    const expiresAt = typeof resolved.expires_at === "string" ? Date.parse(resolved.expires_at) : NaN;
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
       await logInviteEvent(supabase, "token_expired", {
         token,
         prospect_id: resolved.prospect_id,
