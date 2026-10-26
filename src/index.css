@@ -1587,6 +1587,18 @@
   }
 }
 
+@layer utilities {
+  /* Narrowly scoped marketing display headline utility (Figtree 900).
+     Apply only to prominent public marketing H1/headlines — never logo,
+     body text, forms, navigation, Clara dialogue, checkout or admin. */
+  .marketing-display {
+    font-family: var(--font-marketing-display);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+}
+
 @layer components {
   /* ═══════════════════════════════════════════════
      CINEMATIC BACKGROUND SYSTEM
