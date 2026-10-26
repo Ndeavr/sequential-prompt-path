@@ -185,6 +185,10 @@ export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun
   if (duplicateError || !duplicates || duplicates.length !== 1 || duplicates[0].id !== id) throw new Error("canonical_phone_ambiguous");
   const { data: opted, error: optError } = await sb.from("sms_opt_outs").select("normalized_phone").in("normalized_phone", [phone.normalized, phone.normalized.slice(2)]).limit(1);
   if (optError || !opted || opted.length) throw new Error("opted_out_or_unreadable");
+  // Public listing is not permission to contact a suppressed destination.
+  // Fail closed if the canonical suppression RPC cannot be read.
+  const { data: suppressed, error: suppressionError } = await sb.rpc("is_phone_suppressed", { p_phone: phone.normalized });
+  if (suppressionError || suppressed !== false) throw new Error("suppression_blocked_or_unreadable");
   if (!p.website_url) throw new Error("official_site_missing");
   const source = safeUrl(/^https:\/\//i.test(p.website_url) ? p.website_url : `https://${p.website_url}`).toString();
   const relevance = `Publication à examiner pour le service déclaré « ${service} »; aucune autorisation de sollicitation automatique.`;
