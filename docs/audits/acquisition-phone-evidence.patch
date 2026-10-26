@@ -1,0 +1,194 @@
+--- a/supabase/functions/enrich-official-website/caslFirstParty.ts
++++ b/supabase/functions/enrich-official-website/caslFirstParty.ts
+@@ -1,4 +1,5 @@
+-import { normalizeCaslDestination, sha256Hex } from "../_shared/caslEvidence.ts";
++import { normalizePhone } from "../_shared/normalizePhone.ts";
++import { captureCaslEvidence, normalizeCaslDestination, sha256Hex } from "../_shared/caslEvidence.ts";
+ import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "../_shared/officialSiteCrawler.ts";
+ 
+ export const POLICY = { version: "first-party-observation-v1", auto_eligibility_enabled: false, maxPages: 6, maxBytes: 250_000, timeoutMs: 4_000, freshMs: 300_000 } as const;
+@@ -68,6 +69,14 @@
+   const normalized = norm(visible);
+   const declared = norm(service);
+   const aliases: Record<string, RegExp> = {
++    "nettoyage-conduits": /conduits|ducts|dryer|sécheuse|secheuse/i,
++    "lavage-de-vitres": /vitres|windows/i,
++    "entretien-menager": /ménag|menag|cleaning|nettoyage/i,
++    "debarras-ramassage": /débarras|debarras|junk|encombrants/i,
++    "entretien-gazon": /gazon|lawn/i,
++    "gestion-parasitaire": /parasitaire|extermin|pest/i,
++    "nettoyage-tapis": /tapis|carpet|rug/i,
++    "nettoyage-mobilier": /mobilier|upholstery|tissus/i,
+     peinture: /\b(peinture|peintre|painting|painters?)\b/,
+     painting: /\b(peinture|peintre|painting|painters?)\b/,
+     toiture: /\b(toiture|couvreur|roofing|roofers?)\b/,
+@@ -81,12 +90,15 @@
+ export async function observeFirstParty(e: Target, company: Company, io: IO): Promise<Observation> {
+   const result: Observation = { status: "pending", reason: "not_checked", evidence_id: e.id, business_name: company.business_name ?? "", building_service: serviceHint(company), relevance: "", checked_at: new Date(io.now?.() ?? Date.now()).toISOString(), pages: [], policy: POLICY, legal_consent_established: false };
+   try {
+-    if (e.destination_type !== "email" || e.source_type !== "company_website") throw new Error("first_party_email_required");
++    if (!["email", "phone_sms"].includes(e.destination_type) || e.source_type !== "company_website") throw new Error("first_party_destination_required");
++    const isPhone = e.destination_type === "phone_sms";
++    const phone = isPhone ? normalizePhone(e.destination_normalized) : null;
++    if (isPhone && (!phone?.valid || !phone.normalized || !/^\+1[2-9]\d{2}[2-9]\d{6}$/.test(phone.normalized) || /^\+1(?:800|833|844|855|866|877|888)/.test(phone.normalized))) throw new Error("invalid_sms_destination");
+     const source = safeUrl(e.source_url);
+     const rawOfficial = company.official_domain ?? company.website_url ?? "";
+     const official = safeUrl(/^https:\/\//i.test(rawOfficial) ? rawOfficial : `https://${rawOfficial}`);
+     const email = normalizeCaslDestination("email", e.destination_normalized);
+-    if (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || email.split("@")[1] !== source.hostname.replace(/^www\./, "")) throw new Error("official_identity_ambiguous");
++    if ((!isPhone && (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email))) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || (!isPhone && email?.split("@")[1] !== source.hostname.replace(/^www\./, ""))) throw new Error("official_identity_ambiguous");
+     if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
+     const rules = parseRobots(await read(`${source.origin}/robots.txt`, io, source.hostname, true));
+     const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false;
+@@ -95,9 +107,11 @@
+       const u = safeUrl(queue[i], source.hostname); if (seen.has(u.toString())) continue; seen.add(u.toString());
+       if (!isAllowedByRobots(rules, u.pathname)) throw new Error("robots_blocked");
+       const html = await read(u.toString(), io, source.hostname); const visible = text(html); const lower = norm(visible);
+-      const addresses = visible.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? []; const found = addresses.some(a => a.toLowerCase() === email);
+-      exact ||= found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
+-      const refused = refusal(visible); const at = found ? visible.toLowerCase().indexOf(email) : 0;
++      const addresses = visible.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? []; const phoneMatches = visible.match(/(?:\+?1[ .-]?)?\(?[2-9]\d{2}\)?[ .-]?[2-9]\d{2}[ .-]?\d{4}/g) ?? [];
++      const matchedPhone = phoneMatches.find(raw => normalizePhone(raw).normalized === phone?.normalized);
++      const found = isPhone ? Boolean(matchedPhone) : addresses.some(a => a.toLowerCase() === email);
++      exact ||= isPhone ? (i === 0 && found) : found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
++      const refused = refusal(visible); const at = found ? visible.toLowerCase().indexOf(isPhone ? matchedPhone ?? "" : email ?? "") : 0;
+       result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
+       if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
+       for (const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+@@ -109,7 +123,7 @@
+       }
+     }
+     result.relevance = e.business_relevance_explanation;
+-    result.reason = !exact ? "exact_email_not_visible" : !name || !service ? "company_or_service_ambiguous" : !contact || !policy ? "contact_or_policy_missing" : "publication_observed_human_review_required";
++    result.reason = !exact ? (isPhone ? "exact_phone_not_visible" : "exact_email_not_visible") : !name || !service ? "company_or_service_ambiguous" : !contact || !policy ? "contact_or_policy_missing" : "publication_observed_human_review_required";
+     if (exact && name && service && contact && policy) result.status = "machine_verified";
+   } catch (err) { result.reason = err instanceof Error ? err.message : "check_failed"; }
+   return result;
+@@ -132,4 +146,43 @@
+     if (writeError) throw new Error("observation_write_failed");
+   }
+   return observation;
++} 
++
++/** Explicit admin action; exact existing canonical anchor only. No identity updates. */
++export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun: boolean) {
++  const { data: p, error } = await sb.from("contractor_prospects")
++    .select("id,business_name,website_url,phone,phone_e164,category_slug,trade,trade_category,do_not_contact,rbq_verified")
++    .eq("id", id).maybeSingle();
++  if (error || !p) throw new Error("canonical_anchor_missing_or_unreadable");
++  if (p.do_not_contact) throw new Error("opted_out");
++  // Bounded maintenance scope only; regulated construction is never inferred eligible.
++  const maintenance = new Set(["nettoyage-conduits", "lavage-de-vitres", "entretien-menager", "debarras-ramassage", "entretien-gazon", "gestion-parasitaire", "nettoyage-tapis", "nettoyage-mobilier"]);
++  if (!maintenance.has(p.category_slug)) throw new Error("service_fit_requires_review");
++  if (/hotel|hôtel|aquatique|aqua club|parc du|entraide|écocentre|ecocentre|ameublement/i.test(p.business_name ?? "")) throw new Error("not_service_provider");
++  const phone = normalizePhone(p.phone_e164 ?? p.phone);
++  if (!phone.valid || !phone.normalized || /^\+1(?:800|833|844|855|866|877|888)/.test(phone.normalized)) throw new Error("invalid_sms_destination");
++  const { data: duplicates, error: duplicateError } = await sb.from("contractor_prospects").select("id").eq("phone_e164", phone.normalized).limit(2);
++  if (duplicateError || !duplicates || duplicates.length !== 1 || duplicates[0].id !== id) throw new Error("canonical_phone_ambiguous");
++  const { data: suppressed, error: suppressionError } = await sb.rpc("is_phone_suppressed", { p_phone: phone.normalized });
++  if (suppressionError || suppressed !== false) throw new Error("suppression_blocked_or_unreadable");
++  const { data: opted, error: optError } = await sb.from("sms_opt_outs").select("normalized_phone").in("normalized_phone", [phone.normalized, phone.normalized.slice(2)]).limit(1);
++  if (optError || !opted || opted.length) throw new Error("opted_out_or_unreadable");
++  const relevance = `Publication à examiner pour les services déclarés ${p.category_slug}; aucune autorisation de sollicitation automatique.`;
++  const source = safeUrl(p.website_url).toString();
++  const observation = await observeFirstParty({ id, destination_type: "phone_sms", destination_normalized: phone.normalized, source_type: "company_website", source_url: source, business_relevance_explanation: relevance }, p, io);
++  let evidenceId: string | null = null;
++  if (observation.status === "machine_verified" && !dryRun) {
++    // Explicit fail-closed dedupe before the existing capture helper (which historically ignores read errors).
++    const { data: existing, error: evidenceError } = await sb.from("casl_consent_evidence").select("id").eq("contractor_prospect_id", id).eq("destination_type", "phone_sms").eq("destination_normalized", phone.normalized.slice(2)).eq("source_url", source).limit(1);
++    if (evidenceError || !existing) throw new Error("evidence_dedupe_unreadable");
++    if (existing.length) evidenceId = existing[0].id;
++    else {
++      const page = observation.pages[0];
++      if (!page) throw new Error("source_observation_missing");
++      const captured = await captureCaslEvidence(sb, { contractor_prospect_id: id, destination_type: "phone_sms", destination: phone.normalized, lawful_basis: "implicit_public_conspicuous", source_url: source, source_type: "company_website", source_publisher: p.business_name, retrieved_at: observation.checked_at, page_sha256: page.page_sha256, business_relevance_explanation: `${relevance} Extrait observé : ${page.snippet}`, refusal_statement_found: false, verification_method: "first_party_phone_pending_human_review", capture_agent: "enrich-official-website" });
++      if (!captured.ok || !captured.evidence_id) throw new Error("phone_evidence_capture_failed");
++      evidenceId = captured.evidence_id;
++    }
++  }
++  return { observation, evidence_id: evidenceId, human_review_required: true, legal_consent_established: false, dry_run: dryRun, sent: 0 };
+ }
+--- a/supabase/functions/enrich-official-website/index.ts
++++ b/supabase/functions/enrich-official-website/index.ts
+@@ -29,7 +29,7 @@
+ } from "../_shared/officialSiteCrawler.ts";
+ import { sanitizeEmail } from "../_shared/emailHygiene.ts";
+ import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+-import { recheckCasl } from "./caslFirstParty.ts";
++import { captureFirstPartyPhone, recheckCasl } from "./caslFirstParty.ts";
+ import { pinnedPublicFetch } from "./pinnedPublicFetch.ts";
+ import { z } from "https://esm.sh/zod@3.25.76";
+ 
+@@ -62,6 +62,16 @@
+     const supabase = createClient(url, svc);
+ 
+     const body = await req.json().catch(() => ({}));
++    if (body.action === "capture_phone_casl") {
++      if (caller.kind !== "admin") return jr({ ok: false, code: "admin_session_required" }, 403, rid);
++      const parsed = z.object({ action: z.literal("capture_phone_casl"), contractor_prospect_id: z.string().uuid(), dry_run: z.boolean().default(true) }).strict().safeParse(body);
++      if (!parsed.success) return jr({ ok: false, code: "invalid_phone_capture_request" }, 400, rid);
++      const result = await captureFirstPartyPhone(supabase, parsed.data.contractor_prospect_id, {
++        fetch: pinnedPublicFetch,
++        resolve: async (host) => { try { return await Deno.resolveDns(host, "A"); } catch { return []; } },
++      }, parsed.data.dry_run);
++      return jr({ ok: true, ...result }, 200, rid);
++    }
+     if (body.action === "verify_casl") {
+       const parsed = z.object({ action: z.literal("verify_casl"), evidence_id: z.string().uuid(), dry_run: z.boolean().default(false) }).strict().safeParse(body);
+       if (!parsed.success) return jr({ ok: false, code: "invalid_casl_request" }, 400, rid);
+--- a/supabase/functions/send-verified-batch/index.ts
++++ b/supabase/functions/send-verified-batch/index.ts
+@@ -388,6 +388,7 @@
+           else if (p.outreach_status !== "none") reason = `already_${p.outreach_status}`;
+           else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "") && !p.email) reason = `no_channel_available:tier=${p.sms_eligibility_tier ?? "none"}_no_email`;
+ 
++          if (!dryRun) {
+           await supabase
+             .from("verified_contractor_prospects")
+             .update({
+@@ -414,6 +415,7 @@
+               has_email: !!p.email,
+             },
+           });
++          }
+           missingResults.push({ id: p.id, business_name: p.business_name, status: "skipped_by_gate", skipped: reason });
+         }
+       }
+@@ -527,6 +529,7 @@
+       (!!p.phone_e164 && recentlyContactedPhones.has(String(p.phone_e164)));
+ 
+     if (dryRun) {
++      const previewGate = await assertCommercialOutreachAllowed(supabase as any);
+       const previews = eligible.map((p: any) => {
+         const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+         const dup = isRecentlyContacted(p);
+@@ -540,7 +543,13 @@
+           email_eligibility_reason: p.email_eligibility_reason ?? null,
+           outreach_status: p.outreach_status,
+           duplicate_guard: dup,
+-          channel_planned: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
++          channel_planned: "none",
++          candidate_channel: smsEligibleTier ? "sms" : (p.email ? "email" : "none"),
++          sms_provider_ready: false,
++          readiness_status: previewGate.allowed ? "not_verified" : "blocked",
++          readiness_blockers: [previewGate.allowed ? "full_sender_preflight_not_verified" : previewGate.reason,
++            ...(p.phone_line_type !== "mobile" ? ["sms_destination_or_prior_delivery_not_verified"] : []),
++            "reviewed_casl_suppression_daily_cap_cooldown_not_verified"],
+           skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
+           // Exact first-touch body; the real token is minted only at send time.
+           sms_preview: dup ? null : safeFirstTouchBody(p.business_name, typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim() ? messageOverrides[p.id].trim() : null, "https://unpro.ca/unpro/audit/<jeton>"),
+@@ -548,12 +557,12 @@
+       });
+       const dupCount = previews.filter((p) => p.duplicate_guard).length;
+       return jsonResponse({
+-        ok: true, dry_run: true, eligible_count: eligible.length - dupCount,
++        ok: true, dry_run: true, eligible_count: 0, candidate_count: eligible.length - dupCount, sms_provider_ready_count: 0, readiness_status: previewGate.allowed ? "not_verified" : "blocked",
+         duplicate_skipped_count: dupCount,
+         eligible: previews,
+         skipped: [...missingResults, ...freeExclusions],
+         free_excluded_count: freeExclusions.length,
+-        message: eligible.length > 0 ? `${eligible.length - dupCount} prospect(s) prêt(s)` : "Aucun prospect éligible",
++        message: `${eligible.length - dupCount} candidat(s) à vérifier · 0 SMS prêts fournisseur`,
+       }, 200, requestId);
+     }
+ 
