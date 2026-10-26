@@ -10,3 +10,6 @@ if (response.status !== 200) throw new Error(`pinned_fetch_http_${response.statu
 const text = await response.text();
 if (!text.toLowerCase().includes("example domain")) throw new Error("pinned_fetch_body_unexpected");
 console.log("Deno pinned HTTPS smoke: public IP pinning + SNI/TLS verified; HTTP 200; no credentials.");
+
+// Verify the same certificate/SNI mismatch observed on the Hostinger-hosted Clean Vents site.
+await import("./deno-tls-sni-probe.ts");
