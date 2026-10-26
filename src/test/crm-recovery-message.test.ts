@@ -12,14 +12,14 @@ const pid = '00000000-0000-4000-8000-000000000001';
 function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean; admin?: boolean; claimed?: boolean; paid?: boolean; activated?: boolean; suppressed?: boolean; optedOut?: boolean; missingToken?: boolean; gateOff?: boolean } = {}) {
   const calls: { name: string; body: any }[] = [];
   const writes: { table: string; value: unknown }[] = [];
-  const reads: { table: string; method: string; value: unknown }[] = [];
+  const reads: { table: string; method: string; value: unknown; match?: unknown }[] = [];
   let gateCalls = 0;
   let handler: ((req: Request) => Promise<Response>) | undefined;
   const sb = {
     from(table: string) {
       const chain: any = {};
       for (const method of ['select','eq','in','order','limit','insert','update']) {
-        chain[method] = (value: unknown) => { if (method === 'insert' || method === 'update') writes.push({table,value}); else reads.push({table,method,value}); return chain; };
+        chain[method] = (value: unknown, match?: unknown) => { if (method === 'insert' || method === 'update') writes.push({table,value}); else reads.push({table,method,value,...(method==='eq' ? {match} : {})}); return chain; };
       }
       const result = () => ({ error: table === 'verified_prospect_tokens' && options.lookupError ? { message: 'lookup failed' } : null,
         data: table === 'verified_contractor_prospects' ? { id: pid, business_name: 'Entreprise synthétique', email: 'info@example.test', paid_at:options.paid ? '2026-01-01' : null, profile_active_at:options.activated ? '2026-01-01' : null, outreach_status: options.delivered ? 'delivered' : 'not_started' }
@@ -140,7 +140,7 @@ describe('active renewal stop — actual handler, no transaction workaround',()=
   it('resume preserves the exact stored prospect attribution and token without mutation',async()=>{
     const h=harness();const r=await h.run('resume_checkout');
     expect(r.body.results[0].result).toBe(`https://unpro.ca/unpro/activate/${token}`);
-    expect(h.reads).toContainEqual({table:'verified_prospect_tokens',method:'eq',value:'prospect_id'});
+    expect(h.reads).toContainEqual({table:'verified_prospect_tokens',method:'eq',value:'prospect_id',match:pid});
     expect(h.writes.every(w=>w.table==='crm_action_log')).toBe(true);expect(h.calls).toHaveLength(0);
   });
   it.each(actions)('closed commercial gate blocks %s without token mutations or provider calls',async action=>{
