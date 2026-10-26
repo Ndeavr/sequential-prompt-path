@@ -47,7 +47,7 @@ function moduleHarness(options: Record<string, any> = {}) {
     const q: any = {};
     for (const name of ["select", "eq", "in", "limit"]) q[name] = () => q;
     q.maybeSingle = async () => ({ data: { ...company, ...options.company }, error: null });
-    q.then = (resolve: any) => Promise.resolve({ data: table === "contractor_prospects" ? (options.duplicates ?? [{ id }]) : table === "sms_opt_outs" ? (options.opted ? [{}] : []) : options.existing ?? [], error: null }).then(resolve);
+    q.then = (resolve: any) => Promise.resolve({ data: table === "contractor_prospects" ? (options.duplicates ?? [{ id }]) : table === "sms_opt_outs" ? (options.opted ? [{}] : []) : ("existing" in options ? options.existing : []), error: ("existing" in options && options.existing === null ? { message: "x" } : null) }).then(resolve);
     return q;
   } };
   return { m, io, sb, writes, capture, fetch };
