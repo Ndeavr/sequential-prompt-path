@@ -36,7 +36,7 @@
      const official = safeUrl(/^https:\/\//i.test(rawOfficial) ? rawOfficial : `https://${rawOfficial}`);
      const email = normalizeCaslDestination("email", e.destination_normalized);
 -    if (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || email.split("@")[1] !== source.hostname.replace(/^www\./, "")) throw new Error("official_identity_ambiguous");
-+    if ((!isPhone && (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email))) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || email.split("@")[1] !== source.hostname.replace(/^www\./, "")) throw new Error("official_identity_ambiguous");
++    if ((!isPhone && (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email))) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || (!isPhone && email?.split("@")[1] !== source.hostname.replace(/^www\./, ""))) throw new Error("official_identity_ambiguous");
      if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
      const rules = parseRobots(await read(`${source.origin}/robots.txt`, io, source.hostname, true));
      const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false;
@@ -82,7 +82,7 @@
 +  if (!maintenance.has(p.category_slug)) throw new Error("service_fit_requires_review");
 +  if (/hotel|hôtel|aquatique|aqua club|parc du|entraide|écocentre|ecocentre|ameublement/i.test(p.business_name ?? "")) throw new Error("not_service_provider");
 +  const phone = normalizePhone(p.phone_e164 ?? p.phone);
-+  if (!phone.valid || !phone.normalized) throw new Error("invalid_sms_destination");
++  if (!phone.valid || !phone.normalized || /^\+1(?:800|833|844|855|866|877|888)/.test(phone.normalized)) throw new Error("invalid_sms_destination");
 +  const { data: duplicates, error: duplicateError } = await sb.from("contractor_prospects").select("id").eq("phone_e164", phone.normalized).limit(2);
 +  if (duplicateError || !duplicates || duplicates.length !== 1 || duplicates[0].id !== id) throw new Error("canonical_phone_ambiguous");
 +  const { data: suppressed, error: suppressionError } = await sb.rpc("is_phone_suppressed", { p_phone: phone.normalized });
