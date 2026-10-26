@@ -7,7 +7,22 @@
  import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "../_shared/officialSiteCrawler.ts";
  
  export const POLICY = { version: "first-party-observation-v1", auto_eligibility_enabled: false, maxPages: 6, maxBytes: 250_000, timeoutMs: 4_000, freshMs: 300_000 } as const;
-@@ -81,12 +82,15 @@
+@@ -68,6 +69,14 @@
+   const normalized = norm(visible);
+   const declared = norm(service);
+   const aliases: Record<string, RegExp> = {
++    "nettoyage-conduits": /conduits|ducts|dryer|sécheuse|secheuse/i,
++    "lavage-de-vitres": /vitres|windows/i,
++    "entretien-menager": /ménag|menag|cleaning|nettoyage/i,
++    "debarras-ramassage": /débarras|debarras|junk|encombrants/i,
++    "entretien-gazon": /gazon|lawn/i,
++    "gestion-parasitaire": /parasitaire|extermin|pest/i,
++    "nettoyage-tapis": /tapis|carpet|rug/i,
++    "nettoyage-mobilier": /mobilier|upholstery|tissus/i,
+     peinture: /\b(peinture|peintre|painting|painters?)\b/,
+     painting: /\b(peinture|peintre|painting|painters?)\b/,
+     toiture: /\b(toiture|couvreur|roofing|roofers?)\b/,
+@@ -81,12 +90,15 @@
  export async function observeFirstParty(e: Target, company: Company, io: IO): Promise<Observation> {
    const result: Observation = { status: "pending", reason: "not_checked", evidence_id: e.id, business_name: company.business_name ?? "", building_service: serviceHint(company), relevance: "", checked_at: new Date(io.now?.() ?? Date.now()).toISOString(), pages: [], policy: POLICY, legal_consent_established: false };
    try {
@@ -25,7 +40,7 @@
      if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
      const rules = parseRobots(await read(`${source.origin}/robots.txt`, io, source.hostname, true));
      const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false;
-@@ -95,9 +99,11 @@
+@@ -95,9 +107,11 @@
        const u = safeUrl(queue[i], source.hostname); if (seen.has(u.toString())) continue; seen.add(u.toString());
        if (!isAllowedByRobots(rules, u.pathname)) throw new Error("robots_blocked");
        const html = await read(u.toString(), io, source.hostname); const visible = text(html); const lower = norm(visible);
@@ -40,7 +55,7 @@
        result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
        if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
        for (const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-@@ -109,7 +115,7 @@
+@@ -109,7 +123,7 @@
        }
      }
      result.relevance = e.business_relevance_explanation;
@@ -49,11 +64,11 @@
      if (exact && name && service && contact && policy) result.status = "machine_verified";
    } catch (err) { result.reason = err instanceof Error ? err.message : "check_failed"; }
    return result;
-@@ -132,4 +138,43 @@
+@@ -132,4 +146,43 @@
      if (writeError) throw new Error("observation_write_failed");
    }
    return observation;
--}+}
+-}+} 
 +
 +/** Explicit admin action; exact existing canonical anchor only. No identity updates. */
 +export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun: boolean) {
@@ -86,7 +101,7 @@
 +    else {
 +      const page = observation.pages[0];
 +      if (!page) throw new Error("source_observation_missing");
-+      const captured = await captureCaslEvidence(sb, { contractor_prospect_id: id, destination_type: "phone_sms", destination: phone.normalized, lawful_basis: "implicit_public_conspicuous", source_url: source, source_type: "company_website", source_publisher: p.business_name, retrieved_at: observation.checked_at, page_sha256: page.page_sha256, business_relevance_explanation: relevance, refusal_statement_found: false, verification_method: "first_party_phone_pending_human_review", capture_agent: "enrich-official-website" });
++      const captured = await captureCaslEvidence(sb, { contractor_prospect_id: id, destination_type: "phone_sms", destination: phone.normalized, lawful_basis: "implicit_public_conspicuous", source_url: source, source_type: "company_website", source_publisher: p.business_name, retrieved_at: observation.checked_at, page_sha256: page.page_sha256, business_relevance_explanation: `${relevance} Extrait observé : ${page.snippet}`, refusal_statement_found: false, verification_method: "first_party_phone_pending_human_review", capture_agent: "enrich-official-website" });
 +      if (!captured.ok || !captured.evidence_id) throw new Error("phone_evidence_capture_failed");
 +      evidenceId = captured.evidence_id;
 +    }
