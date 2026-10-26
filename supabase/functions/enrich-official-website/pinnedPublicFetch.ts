@@ -15,12 +15,32 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
   ]).finally(() => clearTimeout(timer));
   if (!addresses.length || addresses.some(a => !publicAddress(a))) throw new Error("unsafe_dns");
   const address = addresses[0];
+  // Deno's node:https ClientRequest does not implement options.lookup.
+  // Connect by the already-validated public IP *itself*, never by a hostname
+  // that could be resolved a second time after our DNS validation (SSRF).
+  // Host and servername remain the original business domain: mandatory for
+  // HTTP virtual hosting, TLS SNI and verified certificate hostname. Do NOT
+  // disable TLS verification or follow redirects.
+  const pinnedOptions = {
+    protocol: "https:" as const,
+    hostname: address,
+    port: 443,
+    path: u.pathname + u.search,
+    method: "GET" as const,
+    servername: u.hostname,
+    rejectUnauthorized: true,
+    agent: false as const,
+    headers: {
+      Host: u.host,
+      "User-Agent": "UNPRO-Enrichment/1.1 (+https://unpro.ca)",
+      "Cache-Control": "no-cache",
+      Accept: "text/html,text/plain",
+      "Accept-Encoding": "identity",
+      Connection: "close",
+    },
+  };
   return await new Promise<Response>((resolve, reject) => {
-    const req = request(u, {
-      method: "GET", servername: u.hostname,
-      headers: { "User-Agent": "UNPRO-Enrichment/1.1 (+https://unpro.ca)", "Cache-Control": "no-cache", "Accept": "text/html,text/plain" },
-      lookup: (_host, _options, callback) => callback(null, address, 4),
-    }, (res) => {
+    const req = request(pinnedOptions, (res) => {
       const chunks: Uint8Array[] = []; let bytes = 0;
       res.on("data", (chunk: Uint8Array) => { bytes += chunk.length; if (bytes > POLICY.maxBytes) { req.destroy(new Error("volume_limit")); return; } chunks.push(chunk); });
       res.on("error", reject);
