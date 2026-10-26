@@ -54,7 +54,9 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
-    expect(box).toContain('placeholder: "Décrivez votre projet…"');
+    expect(box).toContain('placeholder: "Décrivez votre besoin…"');
+    expect(box).toContain('placeholderActive: "Répondez à Clara…"');
+    expect(box).toContain("placeholder={composerPlaceholder}");
     expect(box).toContain('const [composerText, setComposerText] = useState("")');
     expect(box).toContain("value={composerText}");
     expect(box).toContain("setComposerText(\"\")");
@@ -69,9 +71,13 @@ describe("Clara mobile — conversation compacte", () => {
 
   it("remplace les phrases arbitraires par des intentions réelles", () => {
     expect(box).not.toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
-    expect(box).toContain('label: "J’aimerais rénover ma salle de bain", intent: "homeowner_problem"');
-    expect(box).toContain('label: "J’aimerais refaire ma cuisine", intent: "homeowner_problem"');
-    expect(box).toContain('label: "J’ai des barrages de glace sur le toit", intent: "homeowner_problem"');
+    // The current defaults span the three service universes; embedded views can show real trending questions.
+    expect(box).toContain('label: "Je cherche un courtier immobilier", intent: "homeowner_problem"');
+    expect(box).toContain('label: "Nettoyer mes conduits d’air", intent: "homeowner_problem"');
+    expect(box).toContain('label: "J’ai un projet de rénovation", intent: "homeowner_problem"');
+    expect(box).toContain('const popularQuestions = usePopularQuestions(3)');
+    expect(box).toContain('popularQuestions.source === "trending"');
+    expect(box).toContain('intent: item.intent === "comparison" ? "quote_comparison" : "homeowner_problem"');
     expect(box).toContain("chooseIntentSuggestion(suggestion)");
     expect(box).not.toContain("J’ai de l’eau ici.");
     expect(box).not.toContain("J’ai trois soumissions.");
