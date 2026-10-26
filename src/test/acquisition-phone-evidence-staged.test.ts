@@ -6,10 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 import { normalizePhone } from "../../supabase/functions/_shared/normalizePhone";
 import { normalizeCaslDestination, sha256Hex } from "../../supabase/functions/_shared/caslEvidence";
 import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "../../supabase/functions/_shared/officialSiteCrawler";
+import { normalizeServiceCategory } from "../../supabase/functions/_shared/localServiceCategories";
 import { assertCommercialOutreachAllowed } from "../../supabase/functions/_shared/outreachGate";
 
-const patch = readFileSync("docs/audits/acquisition-phone-evidence.patch", "utf8");
-function proposed(path: string) {
+// Active source (patch now applied); kept name for history.
+function proposed(path: string) { return readFileSync(path, "utf8"); }
+function _unusedStaged(patch: string, path: string) {
   const lines = readFileSync(path, "utf8").split("\n");
   const section = patch.split(`--- a/${path}\n`)[1]?.split("\n--- a/")[0];
   if (!section) throw new Error("missing staged section");
@@ -33,11 +35,11 @@ function load(source: string, extras: Record<string, unknown>) {
   return context;
 }
 const id = "11111111-1111-4111-8111-111111111111";
-const company = { id, business_name: "Synthetic Cleaning", website_url: "https://synthetic-cleaning.test/", phone_e164: "+14502345678", category_slug: "lavage-de-vitres", do_not_contact: false };
+const company = { id, business_name: "Synthetic Cleaning", website_url: "https://synthetic-cleaning.test/", phone_e164: "+14502345678", category_slug: null, trade: "Lavage de vitres", outreach_status: "not_started", do_not_contact: false };
 const document = '<h1>Synthetic Cleaning</h1><p>Lavage de vitres 450-234-5678</p><a href="/contact">Contact</a><a href="/privacy">Politique</a>';
 function moduleHarness(options: Record<string, any> = {}) {
   const writes: any[] = []; const capture = vi.fn(async (_sb, input) => { writes.push(input); return { ok: true, evidence_id: id }; });
-  const m = load(proposed("supabase/functions/enrich-official-website/caslFirstParty.ts"), { normalizePhone, normalizeCaslDestination, sha256Hex, captureCaslEvidence: capture, resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT }).exports;
+  const m = load(proposed("supabase/functions/enrich-official-website/caslFirstParty.ts"), { normalizePhone, normalizeCaslDestination, sha256Hex, captureCaslEvidence: capture, resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT, normalizeServiceCategory }).exports;
   const fetch = vi.fn(async (u: string) => new Response(u.endsWith("robots.txt") ? "User-agent: *\nDisallow:" : options.html ?? document, { headers: { "content-type": u.endsWith("robots.txt") ? "text/plain" : "text/html" } }));
   (fetch as any)[m.PINNED_TRANSPORT] = true;
   const io = { fetch, resolve: async () => ["93.184.216.34"] };
@@ -67,10 +69,16 @@ describe("staged first-party phone evidence — no consent or provider", () => {
   it("hidden phone is not visible evidence", async () => { const h = moduleHarness({ html: document.replace("450-234-5678", "") + "<script>450-234-5678</script>" }); const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(r.observation.reason).toBe("exact_phone_not_visible"); expect(h.writes).toHaveLength(0); });
   it.each([
     { company: { do_not_contact: true } }, { opted: true }, { suppressed: true }, { duplicates: [{ id }, { id: "other" }] },
-    { company: { category_slug: "roofing", rbq_verified: false } }, { company: { business_name: "Hôtel Synthetic" } },
+    { company: { trade: "Toiture" } }, { company: { trade: null } }, { company: { outreach_status: "sent" } }, { company: { business_name: "Hôtel Synthetic" } },
     { company: { phone_e164: "+18002345678" } }, { company: { phone_e164: "invalid" } },
   ])("blocks invalid fit/contact before fetch: %j", async options => { const h = moduleHarness(options); await expect(h.m.captureFirstPartyPhone(h.sb, id, h.io, false)).rejects.toThrow(); expect(h.fetch).not.toHaveBeenCalled(); expect(h.writes).toHaveLength(0); });
   it.each([document.replace("450-234-5678", "450-234-5679"), document + " Aucune sollicitation commerciale"])("absent phone or refusal never captures", async html => { const h = moduleHarness({ html }); await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(h.writes).toHaveLength(0); });
+  it.each([["Entretien ménager", "entretien-menager"], ["Nettoyage de conduits d air", "nettoyage-conduits"], ["Lavage de vitres", "lavage-de-vitres"], ["Plomberie", null], ["Portes et fenêtres", null]])("maps real trade text %s via canonical categories", (trade, slug) => {
+    expect(moduleHarness().m.phoneCaptureService({ category_slug: null, trade })).toBe(slug);
+  });
+  it("official-site company name mismatch fails closed", async () => { const h = moduleHarness({ company: { business_name: "Autre Nom Inc" } }); const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(r.observation.status).toBe("pending"); expect(h.writes).toHaveLength(0); });
+  it("dedupe read error fails closed", async () => { const h = moduleHarness({ existing: null }); await expect(h.m.captureFirstPartyPhone(h.sb, id, h.io, false)).rejects.toThrow("evidence_dedupe_unreadable"); expect(h.writes).toHaveLength(0); });
+  it("unpinned transport is refused", async () => { const h = moduleHarness(); delete (h.fetch as any)[h.m.PINNED_TRANSPORT]; const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false); expect(r.observation.reason).toBe("unpinned_transport"); expect(h.writes).toHaveLength(0); });
   it("third-party phone is refused without fetching", async () => {
     const h = moduleHarness(); const r = await h.m.observeFirstParty({ id, destination_type: "phone_sms", destination_normalized: company.phone_e164, source_type: "google_business_profile", source_url: company.website_url }, company, h.io);
     expect(r.status).toBe("pending"); expect(h.fetch).not.toHaveBeenCalled();
