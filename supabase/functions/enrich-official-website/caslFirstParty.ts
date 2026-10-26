@@ -1,4 +1,6 @@
-import { normalizeCaslDestination, sha256Hex } from "../_shared/caslEvidence.ts";
+import { normalizePhone } from "../_shared/normalizePhone.ts";
+import { captureCaslEvidence, normalizeCaslDestination, sha256Hex } from "../_shared/caslEvidence.ts";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "../_shared/officialSiteCrawler.ts";
 
 export const POLICY = { version: "first-party-observation-v1", auto_eligibility_enabled: false, maxPages: 6, maxBytes: 250_000, timeoutMs: 4_000, freshMs: 300_000 } as const;
@@ -12,6 +14,7 @@ type IO = { fetch: typeof fetch; resolve: (host: string) => Promise<string[]>; n
  * dials (DNS rebinding / TOCTOU). Only a transport that pins the socket to
  * the validated address is accepted; anything else fails closed.
  */
+const TOLL_FREE = /^\+1(?:800|833|844|855|866|877|888)/;
 export const PINNED_TRANSPORT = Symbol.for("unpro.pinned-public-transport");
 
 export function publicAddress(ip: string): boolean {
@@ -68,6 +71,17 @@ function serviceVisible(visible: string, service: string): boolean {
   const normalized = norm(visible);
   const declared = norm(service);
   const aliases: Record<string, RegExp> = {
+    "nettoyage-conduits": /conduits|ducts|dryer|secheuse/,
+    "lavage-de-vitres": /vitres|windows|fenetres/,
+    "entretien-menager": /menag|cleaning|nettoyage/,
+    "grand-menage": /menag|cleaning|nettoyage/,
+    "debarras-ramassage": /debarras|junk|encombrants/,
+    "entretien-gazon": /gazon|pelouse|lawn/,
+    "gestion-parasitaire": /parasit|extermin|pest/,
+    "nettoyage-tapis": /tapis|carpet|rug/,
+    "nettoyage-mobilier": /mobilier|upholstery|tissus/,
+    "nettoyage-gouttieres": /gouttiere|gutter/,
+    "lavage-pression": /pression|pressure/,
     peinture: /\b(peinture|peintre|painting|painters?)\b/,
     painting: /\b(peinture|peintre|painting|painters?)\b/,
     toiture: /\b(toiture|couvreur|roofing|roofers?)\b/,
@@ -81,12 +95,15 @@ function serviceVisible(visible: string, service: string): boolean {
 export async function observeFirstParty(e: Target, company: Company, io: IO): Promise<Observation> {
   const result: Observation = { status: "pending", reason: "not_checked", evidence_id: e.id, business_name: company.business_name ?? "", building_service: serviceHint(company), relevance: "", checked_at: new Date(io.now?.() ?? Date.now()).toISOString(), pages: [], policy: POLICY, legal_consent_established: false };
   try {
-    if (e.destination_type !== "email" || e.source_type !== "company_website") throw new Error("first_party_email_required");
+    if (!["email", "phone_sms"].includes(e.destination_type) || e.source_type !== "company_website") throw new Error("first_party_destination_required");
+    const isPhone = e.destination_type === "phone_sms";
+    const phone = isPhone ? normalizePhone(e.destination_normalized) : null;
+    if (isPhone && (!phone?.valid || !phone.normalized || !/^\+1[2-9]\d{2}[2-9]\d{6}$/.test(phone.normalized) || TOLL_FREE.test(phone.normalized))) throw new Error("invalid_sms_destination");
     const source = safeUrl(e.source_url);
     const rawOfficial = company.official_domain ?? company.website_url ?? "";
     const official = safeUrl(/^https:\/\//i.test(rawOfficial) ? rawOfficial : `https://${rawOfficial}`);
     const email = normalizeCaslDestination("email", e.destination_normalized);
-    if (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || email.split("@")[1] !== source.hostname.replace(/^www\./, "")) throw new Error("official_identity_ambiguous");
+    if ((!isPhone && (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email))) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || (!isPhone && email?.split("@")[1] !== source.hostname.replace(/^www\./, ""))) throw new Error("official_identity_ambiguous");
     if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
     const rules = parseRobots(await read(`${source.origin}/robots.txt`, io, source.hostname, true));
     const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false;
@@ -95,9 +112,11 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
       const u = safeUrl(queue[i], source.hostname); if (seen.has(u.toString())) continue; seen.add(u.toString());
       if (!isAllowedByRobots(rules, u.pathname)) throw new Error("robots_blocked");
       const html = await read(u.toString(), io, source.hostname); const visible = text(html); const lower = norm(visible);
-      const addresses = visible.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? []; const found = addresses.some(a => a.toLowerCase() === email);
-      exact ||= found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
-      const refused = refusal(visible); const at = found ? visible.toLowerCase().indexOf(email) : 0;
+      const addresses = visible.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? []; const phoneMatches = visible.match(/(?:\+?1[ .-]?)?\(?[2-9]\d{2}\)?[ .-]?[2-9]\d{2}[ .-]?\d{4}/g) ?? [];
+      const matchedPhone = phoneMatches.find(raw => normalizePhone(raw).normalized === phone?.normalized);
+      const found = isPhone ? Boolean(matchedPhone) : addresses.some(a => a.toLowerCase() === email);
+      exact ||= isPhone ? (i === 0 && found) : found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
+      const refused = refusal(visible); const at = found ? Math.max(0, visible.toLowerCase().indexOf(isPhone ? matchedPhone ?? "" : email ?? "")) : 0;
       result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
       if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
       for (const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
@@ -109,7 +128,7 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
       }
     }
     result.relevance = e.business_relevance_explanation;
-    result.reason = !exact ? "exact_email_not_visible" : !name || !service ? "company_or_service_ambiguous" : !contact || !policy ? "contact_or_policy_missing" : "publication_observed_human_review_required";
+    result.reason = !exact ? (isPhone ? "exact_phone_not_visible" : "exact_email_not_visible") : !name || !service ? "company_or_service_ambiguous" : !contact || !policy ? "contact_or_policy_missing" : "publication_observed_human_review_required";
     if (exact && name && service && contact && policy) result.status = "machine_verified";
   } catch (err) { result.reason = err instanceof Error ? err.message : "check_failed"; }
   return result;
@@ -132,4 +151,57 @@ export async function recheckCasl(sb: any, id: string, io: IO, dryRun: boolean) 
     if (writeError) throw new Error("observation_write_failed");
   }
   return observation;
+}
+/** Modest maintenance services only; regulated construction is never inferred eligible. */
+export const PHONE_CAPTURE_SERVICES = new Set(["nettoyage-conduits", "lavage-de-vitres", "entretien-menager", "grand-menage", "debarras-ramassage", "entretien-gazon", "gestion-parasitaire", "nettoyage-tapis", "nettoyage-mobilier", "nettoyage-gouttieres", "lavage-pression"]);
+const NOT_SERVICE_PROVIDER = /hotel|hôtel|aquatique|aqua club|piscine municipale|parc du|entraide|écocentre|ecocentre|ameublement|ville de|municipalit|gouvernement|fondation|organisme/i;
+
+/** Maps the real declared trade text (category_slug is mostly NULL) through the canonical local-service mapping. */
+export function phoneCaptureService(p: { category_slug?: string | null; trade?: string | null; trade_category?: string | null }): string | null {
+  for (const raw of [p.category_slug, p.trade, p.trade_category]) {
+    const slug = normalizeServiceCategory(raw ?? null);
+    if (slug) return PHONE_CAPTURE_SERVICES.has(slug) ? slug : null;
+  }
+  return null;
+}
+
+/**
+ * Explicit admin action on an exact existing contractor_prospects anchor.
+ * Never sets reviewer_id, never approves consent, never changes prospect, gate or provider state.
+ */
+export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun: boolean) {
+  const { data: p, error } = await sb.from("contractor_prospects")
+    .select("id,business_name,website_url,phone,phone_e164,category_slug,trade,trade_category,do_not_contact,outreach_status,suppression_reason")
+    .eq("id", id).maybeSingle();
+  if (error || !p) throw new Error("canonical_anchor_missing_or_unreadable");
+  if (p.do_not_contact || p.suppression_reason) throw new Error("opted_out_or_suppressed");
+  if (p.outreach_status && !["none", "new", "pending", "not_contacted"].includes(p.outreach_status)) throw new Error("already_contacted");
+  const service = phoneCaptureService(p);
+  if (!service) throw new Error("service_fit_requires_review");
+  if (NOT_SERVICE_PROVIDER.test(p.business_name ?? "")) throw new Error("not_service_provider");
+  const phone = normalizePhone(p.phone_e164 ?? p.phone);
+  if (!phone.valid || !phone.normalized || TOLL_FREE.test(phone.normalized)) throw new Error("invalid_sms_destination");
+  const { data: duplicates, error: duplicateError } = await sb.from("contractor_prospects").select("id").eq("phone_e164", phone.normalized).limit(2);
+  if (duplicateError || !duplicates || duplicates.length !== 1 || duplicates[0].id !== id) throw new Error("canonical_phone_ambiguous");
+  const { data: opted, error: optError } = await sb.from("sms_opt_outs").select("normalized_phone").in("normalized_phone", [phone.normalized, phone.normalized.slice(2)]).limit(1);
+  if (optError || !opted || opted.length) throw new Error("opted_out_or_unreadable");
+  if (!p.website_url) throw new Error("official_site_missing");
+  const source = safeUrl(/^https:\/\//i.test(p.website_url) ? p.website_url : `https://${p.website_url}`).toString();
+  const relevance = `Publication à examiner pour le service déclaré « ${service} »; aucune autorisation de sollicitation automatique.`;
+  const observation = await observeFirstParty({ id, destination_type: "phone_sms", destination_normalized: phone.normalized, source_type: "company_website", source_url: source, business_relevance_explanation: relevance }, { business_name: p.business_name, website_url: source, category_slug: service }, io);
+  let evidenceId: string | null = null;
+  if (observation.status === "machine_verified" && !dryRun) {
+    // Fail-closed dedupe before the capture helper (which tolerates read errors).
+    const { data: existing, error: evidenceError } = await sb.from("casl_consent_evidence").select("id").eq("contractor_prospect_id", id).eq("destination_type", "phone_sms").eq("destination_normalized", phone.normalized.slice(2)).eq("source_url", source).limit(1);
+    if (evidenceError || !existing) throw new Error("evidence_dedupe_unreadable");
+    if (existing.length) evidenceId = existing[0].id;
+    else {
+      const page = observation.pages[0];
+      if (!page) throw new Error("source_observation_missing");
+      const captured = await captureCaslEvidence(sb, { contractor_prospect_id: id, destination_type: "phone_sms", destination: phone.normalized, lawful_basis: "implicit_public_conspicuous", source_url: source, source_type: "company_website", source_publisher: p.business_name, retrieved_at: observation.checked_at, page_sha256: page.page_sha256, business_relevance_explanation: `${relevance} Extrait observé : ${page.snippet}`, refusal_statement_found: false, verification_method: "first_party_phone_pending_human_review", capture_agent: "enrich-official-website" });
+      if (!captured.ok || !captured.evidence_id) throw new Error("phone_evidence_capture_failed");
+      evidenceId = captured.evidence_id;
+    }
+  }
+  return { observation, service, evidence_id: evidenceId, human_review_required: true, legal_consent_established: false, dry_run: dryRun, sent: 0 };
 }
