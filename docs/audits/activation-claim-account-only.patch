@@ -1,0 +1,110 @@
+--- a/supabase/functions/activation-claim/index.ts
++++ b/supabase/functions/activation-claim/index.ts
+@@ -7,7 +7,7 @@
+ //  - le jeton n'est jamais journalisé en clair (empreinte SHA-256 seulement) ;
+ //  - un prospect ne peut être réclamé qu'une seule fois (contrainte unique) ;
+ //  - un utilisateur qui rouvre son propre lien retrouve son profil, sans doublon ;
+-//  - l'activation est enregistrée immédiatement, l'enrichissement vient après.
++//  - le rattachement ne confirme aucun paiement et n'accorde aucun plan payant.
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
+ import { logInviteEvent } from "../_shared/inviteAudit.ts";
+@@ -252,7 +252,7 @@
+           service_areas: prospect.service_areas ?? null,
+           slug: `${slugBase}-${user.id.slice(0, 6)}`,
+           onboarding_status: "in_progress",
+-          activation_status: "activated",
++          activation_status: "not_ready",
+         })
+         .select("id")
+         .maybeSingle();
+@@ -264,12 +264,11 @@
+       }
+       contractorId = inserted.id;
+       created = true;
+-    } else {
+-      await admin.from("contractors").update({ activation_status: "activated" }).eq("id", contractorId);
+-    }
++    }
++    // Une reprise ne modifie jamais une activation existante (payée ou gratuite).
+ 
+     // ------------------------------------------------------------- registre claim
+-    const { error: claimErr } = await admin
++    const { error: claimErr } = existingClaim ? { error: null } : await admin
+       .from("contractor_prospect_claims")
+       .upsert(
+         {
+@@ -278,7 +277,7 @@
+           user_id: user.id,
+           token_hash: tokenHash,
+           channel: "web",
+-          status: "activated",
++          status: "claimed",
+         },
+         { onConflict: "prospect_id" },
+       );
+@@ -292,8 +291,9 @@
+     try {
+       await admin
+         .from("verified_contractor_prospects")
+-        .update({ outreach_status: "activated", last_action_at: new Date().toISOString() })
+-        .eq("id", prospect.id);
++        .update({ outreach_status: "registered", last_action_at: new Date().toISOString() })
++        .eq("id", prospect.id)
++        .or("outreach_status.is.null,outreach_status.not.in.(paid,activated)");
+     } catch (_e) { /* non bloquant */ }
+ 
+     // ───────────── Offre « 1 an gratuit » — services résidentiels locaux ─────
+@@ -360,7 +360,6 @@
+ 
+     if (created) await logEvent("contractor_profile_created", { source: "activation_link" }, ids);
+     await logEvent("profile_claimed", { already: Boolean(existingClaim) }, ids);
+-    await logEvent("profile_activated", { already: Boolean(existingClaim) }, ids);
+ 
+     return json({
+       ok: true,
+--- a/src/features/activationProfile/components/ActivationClaimPanel.tsx
++++ b/src/features/activationProfile/components/ActivationClaimPanel.tsx
+@@ -90,12 +90,6 @@
+         step: "claim",
+         contractor_id: data.contractor_id ?? null,
+         metadata: { already_claimed: Boolean(data.already_claimed) },
+-        ...attribution,
+-      });
+-      void logFunnelEvent({
+-        event_type: "profile_activated",
+-        step: "claim",
+-        contractor_id: data.contractor_id ?? null,
+         ...attribution,
+       });
+     } catch {
+@@ -161,7 +155,7 @@
+         <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
+           <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
+           <h2 className="text-xl font-semibold text-white">
+-            {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
++            {alreadyClaimed ? `Le profil de ${company} est déjà rattaché` : `Le profil de ${company} est rattaché à votre compte`}
+           </h2>
+           {grantedYear && (
+             <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
+@@ -176,7 +170,7 @@
+           <p className="mt-2 text-[14px] leading-relaxed text-white/75">
+             {alreadyClaimed
+               ? "Votre espace entrepreneur vous attend."
+-              : "Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes."}
++              : "Confirmez votre métier et vos villes pour compléter votre fiche."}
+           </p>
+         </div>
+ 
+@@ -232,9 +226,9 @@
+             className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+           >
+             {phase === "claiming" ? (
+-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Activation en cours…</>
++              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rattachement en cours…</>
+             ) : (
+-              <>{freeYear?.eligible ? "Réclamer gratuitement ma fiche" : "Activer mon profil gratuitement"} <ArrowRight className="ml-1 h-4 w-4" /></>
++              <>{freeYear?.eligible ? "Réclamer gratuitement ma fiche" : "Réclamer ma fiche"} <ArrowRight className="ml-1 h-4 w-4" /></>
+             )}
+           </Button>
+           <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
