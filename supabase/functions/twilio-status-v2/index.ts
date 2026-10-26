@@ -49,26 +49,38 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const json = (body: unknown, status: number) =>
+      new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Twilio status callbacks are form-encoded; other formats are rejected without writes.
     const ct = req.headers.get("content-type") ?? "";
-    let params: URLSearchParams;
-    if (ct.includes("application/json")) {
-      const j = await req.json();
-      params = new URLSearchParams(j as Record<string, string>);
-    } else {
-      const text = await req.text();
-      params = new URLSearchParams(text);
+    if (!ct.includes("application/x-www-form-urlencoded")) return json({ error: "unsupported_content_type" }, 415);
+    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+    const signatureHeader = req.headers.get("x-twilio-signature") ?? "";
+    if (!TWILIO_AUTH_TOKEN || !signatureHeader) return json({ error: "unauthorized_callback" }, 401);
+    const params = new URLSearchParams(await req.text());
+    const raw: Record<string, string> = {};
+    for (const [k, v] of params.entries()) raw[k] = v;
+    // Twilio signs the public URL the sender registered (SUPABASE_URL/functions/v1/twilio-status-v2?token=…).
+    const signedUrl = `${SUPABASE_URL}/functions/v1/twilio-status-v2${new URL(req.url).search}`;
+    if (!(await isValidTwilioSignature(signedUrl, raw, signatureHeader, TWILIO_AUTH_TOKEN))) {
+      console.warn("twilio-status-v2: rejected invalid signature");
+      return json({ error: "unauthorized_callback" }, 401);
     }
     const sid = params.get("MessageSid") ?? params.get("SmsSid");
     const status = params.get("MessageStatus") ?? params.get("SmsStatus");
     const errorCode = params.get("ErrorCode");
     const errorMessage = params.get("ErrorMessage");
 
-    if (!sid || !status) {
-      return new Response(JSON.stringify({ error: "missing_sid_or_status" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (!sid || !status) return json({ error: "missing_sid_or_status" }, 400);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const mapped = mapStatus(status);
+    // Only pre-existing SIDs from the canonical sender are updated; unknown SIDs are ignored without writes.
+    const { data: existing, error: readErr } = await supabase
+      .from("sms_events_v2").select("id, status").eq("twilio_sid", sid).maybeSingle();
+    if (readErr) { console.error("twilio-status-v2 read failed", readErr.message); return json({ error: "read_failed" }, 500); }
+    if (!existing) return json({ ok: true, ignored: "unknown_sid" }, 200);
+    if (isStatusRegression(existing.status, mapped)) return json({ ok: true, ignored: "non_monotonic" }, 200);
     const now = new Date().toISOString();
     const update: Record<string, unknown> = {
       status: mapped,
@@ -78,20 +90,22 @@ Deno.serve(async (req) => {
     if (mapped === "failed" || mapped === "undelivered") update.failed_at = now;
     if (errorCode) update.error_code = errorCode;
     if (errorMessage) update.error_message = errorMessage;
+    const { To: _to, From: _from, ...safePayload } = raw;
     update.provider_response = {
       source: "twilio-status-v2",
+      signature_verified: true,
       received_at: now,
-      payload: Object.fromEntries(params.entries()),
+      payload: safePayload,
     };
 
     const { data: updatedEvents, error } = await supabase
       .from("sms_events_v2")
       .update(update)
-      .eq("twilio_sid", sid)
+      .eq("id", existing.id)
       .select("id, metadata");
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
-      // do not return — still record canonical funnel event below
+      return json({ error: "update_failed" }, 500);
     }
 
     const eventMetadata = (updatedEvents?.[0]?.metadata ?? {}) as Record<string, unknown>;
