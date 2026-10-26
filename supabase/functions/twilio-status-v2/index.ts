@@ -6,7 +6,7 @@ import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { recordSmsEvent } from "../_shared/outreachEvents.ts";
 import { attributionFromLog } from "../_shared/smsAttribution.ts";
 import { classifyTwilio } from "../_shared/outreachRetryPolicy.ts";
-import { isStatusRegression, isValidTwilioSignature } from "../_shared/twilioSignature.ts";
+import { canonicalSmsKind, isStatusRegression, isValidTwilioSignature, priorStatusesBelow, redactCallbackPayload } from "../_shared/twilioSignature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     if (mapped === "failed" || mapped === "undelivered") update.failed_at = now;
     if (errorCode) update.error_code = errorCode;
     if (errorMessage) update.error_message = errorMessage;
-    const { To: _to, From: _from, ...safePayload } = raw;
+    const safePayload = redactCallbackPayload(raw);
     update.provider_response = {
       source: "twilio-status-v2",
       signature_verified: true,
@@ -103,11 +103,14 @@ Deno.serve(async (req) => {
       .from("sms_events_v2")
       .update(update)
       .eq("id", existing.id)
+      // Atomic monotonic predicate: only rows still below the new rank are updated.
+      .or(`status.is.null,status.in.(${priorStatusesBelow(mapped).join(",")})`)
       .select("id, metadata");
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
       return json({ error: "update_failed" }, 500);
     }
+    if (!updatedEvents || updatedEvents.length === 0) return json({ ok: true, ignored: "non_monotonic" }, 200);
 
     const eventMetadata = (updatedEvents?.[0]?.metadata ?? {}) as Record<string, unknown>;
     const prospectId = typeof eventMetadata.prospect_id === "string" ? eventMetadata.prospect_id : null;
@@ -146,16 +149,14 @@ Deno.serve(async (req) => {
         error_message: errorMessage || null,
         source_table: smsEvent?.id ? "sms_events_v2" : "twilio_webhook",
         source_row_id: smsEvent?.id ?? null,
-        payload: Object.fromEntries(params.entries()),
+        payload: safePayload,
         occurred_at: now,
       });
     } catch (e) { console.error("[twilio-status-v2] message_events insert failed", e); }
 
     // Canonical funnel: feed outreach_sms_events keyed by Twilio MessageSid
-    {
-      const kind = mapped === "delivered" ? "delivered"
-        : (mapped === "failed" || mapped === "undelivered") ? "failed"
-        : "sent";
+    const kind = canonicalSmsKind(mapped);
+    if (kind) {
       // Aucun échec silencieux : l'événement est journalisé, sinon la panne est tracée.
       // Attribution only from the exact SID's log row; unknown SID → none (never invented).
       let attribution: Record<string, string> = {};
