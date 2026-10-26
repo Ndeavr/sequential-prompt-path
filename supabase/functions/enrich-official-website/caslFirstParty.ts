@@ -175,7 +175,7 @@ export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun
     .eq("id", id).maybeSingle();
   if (error || !p) throw new Error("canonical_anchor_missing_or_unreadable");
   if (p.do_not_contact || p.suppression_reason) throw new Error("opted_out_or_suppressed");
-  if (p.outreach_status && !["none", "new", "pending", "not_contacted"].includes(p.outreach_status)) throw new Error("already_contacted");
+  if (p.outreach_status && !["none", "new", "pending", "not_contacted", "not_started"].includes(p.outreach_status)) throw new Error("already_contacted");
   const service = phoneCaptureService(p);
   if (!service) throw new Error("service_fit_requires_review");
   if (NOT_SERVICE_PROVIDER.test(p.business_name ?? "")) throw new Error("not_service_provider");
