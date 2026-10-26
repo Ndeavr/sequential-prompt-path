@@ -20,6 +20,8 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - name: Install Node types required by project Deno configuration
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check source and run first-party pinned transport with real Deno
         run: |
           deno check supabase/functions/enrich-official-website/pinnedPublicFetch.ts
