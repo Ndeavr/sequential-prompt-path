@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { normalizeServiceCategory } from "@/lib/localServices/categories";
 import { classifyPrefix, reviewPriority } from "@/lib/phone/cnacPrefix";
 import { approvalBlocker, bucketOf, BUCKET_LABEL, lineStates, paginate, validateDecision, MIN_NOTE, type ReviewBucket } from "@/lib/casl/reviewRules";
 
@@ -39,6 +40,115 @@ export function precheck(n: string): string | null {
 const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "lien"; } };
 const SOURCE_KIND: Record<string, string> = { company_website: "Site de l'entreprise", google_business_profile: "Google Places (tiers)", government_registry: "Registre public (tiers)" };
 const FILTERS: (ReviewBucket | "all")[] = ["preuve_potentielle", "source_tierce", "exclu", "admissible_sur_preuve", "all"];
+
+
+/**
+ * Admin-only first-party capture control. A successful observation merely
+ * proposes a CASL evidence row. A separate human signature is required below.
+ * This is not an outreach scheduler or a phone-type verification tool.
+ */
+type PhoneCaptureCandidate = {
+  id: string; business_name: string; website_url: string | null;
+  phone_e164: string | null; trade: string | null; category_slug: string | null;
+};
+const PHONE_CAPTURE_CATEGORIES = new Set([
+  "nettoyage-conduits", "lavage-de-vitres", "entretien-menager", "grand-menage",
+  "debarras-ramassage", "entretien-gazon", "gestion-parasitaire",
+  "nettoyage-tapis", "nettoyage-mobilier", "nettoyage-gouttieres", "lavage-pression",
+]);
+
+function FirstPartyPhoneCapture() {
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [captured, setCaptured] = useState<Record<string, any>>({});
+  const candidates = useQuery({
+    queryKey: ["casl-first-party-phone-candidates"],
+    queryFn: async (): Promise<PhoneCaptureCandidate[]> => {
+      const { data, error } = await supabase.from("contractor_prospects")
+        .select("id,business_name,website_url,phone_e164,trade,category_slug")
+        .eq("do_not_contact", false)
+        .eq("outreach_status", "not_started")
+        .not("website_url", "is", null)
+        .not("phone_e164", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []) as PhoneCaptureCandidate[];
+    },
+  });
+  const capture = useMutation({
+    mutationFn: async ({ id, save }: { id: string; save: boolean }) => {
+      const { data, error } = await supabase.functions.invoke("enrich-official-website", {
+        body: { action: "capture_phone_casl", contractor_prospect_id: id, dry_run: !save },
+      });
+      if (error || data?.ok !== true || !data?.observation)
+        throw new Error("Capture indisponible ou refusée par les contrôles de sécurité.");
+      return { id, save, ...data };
+    },
+    onSuccess: (result) => {
+      setCaptured(previous => ({ ...previous, [result.id]: result }));
+      if (result.save && result.evidence_id) {
+        void qc.invalidateQueries({ queryKey: ["casl-review"] });
+        toast.success("Preuve enregistrée en attente de revue humaine. Aucun SMS envoyé.");
+      } else if (result.observation.status !== "machine_verified") {
+        toast.warning("Publication non vérifiée : aucune preuve créée.");
+      } else {
+        toast.success("Numéro observé sur le site officiel. Décision humaine requise.");
+      }
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const eligible = (candidates.data ?? []).filter(p =>
+    PHONE_CAPTURE_CATEGORIES.has(normalizeServiceCategory(p.category_slug ?? p.trade) ?? "")
+    && p.business_name && p.phone_e164 && p.website_url
+    && (!search.trim() || p.business_name.toLowerCase().includes(search.trim().toLowerCase()))
+  ).slice(0, 25);
+
+  return (
+    <section aria-label="Collecte de preuves depuis les sites officiels" className="rounded-xl border border-border p-3 space-y-3">
+      <div>
+        <h3 className="font-semibold">Vérifier les coordonnées sur le site officiel</h3>
+        <p className="text-xs text-muted-foreground">
+          Une entreprise à la fois. La vérification ne signifie pas consentement, n'atteste pas que le numéro est mobile et n'envoie aucun SMS.
+        </p>
+      </div>
+      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher une entreprise" aria-label="Rechercher une entreprise à vérifier" />
+      {candidates.isLoading && <p className="text-xs text-muted-foreground">Chargement des entreprises…</p>}
+      {candidates.error && <p role="alert" className="text-xs text-destructive">Liste inaccessible : vérifiez votre accès administrateur.</p>}
+      {candidates.isSuccess && eligible.length === 0 && <p className="text-xs text-muted-foreground">Aucune entreprise compatible dans cette sélection.</p>}
+      {eligible.map(p => {
+        const last = captured[p.id];
+        const verified = last?.observation?.status === "machine_verified";
+        const saved = Boolean(last?.evidence_id);
+        return (
+          <div key={p.id} className="rounded-lg border border-border p-2 space-y-2">
+            <div className="text-sm font-medium">{p.business_name}</div>
+            <div className="text-xs text-muted-foreground">
+              {p.trade ?? p.category_slug ?? "Service à vérifier"} · {maskNum(String(p.phone_e164).replace(/\D/g, "").slice(-10))}
+            </div>
+            {p.website_url && <a href={p.website_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline break-all">Site déclaré (vérification indépendante requise)</a>}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="min-h-11" disabled={capture.isPending} onClick={() => capture.mutate({ id: p.id, save: false })}>
+                {capture.isPending && capture.variables?.id === p.id ? "Vérification…" : "Vérifier le site"}
+              </Button>
+              {verified && !saved && <Button size="sm" className="min-h-11" disabled={capture.isPending} onClick={() => capture.mutate({ id: p.id, save: true })}>
+                Enregistrer la preuve à examiner
+              </Button>}
+              {saved && <Badge variant="outline">En attente de signature humaine</Badge>}
+            </div>
+            {last && <div role="status" className="space-y-1 text-xs break-words">
+              <span>{verified ? "Publication du numéro observée; ce n'est pas une autorisation d'envoi." : `Bloqué : ${last.observation?.reason ?? "preuve insuffisante"}`}</span>
+              {(last.observation?.pages ?? []).map((page: any) =>
+                <p key={page.url}>{page.url} — {page.snippet}</p>
+              )}
+            </div>}
+          </div>
+        );
+      })}
+      <p className="text-xs text-muted-foreground">Maximum 25 affichés. Seul un administrateur authentifié peut demander la capture; seule une vraie signature de revue ci-dessous peut approuver la base légale.</p>
+    </section>
+  );
+}
 
 export default function CaslHumanReviewPanel() {
   const qc = useQueryClient();
@@ -140,6 +250,7 @@ export default function CaslHumanReviewPanel() {
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
+        <FirstPartyPhoneCapture />
         <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filtre de revue">
           {FILTERS.map((f) => (
             <Button key={f} role="tab" aria-selected={filter === f} size="sm" variant={filter === f ? "default" : "outline"} className="min-h-11 shrink-0"
