@@ -8,6 +8,9 @@
   :root {
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Marketing display headlines only (Figtree Black, open-source stand-in for
+       heavy proprietary display faces). Never use for body, forms, nav or Clara. */
+    --font-marketing-display: 'Figtree', 'Inter', system-ui, -apple-system, sans-serif;
 
     /* ─── Cinematic motion contract ─── */
     --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
@@ -563,7 +566,7 @@
     box-shadow: 0 0 8px hsl(199 100% 67% / .8);
   }
   .home-light .home-hero-title {
-    font-family: var(--font-display);
+    font-family: var(--font-marketing-display);
     max-width: 860px;
     font-size: clamp(2rem, 4.2vw, 4rem);
     line-height: 1.04;
@@ -1581,6 +1584,18 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.2);
+  }
+}
+
+@layer utilities {
+  /* Narrowly scoped marketing display headline utility (Figtree 900).
+     Apply only to prominent public marketing H1/headlines — never logo,
+     body text, forms, navigation, Clara dialogue, checkout or admin. */
+  .marketing-display {
+    font-family: var(--font-marketing-display);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
   }
 }
 

@@ -48,7 +48,7 @@ export default function HeroHomeownerLight() {
                   <i aria-hidden="true" />
                   {copy.eyebrow}
                 </span>
-                <h1 aria-label={copy.title} className="home-hero-title font-semibold text-foreground">
+                <h1 aria-label={copy.title} className="home-hero-title marketing-display text-foreground">
                   <span>{copy.lead} </span>
                   <strong>{copy.accent}</strong>
                   <span> {copy.tail}</span>
