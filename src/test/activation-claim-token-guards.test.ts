@@ -146,3 +146,95 @@ describe('actual activation claim — exact token guards, synthetic only', () =>
     expect(h.writes).toEqual([]); expect(h.reads).toEqual([]);
   });
 });
+
+function resolverHarness(tokens: TokenRow[] = [validToken()], lookupError?: string) {
+  const reads: { table: string; method: string; value: unknown }[] = [];
+  const writes: string[] = [];
+  const audits: unknown[] = [];
+  let handler: ((req: Request) => Promise<Response>) | undefined;
+  const sb = {
+    from(table: string) {
+      let match: unknown;
+      let prefix: unknown;
+      const chain: Record<string, any> = {};
+      for (const method of ['select', 'eq', 'like', 'limit', 'ilike', 'in', 'update', 'insert', 'upsert']) {
+        chain[method] = (value: unknown, argument?: unknown) => {
+          reads.push({ table, method, value: argument ?? value });
+          if (['update', 'insert', 'upsert'].includes(method)) writes.push(table);
+          if (method === 'eq') match = argument;
+          if (method === 'like') prefix = argument;
+          return chain;
+        };
+      }
+      const result = () => {
+        if (table === 'verified_prospect_tokens') {
+          const rows = tokens.filter(row => prefix ? row.token.startsWith(String(prefix).replace(/%$/, '')) : row.token === match);
+          return { data: prefix ? rows : rows.length === 1 ? rows[0] : null, error: lookupError ? { message: 'synthetic error' } : rows.length > 1 && !prefix ? { message: 'ambiguous' } : null };
+        }
+        if (table === 'verified_contractor_prospects') return { data: { id: match, business_name: 'Entreprise synthétique', category: null }, error: null };
+        return { data: null, error: null };
+      };
+      chain.maybeSingle = async () => result();
+      chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result()).then(resolve);
+      return chain;
+    },
+    rpc: async () => { throw new Error('RPC forbidden in synthetic preview'); },
+  };
+  const source = readFileSync('supabase/functions/activation-token-resolve/index.ts', 'utf8').replace(/^import .*;\n/gm, '');
+  runInNewContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText, {
+    Deno: { env: { get: () => 'synthetic-only' }, serve: (fn: typeof handler) => { handler = fn; } },
+    createClient: () => sb, Response, Date, console, URL,
+    GUEST_PREFIX: 'guest_', resolveGuestInvite: async () => { throw new Error('Guest flow outside fixture'); },
+    normalizeServiceCategory: () => null, logInviteEvent: async (...args: unknown[]) => { audits.push(args.slice(1)); },
+    fetch: () => { throw new Error('Outbound forbidden'); },
+  });
+  return { reads, writes, audits, async run(input = token) {
+    if (!handler) throw new Error('handler missing');
+    const response = await handler(new Request('https://example.test/resolve', { method: 'POST', body: JSON.stringify({ token: input, preview: true }) }));
+    return { status: response.status, body: await response.json() };
+  } };
+}
+
+describe('actual profile resolver → exact claim contract, synthetic only', () => {
+  it('preserves the full token and its prospect end to end without writes', async () => {
+    const resolver = resolverHarness(); const result = await resolver.run();
+    expect(result.status).toBe(200); expect(result.body.token).toBe(token);
+    expect(result.body.prospect.id).toBe(prospectId); expect(resolver.writes).toEqual([]);
+    const claim = harness(); const probe = await claim.run(result.body.token, true);
+    expect(probe.status).toBe(200); expect(claim.writes).toEqual([]);
+    expect(claim.reads.find(r => r.table === 'verified_prospect_tokens' && r.method === 'eq')?.match).toBe(token);
+  });
+  it.each([10, 16, 20])('never expands or discloses a %i-character prefix', async length => {
+    const resolver = resolverHarness(); const result = await resolver.run(token.slice(0, length));
+    expect(result.status).toBe(404); expect(result.body.reason).toBe('token_not_found');
+    expect(JSON.stringify(result.body)).not.toContain(token);
+    expect(resolver.reads.some(r => r.method === 'like')).toBe(false);
+    expect(resolver.reads.some(r => r.table === 'verified_contractor_prospects')).toBe(false);
+    expect(resolver.writes).toEqual([]);
+  });
+  it('does not attribute a colliding prefix to either prospect', async () => {
+    const resolver = resolverHarness([validToken(), { ...validToken(), token: token + 'other', prospect_id: 'other-prospect' }]);
+    const result = await resolver.run(token.slice(0, 16));
+    expect(result.status).toBe(404); expect(result.body.prospect).toBeUndefined(); expect(result.body.token).toBeUndefined();
+  });
+  it('keeps exact attribution despite a longer token sharing the prefix', async () => {
+    const resolver = resolverHarness([validToken(), { ...validToken(), token: token + 'other', prospect_id: 'other-prospect' }]);
+    const result = await resolver.run();
+    expect(result.status).toBe(200); expect(result.body.prospect.id).toBe(prospectId); expect(result.body.token).toBe(token);
+  });
+  it.each([
+    ['revoked', { revoked_at: '2026-01-01T00:00:00Z' }, 'token_revoked'],
+    ['expired', { expires_at: '2000-01-01T00:00:00Z' }, 'token_expired'],
+    ['unreadable expiry', { expires_at: 'invalid' }, 'token_expired'],
+    ['absent expiry', { expires_at: null }, 'token_expired'],
+  ] as const)('blocks %s before exposing a claimable profile', async (_label, changes, reason) => {
+    const resolver = resolverHarness([{ ...validToken(), ...changes }]); const result = await resolver.run();
+    expect(result.status).toBe(410); expect(result.body.reason).toBe(reason);
+    expect(result.body.token).toBeUndefined(); expect(result.body.prospect).toBeUndefined(); expect(resolver.writes).toEqual([]);
+  });
+  it('fails closed on lookup error without resolving another token', async () => {
+    const resolver = resolverHarness([validToken()], 'offline'); const result = await resolver.run();
+    expect(result.status).toBe(500); expect(result.body.reason).toBe('lookup_failed');
+    expect(resolver.reads.some(r => r.method === 'like')).toBe(false); expect(resolver.writes).toEqual([]);
+  });
+});
