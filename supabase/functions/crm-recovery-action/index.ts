@@ -70,10 +70,6 @@ const COMMERCIAL_CHANNEL: Record<string, "sms" | "email"> = {
 };
 
 
-function randToken() {
-  return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
-}
-
 const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
@@ -162,6 +158,16 @@ Deno.serve(async (req) => {
         if (actorAffiliateIds.length === 0) return json({ error: "forbidden" }, 403);
         if (!AFFILIATE_ACTIONS.has(action)) return json({ error: "forbidden_action", action }, 403);
       }
+    }
+
+    // No verified atomic RPC serializes renewal with all token writers/claims.
+    // Refuse before prospect reads, gates, audit writes or provider calls; never
+    // revoke an existing link or mint one as a side effect of a retry/dry run.
+    if (action === "new_checkout") {
+      if (!isAdmin || isServiceRole || source !== "manual") {
+        return json({ error: "forbidden_action", message: "Seul un administrateur connecté peut demander le renouvellement." }, 403);
+      }
+      return json({ error: "atomic_token_renewal_unavailable", message: "Renouvellement bloqué : l’unicité transactionnelle du lien doit être garantie. Les liens existants sont conservés." }, 423);
     }
 
     /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */
@@ -294,7 +300,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Resolve or create an activation token/link when needed.
+        // Read-only resolution: no implicit token creation from sends or retries.
         const needsLink = ["payment_email", "payment_sms", "second_sms", "resume_checkout", "new_checkout", "onboarding_email", "send_email", "send_activation_link"];
 
         let link = "";
@@ -310,12 +316,8 @@ Deno.serve(async (req) => {
           if (tok?.revoked_at || (tok?.expires_at && (!Number.isFinite(Date.parse(tok.expires_at)) || Date.parse(tok.expires_at) <= Date.now()))) {
             throw new Error("inactive_activation_token");
           }
-          let token = tok?.token as string | undefined;
-          if (!token || action === "new_checkout") {
-            token = randToken();
-            const { error } = await sb.from("verified_prospect_tokens").insert({ token, prospect_id: pid });
-            if (error) throw new Error(`token_create_failed: ${error.message}`);
-          }
+          const token = tok?.token;
+          if (!token) throw new Error("atomic_token_creation_unavailable");
           link = activationLink(token);
         }
 
