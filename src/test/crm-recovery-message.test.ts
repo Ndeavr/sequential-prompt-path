@@ -9,21 +9,23 @@ import { OFFER_350 } from '../lib/copy/offer350';
 const actions = ['send_email', 'onboarding_email', 'payment_email', 'send_activation_link'];
 const token = 'synthetic0123456789abcdef';
 const pid = '00000000-0000-4000-8000-000000000001';
-function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean; staged?: boolean; admin?: boolean; claimed?: boolean; paid?: boolean; suppressed?: boolean } = {}) {
+function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean; admin?: boolean; claimed?: boolean; paid?: boolean; activated?: boolean; suppressed?: boolean; optedOut?: boolean; missingToken?: boolean; gateOff?: boolean } = {}) {
   const calls: { name: string; body: any }[] = [];
   const writes: { table: string; value: unknown }[] = [];
+  const reads: { table: string; method: string; value: unknown }[] = [];
+  let gateCalls = 0;
   let handler: ((req: Request) => Promise<Response>) | undefined;
   const sb = {
     from(table: string) {
       const chain: any = {};
       for (const method of ['select','eq','in','order','limit','insert','update']) {
-        chain[method] = (value: unknown) => { if (method === 'insert' || method === 'update') writes.push({table,value}); return chain; };
+        chain[method] = (value: unknown) => { if (method === 'insert' || method === 'update') writes.push({table,value}); else reads.push({table,method,value}); return chain; };
       }
       const result = () => ({ error: table === 'verified_prospect_tokens' && options.lookupError ? { message: 'lookup failed' } : null,
-        data: table === 'verified_contractor_prospects' ? { id: pid, business_name: 'Entreprise synthétique', email: 'info@example.test', outreach_status: options.delivered ? 'delivered' : 'not_started' }
-        : table === 'contractor_leads' ? {id:'synthetic-lead'}
+        data: table === 'verified_contractor_prospects' ? { id: pid, business_name: 'Entreprise synthétique', email: 'info@example.test', paid_at:options.paid ? '2026-01-01' : null, profile_active_at:options.activated ? '2026-01-01' : null, outreach_status: options.delivered ? 'delivered' : 'not_started' }
+        : table === 'contractor_leads' ? {id:'synthetic-lead',do_not_contact:options.suppressed,unsubscribed_at:options.optedOut ? '2026-01-01' : null}
         : table === 'v_commercial_send_eligibility' ? {}
-        : table === 'verified_prospect_tokens' ? {token:options.token ?? token, expires_at:options.expires_at, revoked_at:options.revoked_at,claimed_at:options.claimed ? '2026-01-01T00:00:00Z' : null}
+        : table === 'verified_prospect_tokens' ? (options.missingToken ? null : {token:options.token ?? token, expires_at:options.expires_at, revoked_at:options.revoked_at,claimed_at:options.claimed ? '2026-01-01T00:00:00Z' : null})
         : table === 'user_roles' && options.admin ? [{role:'admin'}]
         : table === 'crm_action_log' && options.prior ? {id:'prior'} : null });
       chain.maybeSingle = async () => result();
@@ -32,25 +34,18 @@ function harness(options: { token?: string; expires_at?: string; revoked_at?: st
     },
     auth: {getUser: async () => ({data:{user:options.admin ? {id:'synthetic-admin'} : null}})},
   };
-  let source = readFileSync('supabase/functions/crm-recovery-action/index.ts','utf8').replace(/^import .*;\n/gm,'');
-  if(options.staged){
-    const patch=readFileSync('docs/audits/crm-renewal-fail-closed.patch','utf8');
-    const anchor='    /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */';
-    if(!source.includes(anchor)) throw new Error('staged patch anchor changed');
-    const replacement=patch.split('\n').filter(line=>line.startsWith('+')&&!line.startsWith('+++')).map(line=>line.slice(1)).join('\n');
-    source=source.replace(anchor,replacement);
-  }
+  const source = readFileSync('supabase/functions/crm-recovery-action/index.ts','utf8').replace(/^import .*;\n/gm,'');
   runInNewContext(ts.transpileModule(source, {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText, {
     Deno:{env:{get:(k:string) => k === 'SUPABASE_URL' ? 'https://example.test' : 'synthetic-service'}, serve:(fn: typeof handler) => {handler=fn;}},
     createClient:() => sb, corsHeaders:{}, emailHtml, emailText, emailSubject,
     computeContactPermissions:() => ({can_email:!options.denied,can_sms:false,reasons:{email:'missing_consent'}}),
-    callCommercialSendGate:async () => ({pass:true}), gateBlockMessage:()=>'blocked',
+    callCommercialSendGate:async () => {gateCalls++;return {pass:!options.gateOff};}, gateBlockMessage:()=>'blocked',
     crypto:webcrypto, Request, Response, Date, console,
     fetch:async (url:string, init:any) => {calls.push({name:url.split('/').pop() ?? '',body:JSON.parse(init.body)});return new Response(JSON.stringify({ok:true,resend_id:'synthetic-provider'}));},
   });
-  return { calls,writes,async run(action:string, auth:string | null = 'Bearer synthetic-service', dry_run=false) {
+  return { calls,writes,reads,get gateCalls(){return gateCalls;},async run(action:string, auth:string | null = 'Bearer synthetic-service', dry_run=false, source='manual') {
     if (!handler) throw new Error('handler missing');
-    const response = await handler(new Request('https://example.test', {method:'POST',headers:auth ? {Authorization:auth} : {},body:JSON.stringify({action,prospect_ids:[pid],dry_run,payload:{channel:'email'}})}));
+    const response = await handler(new Request('https://example.test', {method:'POST',headers:auth ? {Authorization:auth} : {},body:JSON.stringify({action,prospect_ids:[pid],source,dry_run,payload:{channel:'email'}})}));
     return {status:response.status,body:await response.json()};
   }};
 }
@@ -103,29 +98,55 @@ describe('actual CRM entry-activation branches — synthetic adapters only', () 
   });
 });
 
-describe('staged renewal stop — actual reconstructed handler, no transaction workaround',()=>{
+describe('active renewal stop — actual handler, no transaction workaround',()=>{
   it.each([
     {expires_at:'2000-01-01T00:00:00Z'},
     {revoked_at:'2026-01-01T00:00:00Z'},
     {expires_at:'2099-01-01T00:00:00Z'},
-    {claimed:true}, {paid:true}, {suppressed:true}, {denied:true}, {lookupError:true},
+    {claimed:true}, {paid:true}, {activated:true}, {optedOut:true}, {suppressed:true}, {denied:true}, {lookupError:true}, {missingToken:true},
   ])('admin renewal remains blocked with zero reads-dependent mutations or sends: %j',async state=>{
-    const h=harness({...state,admin:true,staged:true});
+    const h=harness({...state,admin:true});
     const r=await h.run('new_checkout','Bearer synthetic-admin');
     expect(r.status).toBe(423); expect(r.body.error).toBe('atomic_token_renewal_unavailable');
     expect(h.writes).toHaveLength(0); expect(h.calls).toHaveLength(0);
+    expect(h.reads.every(r=>r.table==='user_roles')).toBe(true);expect(h.gateCalls).toBe(0);
   });
   it('service/background request cannot masquerade as an explicit admin renewal',async()=>{
-    const h=harness({staged:true}); expect((await h.run('new_checkout')).status).toBe(403);
+    const h=harness(); expect((await h.run('new_checkout')).status).toBe(403);
     expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
   });
   it('unauthorized renewal is rejected before any effect',async()=>{
-    const h=harness({staged:true});expect((await h.run('new_checkout',null)).status).toBe(401);
+    const h=harness();expect((await h.run('new_checkout',null)).status).toBe(401);
     expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
   });
   it('parallel admin retries cannot create two valid tokens or audit false success',async()=>{
-    const h=harness({staged:true,admin:true});
+    const h=harness({admin:true});
     const results=await Promise.all([h.run('new_checkout','Bearer synthetic-admin'),h.run('new_checkout','Bearer synthetic-admin')]);
     expect(results.map(r=>r.status)).toEqual([423,423]);expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
+  });
+  it('admin automation and dry-run never mint or claim a link',async()=>{
+    const h=harness({admin:true});
+    expect((await h.run('new_checkout','Bearer synthetic-admin',false,'automation')).status).toBe(403);
+    expect((await h.run('new_checkout','Bearer synthetic-admin',true)).status).toBe(423);
+    expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);expect(h.gateCalls).toBe(0);
+  });
+  it.each([...actions,'resume_checkout','payment_sms','second_sms'])('%s cannot implicitly mint a missing token',async action=>{
+    const h=harness({missingToken:true});const r=await h.run(action);
+    // SMS fails at its contact guard; other branches reach read-only resolution.
+    expect(r.body.failed).toBe(1);expect(h.calls).toHaveLength(0);
+    expect(h.writes.every(w=>w.table==='crm_action_log')).toBe(true);
+    if(!['payment_sms','second_sms'].includes(action)) expect(r.body.results[0].result).toBe('atomic_token_creation_unavailable');
+  });
+  it('resume preserves the exact stored prospect attribution and token without mutation',async()=>{
+    const h=harness();const r=await h.run('resume_checkout');
+    expect(r.body.results[0].result).toBe(`https://unpro.ca/unpro/activate/${token}`);
+    expect(h.reads).toContainEqual({table:'verified_prospect_tokens',method:'eq',value:'prospect_id'});
+    expect(h.writes.every(w=>w.table==='crm_action_log')).toBe(true);expect(h.calls).toHaveLength(0);
+  });
+  it.each(actions)('closed commercial gate blocks %s without token mutations or provider calls',async action=>{
+    const h=harness({gateOff:true});const r=await h.run(action);
+    expect(r.body.failed).toBe(1);expect(h.calls).toHaveLength(0);
+    expect(h.reads.some(r=>r.table==='verified_prospect_tokens')).toBe(false);
+    expect(h.writes.every(w=>w.table==='crm_action_log')).toBe(true);
   });
 });
