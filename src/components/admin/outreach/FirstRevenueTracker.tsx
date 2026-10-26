@@ -27,41 +27,49 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
   // Aucun montant n'est déduit d'un compte d'activations : cette vue n'expose
   // aucun encaissement Stripe LIVE rapproché (hors taxes, frais, remboursements).
-  const alert = snapshot?.alert_no_activation_48h ?? true;
+  const alert = !isLoading && snapshot?.alert_no_activation_48h === true;
 
   return (
     <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <DollarSign className="w-5 h-5 text-emerald-400" />
-        <h2 className="text-base font-semibold text-readable">First Revenue Tracker</h2>
+        <h2 className="text-base font-semibold text-readable">Activations — historique non vérifié</h2>
       </div>
+
+      <p className="mb-4 text-sm text-readable-muted">
+        Paiements LIVE de 350 $ CA hors taxes : non vérifiés. Les statuts historiques ne prouvent
+        ni un encaissement ni des droits. Le rapprochement Stripe, webhook signé et entrepreneur,
+        sans remboursement ni litige, reste requis. Aucune estimation de revenu n’est calculée.
+      </p>
 
       {alert && (
         <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/50 bg-red-500/15 p-3">
           <AlertOctagon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
           <div>
             <div className="text-sm font-bold text-red-300 uppercase tracking-wide">
-              AUCUNE ACTIVATION DEPUIS 48 HEURES
+              AUCUN SIGNAL INTERNE D’ACTIVATION DEPUIS 48 HEURES
             </div>
             <div className="text-xs text-red-200/80 mt-0.5">
-              Le funnel ne convertit pas. Vérifier livraison SMS, priorisation, et taux de clic ci-dessous.
+              Ce signal historique ne confirme ni une vente ni son absence.
             </div>
           </div>
         </div>
       )}
 
-      {isLoading || !snapshot ? (
+      {isLoading ? (
         <div className="text-sm text-readable-muted">Chargement…</div>
+      ) : !snapshot ? (
+        <div className="text-sm text-readable-muted">Historique indisponible — paiements non vérifiés.</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="Activations aujourd'hui" value={snapshot.activations_today} tone="revenue" />
+          <Stat label="Activations déclarées aujourd’hui (non vérifiées)" value={snapshot.activations_today} tone="muted" />
           <Stat label="Revenu encaissé aujourd'hui" value={REVENUE_UNAVAILABLE} tone="muted" />
           <Stat label="Revenu récurrent (30j)" value={REVENUE_UNAVAILABLE} tone="muted" />
-          <Stat label="Plans payants actifs" value={snapshot.paid_plans_active} />
+          <Stat label="Plans indiqués payants (non vérifiés)" value={snapshot.paid_plans_active} tone="muted" />
           <Stat label="Contactés (7j)" value={snapshot.contacted_7d} tone="muted" />
           <Stat label="Inscriptions (7j)" value={snapshot.registrations_7d} tone="muted" />
           <Stat label="Profils complétés (7j)" value={snapshot.profiles_completed_7d} tone="muted" />
-          <Stat label="Activations 350 $ (7j)" value={snapshot.activations_7d} tone="muted" />
+          <Stat label="Activations déclarées (7j, non vérifiées)" value={snapshot.activations_7d} tone="muted" />
         </div>
       )}
     </div>
