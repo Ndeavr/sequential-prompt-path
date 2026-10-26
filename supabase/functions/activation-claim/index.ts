@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
   let tokenHash: string | null = null;
   try {
     const body = await req.json().catch(() => ({}));
-    const token = String((body as { token?: string })?.token ?? "").trim();
+    const rawToken = (body as { token?: unknown })?.token;
+    const token = typeof rawToken === "string" ? rawToken.trim() : "";
     // Mode sonde : lecture seule. Sert à savoir si la session courante est
     // DÉJÀ rattachée à cette fiche. Sans lui, l'UI rattachait en silence
     // n'importe quelle session ouverte, sans vérification par code SMS.
@@ -100,21 +101,17 @@ Deno.serve(async (req) => {
     }
 
     // ------------------------------------------------------------ jeton → prospect
-    let { data: tk } = await admin
+    // Ne jamais résoudre un préfixe : seul le jeton complet stocké fait foi.
+    const { data: tk, error: tokenErr } = await admin
       .from("verified_prospect_tokens")
-      .select("token, prospect_id, expires_at, revoked_at, revoked_reason")
+      .select("token, prospect_id, expires_at, revoked_at, revoked_reason, claimed_at, claimed_by")
       .eq("token", token)
       .maybeSingle();
 
-    if (!tk && token.length >= 16) {
-      const { data: candidates } = await admin
-        .from("verified_prospect_tokens")
-        .select("token, prospect_id, expires_at, revoked_at, revoked_reason")
-        .like("token", `${token}%`)
-        .limit(2);
-      if (candidates && candidates.length === 1) tk = candidates[0];
+    if (tokenErr) {
+      return json({ ok: false, reason: tokenErr.code === "PGRST116" ? "token_ambiguous" : "token_lookup_failed" }, tokenErr.code === "PGRST116" ? 409 : 503);
     }
-    if (!tk) {
+    if (!tk || tk.token !== token) {
       await logEvent("activation_error", { step_failed: "token", code: "token_not_found" }, { user_id: user.id, token_hash: tokenHash });
       await logInviteEvent(admin, "token_invalid", { token_hash: tokenHash, user_id: user.id, outcome: "blocked", reason: "token_not_found" });
       return json({ ok: false, reason: "token_not_found" }, 404);
@@ -126,10 +123,14 @@ Deno.serve(async (req) => {
       });
       return json({ ok: false, reason: "token_revoked" }, 410);
     }
-    if (tk.expires_at && new Date(tk.expires_at).getTime() <= Date.now()) {
+    const expiresAt = typeof tk.expires_at === "string" ? Date.parse(tk.expires_at) : NaN;
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
       await logEvent("activation_error", { step_failed: "token", code: "token_expired" }, { user_id: user.id, token_hash: tokenHash });
       await logInviteEvent(admin, "token_expired", { token_hash: tokenHash, user_id: user.id, prospect_id: tk.prospect_id, outcome: "blocked", reason: "token_expired" });
       return json({ ok: false, reason: "token_expired" }, 410);
+    }
+    if ((tk.claimed_by && tk.claimed_by !== user.id) || (tk.claimed_at && !tk.claimed_by)) {
+      return json({ ok: false, reason: "already_claimed" }, 409);
     }
 
     const { data: prospect } = await admin
@@ -143,11 +144,13 @@ Deno.serve(async (req) => {
     }
 
     // ------------------------------------------------- activation déjà existante
-    const { data: existingClaim } = await admin
+    const { data: existingClaim, error: existingClaimErr } = await admin
       .from("contractor_prospect_claims")
       .select("id, user_id, contractor_id")
       .eq("prospect_id", prospect.id)
       .maybeSingle();
+
+    if (existingClaimErr) return json({ ok: false, reason: "claim_lookup_failed" }, 503);
 
     if (existingClaim && existingClaim.user_id !== user.id) {
       await logEvent("activation_error", { step_failed: "claim", code: "already_claimed_by_other" }, {
