@@ -61,9 +61,11 @@ serve(async (req) => {
     return json({ error: "SESSION_REQUIRED", message: "Session invitée introuvable. Réessayez dans un instant." }, 401);
   }
   const isDetails = !!body.place_id;
+  // Only the existing business-import mode may request business contact fields.
+  const lookupType = body.types === "establishment" ? "establishment" : "address";
   if (isDetails && (typeof body.place_id !== "string" || !/^[A-Za-z0-9_-]{1,255}$/.test(body.place_id))) return json({ error: "INVALID_PLACE_ID" }, 400);
   const normInput = typeof body.input === "string" ? body.input.trim().toLowerCase().replace(/\s+/g, " ") : "";
-  const cacheKey = `${callerKey}|${normInput}|${body.region ?? "ca"}|${body.language ?? "fr"}`;
+  const cacheKey = `${callerKey}|${lookupType}|${normInput}|${body.region ?? "ca"}|${body.language ?? "fr"}`;
   if (!isDetails) {
     if (normInput.length < 4 || normInput.length > 200) return json({ predictions: [] });
     const hit = cache.get(cacheKey);
@@ -108,7 +110,9 @@ serve(async (req) => {
       const { data, source, google_status, error_message } = await placeDetails(body.place_id, {
         language: "fr",
         sessionToken,
-        fields: "id,formattedAddress,addressComponents,location",
+        fields: lookupType === "establishment"
+          ? "id,displayName,formattedAddress,addressComponents,location,nationalPhoneNumber,websiteUri,types"
+          : "id,formattedAddress,addressComponents,location",
       });
 
       if (!data) {
@@ -150,7 +154,7 @@ serve(async (req) => {
     }
 
     const { data, source, google_status, error_message } = await placesAutocomplete(input.trim(), {
-      types: "address",
+      types: lookupType,
       region: "ca",
       language: "fr",
       sessionToken,

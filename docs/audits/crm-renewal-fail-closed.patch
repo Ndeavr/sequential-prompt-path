@@ -1,0 +1,14 @@
+--- a/supabase/functions/crm-recovery-action/index.ts
++++ b/supabase/functions/crm-recovery-action/index.ts
+@@
+-    /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */
++    // STAGED ONLY: no atomic renewal RPC has been established in this repository.
++    // Never convert an admin click or retry into an unprotected token INSERT.
++    if (action === "new_checkout") {
++      if (!isAdmin || isServiceRole || source !== "manual") {
++        return json({ error: "forbidden_action", message: "Seul un administrateur connecté peut demander le renouvellement." }, 403);
++      }
++      return json({ error: "atomic_token_renewal_unavailable", message: "Renouvellement bloqué : la protection transactionnelle du lien doit être validée." }, 423);
++    }
++
++    /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */

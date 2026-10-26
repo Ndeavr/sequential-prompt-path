@@ -9,7 +9,7 @@ import { OFFER_350 } from '../lib/copy/offer350';
 const actions = ['send_email', 'onboarding_email', 'payment_email', 'send_activation_link'];
 const token = 'synthetic0123456789abcdef';
 const pid = '00000000-0000-4000-8000-000000000001';
-function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean } = {}) {
+function harness(options: { token?: string; expires_at?: string; revoked_at?: string; lookupError?: boolean; delivered?: boolean; prior?: boolean; denied?: boolean; staged?: boolean; admin?: boolean; claimed?: boolean; paid?: boolean; suppressed?: boolean } = {}) {
   const calls: { name: string; body: any }[] = [];
   const writes: { table: string; value: unknown }[] = [];
   let handler: ((req: Request) => Promise<Response>) | undefined;
@@ -23,15 +23,23 @@ function harness(options: { token?: string; expires_at?: string; revoked_at?: st
         data: table === 'verified_contractor_prospects' ? { id: pid, business_name: 'Entreprise synthétique', email: 'info@example.test', outreach_status: options.delivered ? 'delivered' : 'not_started' }
         : table === 'contractor_leads' ? {id:'synthetic-lead'}
         : table === 'v_commercial_send_eligibility' ? {}
-        : table === 'verified_prospect_tokens' ? {token:options.token ?? token, expires_at:options.expires_at, revoked_at:options.revoked_at}
+        : table === 'verified_prospect_tokens' ? {token:options.token ?? token, expires_at:options.expires_at, revoked_at:options.revoked_at,claimed_at:options.claimed ? '2026-01-01T00:00:00Z' : null}
+        : table === 'user_roles' && options.admin ? [{role:'admin'}]
         : table === 'crm_action_log' && options.prior ? {id:'prior'} : null });
       chain.maybeSingle = async () => result();
       chain.then = (resolve: any) => Promise.resolve(result()).then(resolve);
       return chain;
     },
-    auth: {getUser: async () => ({data:{user:null}})},
+    auth: {getUser: async () => ({data:{user:options.admin ? {id:'synthetic-admin'} : null}})},
   };
-  const source = readFileSync('supabase/functions/crm-recovery-action/index.ts','utf8').replace(/^import .*;\n/gm,'');
+  let source = readFileSync('supabase/functions/crm-recovery-action/index.ts','utf8').replace(/^import .*;\n/gm,'');
+  if(options.staged){
+    const patch=readFileSync('docs/audits/crm-renewal-fail-closed.patch','utf8');
+    const anchor='    /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */';
+    if(!source.includes(anchor)) throw new Error('staged patch anchor changed');
+    const replacement=patch.split('\n').filter(line=>line.startsWith('+')&&!line.startsWith('+++')).map(line=>line.slice(1)).join('\n');
+    source=source.replace(anchor,replacement);
+  }
   runInNewContext(ts.transpileModule(source, {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText, {
     Deno:{env:{get:(k:string) => k === 'SUPABASE_URL' ? 'https://example.test' : 'synthetic-service'}, serve:(fn: typeof handler) => {handler=fn;}},
     createClient:() => sb, corsHeaders:{}, emailHtml, emailText, emailSubject,
@@ -92,5 +100,32 @@ describe('actual CRM entry-activation branches — synthetic adapters only', () 
   });
   it('dry run creates no token, log or provider call',async()=>{
     const h=harness();expect((await h.run('send_email','Bearer synthetic-service',true)).body.results[0].status).toBe('dry_run');expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
+  });
+});
+
+describe('staged renewal stop — actual reconstructed handler, no transaction workaround',()=>{
+  it.each([
+    {expires_at:'2000-01-01T00:00:00Z'},
+    {revoked_at:'2026-01-01T00:00:00Z'},
+    {expires_at:'2099-01-01T00:00:00Z'},
+    {claimed:true}, {paid:true}, {suppressed:true}, {denied:true}, {lookupError:true},
+  ])('admin renewal remains blocked with zero reads-dependent mutations or sends: %j',async state=>{
+    const h=harness({...state,admin:true,staged:true});
+    const r=await h.run('new_checkout','Bearer synthetic-admin');
+    expect(r.status).toBe(423); expect(r.body.error).toBe('atomic_token_renewal_unavailable');
+    expect(h.writes).toHaveLength(0); expect(h.calls).toHaveLength(0);
+  });
+  it('service/background request cannot masquerade as an explicit admin renewal',async()=>{
+    const h=harness({staged:true}); expect((await h.run('new_checkout')).status).toBe(403);
+    expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
+  });
+  it('unauthorized renewal is rejected before any effect',async()=>{
+    const h=harness({staged:true});expect((await h.run('new_checkout',null)).status).toBe(401);
+    expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
+  });
+  it('parallel admin retries cannot create two valid tokens or audit false success',async()=>{
+    const h=harness({staged:true,admin:true});
+    const results=await Promise.all([h.run('new_checkout','Bearer synthetic-admin'),h.run('new_checkout','Bearer synthetic-admin')]);
+    expect(results.map(r=>r.status)).toEqual([423,423]);expect(h.writes).toHaveLength(0);expect(h.calls).toHaveLength(0);
   });
 });
