@@ -6,7 +6,7 @@
 //   4) advance current_step / next_send_at
 //   5) report a real business outcome (achieved / blocked / pending / failed)
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
 import { ONBOARDING_STEPS, TOTAL_STEPS, buildPrivateProfileUrl } from "../_shared/onboardingTemplates.ts";
 
@@ -41,7 +41,7 @@ type RunCounters = {
 };
 
 async function processOne(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient<any>,
   seq: any,
   counters: RunCounters,
 ): Promise<void> {

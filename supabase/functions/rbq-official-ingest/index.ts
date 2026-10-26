@@ -374,7 +374,7 @@ Deno.serve(async (req) => {
         for (const part of chunk(phones)) {
           jobs.push((async () => {
             const { data } = await supabase.from(table).select(col).in(col, part).limit(1000);
-            for (const r of (data ?? []) as Record<string, string>[]) if (r[col]) knownPhones.add(r[col]);
+            for (const r of (data ?? []) as unknown as Record<string, string>[]) if (r[col]) knownPhones.add(r[col]);
           })());
         }
       }
@@ -382,7 +382,7 @@ Deno.serve(async (req) => {
         for (const part of chunk(names)) {
           jobs.push((async () => {
             const { data } = await supabase.from(table).select(col).in(col, part).limit(1000);
-            for (const r of (data ?? []) as Record<string, string>[]) if (r[col]) knownNames.add(r[col]);
+            for (const r of (data ?? []) as unknown as Record<string, string>[]) if (r[col]) knownNames.add(r[col]);
           })());
         }
       }

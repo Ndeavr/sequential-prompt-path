@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Repair preview Deno type/dependency errors only; no manual additional function deployment or commercial action.
 - [x] Bounded SMS eligibility pass: read-only stock/anchor/fit snapshot; exact first-party phone capture and honest batch dry-run patch staged outside active Edge directories, synthetic tests only. No hosted capture, human approval, provider readiness or deployment claimed; switches and legacy queue unchanged. See docs/audits/acquisition-phone-evidence.md.
 - [ ] Phone-evidence release blocked: missing canonical category mapping, remaining endpoint/error/dedup regression coverage and isolated hosted transport/review QA. 24 provisional candidates/11 first-party host matches, zero captured or approved; no complete provider-ready computation or 25-SMS batch certified.
 - [ ] P0 claim/payment separation: active handler falsely sets activated without payment; proposed handler/UI patch staged in docs/audits/activation-claim-account-only.patch only, pending separately authorized deployment and isolated QA. Preserve canonical paid ledger/free-year RPC; no historical correction or remote access authorized.
