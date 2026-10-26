@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
           const r = await fetch(DATAFORSEO_ENDPOINT, {
             method: "POST",
             headers: { "Authorization": authValue as string, "Content-Type": "application/json" },
-            body: JSON.stringify(buildRequestBody({ title: c.business_name, locality: target.city, region: c.region, limit: 10 })),
+            body: JSON.stringify(buildRequestBody({ title: c.business_name as string, locality: target.city, region: c.region, limit: 10 })),
           });
           if (r.status === 401 || r.status === 402 || r.status === 400) {
             lastError = `http_${r.status}`;
