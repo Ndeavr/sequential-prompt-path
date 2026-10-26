@@ -24,7 +24,7 @@ The report must not imply that a 25-record evidence-ready batch exists. Current 
 
 ## Validation
 
-- Four focused suites: **62/62 passed** (19 staged phone/preview, 33 existing first-party, 4 existing authenticated handler, 6 prefix).
+- Four focused suites: **67/67 passed** (24 staged phone/preview, 33 existing first-party, 4 existing authenticated handler, 6 prefix).
 - Staged source is reconstructed against actual files; stale patch contexts fail the tests.
 - Gate OFF: zero provider calls; unknown/landline/mobile never counted ready. Explicit missing candidates: zero dry-run updates/logs. Capture: pending-only, exact publication, duplicates/opt-out/invalid/no construction licence/refusal/third-party negatives.
 - `git diff --check`: passed.
@@ -34,6 +34,10 @@ The report must not imply that a 25-record evidence-ready batch exists. Current 
 ## Residual limitations
 
 Canonical phones must already be unambiguous and normalized; missing or shared anchors refuse capture. Only narrowly scoped maintenance categories are supported by this bounded proposal. A complete provider-ready preview has not been implemented: open-gate results remain explicitly unverified rather than optimistically counted. Read-only preview does not reserve quota; the existing atomic sender remains the final authority. Current first-party recheck on hosted code remains email-only until separate release.
+
+Independent reviewer: staged-only safe, **deployment blocked** pending capture endpoint/error-query/dedup-count regressions and isolated runtime verification. Existing helper normalization was confirmed by a concrete ten-digit test; three visible format variants and a hidden-script negative also pass. Canonical maintenance category query returned only `lavage-de-vitres` (71 rows) among supported slugs: other category mappings are not silently invented.
+
+Operational snapshot: 69 untouched unknown/unverified records; 23 raw website/phone-source host matches; seven occupation mismatches; 24 provisional strict canonical-anchor service candidates, 11 with first-party host matches and 13 with third-party phone URLs. No fresh crawl or capture, no reviewer approval, zero valid reviewed SMS evidence, zero sent today. These are not 25 ready candidates; full suppression/licence/capability verification remains incomplete.
 
 ## Founder action
 
