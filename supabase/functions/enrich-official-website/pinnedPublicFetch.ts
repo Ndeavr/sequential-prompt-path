@@ -1,4 +1,5 @@
-import { request } from "node:https";
+import { request, Agent } from "node:https";
+import { connect } from "node:tls";
 import { publicAddress, safeUrl, POLICY, PINNED_TRANSPORT } from "./caslFirstParty.ts";
 
 declare const Deno: any;
@@ -15,12 +16,33 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
   ]).finally(() => clearTimeout(timer));
   if (!addresses.length || addresses.some(a => !publicAddress(a))) throw new Error("unsafe_dns");
   const address = addresses[0];
-  // Deno's node:https ClientRequest does not implement options.lookup.
-  // Connect by the already-validated public IP *itself*, never by a hostname
-  // that could be resolved a second time after our DNS validation (SSRF).
-  // Host and servername remain the original business domain: mandatory for
-  // HTTP virtual hosting, TLS SNI and verified certificate hostname. Do NOT
-  // disable TLS verification or follow redirects.
+  // Deno's node:https ClientRequest does not implement options.lookup,
+  // and its direct-IP request can verify the certificate against the IP.
+  // The separately tested node:tls SNI socket is the *only* transport:
+  // connect to the validated public IP, but verify TLS against the original
+  // business domain. No DNS fallback, proxy, redirects or disabled TLS.
+  const agent = new Agent({ keepAlive: false });
+  agent.createConnection = ((_options: unknown, callback?: (error: Error | null, socket?: ReturnType<typeof connect>) => void) => {
+    const socket = connect({
+      host: address,
+      port: 443,
+      servername: u.hostname,
+      rejectUnauthorized: true,
+      ALPNProtocols: ["http/1.1"],
+    });
+    let notified = false;
+    const notify = (error: Error | null, connected?: ReturnType<typeof connect>) => {
+      if (notified) return;
+      notified = true;
+      callback?.(error, connected);
+    };
+    socket.once("secureConnect", () => {
+      if (socket.authorized) notify(null, socket);
+      else notify(new Error("tls_unauthorized"));
+    });
+    socket.once("error", (error: Error) => notify(error));
+    return socket;
+  }) as typeof agent.createConnection;
   const pinnedOptions = {
     protocol: "https:" as const,
     hostname: address,
@@ -29,7 +51,7 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
     method: "GET" as const,
     servername: u.hostname,
     rejectUnauthorized: true,
-    agent: false as const,
+    agent,
     headers: {
       Host: u.host,
       "User-Agent": "UNPRO-Enrichment/1.1 (+https://unpro.ca)",
@@ -55,7 +77,7 @@ export async function pinnedPublicFetch(raw: string | URL | Request, init?: Requ
     const abort = () => req.destroy(new Error("timeout"));
     init?.signal?.addEventListener("abort", abort, { once: true });
     req.on("error", reject);
-    req.on("close", () => { clearTimeout(t); init?.signal?.removeEventListener("abort", abort); });
+    req.on("close", () => { clearTimeout(t); agent.destroy(); init?.signal?.removeEventListener("abort", abort); });
     req.end();
   });
 }
