@@ -22,7 +22,7 @@ const LOCK_MINUTES = 30;
 
 const DEAD_STATUSES = new Set(["not_interested", "subscribed", "trial_1dollar", "converted", "won"]);
 
-type Lead = Record<string, string | number | null>;
+type Lead = Record<string, unknown>;
 
 function score(lead: Lead, nowMs: number, isRecovery = false): number {
   let s = 0;
@@ -127,26 +127,27 @@ Deno.serve(async (req) => {
     const LEAD_COLUMNS =
       "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id";
 
-    const ordered = <T extends { order: (c: string, o?: Record<string, unknown>) => T }>(q: T): T =>
-      q
+    const { data: assignedLeads, error: assignedErr } = await
+      sb.from("contractor_leads").select(LEAD_COLUMNS)
+        .eq("assigned_affiliate_id", affiliate.id)
+        .is("archived_at", null)
         .order("priority_score", { ascending: false, nullsFirst: false })
         .order("fit_score", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: true, nullsFirst: false })
-        .order("id", { ascending: true });
-
-    const { data: assignedLeads, error: assignedErr } = await ordered(
-      sb.from("contractor_leads").select(LEAD_COLUMNS)
-        .eq("assigned_affiliate_id", affiliate.id)
-        .is("archived_at", null) as never,
-    ).limit(400);
+        .order("id", { ascending: true })
+        .limit(400);
     if (assignedErr) return json({ error: assignedErr.message }, 500);
 
-    const { data: createdLeads, error: createdErr } = await ordered(
+    const { data: createdLeads, error: createdErr } = await
       sb.from("contractor_leads").select(LEAD_COLUMNS)
         .is("assigned_affiliate_id", null)
         .eq("created_by_affiliate_id", affiliate.id)
-        .is("archived_at", null) as never,
-    ).limit(400);
+        .is("archived_at", null)
+        .order("priority_score", { ascending: false, nullsFirst: false })
+        .order("fit_score", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true })
+        .limit(400);
     if (createdErr) return json({ error: createdErr.message }, 500);
 
     // Fusion sans doublon, propriété stricte revérifiée côté serveur.
@@ -228,7 +229,7 @@ Deno.serve(async (req) => {
       eligibility: (eligRow ?? null) as SendEligibilityRow | null,
       has_phone: !!(pick.phone_e164 || pick.phone),
       has_email: !!pick.email,
-      do_not_contact: pick.do_not_contact,
+      do_not_contact: pick.do_not_contact as boolean | null | undefined,
       unsubscribed: !!pick.unsubscribed_at,
       phone_validation_status: (pick.phone_validation_status as string | null) ?? null,
       compliance_review_required: (pick.compliance_review_required as unknown as boolean | null) ?? null,

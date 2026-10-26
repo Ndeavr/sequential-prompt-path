@@ -217,9 +217,9 @@ Deno.serve(async (req) => {
 
       const target: MatchTarget = {
         business_name_norm: c.business_name_norm ?? "",
-        city: c.municipality ?? c.city,
-        postal_code: c.postal_code,
-        official_domain: c.official_domain,
+        city: c.municipality ?? c.city ?? null,
+        postal_code: c.postal_code ?? null,
+        official_domain: c.official_domain ?? null,
       };
 
       let parsed = null as ReturnType<typeof parseResponse> | null;
@@ -230,8 +230,8 @@ Deno.serve(async (req) => {
         try {
           const r = await fetch(DATAFORSEO_ENDPOINT, {
             method: "POST",
-            headers: { "Authorization": authValue, "Content-Type": "application/json" },
-            body: JSON.stringify(buildRequestBody({ title: c.business_name, locality: target.city, region: c.region, limit: 10 })),
+            headers: { "Authorization": authValue as string, "Content-Type": "application/json" },
+            body: JSON.stringify(buildRequestBody({ title: c.business_name as string, locality: target.city, region: c.region, limit: 10 })),
           });
           if (r.status === 401 || r.status === 402 || r.status === 400) {
             lastError = `http_${r.status}`;
