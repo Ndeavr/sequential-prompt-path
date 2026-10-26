@@ -388,6 +388,7 @@ Deno.serve(async (req) => {
           else if (p.outreach_status !== "none") reason = `already_${p.outreach_status}`;
           else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "") && !p.email) reason = `no_channel_available:tier=${p.sms_eligibility_tier ?? "none"}_no_email`;
 
+          if (!dryRun) {
           await supabase
             .from("verified_contractor_prospects")
             .update({
@@ -414,6 +415,7 @@ Deno.serve(async (req) => {
               has_email: !!p.email,
             },
           });
+          }
           missingResults.push({ id: p.id, business_name: p.business_name, status: "skipped_by_gate", skipped: reason });
         }
       }
@@ -527,6 +529,7 @@ Deno.serve(async (req) => {
       (!!p.phone_e164 && recentlyContactedPhones.has(String(p.phone_e164)));
 
     if (dryRun) {
+      const previewGate = await assertCommercialOutreachAllowed(supabase as any);
       const previews = eligible.map((p: any) => {
         const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
         const dup = isRecentlyContacted(p);
@@ -540,7 +543,13 @@ Deno.serve(async (req) => {
           email_eligibility_reason: p.email_eligibility_reason ?? null,
           outreach_status: p.outreach_status,
           duplicate_guard: dup,
-          channel_planned: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
+          channel_planned: "none",
+          candidate_channel: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
+          sms_provider_ready: false,
+          readiness_status: previewGate.allowed ? "not_verified" : "blocked",
+          readiness_blockers: [previewGate.allowed ? "full_sender_preflight_not_verified" : previewGate.reason,
+            ...(p.phone_line_type !== "mobile" ? ["sms_destination_or_prior_delivery_not_verified"] : []),
+            "reviewed_casl_suppression_daily_cap_cooldown_not_verified"],
           skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
           // Exact first-touch body; the real token is minted only at send time.
           sms_preview: dup ? null : safeFirstTouchBody(p.business_name, typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim() ? messageOverrides[p.id].trim() : null, "https://unpro.ca/unpro/audit/<jeton>"),
@@ -548,12 +557,12 @@ Deno.serve(async (req) => {
       });
       const dupCount = previews.filter((p) => p.duplicate_guard).length;
       return jsonResponse({
-        ok: true, dry_run: true, eligible_count: eligible.length - dupCount,
+        ok: true, dry_run: true, eligible_count: 0, candidate_count: eligible.length - dupCount, sms_provider_ready_count: 0, readiness_status: previewGate.allowed ? "not_verified" : "blocked",
         duplicate_skipped_count: dupCount,
         eligible: previews,
         skipped: [...missingResults, ...freeExclusions],
         free_excluded_count: freeExclusions.length,
-        message: eligible.length > 0 ? `${eligible.length - dupCount} prospect(s) prêt(s)` : "Aucun prospect éligible",
+        message: `${eligible.length - dupCount} candidat(s) à vérifier · 0 SMS prêts fournisseur`,
       }, 200, requestId);
     }
 
@@ -631,7 +640,22 @@ Deno.serve(async (req) => {
       // reachability only — consent/provenance gates above still apply.
       // Unknown, never-delivered lines are never texted (no paid Lookup).
       const smsDestinationOk = p.phone_line_type === "mobile" || deliveredPhones.has(p.phone_e164);
-      const shouldTrySms = smsEligibleTier && hasValidPhone && smsDestinationOk;
+      let shouldTrySms = smsEligibleTier && hasValidPhone && smsDestinationOk;
+      // Pre-link recheck (fail closed): exact destination needs valid human-reviewed
+      // CASL evidence and no opt-out BEFORE any token is minted. sendSms re-checks.
+      if (shouldTrySms) {
+        const ten = String(p.phone_e164).replace(/^\+1/, "");
+        const [{ data: ev, error: evErr }, { data: opt, error: optErr }] = await Promise.all([
+          supabase.from("casl_consent_evidence").select("id").eq("destination_type", "phone_sms").eq("destination_normalized", ten)
+            .eq("is_valid", true).eq("refusal_statement_found", false).not("reviewer_id", "is", null).limit(1),
+          supabase.from("sms_opt_outs").select("normalized_phone").in("normalized_phone", [p.phone_e164, ten]).limit(1),
+        ]);
+        if (evErr || optErr || !ev?.length || !opt || opt.length) shouldTrySms = false;
+        if (!shouldTrySms && !p.email) {
+          results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: evErr || optErr ? "casl_precheck_unreadable" : (opt?.length ? "opted_out" : "no_reviewed_casl_evidence"), channel_used: null });
+          continue;
+        }
+      }
       if (smsEligibleTier && hasValidPhone && !smsDestinationOk && !p.email) {
         results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "sms_destination_unverified", channel_used: null });
         continue;

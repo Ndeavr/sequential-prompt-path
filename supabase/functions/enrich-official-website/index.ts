@@ -29,7 +29,7 @@ import {
 } from "../_shared/officialSiteCrawler.ts";
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
-import { recheckCasl } from "./caslFirstParty.ts";
+import { captureFirstPartyPhone, recheckCasl } from "./caslFirstParty.ts";
 import { pinnedPublicFetch } from "./pinnedPublicFetch.ts";
 import { z } from "https://esm.sh/zod@3.25.76";
 
@@ -62,6 +62,20 @@ Deno.serve(async (req) => {
     const supabase = createClient(url, svc);
 
     const body = await req.json().catch(() => ({}));
+    if (body.action === "capture_phone_casl") {
+      if (caller.kind !== "admin") return jr({ ok: false, code: "admin_session_required" }, 403, rid);
+      const parsed = z.object({ action: z.literal("capture_phone_casl"), contractor_prospect_id: z.string().uuid(), dry_run: z.boolean().default(true) }).strict().safeParse(body);
+      if (!parsed.success) return jr({ ok: false, code: "invalid_phone_capture_request" }, 400, rid);
+      try {
+        const result = await captureFirstPartyPhone(supabase, parsed.data.contractor_prospect_id, {
+          fetch: pinnedPublicFetch,
+          resolve: async (host) => { try { return await Deno.resolveDns(host, "A"); } catch { return []; } },
+        }, parsed.data.dry_run);
+        return jr({ ok: true, ...result }, 200, rid);
+      } catch (err) {
+        return jr({ ok: false, code: err instanceof Error ? err.message : "phone_capture_failed", sent: 0, legal_consent_established: false }, 422, rid);
+      }
+    }
     if (body.action === "verify_casl") {
       const parsed = z.object({ action: z.literal("verify_casl"), evidence_id: z.string().uuid(), dry_run: z.boolean().default(false) }).strict().safeParse(body);
       if (!parsed.success) return jr({ ok: false, code: "invalid_casl_request" }, 400, rid);
