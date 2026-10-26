@@ -30,3 +30,28 @@ export function isStatusRegression(current: string | null | undefined, next: str
   if (c >= 5 && n <= c) return true; // terminal: ignore duplicates and regressions
   return n < c;
 }
+
+// Statuses strictly below `next` in rank: used as an atomic UPDATE predicate so a concurrent
+// higher-rank write (e.g. delivered) can never be overwritten and duplicates match zero rows.
+export function priorStatusesBelow(next: string): string[] {
+  const n = RANK[next] ?? 0;
+  return Object.keys(RANK).filter((s) => RANK[s] < n);
+}
+
+// Remove phone numbers and any token-like fields from stored callback payloads; SID is preserved.
+export function redactCallbackPayload(raw: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (/^(to|from|token|.*phone.*|.*number.*)$/i.test(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+// Canonical outreach kind: only real provider statuses; progress statuses return null.
+export function canonicalSmsKind(mapped: string): "sent" | "delivered" | "failed" | null {
+  if (mapped === "sent") return "sent";
+  if (mapped === "delivered") return "delivered";
+  if (mapped === "failed" || mapped === "undelivered") return "failed";
+  return null;
+}
