@@ -75,7 +75,7 @@ export default function GooglePlacesAutocomplete({ onSelect, placeholder = "Rech
     setDetailLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
-        body: { place_id: p.place_id, session_token: await getAddressAccessToken() },
+        body: { place_id: p.place_id, types: "establishment", session_token: await getAddressAccessToken() },
       });
       if (!error && data?.result) {
         onSelect(data.result);
