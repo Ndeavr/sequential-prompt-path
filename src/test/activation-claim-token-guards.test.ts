@@ -190,7 +190,7 @@ describe('staged account claim is not paid activation — no remote execution', 
     expect(h.writes.filter(w => ['contractor_activation_ledger', 'contractor_subscriptions', 'contractor_entitlements'].includes(w.table))).toEqual([]);
     expect(h.writes.filter(w => w.table === 'contractor_funnel_events').map(w => w.value.event_type)).not.toContain('profile_activated');
   });
-  it.each(['unpaid', 'paid', 'free-year'])('reopening a %s owner profile leaves activation and claim attribution untouched', async () => {
+  it('reopening the owner profile leaves its existing activation and claim attribution untouched', async () => {
     const h = harness({ staged: true, claimUser: userId, tokens: [{ ...validToken(), claimed_at: '2026-01-01T00:00:00Z', claimed_by: userId }] });
     const result = await h.run();
     expect(result.status).toBe(200); expect(result.body.already_claimed).toBe(true);
