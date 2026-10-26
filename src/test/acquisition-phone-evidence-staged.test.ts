@@ -84,7 +84,7 @@ function batchHarness({ gate = false, missing = false, line = "unknown" } = {}) 
     q.then = (resolve: any) => Promise.resolve({ data: table === "verified_contractor_prospects" ? (missing && selected.includes("retry_count") ? [] : [row]) : [], error: null }).then(resolve);
     return q;
   } };
-  load(proposed("supabase/functions/send-verified-batch/index.ts"), { Deno: { env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "synthetic-service" : "https://synthetic.test" }, serve: (f: any) => { handler = f; } }, createClient: () => sb, assertCommercialOutreachAllowed, sendSms: sends, logPipelineEvent: vi.fn(() => { writes.push("log"); }), sanitizeEmail: (e: any) => e, buildOutreachUrl: (u: string) => u, smsWithLink: (s: string, u: string) => `${s} ${u}`, firstTouchScoreSms: () => "Synthetic", });
+  load(proposed("supabase/functions/send-verified-batch/index.ts"), { Deno: { env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "synthetic-service" : k === "SUPABASE_URL" ? "https://synthetic.test" : undefined }, serve: (f: any) => { handler = f; } }, createClient: () => sb, assertCommercialOutreachAllowed, sendSms: sends, logPipelineEvent: vi.fn(() => { writes.push("log"); }), sanitizeEmail: (e: any) => e, buildOutreachUrl: (u: string) => u, smsWithLink: (s: string, u: string) => `${s} ${u}`, firstTouchScoreSms: () => "Synthetic", });
   return { writes, sends, run: async () => (await handler(new Request("https://synthetic.test", { method: "POST", headers: { Authorization: "Bearer synthetic-service" }, body: JSON.stringify({ dry_run: true, prospect_ids: [id] }) }))).json() };
 }
 describe("staged batch preview never confuses tier C with provider readiness", () => {
