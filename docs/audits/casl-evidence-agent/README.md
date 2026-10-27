@@ -22,6 +22,11 @@ The verified source checkout includes the current canonical revision. Existing o
 - Proposed-handler auth: 7/7 passed; anonymous/anon-key and metadata-admin denied, exact configured service credential accepted, malformed/oversized input denied, default dry-run preserved.
 - These are isolated checks, not production CI or hosted capture proof. Current production has zero company-website phone evidence; outreach/recruitment flags false and historical pending count unchanged.
 
+## GitHub-only migration packaging fix — 27 October 2026
+The previous Cloud migration attempt failed before applying SQL because it rejected a literal `INSERT ... VALUES ('control')` in a DDL migration. The staged SQL now uses an explicitly disabled, idempotent `INSERT ... SELECT` with `WHERE NOT EXISTS`; Lovable's stated validator permits DDL and `INSERT SELECT` backfills. This packaging fix has **not** been accepted by the hosted Cloud migration tool yet. No migration, control initialization, crawler, or schedule is active merely because this branch passes CI.
+
+The founder provided a screenshot of the project Backups page listing a 27 October 2026 01:28:37 UTC backup and a restore option; snapshot readability/recovery has **not** been empirically tested. Before applying production changes, recheck exact project, source, snapshot, migration permissions, fallback/rollback and inspect current tables. If the validator still refuses an INSERT SELECT initialization, stop and use only an explicitly supported bootstrap path—never obscure a write behind DDL.
+
 ## Release blocker
 Repository safety contract requires independently verified backup integrity before any remote write. No verified backup/snapshot evidence is available in this task. Do not weaken this guard or automatically deploy the proposed module. Confirm a current recoverable Cloud backup, then apply the exact staged migration and deploy only the existing endpoint. Verify the private Vault credential matches that endpoint's service authorization without displaying its value; run one bounded real pending-only capture and inspect the exact row before activating the pilot schedule.
 
