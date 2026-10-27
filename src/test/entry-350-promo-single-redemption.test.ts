@@ -59,7 +59,10 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
       from(table: string) {
         let payload: any, operation = "read", originalLookup = false, contractor = "";
         const q: any = {
-          select(columns: string) { originalLookup = columns === "contractor_id, metadata"; return q; },
+          select(columns: string) {
+            originalLookup = columns === "contractor_id, metadata" || columns === "contractor_id, source, metadata";
+            return q;
+          },
           eq(key: string, value: string) { if (key === "id") contractor = value; return q; },
           neq() { return q; }, limit() { return q; },
           insert(value: any) { payload = value; operation = "insert"; return q; },
@@ -97,7 +100,7 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
     const shared = await realSharedImports();
     const branch = await compileWebhookBranch('if (session.metadata?.offer === "entry_activation_350")', "// ── OFFRE DE REPLI",
       ["supabase", "session", "event", "corsHeaders", ...Object.keys(shared)]);
-    const sessions = ["a", "b"].map((suffix) => ({ id: `cs_test_${suffix}`, mode: "payment", currency: "cad", payment_status: "paid",
+    const sessions = ["a", "b"].map((suffix) => ({ id: `cs_test_${suffix}`, mode: "payment", currency: "cad", payment_status: "paid", payment_intent: `pi_test_${suffix}`,
       amount_subtotal: 35000, amount_total: 115, total_details: { amount_tax: 15, amount_discount: 34900 },
       metadata: { offer: "entry_activation_350", contractor_id: `00000000-0000-0000-0000-00000000000${suffix}`,
         entry_tax_contract: ENTRY350_PROMO_TAX_CONTRACT, promo_code_id: "promo_test_race", promo_coupon_id: "coupon_test" } }));
