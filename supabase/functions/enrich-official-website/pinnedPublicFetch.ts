@@ -6,6 +6,7 @@ declare const Deno: any;
 
 const HEADER_LIMIT = 16_384;
 const RAW_LIMIT = POLICY.maxBytes * 2 + HEADER_LIMIT;
+export const PINNED_TLS_TRANSPORT_VERSION = "direct-tls-http1-v1";
 
 /**
  * Parse a strictly bounded HTTP/1.1 response sent over an already validated
