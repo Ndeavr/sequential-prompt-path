@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
           if (entryContractorId && paid && amountOk) {
             const { data: already, error: alreadyError } = await supabase
               .from("contractor_activation_ledger")
-              .select("contractor_id, source, metadata")
+              .select("id")
               .eq("action", "entry_activation_350_paid")
               .eq("metadata->>stripe_session_id", session.id)
               .maybeSingle();
@@ -459,8 +459,18 @@ Deno.serve(async (req) => {
               paymentIntentId: entryPaymentIntentId,
               livemode: event.livemode === true,
             };
-            if (already && !entryActivationReplayReceiptMatches(already, expectedReceipt)) {
-              throw new Error("entry_activation_350 replay receipt mismatch");
+            if (already) {
+              // The existence check may return only an ID. Read the complete
+              // committed receipt before restoring a partially failed delivery.
+              const { data: prior, error: priorError } = await supabase
+                .from("contractor_activation_ledger")
+                .select("contractor_id, source, metadata")
+                .eq("action", "entry_activation_350_paid")
+                .eq("metadata->>stripe_session_id", session.id)
+                .maybeSingle();
+              if (priorError || !entryActivationReplayReceiptMatches(prior, expectedReceipt)) {
+                throw new Error("entry_activation_350 replay receipt mismatch");
+              }
             }
             // PROMO usage unique global : une autre session déjà payée avec ce code
             // (tout compte) = aucune activation, alerte remboursement.
