@@ -28,7 +28,16 @@ ALTER TABLE public.casl_phone_capture_jobs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY capture_service_only ON public.casl_phone_capture_jobs FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE UNIQUE INDEX casl_capture_single_control ON public.casl_phone_capture_jobs ((status)) WHERE status='control';
 CREATE INDEX casl_capture_due ON public.casl_phone_capture_jobs (status,next_retry_at) WHERE status IN ('queued','retry','running');
-INSERT INTO public.casl_phone_capture_jobs(status) VALUES ('control');
+-- Lovable Cloud's migration validator accepts DDL and INSERT SELECT backfills,
+-- but rejects literal INSERT VALUES seeds in migrations. Insert the unique,
+-- DISABLED control row through an idempotent INSERT SELECT, in the same
+-- migration transaction. This does not enable jobs, cron or outreach.
+INSERT INTO public.casl_phone_capture_jobs(status, enabled, daily_attempts, run_attempts)
+SELECT 'control', false, 0, 0
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.casl_phone_capture_jobs WHERE status = 'control'
+)
+ON CONFLICT DO NOTHING;
 
 CREATE FUNCTION public.begin_casl_phone_capture_run(p_run uuid) RETURNS jsonb
 LANGUAGE plpgsql SECURITY INVOKER SET search_path=public AS $$
