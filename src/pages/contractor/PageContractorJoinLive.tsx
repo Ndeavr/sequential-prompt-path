@@ -2,18 +2,40 @@
  * /contractor/join — single-input live activation entry.
  * Cinematic dark, mobile-first, no extra clicks.
  */
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Loader2, ArrowRight, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { detectInputKind } from "@/config/contractorOnboarding";
 import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
+import { contractorLandingDedupeKey, trackedContractorAnalysisPath } from "@/lib/analytics/contractorAdTracking";
 
 export default function PageContractorJoinLive() {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { search } = useLocation();
+
+  useEffect(() => {
+    // Attribution is read from the current URL by UNPRO's existing logger.
+    // Duplicate views in one session must not inflate A/B acquisition metrics.
+    let visitorSession: string;
+    try {
+      visitorSession = sessionStorage.getItem("unpro_funnel_session_id") || crypto.randomUUID();
+      sessionStorage.setItem("unpro_funnel_session_id", visitorSession);
+    } catch {
+      visitorSession = crypto.randomUUID();
+    }
+    void logFunnelEvent({
+      event_type: "landing_view",
+      step: "contractor_join_landing",
+      dedupe_key: contractorLandingDedupeKey(visitorSession),
+      metadata: { surface: "contractor_join" },
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,8 +52,16 @@ export default function PageContractorJoinLive() {
       if (invokeErr) throw invokeErr;
       const runId = (data as { run_id?: string })?.run_id;
       if (!runId) throw new Error("Réponse invalide du pipeline.");
-      navigate(`/contractor/analysis?run=${runId}`);
+      void trackFunnelStep("analysis_started", {
+        subjectId: runId,
+        metadata: { surface: "contractor_join", input_kind: inputKind },
+      });
+      navigate(trackedContractorAnalysisPath(runId, search));
     } catch (err) {
+      // Operational error signal only — never upload the raw company input.
+      void trackFunnelFailure("analysis_started", "activation_pipeline_start_unavailable", {
+        metadata: { surface: "contractor_join" },
+      });
       setError(err instanceof Error ? err.message : "Erreur inattendue.");
       setBusy(false);
     }

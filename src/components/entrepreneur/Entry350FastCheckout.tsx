@@ -14,6 +14,7 @@ import { getClaraQualification } from "@/services/clara/claraContractorQualifica
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { normalizeRef } from "@/lib/activation350Links";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 const DECLARED_NAME_KEY = "unpro_entry350_declared_name";
 
@@ -123,6 +124,13 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         return;
       }
       if (error || reply?.error || !reply?.url) throw new Error("unavailable");
+      // This only measures a real server-created Stripe checkout handoff.
+      // A redirect/success URL must NEVER be counted as paid revenue.
+      await logFunnelEvent({
+        event_type: "stripe_checkout_started",
+        step: "entry350_checkout_created",
+        metadata: { surface: "activation_350", entry_activation: true },
+      });
       redirectToCheckout(reply.url);
     } catch {
       setErrorText("Impossible d'ouvrir le paiement. Vos réponses sont conservées. Réessayez.");
