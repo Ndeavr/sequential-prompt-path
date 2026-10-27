@@ -15,6 +15,7 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisuals";
+import R51vsR60Article, { R51_R60_ARTICLE_SLUG } from "@/pages/blog/R51vsR60Article";
 import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
@@ -37,7 +38,7 @@ export default function BlogArticlePage() {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!slug,
+    enabled: !!slug && slug !== R51_R60_ARTICLE_SLUG,
     retry: 0,
     staleTime: 5 * 60 * 1000,
   });
@@ -85,6 +86,8 @@ export default function BlogArticlePage() {
       acceptedAnswer: { "@type": "Answer", text: f.answer },
     })),
   } : null;
+
+  if (slug === R51_R60_ARTICLE_SLUG) return <R51vsR60Article />;
 
   if (isLoading && !stuck) {
     return (
