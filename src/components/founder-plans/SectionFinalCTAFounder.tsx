@@ -1,50 +1,30 @@
-
-import { useState } from "react";
+/**
+ * Honest enrollment handoff from the legacy founder-plan landing.
+ * Never show unverified scarcity or use the retired untaxed pipeline checkout.
+ * The base CAD350/12-month profile does not include guaranteed appointments.
+ */
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Crown, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { FounderPlan } from "@/hooks/useFounderPlans";
-import CounterLiveSpots from "./CounterLiveSpots";
-import { supabase } from "@/integrations/supabase/client";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface Props {
   elite?: FounderPlan;
   signature?: FounderPlan;
 }
 
-export default function SectionFinalCTAFounder({ elite, signature }: Props) {
-  const totalRemaining = (elite?.spots_remaining ?? 30) + (signature?.spots_remaining ?? 30);
-  const [busy, setBusy] = useState(false);
-
-  const handleReserve = async () => {
+export default function SectionFinalCTAFounder(_props: Props) {
+  const navigate = useNavigate();
+  const handleEnroll = () => {
     const params = new URLSearchParams(window.location.search);
     const runId = params.get("from") ?? params.get("run");
-    if (runId) {
-      setBusy(true);
-      try {
-        const { data, error } = await supabase.functions.invoke(
-          "activation-create-checkout",
-          { body: { run_id: runId } },
-        );
-        if (error) throw error;
-        const url = (data as { url?: string })?.url;
-        if (url) {
-          redirectToCheckout(url);
-          return;
-        }
-      } catch (e) {
-        console.warn("[founder-final-cta] checkout failed", e);
-      }
-      setBusy(false);
-    }
-    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
+    navigate(runId ? `/contractor/join?run=${encodeURIComponent(runId)}` : "/contractor/join");
   };
 
   return (
     <section className="px-4 pb-24 pt-8">
       <div className="relative max-w-lg mx-auto text-center space-y-6">
-        {/* Glow */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-primary/6 rounded-full blur-[100px]" />
         </div>
@@ -55,18 +35,17 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
           viewport={{ once: true }}
           className="space-y-4"
         >
-          <div className="flex justify-center">
-            <CounterLiveSpots remaining={totalRemaining} total={60} />
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Profil UNPRO · 12 mois de présence
           </div>
-
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            Ne laissez pas quelqu'un d'autre
-            <br />
-            <span className="text-primary">prendre votre territoire</span>
+            Faites connaître votre entreprise aux bons clients
           </h2>
-
           <p className="text-sm text-muted-foreground">
-            Chaque place prise est un territoire de moins pour vous.
+            Identifiez votre entreprise et découvrez son analyse. Offre de base :
+            350 $ CA + taxes applicables, paiement unique pour 12 mois.
+            Aucun rendez-vous inclus ou garanti dans l'offre de base.
           </p>
         </motion.div>
 
@@ -77,13 +56,12 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-3"
         >
-          <Button variant="premium" size="xl" onClick={handleReserve} disabled={busy} className="w-full">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-            {busy ? "Redirection…" : "Réserver maintenant"}
+          <Button variant="premium" size="xl" onClick={handleEnroll} className="w-full">
+            Identifier mon entreprise <ArrowRight className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="lg" asChild className="w-full">
             <a href="/alex">
-              <MessageCircle className="h-4 w-4" /> Parler à Clara
+              <MessageCircle className="h-4 w-4 mr-2" /> Parler à Clara
             </a>
           </Button>
         </motion.div>
