@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "status": "prepared_not_live",
+  "owner_project": "ba1eabf3-fd1c-40fe-9856-3812a70f9869",
+  "baseline_branch": "lovable-sync",
+  "primary_metric": "verified_live_cad350_contractor_activations_per_eligible_unique_visitor",
+  "no_billing_or_campaign_actions": true,
+  "audiences": [
+    "renovation",
+    "maintenance_services",
+    "real_estate_professionals"
+  ],
+  "guardrails": [
+    "No guaranteed third-party AI recommendation",
+    "No invented reviews, scarcity, booking or contractor verification",
+    "No appointment entitlement unless separately server-confirmed",
+    "Present base CAD350 plus applicable taxes before payment",
+    "No commercial SMS or email without recipient-specific CASL checks and unsubscribe"
+  ],
+  "experiments": [
+    {
+      "id": "unpro.contractor.landing.message.v1",
+      "surface": "/contractor/join",
+      "allocation": {
+        "A": 0.5,
+        "B": 0.5
+      },
+      "unit": "stable_visitor_or_company",
+      "one_change": "headline_and_supporting_copy_package",
+      "variants": {
+        "A": {
+          "angle": "autonomy",
+          "headline_fr": "Choisissez les contrats que vous voulez. Pas ceux qu'on vous impose.",
+          "description_fr": "Précisez vos services, vos secteurs et les projets que vous acceptez. Clara aide à rechercher des jumelages qui tiennent compte de vos critères.",
+          "cta_fr": "Analyser mon entreprise"
+        },
+        "B": {
+          "angle": "wasted_time",
+          "headline_fr": "Tanné de courir après des clients qui ne vous conviennent pas?",
+          "description_fr": "Des demandes trop loin, hors de votre spécialité ou mal préparées? Dites à Clara les contrats qui valent vraiment votre temps.",
+          "cta_fr": "Définir mes clients idéaux"
+        }
+      }
+    },
+    {
+      "id": "unpro.contractor.activation350.value.v1",
+      "surface": "/entrepreneurs/activation-350",
+      "allocation": {
+        "A": 0.5,
+        "B": 0.5
+      },
+      "prerequisite": "Experiment landing.message.v1 closed and downstream checkout verified",
+      "variants": {
+        "A": {
+          "angle": "visibility",
+          "copy_fr": "Activez votre profil professionnel UNPRO pour 12 mois — 350 $ + taxes, paiement unique."
+        },
+        "B": {
+          "angle": "fit_and_visibility",
+          "copy_fr": "Faites connaître précisément vos spécialités et territoires à UNPRO : profil structuré + 12 mois de présence UNPRO — 350 $ + taxes, paiement unique."
+        }
+      }
+    }
+  ],
+  "measurement": {
+    "exposure": "unique_eligible_landing_exposure",
+    "steps": [
+      "analysis_start",
+      "company_identified",
+      "analysis_completed",
+      "preferences_saved",
+      "activation_offer_viewed",
+      "checkout_started",
+      "payment_verified_server",
+      "activation_entitlement_confirmed"
+    ],
+    "valid_payment_requirements": [
+      "Stripe LIVE",
+      "CAD 350 base subtotal",
+      "authenticated webhook",
+      "contractor attribution",
+      "12-month entitlement",
+      "exclude refunded or disputed"
+    ],
+    "exclude": [
+      "admin_test",
+      "smoke",
+      "e2e",
+      "simulation",
+      "test_account",
+      "Stripe TEST",
+      "CAD 1 test"
+    ]
+  },
+  "implementation": "none_pending_competitor_research_review",
+  "launch_gate": "CI plus hosted synthetic QA, explicit campaign authorization"
+}
