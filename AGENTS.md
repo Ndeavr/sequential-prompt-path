@@ -73,6 +73,7 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 - SMS attribution reconciliation stays in the existing SID-keyed RPC with locked missing-only updates; staged SQL remains outside automatic migrations until explicitly authorized. Why: prevent mixed identities and unintended production backfills.
 - Funnel audit click classification stays local to the existing report, preserves raw counters and resolves explicit non-QA entity links; payment success fails closed without signed LIVE entry-contract, activation and refund evidence. Why: internal traffic and checkout statuses are not commercial conversions.
 - No-deploy outreach QA corrections may be staged as patches outside active edge directories and tested against reconstructed existing handlers; mocks never release hosted gates. Why: preserve explicit production authorization and avoid duplicate engines.
+- Verified-prospect phone enrichment must refuse other-owner collisions and identity replacement, preserve the unique index and report failed writes explicitly; no-release corrections stay staged. Why: official publication does not authorize reassignment or make failed enrichment successful.
 - First-party phone capture uses the existing canonical prospect anchor and capture helper, never signs consent; batch previews keep candidate counts separate from unverified provider readiness. Why: domain publication and tier C do not establish lawful or technically deliverable SMS.
 
 ## Source-of-truth discipline

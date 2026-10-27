@@ -1,4 +1,6 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] Issue #56 local-only: cause proven at c47d538; single-handler phone collision/CAS patch staged outside Edge directories; 51/51 isolated regressions pass. No remote actions or deployment. See docs/audits/issue-56-prospect-phone-collision.md.
+- [ ] Issue #56 release blocked: separate deployment authorization and isolated hosted collision verification required; staged mocks do not prove production PostgreSQL concurrency.
 - [x] Repair six preview Deno type/dependency failures; focused Deno checks and 62 existing regressions pass. No manual additional deployment or handler invocation; automatic deployment state unverified.
 - [x] Bounded SMS eligibility pass: read-only stock/anchor/fit snapshot; exact first-party phone capture and honest batch dry-run patch staged outside active Edge directories, synthetic tests only. No hosted capture, human approval, provider readiness or deployment claimed; switches and legacy queue unchanged. See docs/audits/acquisition-phone-evidence.md.
 - [ ] Phone-evidence release blocked: missing canonical category mapping, remaining endpoint/error/dedup regression coverage and isolated hosted transport/review QA. 24 provisional candidates/11 first-party host matches, zero captured or approved; no complete provider-ready computation or 25-SMS batch certified.
