@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MapPin, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { readVerifiedExclusiveCapacity } from "@/lib/market/verifiedScarcity";
 
 interface Props {
   open: boolean;
@@ -25,10 +26,11 @@ const VOLUMES = ["1-10 transactions/an", "10-25 transactions/an", "25-50 transac
 type Step = "city" | "specialty" | "volume" | "checking" | "result";
 
 interface AvailabilityResult {
+  status: "unverified" | "available" | "almost_full" | "waitlist";
   available: boolean;
-  activeSlots: number;
-  maxSlots: number;
-  waitingCount: number;
+  activeSlots: number | null;
+  maxSlots: number | null;
+  waitingCount: number | null;
 }
 
 export default function BrokerQualificationModal({ open, onOpenChange }: Props) {
@@ -49,28 +51,16 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
       const citySlug = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
       const specialtySlug = specialties[0]?.toLowerCase() || "residentiel";
 
-      const { data } = await supabase
-        .from("market_capacity")
-        .select("*")
-        .eq("city", citySlug)
-        .eq("specialty", specialtySlug)
-        .maybeSingle();
-
-      if (data) {
-        setResult({
-          available: data.active_slots < data.max_slots,
-          activeSlots: data.active_slots,
-          maxSlots: data.max_slots,
-          waitingCount: data.waiting_list_count,
-        });
-      } else {
-        // No record = available
-        setResult({ available: true, activeSlots: 0, maxSlots: 3, waitingCount: 0 });
-      }
+      const { data, error } = await supabase
+        .from("market_capacity").select("*")
+        .eq("city", citySlug).eq("specialty", specialtySlug).maybeSingle();
+      const capacity = readVerifiedExclusiveCapacity(error ? null : data);
+      setResult({ status: capacity.status, available: capacity.verified && (capacity.slotsRemaining ?? 0) > 0,
+        activeSlots: capacity.slotsUsed, maxSlots: capacity.slotsTotal, waitingCount: capacity.waiting });
     } catch {
-      setResult({ available: true, activeSlots: 0, maxSlots: 3, waitingCount: 0 });
+      setResult({ status: "unverified", available: false, activeSlots: null, maxSlots: null, waitingCount: null });
     }
-    setStep("result");
+        setStep("result");
   };
 
   const handleContinue = () => {
@@ -95,7 +85,7 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
             {step === "specialty" && "Vos spécialités"}
             {step === "volume" && "Votre volume d'affaires"}
             {step === "checking" && "Vérification en cours..."}
-            {step === "result" && (result?.available ? "Place disponible!" : "Liste d'attente")}
+            {step === "result" && (result?.status === "unverified" ? "Admission professionnelle" : result?.available ? "Disponibilité confirmée" : "Liste d’attente des rendez-vous")}
           </DialogTitle>
         </DialogHeader>
 
@@ -171,7 +161,15 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
 
         {step === "result" && result && (
           <div className="space-y-4">
-            {result.available ? (
+            {result.status === "unverified" ? (
+              <>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="font-bold">Disponibilité des rendez-vous exclusifs à confirmer</p>
+                  <p className="text-sm text-muted-foreground">Aucun nombre de places ou de professionnels en attente n’est vérifié pour {city}. Vous pouvez poursuivre votre inscription.</p>
+                </div>
+                <Button className="w-full" onClick={handleContinue}>Continuer mon inscription</Button>
+              </>
+            ) : result.available ? (
               <>
                 <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/10">
                   <CheckCircle className="h-8 w-8 text-primary shrink-0" />
@@ -179,7 +177,7 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
                     <p className="font-bold text-foreground">Place disponible à {city}!</p>
                     <p className="text-sm text-muted-foreground">
                       {result.activeSlots}/{result.maxSlots} places occupées.
-                      {result.maxSlots - result.activeSlots <= 1 && " Dernière place!"}
+                      {result.status === "almost_full" && " Dernière position confirmée!"}
                     </p>
                   </div>
                 </div>
@@ -194,7 +192,7 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
                   <div>
                     <p className="font-bold text-foreground">Territoire complet à {city}</p>
                     <p className="text-sm text-muted-foreground">
-                      {result.waitingCount} courtier{result.waitingCount > 1 ? "s" : ""} en attente.
+                      {result.waitingCount === null ? "Nombre de personnes en attente non confirmé." : `${result.waitingCount} professionnel${result.waitingCount > 1 ? "s" : ""} en attente.`}
                     </p>
                   </div>
                 </div>
