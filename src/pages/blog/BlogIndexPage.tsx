@@ -11,6 +11,7 @@ import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+import { R51_R60_ARTICLE_SLUG } from "@/pages/blog/R51vsR60Article";
 import { formatEditorialDate } from "@/seo/editorialDates";
 
 
@@ -101,6 +102,19 @@ export default function BlogIndexPage() {
             </button>
           ))}
         </div>
+
+        {/* Static expert guide: no DB write or publication pipeline required. */}
+        {(category === "all" || category === "isolation" || category === "comparaison") && (
+          <Link to={`/blog/${R51_R60_ARTICLE_SLUG}`} className="group mb-8 block rounded-2xl border border-primary/25 bg-primary/5 p-5 transition hover:border-primary/50 hover:bg-primary/10 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="rounded-full bg-primary/15 px-3 py-1 font-semibold text-primary">Guide pratique • Isolation</span>
+              <span>27 octobre 2026</span><span>•</span><span>7 min de lecture</span>
+            </div>
+            <h2 className="mt-3 text-xl font-bold leading-snug text-foreground group-hover:text-primary">R-51 ou R-60 pour l'entretoit : prix, économies et retour sur investissement</h2>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">Un exemple de 1 400 pi² avec 2 po d'uréthane, la quantité de fibre de verre soufflée, les économies réelles et un calculateur de rentabilité.</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">Lire le guide <ArrowRight className="h-4 w-4" /></span>
+          </Link>
+        )}
 
         {/* Articles Grid */}
         {isLoading ? (
