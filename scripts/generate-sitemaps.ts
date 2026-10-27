@@ -140,8 +140,11 @@ async function buildBlog() {
       "0.7",
     ),
   );
+  // Static editorial guides live alongside database-backed posts in the same /blog route.
+  // Keep this URL in the sitemap even when the article is not stored in blog_articles.
+  urls.unshift(urlNode(`${BASE_URL}/blog/r51-vs-r60-isolation-entretoit-cout-economies`, "2026-10-27", "monthly", "0.7"));
   writeSitemap("sitemap-blog.xml", urls);
-  return rows.length;
+  return urls.length;
 }
 
 async function buildJournal() {
