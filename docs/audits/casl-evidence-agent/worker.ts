@@ -13,7 +13,7 @@ export function candidate(p: any): { id: string; phone: string; domain: string }
   // This is publication capture, not a mobile classification. Known NON-SMS destinations fail closed.
   if (["landline", "fixed", "voip", "toll_free", "invalid"].includes(String(p.phone_type ?? "").toLowerCase()) || p.phone_sms_capable === false) return null;
   const phone = normalizePhone(p.phone_e164);
-  if (!phone.valid || phone.normalized !== p.phone_e164 || /^\+1(?:800|833|844|855|866|877|888)/.test(p.phone_e164)) return null;
+  if (!phone.valid || !phone.normalized || phone.normalized !== p.phone_e164 || /^\+1(?:800|833|844|855|866|877|888)/.test(p.phone_e164)) return null;
   if (!/^https:\/\//i.test(p.website_url ?? "")) return null;
   try { return { id: p.id, phone: phone.normalized, domain: safeUrl(p.website_url).hostname.replace(/^www\./, "") }; } catch { return null; }
 }

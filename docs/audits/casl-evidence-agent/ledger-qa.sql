@@ -1,5 +1,5 @@
 -- Run ONLY in the disposable local PostgreSQL fixture, never production.
-INSERT INTO contractor_prospects SELECT gen_random_uuid(),'+1450'||lpad(n::text,7,'2'),false,NULL,'not_started','https://synthetic'||n||'.test/' FROM generate_series(1,25) n;
+INSERT INTO contractor_prospects SELECT gen_random_uuid(),'+1450234'||lpad(n::text,4,'0'),false,NULL,'not_started','https://synthetic'||n||'.test/' FROM generate_series(1,25) n;
 UPDATE casl_phone_capture_jobs SET enabled=true WHERE status='control';
 DO $$
 DECLARE run uuid:=gen_random_uuid(); state jsonb; total integer:=0; claimed integer; item record; attempt integer;
