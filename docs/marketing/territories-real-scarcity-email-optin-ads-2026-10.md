@@ -1,0 +1,106 @@
+# UNPRO — Real territory capacity + voluntary email/ads (27 October 2026)
+
+STATUS: read-only production audit + marketing drafts. Nothing live, no email sent, no media spending, no payment. Target: 3,000 unique verified CAD350 paying pros by Dec 31 2026. Never invent appointment entitlement in the base CAD350 12-month profile offer.
+
+## 1. No authenticated remaining-spots numbers yet
+
+Production observations 27 Oct 2026, backend clmaqdnphbndvmmqvpff:
+- market_capacity: 179 rows, all last updated Aug 16, zero actual monthly demand, zero active pros; nonetheless all have remaining_positions positive. NOT a source for scarcity.
+- acq_territory_slots: 6 configured rows: Laval isolation 3/0, plumbing 6/0, roofing 3/0; Montreal isolation 5/0, plumbing 8/0, roofing 5/0. Last updated May/Aug, not tied to delivered appointments or settled payments. NOT publishable availability.
+- recruitment_capacity_targets: 9 rows last recalculated April 15, some claim paid/full without new Stripe LIVE reconciliation. NOT publishable availability.
+- market_capacity_commitments: 0 rows.
+- appointments: 8 total (3 archived_test, 3 requested, 2 confirmed), only 1 non-test created in last 30 days, zero completed.
+- projects: 0.
+- Verified-prospect records are NOT committed contractors or paid customers.
+
+ANSWER: no city-by-trade maximum or spots remaining can currently be certified from these tables. It would be misleading to say “2 spots left”, “region full”, “join the waitlist” or to aggregate old placeholders toward the 3,000 payer goal. Unknown availability is not zero and not unlimited.
+
+Crucial distinction: the $350 activation is a business profile/12-month UNPRO presence, without included guaranteed appointments. Its enrollment need not be territorially capped. ONLY a distinct exclusive-appointment offer may have finite availability if actual demand, signed commitments, and operational limits justify it. A real human-validation throughput limit can be shared only if measured and enforced.
+
+### Defensible exclusive-appointment capacity formula
+
+Evaluate each trade x verified service area x rolling 30-day window, not city alone. Service-area overlaps require a single commitment allocation to avoid selling the same homeowner appointment twice.
+
+Q = unique qualified homeowner appointment demand per period, excluding bots/test/duplicates.
+D = distinct completed EXCLUSIVE appointments in the same area/trade, excluding test/cancelled.
+r = conservative deliverable share observed from verified homeowner-to-completed funnel, NOT assumed.
+m = minimum monthly completed appointment obligation per partner under the separate appointment offer.
+c = genuine UNPRO qualification/booking operations capacity if verified.
+p = already reserved active contractor capacity, deduplicated with verified booking/contract/payment state.
+
+Cmax = max(0, min(c, floor(min(Q*r,D)/m))).
+Remaining = max(0,Cmax-p).
+
+No public numeric display unless Q,D,r,m,c,p and source dates are available, current (30 days), signed/traceable, company/territory-specific and allocated atomically. Otherwise show “Disponibilité des jumelages exclusifs en validation — commencer mon analyse sans paiement.” Do not block the base profile purchase.
+
+FICTIONAL explanation only (never an ad): Q40, r75%, D24 completed, m4, c10, p3 -> Cmax6 and hypothetical 3 positions. These values do NOT describe any current UNPRO territory.
+
+### Honest FOMO templates (conditional only)
+
+When REAL verified availability exists:
+- “Il reste {N} positions de jumelage exclusif pour {métier} à {territoire}, mise à jour le {date}.”
+- Only when complete: “La capacité des rendez-vous exclusifs est atteinte dans ce secteur. Votre profil UNPRO demeure accessible; vous pouvez demander un avis lorsqu'une position se libère.”
+- Only if actual waitlist entries counted with consent: “{N} professionnels ont demandé un avis de réouverture.”
+Never say “Votre entreprise sera sur une liste d'attente” just to pressure someone, or count prospect rows as paid/reserved partners. No countdown unless a genuine, enforceable offer deadline exists. UNPRO internal Dec31 goal is NOT an advertised sale end date.
+
+When capacity unverified, use non-scarcity urgency: “Choisissez les secteurs que vous voulez couvrir dès maintenant. Une analyse de départ est disponible sans paiement.”
+
+## 2. Email: reachable addresses are not a marketing list
+
+Production read-only counts:
+- contractor_prospects: 955 records, 77 emails, 43 untouched non-DNC with email.
+- verified_contractor_prospects: 1,188 records, 568 emails; 141 email_eligible flags. Flags do not independently constitute current CASL consent.
+- email CASL evidence: 5 rows total: 2 reviewed from company website, 3 government registry not reviewed. These do NOT mean 5 confirmed eligible commercial sends without fresh relevance/refusal/suppression checks.
+
+Use the EXISTING Resend CRM sender, proof records and suppression logic; DO NOT mass-email scraped 568 addresses. For each actual message require justified express/implied consent under CASL, company ID/address/contact, functional unsubscribe, relevant business role and source evidence, current no-refusal / STOP state and logging.
+
+EMAIL A, only after authorization:
+Subject: {entreprise} : quels contrats voulez-vous vraiment?
+Bonjour {prénom}, avec UNPRO, précisez les services, territoires et mandats qui vous conviennent. Commencez par analyser votre entreprise sans paiement : {lien}. L'activation à 350 $ + taxes est présentée avant toute transaction. UNPRO — {signature et adresse valides} — {désabonnement}.
+
+EMAIL B, only after authorization:
+Subject: Des demandes hors secteur pour {entreprise}?
+Bonjour {prénom}, trop de soumissions pour des travaux que vous ne faites pas ou des clients trop loin? Définissez vos clients idéaux avec Clara : {lien}. UNPRO — {signature valide} — {désabonnement}.
+
+NEVER say a personal analysis is ready if no real completed analysis exists.
+
+## 3. Paid ads where the professional voluntarily requests the link
+
+### Preferred route A: instant value (no email required)
+Meta or Google ad -> canonical UNPRO contractor/join landing -> visitor identifies company by site/business/NEQ/RBQ as relevant -> real company preview -> Clara asks needed preferences one at a time -> present base CAD350 offer + applicable taxes BEFORE optional Stripe checkout. Direct landing is easier to audit and avoids deliverability/spam friction.
+
+### Route B: requested-link form, one-response relationship
+Meta Ads “Leads > Instant Forms > Higher Intent” (review screen) or eligible Google Ads Lead Form asset -> company name/site, first name and email requested -> user clicks “Envoyez-moi mon lien d'analyse” -> signed provider form webhook or supported CRM connector -> dedupe and store source campaign/ad/form/submission ID, exact consent and request text, timestamp and privacy notice version -> ONE requested link email via existing verified sender -> analysis/Clara/optional activation. No checkout automatically.
+
+Add a separate UNCHECKED checkbox for ongoing commercial communications:
+“J'accepte aussi de recevoir par courriel les conseils, nouvelles et offres d'UNPRO. Je pourrai me désabonner en tout temps.”
+No checkbox = the requested link only (subject to lawful response-to-request rules), not a follow-up marketing flow.
+Separate optional phone channel and separate SMS marketing opt-in; do not assume email request authorizes recurring SMS. No prechecked forms, no purchased lead list, no retargeting contrary to privacy settings.
+Privacy policy link is required for Google Ads lead forms; confirm Meta account and form eligibility. Meta's own Lead Generation Guide supports instant forms, Higher Intent, CRM ingestion and Conversions API. Google lead assets support direct CSV/webhook/API CRM routing.
+
+Read current in-app schemas BEFORE adding any CRM tables. Reuse contractor join, attribution, logged funnel events, CASL evidence, consent, opt-out, and payment verification. Require provider webhook signing, replay/idempotency guard and no other-user record access. DO NOT launch without approved budget and verified policy page.
+
+### French-Québec ad creative (two first variants)
+A: “Choisissez les contrats que vous voulez.” — “Spécialités, territoires, mandats : dites à Clara ce que vous recherchez. Découvrez comment UNPRO peut présenter votre entreprise. Commencez sans paiement.” CTA “Analyser mon entreprise” (site) or “Recevoir mon lien d'analyse” (form).
+B: “Tanné des leads qui mènent nulle part?” — “Trop loin, hors spécialité, soumissions inutiles? Dites à Clara quels mandats valent votre temps. Découvrez UNPRO, sans paiement pour commencer.” CTA “Obtenir mon lien”.
+Professional-services sector: “Votre expertise mérite mieux qu'une liste de noms.” — “Courtiers, notaires, inspecteurs, gestionnaires et géomètres : présentez vos mandats, votre territoire et vos champs de pratique. Découvrez UNPRO.”
+
+Form confirmation:
+“Vous demandez le lien pour commencer votre analyse UNPRO, sans paiement. Aucun abonnement marketing n'est déclenché sauf consentement distinct et explicite.”
+
+## 4. A/B decision and spend
+Test direct site landing (A) vs Higher Intent requested-link form (B) for the SAME trade/area and comparable creatives/approved budget. Primary outcome: UNIQUE verified paying CAD350 contractors per dollar invested. Secondary: qualified link requests, delivered requested emails, started/completed analyses, registration, signed LIVE Stripe payment+entitlement, refunds, complaints. Remove tests/QA/bots and dedupe businesses. Do not declare winner based on lowest CPL or most form submissions.
+CAC ceiling is NOT known: CAD350 pretax minus verified fulfillment cost, Stripe fee, commissions, refund reserve and required contribution margin. No ads or budgets launched until user explicitly authorizes financial spend; no promise of sales volume.
+
+**Official references:** CRTC CASL FAQ https://crtc.gc.ca/eng/com500/faq500.htm ; CRTC implied consent https://crtc.gc.ca/eng/com500/guide.htm ; ISED guide https://ised-isde.canada.ca/site/canada-anti-spam-legislation/en/getting-consent-send-email ; Quebec CAI Law25 collection https://www.cai.gouv.qc.ca/protection-renseignements-personnels/information-entreprises-privees/collecte-renseignements-personnels_entreprises ; Meta guide https://about.fb.com/ltam/wp-content/uploads/sites/14/2023/11/LeadGenerationGuide.pdf ; Google Ads https://support.google.com/google-ads/answer/9423234 and policy https://support.google.com/adspolicy/answer/9472930 .
+
+## 5. GitHub-first rollout with minimal Lovable credits
+
+P0: source fix stops old frontend promises of default “3 places” when market row is missing; no FOMO until fresh verified demand/commitments (PR separate).
+P0: keep basic 350 profile open regardless of exclusive appointment availability.
+P1: create opt-in-to-link attribution/CRM protocol with explicit future marketing checkbox; verify provider signatures and no duplicates before sending real emails.
+P1: link webhook signed settled Stripe CAD350 to acquisition campaign, one company, 12-month entitlements. Publish no fabricated conversion counts.
+P1: launch ONE A/B only after consent/webhook and financial approval.
+P2: compute weekly real capacity from completed exclusive appointment ledger + active commitments + delivery rate; only then permit area/trade specific waiting list and numbers.
+
+CURRENT STATUS: Data audited, strategy and copy written; capacity claims NOT VERIFIED; Meta/Google forms NOT CONFIGURED; email campaigns NOT SENT; no budget approved; no appointments or scarcity sold through this plan.
