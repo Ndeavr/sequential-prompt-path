@@ -106,7 +106,7 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
     if ((!isPhone && (!email || !/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(email))) || source.hostname.replace(/^www\./, "") !== official.hostname.replace(/^www\./, "") || (!isPhone && email?.split("@")[1] !== source.hostname.replace(/^www\./, ""))) throw new Error("official_identity_ambiguous");
     if (!company.business_name || !result.building_service || !e.business_relevance_explanation) throw new Error("professional_relevance_missing");
     const rules = parseRobots(await read(`${source.origin}/robots.txt`, io, source.hostname, true));
-    const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false;
+    const queue = [source.toString()]; const seen = new Set<string>(); let exact = false; let name = false; let service = false; let contact = false; let policy = false; let phoneContactContext = false;
     for (let i = 0; i < queue.length; i++) {
       if (seen.size >= POLICY.maxPages) throw new Error("page_budget_exceeded");
       const u = safeUrl(queue[i], source.hostname); if (seen.has(u.toString())) continue; seen.add(u.toString());
@@ -116,6 +116,18 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
       const matchedPhone = phoneMatches.find(raw => normalizePhone(raw).normalized === phone?.normalized);
       const found = isPhone ? Boolean(matchedPhone) : addresses.some(a => a.toLowerCase() === email);
       exact ||= isPhone ? (i === 0 && found) : found; name ||= lower.includes(norm(company.business_name)); service ||= serviceVisible(visible, result.building_service);
+      // For phone_SMS, the relevant proof is a conspicuously published exact
+      // number in a business-contact context on the FIRST-PARTY source page.
+      // CASL does not require a site's menu to include a "privacy policy"
+      // anchor, and many legitimate business sites use "Instant Quote" or
+      // plainly display "CALL US NOW" instead of a /contact link. This does
+      // NOT approve consent: a separate real human must still review evidence,
+      // relevance, restrictions and refusals before any commercial SMS.
+      if (isPhone && i === 0 && matchedPhone) {
+        const position = visible.indexOf(matchedPhone);
+        const nearby = norm(visible.slice(Math.max(0, position - 120), position + matchedPhone.length + 90));
+        phoneContactContext ||= /\b(call\s+(?:us|now)|get\s+in\s+touch|phone|telephone|contact|text\s+us|sms|texto|appeler|appelez|nous\s+joindre)\b/.test(nearby);
+      }
       const refused = refusal(visible); const at = found ? Math.max(0, visible.toLowerCase().indexOf(isPhone ? matchedPhone ?? "" : email ?? "")) : 0;
       result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
       if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
@@ -128,8 +140,12 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
       }
     }
     result.relevance = e.business_relevance_explanation;
-    result.reason = !exact ? (isPhone ? "exact_phone_not_visible" : "exact_email_not_visible") : !name || !service ? "company_or_service_ambiguous" : !contact || !policy ? "contact_or_policy_missing" : "publication_observed_human_review_required";
-    if (exact && name && service && contact && policy) result.status = "machine_verified";
+    // EMAIL evidence retains the older contact + policy-link heuristic;
+    // PHONE evidence uses visible contact wording adjacent to the exact number.
+    // Neither grants CASL consent or verifies that the number accepts SMS.
+    const contextualPublication = isPhone ? phoneContactContext : (contact && policy);
+    result.reason = !exact ? (isPhone ? "exact_phone_not_visible" : "exact_email_not_visible") : !name || !service ? "company_or_service_ambiguous" : !contextualPublication ? (isPhone ? "phone_publication_context_missing" : "contact_or_policy_missing") : "publication_observed_human_review_required";
+    if (exact && name && service && contextualPublication) result.status = "machine_verified";
   } catch (err) { result.reason = err instanceof Error ? err.message : "check_failed"; }
   return result;
 }
