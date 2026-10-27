@@ -30,7 +30,7 @@ import {
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { captureFirstPartyPhone, recheckCasl } from "./caslFirstParty.ts";
-import { pinnedPublicFetch } from "./pinnedPublicFetch.ts";
+import { pinnedPublicFetch, PINNED_TLS_TRANSPORT_VERSION } from "./pinnedPublicFetch.ts";
 import { z } from "https://esm.sh/zod@3.25.76";
 
 const FN = "enrich-official-website";
@@ -50,7 +50,7 @@ async function sha256(s: string): Promise<string> {
 
 Deno.serve(async (req) => {
   const rid = crypto.randomUUID();
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...corsHeaders, "x-unpro-transport-version": PINNED_TLS_TRANSPORT_VERSION } });
 
   try {
     const caller = await requireAdminCaller(req, corsHeaders);
