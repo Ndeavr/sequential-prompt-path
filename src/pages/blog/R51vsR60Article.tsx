@@ -37,6 +37,7 @@ const sourceUrls = [
   "https://natural-resources.canada.ca/energy-efficiency/home-energy-efficiency/keeping-heat-section-5-roofs-attics",
   "https://atticat.ca/wp-content/uploads/2024/02/ATTICAT-BROCHURE_EN_2024.pdf",
   "https://www.hydroquebec.com/residential/customer-space/rates/rate-d-billing.html",
+  "https://bidmii.com/directory/qc/montreal/insulation",
 ];
 
 const money = (n: number) => new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
@@ -154,7 +155,8 @@ export default function R51vsR60Article() {
         <section className="space-y-4">
           <h2 className="text-2xl font-bold">Combien coûte le passage de R-51 à R-60 ?</h2>
           <p>L'uréthane, le retrait de l'ancien isolant, le nettoyage, le calfeutrage et les déflecteurs de ventilation coûtent sensiblement la même chose dans les deux scénarios. La différence vient surtout de la quantité supplémentaire de fibre soufflée.</p>
-          <p>Pour un projet comparable de <strong>1 400 pi²</strong>, utilisez un <strong>budget indicatif d'environ 400 à 800 $ de plus</strong> pour le R-60. Ce n'est pas un tarif contractuel : le prix dépend du fournisseur, de la main-d'œuvre et du devis. Demandez au professionnel de chiffrer <em>uniquement la différence R-51/R-60</em> sur la même soumission.</p>
+          <p>Pour un projet comparable de <strong>1 400 pi²</strong>, les fourchettes budgétaires indicatives pour <strong>2 po d'uréthane + la fibre de verre soufflée, installés</strong> sont d'environ <strong>6 300 à 11 200 $ pour R-51+</strong> et <strong>6 700 à 12 000 $ pour R-60</strong>, avant taxes. Elles excluent le retrait de l'ancien isolant, les travaux correctifs et les frais particuliers d'accès. Ce sont des ordres de grandeur fondés sur des prix de marché publiés, et non des tarifs garantis.</p>
+          <p>Pour un chantier déjà prévu, utilisez surtout un <strong>budget indicatif d'environ 400 à 800 $ de plus</strong> pour passer à R-60. Ce n'est pas un tarif contractuel : le prix dépend du fournisseur, de la main-d'œuvre et du devis. Demandez au professionnel de chiffrer <em>uniquement la différence R-51/R-60</em> sur la même soumission.</p>
           <p>Ne comparez pas une offre R-51 qui comprend le retrait, le pare-air et les correctifs de ventilation avec une offre R-60 qui les exclut. Le prix total n'est pas comparable si les travaux ne sont pas identiques.</p>
         </section>
 
@@ -210,6 +212,7 @@ export default function R51vsR60Article() {
           <p><a href={sourceUrls[0]} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Ressources naturelles Canada — Emprisonnons la chaleur, toits et entretoits</a></p>
           <p><a href={sourceUrls[1]} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Owens Corning AttiCat — tableau de couverture canadien</a></p>
           <p><a href={sourceUrls[2]} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Hydro-Québec — tarif D au 1er avril 2026</a></p>
+          <p><a href={sourceUrls[3]} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Bidmii — fourchettes indicatives de prix d’isolation à Montréal</a></p>
           <p>Méthode : estimation stationnaire des pertes par conduction, 1 400 pi², deux valeurs R nominales, environ 4 250 degrés-jours à 18 °C. Ne constitue pas une simulation énergétique ni une soumission.</p>
         </section>
 
