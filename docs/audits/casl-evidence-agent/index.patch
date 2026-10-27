@@ -1,0 +1,31 @@
+--- a/supabase/functions/enrich-official-website/index.ts
++++ b/supabase/functions/enrich-official-website/index.ts
+@@ -33,6 +33,7 @@
+ import { pinnedPublicFetch, PINNED_TLS_TRANSPORT_VERSION } from "./pinnedPublicFetch.ts";
+ import { z } from "https://esm.sh/zod@3.25.76";
++import { runPhoneCaptureBatch } from "./batchPhoneCapture.ts";
+ 
+ const FN = "enrich-official-website";
+ 
+@@ -63,6 +64,22 @@
+     const supabase = createClient(url, svc);
+ 
+     const body = await req.json().catch(() => ({}));
++    if (body.action === "capture_phone_casl_batch") {
++      // Service identity is exact-key verified by requireAdminCaller, never metadata.
++      if (caller.kind !== "service") return jr({ ok: false, code: "service_required" }, 403, rid);
++      const parsed = z.object({ action: z.literal("capture_phone_casl_batch"), dry_run: z.boolean().default(true), limit: z.number().int().min(1).max(2).default(2) }).strict().safeParse(body);
++      if (!parsed.success) return jr({ ok: false, code: "invalid_batch_request" }, 400, rid);
++      try {
++        const result = await runPhoneCaptureBatch(supabase, {
++          fetch: pinnedPublicFetch,
++          resolve: async (host) => { try { return await Deno.resolveDns(host, "A"); } catch { return []; } },
++        }, parsed.data);
++        return jr({ ok: true, ...result }, 200, rid);
++      } catch {
++        return jr({ ok: false, code: "capture_batch_failed", sent: 0, legal_consent_established: false }, 503, rid);
++      }
++    }
+     if (body.action === "capture_phone_casl") {
+       if (caller.kind !== "admin") return jr({ ok: false, code: "admin_session_required" }, 403, rid);
+       const parsed = z.object({ action: z.literal("capture_phone_casl"), contractor_prospect_id: z.string().uuid(), dry_run: z.boolean().default(true) }).strict().safeParse(body);

@@ -1,0 +1,20 @@
+-- STAGED ONLY; DO NOT EXECUTE before backup preflight, migration, deployment,
+-- private Vault credential validity and pending-only hosted pilot verification.
+-- Run 10 times/day: two attempts/run, hard DB cap 20/day including retries.
+-- Queue is bounded by existing corpus, no discovery providers or sender calls.
+-- Existing email discovery schedule and all commercial gates remain untouched.
+-- At most 24-hour retry after transport failure. No secret literals in SQL.
+-- Substitute the already-verified backend base URL at release, not a new target.
+-- SELECT cron.schedule('casl-phone-evidence-pilot', '0 10-19 * * *', $job$
+-- SELECT net.http_post(
+--   url := '<verified-current-backend>/functions/v1/enrich-official-website',
+--   headers := jsonb_build_object('Content-Type','application/json','Authorization',
+--     'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='email_queue_service_role_key')),
+--   body := '{"action":"capture_phone_casl_batch","dry_run":false,"limit":2}'::jsonb
+-- ) WHERE EXISTS (
+--   SELECT 1 FROM public.casl_phone_capture_jobs WHERE status='control' AND enabled
+--     AND (NOT discovery_complete OR EXISTS (
+--       SELECT 1 FROM public.casl_phone_capture_jobs WHERE status IN ('queued','retry','running')
+--     ))
+-- ); $job$);
+-- Keep DISABLED until guards pass. Unschedule after corpus drain; do not leave an idle sweep.
