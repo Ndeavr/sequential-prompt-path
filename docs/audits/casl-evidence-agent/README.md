@@ -16,10 +16,10 @@ The verified source checkout includes the current canonical revision. Existing o
 - Proposed schedule is disabled. Existing Vault credential name exists, but usable credential authorization is not verified; no secret read or exposed.
 
 ## Verification
-- 104 targeted Vitest tests passed across worker, existing capture, first-party observation and existing handler suites; new worker rerun 29/29.
+- Final focused Vitest run: 111/111 across five suites, including actual canonical guard with proposed batch dispatch, worker and existing first-party capture/observation.
 - Staged worker Deno check passed.
 - Real isolated PostgreSQL migration succeeded. SQL QA passed caps, repeated-claim cap, duplicate run lock, service-only grants, lease fencing, pending-only INSERT and 24-hour cooldown.
-- Additional proposed-handler authentication tests are reported separately after execution.
+- Proposed-handler auth: 7/7 passed; anonymous/anon-key and metadata-admin denied, exact configured service credential accepted, malformed/oversized input denied, default dry-run preserved.
 - These are isolated checks, not production CI or hosted capture proof. Current production has zero company-website phone evidence; outreach/recruitment flags false and historical pending count unchanged.
 
 ## Release blocker
