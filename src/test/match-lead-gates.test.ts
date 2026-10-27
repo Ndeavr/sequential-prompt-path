@@ -19,6 +19,28 @@ describe("territoire", () => {
     expect(servesCityGate(["Montréal", "Laval"], "montreal")).toBe(true);
   });
 
+  it("accepte les quartiers et villes expressément autorisés pour ISR", () => {
+    const isr = [
+      "Laval", "Terrebonne", "Pointe-aux-Trembles", "Montréal-Est",
+      "Pierrefonds", "Pierrefonds-Roxboro", "Pointe-Claire",
+      "Dollard-des-Ormeaux", "Kirkland", "Beaconsfield",
+    ];
+    for (const place of ["Pointe aux Trembles", "Montreal-Est", "Pierrefonds", "Pointe Claire", "Dollard des Ormeaux"]) {
+      expect(servesCityGate(isr, place)).toBe(true);
+    }
+  });
+
+  it("ne confond pas Montréal générique, centre-ville et territoires ISR permis", () => {
+    const allowed = ["Laval", "Pointe-aux-Trembles", "Montréal-Est", "Pierrefonds", "Dorval"];
+    for (const place of ["Montréal", "Montreal", "Ville-Marie", "Centre-ville", "Longueuil"]) {
+      expect(servesCityGate(allowed, place)).toBe(false);
+    }
+  });
+
+  it("ne confond pas l'arrondissement entier RDP-PAT avec Pointe-aux-Trembles seul", () => {
+    expect(servesCityGate(["Pointe-aux-Trembles"], "Rivière-des-Prairies–Pointe-aux-Trembles")).toBe(false);
+  });
+
   it("refuse quand aucune zone de service ne correspond", () => {
     expect(servesCityGate(["Laval"], "Terrebonne")).toBe(false);
   });

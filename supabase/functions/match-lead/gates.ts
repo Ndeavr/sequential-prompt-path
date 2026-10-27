@@ -9,6 +9,10 @@ export function normCity(s: string | null | undefined): string {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
+    // Geocoders and homeowner inputs differ on hyphens/apostrophes.
+    // Normalize separators, without conflating Montreal with Montreal-Est.
+    .replace(/[-‐‑‒–—'’]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
