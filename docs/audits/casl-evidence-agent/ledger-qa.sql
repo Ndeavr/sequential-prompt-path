@@ -1,4 +1,5 @@
 -- Run ONLY in the disposable local PostgreSQL fixture, never production.
+INSERT INTO casl_phone_capture_jobs(status) VALUES ('control') ON CONFLICT DO NOTHING;
 INSERT INTO contractor_prospects SELECT gen_random_uuid(),'+1450234'||lpad(n::text,4,'0'),false,NULL,'not_started','https://synthetic'||n||'.test/' FROM generate_series(1,25) n;
 UPDATE casl_phone_capture_jobs SET enabled=true WHERE status='control';
 DO $$

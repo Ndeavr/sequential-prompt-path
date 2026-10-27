@@ -35,6 +35,7 @@ LANGUAGE plpgsql SECURITY INVOKER SET search_path=public AS $$
 DECLARE c public.casl_phone_capture_jobs; today date := (now() AT TIME ZONE 'America/Toronto')::date;
 BEGIN
   SELECT * INTO c FROM casl_phone_capture_jobs WHERE status='control' FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'control_missing'; END IF;
   IF NOT c.enabled THEN RETURN jsonb_build_object('acquired',false,'reason','paused'); END IF;
   IF c.lease_until>now() THEN RETURN jsonb_build_object('acquired',false,'reason','busy'); END IF;
   UPDATE casl_phone_capture_jobs SET status=CASE WHEN attempt_count<2 THEN 'retry' ELSE 'failed' END,
