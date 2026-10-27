@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
@@ -1242,6 +1242,8 @@ Deno.serve(async (req) => {
                 // parcours plan personnalisé). Index unique par session : une
                 // relivraison n'ajoute rien et ne prolonge jamais la période.
                 if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
+                  const paymentIntentId = typeof session.payment_intent === "string"
+                    ? session.payment_intent : session.payment_intent?.id ?? null;
                   const { error: ledErr } = await supabase.from("contractor_activation_ledger").insert({
                     contractor_id: activatedContractorId,
                     action: "entry_activation_350_paid",
@@ -1250,7 +1252,7 @@ Deno.serve(async (req) => {
                     metadata: {
                       stripe_session_id: session.id,
                       stripe_event_id: event.id,
-                      stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
+                      stripe_payment_intent: paymentIntentId,
                       amount_cents: session.amount_total ?? null,
                       livemode: true,
                       offer: "entry_pack_350",
@@ -1258,8 +1260,27 @@ Deno.serve(async (req) => {
                       ref: session.metadata?.ref ?? null,
                     },
                   });
-                  if (ledErr && !/duplicate key|uq_ledger_entry350_session/i.test(ledErr.message)) {
-                    entryPackFatal = new Error(`entry_pack_350 ledger: ${ledErr.message}`);
+                  if (ledErr) {
+                    // Duplicate-key is NOT proof of a legitimate same-business replay.
+                    // An unrelated constraint failure or foreign receipt must stop paid telemetry.
+                    const sameSessionConflict = ledErr.code === "23505" &&
+                      entry350LedgerConflict(ledErr.message) === "same_session";
+                    if (!sameSessionConflict) {
+                      entryPackFatal = new Error(`entry_pack_350 ledger: ${ledErr.message}`);
+                    } else {
+                      const { data: prior, error: lookupErr } = await supabase
+                        .from("contractor_activation_ledger")
+                        .select("contractor_id, source, metadata")
+                        .eq("action", "entry_activation_350_paid")
+                        .eq("metadata->>stripe_session_id", session.id)
+                        .maybeSingle();
+                      if (lookupErr || !entryPackReplayReceiptMatches(
+                        prior as unknown as Parameters<typeof entryPackReplayReceiptMatches>[0],
+                        { contractorId: activatedContractorId, paymentIntentId },
+                      )) {
+                        entryPackFatal = new Error("entry_pack_350 duplicate session: receipt or business mismatch");
+                      }
+                    }
                   }
                 }
               } else if (session.metadata?.offer === "entry_pack_350" && event.livemode === true) {
