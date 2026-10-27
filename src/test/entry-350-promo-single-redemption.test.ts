@@ -71,7 +71,7 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
           async maybeSingle() {
             if (table === "contractors") return { data: { user_id: contractor, activation_status: "pending" }, error: null };
             if (originalLookup) {
-              const r = await db.query(`SELECT contractor_id, metadata FROM contractor_activation_ledger LIMIT 1`);
+              const r = await db.query(`SELECT contractor_id, source, metadata FROM contractor_activation_ledger LIMIT 1`);
               return { data: r.rows[0] ?? null, error: null };
             }
             // Deliberately stale reads for BOTH workers: only the SQL constraint can arbitrate.
