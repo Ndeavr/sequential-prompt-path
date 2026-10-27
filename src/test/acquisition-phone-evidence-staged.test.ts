@@ -58,6 +58,44 @@ describe("staged first-party phone evidence — no consent or provider", () => {
     expect(r.observation.status).toBe("machine_verified"); expect(r.observation.pages[0].page_sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(r.legal_consent_established).toBe(false); expect(r.observation.policy.auto_eligibility_enabled).toBe(false); expect(r.sent).toBe(0); expect(h.writes).toHaveLength(0);
   });
+  it("recognizes Clean Vents-style CALL US NOW first-party publication without /contact or privacy anchors", async () => {
+    const html = '<h1>Synthetic Cleaning</h1><p>CALL US NOW: 450-234-5678</p><nav><a href="/about-us">About Us</a><a href="/instant-quote/">Instant Quote</a></nav><p>Lavage de vitres</p>';
+    const h = moduleHarness({ html });
+    const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, true);
+    expect(r.observation.status).toBe("machine_verified");
+    expect(r.observation.reason).toBe("publication_observed_human_review_required");
+    expect(r.human_review_required).toBe(true);
+    expect(r.legal_consent_established).toBe(false);
+    expect(r.sent).toBe(0);
+    expect(h.writes).toHaveLength(0);
+  });
+  it("allows only a PENDING proposal from that publication, never a CASL human approval", async () => {
+    const html = '<h1>Synthetic Cleaning</h1><p>CALL US NOW: 450-234-5678</p><p>Lavage de vitres</p><a href="/instant-quote">Instant Quote</a>';
+    const h = moduleHarness({ html });
+    const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false);
+    expect(r.observation.status).toBe("machine_verified");
+    expect(r.legal_consent_established).toBe(false);
+    expect(h.writes).toHaveLength(1);
+    expect(h.writes[0]).not.toHaveProperty("reviewer_id");
+    expect(h.writes[0].verification_method).toBe("first_party_phone_pending_human_review");
+    expect(r.sent).toBe(0);
+  });
+  it("rejects a phone dumped into arbitrary body text without contact wording", async () => {
+    const html = '<h1>Synthetic Cleaning</h1><p>Lavage de vitres</p><p>Inventory 450-234-5678 archive number</p>';
+    const h = moduleHarness({ html });
+    const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false);
+    expect(r.observation.status).toBe("pending");
+    expect(r.observation.reason).toBe("phone_publication_context_missing");
+    expect(h.writes).toHaveLength(0);
+  });
+  it("blocks direct first-party phone evidence if that page prohibits commercial solicitation", async () => {
+    const html = '<h1>Synthetic Cleaning</h1><p>CALL US NOW: 450-234-5678</p><p>Lavage de vitres</p><p>No unsolicited marketing.</p>';
+    const h = moduleHarness({ html });
+    const r = await h.m.captureFirstPartyPhone(h.sb, id, h.io, false);
+    expect(r.observation.status).toBe("rejected");
+    expect(r.observation.reason).toBe("solicitation_refused");
+    expect(h.writes).toHaveLength(0);
+  });
   it("captures only pending evidence via the canonical helper, never a reviewer", async () => {
     const h = moduleHarness(); await h.m.captureFirstPartyPhone(h.sb, id, h.io, false);
     expect(h.writes).toHaveLength(1); expect(h.writes[0].contractor_prospect_id).toBe(id);
