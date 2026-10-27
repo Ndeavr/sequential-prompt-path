@@ -9,8 +9,8 @@ describe("legacy pipeline checkout retirement", () => {
   it("refuses any payment request without Stripe, service secrets, DB or queue effects", () => {
     expect(retired).toContain('error: "legacy_pipeline_checkout_retired"');
     expect(retired).toContain('next_path: "/contractor/join"');
-    expect(retired).toMatch(/status:\\s*410/);
-    expect(retired).not.toMatch(/import\\s+Stripe\\b|new\\s+Stripe\\(|checkout\\.sessions\\.create|createClient\\(|SUPABASE_SERVICE_ROLE_KEY/);
+    expect(retired).toMatch(/status:\s*410/);
+    expect(retired).not.toMatch(/import\s+Stripe\b|new\s+Stripe\(|checkout\.sessions\.create|createClient\(|SUPABASE_SERVICE_ROLE_KEY/);
     expect(retired).not.toMatch(/unit_amount|allow_promotion_codes|price_data|tax_rates/);
   });
 
