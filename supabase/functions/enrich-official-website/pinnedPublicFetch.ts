@@ -79,7 +79,9 @@ function parseHttpResponse(raw: Uint8Array): Response {
     body = new Uint8Array(wire);
   }
   if (body.length > POLICY.maxBytes) throw new Error("volume_limit");
-  return new Response([204, 304].includes(statusCode) ? null : body, { status: statusCode, headers });
+  const responseBody = new ArrayBuffer(body.length);
+  new Uint8Array(responseBody).set(body);
+  return new Response([204, 304].includes(statusCode) ? null : responseBody, { status: statusCode, headers });
 }
 
 /**
