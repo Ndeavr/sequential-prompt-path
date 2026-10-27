@@ -5,23 +5,9 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-function stagedHandlerSource() {
-  const path = "supabase/functions/enrich-official-website/index.ts";
-  const lines = readFileSync(path, "utf8").split("\n");
-  const patch = readFileSync("docs/audits/issue-56-prospect-phone-collision.patch", "utf8");
-  let offset = 0;
-  for (const hunk of patch.split(/(?=^@@ )/m).slice(1)) {
-    const header = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@.*\n/.exec(hunk);
-    if (!header) throw new Error("invalid patch");
-    const body = hunk.slice(header[0].length).split("\n").filter(l => /^[ +\-]/.test(l));
-    const before = body.filter(l => l[0] !== "+").map(l => l.slice(1));
-    const after = body.filter(l => l[0] !== "-").map(l => l.slice(1));
-    const start = Number(header[1]) - 1 + offset;
-    if (lines.slice(start, start + before.length).join("\n") !== before.join("\n")) throw new Error("stale patch");
-    lines.splice(start, before.length, ...after);
-    offset += after.length - before.length;
-  }
-  return lines.join("\n");
+function activeHandlerSource() {
+  // Tests execute the real active Edge handler, not an unapplied staged patch.
+  return readFileSync("supabase/functions/enrich-official-website/index.ts", "utf8");
 }
 
 const phone = "+14502345678"; // Synthetic, never sent or queried remotely.
@@ -74,7 +60,7 @@ function harness(options: { race?: boolean; changed?: boolean; lookupError?: boo
   } };
   let handler: ((r: Request) => Promise<Response>) | undefined;
   const capture = vi.fn(async () => ({ observation: { status: "pending" }, dry_run: true, legal_consent_established: false, sent: 0 }));
-  const code = stagedHandlerSource().replace(/^import[\s\S]*?;\n/gm, "");
+  const code = activeHandlerSource().replace(/^import[\s\S]*?;\n/gm, "");
   runInNewContext(ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, {
     exports: {}, Deno: { env: { get: () => "synthetic" }, serve: (h: typeof handler) => { handler = h; } },
     crypto, Request, Response, TextEncoder, console: { error: vi.fn() }, corsHeaders: {},
@@ -93,7 +79,7 @@ function harness(options: { race?: boolean; changed?: boolean; lookupError?: boo
   return { rows, evidence, updates, run, capture };
 }
 
-describe("#56 staged actual enrichment handler, isolated database adapter", () => {
+describe("#56 active official-site enrichment handler, isolated database adapter", () => {
   it("refuses another prospect's phone without update or exposed number; keeps independent crawl evidence", async () => {
     const h = harness(); h.rows[1].phone_e164 = phone;
     const before = structuredClone(h.rows);

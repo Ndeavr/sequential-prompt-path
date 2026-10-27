@@ -277,6 +277,21 @@ Deno.serve(async (req) => {
       const rbqs = summary.fields.filter(f => f.kind === "rbq" && f.normalized);
 
       if (phones.length > 0) {
+        const candidatePhone = phones[0].normalized;
+        // Keep the original owner identity; public crawling must never
+        // transfer a number between company records.
+        if (prospect.phone_e164 && prospect.phone_e164 !== candidatePhone) {
+          return jr({ ok: false, code: "prospect_phone_change_requires_review", status: "needs_review", run_id: run?.id, sent: 0 }, 409, rid);
+        }
+        const { data: owners, error: ownerError } = await supabase
+          .from("verified_contractor_prospects").select("id")
+          .eq("phone_e164", candidatePhone).neq("id", prospect_id).limit(1);
+        if (ownerError || !owners) {
+          return jr({ ok: false, code: "prospect_phone_lookup_failed", status: "retryable", run_id: run?.id, sent: 0 }, 503, rid);
+        }
+        if (owners.length > 0) {
+          return jr({ ok: false, code: "prospect_phone_collision", status: "needs_review", run_id: run?.id, sent: 0 }, 409, rid);
+        }
         pupd.phone_e164 = phones[0].normalized;
         pupd.phone_primary = phones[0].normalized;
         pupd.phone_source_url = phones[0].source_url;
@@ -307,11 +322,24 @@ Deno.serve(async (req) => {
         pupd.eligibility_reason = "official_site_crawl_confirmed";
       }
 
-      const { error: pErr } = await supabase
-        .from("verified_contractor_prospects")
-        .update(pupd)
-        .eq("id", prospect_id);
-      if (pErr) console.error(`[${rid}] prospect update failed`, pErr);
+      let prospectUpdate = supabase.from("verified_contractor_prospects")
+        .update(pupd).eq("id", prospect_id);
+      // Compare-and-set protects against changes since this prospect was loaded.
+      // The unique index remains the authoritative concurrent-owner constraint.
+      if (phones.length > 0) {
+        prospectUpdate = prospect.phone_e164
+          ? prospectUpdate.eq("phone_e164", prospect.phone_e164)
+          : prospectUpdate.is("phone_e164", null);
+      }
+      const { data: updatedProspects, error: pErr } = await prospectUpdate.select("id");
+      if (pErr) {
+        const collision = pErr.code === "23505";
+        console.error(`[${rid}] prospect update failed`, { code: pErr.code });
+        return jr({ ok: false, code: collision ? "prospect_unique_collision" : "prospect_update_failed", status: collision ? "needs_review" : "retryable", run_id: run?.id, sent: 0 }, collision ? 409 : 503, rid);
+      }
+      if (!updatedProspects || updatedProspects.length !== 1) {
+        return jr({ ok: false, code: "prospect_changed_during_enrichment", status: "needs_review", run_id: run?.id, sent: 0 }, 409, rid);
+      }
     }
 
 
