@@ -17,6 +17,7 @@ CREATE TABLE public.casl_phone_capture_jobs (
   discovery_complete boolean NOT NULL DEFAULT false,
   quota_day date,
   daily_attempts integer NOT NULL DEFAULT 0 CHECK (daily_attempts BETWEEN 0 AND 20),
+  run_attempts integer NOT NULL DEFAULT 0 CHECK (run_attempts BETWEEN 0 AND 2),
   enabled boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -41,7 +42,7 @@ BEGIN
     last_reason='stale_worker_lease',lease_owner=NULL,lease_until=NULL,updated_at=now()
     WHERE status='running' AND lease_until<=now();
   UPDATE casl_phone_capture_jobs SET lease_owner=p_run,lease_until=now()+interval '5 minutes',
-    daily_attempts=CASE WHEN quota_day=today THEN daily_attempts ELSE 0 END,quota_day=today,updated_at=now()
+    daily_attempts=CASE WHEN quota_day=today THEN daily_attempts ELSE 0 END,quota_day=today,run_attempts=0,updated_at=now()
     WHERE status='control';
   RETURN jsonb_build_object('acquired',true,'cursor',c.discovery_cursor,'discovery_complete',c.discovery_complete);
 END $$;
@@ -75,7 +76,7 @@ BEGIN
   IF p_limit<1 OR p_limit>2 THEN RAISE EXCEPTION 'invalid_limit'; END IF;
   SELECT * INTO c FROM casl_phone_capture_jobs WHERE status='control' FOR UPDATE;
   IF NOT c.enabled OR c.lease_owner IS DISTINCT FROM p_run OR c.lease_until<=now() THEN RAISE EXCEPTION 'lease_lost'; END IF;
-  n:=LEAST(p_limit,20-c.daily_attempts);
+  n:=LEAST(p_limit,20-c.daily_attempts,2-c.run_attempts);
   IF n<=0 THEN RETURN; END IF;
   RETURN QUERY WITH due AS (
     SELECT j.id FROM casl_phone_capture_jobs j WHERE j.status IN ('queued','retry') AND j.attempt_count<2
@@ -85,7 +86,7 @@ BEGIN
     last_attempt_at=now(),lease_owner=p_run,lease_until=c.lease_until,updated_at=now()
     FROM due WHERE j.id=due.id RETURNING j.*;
   GET DIAGNOSTICS n=ROW_COUNT;
-  UPDATE casl_phone_capture_jobs SET daily_attempts=daily_attempts+n,updated_at=now() WHERE status='control';
+  UPDATE casl_phone_capture_jobs SET daily_attempts=daily_attempts+n,run_attempts=run_attempts+n,updated_at=now() WHERE status='control';
 END $$;
 
 -- Lease fencing, exact-source dedupe and evidence insertion are ONE transaction.
@@ -104,9 +105,9 @@ BEGIN
     OR p_evidence->>'destination_normalized' IS DISTINCT FROM substring(j.phone FROM 3)
     OR p_evidence->>'lawful_basis' IS DISTINCT FROM 'implicit_public_conspicuous'
     OR p_evidence->>'verification_method' IS DISTINCT FROM 'first_party_phone_pending_human_review'
-    OR p_evidence->>'source_url' NOT LIKE 'https://%'
+    OR COALESCE(p_evidence->>'source_url','') NOT LIKE 'https://%'
     OR lower(regexp_replace(split_part(substring(p_evidence->>'source_url' FROM 9),'/',1),'^www\.','')) IS DISTINCT FROM j.domain
-    OR p_evidence->>'page_sha256' !~ '^[a-f0-9]{64}$'
+    OR COALESCE(p_evidence->>'page_sha256','') !~ '^[a-f0-9]{64}$'
     OR NULLIF(p_evidence->>'business_relevance_explanation','') IS NULL
     OR NULLIF(p_evidence->>'retrieved_at','') IS NULL
     OR p_evidence->>'refusal_statement_found' IS DISTINCT FROM 'false'
