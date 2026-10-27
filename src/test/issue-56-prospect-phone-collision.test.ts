@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 function stagedHandlerSource() {
   const path = "supabase/functions/enrich-official-website/index.ts";
@@ -81,11 +82,12 @@ function harness(options: { race?: boolean; changed?: boolean; lookupError?: boo
     resolveOfficialDomain: () => ({ canonical: source }),
     crawlOfficialSite: async () => ({ complete: true, had_transient_failure: false, ok_pages: [source], pages_attempted: [{ url: source, ok: true }], fields: [{ kind: "phone", normalized: phone, raw: phone, source_url: source, method: "visible" }] }),
     sanitizeEmail: () => null, captureFirstPartyPhone: capture, pinnedPublicFetch: vi.fn(),
-    z: { object: () => ({ strict: () => ({ safeParse: (body: unknown) => ({ success: true, data: body }) }) }) },
+    z,
   });
   async function run(id = "a", extra: Record<string, unknown> = {}) {
     if (!handler) throw new Error("missing handler");
-    const response = await handler(new Request(source, { method: "POST", body: JSON.stringify({ prospect_id: id, ...extra }) }));
+    const body = extra.action ? extra : { prospect_id: id, ...extra };
+    const response = await handler(new Request(source, { method: "POST", body: JSON.stringify(body) }));
     return { status: response.status, body: await response.json() };
   }
   return { rows, evidence, updates, run, capture };
@@ -141,7 +143,7 @@ describe("#56 staged actual enrichment handler, isolated database adapter", () =
     expect(h.updates).toHaveLength(0); expect(h.evidence).toHaveLength(0);
   });
   it("keeps the independent phone-CASL action outside prospect update handling", async () => {
-    const h = harness(); const r = await h.run("a", { action: "capture_phone_casl", contractor_prospect_id: "synthetic", dry_run: true });
+    const h = harness(); const r = await h.run("a", { action: "capture_phone_casl", contractor_prospect_id: "11111111-1111-4111-8111-111111111111", dry_run: true });
     expect(r.status).toBe(200); expect(r.body.legal_consent_established).toBe(false); expect(r.body.sent).toBe(0);
     expect(h.capture).toHaveBeenCalledTimes(1); expect(h.updates).toHaveLength(0); expect(h.evidence).toHaveLength(0);
   });
