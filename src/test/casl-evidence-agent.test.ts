@@ -18,6 +18,24 @@ function harness() {
   return { m: ctx.exports, capture: captureFirstPartyPhone };
 }
 const prospect = { id, business_name: "Synthetic Windows", trade: "Lavage de vitres", website_url: "https://synthetic.test/", phone_e164: "+14502345678", do_not_contact: false, outreach_status: "not_started" };
+describe("capture-ledger migration accepted by the Cloud migration validator", () => {
+  const migration = readFileSync("docs/migrations-staged/20261027_casl_phone_capture_jobs.sql", "utf8");
+  it("initializes exactly one disabled control row using INSERT SELECT, never INSERT VALUES", () => {
+    expect(migration).toMatch(/INSERT INTO public\.casl_phone_capture_jobs\(status, enabled, daily_attempts, run_attempts\)\s*SELECT 'control', false, 0, 0\s*WHERE NOT EXISTS\s*\(/);
+    expect(migration).not.toMatch(/INSERT INTO public\.casl_phone_capture_jobs\(status\) VALUES/i);
+    expect(migration).toMatch(/ON CONFLICT DO NOTHING;/);
+    expect((migration.match(/INSERT INTO public\.casl_phone_capture_jobs/g) || []).length).toBe(1);
+  });
+  it("keeps service-only permission, safe default and per-run/day quota", () => {
+    expect(migration).toContain("enabled boolean NOT NULL DEFAULT false");
+    expect(migration).toContain("daily_attempts integer NOT NULL DEFAULT 0 CHECK (daily_attempts BETWEEN 0 AND 20)");
+    expect(migration).toContain("run_attempts integer NOT NULL DEFAULT 0 CHECK (run_attempts BETWEEN 0 AND 2)");
+    expect(migration).toContain("ALTER TABLE public.casl_phone_capture_jobs ENABLE ROW LEVEL SECURITY");
+    expect(migration).toMatch(/REVOKE ALL ON FUNCTION public\.begin_casl_phone_capture_run/);
+    expect(migration).toMatch(/TO service_role;/);
+  });
+});
+
 describe("bounded pending-evidence agent", () => {
   it("has concrete founder crawl limits, not SMS quotas", () => { expect(harness().m.CAPTURE_LIMITS.perRun).toBe(2); expect(harness().m.CAPTURE_LIMITS.perDay).toBe(20); expect(harness().m.CAPTURE_LIMITS.maxAttempts).toBe(2); });
   it("allows unknown mobile only as publication, never changes line type", () => { const p = { ...prospect }; expect(harness().m.candidate(p)?.id).toBe(id); expect(p).not.toHaveProperty("has_mobile"); });
