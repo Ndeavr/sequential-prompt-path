@@ -1267,6 +1267,17 @@ Deno.serve(async (req) => {
               }
             }
 
+            // A Stripe payment can be real while account provisioning or the
+            // durable 12-month ledger receipt failed. Never emit a verified
+            // activation success/audience funnel event without both.
+            // The paid session remains available for human reconciliation;
+            // rethrow below so signed Stripe redelivery can retry safely.
+            if (session.metadata?.offer === "entry_pack_350" &&
+                (!activatedContractorId || entryPackFatal)) {
+              entryPackFatal ??= new Error("entry_pack_350 receipt incomplete: contractor or ledger missing");
+              throw entryPackFatal;
+            }
+
             await supabase.from("unpro_payment_activation_audit").insert({
               contractor_id: activatedContractorId,
               prospect_id: vProspectId,
