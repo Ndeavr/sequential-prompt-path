@@ -28,7 +28,9 @@ ALTER TABLE public.casl_phone_capture_jobs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY capture_service_only ON public.casl_phone_capture_jobs FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE UNIQUE INDEX casl_capture_single_control ON public.casl_phone_capture_jobs ((status)) WHERE status='control';
 CREATE INDEX casl_capture_due ON public.casl_phone_capture_jobs (status,next_retry_at) WHERE status IN ('queued','retry','running');
-INSERT INTO public.casl_phone_capture_jobs(status) VALUES ('control');
+-- Control row is initialized SEPARATELY by a one-time authorized DML step after
+-- successful DDL and RLS/grants verification. Defaults remain disabled until pilot.
+-- See docs/audits/casl-evidence-agent/seed-control.sql.
 
 CREATE FUNCTION public.begin_casl_phone_capture_run(p_run uuid) RETURNS jsonb
 LANGUAGE plpgsql SECURITY INVOKER SET search_path=public AS $$
