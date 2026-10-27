@@ -1,79 +1,35 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * Checkout return URL is not an activation receipt.
+ *
+ * Do NOT invoke legacy activation-confirm from the browser: the currently
+ * hosted Edge version may still mutate activated flags and issue magic links.
+ * The signed webhook and server-side entitlement must be reconciled before
+ * any UI claims a completed purchase.
+ */
+import { Link, useSearchParams } from "react-router-dom";
 
 export default function PageActivationSuccess() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
-  const [status, setStatus] = useState<"verifying" | "ok" | "error">("verifying");
-  const [email, setEmail] = useState<string | null>(null);
-  const [magic, setMagic] = useState<string | null>(null);
-
-  useEffect(() => {
-    const session_id = params.get("session_id");
-    const slug = params.get("slug");
-    if (!session_id) { setStatus("error"); return; }
-
-    (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("activation-confirm", {
-          body: { session_id, slug },
-        });
-        if (error || !data?.ok) { setStatus("error"); return; }
-        setEmail(data.email ?? null);
-        setMagic(data.magic_link ?? null);
-        setStatus("ok");
-      } catch {
-        setStatus("error");
-      }
-    })();
-  }, [params]);
+  const hasSession = Boolean(params.get("session_id"));
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+    <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center space-y-6">
-        {status === "verifying" && (
-          <>
-            <div className="h-12 w-12 mx-auto rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <h1 className="text-2xl font-semibold">Activation en cours…</h1>
-            <p className="text-sm text-muted-foreground">Nous préparons votre tableau de bord UNPRO.</p>
-          </>
-        )}
-        {status === "ok" && (
-          <>
-            <div className="text-5xl">⚡</div>
-            <h1 className="text-3xl font-semibold">Visibilité IA activée</h1>
-            <p className="text-base text-muted-foreground">
-              {email
-                ? <>Un lien d'accès a été envoyé à <span className="text-foreground font-medium">{email}</span>.</>
-                : <>Votre accès est prêt.</>}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Aucun renouvellement automatique — vous choisirez votre plan pendant les 7 prochains jours.
-            </p>
-
-            {magic ? (
-              <a href={magic} className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-6 py-3 font-medium">
-                Ouvrir mon tableau de bord
-              </a>
-            ) : (
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-6 py-3 font-medium"
-              >
-                Aller au tableau de bord
-              </button>
-            )}
-          </>
-        )}
-        {status === "error" && (
-          <>
-            <h1 className="text-2xl font-semibold">Vérification impossible</h1>
-            <p className="text-sm text-muted-foreground">Si vous avez été débité, contactez-nous — votre activation sera honorée.</p>
-            <button onClick={() => navigate("/")} className="text-sm underline">Retour à l'accueil</button>
-          </>
-        )}
+        <h1 className="text-2xl font-semibold">
+          {hasSession ? "Vérification de votre activation" : "Lien de retour incomplet"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {hasSession
+            ? "Votre retour de Stripe ne constitue pas une preuve de paiement ou d'activation. La confirmation exige un paiement réel réconcilié, un webhook Stripe signé, votre entreprise exacte et un droit de présence de 12 mois."
+            : "Nous ne disposons pas des informations nécessaires pour retrouver cette tentative de paiement."}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Si vous avez été débité, ne recommencez pas le paiement. Communiquez avec l'équipe UNPRO pour faire vérifier votre dossier.
+        </p>
+        <Link to="/" className="inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-medium">
+          Retour à l'accueil
+        </Link>
       </div>
-    </div>
+    </main>
   );
 }
