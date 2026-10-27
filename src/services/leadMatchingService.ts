@@ -4,6 +4,7 @@
  * writes results to the `matches` table.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { readVerifiedExclusiveCapacity } from "@/lib/market/verifiedScarcity";
 
 // ─── Types ───
 
@@ -216,17 +217,19 @@ export async function matchLead(leadId: string): Promise<ScoredMatch[]> {
 // ─── Market Capacity Check ───
 
 export async function checkMarketCapacity(city: string, specialty: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("market_capacity")
     .select("*")
     .eq("city", city)
     .eq("specialty", specialty)
     .maybeSingle();
 
-  if (!data) return { status: "available" as const, slots_remaining: 3 };
-
-  const remaining = data.max_slots - data.active_slots;
-  if (remaining <= 0) return { status: "waitlist" as const, slots_remaining: 0, waiting: data.waiting_list_count };
-  if (remaining === 1) return { status: "almost_full" as const, slots_remaining: 1 };
-  return { status: "available" as const, slots_remaining: remaining };
+  // Missing/old market rows are NOT evidence of 3 open spots or a waitlist.
+  // Appointment positions and the base $350 profile activation are different.
+  const verified = readVerifiedExclusiveCapacity(error ? null : data);
+  return {
+    status: verified.status,
+    slots_remaining: verified.slotsRemaining,
+    waiting: verified.waiting,
+  };
 }
