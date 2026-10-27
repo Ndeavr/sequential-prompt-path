@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Bounded autonomous first-party CASL capture: reuse canonical observer; atomic service-only ledger, 2/run and 20/day, one retry, pending-only evidence; targeted QA and guarded pilot/schedule. Remote writes require verified backup integrity.
 - [x] Issue #56 local-only: cause proven at c47d538; single-handler phone collision/CAS patch staged outside Edge directories; 51/51 isolated regressions pass. No remote actions or deployment. See docs/audits/issue-56-prospect-phone-collision.md.
 - [ ] Issue #56 release blocked: separate deployment authorization and isolated hosted collision verification required; staged mocks do not prove production PostgreSQL concurrency.
 - [x] Repair six preview Deno type/dependency failures; focused Deno checks and 62 existing regressions pass. No manual additional deployment or handler invocation; automatic deployment state unverified.
