@@ -232,6 +232,25 @@ export function entry350CommissionArgs(i: {
   };
 }
 
+/**
+ * An entry-pack duplicate-key is an idempotent replay ONLY if the durable
+ * receipt belongs to the same contractor, LIVE payment intent and offer.
+ * Never treat an unrelated unique violation or a different business as paid.
+ */
+export function entryPackReplayReceiptMatches(
+  prior: { contractor_id?: string | null; source?: string | null; metadata?: Record<string, unknown> | null } | null,
+  expected: { contractorId: string; paymentIntentId: string | null },
+): boolean {
+  const md = prior?.metadata;
+  return !!expected.paymentIntentId &&
+    !!prior &&
+    prior.contractor_id === expected.contractorId &&
+    prior.source === "stripe_webhook" &&
+    md?.offer === "entry_pack_350" &&
+    md?.livemode === true &&
+    md?.stripe_payment_intent === expected.paymentIntentId;
+}
+
 /** Classify an entry-350 ledger insert error. The promo index must win over the generic
  * duplicate-key match: a second session redeeming PROMO is NEVER an idempotent replay. */
 export function entry350LedgerConflict(message: string | null | undefined): "promo_already_redeemed" | "same_session" | null {
