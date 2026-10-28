@@ -25,7 +25,7 @@ describe("UNPRO animated appointment explainer", () => {
     expect(page).not.toMatch(/\.from\(|\.rpc\(|functions\.invoke\(|fetch\(|sendSms\(|pushGoogleEvent\(/);
   });
   it("shows distance, duration and buffer as explicitly fictional until routing is verified", () => {
-    expect(page).toContain('["18 km"]'.replace("[", "").replace("]", "").slice(0, 1) === "[" ? "?" : "18 km"); // literal shown in simulation
+    expect(page).toContain("18 km");
     expect(page).toContain("28 min");
     expect(page).toContain("+15 min");
     expect(page).toContain("Un vrai trajet exige des données de routage vérifiées.");
