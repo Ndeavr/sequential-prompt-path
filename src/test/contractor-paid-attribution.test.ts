@@ -46,6 +46,17 @@ describe("UNPRO company-specific contractor ad tracking", () => {
     expect(redirect).toBeGreaterThan(tracked);
     expect(page).not.toContain('event_type: "stripe_payment_success"');
   });
+  it("never waits indefinitely for optional telemetry after checkout URL creation", () => {
+    const page = readFileSync("src/components/entrepreneur/Entry350FastCheckout.tsx", "utf8");
+    const bounded = page.indexOf("await Promise.race([");
+    const timeout = page.indexOf("new Promise<void>((resolve) => setTimeout(resolve, 500))", bounded);
+    const redirect = page.indexOf("redirectToCheckout(reply.url)", bounded);
+    expect(bounded).toBeGreaterThan(0);
+    expect(timeout).toBeGreaterThan(bounded);
+    expect(redirect).toBeGreaterThan(timeout);
+    expect(page).not.toContain("await logFunnelEvent({");
+  });
+
   it("retains Stripe LIVE payment as a separate signed server-side event", () => {
     const join = readFileSync("src/pages/contractor/PageContractorJoinLive.tsx", "utf8");
     const checkout = readFileSync("src/components/entrepreneur/Entry350FastCheckout.tsx", "utf8");
