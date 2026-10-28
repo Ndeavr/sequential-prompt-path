@@ -70,11 +70,12 @@ describe("Clara mobile — conversation compacte", () => {
   });
 
   it("remplace les phrases arbitraires par des intentions réelles", () => {
-    expect(box).not.toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
+    expect(box).toContain('label: "Je suis entrepreneur", intent: "contractor_onboarding"');
     // The current defaults span the three service universes; embedded views can show real trending questions.
     expect(box).toContain('label: "Je cherche un courtier immobilier", intent: "homeowner_problem"');
     expect(box).toContain('label: "Nettoyer mes conduits d’air", intent: "homeowner_problem"');
-    expect(box).toContain('label: "J’ai un projet de rénovation", intent: "homeowner_problem"');
+    expect(box).not.toContain('label: "J’ai un projet de rénovation", intent: "homeowner_problem"');
+    expect(box).toContain('label: "I’m a contractor", intent: "contractor_onboarding"');
     expect(box).toContain('const popularQuestions = usePopularQuestions(3)');
     expect(box).toContain('popularQuestions.source === "trending"');
     expect(box).toContain('intent: item.intent === "comparison" ? "quote_comparison" : "homeowner_problem"');
