@@ -126,11 +126,16 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       if (error || reply?.error || !reply?.url) throw new Error("unavailable");
       // This only measures a real server-created Stripe checkout handoff.
       // A redirect/success URL must NEVER be counted as paid revenue.
-      await logFunnelEvent({
-        event_type: "stripe_checkout_started",
-        step: "entry350_checkout_created",
-        metadata: { surface: "activation_350", entry_activation: true },
-      });
+      // Ne jamais laisser la télémétrie ralentir indéfiniment un paiement déjà prêt.
+      // L'écriture reste best-effort et ne constitue jamais une preuve de paiement.
+      await Promise.race([
+        logFunnelEvent({
+          event_type: "stripe_checkout_started",
+          step: "entry350_checkout_created",
+          metadata: { surface: "activation_350", entry_activation: true },
+        }),
+        new Promise<void>((resolve) => setTimeout(resolve, 500)),
+      ]);
       redirectToCheckout(reply.url);
     } catch {
       setErrorText("Impossible d'ouvrir le paiement. Vos réponses sont conservées. Réessayez.");
