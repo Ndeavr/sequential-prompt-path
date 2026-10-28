@@ -17,6 +17,7 @@ describe("single Clara appointment-setting path", () => {
     expect(slots).toContain("fetchExternalBusy");
     expect(slots).toContain("buffer_before_minutes");
     expect(slots).toContain("travel_padding_minutes");
+    expect(slots).not.toContain('badges.push("reduced_travel")');
   });
   it("confirms free bookings exclusively with the locked backend RPC", () => {
     expect(publicBooking).toContain("if (!isPaid) {");
