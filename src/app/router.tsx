@@ -675,6 +675,7 @@ const MyPlacementsPage = lazyWithRetry(() => import("@/pages/dashboard/MyPlaceme
 const PageEntrepreneurLandingAIPP = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurLandingAIPP"));
 const PageEntrepreneurDiagnosticLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDiagnosticLanding"));
 const PageEntrepreneursLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneursLanding"));
+const PageAppointmentSetterExplainer = lazyWithRetry(() => import("@/pages/entrepreneur/PageAppointmentSetterExplainer"));
 const PageEntrepreneurScoreResult = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurScoreResult"));
 const PageEntrepreneurDashboardLite = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDashboardLite"));
 const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur/PageAIPPAnalysisLoading"));
@@ -1047,6 +1048,7 @@ export const AppRouter = () => (
         <Route path="/contractors/:id" element={<ContractorProfile />} />
         {/* Isolation Solution Royal résout vers la fiche publique canonique (/entrepreneur/:slug). */}
         <Route path="/entrepreneurs/pavage-alpha-laval" element={<Navigate to="/entrepreneur/pavage-alpha-laval" replace />} />
+        <Route path="/entrepreneurs/rendez-vous-intelligents" element={<Suspense fallback={<LazyFallback />}><PageAppointmentSetterExplainer /></Suspense>} />
         <Route path="/entrepreneurs/:slug" element={<Suspense fallback={<LazyFallback />}><PageHomeownerBookingFunnel /></Suspense>} />
         <Route path="/entrepreneur/bienvenue" element={<Suspense fallback={<LazyFallback />}><PageClaimWelcome /></Suspense>} />
         <Route path="/entrepreneur/:slug/reclamer" element={<Suspense fallback={<LazyFallback />}><PageClaimWizard /></Suspense>} />
