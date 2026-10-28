@@ -11,10 +11,10 @@ const compiled = ts.transpileModule(stripped, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function harness(mode: "read_error" | "duplicate" | "new") {
+function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: boolean; companyName?: string }) {
   let handler: ((request: Request) => Promise<Response>) | undefined;
   const inserts: unknown[] = [];
-  const outbound = vi.fn();
+  const outbound = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 202 }));
   const db = {
     from: (table: string) => {
       expect(table).toBe("leads");
@@ -47,7 +47,7 @@ function harness(mode: "read_error" | "duplicate" | "new") {
     env: { get: (key: string) =>
       key === "SUPABASE_URL" ? "https://synthetic.test"
         : key === "SUPABASE_SERVICE_ROLE_KEY" ? "synthetic-only"
-        : undefined },
+        : key === "RESEND_API_KEY" && options?.notify ? "synthetic-only" : undefined },
   };
   runInNewContext(compiled, {
     Deno, z, createClient: () => db, Date, Request, Response, URL,
@@ -58,7 +58,7 @@ function harness(mode: "read_error" | "duplicate" | "new") {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      company_name: "Synthetic Services",
+      company_name: options?.companyName ?? "Synthetic Services",
       contact_name: "Example Tester",
       phone: "450 234 5678",
       primary_service: "Entretien ménager",
@@ -94,5 +94,18 @@ describe("Public AI visibility lead — dedupe read is a hard prerequisite", () 
     expect(await response.json()).toMatchObject({ ok: true, duplicate: false });
     expect(h.inserts).toHaveLength(1);
     expect(h.outbound).not.toHaveBeenCalled();
+  });
+
+  it("HTML-escapes user-controlled lead fields in the internal notification", async () => {
+    const companyName = "<script>alert('x')</script> & Services";
+    const h = harness("new", { notify: true, companyName });
+    const response = await h.run();
+    expect(response.status).toBe(200);
+    expect(h.inserts).toHaveLength(1);
+    expect(h.outbound).toHaveBeenCalledTimes(1);
+    const requestInit = h.outbound.mock.calls[0]?.[1];
+    const email = JSON.parse(String(requestInit?.body));
+    expect(email.html).toContain("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; &amp; Services");
+    expect(email.html).not.toContain("<script>");
   });
 });
