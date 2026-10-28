@@ -2,7 +2,7 @@
  * current conversation, never as a permanent footer on an empty chat.
  * This is presentation logic; the existing CTA owns authentication and navigation.
  */
-type RegistrationTurn = { role: "user" | "assistant"; text: string };
+type RegistrationTurn = { role: "user" | "assistant"; text: string; audience?: "homeowner" | "contractor" };
 
 const ACTION = /\b(?:enregistrer|enregistrez|inscrire|sauvegarder|conserver|creer|cree|creez|ouvrir|ajouter|register|save|create|open|add)\b/;
 const OBJECT = /\b(?:propriete|passeport maison|dossier maison|mon compte|un compte|votre compte|compte unpro|ma maison|votre maison|my property|your property|home passport|home file|my account|an account|your account)\b/;
@@ -18,13 +18,14 @@ function isRegistrationRequest(text: string): boolean {
  */
 export function shouldOfferHomeownerRegistration(turns: readonly RegistrationTurn[]): boolean {
   const last = turns[turns.length - 1];
-  if (!last) return false;
+  if (!last || last.audience === "contractor") return false;
   const previous = turns[turns.length - 2];
+  const previousHomeRequest = previous?.audience !== "contractor" && previous && isRegistrationRequest(previous.text);
   if (last.role === "user") {
     if (isRegistrationRequest(last.text)) return true;
     const affirmative = /^(?:oui|yes|ok|d'accord|d’accord|volontiers|allons-y)[.!\s]*$/i.test(last.text.trim());
-    return affirmative && previous?.role === "assistant" && isRegistrationRequest(previous.text);
+    return affirmative && previous?.role === "assistant" && !!previousHomeRequest;
   }
   return isRegistrationRequest(last.text) ||
-    (previous?.role === "user" && isRegistrationRequest(previous.text));
+    (previous?.role === "user" && !!previousHomeRequest);
 }
