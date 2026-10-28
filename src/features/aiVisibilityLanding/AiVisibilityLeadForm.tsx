@@ -95,7 +95,7 @@ export default function AiVisibilityLeadForm() {
       setStatus("success");
       logFunnelEvent({
         event_type: "ai_visibility_form_submitted",
-        phone: parsed.data.phone,
+        // Phone is captured by the canonical CRM edge function, not by funnel telemetry.
         metadata: { duplicate: Boolean(data?.duplicate), ...readUtm() },
       });
     } catch (err) {
