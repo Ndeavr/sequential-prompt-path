@@ -112,7 +112,12 @@ Deno.serve(async (req) => {
     .contains("payload", { phone, source: SOURCE })
     .limit(1);
 
-  if (dupeErr) console.error("[visibilite-ia-lead] duplicate_check_failed", dupeErr.message);
+  if (dupeErr) {
+    // Fail closed: an unreadable dedupe gate must never become a new CRM lead
+    // or an internal notification. The public form can safely retry later.
+    console.error("[visibilite-ia-lead] duplicate_check_failed", dupeErr.message);
+    return json({ error: "duplicate_check_unavailable" }, 503);
+  }
   if (dupes && dupes.length > 0) {
     console.log("[visibilite-ia-lead] duplicate_blocked", { lead_id: dupes[0].id });
     return json({ ok: true, duplicate: true });
