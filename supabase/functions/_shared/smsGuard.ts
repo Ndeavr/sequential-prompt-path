@@ -103,14 +103,10 @@ export async function validateBeforeSend(opts: {
 
 
 
-  // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
-  // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
+  // Mobile-only + failure-threshold guard. An unclassified carrier is NOT a
+  // verified mobile. Preserve the original number and route to a reviewed
+  // alternate channel instead of silently making a tier-C SMS attempt.
   let resolvedPhoneType: string | null = null;
-  // Set when the destination belongs to a verified prospect that the eligibility
-  // engine already scored SMS-eligible (tier A/B/C). Used only to decide what to
-  // do when Twilio Lookup CANNOT classify the carrier (Canadian CLNPC/NPAC
-  // restriction, error 60601) — never to override an explicit landline/VoIP.
-  let prospectSmsEligible = false;
   if (opts.lead_id) {
     const { data: lead } = await opts.supabase
       .from("contractor_leads")
@@ -159,7 +155,6 @@ export async function validateBeforeSend(opts: {
     if (["sent", "delivered", "clicked", "activated", "opted_out"].includes(prospect.outreach_status ?? "")) {
       return { ok: false, reason: "blocked", detail: `already_${prospect.outreach_status}`, normalized: norm.normalized };
     }
-    prospectSmsEligible = true;
     resolvedPhoneType = lineType === "mobile" ? "mobile" : null;
   }
 
@@ -191,31 +186,12 @@ export async function validateBeforeSend(opts: {
   }
 
   if (!resolvedPhoneType || resolvedPhoneType === "unknown") {
-    // Carrier could not be classified. For a verified prospect already scored
-    // SMS-eligible (tier A/B/C) on a syntactically valid E.164 backed by a
-    // public business source, a single controlled first touch is allowed with
-    // an explicit, auditable "unknown carrier" marker. The line type is NEVER
-    // rewritten to "mobile".
-    if (prospectSmsEligible) {
-      try {
-        console.log(JSON.stringify({
-          scope: "smsGuard",
-          sms_guard_reason: "unclassified_carrier_tier_eligible",
-          phone: norm.normalized,
-          prospect_id: opts.prospect_id ?? null,
-          phone_type: "unknown_carrier",
-        }));
-      } catch { /* noop */ }
-      return {
-        ok: true,
-        normalized: norm.normalized,
-        area_code: norm.area_code,
-        country_code: norm.country_code,
-        phone_type: "unknown_carrier",
-        sms_guard_reason: "unclassified_carrier_tier_eligible",
-      };
-    }
-    return { ok: false, reason: "not_mobile", detail: "phone_type_unconfirmed", normalized: norm.normalized };
+    return {
+      ok: false,
+      reason: "not_mobile",
+      detail: "phone_type_unconfirmed_manual_review_required",
+      normalized: norm.normalized,
+    };
   }
 
   return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code, phone_type: resolvedPhoneType };
