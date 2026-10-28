@@ -136,6 +136,7 @@ export default function PublicBookingPage() {
     if (!selectedDate || !selectedType || !contractor) return;
 
     setIsLoadingSlots(true);
+    setSelectedSlot(null);
     const from = new Date(selectedDate);
     from.setHours(0, 0, 0, 0);
     const to = new Date(selectedDate);
@@ -148,7 +149,11 @@ export default function PublicBookingPage() {
       dateTo: to,
     })
       .then((result) => {
-        setSlots(result.slots);
+        // Offer exactly three genuine free/busy-filtered choices at a time.
+        // Travel padding is contractor-configured, not a verified route ETA.
+        const topThree = [...result.slots].sort((a, b) => b.score - a.score).slice(0, 3);
+        topThree.sort((a, b) => a.start.getTime() - b.start.getTime());
+        setSlots(topThree);
         setStep("slots");
       })
       .catch(() => toast.error("Erreur de chargement des plages"))
