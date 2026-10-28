@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
     // or manual flow; otherwise callers could bypass payment by posting here.
     const { data: type, error: typeError } = await admin
       .from("booking_appointment_types")
-      .select("contractor_id,is_active,is_free,price_amount,requires_deposit,requires_manual_approval,duration_minutes,min_notice_hours,location_mode")
+      .select("contractor_id,is_active,is_free,price_amount,requires_deposit,requires_manual_approval,requires_prequalification,duration_minutes,min_notice_hours,location_mode")
       .eq("id", appointmentTypeId).eq("contractor_id", contractorId).maybeSingle();
     if (typeError) return json({ error: "appointment_type_unavailable" }, 503);
     if (!type || !type.is_active || !type.is_free || Number(type.price_amount) > 0 ||
-        type.requires_deposit || type.requires_manual_approval) {
+        type.requires_deposit || type.requires_manual_approval || type.requires_prequalification) {
       return json({ error: "appointment_type_not_directly_bookable" }, 409);
     }
     const exactDurationMs = Number(type.duration_minutes) * 60_000;
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     try {
       const { data: contractor } = await admin
         .from("contractors")
-        .select("user_id, business_name")
+        .select("user_id, business_name, google_calendar_id")
         .eq("id", contractorId)
         .maybeSingle();
 
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
             location: [clean(body.address_line1), clean(body.city, 120)].filter(Boolean).join(", ") || undefined,
             start,
             end,
-          });
+          }, contractor.google_calendar_id || "primary");
           if (eventId) {
             await admin.from("smart_bookings")
               .update({ google_calendar_event_id: eventId })
