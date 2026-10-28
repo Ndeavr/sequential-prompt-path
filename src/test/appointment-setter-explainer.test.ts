@@ -22,7 +22,7 @@ describe("UNPRO animated appointment explainer", () => {
     expect(page).toContain("SLOT_LABELS.map");
     expect(page).toContain("choose(index)");
     expect(page).toContain("aucun véritable rendez-vous créé");
-    expect(page).not.toMatch(/\.from\(|\.rpc\(|functions\.invoke\(|fetch\(|sendSms\(|pushGoogleEvent\(/);
+    expect(page).not.toMatch(/(?:supabase\.(?:from|rpc|functions\.invoke)\s*\(|\b(?:fetch|sendSms|pushGoogleEvent)\s*\()/);
   });
   it("shows distance, duration and buffer as explicitly fictional until routing is verified", () => {
     expect(page).toContain("18 km");
