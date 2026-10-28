@@ -29,6 +29,8 @@ describe("single Clara appointment-setting path", () => {
     expect(confirmation).toContain("appointment_type_not_directly_bookable");
     expect(confirmation).toContain("requires_deposit");
     expect(confirmation).toContain("requires_manual_approval");
+    expect(confirmation).toContain("requires_prequalification");
+    expect(confirmation).toContain('contractor.google_calendar_id || "primary"');
     expect(confirmation).toContain("booking_page_published");
     expect(confirmation).toContain("invalid_appointment_duration");
     expect(publicBooking).toContain("create-booking-checkout");
