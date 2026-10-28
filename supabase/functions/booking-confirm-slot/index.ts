@@ -126,7 +126,8 @@ Deno.serve(async (req) => {
               .update({ google_calendar_event_id: eventId })
               .eq("id", bookingId);
           }
-          calendarPush = "written";
+          // A missing event ID is never evidence of a successful Google write.
+          calendarPush = eventId ? "written" : "failed";
 
           // A freshly booked slot must block the next availability computation.
           await admin.from("calendar_busy_periods").insert({
@@ -146,6 +147,37 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Persist a contractor-facing in-app notification after the atomic booking.
+    // This is NOT proof of phone push or SMS delivery; no external sends occur.
+    let contractorNotification: "queued" | "skipped" | "failed" = "skipped";
+    try {
+      const { data: owner, error: ownerError } = await admin.from("contractors")
+        .select("user_id").eq("id", contractorId).maybeSingle();
+      if (ownerError) throw ownerError;
+      if (owner?.user_id) {
+        const { data: profile, error: profileError } = await admin.from("profiles")
+          .select("id").eq("user_id", owner.user_id).maybeSingle();
+        if (profileError) throw profileError;
+        if (profile?.id) {
+          const { error: notificationError } = await admin.from("notifications").insert({
+            profile_id: profile.id,
+            type: "appointment_created",
+            title: "Nouveau rendez-vous UNPRO",
+            body: "Un rendez-vous a été confirmé. Consultez votre agenda UNPRO.",
+            channel: "in_app", status: "pending",
+            entity_type: "smart_booking", entity_id: bookingId,
+            metadata: { booking_id: bookingId, calendar_push: calendarPush },
+          });
+          if (notificationError) throw notificationError;
+          contractorNotification = "queued";
+        }
+      }
+    } catch (error) {
+      contractorNotification = "failed";
+      console.error("contractor booking in-app notification failed", {
+        reason: error instanceof Error ? error.name : "unknown",
+      });
+    }
     await admin.from("calendar_conversion_events").insert({
       user_id: null,
       role_context: "contractor",
@@ -155,7 +187,7 @@ Deno.serve(async (req) => {
       metadata: { contractor_id: contractorId, booking_id: bookingId, calendar_push: calendarPush },
     });
 
-    return json({ booking_id: bookingId, status: "confirmed", calendar_push: calendarPush });
+    return json({ booking_id: bookingId, status: "confirmed", calendar_push: calendarPush, contractor_notification: contractorNotification, phone_push: "not_configured" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
     console.error("booking-confirm-slot error", message);
