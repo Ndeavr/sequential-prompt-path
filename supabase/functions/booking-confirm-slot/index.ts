@@ -56,6 +56,37 @@ Deno.serve(async (req) => {
     if (Date.parse(end) <= Date.parse(start)) return json({ error: "invalid_slot_window" }, 400);
     if (Date.parse(start) < Date.now() - 60_000) return json({ error: "slot_in_the_past" }, 400);
 
+    if (!appointmentTypeId) return json({ error: "appointment_type_required" }, 400);
+    // This direct-confirmation path is exclusively for approved free visits.
+    // Paid/deposit/manual-approval bookings must use their existing checkout
+    // or manual flow; otherwise callers could bypass payment by posting here.
+    const { data: type, error: typeError } = await admin
+      .from("booking_appointment_types")
+      .select("contractor_id,is_active,is_free,price_amount,requires_deposit,requires_manual_approval,duration_minutes,min_notice_hours,location_mode")
+      .eq("id", appointmentTypeId).eq("contractor_id", contractorId).maybeSingle();
+    if (typeError) return json({ error: "appointment_type_unavailable" }, 503);
+    if (!type || !type.is_active || !type.is_free || Number(type.price_amount) > 0 ||
+        type.requires_deposit || type.requires_manual_approval) {
+      return json({ error: "appointment_type_not_directly_bookable" }, 409);
+    }
+    const exactDurationMs = Number(type.duration_minutes) * 60_000;
+    if (!(exactDurationMs > 0) || Date.parse(end) - Date.parse(start) !== exactDurationMs) {
+      return json({ error: "invalid_appointment_duration" }, 400);
+    }
+    if (Date.parse(start) - Date.now() < Number(type.min_notice_hours ?? 0) * 3_600_000) {
+      return json({ error: "minimum_notice_not_met" }, 409);
+    }
+    const { data: bookable, error: contractorError } = await admin.from("contractors")
+      .select("id,booking_enabled,is_accepting_appointments,booking_page_published")
+      .eq("id", contractorId).maybeSingle();
+    if (contractorError) return json({ error: "contractor_booking_unavailable" }, 503);
+    if (!bookable?.booking_enabled || !bookable?.is_accepting_appointments || !bookable?.booking_page_published) {
+      return json({ error: "booking_not_available" }, 409);
+    }
+    if (type.location_mode === "client_address" &&
+        (!clean(body.address_line1) || !clean(body.city, 120))) {
+      return json({ error: "visit_address_required" }, 400);
+    }
     const clientName = clean(body.client_name, 120);
     if (!clientName) return json({ error: "client_name_required" }, 400);
 
@@ -97,7 +128,7 @@ Deno.serve(async (req) => {
     try {
       const { data: contractor } = await admin
         .from("contractors")
-        .select("user_id, company_name")
+        .select("user_id, business_name")
         .eq("id", contractorId)
         .maybeSingle();
 
