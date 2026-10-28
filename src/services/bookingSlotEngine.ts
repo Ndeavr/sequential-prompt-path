@@ -413,13 +413,8 @@ function scoreSlot(
   ).length;
   if (sameDayBookings > 0 && sameDayBookings < 4) score += 4 * sameDayBookings;
 
-  // Adjacent slot bonus — reduced travel
-  const adjacentBonus = existing.some((eb) => {
-    const ebEnd = new Date(eb.scheduled_end);
-    const gap = Math.abs(slotStart.getTime() - ebEnd.getTime()) / 60000;
-    return gap > 0 && gap < 90;
-  });
-  if (adjacentBonus) score += 8;
+  // Do not award a driving-time bonus without a verified route ETA.
+  // Temporal proximity to another job does not imply geographic proximity.
 
   // DNA compatibility
   if (input.dnaMatchScore) {
@@ -458,16 +453,7 @@ function computeBadges(
     if (hoursFromNow < 48) badges.push("urgency_optimized");
   }
 
-  // Reduced travel — adjacent to existing booking
-  const slotDay = slotStart.toISOString().split("T")[0];
-  const hasAdjacent = existing.some((eb) => {
-    const ebDay = new Date(eb.scheduled_start).toISOString().split("T")[0];
-    if (ebDay !== slotDay) return false;
-    const ebEnd = new Date(eb.scheduled_end);
-    const gap = Math.abs(slotStart.getTime() - ebEnd.getTime()) / 60000;
-    return gap > 0 && gap < 90;
-  });
-  if (hasAdjacent) badges.push("reduced_travel");
+  // No reduced-travel badge without a routing provider and verified ETA.
 
   if (score >= 78) badges.push("most_convenient");
 
