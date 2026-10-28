@@ -83,6 +83,7 @@ export default function PublicBookingPage() {
   const [slots, setSlots] = useState<SlotCandidate[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<SlotCandidate | null>(null);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [calendarPush, setCalendarPush] = useState<"written" | "skipped" | "failed" | "reconnect_required" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -192,6 +193,31 @@ export default function PublicBookingPage() {
 
     try {
       const isPaid = !selectedType.is_free && selectedType.price_amount > 0;
+      if (!isPaid) {
+        // Atomic server-side confirmation, never a client-side INSERT.
+        const { data: confirmed, error: confirmError } = await supabase.functions.invoke("booking-confirm-slot", {
+          body: { contractor_id: contractor.id, appointment_type_id: selectedType.id,
+            start: selectedSlot.start.toISOString(), end: selectedSlot.end.toISOString(),
+            client_name: clientName.trim(), client_email: clientEmail.trim() || null,
+            client_phone: clientPhone.trim() || null, address_line1: address.trim() || null,
+            city: city.trim() || null, requested_notes: notes.trim() || null, source: "public_page" },
+        });
+        if (confirmError || confirmed?.status !== "confirmed" || !confirmed?.booking_id) {
+          if (confirmed?.error === "slot_unavailable" || (confirmError?.message ?? "").includes("slot_unavailable")) {
+            toast.error("Ce créneau vient d’être pris. Choisissez une autre heure.");
+            setSelectedSlot(null);
+            setStep("date");
+            return;
+          }
+          throw new Error(confirmError?.message ?? confirmed?.error ?? "booking_confirmation_unavailable");
+        }
+        setBookingId(confirmed.booking_id);
+        setCalendarPush(confirmed.calendar_push ?? "skipped");
+        setStep("confirmed");
+        if (confirmed.calendar_push === "written") toast.success("Rendez-vous confirmé et ajouté à l’agenda.");
+        else toast.message("Rendez-vous enregistré sur UNPRO. La synchronisation du calendrier reste à confirmer.");
+        return;
+      }
 
       const { data, error } = await supabase
         .from("smart_bookings")
@@ -579,6 +605,9 @@ export default function PublicBookingPage() {
             {/* Step: Confirmed */}
             {step === "confirmed" && selectedType && selectedSlot && bookingId && (
               <motion.div key="confirmed" {...stepAnimation}>
+                {calendarPush && calendarPush !== "written" && (
+                  <p role="status" className="mb-3 text-sm text-amber-700 dark:text-amber-300">Rendez-vous enregistré sur UNPRO. Ajout à l’agenda externe non confirmé.</p>
+                )}
                 <BookingConfirmationCard
                   companyName={contractor.business_name}
                   appointmentTitle={selectedType.title}
