@@ -56,7 +56,9 @@ export async function runAgentEvidenceBatch(
   }
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
-  // UTC midnight starts earlier than Toronto midnight year-round: a conservative\n  // overcount, never a quota undercount during the DST transition.\n  const startUTC = `${today}T00:00:00.000Z`;
+  // UTC midnight precedes Toronto midnight: a conservative overcount,
+  // including on DST transitions; it cannot exceed the daily capture cap.
+  const startUTC = `${today}T00:00:00.000Z`;
   // This read-only quota is a SECOND line of defense. The controlled worker
   // must be invoked sequentially; do not run concurrent commercial batches.
   const { count, error: quotaErr } = await sb.from("casl_consent_evidence")
