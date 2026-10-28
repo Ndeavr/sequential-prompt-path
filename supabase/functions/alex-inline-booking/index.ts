@@ -35,14 +35,14 @@ serve(async (req) => {
         const { data: contractor, error } = await sb.from("contractors")
           .select("slug,booking_enabled,booking_page_published,is_accepting_appointments")
           .eq("id", id).maybeSingle();
-        if (error || !contractor) return respond({ slots: [], source: "none", message: "Aucune disponibilité n’est publiée pour cet entrepreneur." }, 200);
+        if (error || !contractor) return respond({ slots: [], source: "none", message: "Aucune disponibilité n'est publiée pour cet entrepreneur." }, 200);
         const configured = contractor.booking_enabled && contractor.booking_page_published && contractor.is_accepting_appointments && contractor.slug;
         return respond({
           slots: [], source: "none",
           booking_path: configured ? `/book/${encodeURIComponent(contractor.slug)}` : null,
           message: configured
             ? "Choisissez votre heure dans l’agenda UNPRO; seules les plages revalidées peuvent être confirmées."
-            : "Aucune disponibilité n’est publiée. Clara peut transmettre votre demande de rappel.",
+            : "Aucune disponibilité n'est publiée. Clara peut transmettre votre demande de rappel.",
         });
       }
       case "hold_slot":
