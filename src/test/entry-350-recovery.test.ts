@@ -42,7 +42,7 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
   const shared = await realSharedImports(undefined, { entry350SessionRevoked: async () => false });
   const params = ["supabase", "session", "event", "corsHeaders", ...Object.keys(shared)];
   const runBranch = await compileWebhookBranch('if (session.metadata?.offer === "entry_activation_350")', "// ── OFFRE DE REPLI", params);
-  const session = { id: "cs_fixture", mode: "payment", amount_subtotal: 35000, amount_total: 40241, currency: "cad", payment_status: "paid", metadata: { offer: "entry_activation_350", contractor_id: "fixture-contractor", quote_id: "fixture-quote" } };
+  const session = { id: "cs_fixture", mode: "payment", amount_subtotal: 35000, amount_total: 40241, currency: "cad", payment_status: "paid", payment_intent: "pi_fixture", metadata: { offer: "entry_activation_350", contractor_id: "fixture-contractor", quote_id: "fixture-quote" } };
   return { state, session, run: () => runBranch(db, session, { id: "evt_fixture", livemode: options.live !== false }, {}, ...Object.values(shared)) };
 }
 
@@ -71,6 +71,27 @@ describe("350 CAD — interrupted real webhook branch", () => {
     await f.run();
     expect(f.state.receipts).toHaveLength(1);
     expect(f.state.successEvents).toBe(0);
+  });
+  it("rejects already-recorded receipts from a different business, intent, mode or source", async () => {
+    const base = {
+      contractor_id: "fixture-contractor",
+      source: "stripe_webhook",
+      metadata: { stripe_session_id: "cs_fixture", stripe_payment_intent: "pi_fixture", livemode: true, amount_subtotal_cents: 35000 },
+    };
+    const variations = [
+      { contractor_id: "different-contractor" },
+      { metadata: { ...base.metadata, stripe_payment_intent: "pi_other" } },
+      { metadata: { ...base.metadata, livemode: false } },
+      { metadata: { ...base.metadata, amount_subtotal_cents: 100 } },
+      { source: "manual" },
+    ];
+    for (const invalid of variations) {
+      const f = await fixture();
+      f.state.receipts.push({ ...base, ...invalid });
+      await expect(f.run()).rejects.toThrow("entry_activation_350 replay receipt mismatch");
+      expect(f.state.activated).toBe(false);
+      expect(f.state.roles).toBe(0);
+    }
   });
   it("fails closed on ownership/ledger lookup failure before any activation", async () => {
     const f = await fixture({ lookupError: true });

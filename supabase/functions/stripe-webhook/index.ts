@@ -1,4 +1,4 @@
-import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
+import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches, entryActivationReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
@@ -420,6 +420,8 @@ Deno.serve(async (req) => {
         if (session.metadata?.offer === "entry_activation_350") {
           const entryContractorId = session.metadata?.contractor_id ?? null;
           const paid = session.payment_status === "paid";
+          const entryPaymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent : session.payment_intent?.id ?? null;
           // Montant exact exigé : 350 $ CAD hors taxes. Tout écart = aucune activation.
           const amountOk = session.amount_subtotal === 35000 && (session.currency ?? "").toLowerCase() === "cad";
           if (entryContractorId && paid && !amountOk) {
@@ -450,6 +452,25 @@ Deno.serve(async (req) => {
               .maybeSingle();
             if (alreadyError || ownerError || otherError || !ownerRow?.user_id) {
               throw new Error("entry_activation_350 ownership or ledger lookup failed");
+            }
+            const expectedReceipt = {
+              contractorId: entryContractorId,
+              sessionId: session.id,
+              paymentIntentId: entryPaymentIntentId,
+              livemode: event.livemode === true,
+            };
+            if (already) {
+              // The existence check may return only an ID. Read the complete
+              // committed receipt before restoring a partially failed delivery.
+              const { data: prior, error: priorError } = await supabase
+                .from("contractor_activation_ledger")
+                .select("contractor_id, source, metadata")
+                .eq("action", "entry_activation_350_paid")
+                .eq("metadata->>stripe_session_id", session.id)
+                .maybeSingle();
+              if (priorError || !entryActivationReplayReceiptMatches(prior, expectedReceipt)) {
+                throw new Error("entry_activation_350 replay receipt mismatch");
+              }
             }
             // PROMO usage unique global : une autre session déjà payée avec ce code
             // (tout compte) = aucune activation, alerte remboursement.
@@ -502,7 +523,7 @@ Deno.serve(async (req) => {
                 metadata: {
                   stripe_session_id: session.id,
                   stripe_event_id: event.id,
-                  stripe_payment_intent: session.payment_intent ? String(session.payment_intent) : null,
+                  stripe_payment_intent: entryPaymentIntentId,
                   amount_cents: session.amount_total ?? 35000,
                   amount_subtotal_cents: session.amount_subtotal ?? null,
                   amount_discount_cents: session.total_details?.amount_discount ?? 0,
@@ -549,6 +570,19 @@ Deno.serve(async (req) => {
               if (ledgerErr && !concurrentDup) {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
+              }
+              if (concurrentDup) {
+                // An index collision proves only that a row exists, not its
+                // entitlement owner. Never provision a different business.
+                const { data: prior, error: priorError } = await supabase
+                  .from("contractor_activation_ledger")
+                  .select("contractor_id, source, metadata")
+                  .eq("action", "entry_activation_350_paid")
+                  .eq("metadata->>stripe_session_id", session.id)
+                  .maybeSingle();
+                if (priorError || !entryActivationReplayReceiptMatches(prior, expectedReceipt)) {
+                  throw new Error("entry_activation_350 concurrent replay receipt mismatch");
+                }
               }
               // A ledger receipt is not proof that every entitlement write succeeded.
               // Replay the same-session upserts after an interrupted delivery;

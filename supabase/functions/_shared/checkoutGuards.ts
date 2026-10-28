@@ -251,6 +251,27 @@ export function entryPackReplayReceiptMatches(
     md?.stripe_payment_intent === expected.paymentIntentId;
 }
 
+/**
+ * The personalized 350 entry cannot repair a partially processed payment on
+ * the strength of a matching session ID alone. Protect the original business,
+ * mode and Stripe PaymentIntent (including concurrent unique-index replays).
+ * action='entry_activation_350_paid' is checked by the caller's ledger query.
+ */
+export function entryActivationReplayReceiptMatches(
+  prior: { contractor_id?: string | null; source?: string | null; metadata?: Record<string, unknown> | null } | null,
+  expected: { contractorId: string; sessionId: string; paymentIntentId: string | null; livemode: boolean },
+): boolean {
+  const md = prior?.metadata;
+  return !!prior &&
+    !!expected.paymentIntentId &&
+    prior.contractor_id === expected.contractorId &&
+    prior.source === "stripe_webhook" &&
+    md?.stripe_session_id === expected.sessionId &&
+    md?.stripe_payment_intent === expected.paymentIntentId &&
+    md?.livemode === expected.livemode &&
+    md?.amount_subtotal_cents === 35000;
+}
+
 /** Classify an entry-350 ledger insert error. The promo index must win over the generic
  * duplicate-key match: a second session redeeming PROMO is NEVER an idempotent replay. */
 export function entry350LedgerConflict(message: string | null | undefined): "promo_already_redeemed" | "same_session" | null {
