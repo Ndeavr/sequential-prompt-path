@@ -6,11 +6,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  CheckCircle2, Home, Sparkles, Crown, ArrowRight, Shield,
-  FileSearch, Eye, FolderOpen, AlertTriangle, ChevronDown,
+  CheckCircle2, Home, Sparkles, Crown, ArrowRight, ChevronDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useState } from "react";
 import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
 import { useHomeownerPlan, normalizeHomeownerPlanCode } from "@/features/planSystem/useHomeownerPlan";
 import {
@@ -50,8 +49,8 @@ const PLANS: Plan[] = [
     code: "homeowners_discovery",
     name: "Gratuit",
     price: 0,
-    period: "/ gratuit",
-    audience: "Essayez UNPRO chaque mois",
+    period: "",
+    audience: "Pour commencer",
     description: "Tout le nécessaire pour une première décision, sans frais.",
     features: [
       { text: "1 propriété" },
@@ -65,14 +64,14 @@ const PLANS: Plan[] = [
     ctaLink: "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
     microcopy: "Le quota se renouvelle chaque mois. Aucune carte requise.",
     icon: Home,
-    badge: { label: "0 $", type: "neutral" },
+    badge: { label: "Sans frais", type: "neutral" },
   },
   {
     code: "homeowners_plus",
     name: "Plus",
     price: 49,
     period: "/ an",
-    audience: "Ma maison, sans limites",
+    audience: "Pour les projets et décisions du quotidien",
     description: "Analysez et comparez autant de soumissions que nécessaire.",
     features: [
       { text: "1 propriété" },
@@ -86,7 +85,7 @@ const PLANS: Plan[] = [
     ctaLink: "/auth?plan=plus",
     microcopy: "Le meilleur équilibre pour une maison.",
     icon: Sparkles,
-    badge: { label: "Le plus populaire", type: "popular" },
+    badge: { label: "Pour aller plus loin", type: "popular" },
     popular: true,
   },
   {
@@ -94,7 +93,7 @@ const PLANS: Plan[] = [
     name: "Gold",
     price: 149,
     period: "/ an",
-    audience: "Toutes mes propriétés, sans limites",
+    audience: "Pour plusieurs propriétés",
     description: "Pour gérer plusieurs propriétés au même endroit.",
     features: [
       { text: "Jusqu'à 3 propriétés", highlight: true },
@@ -152,13 +151,6 @@ const FAQ = [
 ];
 
 
-/* ─── Why Pay Blocks ─── */
-const WHY_PAY = [
-  { icon: AlertTriangle, title: "Évitez les erreurs coûteuses", text: "Repérez les écarts, les oublis et les zones floues avant de signer." },
-  { icon: FolderOpen, title: "Gardez le contrôle", text: "Centralisez documents, historique et décisions au même endroit." },
-  { icon: Eye, title: "Avancez avec plus de confiance", text: "Choisissez avec plus de clarté, moins de bruit, moins d'hésitation." },
-];
-
 /* ─── Badge Component ─── */
 function PlanBadge({ label, type }: { label: string; type: "popular" | "premium" | "neutral" }) {
   const styles = {
@@ -185,6 +177,8 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
   const Icon = plan.icon;
   const isPopular = plan.popular;
   const isPremium = plan.premium;
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const displayedFeatures = showAllFeatures ? plan.features : plan.features.slice(0, 3);
 
   return (
     <motion.div
@@ -196,7 +190,7 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
     >
       <div
         className={`
-          relative h-full flex flex-col rounded-2xl p-6 md:p-7 transition-all duration-300
+          relative h-full flex flex-col rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-300
           ${isPopular
             ? "border-2 border-primary/30 bg-card/80 shadow-glow md:scale-[1.03] md:-my-2 z-10"
             : isPremium
@@ -219,7 +213,7 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
 
         {/* Badge */}
         {plan.badge && (
-          <div className="mb-4">
+          <div className="mb-2">
             <PlanBadge label={plan.badge.label} type={plan.badge.type} />
           </div>
         )}
@@ -235,7 +229,7 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
         </div>
 
         {/* Audience */}
-        <p className="text-xs text-muted-foreground mb-4">{plan.audience}</p>
+        <p className="text-xs text-muted-foreground mb-2">{plan.audience}</p>
 
         {/* Price */}
         <div className="mb-1">
@@ -244,11 +238,11 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{plan.description}</p>
+        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
 
         {/* Features */}
-        <ul className="space-y-2.5 mb-6 flex-1">
-          {plan.features.map((f) => (
+        <ul className="space-y-2 mb-2 flex-1">
+          {displayedFeatures.map((f) => (
             <li key={f.text} className="flex items-start gap-2.5">
               <CheckCircle2 className={`h-4 w-4 shrink-0 mt-0.5 ${
                 f.highlight ? "text-primary" : "text-success/70"
@@ -261,6 +255,17 @@ function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCur
             </li>
           ))}
         </ul>
+        {plan.features.length > 3 && (
+          <button
+            type="button"
+            onClick={() => setShowAllFeatures((value) => !value)}
+            aria-expanded={showAllFeatures}
+            className="inline-flex items-center gap-1.5 self-start mb-3 text-xs font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            {showAllFeatures ? "Voir moins" : "Toutes les inclusions"}
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} />
+          </button>
+        )}
 
         {/* CTA */}
         <div className="mt-auto space-y-2">
@@ -351,7 +356,7 @@ export default function HomeownerPlans() {
   }));
 
   return (
-    <section className="px-5 py-16 md:py-24" id="homeowner-plans">
+    <section className="px-5 pt-3 pb-12 md:pt-6 md:pb-16" id="homeowner-plans">
 
       {/* Checkout Drawer */}
       <HomeownerCheckoutDrawer
@@ -363,7 +368,7 @@ export default function HomeownerPlans() {
       />
 
       {/* ─── PLAN CARDS ─── */}
-      <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5 md:gap-4 mb-16 md:items-stretch">
+      <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-3 md:gap-4 mb-5 md:items-stretch">
         {plansWithCheckout.map((plan, i) => (
           <CardPlan
             key={plan.code}
@@ -374,146 +379,49 @@ export default function HomeownerPlans() {
         ))}
       </div>
 
-      {/* ─── REASSURANCE BANNER ─── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="max-w-3xl mx-auto mb-16"
-      >
-        <div className="rounded-2xl border border-warning/15 bg-warning/[0.04] p-5 md:p-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Shield className="h-5 w-5 text-warning" />
-            <span className="text-sm font-bold text-foreground">Protection contre les erreurs</span>
+      <div className="max-w-5xl mx-auto">
+        <p className="text-xs text-muted-foreground mb-5">
+          * Illimité selon un usage normal de propriétaire, avec protection contre les abus.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => setShowComparison((value) => !value)}
+          aria-expanded={showComparison}
+          aria-controls="homeowner-comparison"
+          className="flex items-center justify-between gap-3 w-full rounded-xl border border-border/40 bg-card/40 px-4 py-3.5 text-left text-sm font-semibold text-foreground hover:border-primary/40 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          Comparer toutes les fonctionnalités
+          <ChevronDown className={`h-4 w-4 shrink-0 text-primary transition-transform ${showComparison ? "rotate-180" : ""}`} />
+        </button>
+        {showComparison && (
+          <div id="homeowner-comparison" className="mt-3 rounded-xl border border-border/30 bg-card/30 p-3 sm:p-5">
+            <ComparisonMatrix />
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
-            Une mauvaise décision coûte souvent beaucoup plus cher qu'un abonnement. UNPRO vous aide à mieux comprendre avant d'avancer.
-          </p>
-        </div>
-      </motion.div>
+        )}
 
-      {/* ─── WHY PAY ─── */}
-      <div className="max-w-4xl mx-auto mb-16">
-        <motion.h3
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8"
-        >
-          Pourquoi passer à un plan propriétaire ?
-        </motion.h3>
-        <div className="grid md:grid-cols-3 gap-5">
-          {WHY_PAY.map(({ icon: WIcon, title, text }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-2xl border border-border/30 bg-card/40 p-5 text-center"
-              style={{ backdropFilter: "blur(10px)" }}
-            >
-              <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <WIcon className="h-5 w-5 text-primary" />
-              </div>
-              <h4 className="font-bold text-foreground text-sm mb-1.5">{title}</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
-            </motion.div>
-          ))}
+        <div className="max-w-2xl mx-auto mt-10">
+          <h2 className="text-lg md:text-xl font-bold text-foreground mb-4 text-center">
+            Questions fréquentes
+          </h2>
+          <Accordion type="single" collapsible className="space-y-2">
+            {FAQ.map((item, i) => (
+              <AccordionItem
+                key={i}
+                value={`faq-${i}`}
+                className="rounded-xl border border-border/30 bg-card/30 px-4 data-[state=open]:bg-card/50 transition-colors"
+              >
+                <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-3">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-3">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </div>
-
-      {/* ─── VALUE STACK ─── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="max-w-3xl mx-auto text-center mb-16"
-      >
-        <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2">
-          Gratuit rassure. Plus aide à décider. Gold aide à piloter plusieurs propriétés.
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Chaque plan augmente votre niveau de clarté, de structure et de contrôle.
-        </p>
-      </motion.div>
-
-      {/* ─── COMPARISON MATRIX ─── */}
-      <div id="comparison-matrix" className="max-w-4xl mx-auto mb-16">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-6"
-        >
-          <h3 className="text-2xl md:text-3xl font-bold text-foreground">Comparez les plans en un coup d'œil</h3>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="rounded-2xl border border-border/30 bg-card/30 p-4 md:p-6"
-          style={{ backdropFilter: "blur(10px)" }}
-        >
-          <ComparisonMatrix />
-        </motion.div>
-      </div>
-
-      {/* ─── FAQ ─── */}
-      <div className="max-w-2xl mx-auto mb-16">
-        <motion.h3
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-2xl md:text-3xl font-bold text-foreground text-center mb-6"
-        >
-          Questions fréquentes
-        </motion.h3>
-        <Accordion type="single" collapsible className="space-y-2">
-          {FAQ.map((item, i) => (
-            <AccordionItem
-              key={i}
-              value={`faq-${i}`}
-              className="rounded-xl border border-border/30 bg-card/30 px-5 data-[state=open]:bg-card/50 transition-colors"
-            >
-              <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-4">
-                {item.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
-                {item.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-
-      {/* ─── FINAL CTA ─── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="max-w-2xl mx-auto text-center"
-      >
-        <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          Commencez avec les bases. Passez à un niveau supérieur quand vous êtes prêt.
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Créez votre espace propriétaire UNPRO et avancez avec plus de clarté dès aujourd'hui.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button asChild size="lg" className="rounded-xl shadow-glow px-8">
-            <Link to="/signup">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="rounded-xl text-muted-foreground"
-            onClick={() => document.getElementById("comparison-matrix")?.scrollIntoView({ behavior: "smooth" })}
-          >
-            Comparer les plans
-          </Button>
-        </div>
-      </motion.div>
     </section>
   );
 }

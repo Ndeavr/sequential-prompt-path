@@ -82,8 +82,8 @@ export default function HomeownerCheckoutDrawer({
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {planCode === "plus"
-                ? "Jusqu'à 3 adresses, analyses illimitées, comparaison de soumissions"
-                : "Jusqu'à 5 adresses, accompagnement Clara avancé, vue consolidée premium"}
+                ? "Pour une propriété : analyses de soumissions illimitées et Passeport Maison enrichi"
+                : "Pour plusieurs propriétés : analyses illimitées et un Passeport Maison par propriété"}
             </p>
           </div>
 
