@@ -138,7 +138,9 @@ Deno.serve(async (req) => {
       // Aucun Lookup fournisseur n'est appelé à l'import : le statut reste
       // « unverified » jusqu'à la vérification du numéro par le worker.
       phone_validation_status: "unverified",
-      sms_eligible: !!phoneE164,
+      // A valid E.164 format does not prove that a number accepts SMS.
+      // The phone worker must validate the channel before enabling outreach.
+      sms_eligible: false,
       email: email?.toLowerCase() ?? null,
       city,
       // Fail-closed : une fiche sans provenance publique documentée n'est
@@ -206,25 +208,37 @@ Deno.serve(async (req) => {
       metadata: { import_batch: batchId },
     });
 
-    let rowStatus = write.data.verification_status === "verified" ? "verified" : "imported";
+    let rowStatus = write.data.verification_status === "verified" ? "needs_review" : "imported";
     if (write.data.verification_status === "verified") {
       await supabase.from("acquisition_queue").upsert({
         prospect_id: write.data.id,
-        state: phoneE164 ? "ready_sms" : "ready_email",
-        channel: phoneE164 ? "sms" : "email",
+        // Public-source verification does not validate the carrier or CASL.
+        // Senders must not see a ready_sms entry until validation is complete.
+        state: "needs_enrichment",
+        channel: null,
         next_action_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: "prospect_id" });
-      queued += 1;
-      rowStatus = "queued_outreach";
-      await supabase.from("acquisition_pipeline_events").insert({ prospect_id: write.data.id, business_name: write.data.business_name, city: write.data.city, category: write.data.category, source: "manual", stage: phoneE164 ? "ready_sms" : "ready_email", metadata: { import_batch: batchId } });
+      // Deliberately not counted as an outbound-ready queue entry.
+      rowStatus = "needs_review";
+      await supabase.from("acquisition_pipeline_events").insert({
+        prospect_id: write.data.id,
+        business_name: write.data.business_name,
+        city: write.data.city,
+        category: write.data.category,
+        source: "manual",
+        stage: "verified",
+        metadata: { import_batch: batchId, channel_validation_pending: true },
+      });
     }
 
     await supabase.from("acquisition_manual_import_rows").insert({ ...rowBase, prospect_id: write.data.id, status: rowStatus, normalized: prospectPayload });
     results.push({ row: i + 1, status: rowStatus, prospect_id: write.data.id });
   }
 
-  let sendResult: any = null;
+  let sendResult: any = auto_send
+    ? { ok: true, sent: 0, blocked: true, reason: "channel_validation_required_before_outreach" }
+    : null;
   if (auto_send && queued > 0) {
     const res = await fetch(`${url}/functions/v1/send-verified-batch`, {
       method: "POST",
