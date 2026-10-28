@@ -9,7 +9,8 @@ import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { useCalendarConnections, useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
 import WidgetCalendarAvailabilityPreview from "@/components/calendar/WidgetCalendarAvailabilityPreview";
-import { supabase } from "@/integrations/supabase/client";
+import CardGoogleCalendarSelection from "@/components/calendar/CardGoogleCalendarSelection";
+
 
 export default function PageCalendarConnectionSuccess() {
   const [params] = useSearchParams();
@@ -28,16 +29,8 @@ export default function PageCalendarConnectionSuccess() {
     refresh();
     track({ surface, role_context: role, event_type: "contractor_calendar_connected", provider });
 
-    // Import the real busy periods immediately so availability is accurate
-    // from the very first booking attempt. A failure here never blocks.
-    void supabase.functions
-      .invoke("calendar-freebusy-sync", { body: { days: 45 } })
-      .catch(() => undefined);
-
-    const t = setTimeout(() => {
-      navigate(returnTo || "/dashboard");
-    }, 3000);
-    return () => clearTimeout(t);
+    // No automatic sync, redirect or inferred calendar choice: the contractor
+    // must explicitly choose which Google calendar UNPRO may use first.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -58,6 +51,7 @@ export default function PageCalendarConnectionSuccess() {
             </p>
           </div>
 
+          {role === "contractor" && <CardGoogleCalendarSelection />}
           <WidgetCalendarAvailabilityPreview role={role} />
 
           <div className="flex gap-2">
