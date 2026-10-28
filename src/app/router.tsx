@@ -208,6 +208,7 @@ const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 const PageManifesto = lazyWithRetry(() => import("@/pages/PageManifesteUnpro"));
 const PagePourquoiPasTroisSoumissions = lazyWithRetry(() => import("@/pages/PagePourquoiPasTroisSoumissions"));
 const PageIntelligenceHub = lazyWithRetry(() => import("@/pages/PageIntelligenceHub"));
+const PageIntelligentBooker = lazyWithRetry(() => import("@/pages/PageIntelligentBooker"));
 const PageUnproFAQ25 = lazyWithRetry(() => import("@/pages/PageUnproFAQ25"));
 const PageAlexPromptRulesAdmin = lazyWithRetry(() => import("@/pages/PageAlexPromptRulesAdmin"));
 const PageAlexConversationDebugAdmin = lazyWithRetry(() => import("@/pages/PageAlexConversationDebugAdmin"));
@@ -1016,6 +1017,8 @@ export const AppRouter = () => (
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/pourquoi-pas-trois-soumissions" element={<Suspense fallback={<LazyFallback />}><PagePourquoiPasTroisSoumissions /></Suspense>} />
         <Route path="/intelligence" element={<Suspense fallback={<LazyFallback />}><PageIntelligenceHub /></Suspense>} />
+        <Route path="/intelligent-booker" element={<Suspense fallback={<LazyFallback />}><PageIntelligentBooker /></Suspense>} />
+        <Route path="/le-booker-intelligent" element={<Navigate to="/intelligent-booker" replace />} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/calculateur-taxes-quebec" element={<Suspense fallback={<LazyFallback />}><PageCalculateurTaxesQuebec /></Suspense>} />
         <Route path="/isroyal/calculateur-taxes" element={<Suspense fallback={<LazyFallback />}><PageIsRoyalCalculateurTaxes /></Suspense>} />
