@@ -30,6 +30,7 @@ import {
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
 import { captureFirstPartyPhone, recheckCasl } from "./caslFirstParty.ts";
+import { runAgentEvidenceBatch } from "./agentEvidenceBatch.ts";
 import { pinnedPublicFetch, PINNED_TLS_TRANSPORT_VERSION } from "./pinnedPublicFetch.ts";
 import { z } from "https://esm.sh/zod@3.25.76";
 
@@ -62,6 +63,29 @@ Deno.serve(async (req) => {
     const supabase = createClient(url, svc);
 
     const body = await req.json().catch(() => ({}));
+    // Agent autonome : ne signe aucune preuve et ne contacte aucun prospect.
+    // Service-only: cron de l'orchestrateur existant, jamais navigateur public.
+    if (body.action === "agent_capture_firstparty_casl") {
+      if (caller.kind !== "service") return jr({ ok: false, code: "service_role_required", sent: 0 }, 403, rid);
+      const schema = z.object({
+        action: z.literal("agent_capture_firstparty_casl"),
+        dry_run: z.boolean().default(true),
+        limit: z.number().int().min(1).max(2).default(1),
+        source: z.literal("autonomy-loop").optional(),
+      }).strict();
+      const parsed = schema.safeParse(body);
+      if (!parsed.success) return jr({ ok: false, code: "invalid_agent_batch_request", sent: 0 }, 400, rid);
+      try {
+        const result = await runAgentEvidenceBatch(supabase, {
+          fetch: pinnedPublicFetch,
+          resolve: async (host) => { try { return await Deno.resolveDns(host, "A"); } catch { return []; } },
+        }, parsed.data);
+        return jr(result, 200, rid);
+      } catch (e) {
+        const code = e instanceof Error && /^[a-z_]{3,70}$/.test(e.message) ? e.message : "agent_capture_unavailable";
+        return jr({ ok: false, code, sent: 0, legal_consent_established: false }, 503, rid);
+      }
+    }
     if (body.action === "capture_phone_casl") {
       if (caller.kind !== "admin") return jr({ ok: false, code: "admin_session_required" }, 403, rid);
       const parsed = z.object({ action: z.literal("capture_phone_casl"), contractor_prospect_id: z.string().uuid(), dry_run: z.boolean().default(true) }).strict().safeParse(body);
