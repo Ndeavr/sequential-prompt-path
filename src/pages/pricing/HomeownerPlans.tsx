@@ -93,7 +93,7 @@ function PlanCard({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <h2 className="text-base font-bold text-foreground">{plan.name}</h2>
@@ -107,15 +107,6 @@ function PlanCard({
       </div>
 
       <p className="mt-3 text-sm leading-snug text-foreground/80">{plan.summary}</p>
-
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {plan.features.slice(0, 2).map((feature) => (
-          <span key={feature} className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-            {feature}
-          </span>
-        ))}
-      </div>
 
       <div className="mt-auto pt-4">
         {isCurrent && plan.price > 0 ? (
