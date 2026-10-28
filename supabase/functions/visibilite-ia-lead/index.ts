@@ -42,6 +42,20 @@ function json(body: unknown, status = 200) {
   });
 }
 
+/** Escape user-supplied fields before embedding them in internal email HTML. */
+function escapeHtmlText(value: unknown): string {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return char;
+    }
+  });
+}
+
 /** Normalise un numéro canadien en E.164 (+1XXXXXXXXXX). */
 function toE164(raw: string): string | null {
   const d = (raw || "").replace(/\D/g, "");
@@ -179,14 +193,14 @@ Deno.serve(async (req) => {
           html: `
             <h2>Nouvelle demande d'analyse de visibilité IA</h2>
             <ul>
-              <li><strong>Entreprise :</strong> ${data.company_name}</li>
-              <li><strong>Contact :</strong> ${data.contact_name}</li>
-              <li><strong>Téléphone :</strong> ${phone}</li>
-              <li><strong>Site Web :</strong> ${website ?? "—"}</li>
-              <li><strong>Service principal :</strong> ${data.primary_service}</li>
-              <li><strong>Page source :</strong> ${payload.landing_page}</li>
-              <li><strong>UTM :</strong> ${payload.utm_source ?? "—"} / ${payload.utm_medium ?? "—"} / ${payload.utm_campaign ?? "—"}</li>
-              <li><strong>Lead ID :</strong> ${inserted.id}</li>
+              <li><strong>Entreprise :</strong> ${escapeHtmlText(data.company_name)}</li>
+              <li><strong>Contact :</strong> ${escapeHtmlText(data.contact_name)}</li>
+              <li><strong>Téléphone :</strong> ${escapeHtmlText(phone)}</li>
+              <li><strong>Site Web :</strong> ${escapeHtmlText(website ?? "—")}</li>
+              <li><strong>Service principal :</strong> ${escapeHtmlText(data.primary_service)}</li>
+              <li><strong>Page source :</strong> ${escapeHtmlText(payload.landing_page)}</li>
+              <li><strong>UTM :</strong> ${escapeHtmlText(payload.utm_source ?? "—")} / ${escapeHtmlText(payload.utm_medium ?? "—")} / ${escapeHtmlText(payload.utm_campaign ?? "—")}</li>
+              <li><strong>Lead ID :</strong> ${escapeHtmlText(inserted.id)}</li>
             </ul>`,
         }),
       });
