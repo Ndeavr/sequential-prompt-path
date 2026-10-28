@@ -13,7 +13,18 @@ function isRegistrationRequest(text: string): boolean {
   return ACTION.test(normal) && OBJECT.test(normal) && !NEGATIVE.test(normal);
 }
 
-/** Only the most recent exchange matters; switching topic makes old CTAs disappear. */
+/** An explicit request or Clara's latest offer enables the action. A new unrelated
+ * user turn hides a previous offer immediately, without waiting for Clara's reply.
+ */
 export function shouldOfferHomeownerRegistration(turns: readonly RegistrationTurn[]): boolean {
-  return turns.slice(-2).some((turn) => isRegistrationRequest(turn.text));
+  const last = turns[turns.length - 1];
+  if (!last) return false;
+  const previous = turns[turns.length - 2];
+  if (last.role === "user") {
+    if (isRegistrationRequest(last.text)) return true;
+    const affirmative = /^(?:oui|yes|ok|d'accord|d’accord|volontiers|allons-y)[.!\s]*$/i.test(last.text.trim());
+    return affirmative && previous?.role === "assistant" && isRegistrationRequest(previous.text);
+  }
+  return isRegistrationRequest(last.text) ||
+    (previous?.role === "user" && isRegistrationRequest(previous.text));
 }
