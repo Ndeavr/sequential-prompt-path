@@ -52,6 +52,17 @@ describe('isolated SQL/session safety',()=>{
     expect(receipts[0].checkout_status).toBe('open');
     expect(receipts[0].payment_status).toBe('unpaid');
   });
+  it('signed webhook returns 503 before entitlements when canonical audit insert fails, then safely retries',async()=>{
+    const s=await create('personal');
+    qa.failNext('stripe_webhook_events');
+    const denied=await qa.deliver(s);
+    expect(denied.status).toBe(503);
+    expect(denied.body.error).toBe('webhook_audit_unavailable');
+    expect((await qa.db.query('select * from contractor_activation_ledger')).rows).toHaveLength(0);
+    expect(await plan()).toBeNull();
+    expect((await qa.deliver(s)).status).toBe(200);
+    expect(await plan()).toBe('presence');
+  });
   it('HMAC missing/bad and TEST signature on fake LIVE rejected before receipt writes',async()=>{
     const s=await create('personal');
     for(const signature of ['missing','bad','test'] as const)expect((await qa.deliver(s,{signature})).status).toBe(400);
