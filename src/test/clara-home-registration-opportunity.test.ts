@@ -21,6 +21,8 @@ describe("Clara homepage — contextual property/account actions", () => {
     expect(shouldOfferHomeownerRegistration([user("I want to register my property")])).toBe(true);
     expect(shouldOfferHomeownerRegistration([user("I want to create my account")])).toBe(true);
     expect(shouldOfferHomeownerRegistration([user("Je ne veux pas créer mon compte maintenant")])).toBe(false);
+    expect(shouldOfferHomeownerRegistration([{ ...user("Je veux créer mon compte"), audience: "contractor" }])).toBe(false);
+    expect(shouldOfferHomeownerRegistration([{ ...user("Je veux créer mon compte"), audience: "contractor" }, clara("Quel projet avez-vous ?")])).toBe(false);
   });
 
   it("responds to an actual Clara invitation, then clears stale prompts when topic changes", () => {
