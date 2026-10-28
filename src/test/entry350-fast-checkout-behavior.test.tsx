@@ -54,6 +54,12 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     expect(mock.telemetry).toHaveBeenCalledTimes(1);
   });
 
+  it("does not let rejected optional analytics block a verified Checkout URL", async () => {
+    mock.telemetry.mockRejectedValue(new Error("synthetic analytics outage"));
+    start();
+    await waitFor(() => expect(mock.redirect).toHaveBeenCalledExactlyOnceWith("https://checkout.stripe.com/c/pay/cs_test_synthetic"));
+  });
+
   it("does not redirect or claim payment if LIVE entry checkout is locked", async () => {
     mock.invoke.mockResolvedValue({ data: { code: "entry350_live_not_released" }, error: null });
     start();
