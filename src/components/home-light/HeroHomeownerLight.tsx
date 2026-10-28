@@ -44,8 +44,6 @@ export default function HeroHomeownerLight() {
               </span>
               <span className="home-hero-badge-copy">
                 <span className="home-hero-badge-kicker">
-                  <span>UNPRO</span>
-                  <i aria-hidden="true" />
                   {copy.eyebrow}
                 </span>
                 <h1 aria-label={copy.title} className="home-hero-title marketing-display text-foreground">
