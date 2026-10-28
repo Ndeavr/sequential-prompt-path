@@ -37,7 +37,7 @@ describe("The Intelligent Booker — animated product explainer", () => {
     view();
     expect(screen.getByRole("heading", { level:1, name:/the intelligent booker/i })).toBeTruthy();
     expect(screen.getByText(/Démonstration du processus seulement/)).toBeTruthy();
-    expect(screen.getByText(/aucune réservation effectuée dans cette démo/)).toBeTruthy();
+    expect(screen.getByText(/aucun entrepreneur, créneau, vérification de licence ou rendez-vous réel/)).toBeTruthy();
     expect(screen.getByRole("link", { name:/Discuter de mon projet/ }).getAttribute("href")).toBe("/conversation");
     expect(screen.getByRole("link", { name:/Je suis professionnel/ }).getAttribute("href")).toBe("/entrepreneurs/audit-ia");
   });
@@ -46,9 +46,9 @@ describe("The Intelligent Booker — animated product explainer", () => {
     view();
     fireEvent.click(screen.getByRole("button", { name:"Étape suivante" }));
     expect(screen.getByText(/Chaque détail devient utile/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name:"3 · Jumeler" }).closest("button")!);
+    fireEvent.click(screen.getAllByRole("button", { name:"3 · Jumeler" })[0]);
     expect(screen.getByText(/La compatibilité avant la proximité/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name:"4 · Réserver" }).closest("button")!);
+    fireEvent.click(screen.getAllByRole("button", { name:"4 · Réserver" })[0]);
     expect(screen.getByText(/Un rendez-vous. Pas un lead partagé/)).toBeTruthy();
   });
 
