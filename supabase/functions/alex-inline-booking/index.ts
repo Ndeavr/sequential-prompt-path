@@ -25,96 +25,33 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Legacy inline booking is a routing surface, NOT a second reservation
+    // engine. Only /book/:slug may offer checked slots and the locked
+    // booking-confirm-slot function can confirm them.
     switch (action) {
       case "get_slots": {
-        // Real availability only. UNPRO never proposes an invented time slot.
-        const { data: realSlots, error: slotsError } = await sb
-          .from("availability_slots")
-          .select("*")
-          .eq("contractor_id", contractor_id)
-          .eq("status", "available")
-          .gte("start_time", new Date().toISOString())
-          .order("start_time", { ascending: true })
-          .limit(5);
-
-        if (slotsError) {
-          console.error("availability_slots read failed", slotsError.message);
-          return respond({
-            slots: [],
-            source: "unavailable",
-            message:
-              "Je n'arrive pas à consulter les disponibilités en ce moment. Je peux faire rappeler l'entrepreneur.",
-          }, 200);
-        }
-
-        if (realSlots && realSlots.length > 0) {
-          return respond({
-            slots: realSlots.map((s: any) => ({
-              id: s.id,
-              contractorId: s.contractor_id,
-              start: s.start_time,
-              end: s.end_time,
-              label: formatSlotLabel(s.start_time),
-              type: s.slot_type || "estimation",
-              status: "available",
-            })),
-            source: "database",
-          });
-        }
-
+        const id = typeof contractor_id === "string" ? contractor_id : "";
+        if (!/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i.test(id)) return respond({ error: "invalid_contractor" }, 400);
+        const { data: contractor, error } = await sb.from("contractors")
+          .select("slug,booking_enabled,booking_page_published,is_accepting_appointments")
+          .eq("id", id).maybeSingle();
+        if (error || !contractor) return respond({ slots: [], source: "none", message: "Aucune disponibilité n’est publiée pour cet entrepreneur." }, 200);
+        const configured = contractor.booking_enabled && contractor.booking_page_published && contractor.is_accepting_appointments && contractor.slug;
         return respond({
-          slots: [],
-          source: "none",
-          message:
-            "Aucune disponibilité n'est publiée pour l'instant. Je peux transmettre votre demande et faire confirmer une heure.",
+          slots: [], source: "none",
+          booking_path: configured ? `/book/${encodeURIComponent(contractor.slug)}` : null,
+          message: configured
+            ? "Choisissez votre heure dans l’agenda UNPRO; seules les plages revalidées peuvent être confirmées."
+            : "Aucune disponibilité n’est publiée. Clara peut transmettre votre demande de rappel.",
         });
       }
-
-      case "hold_slot": {
-        if (conversation_session_id) {
-          await sb.from("alex_booking_candidates").insert({
-            conversation_session_id,
-            contractor_id: contractor_id || null,
-            slot_start_at: slot_data?.start || null,
-            slot_end_at: slot_data?.end || null,
-            slot_type: slot_data?.type || "estimation",
-            slot_status: "held",
-          });
-        }
-        return respond({ status: "held", message: "Créneau réservé temporairement." });
-      }
-
-      case "confirm_booking": {
-        // Update candidate to booked
-        if (slot_id && conversation_session_id) {
-          await sb
-            .from("alex_booking_candidates")
-            .update({ slot_status: "booked" })
-            .eq("id", slot_id)
-            .eq("conversation_session_id", conversation_session_id);
-
-          // Update session
-          await sb
-            .from("alex_conversation_sessions")
-            .update({
-              session_status: "booked",
-              selected_contractor_id: contractor_id,
-              selected_booking_slot: slot_data,
-            })
-            .eq("id", conversation_session_id);
-        }
-
+      case "hold_slot":
+      case "confirm_booking":
         return respond({
-          status: "confirmed",
-          message: "Rendez-vous confirmé!",
-          booking: {
-            contractor_id,
-            slot: slot_data,
-            confirmed_at: new Date().toISOString(),
-          },
-        });
-      }
-
+          error: "canonical_booking_required",
+          message: "La réservation doit être confirmée dans l’agenda UNPRO sécurisé.",
+          status: "not_confirmed",
+        }, 409);
       default:
         return new Response(
           JSON.stringify({ error: `Unknown action: ${action}` }),
@@ -130,8 +67,9 @@ serve(async (req) => {
   }
 });
 
-function respond(data: any) {
+function respond(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
+    status,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
