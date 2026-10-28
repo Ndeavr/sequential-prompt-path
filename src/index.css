@@ -2771,6 +2771,10 @@ html[data-theme-ready="true"] .glass-btn {
 .home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-shell {
   margin-top: 1rem;
 }
+/* Accueil : le geste vertical sur Clara fait défiler la page. */
+.home-light .home-glossy-hero:not(.is-conversation-active) .home-clara-conversation > div {
+  overscroll-behavior-y: auto;
+}
 .home-light .home-glossy-hero .home-clara-presence strong {
   min-width: 0;
   letter-spacing: 0;
