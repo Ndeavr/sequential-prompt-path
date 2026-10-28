@@ -111,6 +111,26 @@ describe.each(['personal','invited'] as const)('%s — fenêtre exacte des 12 mo
     expect(await plan(other,target)).toBeNull();
   });
 });
+describe('invited CAD350 base never promises unverified exclusive appointments',()=>{
+  it('blocks a quote-linked checkout before creating any Stripe session',async()=>{
+    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true,quote_id:Q});
+    expect(r.status).toBe(409);
+    expect(r.body.error).toBe('quote_requires_separate_checkout');
+    expect(qa.sessions).toHaveLength(0);
+    expect(qa.configs).toHaveLength(0);
+  });
+  it('creates an ordinary base entry without an appointment-package entitlement',async()=>{
+    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    expect(r.status).toBe(200);
+    expect(qa.configs).toHaveLength(1);
+    const c=qa.configs[0];
+    expect(c.metadata.offer).toBe('entry_pack_350');
+    expect(c.metadata.quote_id).toBe('');
+    expect(c.metadata.guaranteed_appointments).toBe('');
+    expect(c.metadata.offer_kind).toBe('');
+    expect(c.line_items[0].price_data.product_data.description).toContain('aucun rendez-vous inclus ou garanti');
+  });
+});
 describe('invited receipt retry',()=>{
   it('failed ledger delivery stays failed, retry grants presence without permanent subscription',async()=>{
     const s=await create('invited');qa.failNext('contractor_activation_ledger');
