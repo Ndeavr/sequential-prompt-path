@@ -56,13 +56,13 @@ export async function runAgentEvidenceBatch(
   }
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
-  const startUTC = new Date(`${today}T00:00:00-04:00`).toISOString();
+  // UTC midnight starts earlier than Toronto midnight year-round: a conservative\n  // overcount, never a quota undercount during the DST transition.\n  const startUTC = `${today}T00:00:00.000Z`;
   // This read-only quota is a SECOND line of defense. The controlled worker
   // must be invoked sequentially; do not run concurrent commercial batches.
   const { count, error: quotaErr } = await sb.from("casl_consent_evidence")
     .select("id", { count: "exact", head: true }).eq("capture_agent", "enrich-official-website")
     .eq("destination_type", "phone_sms").gte("created_at", startUTC);
-  if (quotaErr || count === null) throw new Error("agent_capture_quota_unavailable");
+  if (quotaErr || typeof count !== "number" || !Number.isFinite(count)) throw new Error("agent_capture_quota_unavailable");
   const allowance = Math.max(0, AUTO_CASL_BATCH.maxPerDay - count);
   if (!allowance) return { ok: true, blocked: true, reason: "daily_capture_cap", dry_run, checked: 0, captured: 0, sent: 0 };
 
