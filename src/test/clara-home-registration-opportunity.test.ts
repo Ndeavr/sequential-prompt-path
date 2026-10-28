@@ -26,6 +26,8 @@ describe("Clara homepage — contextual property/account actions", () => {
   it("responds to an actual Clara invitation, then clears stale prompts when topic changes", () => {
     const offered = [user("Mon projet avance"), clara("Vous pouvez enregistrer votre propriété maintenant.")];
     expect(shouldOfferHomeownerRegistration(offered)).toBe(true);
+    expect(shouldOfferHomeownerRegistration([...offered, user("Oui")])).toBe(true);
+    expect(shouldOfferHomeownerRegistration([...offered, user("Parlons plutôt de peinture")])).toBe(false);
     expect(shouldOfferHomeownerRegistration([...offered, user("Parlons plutôt de peinture"), clara("Quel est votre budget ?")])).toBe(false);
     expect(shouldOfferHomeownerRegistration([])).toBe(false); // fresh conversation
   });
