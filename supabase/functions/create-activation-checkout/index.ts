@@ -33,6 +33,14 @@ Deno.serve(async (req) => {
     const stripeEnv = resolveStripeEnv(test_mode);
     if (!entry350TaxCollectionApproved(stripeEnv === "test" && stripeKeyFor("test") ? "test" : "live")) return json({ error: "Le paiement de cette offre n'est pas encore ouvert. Rien n'a été facturé.", code: "entry350_live_not_released" }, 503);
 
+    // This invited CAD350 entry purchase grants 12 months of UNPRO presence,
+    // with zero included exclusive appointments. A quote requires its own
+    // separately reviewed offer/fulfillment path; never merge quote promises
+    // into an ordinary CAD350 checkout or its signed-webhook metadata.
+    if (typeof quote_id === "string" && quote_id.trim()) {
+      return json({ error: "quote_requires_separate_checkout", next_path: "/entrepreneur/devis-personnalise" }, 409);
+    }
+
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side
     // against an ACTIVE affiliate; only a real match reaches Stripe metadata,
@@ -206,28 +214,9 @@ Deno.serve(async (req) => {
     // L'offre 1 $ est OBSOLÈTE et interdite en recrutement. Toute activation
     // passe désormais par le pack d'entrée 350 $ : profil + 12 mois de Présence IA, 0 rendez-vous
     // inclus, aucun abonnement, aucun renouvellement automatique.
-    const resolvedQuoteId = quote_id ?? "";
-    let guaranteedAppointments: number | null = null;
-    let packPriceCents = OFFER.price_cents;
-
-    try {
-      if (quote_id) {
-        const { data: q } = await supabase
-          .from("contractor_pricing_quotes")
-          .select("guaranteed_appointments, total_price_cents")
-          .eq("id", quote_id)
-          .maybeSingle();
-        if (q?.guaranteed_appointments) {
-          guaranteedAppointments = Math.min(Number(q.guaranteed_appointments), OFFER.max_appointments);
-        }
-        // Prix fixe : le pack d'entrée est toujours 350 $, jamais le total d'un forfait.
-      }
-    } catch (_) { /* soft-fail — pack d'entrée standard */ }
-
+    const packPriceCents = OFFER.price_cents;
     const priceLabel = `${Math.round(packPriceCents / 100)} $`;
-    const guaranteeLine = guaranteedAppointments
-      ? `${guaranteedAppointments} rendez-vous exclusif${guaranteedAppointments > 1 ? "s" : ""} garanti${guaranteedAppointments > 1 ? "s" : ""}`
-      : "Profil UNPRO + 12 mois de Présence IA; rendez-vous confirmés seulement après analyse";
+    const guaranteeLine = "Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti";
 
     const baseMetadata: Record<string, string> = {
       // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
@@ -237,8 +226,8 @@ Deno.serve(async (req) => {
       offer_code: "contractor_entry_pack_350",
       activation_type: "activation_pack_350",
       plan_code: plan_code ?? "",
-      quote_id: resolvedQuoteId,
-      guaranteed_appointments: guaranteedAppointments ? String(guaranteedAppointments) : "",
+      quote_id: "",
+      guaranteed_appointments: "",
       prospect_slug: effectiveSlug,
       prospect_id: prospectId,
       campaign_id: outreachCampaignId,
@@ -246,8 +235,8 @@ Deno.serve(async (req) => {
       activation_token: activation_token ?? "",
       offer: "entry_pack_350",
       entry_tax_contract: ENTRY350_TAX_CONTRACT,
-      // Consumed by stripe-unpro-webhook to persist the calculated guarantee.
-      offer_kind: resolvedQuoteId ? "pack_350" : "",
+      // No appointment package is sold through this base-entry path.
+      offer_kind: "",
       source: source ?? (isOutreach ? "sms_outreach" : ""),
       campaign_variant: utm?.camp ?? "",
       utm_city: utm?.city ?? "",
