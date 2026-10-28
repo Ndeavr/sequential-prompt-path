@@ -9,7 +9,7 @@
 import { captureFirstPartyPhone, phoneCaptureService } from "./caslFirstParty.ts";
 import { normalizePhone } from "../_shared/normalizePhone.ts";
 
-export const AUTO_CASL_BATCH = { maxPerRun: 2, maxPerDay: 20, maxScan: 250 } as const;
+export const AUTO_CASL_BATCH = { maxPerRun: 2, maxPerDay: 20, maxScan: 1000 } as const;
 const UNCONTACTED = new Set(["none", "new", "pending", "not_contacted", "not_started"]);
 const BAD_LINE = new Set(["landline", "fixed", "voip", "toll_free", "invalid"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,7 +71,19 @@ export async function runAgentEvidenceBatch(
     .select(fields).eq("do_not_contact", false).not("website_url", "is", null)
     .not("phone_e164", "is", null).order("created_at", { ascending: true }).limit(AUTO_CASL_BATCH.maxScan);
   if (readErr || !prospects) throw new Error("agent_candidates_unreadable");
-  const candidates = prospects.filter(machineCaptureCandidate);
+  // A declined/ambiguous site must not be recrawled every 15 minutes.
+  // Reuse the existing agent log for a 24h source-check cooldown; no new DB.
+  const { data: priorChecks, error: historyErr } = await sb.from("agent_logs")
+    .select("metadata").eq("agent_name", "casl-firstparty-evidence-agent")
+    .gte("created_at", new Date(Date.now() - 24 * 3600_000).toISOString())
+    .order("created_at", { ascending: false }).limit(1000);
+  if (historyErr || !priorChecks) throw new Error("agent_recent_checks_unreadable");
+  const attempted = new Set<string>();
+  for (const row of priorChecks) {
+    const ids = row?.metadata?.candidate_ids;
+    if (Array.isArray(ids)) for (const id of ids) if (typeof id === "string") attempted.add(id);
+  }
+  const candidates = prospects.filter(machineCaptureCandidate).filter((p: Candidate) => !attempted.has(p.id ?? ""));
   const ids = candidates.map((c: Candidate) => c.id as string);
   const { data: prior, error: priorErr } = ids.length
     ? await sb.from("casl_consent_evidence").select("contractor_prospect_id")
@@ -107,7 +119,7 @@ export async function runAgentEvidenceBatch(
     agent_name: "casl-firstparty-evidence-agent",
     log_type: captured ? "info" : "warning",
     message: `Agent CASL : ${checked} source(s) vérifiée(s), ${captured} preuve(s) collectée(s); aucun envoi ni consentement inventé.`,
-    metadata: { checked, captured, outcomes, legal_consent_established: false, sent: 0 },
+    metadata: { candidate_ids: selected.map((p: Candidate) => p.id), checked, captured, outcomes, legal_consent_established: false, sent: 0 },
   });
   return {
     ok: !logErr, dry_run: false, checked, captured, outcomes,
