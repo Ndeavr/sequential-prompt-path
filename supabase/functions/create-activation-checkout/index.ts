@@ -295,7 +295,45 @@ Deno.serve(async (req) => {
     }
 
 
-    // Canonical funnel event — checkout created (step 3/5).
+    // REVENUE-CRITICAL: persist the session so click -> checkout -> paid is
+    // reconcilable without calling Stripe. Do not release the payable URL or
+    // record a created-checkout event when this durable write fails.
+    try {
+      const { error: persistError } = await supabase.from("billing_checkout_sessions").insert({
+        stripe_checkout_session_id: session.id,
+        amount_total: session.amount_total,
+        currency: "cad",
+        checkout_status: "open",
+        payment_status: "unpaid",
+        plan_code: plan_code ?? "entry_pack_350",
+        acquisition_origin: attr.acquisition_origin,
+        agent_run_id: attr.agent_run_id,
+        activation_token: activation_token ?? null,
+        attribution_key: attr.attribution_key,
+        prospect_id: prospectId || null,
+        metadata_json: {
+          entry_tax_contract: ENTRY350_TAX_CONTRACT,
+          amount_subtotal: ENTRY350_AMOUNTS.subtotal,
+          amount_tax: ENTRY350_AMOUNTS.tax,
+          prospect_id: prospectId || null,
+          activation_token: activation_token ?? null,
+          landing_token: landing_token ?? null,
+          slug: effectiveSlug,
+          campaign_id: outreachCampaignId || null,
+          source: source ?? null,
+          checkout_url: session.url ?? null,
+        },
+      });
+      if (persistError) {
+        console.error("[create-activation-checkout] session_persist_failed", persistError.message);
+        return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
+      }
+    } catch (e) {
+      console.error("[create-activation-checkout] session_persist_failed", e);
+      return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
+    }
+
+    // Canonical funnel event — checkout durably recorded (step 3/5).
     // `checkout_opened` is kept for legacy dashboards.
     try {
       const evtBase = {
@@ -326,40 +364,6 @@ Deno.serve(async (req) => {
         _idempotency_key: `checkout_opened:${session.id}`,
       });
     } catch (_) { /* ignore */ }
-
-
-    // REVENUE-CRITICAL: persist the session so click -> checkout -> paid is
-    // reconcilable without calling Stripe. Without this row the funnel between
-    // the activation page and the payment is invisible.
-    try {
-      await supabase.from("billing_checkout_sessions").insert({
-        stripe_checkout_session_id: session.id,
-        amount_total: session.amount_total,
-        currency: "cad",
-        checkout_status: "open",
-        payment_status: "unpaid",
-        plan_code: plan_code ?? "entry_pack_350",
-        acquisition_origin: attr.acquisition_origin,
-        agent_run_id: attr.agent_run_id,
-        activation_token: activation_token ?? null,
-        attribution_key: attr.attribution_key,
-        prospect_id: prospectId || null,
-        metadata_json: {
-          entry_tax_contract: ENTRY350_TAX_CONTRACT,
-          amount_subtotal: ENTRY350_AMOUNTS.subtotal,
-          amount_tax: ENTRY350_AMOUNTS.tax,
-          prospect_id: prospectId || null,
-          activation_token: activation_token ?? null,
-          landing_token: landing_token ?? null,
-          slug: effectiveSlug,
-          campaign_id: outreachCampaignId || null,
-          source: source ?? null,
-          checkout_url: session.url ?? null,
-        },
-      });
-    } catch (e) {
-      console.error("[create-activation-checkout] session_persist_failed", e);
-    }
 
     // Best-effort event log (table may not exist in all envs).
     try {
