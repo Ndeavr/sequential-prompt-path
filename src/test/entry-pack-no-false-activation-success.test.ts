@@ -24,6 +24,33 @@ describe("P0: a paid entry pack is not a verified contractor activation", () => 
   });
 });
 
+describe("P0: entry-pack CRM activation state follows durable ledger receipt", () => {
+  it("never marks the LIVE $350 prospect activated before receipt verification", () => {
+    const start = source.indexOf('const activationToken = session.metadata?.activation_token');
+    const end = source.indexOf("// ACQUISITION PIPELINE flow:", start);
+    const handler = source.slice(start, end);
+    const receiptGuard = handler.indexOf("(!activatedContractorId || entryPackFatal)");
+    const before = handler.slice(0, receiptGuard);
+    const after = handler.slice(receiptGuard);
+    const successAudit = after.indexOf('from("unpro_payment_activation_audit").insert');
+
+    expect(receiptGuard).toBeGreaterThan(0);
+    expect(before).toContain('if (session.metadata?.offer !== "entry_pack_350")');
+    expect(before).not.toContain('.update({ activation_status: "activated", payment_status: "paid" })');
+    for (const statusUpdate of [
+      '.update({ activation_status: "activated", payment_status: "paid" })',
+      '.update({ outreach_status: "activated" })',
+    ]) {
+      const index = after.indexOf(statusUpdate);
+      expect(index).toBeGreaterThan(0);
+      expect(index).toBeLessThan(successAudit);
+    }
+    expect(after.slice(0, successAudit)).toContain("if (crmErr)");
+    expect(after.slice(0, successAudit)).toContain("if (prospectErr)");
+    expect(after.slice(0, successAudit)).toContain("throw entryPackFatal;");
+  });
+});
+
 describe("P0: repeated LIVE entry-pack receipt must belong to the same business", () => {
   const expected = { contractorId: "contractor-1", paymentIntentId: "pi_live_1" };
   const original = {
