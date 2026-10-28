@@ -39,7 +39,8 @@ describe("contractor acquisition SMS — canonical production path", () => {
   it("fails closed on suppression and unconfirmed mobile type", () => {
     expect(guard).toContain('rpc("is_phone_suppressed"');
     expect(guard).toContain('detail: "suppression_check_unreadable"');
-    expect(guard).toContain('detail: "phone_type_unconfirmed"');
+    expect(guard).toContain('detail: "phone_type_unconfirmed_manual_review_required"');
+    expect(guard).not.toContain("unclassified_carrier_tier_eligible");
     expect(guard).toContain('lineType !== "mobile"');
   });
 
