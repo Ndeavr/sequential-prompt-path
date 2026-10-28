@@ -133,7 +133,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
           event_type: "stripe_checkout_started",
           step: "entry350_checkout_created",
           metadata: { surface: "activation_350", entry_activation: true },
-        }),
+        }).catch(() => undefined),
         new Promise<void>((resolve) => setTimeout(resolve, 500)),
       ]);
       redirectToCheckout(reply.url);
