@@ -1103,6 +1103,7 @@ Deno.serve(async (req) => {
 
             // 2 — mark the prospect paid.
             let prospect: any = null;
+            let verifiedProspectId: string | null = null;
             if (vProspectId) {
               const { data: p, error: pErr } = await supabase
                 .from("verified_contractor_prospects")
@@ -1111,12 +1112,17 @@ Deno.serve(async (req) => {
                 .maybeSingle();
               if (pErr) console.error("[stripe-webhook] prospect fetch failed", pErr.message);
               prospect = p ?? null;
+              verifiedProspectId = p?.id ?? null;
+              // Legacy offers retain their existing status behavior. For the
+              // LIVE entry pack, defer "activated" until the durable receipt.
+              if (session.metadata?.offer !== "entry_pack_350") {
               const { error: upErr } = await supabase
                 .from("verified_contractor_prospects")
                 // 'activated' is the terminal value allowed by the table CHECK.
                 .update({ outreach_status: "activated" })
                 .eq("id", vProspectId);
               if (upErr) console.error("[stripe-webhook] prospect status update failed", upErr.message);
+              }
             }
 
             // 2b — Founder guest checkout (pro-founder-checkout-guest) uses the
@@ -1251,12 +1257,8 @@ Deno.serve(async (req) => {
                   .eq("stripe_checkout_session_id", session.id);
 // Entry 350 = one-time: activate_contractor_unified would publish the
                 // profile, so the prospect is marked paid directly instead.
-                if (session.metadata?.offer === "entry_pack_350") {
-                  await supabase.from("contractor_prospects")
-                    .update({ activation_status: "activated", payment_status: "paid" })
-                    .eq("contractor_id", activatedContractorId);
-                } else {
-                                await supabase.rpc("activate_contractor_unified", {
+                if (session.metadata?.offer !== "entry_pack_350") {
+                  await supabase.rpc("activate_contractor_unified", {
                   p_contractor_id: activatedContractorId,
                   p_source: "stripe_entry_pack_350",
                   // A one-time entry is not a perpetual paid subscription.
@@ -1331,6 +1333,28 @@ Deno.serve(async (req) => {
                 (!activatedContractorId || entryPackFatal)) {
               entryPackFatal ??= new Error("entry_pack_350 receipt incomplete: contractor or ledger missing");
               throw entryPackFatal;
+            }
+
+            // Only the signed LIVE webhook + same-business durable ledger receipt
+            // can turn a $350 entry-pack prospect into "activated". A failed
+            // ledger/provisioning attempt remains pending for Stripe redelivery.
+            if (session.metadata?.offer === "entry_pack_350" && activatedContractorId) {
+              const { error: crmErr } = await supabase.from("contractor_prospects")
+                .update({ activation_status: "activated", payment_status: "paid" })
+                .eq("contractor_id", activatedContractorId);
+              if (crmErr) {
+                entryPackFatal = new Error(`entry_pack_350 contractor prospect status: ${crmErr.message}`);
+                throw entryPackFatal;
+              }
+              if (verifiedProspectId) {
+                const { error: prospectErr } = await supabase.from("verified_contractor_prospects")
+                  .update({ outreach_status: "activated" })
+                  .eq("id", verifiedProspectId);
+                if (prospectErr) {
+                  entryPackFatal = new Error(`entry_pack_350 verified prospect status: ${prospectErr.message}`);
+                  throw entryPackFatal;
+                }
+              }
             }
 
             await supabase.from("unpro_payment_activation_audit").insert({
