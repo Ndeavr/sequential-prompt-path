@@ -4,6 +4,7 @@ import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_sh
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import { webhookEntryDecision } from "../_shared/webhookAuth.ts";
+import { classifyWebhookAuditInsert } from "../_shared/webhookAuditPersistence.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -190,23 +191,38 @@ Deno.serve(async (req) => {
       });
 
 
-      if (insertErr && !String(insertErr.message).includes("duplicate")) {
-        console.warn("[stripe-webhook] audit insert warning", insertErr.message);
+      // Do not acknowledge or fulfill a signed event without a durable audit receipt.
+      // Stripe retries 503; a generic DB failure is NOT an event-id duplicate.
+      const auditUnavailable = () => new Response(
+        JSON.stringify({ error: "webhook_audit_unavailable" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+      const insertDisposition = classifyWebhookAuditInsert(insertErr);
+      if (insertDisposition === "unavailable") {
+        console.error("[stripe-webhook] canonical audit insert failed", insertErr?.code ?? "unknown");
+        return auditUnavailable();
       }
-      if (insertErr && String(insertErr.message).includes("duplicate")) {
-        const { data: prior } = await supabase.from("stripe_webhook_events")
+      if (insertDisposition === "redelivery") {
+        const { data: prior, error: lookupErr } = await supabase.from("stripe_webhook_events")
           .select("processing_status, received_at").eq("stripe_event_id", event.id).maybeSingle();
+        if (lookupErr || !prior) {
+          console.error("[stripe-webhook] event-id duplicate could not be verified");
+          return auditUnavailable();
+        }
         if (!shouldSkipRedelivery(prior)) {
-          // Previous attempt failed or stalled: retry idempotently instead of dropping it.
-          console.log(`Redelivered webhook ${event.id} after ${prior?.processing_status}, reprocessing`);
-          await supabase.from("stripe_webhook_events").update({
+          // A previous failed/stale event must be persisted as processing before continuing.
+          const { error: resetErr } = await supabase.from("stripe_webhook_events").update({
             processing_status: "processing", error_message: null, last_retry_at: new Date().toISOString(),
           }).eq("stripe_event_id", event.id);
+          if (resetErr) {
+            console.error("[stripe-webhook] redelivery state reset failed", resetErr.code ?? "unknown");
+            return auditUnavailable();
+          }
         } else {
-        console.log(`Duplicate webhook event ${event.id}, skipping`);
-        return new Response(JSON.stringify({ received: true, duplicate: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+          console.log(`Duplicate webhook event ${event.id}, skipping`);
+          return new Response(JSON.stringify({ received: true, duplicate: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
       }
     }
