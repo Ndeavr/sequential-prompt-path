@@ -100,6 +100,7 @@ import {
 import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, resolveClaraContractorEntry, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import RegisterPropertyCTA from "@/components/home-light/RegisterPropertyCTA";
+import { shouldOfferHomeownerRegistration } from "@/services/clara/claraPropertyRegistrationOpportunity";
 import { CLARA_NEXT_STEP_TEXT, openClaraPricingNextStep, promisesDeferredFollowup } from "@/services/clara/claraNextStep";
 import DossierMaisonSheet from "@/components/dossier-maison/DossierMaisonSheet";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
@@ -244,7 +245,7 @@ type IntentSuggestion = {
 const DEFAULT_INTENT_SUGGESTIONS: IntentSuggestion[] = [
   { label: "Je cherche un courtier immobilier", intent: "homeowner_problem", source: "default" },
   { label: "Nettoyer mes conduits d’air", intent: "homeowner_problem", source: "default" },
-  { label: "J’ai un projet de rénovation", intent: "homeowner_problem", source: "default" },
+  { label: "Je suis entrepreneur", intent: "contractor_onboarding", source: "default" },
 ];
 
 /** Public détecté par Clara : il détermine seul les choix proposés. */
@@ -637,7 +638,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     ? [
         { label: "I’m looking for a real estate broker", intent: "homeowner_problem", source: "default" },
         { label: "Clean my air ducts", intent: "homeowner_problem", source: "default" },
-        { label: "I have a renovation project", intent: "homeowner_problem", source: "default" },
+        { label: "I’m a contractor", intent: "contractor_onboarding", source: "default" },
       ]
     : surface !== "home" && popularQuestions.source === "trending" && homeownerTrending.length >= 3
     ? homeownerTrending.slice(0, 3).map((item) => ({
@@ -1762,6 +1763,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     && !isConversationActive
     && !composerFocused
     && composerText.trim().length === 0;
+  // No premature property/signup upsell: the existing CTA only follows a real
+  // homeowner request or Clara invitation in this exact conversation.
+  const showPropertyRegistration = audience === "homeowner"
+    && !busy
+    && !showIntentSuggestions
+    && shouldOfferHomeownerRegistration(messages);
 
   // Capture directe (appareil photo, caméra, galerie) : le fichier entre
   // immédiatement dans la file d'attente, sans passer par un aperçu factice.
@@ -2052,7 +2059,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <ConversationScrollButton title="Revenir au dernier message" className="home-clara-scroll-latest" />
         </Conversation>
 
-      {audience === "homeowner" && <RegisterPropertyCTA lang={lang} />}
+      {showPropertyRegistration && <RegisterPropertyCTA lang={lang} />}
       <div className={`home-clara-input-row${showIntentSuggestions && mediaItems.length === 0 && !voiceActive ? " is-initial-empty" : ""}`} data-chat-row="composer">
       {mediaItems.length > 0 && (
         <ul className="home-clara-media" aria-label="Fichiers en cours">
