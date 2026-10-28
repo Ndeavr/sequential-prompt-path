@@ -50,6 +50,15 @@ const PageEntrepreneursLanding = () => {
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <Button asChild variant="outline" className="mt-6 h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
         </section>
+        <div className="mx-auto max-w-4xl px-5 pb-12">
+          <Link
+            to={campaignLink("/entrepreneurs/rendez-vous-intelligents", search)}
+            className="group flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/[0.04] px-5 py-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          >
+            <span>{fr ? "Voir comment Clara peut organiser un rendez-vous" : "See how Clara could arrange an appointment"}</span>
+            <span aria-hidden="true" className="text-primary transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+        </div>
         <StickyMobileCTAV2 onTrackCta={trackCta} />
       </div>
     </>
