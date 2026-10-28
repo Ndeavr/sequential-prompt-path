@@ -29,6 +29,29 @@ describe('isolated SQL/session safety',()=>{
     expect((await qa.checkout('personal',{entryActivation:true,quoteId:Q})).status).toBe(401);
     expect((await qa.checkout('personal',{entryActivation:true,quoteId:Q},qa.ownerToken+'bad')).status).toBe(401);
   });
+  it('does not release an invited payment URL when the checkout receipt write fails',async()=>{
+    qa.failNext('billing_checkout_sessions');
+    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    expect(r.status).toBe(503);
+    expect(r.body).toEqual({error:'checkout_record_unavailable',stage:'persist'});
+    expect(r.body.url).toBeUndefined();
+    // Stripe creates a synthetic OPEN session, but no payable URL is returned
+    // and no falsely completed funnel receipt is recorded.
+    expect(qa.sessions).toHaveLength(1);
+    expect(qa.peripheral.get('billing_checkout_sessions') ?? []).toHaveLength(0);
+    expect(qa.peripheral.get('prospect_page_events') ?? []).toHaveLength(0);
+    expect((await qa.db.query('select * from contractor_activation_ledger')).rows).toHaveLength(0);
+  });
+  it('returns the invited URL only after a linked checkout receipt persists',async()=>{
+    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    expect(r.status).toBe(200);
+    expect(r.body.url).toBe(qa.sessions[0].url);
+    const receipts=qa.peripheral.get('billing_checkout_sessions') ?? [];
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0].stripe_checkout_session_id).toBe(qa.sessions[0].id);
+    expect(receipts[0].checkout_status).toBe('open');
+    expect(receipts[0].payment_status).toBe('unpaid');
+  });
   it('HMAC missing/bad and TEST signature on fake LIVE rejected before receipt writes',async()=>{
     const s=await create('personal');
     for(const signature of ['missing','bad','test'] as const)expect((await qa.deliver(s,{signature})).status).toBe(400);
