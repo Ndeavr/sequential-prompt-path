@@ -10,6 +10,9 @@ import {
 const homepageCss = readFileSync("src/styles/home-light-mode.css", "utf8");
 const main = readFileSync("src/main.tsx", "utf8");
 const homepage = readFileSync("src/pages/PageHomeLight.tsx", "utf8");
+const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8");
+const matching = readFileSync("src/components/home-light/HomeLightSections.tsx", "utf8");
+const clara = readFileSync("src/components/home-light/ClaraConversationBox.tsx", "utf8");
 
 afterEach(() => {
   setThemeMode("light");
@@ -40,6 +43,28 @@ describe("UNPRO visual mode regression: no more flash-and-stay-dark", () => {
     expect(homepageCss).toContain("--background: 213 100% 98%");
     expect(homepageCss).toContain("--card: 0 0% 100%");
     expect(homepageCss).not.toContain("html.dark .home-light {");
+  });
+
+
+  it("selects the official contrast-safe wordmark instead of forcing the dark image", () => {
+    expect(header).toMatch(/isHome\\s*\\?\\s*\\([\\s\\S]*?<UnproLogo[\\s\\S]*?tone="auto"/);
+    expect(header).not.toMatch(/tone="gradient"\\s+className="home-brand-wordmark"/);
+  });
+
+  it("keeps the section after Clara on the selected theme", () => {
+    expect(matching).toContain('className="home-matching-section border-t');
+    expect(matching).not.toContain("home-matching-section alex-immersive");
+    expect(homepageCss).toContain("html.light .home-light .home-matching-section {");
+    expect(homepageCss).toContain("html.light .home-light .home-matching-section nav a {");
+  });
+
+  it("increases microphone and send contrast without overriding disabled behavior", () => {
+    expect(homepageCss).toContain("html.light .home-light .home-clara-mic {");
+    expect(homepageCss).toContain("min-height: 44px");
+    expect(homepageCss).toContain('html.light .home-light .home-clara-mic[data-voice-listening="true"]');
+    expect(homepageCss).toContain("html.light .home-light .home-clara-submit:not(:disabled)");
+    expect(homepageCss).toContain("html.light .home-light .home-clara-submit:disabled");
+    expect(clara).toContain("disabled={busy || !canSubmit}");
   });
 
   it("loads the override after the original CSS and avoids a fixed browser theme-color", () => {
