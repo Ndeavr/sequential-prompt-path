@@ -36,7 +36,7 @@ export default function PageCalendarConnectionHub() {
     <MainLayout>
       <Helmet>
         <title>Connecter mon calendrier — UNPRO</title>
-        <meta name="description" content="Connectez Google ou Apple Calendar pour des rendez-vous sans friction. UNPRO lit votre disponibilité, jamais les détails." />
+        <meta name="description" content="Connectez Google pour partager vos plages occupées, ou créez un lien d'abonnement Apple en envoi seulement. Contrôlez vos rendez-vous avec UNPRO." />
         <link rel="canonical" href="https://unpro.ca/calendar/connect" />
       </Helmet>
 
