@@ -27,7 +27,7 @@ interface RunRow {
   aipp_score: number | null;
   aipp_breakdown: Record<string, number>;
   recommended_plan: string | null;
-  recommendation: { reason?: string; projected_appointments?: number } | null;
+  recommendation: { reason?: string } | null;
   partial_confidence: boolean;
   error_log: Array<{ step: string; message: string }>;
 }
@@ -138,7 +138,6 @@ export default function PageContractorAnalysisLive() {
   const buckets = run?.aipp_breakdown ?? {};
   const plan = run?.recommended_plan ?? null;
   const ready = run?.pipeline_status === "ready";
-  const projected = run?.recommendation?.projected_appointments ?? 0;
 
   return (
     <main className="min-h-screen bg-[#060B14] text-white pb-32">
@@ -235,7 +234,7 @@ export default function PageContractorAnalysisLive() {
         {plan && (
           <section className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/[0.04] p-5">
             <p className="text-xs uppercase tracking-wider text-amber-300">
-              Plan recommandé
+              Orientation préliminaire — à confirmer
             </p>
             <p className="mt-1 text-2xl font-semibold text-white">
               UNPRO {planLabel(plan)}
@@ -243,14 +242,10 @@ export default function PageContractorAnalysisLive() {
             <p className="mt-2 text-sm text-white/70 leading-snug">
               {run?.recommendation?.reason}
             </p>
-            <div className="mt-4 grid grid-cols-1 gap-3">
-              <div className="rounded-xl bg-white/[0.04] p-3">
-                <p className="text-xs text-white/50">Rendez-vous qualifiés</p>
-                <p className="text-lg font-semibold tabular-nums">
-                  {projected}/mois
-                </p>
-              </div>
-            </div>
+            <p className="mt-4 text-sm text-white/60">
+              Aucun rendez-vous n'est garanti par cette analyse. Les rendez-vous
+              exclusifs relèvent d'une offre distincte et d'une capacité vérifiée.
+            </p>
             <p className="mt-3 text-xs text-white/40">
               Le plan et son prix seront personnalisés après votre profil et vos objectifs.
             </p>
