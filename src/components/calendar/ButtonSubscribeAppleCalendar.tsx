@@ -29,8 +29,8 @@ export default function ButtonSubscribeAppleCalendar({ surface, role, className,
       if (result?.webcal_url) {
         // Try to open in Apple Calendar
         window.location.href = result.webcal_url;
-        toast.success("Abonnement Apple Calendar créé", {
-          description: "Vos rendez-vous UNPRO apparaîtront dans Apple Calendar.",
+        toast.info("Lien d'abonnement Apple ouvert", {
+          description: "Confirmez l'abonnement dans votre calendrier. Ce lien ne synchronise pas vos disponibilités avec UNPRO.",
         });
       }
     } catch {

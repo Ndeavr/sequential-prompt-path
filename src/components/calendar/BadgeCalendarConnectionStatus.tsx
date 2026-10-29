@@ -8,8 +8,8 @@ export default function BadgeCalendarConnectionStatus({ status }: { status: Cale
   const map = {
     idle:                { icon: Calendar, text: "Non connecté", cls: "bg-muted/40 text-muted-foreground" },
     connecting:          { icon: Loader2, text: "Connexion…",   cls: "bg-primary/10 text-primary animate-pulse" },
-    connected:           { icon: CheckCircle2, text: "Connecté", cls: "bg-emerald-500/15 text-emerald-400" },
-    subscribed_external: { icon: CheckCircle2, text: "Abonné Apple", cls: "bg-blue-500/15 text-blue-400" },
+    connected:           { icon: CheckCircle2, text: "Google connecté", cls: "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300" },
+    subscribed_external: { icon: Calendar, text: "Lien Apple créé", cls: "bg-blue-500/15 text-blue-800 dark:text-blue-300" },
     failed:              { icon: AlertCircle, text: "Échec", cls: "bg-destructive/15 text-destructive" },
     revoked:             { icon: X, text: "Révoqué", cls: "bg-muted/40 text-muted-foreground" },
   } as const;
