@@ -27,7 +27,7 @@ export default function CardCalendarConnectionRole({
   returnTo,
 }: Props) {
   const prompt = useCalendarPrompt(role, surface, lang);
-  const { primary, isConnected } = useCalendarConnections();
+  const { primary, isConnected, hasExternalAppleFeed, loading } = useCalendarConnections();
   const { track } = useCalendarConversionTracking();
 
   useEffect(() => {
@@ -50,15 +50,30 @@ export default function CardCalendarConnectionRole({
             <h3 className="text-base font-bold text-foreground">{prompt?.headline ?? "Connectez votre calendrier"}</h3>
           </div>
         </div>
-        {primary && <BadgeCalendarConnectionStatus status={primary.connection_status} />}
+        {!loading && primary && <BadgeCalendarConnectionStatus status={primary.connection_status} />}
       </div>
 
       <p className="text-sm text-muted-foreground leading-relaxed mb-5">
         {prompt?.subtext ?? "On vérifie seulement votre disponibilité."}
       </p>
 
-      {!isConnected && (
+      {loading && (
+        <p role="status" className="text-sm text-muted-foreground mb-5">
+          Vérification de la connexion…
+        </p>
+      )}
+
+      {!loading && !isConnected && (
         <div className="space-y-2.5 mb-5">
+          {hasExternalAppleFeed && (
+            <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-foreground">
+              <p className="font-semibold">Lien d'abonnement Apple généré.</p>
+              <p className="mt-1 text-muted-foreground">
+                Envoi unidirectionnel seulement. UNPRO ne peut ni confirmer l'abonnement dans Apple,
+                ni lire vos disponibilités. Connectez Google pour synchroniser les plages occupées.
+              </p>
+            </div>
+          )}
           <ButtonConnectGoogleCalendar
             surface={surface}
             role={role}
@@ -66,33 +81,39 @@ export default function CardCalendarConnectionRole({
             label={prompt?.primary_cta ?? "Connecter Google Calendar"}
             className="w-full"
           />
-          {showAppleCTA && (
+          {showAppleCTA && !hasExternalAppleFeed && (
             <ButtonSubscribeAppleCalendar
               surface={surface}
               role={role}
-              label={prompt?.secondary_cta ?? "S'abonner avec Apple Calendar"}
+              label={prompt?.secondary_cta ?? "Créer un lien Apple Calendar (envoi seulement)"}
               className="w-full"
             />
           )}
           <p className="text-xs text-muted-foreground text-center pt-1">
-            Outlook / Microsoft 365 : bientôt disponible.
+            Google : lecture de disponibilités avec autorisation. Apple : abonnement sortant seulement.
           </p>
         </div>
       )}
 
-      {isConnected && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-5">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
-          <p className="text-sm text-emerald-300">
-            Calendrier connecté{primary?.provider_account_email ? ` — ${primary.provider_account_email}` : ""}.
+      {!loading && isConnected && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-600/25 mb-5">
+          <Sparkles className="w-4 h-4 text-emerald-700 dark:text-emerald-300 shrink-0" />
+          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+            Connexion Google Calendar enregistrée{primary?.provider === "google" && primary.provider_account_email ? ` — ${primary.provider_account_email}` : ""}.
           </p>
         </div>
       )}
 
-      <div className="space-y-4">
-        <PanelCalendarConnectionBenefits role={role} />
-        <PanelCalendarPermissionsExplainer />
-      </div>
+      {isConnected ? (
+        <div className="space-y-4">
+          <PanelCalendarConnectionBenefits role={role} />
+          <PanelCalendarPermissionsExplainer />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Les suggestions selon vos créneaux occupés seront disponibles après une connexion Google autorisée.
+        </p>
+      )}
     </motion.div>
   );
 }
