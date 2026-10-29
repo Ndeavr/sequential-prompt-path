@@ -56,6 +56,13 @@ La promesse principale n'est pas « plus de leads », mais :
 
 **Par canal/variante/métier/territoire** : uniques, taux de progression, coût, CAC reconnu, commissions d'affiliés, revenu net hors taxes, remboursements/désabonnements, raisons d'abandon, licence vérifiée/déclarée. Séparer visites des bots, tests/admin et trafic réel. Utiliser les tableaux et `logFunnelEvent` existants, pas d'analytics parallèles.
 
+### Intégrité des canaux d'acquisition (ne pas inventer de conversions)
+
+- Dans `contractor_funnel_events`, `source` et `event_source` décrivent le **producteur technique** (`app`, `webhook`, etc.), **pas** le canal marketing. Une source `app` n'est ni une preuve de trafic organique ni une preuve de publicité.
+- `channel` NULL doit être présenté comme **« non attribué »**. `utm_source`, `utm_medium` et `affiliate_code` indiquent seulement une origine **déclarée** par un lien ou une session, pas un partenaire certifié, une dépense autorisée, une commission due ni une vente. Sans UTM, ne pas inférer « direct »; seules des données de référence vérifiables permettent d'affiner l'attribution.
+- Écarter des cohortes commerciales les événements `is_test = true` et `internal_reason IS NOT NULL`. Compter les événements, sessions uniques et entreprises distinctes dans des colonnes **séparées** : une session, un clic et un client payant ne sont pas interchangeables. Rapporter explicitement le taux de sessions non attribuées.
+- Un achat **350 $ payé par canal** exige le rapprochement serveur de Stripe LIVE réglé, l'événement webhook authentifié, l'identité unique de l'entreprise, les droits de 12 mois et l'absence de remboursement/litige. L'UTM ou un statut CRM seuls ne suffisent jamais. Le CAC par canal requiert en plus les dépenses/commissions effectives et autorisées.
+
 **Alertes d'exploitation** : 0 vrai paiement en 48 h après une campagne autorisée; échec paiement/webhook/droit 12 mois; blocage login/CTA; consentement sans preuve; doublons/erreurs DB; SMS non livrés; CAC dépassé; déploiement qui ne correspond pas au SHA validé.
 
 ### Portes de progression — pas de promesse de ventes inventées
