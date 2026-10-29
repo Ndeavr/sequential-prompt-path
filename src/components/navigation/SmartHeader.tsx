@@ -106,7 +106,7 @@ const SmartHeader = () => {
               {isHome ? (
                 <UnproLogo
                   unsized
-                  tone="gradient"
+                  tone="auto"
                   className="home-brand-wordmark"
                 />
               ) : (
