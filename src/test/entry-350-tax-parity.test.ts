@@ -19,7 +19,7 @@ describe("350 Quebec tax contract", () => {
     const qa=await createQa(false);
     try {
       expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(503);
-      expect((await qa.checkout('personal',{entryActivation:true},qa.ownerToken)).status).toBe(503);
+      expect((await qa.checkout('personal',{entryActivation:true},qa.ownerToken)).status).not.toBe(503);
       expect(qa.sessions).toHaveLength(0);
       expect((await qa.db.query('select * from contractors')).rows).toHaveLength(0);
     } finally { await qa.close(); }

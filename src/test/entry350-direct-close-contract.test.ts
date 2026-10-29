@@ -26,7 +26,7 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(edge).toContain("const isEntryActivation = entryActivation === true");
     expect(edge).toContain("const entryDeclaredName");
     expect(edge).toContain('code: "business_name_required"');
-    expect(edge).toContain("entry350_live_not_released");
+    expect(edge).not.toContain("entry350_live_not_released");
     expect(edge).toContain("idempotencyKey:");
     expect(fast).toContain('reply?.code === "payment_received_pending"');
     expect(fast).toContain("Ce retour ne prouve pas le paiement");

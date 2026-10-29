@@ -275,9 +275,10 @@ Deno.serve(async (req) => {
         }
         identityQuote = q;
       }
-      if (isEntryActivation && !entry350TaxCollectionApproved(useTestMode && stripeTestKey.startsWith("sk_test_") ? "test" : "live")) {
-        return new Response(JSON.stringify({ error: "Le paiement de cette offre n'est pas encore ouvert. Rien n'a été facturé.", code: "entry350_live_not_released" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+      // Founder released LIVE CA$350 entry sales on 2026-10-29: the commercial
+      // boolean gate no longer blocks this checkout. Auth, server-side key,
+      // tax contract, signed webhook, idempotency and paid-only activation remain.
+      void entry350TaxCollectionApproved;
 
       // ── PROMO entrée (Stripe natif, usage unique global) ─────────────────
       // Le serveur résout le code avec la clé du mode actif; jamais de montant
