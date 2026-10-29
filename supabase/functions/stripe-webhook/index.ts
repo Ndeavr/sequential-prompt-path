@@ -1634,7 +1634,39 @@ Deno.serve(async (req) => {
           break;
         }
 
-        if (!contractorId || !planId) break;
+        // The canonical subscription path must be auditable even when an
+        // existing guest account cannot yet be resolved to a contractor.
+        // Never count a Checkout redirect or an unpaid async session as paid.
+        if (session.metadata?.offer === "contractor_subscription" &&
+            session.payment_status === "paid") {
+          const { error: snapshotErr } = await supabase.from("billing_checkout_sessions")
+            .update({ checkout_status: "complete", payment_status: "paid",
+              stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+              paid_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq("stripe_checkout_session_id", session.id);
+          if (snapshotErr) console.error("[stripe-webhook] subscription checkout reconciliation", snapshotErr.code);
+        }
+        if (!contractorId || !planId) {
+          if (session.metadata?.offer === "contractor_subscription" &&
+              session.payment_status === "paid") {
+            const { error: noticeErr } = await supabase.from("admin_notifications").insert({
+              type: "subscription_paid_needs_manual_activation",
+              severity: "critical",
+              title: "Paiement confirmé — rattachement entrepreneur à vérifier",
+              body: "Stripe a confirmé un paiement mais le compte entrepreneur n'est pas encore rattaché. Rapprocher la session Stripe, le courriel du payeur et la fiche avant toute activation manuelle.",
+              payload_json: {
+                stripe_session_id: session.id,
+                stripe_event_id: event.id,
+                livemode: event.livemode === true,
+                plan_code: planCode ?? null,
+                user_id: session.metadata?.user_id || null,
+                onboarding_session_id: session.metadata?.onboarding_session_id || null,
+              },
+            });
+            if (noticeErr) console.error("[stripe-webhook] manual activation notice", noticeErr.code);
+          }
+          break;
+        }
 
         // GUARD — l'activation payée dépend UNIQUEMENT d'un paiement confirmé
         // par Stripe. Une session complétée mais non payée (paiement asynchrone)
