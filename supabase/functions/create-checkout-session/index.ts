@@ -537,7 +537,87 @@ Deno.serve(async (req) => {
         const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
         entryRequestOptions = { idempotencyKey: `${entryPromo ? `entry350-promo349-v1-${entryPromo.promotionCodeId}` : "entry350-v1"}-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
       }
-      const fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
+      // Preserve a real, authenticated buyer's company/contact association BEFORE
+      // calling Stripe. A provider outage must not erase the attempt or prevent
+      // an operator from locating the user. No card data or secrets are stored.
+      if (isEntryActivation) {
+        const { error: attemptError } = await serviceClient.from("contractor_funnel_events").insert({
+          contractor_id: fbContractor.id,
+          user_id: userId,
+          email: userEmail,
+          phone: fbContractor.phone ?? null,
+          event_type: "entry_350_checkout_attempted",
+          step: "stripe_checkout_request",
+          environment: useTestMode ? "test" : "live",
+          is_test: useTestMode,
+          metadata: {
+            offer: "entry_activation_350",
+            amount_cents: amountCents,
+            ref: entryAffRef || null,
+            declared_business_name: fbContractor.business_name,
+          },
+        });
+        // Logging problems never become a reason to refuse a legitimate payment.
+        if (attemptError) console.error("[checkout:entry350] preflight record failed", attemptError.code);
+      }
+
+      let fbSession: Stripe.Checkout.Session;
+      try {
+        fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
+      } catch (stripeError) {
+        if (!isEntryActivation) throw stripeError;
+        const { error: recoveryError } = await serviceClient.from("contractor_funnel_events").insert({
+          contractor_id: fbContractor.id,
+          user_id: userId,
+          email: userEmail,
+          phone: fbContractor.phone ?? null,
+          event_type: "entry_350_checkout_failed",
+          step: "stripe_session_create_failed",
+          environment: useTestMode ? "test" : "live",
+          is_test: useTestMode,
+          failure_reason: "stripe_checkout_unavailable",
+          metadata: {
+            offer: "entry_activation_350",
+            amount_cents: amountCents,
+            recovery_state: "manual_review",
+            ref: entryAffRef || null,
+          },
+        });
+        if (recoveryError) console.error("[checkout:entry350] recovery record failed", recoveryError.code);
+        return new Response(
+          JSON.stringify({
+            code: "checkout_recovery_available",
+            error: "Le paiement n'a pas pu s'ouvrir. Vos informations d'inscription sont conservées; vous pouvez réessayer ou demander de l'aide.",
+            recovery_logged: !recoveryError,
+          }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Stripe is authoritative for the amount and paid state. A snapshot of
+      // the OPEN session lets admin recover abandoned checkouts and reconnect
+      // to the original buyer. INSERT only; an idempotent retry must never
+      // downgrade a completed/paid snapshot.
+      if (isEntryActivation) {
+        const { error: snapshotError } = await serviceClient.from("billing_checkout_sessions").insert({
+          contractor_id: fbContractor.id,
+          stripe_checkout_session_id: fbSession.id,
+          amount_total: fbSession.amount_total ?? 0,
+          currency: fbSession.currency ?? "cad",
+          checkout_status: "open",
+          payment_status: "unpaid",
+          metadata_json: {
+            offer: "entry_activation_350",
+            user_id: userId,
+            amount_subtotal: fbSession.amount_subtotal ?? amountCents,
+            ref: entryAffRef || null,
+            environment: useTestMode ? "test" : "live",
+          },
+        });
+        if (snapshotError && snapshotError.code !== "23505") {
+          console.error("[checkout:entry350] open-session record failed", snapshotError.code);
+        }
+      }
 
       console.info("[checkout:fallback_credit_350:created]", {
         user_id: userId,
