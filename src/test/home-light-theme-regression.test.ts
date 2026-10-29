@@ -47,8 +47,8 @@ describe("UNPRO visual mode regression: no more flash-and-stay-dark", () => {
 
 
   it("selects the official contrast-safe wordmark instead of forcing the dark image", () => {
-    expect(header).toContain('tone="auto"\\n                  className="home-brand-wordmark"');
-    expect(header).not.toContain('tone="gradient"\\n                  className="home-brand-wordmark"');
+    expect(header).toContain('tone="auto"\n                  className="home-brand-wordmark"');
+    expect(header).not.toContain('tone="gradient"\n                  className="home-brand-wordmark"');
   });
 
   it("keeps the section after Clara on the selected theme", () => {
