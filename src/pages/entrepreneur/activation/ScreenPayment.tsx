@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CreditCard, Shield, Lock, Loader2, Tag, ArrowRight, Users } from "lucide-react";
+import { CreditCard, Shield, Lock, Loader2, Tag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,7 +179,7 @@ export default function ScreenPayment() {
           <ul className="space-y-1 text-xs text-muted-foreground">
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Votre profil UNPRO sera activé immédiatement
+              Votre profil UNPRO sera activé après confirmation du paiement et des droits par UNPRO
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
@@ -187,7 +187,7 @@ export default function ScreenPayment() {
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Vous deviendrez admissible aux demandes compatibles disponibles dans votre territoire
+              Votre admissibilité dépend de vos services, de la demande réelle et des vérifications requises
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
@@ -211,11 +211,7 @@ export default function ScreenPayment() {
           </div>
         </div>
 
-        {/* Social proof */}
-        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-6">
-          <Users className="w-3.5 h-3.5" />
-          <span>200+ entrepreneurs actifs au Québec</span>
-        </div>
+        {/* No unverified customer counts, ratings, or fictitious social proof. */}
 
         {/* Desktop pay button */}
         <Button
