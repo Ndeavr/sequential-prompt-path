@@ -104,7 +104,7 @@ describe("contractor identity-first signup after AI analysis", () => {
     };
     mount();
     expect(await screen.findByText(/orientation préliminaire — à confirmer/i)).toBeInTheDocument();
-    expect(screen.queryByText(/50\\/mois/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("50/mois")).not.toBeInTheDocument();
     expect(screen.getByText(/aucun rendez-vous n'est garanti/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /réclamer mon profil — sans paiement/i })).toBeInTheDocument();
   });
