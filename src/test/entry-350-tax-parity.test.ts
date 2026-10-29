@@ -52,8 +52,12 @@ describe("350 Quebec tax contract", () => {
       }
       for(const session of qa.sessions) expect(session.amount_total).toBe(40241);
       const billing=qa.peripheral.get('billing_checkout_sessions') ?? [];
-      expect(billing).toHaveLength(1); expect(billing[0].amount_total).toBe(40241);
-      expect(billing[0].metadata_json.amount_subtotal).toBe(35000);
+      // Both independent entry paths must retain their own Stripe session.
+      expect(billing).toHaveLength(2);
+      for (const record of billing) {
+        expect(record.amount_total).toBe(40241);
+        expect(record.metadata_json.amount_subtotal).toBe(35000);
+      }
     } finally {await qa.close();}
   });
   it("authenticated Stripe read hydrates an old-version payload, rejects fake mode/rates and replay",async()=>{
