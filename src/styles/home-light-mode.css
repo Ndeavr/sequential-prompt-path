@@ -1,0 +1,119 @@
+/**
+ * UNPRO homepage light-mode repair.
+ *
+ * The legacy .home-light scope was redesigned as a DARK surface in index.css.
+ * Changing the <html> theme class therefore only changed the atmospheric
+ * backdrop, not the homepage (the visible "flash then nothing" bug).
+ *
+ * Keep that existing dark design untouched for html.dark. Override only
+ * html.light, with semantic light tokens and the few hard-coded dark hero
+ * layers. This stylesheet loads after index.css and alex-overlays.css.
+ * No layout, Clara interaction, checkout or routing changes.
+ */
+html.light .home-light {
+  --background: 213 100% 98%;
+  --foreground: 222 49% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 49% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 49% 9%;
+  --primary: 224 76% 46%;
+  --primary-foreground: 0 0% 100%;
+  --primary-strong: 224 76% 40%;
+  --primary-tint: 224 76% 33%;
+  --secondary: 213 96% 94%;
+  --secondary-foreground: 224 76% 28%;
+  --secondary-strong: 213 80% 87%;
+  --secondary-tint: 224 76% 30%;
+  --muted: 213 58% 95%;
+  --muted-foreground: 220 20% 33%;
+  --accent: 205 90% 44%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 44%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 153 72% 29%;
+  --success-foreground: 0 0% 100%;
+  --warning: 32 90% 35%;
+  --warning-foreground: 0 0% 100%;
+  --border: 213 35% 86%;
+  --input: 213 35% 88%;
+  --ring: 224 76% 46%;
+  --sun: 45 96% 52%;
+  --sun-foreground: 220 60% 12%;
+  --navy-strip: 224 64% 14%;
+  --text-primary: 222 49% 9%;
+  --text-body: 220 35% 20%;
+  --text-secondary: 220 22% 30%;
+  --text-muted: 220 16% 38%;
+  --text-disabled: 220 12% 52%;
+  --surface-primary: 0 0% 100%;
+  --surface-secondary: 213 90% 96%;
+  --glass-bg: hsl(0 0% 100% / 0.88);
+  --glass-border: hsl(224 40% 20% / 0.1);
+  --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.94), transparent 52%);
+  --glass-metal-bg: linear-gradient(145deg, hsl(0 0% 100% / .95), hsl(213 100% 98% / .88));
+  --glass-metal-border: hsl(224 40% 20% / .1);
+  --home-hero-veil: linear-gradient(90deg, hsl(213 100% 98% / .98), hsl(210 100% 97% / .8));
+  --home-reflection: radial-gradient(55% 100% at 50% 100%, hsl(216 100% 55% / .12), transparent 68%);
+  --home-glass-shadow: 0 28px 65px -30px hsl(217 82% 45% / .22), 0 12px 30px -20px hsl(220 34% 18% / .14), inset 0 1px 0 hsl(0 0% 100% / .85);
+
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html.light .home-light .home-glossy-hero {
+  background:
+    radial-gradient(88% 74% at 50% 95%, hsl(214 100% 86% / .36), transparent 70%),
+    linear-gradient(145deg, #ffffff 0%, #f5f9ff 52%, #eaf3ff 100%);
+}
+
+html.light .home-light .home-clara-ambient {
+  background:
+    radial-gradient(65% 54% at 8% 8%, hsl(215 100% 79% / .23), transparent 71%),
+    radial-gradient(58% 56% at 92% 30%, hsl(197 100% 79% / .19), transparent 75%),
+    linear-gradient(165deg, hsl(0 0% 100% / .42), hsl(213 100% 97% / .3));
+}
+html.light .home-light .home-clara-ambient::before,
+html.light .home-light .home-clara-ambient::after {
+  opacity: .24;
+}
+
+html.light .home-light .home-hero-badge {
+  border-color: hsl(217 70% 69% / .24);
+  background:
+    linear-gradient(135deg, hsl(216 100% 88% / .34), transparent 55%),
+    linear-gradient(165deg, rgba(255, 255, 255, .95), rgba(241, 248, 255, .9));
+  box-shadow: 0 22px 64px -34px hsl(217 80% 48% / .36), inset 0 1px 0 rgba(255, 255, 255, .96);
+}
+html.light .home-light .home-hero-badge-kicker {
+  color: hsl(220 27% 29%);
+}
+html.light .home-light .home-hero-badge-kicker > span {
+  color: hsl(224 76% 33%);
+}
+html.light .home-light .home-hero-title {
+  color: hsl(var(--foreground));
+}
+html.light .home-light .home-hero-title strong {
+  background: linear-gradient(112deg, #1d4ed8, #2563eb 52%, #0369a1);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: none;
+}
+html.light .home-light .home-hero-subtitle {
+  color: hsl(var(--muted-foreground));
+}
+html.light .home-light .home-clara-glass {
+  border-color: hsl(217 68% 80% / .6);
+  background: linear-gradient(155deg, hsl(var(--card)), hsl(var(--background)));
+  color: hsl(var(--card-foreground));
+}
+html.light .home-light .home-clara-prompt [data-slot="input-group"] {
+  border-color: hsl(217 31% 70% / .46);
+  background: hsl(214 80% 97% / .92);
+}
+html.light .home-light .home-afterglow {
+  background: linear-gradient(180deg, #f5f9ff, #edf4ff);
+}
+
+/* Reduced motion and conversation keyboard rules stay in index.css. */
