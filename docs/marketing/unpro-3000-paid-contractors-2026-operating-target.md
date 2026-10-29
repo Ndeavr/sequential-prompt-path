@@ -101,9 +101,9 @@ Chaque rapport UNPRO doit afficher :
 
 ## 9. Audit d'entonnoir reproductible en lecture seule (29 octobre 2026)
 
-**Usage :** contrôles agrégés sur le backend UNPRO existant, sans modification SQL ni divulgation de coordonnées. Ces requêtes ne prouvent **jamais** un achat à elles seules. Périmètre temporel de la campagne : depuis le 27 octobre 2026 à 00 h au Québec (\`2026-10-27T04:00:00+00\`; heure d'été à cette date). Exclure les tests et acteurs internes avant de qualifier des sessions. Ne pas assimiler visiteur, événement, session, entreprise ou revenu.
+**Usage :** contrôles agrégés sur le backend UNPRO existant, sans modification SQL ni divulgation de coordonnées. Ces requêtes ne prouvent **jamais** un achat à elles seules. Périmètre temporel de la campagne : depuis le 27 octobre 2026 à 00 h au Québec (`2026-10-27T04:00:00+00`; heure d'été à cette date). Exclure les tests et acteurs internes avant de qualifier des sessions. Ne pas assimiler visiteur, événement, session, entreprise ou revenu.
 
-\`\`\`sql
+```sql
 -- Entonnoir déclaré par canal : événements ≠ inscriptions ≠ paiements.
 SELECT
   COALESCE(NULLIF(TRIM(channel), ''), 'non attribué') AS canal,
@@ -119,11 +119,11 @@ WHERE created_at >= '2026-10-27T04:00:00+00'
   AND COALESCE(is_test, false) = false
   AND internal_reason IS NULL
 GROUP BY 1 ORDER BY evenements DESC;
-\`\`\`
+```
 
-Le canal \`non attribué\` est conservé comme tel ; \`source='app'\`, les UTM déclarés ou la classe « Direct » de Lovable ne prouvent ni origine commerciale, ni entreprise qualifiée, ni conversion. Les catégories à rapporter séparément sont **affiliés/partenaires, organique, publicité autorisée, prospection conforme, non attribué**. L'absence d'un événement d'inscription ne prouve pas l'absence de tout compte ancien ; ne compter comme nouveau que ce qui est vérifié depuis la date de départ.
+Le canal `non attribué` est conservé comme tel ; `source='app'`, les UTM déclarés ou la classe « Direct » de Lovable ne prouvent ni origine commerciale, ni entreprise qualifiée, ni conversion. Les catégories à rapporter séparément sont **affiliés/partenaires, organique, publicité autorisée, prospection conforme, non attribué**. L'absence d'un événement d'inscription ne prouve pas l'absence de tout compte ancien ; ne compter comme nouveau que ce qui est vérifié depuis la date de départ.
 
-\`\`\`sql
+```sql
 -- Contrôle indicatif des nouvelles traces de monétisation (PAS preuve de ventes).
 SELECT 'billing_webhook_events' AS source, COUNT(*) AS traces
   FROM public.billing_webhook_events WHERE received_at >= '2026-10-27T04:00:00+00'
@@ -139,10 +139,10 @@ UNION ALL SELECT 'billing_checkout_sessions', COUNT(*)
   FROM public.billing_checkout_sessions WHERE created_at >= '2026-10-27T04:00:00+00'
 UNION ALL SELECT 'contractor_recruitment_payments', COUNT(*)
   FROM public.contractor_recruitment_payments WHERE created_at >= '2026-10-27T04:00:00+00';
-\`\`\`
+```
 
-**Réconciliation obligatoire hors SQL :** récupérer Stripe **LIVE**, paginer toutes les transactions pertinentes, vérifier montant **de base avant taxes de 35 000 cents CAD** et règlement, non-remboursement/non-litige ; rapprocher l'identifiant Stripe, le webhook signé authentifié et idempotent, l'identité juridique unique de l'entreprise et son droit de profil **12 mois**. Le seul retour navigateur, \`payment_status\` CRM, l'existence d'un checkout ou une ligne de droit sans source ne qualifie pas. Une liste Stripe \`has_more=true\` est partielle, pas un audit historique exhaustif. Compter le revenu net hors taxes et le CAC uniquement après rapprochement de la dépense réellement engagée par canal.
+**Réconciliation obligatoire hors SQL :** récupérer Stripe **LIVE**, paginer toutes les transactions pertinentes, vérifier montant **de base avant taxes de 35 000 cents CAD** et règlement, non-remboursement/non-litige ; rapprocher l'identifiant Stripe, le webhook signé authentifié et idempotent, l'identité juridique unique de l'entreprise et son droit de profil **12 mois**. Le seul retour navigateur, `payment_status` CRM, l'existence d'un checkout ou une ligne de droit sans source ne qualifie pas. Une liste Stripe `has_more=true` est partielle, pas un audit historique exhaustif. Compter le revenu net hors taxes et le CAC uniquement après rapprochement de la dépense réellement engagée par canal.
 
-**Échantillon observé le 29 octobre vers 16 h 15 (Montréal), lecture seule :** 177 visiteurs et 227 pages vues Lovable depuis le 27 ; 55 événements commerciaux non marqués test/interne = 24 sessions distinctes, 0 entreprise identifiée, **100 % des sessions non attribuées** ; 0 événement d'inscription et 0 événement checkout dans cette cohorte. Les sept tables du contrôle ci-dessus retournent 0 nouvelle trace depuis le départ. Stripe LIVE liste 91 PaymentIntents au total, dont trois paiements réussis à 1 $, aucun réussi à 350 $ ; les 100 Checkout Sessions les plus récentes affichent \`has_more=true\` et ne doivent donc pas être décrites comme l'historique complet. **Ventes admissibles réconciliées : 0/3 000, à cette heure.** Cette photographie ne prouve ni que les correctifs GitHub sont déployés, ni qu'une campagne est prête.
+**Échantillon observé le 29 octobre vers 16 h 15 (Montréal), lecture seule :** 177 visiteurs et 227 pages vues Lovable depuis le 27 ; 55 événements commerciaux non marqués test/interne = 24 sessions distinctes, 0 entreprise identifiée, **100 % des sessions non attribuées** ; 0 événement d'inscription et 0 événement checkout dans cette cohorte. Les sept tables du contrôle ci-dessus retournent 0 nouvelle trace depuis le départ. Stripe LIVE liste 91 PaymentIntents au total, dont trois paiements réussis à 1 $, aucun réussi à 350 $ ; les 100 Checkout Sessions les plus récentes affichent `has_more=true` et ne doivent donc pas être décrites comme l'historique complet. **Ventes admissibles réconciliées : 0/3 000, à cette heure.** Cette photographie ne prouve ni que les correctifs GitHub sont déployés, ni qu'une campagne est prête.
 
 **État d'autorisation inchangé :** rapportage et audit SELECT uniquement ; aucune campagne, signature CASL, message, écriture de production, modification de paiement ou dépense n'est permise par cette section. Le P0 #86 demeure l'autorité de validation du parcours Stripe TEST isolé.
