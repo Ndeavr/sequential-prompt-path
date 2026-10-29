@@ -78,7 +78,7 @@ export function SectionMatchingPaths({ onStartHomeowner }: { onStartHomeowner: (
     transition: { duration: reduced ? 0 : 0.42, delay: reduced ? 0 : delay },
   });
   return (
-    <section aria-labelledby="home-matching-title" className="home-matching-section alex-immersive border-t border-border bg-background px-5 py-16 sm:px-8 md:py-24">
+    <section aria-labelledby="home-matching-title" className="home-matching-section border-t border-border bg-background px-5 py-16 sm:px-8 md:py-24">
       <div className="mx-auto max-w-5xl">
         <div className="mb-10"><ServiceUniverseLinks lang={lang} /></div>
         <h2 id="home-matching-title" className="text-3xl font-semibold leading-tight tracking-normal text-foreground sm:text-4xl md:text-5xl">
