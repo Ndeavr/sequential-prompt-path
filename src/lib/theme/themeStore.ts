@@ -5,16 +5,16 @@
  * <html>, keeps <meta name="theme-color"> in sync and persists the choice in
  * localStorage. No table, no migration.
  *
- * NOTE: the default mode is `dark` (cinematic premium). Only an explicit user
- * choice switches to `light` or `system` — existing surfaces keep rendering
- * exactly as before for everyone who never touches the switcher.
+ * New visitors start in premium `light` mode. Stored preferences (including
+ * `dark` and `system`) always win, so existing users keep their chosen theme.
+ * This does not change dark-scoped admin/Clara surfaces or functional flows.
  */
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "unpro-theme";
-export const DEFAULT_THEME_MODE: ThemeMode = "dark";
+export const DEFAULT_THEME_MODE: ThemeMode = "light";
 
 const THEME_COLOR: Record<ResolvedTheme, string> = {
   dark: "#050816",
