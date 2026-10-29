@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  console.log("[visibilite-ia-lead] submission_received", { source: SOURCE, phone_suffix: phone.slice(-4) });
+  console.log("[visibilite-ia-lead] submission_received", { source: SOURCE });
 
   // Garde anti-doublon 24 h (téléphone + source)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -205,8 +205,8 @@ Deno.serve(async (req) => {
         }),
       });
       if (!res.ok) {
-        const body = await res.text();
-        console.error(`[visibilite-ia-lead] notification_failed [${res.status}]: ${body}`);
+        // Provider errors may contain submitted contact details; never echo response bodies into logs.
+        console.error("[visibilite-ia-lead] notification_failed", { status: res.status });
       } else {
         console.log("[visibilite-ia-lead] notification_sent", { lead_id: inserted.id });
       }
