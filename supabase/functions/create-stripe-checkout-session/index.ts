@@ -92,6 +92,41 @@ serve(async (req) => {
       }
     }
 
+    // A LIVE subscription must be correlated to its existing company when
+    // possible. Guest checkout stays available, but incomplete identity is
+    // explicitly sent to manual reconciliation by the signed webhook.
+    let contractorId: string | null = null;
+    let contactPhone: string | null = null;
+    let companyName: string | null = null;
+    if (userId) {
+      const { data: owned, error: ownedError } = await supabaseAdmin
+        .from("contractors")
+        .select("id,business_name,phone,email")
+        .eq("user_id", userId).maybeSingle();
+      if (ownedError) console.error("[checkout:plans] owner lookup", ownedError.code);
+      if (owned) {
+        contractorId = owned.id;
+        companyName = owned.business_name ?? null;
+        contactPhone = owned.phone ?? null;
+        if (!userEmail && owned.email) userEmail = owned.email;
+      }
+    }
+    if (onboarding_session_id && userId) {
+      const { data: ownedFunnel, error: funnelError } = await supabaseAdmin
+        .from("contractor_activation_funnel")
+        .select("id,user_id,business_name,phone,email")
+        .eq("id", onboarding_session_id).maybeSingle();
+      if (funnelError || !ownedFunnel || ownedFunnel.user_id !== userId) {
+        return new Response(JSON.stringify({
+          code: "onboarding_session_forbidden",
+          error: "Impossible de rattacher cette inscription au compte. Reconnectez-vous puis réessayez.",
+        }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      companyName ||= ownedFunnel.business_name ?? null;
+      contactPhone ||= ownedFunnel.phone ?? null;
+      if (!userEmail && ownedFunnel.email) userEmail = ownedFunnel.email;
+    }
+
     const requestedOrigin = req.headers.get("origin") || "";
     const allowedOrigins = new Set(["https://unpro.ca", "https://www.unpro.ca", "https://sequential-prompt-path.lovable.app"]);
     const origin = allowedOrigins.has(requestedOrigin) ? requestedOrigin : "https://unpro.ca";
@@ -108,6 +143,8 @@ serve(async (req) => {
         billing_cycle: cycle,
         onboarding_session_id: onboarding_session_id || "",
         user_id: userId || "",
+        contractor_id: contractorId || "",
+        plan_id: plan.code,
         expected_amount_cents: String(amountCents),
         offer: "contractor_subscription",
       },
@@ -125,7 +162,9 @@ serve(async (req) => {
     const audit = (event_type: string, extra: Record<string, unknown> = {}) =>
       supabaseAdmin.from("contractor_funnel_events").insert({
         user_id: userId,
+        contractor_id: contractorId,
         email: userEmail,
+        phone: contactPhone,
         event_type,
         step: "subscription_checkout",
         environment: "live",
@@ -161,6 +200,7 @@ serve(async (req) => {
     // Stripe is authoritative for whether this unpaid session completes.
     // Never overwrite the same session id when the webhook has already paid it.
     const { error: saveError } = await supabaseAdmin.from("billing_checkout_sessions").insert({
+      contractor_id: contractorId,
       stripe_checkout_session_id: session.id,
       amount_total: session.amount_total ?? amountCents,
       currency: session.currency || "cad",
@@ -171,6 +211,8 @@ serve(async (req) => {
         expected_amount_cents: amountCents, user_id: userId,
         onboarding_session_id: onboarding_session_id || null,
         email: userEmail,
+        company_name: companyName,
+        contact_phone: contactPhone,
       },
     });
     if (saveError && saveError.code !== "23505") console.error("[checkout:plans] snapshot", saveError.code);
