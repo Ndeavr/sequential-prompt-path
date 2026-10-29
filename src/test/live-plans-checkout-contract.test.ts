@@ -26,6 +26,15 @@ describe("UNPRO LIVE payments across existing offers", () => {
     expect(legacy).toContain("product_data:");
     expect(legacy).toContain('mode: "subscription"');
   });
+  it("links paid subscriptions to a known contractor and flags unlinked Stripe receipts", () => {
+    const webhook = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
+    expect(legacy).toContain('contractor_id: contractorId || ""');
+    expect(legacy).toContain('plan_id: plan.code');
+    expect(legacy).toContain('ownedFunnel.user_id !== userId');
+    expect(webhook).toContain('subscription_paid_needs_manual_activation');
+    expect(webhook).toContain('session.metadata?.offer === "contractor_subscription"');
+    expect(webhook).toContain('session.payment_status === "paid"');
+  });
   it("protects money, identity and recovery, not speculative launch gates", () => {
     expect(legacy).toContain('stripe.prices.retrieve(publishedPriceId)');
     expect(legacy).toContain("const amountCents");
