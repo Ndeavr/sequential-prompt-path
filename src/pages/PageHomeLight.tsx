@@ -59,7 +59,6 @@ export default function PageHomeLight() {
             content={description}
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-          <meta name="theme-color" content="#050816" />
           <link rel="canonical" href="https://unpro.ca/" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
