@@ -46,12 +46,19 @@ export function useCalendarConnections() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Apple ICS is an outgoing feed link; it does NOT give UNPRO permission
+  // to read free/busy slots. Do not treat it as bidirectional availability.
   const isConnected = connections.some(
-    (c) => c.connection_status === "connected" || c.connection_status === "subscribed_external"
+    (c) => c.provider === "google" && c.connection_status === "connected"
   );
-  const primary = connections.find((c) => c.is_primary) ?? connections[0] ?? null;
+  const hasExternalAppleFeed = connections.some(
+    (c) => c.provider === "apple" && c.connection_status === "subscribed_external"
+  );
+  const primary = connections.find((c) => c.provider === "google" && c.connection_status === "connected")
+    ?? connections.find((c) => c.is_primary)
+    ?? connections[0] ?? null;
 
-  return { connections, primary, isConnected, loading, refresh };
+  return { connections, primary, isConnected, hasExternalAppleFeed, loading, refresh };
 }
 
 export function useCalendarConversionTracking() {
