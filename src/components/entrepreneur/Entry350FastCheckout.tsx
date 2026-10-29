@@ -119,6 +119,12 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         setErrorText("Le paiement n'est pas encore ouvert. Rien n'a été facturé.");
         return;
       }
+      if (reply?.code === "checkout_recovery_available") {
+        // The authenticated company/contact are kept server-side for support.
+        // A failed Checkout creation is never presented as a paid transaction.
+        setErrorText("Le paiement n'a pas pu s'ouvrir. Vos informations d'inscription sont conservées. Vous pouvez réessayer ou demander de l'aide.");
+        return;
+      }
       if (reply?.code === "business_name_required") {
         setErrorText("Confirmez le nom de votre entreprise avant le paiement.");
         return;
@@ -178,7 +184,15 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       </div>
       {outcome === "success" && <p role="status" className="mt-3 text-sm text-primary">Retour de Stripe détecté. Ce retour ne prouve pas le paiement; seul le serveur peut confirmer votre activation. Vérifiez votre espace entrepreneur.</p>}
       {outcome === "canceled" && <p role="status" className="mt-3 text-sm">Paiement annulé : vos réponses sont conservées.</p>}
-      {errorText && <p role="alert" className="mt-3 text-sm text-destructive">{errorText}</p>}
+      {errorText && (
+        <div role="alert" className="mt-3 space-y-2 text-sm text-destructive">
+          <p>{errorText}</p>
+          <a href="mailto:yan@unpro.ca?subject=Assistance%20activation%20UNPRO%20350"
+            className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+            Demander assistance pour mon activation
+          </a>
+        </div>
+      )}
       {info && <p role="status" className="mt-3 text-sm">{info} <Link to="/pro" className="underline">Mon espace entrepreneur</Link></p>}
       <Button type="button" data-testid="entry-350-checkout" onClick={() => void begin()}
         disabled={busy || Boolean(info) || outcome === "success"} className="mt-4 min-h-12 w-full whitespace-normal">
