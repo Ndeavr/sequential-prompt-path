@@ -4,6 +4,8 @@ import App from "./app/App";
 import "./index.css";
 import "./clara-composer.css";
 import "./styles/alex-overlays.css";
+// Scoped light-mode repair; load after legacy overlays for reliable cascade.
+import "./styles/home-light-mode.css";
 import { installLegacyPlanGuard } from "./dev/legacyPlanGuard";
 import { logBoot } from "./lib/bootDebug";
 import { initObservability } from "./lib/observability";
