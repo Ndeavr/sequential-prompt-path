@@ -92,7 +92,9 @@ serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || "https://sequential-prompt-path.lovable.app";
+    const requestedOrigin = req.headers.get("origin") || "";
+    const allowedOrigins = new Set(["https://unpro.ca", "https://www.unpro.ca", "https://sequential-prompt-path.lovable.app"]);
+    const origin = allowedOrigins.has(requestedOrigin) ? requestedOrigin : "https://unpro.ca";
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
@@ -138,7 +140,8 @@ serve(async (req) => {
     });
     let session: Stripe.Checkout.Session;
     try {
-      const identity = userId || onboarding_session_id || "guest";
+      // Never share the idempotency key of two unrelated anonymous buyers.
+      const identity = userId || crypto.randomUUID();
       const requestKey = "unpro-plan-v2-" + identity + "-" + plan_code + "-" + cycle + "-" + amountCents + "-" + Math.floor(Date.now() / 1800000);
       session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey: requestKey });
     } catch (e) {
