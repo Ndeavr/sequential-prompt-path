@@ -258,17 +258,17 @@ export default function PageContractorAnalysisLive() {
         )}
       </div>
 
-      {/* Sticky CTA */}
-      {ready && plan && (
-        <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
-          <div className="max-w-2xl mx-auto">
-            <ActivationButton runId={runId!} businessName={run?.domain ?? undefined} />
-            <p className="mt-2 text-center text-[11px] text-white/40">
-              Fondateur UNPRO — accès privilégié activé
-            </p>
-          </div>
+      {/* The identity-first signup must never depend on an AI score or plan.
+          Even if analysis is slow or fails, the existing OTP/auth gate handles
+          account creation; this button never opens Stripe. */}
+      <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
+        <div className="max-w-2xl mx-auto">
+          <ActivationButton runId={runId} businessName={run?.domain ?? undefined} />
+          <p className="mt-2 text-center text-[11px] text-white/60">
+            Vérification de votre identité avant le profil. Aucun paiement à cette étape.
+          </p>
         </div>
-      )}
+      </div>
     </main>
   );
 }
@@ -284,7 +284,7 @@ function ActivationButton({ runId, businessName }: { runId: string; businessName
   };
   return (
     <button onClick={activate} className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition">
-      {CONTRACTOR_OFFER.ctaPrimary} <ArrowRight className="w-4 h-4" />
+      Réclamer mon profil — sans paiement <ArrowRight className="w-4 h-4" />
     </button>
   );
 }
