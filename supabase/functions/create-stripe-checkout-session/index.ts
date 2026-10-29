@@ -142,7 +142,17 @@ serve(async (req) => {
     try {
       // Never share the idempotency key of two unrelated anonymous buyers.
       const identity = userId || crypto.randomUUID();
-      const requestKey = "unpro-plan-v2-" + identity + "-" + plan_code + "-" + cycle + "-" + amountCents + "-" + Math.floor(Date.now() / 1800000);
+      // Coupon changes, attribution and return destination must never inherit
+      // a previous checkout created with a different payment contract.
+      const contract = JSON.stringify({
+        identity, plan_code, cycle, amountCents,
+        coupon_code: coupon_code || null,
+        onboarding_session_id: onboarding_session_id || null,
+        origin, bucket: Math.floor(Date.now() / 1800000),
+      });
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(contract));
+      const requestKey = "unpro-plan-v2-" + Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, "0")).join("");
       session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey: requestKey });
     } catch (e) {
       await audit("plan_checkout_failed", { failure_reason: "stripe_session_creation_failed" });
