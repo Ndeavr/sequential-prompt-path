@@ -80,7 +80,7 @@ const QRShareSheet = ({ open, onOpenChange }: QRShareSheetProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[95vh] rounded-3xl p-0 overflow-y-auto overflow-x-hidden border-0 shadow-2xl bg-card">
+      <DialogContent showCloseButton={false} className="w-[calc(100vw-1rem)] max-w-lg max-h-[95vh] rounded-3xl p-0 overflow-y-auto overflow-x-hidden border-0 shadow-2xl bg-card">
         <DialogHeader className="sr-only">
           <DialogTitle>{t.dialogTitle.fr}</DialogTitle>
         </DialogHeader>
@@ -141,7 +141,7 @@ function IntentSelector({
           <h2 className="text-lg font-bold text-foreground font-display">{t.dialogTitle[lang]}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle[lang]}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label={lang === "en" ? "Close sharing" : "Fermer le partage"} className="h-10 w-10 rounded-full">
           <X className="h-4 w-4" />
         </Button>
       </div>
