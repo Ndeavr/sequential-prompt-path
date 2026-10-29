@@ -117,3 +117,102 @@ html.light .home-light .home-afterglow {
 }
 
 /* Reduced motion and conversation keyboard rules stay in index.css. */
+
+/* ─── 2026-10-29 mobile contrast follow-up ─────────────────────────────
+   No markup/handlers changed. Preserve actual disabled states: the send
+   button becomes active only with text or an attachment.
+   Scope to the homepage so admin, paid funnels and dark mode keep their UI.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* A visibly actionable microphone, even before voice is suggested. */
+html.light .home-light .home-clara-mic {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  color: #1d4ed8;
+  background: #e5f1ff;
+  border: 1px solid #93b9ed;
+  box-shadow: 0 3px 10px rgba(29, 78, 216, .12);
+  opacity: 1;
+}
+html.light .home-light .home-clara-mic svg {
+  stroke: currentColor;
+  stroke-width: 2.3;
+  opacity: 1;
+}
+html.light .home-light .home-clara-mic[data-voice-suggested="true"] {
+  color: #1d4ed8;
+  background: #dcecff;
+  border-color: #60a5fa;
+}
+html.light .home-light .home-clara-mic[data-voice-listening="true"] {
+  color: #fff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, .17);
+}
+html.light .home-light .home-clara-mic:focus-visible,
+html.light .home-light .home-clara-submit:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 3px;
+}
+
+/* Bright blue when available; distinct subdued state if composer is empty.
+   Do not make disabled submit clickable or imply a message was sent. */
+html.light .home-light .home-clara-submit:not(:disabled) {
+  color: #fff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 5px rgba(29, 78, 216, .13), 0 8px 18px -8px rgba(29, 78, 216, .5);
+  opacity: 1;
+}
+html.light .home-light .home-clara-submit:disabled {
+  color: #345b9f;
+  background: #dbe8fc;
+  border-color: #adc5e8;
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, .07);
+  opacity: 1;
+  cursor: not-allowed;
+}
+html.light .home-light .home-clara-submit svg {
+  stroke: currentColor;
+  stroke-width: 2.3;
+  opacity: 1;
+}
+
+/* Continue daylight colors below Clara: no dark-only section or hard stop. */
+html.light .home-light .home-matching-section {
+  background: linear-gradient(180deg, #edf5ff 0%, #f5f9ff 20%, #fff 100%);
+  color: hsl(var(--foreground));
+  border-top-color: hsl(var(--border));
+}
+html.light .home-light .home-matching-section article {
+  background: rgba(255, 255, 255, .94);
+  border-color: hsl(var(--border));
+  color: hsl(var(--card-foreground));
+  box-shadow: 0 16px 38px -24px rgba(11, 18, 32, .18);
+}
+html.light .home-light .home-matching-section nav a {
+  background: #fff;
+  color: #142a4a;
+  border-color: #ceddf2;
+}
+html.light .home-light .home-matching-section nav a:hover {
+  background: #e9f2ff;
+  border-color: #95b9eb;
+}
+html.light .home-light .home-matching-section .text-primary-tint {
+  color: hsl(var(--primary-tint));
+}
+html.light .home-light .home-afterglow {
+  background: linear-gradient(180deg, #fff, #f5f9ff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.light .home-light .home-clara-mic,
+  html.light .home-light .home-clara-submit {
+    animation: none;
+    transition: none;
+  }
+}
