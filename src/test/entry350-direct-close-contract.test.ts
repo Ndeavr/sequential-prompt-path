@@ -22,6 +22,21 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(fast).not.toContain("target_monthly_appointments");
     expect(fast).toContain("402,41 $");
   });
+  it("retains buyer and Stripe attempt for manual recovery without marking paid", () => {
+    expect(edge).toContain('"entry_350_checkout_attempted"');
+    expect(edge).toContain('"entry_350_checkout_failed"');
+    expect(edge).toContain('"checkout_recovery_available"');
+    expect(edge).toContain('stripe_checkout_session_id: fbSession.id');
+    expect(edge).toContain('snapshotError.code !== "23505"');
+    expect(edge).toContain('user_id: userId');
+    expect(edge).toContain('email: userEmail');
+    expect(fast).toContain('Demander assistance pour mon activation');
+    expect(fast).toContain('Vos informations d\'inscription sont conservées');
+    // There is no client-side paid mutation or fake success.
+    expect(fast).not.toContain('payment_status: "paid"');
+    expect(fast).not.toContain('activation_status: "active"');
+  });
+
   it("keeps all payment authority server-side and refuses false success claims", () => {
     expect(edge).toContain("const isEntryActivation = entryActivation === true");
     expect(edge).toContain("const entryDeclaredName");
