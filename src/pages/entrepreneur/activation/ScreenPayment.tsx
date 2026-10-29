@@ -3,7 +3,6 @@
  * Plan summary + coupon + tax breakdown + trust + sticky CTA + friendly errors.
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CreditCard, Shield, Lock, Loader2, Tag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,15 +17,14 @@ import { friendlyError } from "@/utils/friendlyErrors";
 import { CONTRACTOR_PLANS, ENTRY_OFFER } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
-const PLAN_DETAILS: Record<string, { name: string; monthly: number }> = Object.fromEntries(
-  CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice }])
+const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = Object.fromEntries(
+  CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice, yearly: p.yearlyPrice }])
 );
 
 const TPS_RATE = 0.05;
 const TVQ_RATE = 0.09975;
 
 export default function ScreenPayment() {
-  const navigate = useNavigate();
   const { state, updateFunnel } = useActivationFunnel();
   const { toast } = useToast();
   const [coupon, setCoupon] = useState("");
@@ -37,7 +35,10 @@ export default function ScreenPayment() {
   const isFounder = (state.selected_plan || "").toLowerCase() === "founder";
 
   const plan = PLAN_DETAILS[state.selected_plan || "pro_v2"] || PLAN_DETAILS["pro_v2"];
-  const price = isFounder ? ENTRY_OFFER.priceDollars : plan.monthly;
+  const billingCycle = state.billing_cycle === "monthly" ? "monthly" : "yearly";
+  const isAnnual = !isFounder && billingCycle === "yearly";
+  const price = isFounder ? ENTRY_OFFER.priceDollars : isAnnual ? plan.yearly : plan.monthly;
+  const periodLabel = isFounder ? "" : isAnnual ? "/an" : "/mois";
   const tps = Math.round(price * TPS_RATE * 100) / 100;
   const tvq = Math.round(price * TVQ_RATE * 100) / 100;
   const total = Math.round((price + tps + tvq) * 100) / 100;
@@ -71,7 +72,6 @@ export default function ScreenPayment() {
 
 
       const planCode = state.selected_plan || "pro_v2";
-      const billingCycle = state.billing_cycle || "yearly";
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
         body: {
           plan_code: planCode,
@@ -82,13 +82,11 @@ export default function ScreenPayment() {
       });
 
       if (error) throw error;
-      if (data?.url) {
-        await updateFunnel({ stripe_session_id: data.session_id });
-        redirectToCheckout(data.url);
-      } else {
-        await updateFunnel({ payment_status: "paid" });
-        navigate("/entrepreneur/activer/succes");
-      }
+      // Only a Stripe URL can start a checkout. The verified webhook is the
+      // ONLY authority allowed to mark an account paid or activated.
+      if (!data?.url || typeof data.url !== "string") throw new Error("checkout_url_missing");
+      await updateFunnel({ stripe_session_id: data.session_id });
+      redirectToCheckout(data.url);
     } catch (err: any) {
       toast({
         title: "Erreur de paiement",
@@ -121,7 +119,7 @@ export default function ScreenPayment() {
             </h3>
             <div className="text-right">
               <span className="text-2xl font-bold text-foreground">{price}$</span>
-              <span className="text-xs text-muted-foreground">{isFounder ? " une seule fois" : "/mois"}</span>
+              <span className="text-xs text-muted-foreground">{isFounder ? " une seule fois" : periodLabel}</span>
             </div>
           </div>
           {isFounder ? (
@@ -131,7 +129,7 @@ export default function ScreenPayment() {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Facturation {state.billing_cycle === "yearly" ? "annuelle" : "mensuelle"}
+              Facturation {isAnnual ? "annuelle" : "mensuelle"}
             </p>
           )}
           {savings > 0 && (
@@ -153,7 +151,7 @@ export default function ScreenPayment() {
           </div>
           <div className="border-t border-border/30 pt-1 mt-1 flex justify-between text-sm font-semibold text-foreground">
             <span>{isFounder ? "À payer aujourd'hui" : "Total"}</span>
-            <span>{total.toFixed(2)}${isFounder ? "" : "/mois"}</span>
+            <span>{total.toFixed(2)}${periodLabel}</span>
           </div>
           {isFounder && (
             <p className="pt-1 text-[11px] text-muted-foreground">
@@ -223,12 +221,12 @@ export default function ScreenPayment() {
           {processing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
           {isFounder
             ? `Payer ${total.toFixed(2)}$ et activer mon profil`
-            : `Payer ${total.toFixed(2)}$/mois`}
+            : `Payer ${total.toFixed(2)}$${periodLabel}`}
         </Button>
       </motion.div>
 
       <StickyMobileCTA
-        label={isFounder ? `Payer ${total.toFixed(2)}$ et activer` : `Payer ${total.toFixed(2)}$/mois`}
+        label={isFounder ? `Payer ${total.toFixed(2)}$ et activer` : `Payer ${total.toFixed(2)}$${periodLabel}`}
         onClick={handlePay}
         disabled={processing}
         loading={processing}
