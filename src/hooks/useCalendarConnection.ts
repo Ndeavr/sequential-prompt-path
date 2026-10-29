@@ -23,6 +23,24 @@ export interface CalendarConnection {
   last_error_message: string | null;
 }
 
+/**
+ * A generated Apple webcal link is outgoing only; it never proves that
+ * the user subscribed and never grants UNPRO free/busy read access.
+ * Keep this pure so it can be tested with synthetic connections.
+ */
+export function deriveCalendarCapabilities(connections: CalendarConnection[]) {
+  const isConnected = connections.some(
+    (c) => c.provider === "google" && c.connection_status === "connected"
+  );
+  const hasExternalAppleFeed = connections.some(
+    (c) => c.provider === "apple" && c.connection_status === "subscribed_external"
+  );
+  const primary = connections.find((c) => c.provider === "google" && c.connection_status === "connected")
+    ?? connections.find((c) => c.is_primary)
+    ?? connections[0] ?? null;
+  return { isConnected, hasExternalAppleFeed, primary };
+}
+
 export function useCalendarConnections() {
   const { user } = useAuth();
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
@@ -46,17 +64,7 @@ export function useCalendarConnections() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Apple ICS is an outgoing feed link; it does NOT give UNPRO permission
-  // to read free/busy slots. Do not treat it as bidirectional availability.
-  const isConnected = connections.some(
-    (c) => c.provider === "google" && c.connection_status === "connected"
-  );
-  const hasExternalAppleFeed = connections.some(
-    (c) => c.provider === "apple" && c.connection_status === "subscribed_external"
-  );
-  const primary = connections.find((c) => c.provider === "google" && c.connection_status === "connected")
-    ?? connections.find((c) => c.is_primary)
-    ?? connections[0] ?? null;
+  const { isConnected, hasExternalAppleFeed, primary } = deriveCalendarCapabilities(connections);
 
   return { connections, primary, isConnected, hasExternalAppleFeed, loading, refresh };
 }
