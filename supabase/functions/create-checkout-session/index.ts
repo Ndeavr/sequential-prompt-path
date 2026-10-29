@@ -608,6 +608,7 @@ Deno.serve(async (req) => {
           metadata_json: {
             offer: "entry_activation_350",
             user_id: userId,
+            amount_subtotal: fbSession.amount_subtotal ?? amountCents,
             ref: entryAffRef || null,
             environment: useTestMode ? "test" : "live",
           },
