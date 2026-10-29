@@ -4,7 +4,7 @@
 // back to activation_pipeline_runs in real time. Failsafe: any single module
 // failure flips partial_confidence=true but never stops the pipeline.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { recommendPlan as canonicalRecommendPlan, planRank } from "../_shared/planRecommendation.ts";
+import { recommendPlan as canonicalRecommendPlan } from "../_shared/planRecommendation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -242,20 +242,13 @@ Deno.serve(async (req) => {
 
         // Phase 4: Plan recommendation
         const { plan, reason } = recommendPlan(total, signals);
-        const projectedAppointments = planRank(plan as any) >= 6
-          ? 50
-          : planRank(plan as any) >= 5
-          ? 25
-          : planRank(plan as any) >= 4
-          ? 15
-          : 10;
+        // Site-visibility signals cannot substantiate appointment demand or
+        // a contractor's closing rate. These require separate verified evidence.
         await patch(supabase, runId!, {
           recommended_plan: plan,
           recommendation: {
             plan,
             reason,
-            projected_appointments: projectedAppointments,
-            estimated_close_rate: 0.4,
           },
           current_step: "ready",
           pipeline_status: "ready",
