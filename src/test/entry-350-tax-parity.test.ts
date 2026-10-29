@@ -66,5 +66,13 @@ describe("350 Quebec tax contract", () => {
     await expect(verifyEntry350TaxContract(stripe,signed,true,true)).rejects.toThrow('unverified');
     line.taxes[1].rate.percentage=10;
     await expect(verifyEntry350TaxContract(stripe,signed,true,false)).rejects.toThrow('rate_mismatch');
+    // Even an apparently paid CAD 402.41 event must fail if Stripe reports a
+    // hidden discount on the line or on the retrieved Checkout session.
+    line.taxes[1].rate.percentage=9.975;
+    line.amount_discount=1;
+    await expect(verifyEntry350TaxContract(stripe,signed,true,false)).rejects.toThrow('entry_tax_lines_mismatch');
+    line.amount_discount=0;
+    retrieved.total_details.amount_discount=1;
+    await expect(verifyEntry350TaxContract(stripe,signed,true,false)).rejects.toThrow('entry_tax_lines_mismatch');
   });
 });
