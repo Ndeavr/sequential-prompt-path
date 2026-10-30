@@ -154,6 +154,9 @@ export default function PageActivation350() {
           <Link to={links.more} className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid="activation-350-more">
             Je veux aussi des rendez-vous exclusifs <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
+          <Link to="/calendrier-intelligent" className="mt-2 block text-sm text-muted-foreground underline-offset-4 hover:underline" data-testid="activation-350-calendar">
+            Découvrir le calendrier intelligent UNPRO
+          </Link>
         </section>
 
       </div>
