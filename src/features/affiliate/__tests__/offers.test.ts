@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { activationCommissionCents, recurringCommissionCents, projection24Cents, resolveRate, offerTypeOf, proposalStatusOf, formatCad, activationLink } from "../offers";
+import { activationCommissionCents, recurringCommissionCents, projection24Cents, resolveRate, offerTypeOf, proposalStatusOf, PROPOSAL_STATUS_LABELS, formatCad, activationLink } from "../offers";
 
 describe("offres affilié", () => {
   it("20 % sur 350 $ = 70 $ unique", () => expect(activationCommissionCents(0.2)).toBe(7000));
@@ -17,9 +17,10 @@ describe("offres affilié", () => {
     expect(offerTypeOf(null)).toBe("a_definir");
     expect(proposalStatusOf(null)).toBeNull();
   });
-  it("paiement confirmé seulement avec paid_at", () => {
+  it("paid_at CRM signale un paiement mais ne prouve pas Stripe LIVE + webhook + droit", () => {
     expect(proposalStatusOf({ used_at: "x" })).toBe("acceptee");
-    expect(proposalStatusOf({ paid_at: "x" })).toBe("paiement_confirme");
+    expect(proposalStatusOf({ paid_at: "x" })).toBe("paiement_a_verifier");
+    expect(PROPOSAL_STATUS_LABELS.paiement_a_verifier).toContain("à vérifier");
     expect(proposalStatusOf({})).toBe("brouillon");
   });
   it("lien conserve attribution et prospect", () => {
