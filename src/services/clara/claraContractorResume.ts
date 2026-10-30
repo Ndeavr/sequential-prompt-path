@@ -1,4 +1,5 @@
 import { getClaraSessionToken, peekClaraSessionToken } from "./claraSession";
+import { sanitizeHomeCampaignAttribution } from "./claraHomeCampaign";
 
 // Extend the existing in-chat flow memory; never use a business profile as a
 // signal that a new homeowner conversation belongs to a contractor.
@@ -63,12 +64,13 @@ export function pauseActiveContractorFlow(): void {
 
 // Curseur propriétaire : dernière question maison sans réponse, par conversation.
 const HOME_CURSOR_KEY = "unpro_clara_home_cursor";
-export interface ClaraHomeCursor { text: string; options: string[] }
+export interface ClaraHomeCursor { text: string; options: string[]; campaign?: "thermopompe"; attribution?: Record<string, string> }
 
 export function rememberHomeCursor(cursor: ClaraHomeCursor | null): void {
   try {
     if (!cursor) { sessionStorage.removeItem(HOME_CURSOR_KEY); return; }
-    sessionStorage.setItem(HOME_CURSOR_KEY, JSON.stringify({ ...cursor, session_token: peekClaraSessionToken() }));
+    const previous = readHomeCursor();
+    sessionStorage.setItem(HOME_CURSOR_KEY, JSON.stringify({ ...previous, ...cursor, session_token: peekClaraSessionToken() }));
   } catch { /* le fil reste la source visible */ }
 }
 
@@ -76,6 +78,9 @@ export function readHomeCursor(): ClaraHomeCursor | null {
   try {
     const raw = JSON.parse(sessionStorage.getItem(HOME_CURSOR_KEY) || "null");
     if (!raw || typeof raw.text !== "string" || raw.session_token !== peekClaraSessionToken()) return null;
-    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options : [] };
+    if (raw.text.length > 8000) return null;
+    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options.filter((value: unknown) => typeof value === "string" && value.length <= 200).slice(0, 4) : [],
+      campaign: raw.campaign === "thermopompe" ? "thermopompe" : undefined,
+      attribution: sanitizeHomeCampaignAttribution(raw.attribution) };
   } catch { return null; }
 }

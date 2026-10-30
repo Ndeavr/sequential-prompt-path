@@ -8,7 +8,8 @@ import { buildClaraHistory } from "@/services/clara/claraConversationHistory";
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { HEAT_PUMP_CAMPAIGN, readHomeCampaign, homeCampaignAttribution, homeCampaignContext, hasHeatPumpCampaign } from "@/services/clara/claraHomeCampaign";
 import { motion } from "framer-motion";
 import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -288,6 +289,9 @@ interface ClaraConversationBoxProps {
 
 export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "" }: ClaraConversationBoxProps) {
   const forcedContractor = forcedAudience === "contractor";
+  const location = useLocation();
+  const campaignEntry = !forcedContractor && surface === "home" ? readHomeCampaign(location.search, location.pathname) : null;
+  const [heatPumpCampaign, setHeatPumpCampaign] = useState(() => !!campaignEntry || (!forcedContractor && readHomeCursor()?.campaign === "thermopompe" && hasExplicitHomeownerFlow()));
   // Rôle établi synchronement avant le premier rendu, donc avant toute salutation.
   const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
@@ -336,7 +340,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   messagesRef.current = messages;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ClaraSurfaceMode>(() => forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
+  const [mode, setMode] = useState<ClaraSurfaceMode>(() => heatPumpCampaign ? "PROJECT" : forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
@@ -346,7 +350,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudienceState] = useState<ClaraAudience>(() => forcedContractor || hasActiveContractorFlow() ? "contractor" : "homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>(() => heatPumpCampaign ? "homeowner" : forcedContractor || hasActiveContractorFlow() ? "contractor" : "homeowner");
   /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
   const audienceRef = useRef<ClaraAudience>(audience);
   const audienceEpochRef = useRef(0);
@@ -551,6 +555,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     announcedMedia.current = new Set();
     workflowRef.current = null;
     rememberHomeCursor(null);
+    setHeatPumpCampaign(false);
     setMessages([]);
     setComposerEverFocused(false);
     setQuickReplies(null);
@@ -659,6 +664,41 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
 
+        const campaign = !forcedContractor && (campaignEntry || (!isContractorContext(state.context) && (hasHeatPumpCampaign(readWorkflow(state.context)) || readHomeCursor()?.campaign === "thermopompe")));
+        if (campaign && audienceEpochRef.current === 0) {
+          // Suspend PRO, never rotate its session or edit the stored account role.
+          pauseActiveContractorFlow();
+          setHeatPumpCampaign(true);
+          setAudience("homeowner");
+          setContractorFlow(false);
+          setMode("PROJECT");
+          const scoped = buildClaraHistory(state.messages, "homeowner").messages;
+          const texts = new Set(scoped.map(message => message.content));
+          const restored = state.messages.filter(message => texts.has(message.text.slice(0, 2000)))
+            .map(message => ({ ...message, audience: "homeowner" as const }));
+          const greetingId = `campaign-thermopompe-${state.session_id}`;
+          const alreadyGreeted = state.messages.some(message => message.text === HEAT_PUMP_CAMPAIGN.greeting);
+          const campaignGreeting: Msg = { id: greetingId, role: "assistant", text: HEAT_PUMP_CAMPAIGN.greeting, audience: "homeowner", status: "complete" };
+          setMessages(current => reconcileMessages(current, alreadyGreeted ? restored : [...restored, campaignGreeting]));
+          workflowRef.current = alreadyGreeted ? readWorkflow(state.context) : { ...nextWorkflowState(readWorkflow(state.context), "homeowner_problem").state, sub_workflow: HEAT_PUMP_CAMPAIGN.intent };
+          if (!alreadyGreeted) {
+            rememberWorkflow(workflowRef.current);
+            rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+          }
+          if (!alreadyGreeted) {
+            rememberHomeCursor({ text: HEAT_PUMP_CAMPAIGN.greeting, options: [...HEAT_PUMP_CAMPAIGN.choices], campaign: "thermopompe", attribution: homeCampaignAttribution(location.search) });
+            setQuickReplies({ messageId: greetingId, options: [...HEAT_PUMP_CAMPAIGN.choices] });
+            void appendClaraMessage({ role: "assistant", text: HEAT_PUMP_CAMPAIGN.greeting, clientMessageId: greetingId, audience: "homeowner" }).catch(() => undefined);
+            trackCopilotEvent("clara_chat_opened", { intent: HEAT_PUMP_CAMPAIGN.intent, ...homeCampaignAttribution(location.search) });
+          } else {
+            const cursor = readHomeCursor();
+            const last = restored.at(-1);
+            if (last?.role === "assistant" && last.text === HEAT_PUMP_CAMPAIGN.greeting) setQuickReplies({ messageId: last.id, options: [...HEAT_PUMP_CAMPAIGN.choices] });
+            else if (cursor && last?.role === "assistant" && last.text === cursor.text) setQuickReplies({ messageId: last.id, options: cursor.options });
+          }
+          return;
+        }
+
         const resumedContractor = !hasExplicitHomeownerFlow() && isContractorContext(state.context);
         // Lien entrepreneur : un fil propriétaire existant reste sur le serveur
         // (historique), mais n'est jamais affiché ni hérité dans ce parcours.
@@ -692,13 +732,13 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
         // An explicit role change made while hydration was pending always wins.
-        if (audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())) {
+        if (!campaignEntry && audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())) {
           rememberActiveContractorFlow(true);
           setContractorFlow(true);
         }
       }
     })();
-  }, [forcedAudience, forcedContractor, lang, setAudience]);
+  }, [campaignEntry, forcedAudience, forcedContractor, lang, location.search, setAudience]);
 
   const switchToHomeowner = useCallback(() => {
     // Persist first so a remount/hydration cannot restore the contractor view.
@@ -1177,7 +1217,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // dans le parcours entrepreneur — jamais de Dossier maison.
       const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
       const contractorTurn = audienceRef.current === "contractor"
-        || (!hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
+        || (!heatPumpCampaign && !hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
 
       // Situation RBQ : mêmes 6 statuts que « Mon profil », jamais une 2e validation.
       if (contractorTurn && (mentionsRbq(lastAssistantText) || mentionsRbq(text))) {
@@ -1202,7 +1242,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
       }
 
-      const nextMode = contractorTurn ? "CONTRACTOR" : detectSurfaceMode(text);
+      const detectedMode = detectSurfaceMode(text);
+      const nextMode = contractorTurn ? "CONTRACTOR" : heatPumpCampaign && detectedMode === "IDLE" ? "PROJECT" : detectedMode;
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
 
@@ -1228,8 +1269,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       logClaraWorkflowEvent("intent_detected", { intent: detected });
       const transition = nextWorkflowState(workflowRef.current, detected);
       if (transition.state !== workflowRef.current) {
-        workflowRef.current = transition.state;
-        rememberWorkflow(transition.state);
+        workflowRef.current = heatPumpCampaign && audienceRef.current === "homeowner"
+          ? { ...transition.state, sub_workflow: HEAT_PUMP_CAMPAIGN.intent } : transition.state;
+        rememberWorkflow(workflowRef.current);
       }
       for (const event of transition.events) {
         logClaraWorkflowEvent(event, {
@@ -1286,7 +1328,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             session_token: peekClaraSessionToken(),
             context: {
               surface: "home_clara_box",
-              currentPage: formatClaraPageContext(getClaraPageContext()),
+              currentPage: homeCampaignContext(heatPumpCampaign && audienceRef.current === "homeowner", formatClaraPageContext(getClaraPageContext())),
               mode: nextMode,
               userRole: audienceRef.current,
               conversationSummary: scopedHistory.summary,
@@ -1417,7 +1459,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         focusComposer();
       }
     },
-    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, heatPumpCampaign, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
   );
 
   const chooseQuickReply = useCallback(
@@ -1829,7 +1871,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   const lastMessage = messages[messages.length - 1];
   const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
-  const visibleQuickReplies = quickReplies ?? (lastMessage && restoredOptions.length >= 2
+  const visibleQuickReplies = quickReplies ?? (heatPumpCampaign && audience === "homeowner" && messages.length === 0
+    ? { messageId: "campaign-opening", options: [...HEAT_PUMP_CAMPAIGN.choices] } : lastMessage && restoredOptions.length >= 2
     ? { messageId: lastMessage.id, options: restoredOptions } : null);
 
   return (
@@ -1934,7 +1977,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
-                  <MessageResponse>{audience === "contractor"
+                  <MessageResponse>{heatPumpCampaign && audience === "homeowner" ? HEAT_PUMP_CAMPAIGN.greeting : audience === "contractor"
                     ? (contractorOpening ?? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?"))
                     : (lang === "fr" ? "Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?" : "Hello! What would you like to improve, renovate or repair?")}</MessageResponse>
                 </MessageContent>
