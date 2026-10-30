@@ -165,7 +165,7 @@ export default function PageAffiliateOnboarding() {
         email: d.email || prof?.email || user.email || "",
         city: d.city || prof?.city || "",
       }));
-      // Déjà affiliée ? Direction le Mode Action.
+      // Déjà membre du programme ? Direction le Mode Action.
       const { data: aff } = await supabase
         .from("affiliates" as any)
         .select("id")
@@ -535,7 +535,7 @@ export default function PageAffiliateOnboarding() {
           <section>
             <h1 className="text-3xl font-extrabold tracking-tight">Dernière étape.</h1>
             <p className="mt-2 text-muted-foreground">
-              {draft.first_name}, voici votre parcours une fois activée :
+              {draft.first_name}, voici votre parcours après activation :
             </p>
 
             <div className="mt-6 rounded-3xl border border-border bg-card p-5">

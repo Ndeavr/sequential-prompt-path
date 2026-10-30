@@ -7,7 +7,7 @@ import { campaignLink } from "@/lib/contractorCampaignLinks";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 
 const steps = [
-  { icon: Handshake, title: "Devenez affilié", text: "Rejoignez le programme avec votre compte existant. Votre taux et vos conditions sont confirmés dans votre espace affilié." },
+  { icon: Handshake, title: "Rejoignez le programme affilié", text: "Rejoignez le programme avec votre compte existant. Votre taux et vos conditions sont confirmés dans votre espace affilié." },
   { icon: Link2, title: "Référez vos partenaires", text: "Plombier, électricien, couvreur, équipe d’entretien… Partagez votre lien personnel aux entrepreneurs de votre réseau." },
   { icon: Wallet, title: "Recevez vos commissions", text: "Lorsqu’une référence devient un client payant admissible, suivez votre commission et son statut dans votre espace." },
 ];
@@ -16,14 +16,14 @@ export default function PageContractorAffiliation() {
   useEffect(() => { void trackAffiliateFunnel("affiliate_landing_view", { metadata: { source: "contractor_affiliation" } }); }, []);
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <SeoHead title="Votre réseau pourrait payer votre forfait | UNPRO" description="Devenez affilié UNPRO. Les commissions sur vos références peuvent couvrir le coût de votre forfait et même le dépasser." />
+      <SeoHead title="Votre réseau pourrait payer votre forfait | UNPRO" description="Rejoignez le programme affilié UNPRO. Les commissions sur vos références peuvent couvrir le coût de votre forfait et même le dépasser." />
       <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-primary/10 via-background to-amber-500/10">
         <div className="relative mx-auto max-w-4xl px-5 py-14 sm:py-20">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">Par ici les p’tits vites!</p>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">Votre réseau pourrait payer votre forfait.</h1>
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground">Référez vos partenaires à UNPRO. Vos commissions peuvent couvrir le coût de votre forfait — et même vous rapporter davantage.</p>
-          <Button asChild size="lg" className="mt-8 min-h-12 whitespace-normal h-auto py-3"><Link to={campaignLink("/affilies/onboarding", search, { source: "contractor_affiliation" })} onClick={() => void trackAffiliateFunnel("affiliate_start_clicked", { metadata: { source: "contractor_affiliation" } })}>Devenir affilié <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
-          <Link to="/affiliate" className="mt-4 block w-fit py-2 text-sm underline underline-offset-4">Déjà affilié? Ouvrir mon espace</Link>
+          <Button asChild size="lg" className="mt-8 min-h-12 whitespace-normal h-auto py-3"><Link to={campaignLink("/affilies/onboarding", search, { source: "contractor_affiliation" })} onClick={() => void trackAffiliateFunnel("affiliate_start_clicked", { metadata: { source: "contractor_affiliation" } })}>Rejoindre le programme affilié <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+          <Link to="/affiliate" className="mt-4 block w-fit py-2 text-sm underline underline-offset-4">Déjà membre? Ouvrir mon espace</Link>
         </div>
       </section>
       <div className="mx-auto max-w-4xl px-5 py-10 space-y-10">
