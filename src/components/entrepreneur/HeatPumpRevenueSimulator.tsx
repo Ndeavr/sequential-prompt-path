@@ -76,7 +76,7 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft 
         </div>
         <div className="utp-results" aria-live="polite">
           <div className="utp-small-title">{t('Synthèse', 'Summary')}<span>{t('SIMULATION', 'SIMULATION')}</span></div>
-          {!res.ok ? (
+          {res.ok === false ? (
             <p className="utp-empty" data-testid="sim-not-calculable">{res.reason === 'zero_rate'
               ? t('Objectif non calculable avec un taux de 0 %. Indiquez un taux de conversion et de présence supérieurs à 0.', 'Goal cannot be calculated with a 0% rate. Enter conversion and show rates above 0.')
               : t('Complétez les hypothèses pour voir la simulation.', 'Complete the assumptions to see the simulation.')}</p>
