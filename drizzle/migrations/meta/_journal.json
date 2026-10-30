@@ -218,6 +218,13 @@
       "when": 1792794533579,
       "tag": "0030_outreach_email_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793380703276,
+      "tag": "0031_supplier_partnership_requests",
+      "breakpoints": true
     }
   ]
 }

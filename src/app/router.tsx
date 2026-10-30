@@ -92,6 +92,7 @@ const PageMoinsSoumissionsPlusFactures = lazyWithRetry(() => import("@/pages/art
 const PageFournisseurPeinturePlusContrats = lazyWithRetry(() => import("@/pages/articles/PageFournisseurPeinturePlusContrats"));
 const PageApparaitreRechercheIA2026 = lazyWithRetry(() => import("@/pages/articles/PageApparaitreRechercheIA2026"));
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
+const PagePartenariatsFournisseurs = lazyWithRetry(() => import("@/pages/partners/PagePartenariatsFournisseurs"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageAdminAiVisibilityAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
@@ -1179,6 +1180,7 @@ export const AppRouter = () => (
         <Route path="/book/demo" element={<BookingClientDemoPage />} />
         <Route path="/book/cancel" element={<BookingPaymentCancel />} />
         <Route path="/partners" element={<PartnersPage />} />
+        <Route path="/partenariats-fournisseurs" element={<Suspense fallback={<LazyFallback />}><PagePartenariatsFournisseurs /></Suspense>} />
         <Route path="/describe-project" element={<DescribeProjectPage />} />
         <Route path="/compare-quotes" element={<CompareQuotesPage />} />
         <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />

@@ -89972,6 +89972,66 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_partnership_requests: {
+        Row: {
+          company: string
+          consent_text: string
+          consented_at: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          ip_hash: string | null
+          is_synthetic: boolean
+          last_name: string
+          locale: string | null
+          message: string | null
+          network_size: string | null
+          org_type: string
+          privacy_consent: boolean
+          source: string
+          status: string
+        }
+        Insert: {
+          company: string
+          consent_text: string
+          consented_at?: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          last_name: string
+          locale?: string | null
+          message?: string | null
+          network_size?: string | null
+          org_type: string
+          privacy_consent?: boolean
+          source?: string
+          status?: string
+        }
+        Update: {
+          company?: string
+          consent_text?: string
+          consented_at?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          last_name?: string
+          locale?: string | null
+          message?: string | null
+          network_size?: string | null
+          org_type?: string
+          privacy_consent?: boolean
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
