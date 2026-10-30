@@ -109,7 +109,7 @@ export default function AffiliateOffersPanel({ prospectId, companyName }: { pros
         <Row label="Estimée — activation (unique, HT)" value={formatCad(activationCommissionCents(rate))} />
         <Row label="Estimée — plan personnalisé (par mois)" value={formatCad(monthly)} />
         {projection != null && <Row label={`Projection sur ${24} mois (hypothèse : rétention complète)`} value={formatCad(projection)} />}
-        <Row label="Confirmée" value={prop?.paid_at ? "Voir commissions confirmées" : "Aucune"} />
+        <Row label="Commission confirmée" value={prop?.paid_at ? "À rapprocher Stripe + droits" : "Non démontrée ici"} />
         <p className="text-[11px] text-muted-foreground">Taux {rate == null ? "à déterminer" : `${Math.round(rate * 1000) / 10} %`} selon votre dossier affilié.</p>
       </div>
     </div>
