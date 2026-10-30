@@ -63,12 +63,13 @@ export function pauseActiveContractorFlow(): void {
 
 // Curseur propriétaire : dernière question maison sans réponse, par conversation.
 const HOME_CURSOR_KEY = "unpro_clara_home_cursor";
-export interface ClaraHomeCursor { text: string; options: string[] }
+export interface ClaraHomeCursor { text: string; options: string[]; campaign?: "thermopompe"; attribution?: Record<string, string> }
 
 export function rememberHomeCursor(cursor: ClaraHomeCursor | null): void {
   try {
     if (!cursor) { sessionStorage.removeItem(HOME_CURSOR_KEY); return; }
-    sessionStorage.setItem(HOME_CURSOR_KEY, JSON.stringify({ ...cursor, session_token: peekClaraSessionToken() }));
+    const previous = readHomeCursor();
+    sessionStorage.setItem(HOME_CURSOR_KEY, JSON.stringify({ ...previous, ...cursor, session_token: peekClaraSessionToken() }));
   } catch { /* le fil reste la source visible */ }
 }
 
@@ -76,6 +77,8 @@ export function readHomeCursor(): ClaraHomeCursor | null {
   try {
     const raw = JSON.parse(sessionStorage.getItem(HOME_CURSOR_KEY) || "null");
     if (!raw || typeof raw.text !== "string" || raw.session_token !== peekClaraSessionToken()) return null;
-    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options : [] };
+    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options : [],
+      campaign: raw.campaign === "thermopompe" ? "thermopompe" : undefined,
+      attribution: raw.attribution && typeof raw.attribution === "object" && !Array.isArray(raw.attribution) ? raw.attribution : undefined };
   } catch { return null; }
 }
