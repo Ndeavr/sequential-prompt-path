@@ -109,6 +109,16 @@ export default function PageAffiliateWarRoom() {
   }, [rows]);
 
   const pipeline = aggregatePipeline(potentialPlans);
+  const { data: activationRate = null } = useQuery({
+    queryKey: ["affiliate-rate", affiliate?.id],
+    enabled: !!affiliate?.id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("affiliates").select("commission_rate, commission_pct").eq("id", affiliate!.id).maybeSingle();
+      if (error) throw error;
+      return resolveRate(data);
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -170,8 +180,8 @@ export default function PageAffiliateWarRoom() {
           />
           <StatTile
             icon={DollarSign}
-            label="Commission potentielle"
-            value={formatPrice(pipeline.potentialAnnual)}
+            label="Commission estimée — activations (unique, HT)"
+            value={formatCad(activationRate == null ? null : (activationCommissionCents(activationRate) ?? 0) * pipeline.count)}
             tone="money"
           />
         </div>

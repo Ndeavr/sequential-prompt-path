@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import AffiliateRevenueIntelligencePanel from "@/features/affiliate/components/AffiliateRevenueIntelligencePanel";
+import AffiliateOffersPanel from "@/features/affiliate/components/AffiliateOffersPanel";
 import { Phone, Mail, Globe, MapPin, ArrowLeft, MessageSquare, PhoneCall, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -338,10 +338,7 @@ export default function PageAffiliateCompanyWorkspace() {
           {/* Right sticky */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-6">
-              <AffiliateRevenueIntelligencePanel
-                companyName={prospect.business_name}
-                signals={signals}
-              />
+              <AffiliateOffersPanel prospectId={id!} companyName={prospect.business_name} />
             </div>
           </div>
         </div>
