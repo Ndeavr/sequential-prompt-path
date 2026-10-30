@@ -53,14 +53,18 @@ export default function PageAdLandingAipp() {
     const campaign = searchParams.get("utm_campaign") || searchParams.get("campaign") || null;
     const variant = searchParams.get("v") || null;
     const isMobile = window.innerWidth < 768;
-    const { data } = await supabase.from("lead_capture_sessions" as never).insert({
-      source_channel: source,
-      campaign_name: campaign,
-      landing_variant: variant,
+    // Client-generated id: the insert never needs to read the row back,
+    // so anonymous visitors don't require SELECT on lead_capture_sessions.
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("lead_capture_sessions" as never).insert({
+      id,
+      source_channel: source.slice(0, 120),
+      campaign_name: campaign?.slice(0, 200) ?? null,
+      landing_variant: variant?.slice(0, 60) ?? null,
       device_type: isMobile ? "mobile" : "desktop",
       status: "started",
-    } as never).select("id").single() as { data: { id: string } | null };
-    if (data) { setSessionId(data.id); return data.id; }
+    } as never);
+    if (!error) { setSessionId(id); return id; }
     return null;
   }, [sessionId, searchParams]);
 
