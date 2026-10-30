@@ -68,3 +68,12 @@ export function simulate(i: SimInput): SimResult {
     costPctOfRevenue: r2((totalCost / revenue) * 100),
   };
 }
+
+/** Parse « 1 780 000 $ », « 1 780 000,50 », « $1,780,000.50 ». null si vide/invalide. */
+export function parseAmount(raw: string, fr = true): number | null {
+  let s = raw.replace(/[\s\u00a0\u202f\u2009$]/g, '').replace(/CAD/i, '');
+  if (s === '') return null;
+  s = fr ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
