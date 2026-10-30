@@ -1,3 +1,4 @@
+// @vitest-environment node
 // Isolated PostgreSQL engine; fake digest/random helpers only for fixture token plumbing.
 import { describe, it, expect } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
