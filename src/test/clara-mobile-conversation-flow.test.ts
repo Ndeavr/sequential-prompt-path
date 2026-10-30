@@ -53,11 +53,12 @@ describe("Clara mobile — conversation compacte", () => {
     expect(box).toContain("{showIntentSuggestions && (");
   });
 
-  it("garde le champ vide et sépare strictement sa valeur du placeholder", () => {
+  it("garde le champ vide par défaut et distingue un brouillon explicite du placeholder", () => {
     expect(box).toContain('placeholder: "Décrivez votre besoin…"');
     expect(box).toContain('placeholderActive: "Répondez à Clara…"');
     expect(box).toContain("placeholder={composerPlaceholder}");
-    expect(box).toContain('const [composerText, setComposerText] = useState("")');
+    expect(box).toContain('initialComposerText = ""');
+    expect(box).toContain("useState(initialComposerText)");
     expect(box).toContain("value={composerText}");
     expect(box).toContain("setComposerText(\"\")");
     expect(box).not.toContain('placeholder: "Bonjour ! Que puis-je-faire pour vous?"');
