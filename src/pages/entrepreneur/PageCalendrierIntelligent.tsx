@@ -248,7 +248,7 @@ export default function PageCalendrierIntelligent() {
           </div>
           <div className="mt-8 rounded-[20px] border p-6" style={{ borderColor: "var(--line)", background: "#0d1725" }}>
             <p className="text-base text-[#f4f8ff]">{t.transition}</p>
-            <Link className="ghost mt-4" to="/alex?role=contractor">{t.clara}</Link>
+            <Link className="ghost mt-4" to="/entrepreneurs/activation-350?from=calendrier_intelligent">{t.clara}</Link>
           </div>
         </section>
 
