@@ -151,7 +151,7 @@ export default function PageAdLandingAipp() {
     <>
       <Helmet>
         <title>Découvrez votre score AIPP gratuit | UNPRO</title>
-        <meta name="description" content="Arrêtez d'acheter des clics. Découvrez votre score AIPP et voyez si votre entreprise est vraiment prête à être recommandée par l'IA." />
+        <meta name="description" content="Découvrez un aperçu indicatif de votre présence en ligne et des informations à compléter sur votre entreprise." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -161,16 +161,16 @@ export default function PageAdLandingAipp() {
           <div className="relative max-w-2xl mx-auto px-5 text-center">
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <Badge variant="outline" className="mb-4 border-primary/30 text-primary text-xs">
-                <Sparkles className="h-3 w-3 mr-1" /> Analyse gratuite en 30 secondes
+                <Sparkles className="h-3 w-3 mr-1" /> Analyse initiale gratuite
               </Badge>
               <h1 className="text-3xl md:text-5xl font-black text-foreground leading-[1.1] mb-4">
                 Arrêtez d'acheter des clics.{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Recevez des rendez-vous qualifiés.
+                  Précisez les projets qui vous conviennent.
                 </span>
               </h1>
               <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-                Entrez simplement votre site web ou votre numéro de téléphone. On s'occupe du reste.
+                Indiquez votre site web ou un téléphone professionnel pour obtenir un premier aperçu indicatif.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button size="lg" className="h-13 text-base font-bold px-8" onClick={scrollToForm}>
@@ -187,7 +187,7 @@ export default function PageAdLandingAipp() {
           </div>
           <div className="max-w-2xl mx-auto px-5 mt-10">
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-              {["Gratuit", "Sans engagement", "Résultat instantané", "100% confidentiel"].map((t) => (
+              {["Gratuit", "Sans engagement", "Aperçu indicatif", "Aucun achat requis"].map((t) => (
                 <div key={t} className="flex items-center gap-1">
                   <CheckCircle className="h-3 w-3 text-success" /> {t}
                 </div>
@@ -205,7 +205,7 @@ export default function PageAdLandingAipp() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { icon: XCircle, text: "Vous payez pour des clics qui ne convertissent pas" },
-                { icon: Users, text: "Vos leads sont partagés avec 5+ concurrents" },
+                { icon: Users, text: "Les demandes hors de votre spécialité vous font perdre du temps" },
                 { icon: TrendingUp, text: "Vous êtes noyé dans la compétition locale" },
                 { icon: Target, text: "Vos meilleurs clients ne vous trouvent pas" },
               ].map((p) => (
@@ -219,9 +219,9 @@ export default function PageAdLandingAipp() {
             </div>
             <div className="mt-6 space-y-2">
               {[
-                "Aucun lead partagé — chaque rendez-vous est exclusif",
-                "Pas de clics vides — seulement des clients prêts à agir",
-                "Votre agenda se remplit — pas vos statistiques",
+                "Les rendez-vous exclusifs sont une option distincte selon votre offre",
+                "Décrivez les services et secteurs qui vous conviennent",
+                "Précisez vos préférences avant un éventuel jumelage",
               ].map((c) => (
                 <div key={c} className="flex items-center gap-2 text-sm text-primary font-medium">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" /> {c}
@@ -235,14 +235,14 @@ export default function PageAdLandingAipp() {
         <section className="py-14">
           <div className="max-w-2xl mx-auto px-5">
             <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
-              La solution: des rendez-vous qualifiés, pas des clics
+              Vos services et vos critères, clairement présentés
             </h2>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: Brain, title: "Score AIPP", desc: "Mesurez votre visibilité IA" },
-                { icon: Shield, title: "Profil intelligent", desc: "Optimisé pour les recommandations" },
+                { icon: Shield, title: "Profil intelligent", desc: "Services et territoires structurés" },
                 { icon: MessageCircle, title: "Clara vous guide", desc: "Votre stratégie personnalisée" },
-                { icon: Calendar, title: "Rendez-vous", desc: "Exclusifs et qualifiés" },
+                { icon: Calendar, title: "Rendez-vous optionnels", desc: "Selon les droits et disponibilités" },
               ].map((v) => (
                 <Card key={v.title} className="border-primary/10">
                   <CardContent className="p-4 text-center space-y-2">
@@ -268,7 +268,7 @@ export default function PageAdLandingAipp() {
               {[
                 { step: "1", title: "Entrez votre site web", desc: "Juste votre URL ou votre numéro de téléphone. On fait le reste.", icon: Zap },
                 { step: "2", title: "Analyse automatique", desc: "On scanne votre présence en ligne et on détecte vos forces et faiblesses.", icon: Brain },
-                { step: "3", title: "Recevez votre score", desc: "Score AIPP détaillé avec captures d'écran et recommandations.", icon: Calendar },
+                { step: "3", title: "Recevez votre score", desc: "Estimations indicatives selon les signaux disponibles, sans garantie de recommandation.", icon: Calendar },
               ].map((s) => (
                 <div key={s.step} className="flex gap-4 items-start">
                   <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-lg flex-shrink-0">
@@ -289,7 +289,7 @@ export default function PageAdLandingAipp() {
           <div className="max-w-2xl mx-auto px-5">
             <div className="text-center mb-8">
               <Badge variant="outline" className="mb-3 border-primary/30 text-primary text-xs">
-                <Star className="h-3 w-3 mr-1" /> Gratuit • Instantané
+                <Star className="h-3 w-3 mr-1" /> Gratuit • Résultat indicatif
               </Badge>
               <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
                 Découvrez votre score AIPP
@@ -336,7 +336,7 @@ export default function PageAdLandingAipp() {
               Clara peut vous guider
             </h2>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              Clara peut vous guider pour compléter votre profil et vous montrer exactement quoi faire ensuite pour recevoir vos premiers rendez-vous qualifiés.
+              Clara peut vous guider pour compléter votre profil, préciser vos services et vos territoires, puis comprendre les options de rendez-vous disponibles.
             </p>
             <Button variant="outline" size="lg" onClick={() => {
               trackEvent("cta_alex_preview", "ad_landing");
