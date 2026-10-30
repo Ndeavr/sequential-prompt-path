@@ -617,6 +617,34 @@ export default function PageContractorPricingIntake() {
   };
 
   /* Étape 2 — Votre objectif financier, calcul transparent, capacité du mois prochain. */
+  const simSummary = simHandoff && (() => {
+            const h = simHandoff;
+            const n = (v: number) => new Intl.NumberFormat("fr-CA").format(v);
+            const m = (v: number) => formatQuebecNumber(v, "$");
+            const pl: Record<string, string> = { priority: "prioritaire", accepted: "accepté", excluded: "non recherché" };
+            return (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 space-y-2" data-testid="sim-handoff-summary">
+                <p className="text-[11px] uppercase tracking-wider text-white/50">Repris de votre simulation thermopompes — déclaré, à confirmer</p>
+                {simConflict && (
+                  <div className="space-y-2" data-testid="sim-handoff-conflict">
+                    <p className="text-amber-300">Votre plan contient déjà d'autres valeurs. Elles sont conservées.</p>
+                    <button type="button" className="min-h-11 underline text-white" onClick={() => { setData((d) => ({ ...d, ...(handoffToGoalFields(h) as Partial<PricingIntakeInput>) })); setSimConflict(false); }}>Utiliser les valeurs de la simulation</button>
+                  </div>
+                )}
+                <ul className="space-y-1">
+                  <li data-testid="sim-h-objective">Objectif annuel de chiffre d'affaires ajouté : <strong className="text-white">{m(h.objective)}</strong> (CAD HT / an)</li>
+                  <li data-testid="sim-h-ticket">Panier moyen : <strong className="text-white">{m(h.avgTicket)}</strong> HT</li>
+                  <li data-testid="sim-h-rates">Conversion RDV tenus → vente : <strong className="text-white">{formatQuebecNumber(h.conversionPct, "%")}</strong> · Présence : <strong className="text-white">{formatQuebecNumber(h.showRatePct, "%")}</strong> · {h.weeks} semaines travaillées</li>
+                  <li data-testid="sim-h-appointments"><strong className="text-white">{n(h.sales)} ventes</strong>, <strong className="text-white">{n(h.plannedAppointments)} RDV planifiés / an</strong>, ≈ <strong className="text-white">{n(h.monthlyAppointments)} / mois</strong></li>
+                  {h.preferences && <li data-testid="sim-h-prefs">Centrale {pl[h.preferences.central]}, murale {pl[h.preferences.wall]}, réparation {pl[h.preferences.repair]}</li>}
+                  <li data-testid="sim-h-costs">Hypothèses de coût : {m(h.costPerAppointment)} / RDV, abonnement {m(h.monthlySubscription)} / mois — non tarifaires, le prix réel est calculé dans votre proposition</li>
+                  {h.alreadyActivatedDeclared && <li data-testid="sim-h-activated">Profil déjà activé : déclaré, vérifié avant paiement</li>}
+                </ul>
+                <p className="text-[11px] text-white/55">Modifiez l'objectif, le panier et la conversion ci-dessus; la présence et les coûts restent des hypothèses de simulation.</p>
+              </div>
+            );
+          })();
+
   const objectiveStep: Step = {
     key: "objective",
     question: "Combien d'argent aimeriez-vous faire de plus cette année avec votre entreprise?",
@@ -719,33 +747,7 @@ export default function PageContractorPricingIntake() {
               </p>
             </div>
           )}
-          {simHandoff && (() => {
-            const h = simHandoff;
-            const n = (v: number) => new Intl.NumberFormat("fr-CA").format(v);
-            const m = (v: number) => formatQuebecNumber(v, "$");
-            const pl: Record<string, string> = { priority: "prioritaire", accepted: "accepté", excluded: "non recherché" };
-            return (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 space-y-2" data-testid="sim-handoff-summary">
-                <p className="text-[11px] uppercase tracking-wider text-white/50">Repris de votre simulation thermopompes — déclaré, à confirmer</p>
-                {simConflict && (
-                  <div className="space-y-2" data-testid="sim-handoff-conflict">
-                    <p className="text-amber-300">Votre plan contient déjà d'autres valeurs. Elles sont conservées.</p>
-                    <button type="button" className="min-h-11 underline text-white" onClick={() => { setData((d) => ({ ...d, ...(handoffToGoalFields(h) as Partial<PricingIntakeInput>) })); setSimConflict(false); }}>Utiliser les valeurs de la simulation</button>
-                  </div>
-                )}
-                <ul className="space-y-1">
-                  <li data-testid="sim-h-objective">Objectif annuel de chiffre d'affaires ajouté : <strong className="text-white">{m(h.objective)}</strong> (CAD HT / an)</li>
-                  <li data-testid="sim-h-ticket">Panier moyen : <strong className="text-white">{m(h.avgTicket)}</strong> HT</li>
-                  <li data-testid="sim-h-rates">Conversion RDV tenus → vente : <strong className="text-white">{formatQuebecNumber(h.conversionPct, "%")}</strong> · Présence : <strong className="text-white">{formatQuebecNumber(h.showRatePct, "%")}</strong> · {h.weeks} semaines travaillées</li>
-                  <li data-testid="sim-h-appointments"><strong className="text-white">{n(h.sales)} ventes</strong>, <strong className="text-white">{n(h.plannedAppointments)} RDV planifiés / an</strong>, ≈ <strong className="text-white">{n(h.monthlyAppointments)} / mois</strong></li>
-                  {h.preferences && <li data-testid="sim-h-prefs">Centrale {pl[h.preferences.central]}, murale {pl[h.preferences.wall]}, réparation {pl[h.preferences.repair]}</li>}
-                  <li data-testid="sim-h-costs">Hypothèses de coût : {m(h.costPerAppointment)} / RDV, abonnement {m(h.monthlySubscription)} / mois — non tarifaires, le prix réel est calculé dans votre proposition</li>
-                  {h.alreadyActivatedDeclared && <li data-testid="sim-h-activated">Profil déjà activé : déclaré, vérifié avant paiement</li>}
-                </ul>
-                <p className="text-[11px] text-white/55">Modifiez l'objectif, le panier et la conversion ci-dessus; la présence et les coûts restent des hypothèses de simulation.</p>
-              </div>
-            );
-          })()}
+          {simSummary}
           {(() => {
             const range: CapacityRange | "" = g.capacity_range ?? (typeof g.next_month_appointments === "number" ? "other" : "");
             const bounds = capacityBounds(g);
@@ -937,6 +939,7 @@ export default function PageContractorPricingIntake() {
             )}
 
             <div className="rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl p-5">
+              {safeStep === 0 && simSummary}
               {current.render(data, set)}
             </div>
           </motion.div>
