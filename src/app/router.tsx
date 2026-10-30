@@ -682,6 +682,7 @@ const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
 const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
+const PageThermopompes = lazyWithRetry(() => import("@/pages/entrepreneur/PageThermopompes"));
 const PageCalendrierIntelligent = lazyWithRetry(() => import("@/pages/entrepreneur/PageCalendrierIntelligent"));
 const PageActivation350 = lazyWithRetry(() => import("@/pages/entrepreneur/PageActivation350"));
 const PageMatchingProfileWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageMatchingProfileWizard"));
@@ -1127,6 +1128,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/calculateur-forfait" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        <Route path="/entrepreneurs/thermopompes" element={<Suspense fallback={<LazyFallback />}><PageThermopompes /></Suspense>} />
         <Route path="/calendrier-intelligent" element={<Suspense fallback={<LazyFallback />}><PageCalendrierIntelligent /></Suspense>} />
         <Route path="/entrepreneurs/activation-350" element={<Suspense fallback={<LazyFallback />}><PageActivation350 /></Suspense>} />
         {/* Profil de matching — complétion progressive avant les forfaits */}

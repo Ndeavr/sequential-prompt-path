@@ -274,6 +274,8 @@ const TRANSITION_PULSE_MS = 550;
 const TRANSITION_PULSES = 3;
 
 interface ClaraConversationBoxProps {
+  /** Optional editable draft, never submitted automatically. Read only on mount. */
+  initialComposerText?: string;
   onConversationActiveChange?: (active: boolean) => void;
   surface?: "home" | "embedded";
   onDestinationOpened?: () => void;
@@ -284,7 +286,7 @@ interface ClaraConversationBoxProps {
   heading?: string;
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "" }: ClaraConversationBoxProps) {
   const forcedContractor = forcedAudience === "contractor";
   // Rôle établi synchronement avant le premier rendu, donc avant toute salutation.
   const { openAlex, closeAlex } = useAlexVoice();
@@ -359,7 +361,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     if (audience !== "homeowner") { setDossierOpen(false); setDossierEditAddress(false); }
     else setSwitchConfirm(false);
   }, [audience]);
-  const [composerText, setComposerText] = useState("");
+  const [composerText, setComposerText] = useState(initialComposerText);
   const [composerFocused, setComposerFocused] = useState(false);
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [confirmReset, setConfirmReset] = useState(false);

@@ -28,6 +28,7 @@ import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHe
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
 import { AffiliateTeamSection } from "@/features/affiliate/team/AffiliateTeamSection";
+import { resolveRate, activationCommissionCents, formatCad } from "@/features/affiliate/offers";
 
 type Assignment = {
   id: string;

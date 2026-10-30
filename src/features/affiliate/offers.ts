@@ -55,19 +55,19 @@ export function offerTypeOf(p: ProposalRow | null): OfferType {
   return "a_definir";
 }
 
-export type ProposalStatus = "brouillon" | "prete" | "envoyee" | "acceptee" | "paiement_confirme";
+export type ProposalStatus = "brouillon" | "prete" | "envoyee" | "acceptee" | "paiement_a_verifier";
 export const PROPOSAL_STATUS_LABELS: Record<ProposalStatus, string> = {
   brouillon: "Brouillon",
   prete: "Prête",
   envoyee: "Envoyée",
   acceptee: "Acceptée",
-  paiement_confirme: "Paiement confirmé",
+  paiement_a_verifier: "Paiement signalé — à vérifier",
 };
 
-/** Statut uniquement selon événements réels enregistrés (paid_at = webhook serveur). */
+/** paid_at est un indicateur CRM, PAS une preuve Stripe LIVE + webhook signé + droit de 12 mois. */
 export function proposalStatusOf(p: ProposalRow | null): ProposalStatus | null {
   if (!p) return null;
-  if (p.paid_at) return "paiement_confirme";
+  if (p.paid_at) return "paiement_a_verifier";
   if (p.used_at) return "acceptee";
   if ((p.payload as any)?.sent_at) return "envoyee";
   if ((p.payload as any)?.ready_at) return "prete";
