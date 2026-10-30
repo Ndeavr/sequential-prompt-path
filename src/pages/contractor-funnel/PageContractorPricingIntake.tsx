@@ -33,6 +33,8 @@ import { setActiveActivationToken } from "@/lib/checkoutUrl";
 import { getKnownContractorContext } from "@/lib/contractorKnownContext";
 import { avgTicketFor, closeRateFor } from "@/config/scanCapacityTickets";
 import { formatQuebecNumber, parseQuebecNumber } from "@/lib/formatting";
+import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
+import { Button } from "@/components/ui/button";
 
 type Step = {
   key: string;
@@ -87,6 +89,9 @@ export default function PageContractorPricingIntake() {
   const auditId = searchParams.get("audit");
   const auditToken = searchParams.get("audit_token");
   const activationToken = searchParams.get("t");
+  const proposalToken = searchParams.get("proposal");
+  const proposalContext = useProposalContext(proposalToken);
+  const [proposalApplied, setProposalApplied] = useState(false);
   const sessionKey = useMemo(getSessionKey, []);
   const draftKey = `unpro_pricing_intake_draft:${auditId ?? sessionKey}`;
 
@@ -811,6 +816,7 @@ export default function PageContractorPricingIntake() {
   const isLast = safeStep === total - 1;
 
   const submit = async () => {
+    if (proposalToken && (!proposalContext.proposal || !proposalApplied)) return;
     const calc = objectiveToPayload(data);
     if (!calc) return;
     const payload = calc.payload;
@@ -837,14 +843,14 @@ export default function PageContractorPricingIntake() {
       },
     });
     try {
-      const quote = await computePricingQuote(payload as PricingIntakeInput);
+      const quote = await computePricingQuote({ ...payload, ...(proposalToken ? { affiliate_proposal_token: proposalToken } : {}) } as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
         city: payload.city ?? null,
         metadata: { plan_code: quote.recommended_plan ?? null, from: searchParams.get("from") },
       });
       const carry = new URLSearchParams();
-      for (const key of new Set([...ATTRIBUTION_PARAMS, "promo", "offer", "audit", "audit_token", "objective", "from", "view"])) {
+      for (const key of new Set([...ATTRIBUTION_PARAMS, "proposal", "promo", "offer", "audit", "audit_token", "objective", "from", "view"])) {
         const value = searchParams.get(key);
         if (value) carry.set(key, value);
       }
@@ -888,6 +894,11 @@ export default function PageContractorPricingIntake() {
 
       <div className="relative max-w-xl mx-auto px-5 pt-10">
         <CreditCampaignNotice />
+        {proposalToken && <section className="mb-5 rounded-xl border border-border bg-card p-4 text-foreground space-y-2">
+          {proposalContext.loading && <p role="status">Lecture de votre proposition…</p>}
+          {proposalContext.error && <p role="alert" className="text-destructive">{proposalContext.error}</p>}
+          {proposalContext.proposal && <><p className="font-semibold">Proposition pour {proposalContext.proposal.company_name}</p><p className="text-sm">Objectifs déclarés par votre contact UNPRO, à confirmer. Le prix et les droits seront calculés par le serveur.</p><p className="text-sm">{proposalContext.proposal.inputs.target_monthly_appointments} RDV / mois · capacité {proposalContext.proposal.inputs.monthly_capacity} / mois · panier {proposalContext.proposal.inputs.average_project_value} $ HT · conversion {Number(proposalContext.proposal.inputs.close_rate_estimate ?? 0) * 100} %</p><Button className="h-auto max-w-full whitespace-normal" disabled={proposalApplied} onClick={() => { setData(d => ({ ...d, ...proposalContext.proposal?.inputs })); setManualEntry(true); setBusinessConfirmed(true); setProposalApplied(true); }}> {proposalApplied ? "Informations reprises — modifiables ci-dessous" : "Confirmer et reprendre ces informations"}</Button></>}
+        </section>}
         {/* Fiche rattachée / entreprise analysée — jamais de détour vers l'audit. */}
         {(linked || auditValid) && (
           <div

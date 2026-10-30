@@ -1,126 +1,75 @@
-/**
- * UNPRO — Panneau des deux offres (fiche entreprise affilié).
- * Aperçu seulement : aucun envoi, aucun statut modifié, aucun paiement.
- */
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAffiliateSelf } from "@/hooks/useAffiliateSelf";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import {
-  activationCommissionCents, activationLink, customPlanLink, formatCad, offerTypeOf,
-  OFFER_LABELS, projection24Cents, proposalStatusOf, PROPOSAL_STATUS_LABELS,
-  recurringCommissionCents, resolveRate,
-} from "../offers";
+import { activationCommissionCents, formatCad, resolveRate } from "../offers";
+import { loadProposal, saveProposal, proposalClientLink, type ProposalKind } from "../proposalService";
+import type { PricingIntakeInput } from "@/services/contractorPricingQuoteService";
 
-export default function AffiliateOffersPanel({ prospectId, companyName }: { prospectId: string; companyName?: string | null }) {
-  const { data: affiliate } = useAffiliateSelf();
-  const [preview, setPreview] = useState<{ kind: string; url: string } | null>(null);
-
-  const rateQ = useQuery({
-    queryKey: ["affiliate-rate", affiliate?.id],
-    enabled: !!affiliate?.id,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("affiliates").select("commission_rate, commission_pct").eq("id", affiliate!.id).maybeSingle();
-      if (error) throw error;
-      return resolveRate(data);
-    },
-  });
-
-  const propQ = useQuery({
-    queryKey: ["affiliate-proposal", affiliate?.id, prospectId],
-    enabled: !!affiliate?.id,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("affiliate_proposals")
-        .select("recommended_plan_slug, monthly_price_cents, used_at, paid_at, payload, created_at")
-        .eq("affiliate_id", affiliate!.id).eq("prospect_id", prospectId)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const rate = rateQ.data ?? null;
-  const prop = propQ.data ?? null;
-  const type = offerTypeOf(prop);
-  const status = proposalStatusOf(prop);
-  const monthly = recurringCommissionCents(prop?.monthly_price_cents, rate);
-  const projection = projection24Cents(monthly);
-  const ref = affiliate?.referral_code ?? null;
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://unpro.ca";
-
-  return (
-    <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
-      <div>
-        <h3 className="text-base font-semibold text-foreground">Offres pour {companyName ?? "cette entreprise"}</h3>
-        <div className="mt-1 flex flex-wrap gap-1">
-          <Badge variant="outline">{OFFER_LABELS[type]}</Badge>
-          {status && <Badge variant="outline">{PROPOSAL_STATUS_LABELS[status]}</Badge>}
-        </div>
-        {propQ.error && <p className="mt-1 text-xs text-destructive">Proposition illisible : {(propQ.error as Error).message}</p>}
-      </div>
-
-      <div className="rounded-xl border border-border/40 p-4 space-y-2">
-        <p className="font-semibold text-foreground">1. Activation UNPRO — 350 $ + taxes</p>
-        <p className="text-xs text-muted-foreground">
-          Paiement unique. Profil public et 12 mois de présence IA UNPRO. Aucun rendez-vous inclus par défaut :
-          un nombre de rendez-vous n'est annoncé que s'il est calculé par le serveur avant le paiement.
-        </p>
-        <Button className="w-full" onClick={() => setPreview({ kind: "Activation 350 $", url: activationLink(origin, ref, prospectId) })}>
-          Préparer l'offre à 350 $
-        </Button>
-      </div>
-
-      <div className="rounded-xl border border-border/40 p-4 space-y-2">
-        <p className="font-semibold text-foreground">2. Plan personnalisé</p>
-        <p className="text-xs text-muted-foreground">
-          Calculé selon les objectifs de contrats/rendez-vous, le panier moyen, la capacité, les services, le territoire et les disponibilités.
-          L'inclusion de l'activation dépend du devis serveur; elle n'est jamais facturée deux fois.
-        </p>
-        <Button variant="outline" className="w-full" onClick={() => setPreview({ kind: "Plan personnalisé", url: customPlanLink(origin, ref, prospectId) })}>
-          Construire le plan personnalisé
-        </Button>
-      </div>
-
-      {preview && (
-        <div className="rounded-xl bg-muted/40 p-4 space-y-2">
-          <p className="text-xs font-semibold text-foreground">Aperçu — {preview.kind} (rien n'est envoyé)</p>
-          <p className="break-all text-xs text-muted-foreground">{preview.url}</p>
-          {!ref && <p className="text-xs text-destructive">Code affilié introuvable : l'attribution ne sera pas incluse.</p>}
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(preview.url); toast.success("Lien copié"); }}>
-              <Copy className="h-3.5 w-3.5 mr-1" />Copier
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => window.open(preview.url, "_blank", "noopener")}>
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />Ouvrir
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-1 border-t border-border/40 pt-3 text-sm">
-        <p className="font-semibold text-foreground">Commissions</p>
-        {rateQ.error && <p className="text-xs text-destructive">Taux illisible : {(rateQ.error as Error).message}</p>}
-        <Row label="Estimée — activation (unique, HT)" value={formatCad(activationCommissionCents(rate))} />
-        <Row label="Estimée — plan personnalisé (par mois)" value={formatCad(monthly)} />
-        {projection != null && <Row label={`Projection sur ${24} mois (hypothèse : rétention complète)`} value={formatCad(projection)} />}
-        <Row label="Commission confirmée" value={prop?.paid_at ? "À rapprocher Stripe + droits" : "Non démontrée ici"} />
-        <p className="text-[11px] text-muted-foreground">Taux {rate == null ? "à déterminer" : `${Math.round(rate * 1000) / 10} %`} selon votre dossier affilié.</p>
-      </div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold tabular-nums text-foreground">{value}</span>
-    </div>
-  );
+export default function AffiliateOffersPanel({ prospectId, companyName, trade, city }: { prospectId: string; companyName?: string | null; trade?: string | null; city?: string | null }) {
+ const { data: affiliate } = useAffiliateSelf();
+ const qc = useQueryClient();
+ const [kind, setKind] = useState<ProposalKind>("activation_350");
+ const [inputs, setInputs] = useState<Partial<PricingIntakeInput>>({ trade_primary: trade ?? "", city: city ?? "" });
+ const [busy, setBusy] = useState(false);
+ const [dirty, setDirty] = useState(false);
+ const [error, setError] = useState<string | null>(null);
+ const proposal = useQuery({ queryKey: ["affiliate-proposal", affiliate?.user_id, prospectId], enabled: Boolean(affiliate), queryFn: () => loadProposal(prospectId), retry: false });
+ const rateQ = useQuery({ queryKey: ["affiliate-rate", affiliate?.id], enabled: Boolean(affiliate), queryFn: async () => {
+  if (!affiliate) return null;
+  const { data, error } = await supabase.from("affiliates").select("commission_rate, commission_pct").eq("id",affiliate.id).maybeSingle();
+  if (error) throw error;
+  return resolveRate(data);
+ }});
+ useEffect(() => { if (proposal.data) { setKind(proposal.data.offer_type); setInputs(proposal.data.inputs); setDirty(false); } }, [proposal.data]);
+ const update = (patch: Partial<PricingIntakeInput>) => { setInputs(v => ({ ...v, ...patch })); setDirty(true); setError(null); };
+ const persist = async () => {
+  setBusy(true); setError(null);
+  try {
+   const saved = await saveProposal(prospectId, kind, inputs);
+   qc.setQueryData(["affiliate-proposal", affiliate?.user_id, prospectId], saved);
+   setDirty(false); toast.success("Brouillon sauvegardé. Aucun message envoyé.");
+  } catch(e) { setError(e instanceof Error ? e.message : "Sauvegarde non confirmée. Réessayez."); }
+  finally { setBusy(false); }
+ };
+ const url = proposal.data && !dirty ? proposalClientLink(proposal.data, window.location.origin) : null;
+ const fields: { key: keyof PricingIntakeInput; label: string; percent?: boolean }[] = [
+  {key:"target_monthly_appointments",label:"Rendez-vous souhaités par mois"},
+  {key:"monthly_capacity",label:"Capacité par mois"},
+  {key:"average_project_value",label:"Panier moyen ($ HT)"},
+  {key:"close_rate_estimate",label:"Conversion (%)",percent:true},
+ ];
+ return <section id="affiliate-offer" className="rounded-2xl border border-border bg-card p-5 space-y-4">
+  <h2 className="text-base font-semibold">Offres pour {companyName ?? "cette entreprise"}</h2>
+  <div className="flex flex-col gap-2" aria-label="Choisir l’offre">
+   <Button variant={kind === "activation_350" ? "default" : "outline"} onClick={() => {setKind("activation_350");setDirty(true);}}>Activation 350 $ + taxes</Button>
+   <Button variant={kind === "personnalise" ? "default" : "outline"} onClick={() => {setKind("personnalise");setDirty(true);}}>Plan personnalisé</Button>
+  </div>
+  {kind === "activation_350" ? <p className="text-sm text-muted-foreground">Paiement unique : 350 $ HT; 402,41 $ si TPS/TVQ applicables. Profil et présence IA UNPRO 12 mois. Publication après vérification. Aucun rendez-vous inclus par défaut.</p> : <>
+   <p className="text-sm text-muted-foreground">Objectifs déclarés à confirmer par l’entreprise. Prix, volume et frais d’activation calculés par le serveur avant paiement; aucune double activation.</p>
+   <label className="block text-sm">Services / métier<Input value={inputs.trade_primary ?? ""} maxLength={160} onChange={e=>update({trade_primary:e.target.value})}/></label>
+   <label className="block text-sm">Territoire / ville<Input value={inputs.city ?? ""} maxLength={160} onChange={e=>update({city:e.target.value})}/></label>
+   {fields.map(f=><label key={f.key} className="block text-sm">{f.label}<Input type="number" inputMode="decimal" value={typeof inputs[f.key] === "number" ? Number(inputs[f.key])*(f.percent ? 100 : 1) : ""} onChange={e=>update({[f.key]:e.target.value === "" ? undefined : Number(e.target.value)/(f.percent ? 100 : 1)})}/></label>)}
+   <label className="block text-sm">Types de projets (séparés par des virgules)<Input value={inputs.preferred_project_types?.join(", ") ?? ""} maxLength={500} onChange={e=>update({preferred_project_types:e.target.value.split(",").map(v=>v.trim()).filter(Boolean)})}/></label>
+  </>}
+  {proposal.isLoading && <p role="status">Lecture du brouillon…</p>}
+  {(error || proposal.error) && <div role="alert" className="text-sm text-destructive"><p>{error ?? proposal.error?.message}</p><Button variant="outline" onClick={()=>void proposal.refetch()}>Réessayer la lecture</Button></div>}
+  <Button className="w-full" disabled={busy || !affiliate || proposal.isLoading || Boolean(proposal.error)} onClick={()=>void persist()}>{busy ? "Sauvegarde…" : "Sauvegarder le brouillon et préparer l’aperçu"}</Button>
+  {url && <div className="space-y-2 border-t border-border pt-3">
+   <p className="text-sm font-semibold">Brouillon sauvegardé — aucun envoi</p>
+   <p className="text-xs text-muted-foreground">Prochaine action : vérifier l’aperçu client. Le contact reste soumis aux autorisations de votre dossier.</p>
+   <div className="flex gap-2"><Button variant="outline" size="sm" onClick={async()=>{try {await navigator.clipboard.writeText(url);toast.success("Lien copié");} catch {toast.error("Copie impossible. Ouvrez l’aperçu.");}}}><Copy className="mr-1 h-4 w-4"/>Copier le lien</Button><Button variant="outline" size="sm" onClick={()=>window.open(url,"_blank","noopener,noreferrer")}><ExternalLink className="mr-1 h-4 w-4"/>Aperçu client</Button></div>
+  </div>}
+  <div className="border-t border-border pt-3 space-y-1 text-sm">
+   <h3 className="font-semibold">Commissions</h3>
+   <p>Estimée — activation unique HT : <strong>{formatCad(activationCommissionCents(rateQ.data ?? null))}</strong></p>
+   <p>Récurrente : à déterminer selon le devis et les conditions confirmées.</p>
+   <p>Confirmée : à déterminer dans le registre de commissions.</p>
+   {rateQ.error && <p className="text-destructive">Lecture du taux impossible. Réessayez avant de communiquer une estimation.</p>}
+  </div>
+ </section>;
 }

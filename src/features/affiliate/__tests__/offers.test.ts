@@ -8,6 +8,11 @@ describe("offres affilié", () => {
     expect(formatCad(null)).toBe("À déterminer");
   });
   it("taux en pourcentage accepté", () => expect(resolveRate({ commission_pct: 20 })).toBe(0.2));
+  it("zéro confirmé reste distinct de null", () => {
+    expect(resolveRate({ commission_rate: 0 })).toBe(0);
+    expect(recurringCommissionCents(0, 0.2)).toBe(0);
+    expect(recurringCommissionCents(undefined, 0.2)).toBeNull();
+  });
   it("pas de récurrence ni projection sans prix mensuel serveur", () => {
     expect(recurringCommissionCents(null, 0.2)).toBeNull();
     expect(projection24Cents(recurringCommissionCents(null, 0.2))).toBeNull();

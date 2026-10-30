@@ -15,6 +15,8 @@ export function buildActivation350Links(sp: URLSearchParams) {
   }
   const ref = normalizeRef(sp.get("ref"));
   if (ref) carry.set("ref", ref);
+  const proposal = sp.get("proposal");
+  if (proposal && /^[0-9a-f]{64}$/.test(proposal)) carry.set("proposal", proposal);
   const audit = new URLSearchParams(carry);
   const activate = new URLSearchParams(carry);
   activate.set("from", "activation_350");

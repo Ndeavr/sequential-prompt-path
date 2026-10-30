@@ -1,0 +1,85 @@
+--- a/supabase/functions/compute-pricing-quote/index.ts
++++ b/supabase/functions/compute-pricing-quote/index.ts
+@@ -362,7 +362,16 @@
+     const { data: userData } = await userClient.auth.getUser();
+     const user = userData?.user ?? null;
+ 
+-    const body = (await req.json()) as Input & { action?: string; quote_id?: string };
++    const body = (await req.json()) as Input & { action?: string; quote_id?: string; affiliate_proposal_token?: string };
++    let proposalContext: Record<string, unknown> | null = null;
++    if (body.affiliate_proposal_token) {
++      const { data: context, error } = await svc.rpc("resolve_affiliate_proposal_context", { _token: body.affiliate_proposal_token });
++      if (error || !context || context.offer_type !== "personnalise") return new Response(JSON.stringify({ error: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
++      proposalContext = context;
++      // Affiliated preparation must not attach the client quote to the affiliate account.
++      if (user && await userClient.rpc("is_affiliate_owner", { _affiliate_id: context.affiliate_entity_id }).then(r => r.error || r.data === true)) return new Response(JSON.stringify({ error: "client_confirmation_required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
++      body.company_name = context.company_name;
++    }
+ 
+     /**
+      * Lecture d'un devis invité. Un entrepreneur arrivé par SMS n'a pas encore
+@@ -1358,7 +1367,7 @@
+       annual_savings_cents: annualSavingsCents,
+       competition_level: competitionLevel,
+       source: body.source ?? null,
+-      input_payload: body as unknown as Record<string, unknown>,
++      input_payload: { ...body, ...(proposalContext ? { affiliate_proposal_id: proposalContext.id, affiliate_ref: proposalContext.ref, affiliate_prospect_id: proposalContext.prospect_id } : {}) },
+ 
+       breakdown,
+     };
+--- a/supabase/functions/create-checkout-session/index.ts
++++ b/supabase/functions/create-checkout-session/index.ts
+@@ -78,7 +78,8 @@
+       displayedPriceCents,
+       displayedGuaranteedAppointments,
+       includeProfileFee,
+-      ref,
++      ref: rawRef,
++      affiliateProposalToken,
+       offerId,
+       professionCode,
+       activationToken,
+@@ -93,6 +94,19 @@
+       testMode,
+       sessionId: rawSessionId,
+     } = await req.json();
++    let ref = rawRef;
++    let proposalContext: Record<string, unknown> | null = null;
++    let proposalToken = affiliateProposalToken;
++    if (!proposalToken && quoteId) {
++      const { data: contextQuote } = await serviceClient.from("contractor_pricing_quotes").select("input_payload").eq("id", quoteId).maybeSingle();
++      proposalToken = contextQuote?.input_payload?.affiliate_proposal_token;
++    }
++    if (proposalToken) {
++      const { data: context, error } = await serviceClient.rpc("resolve_affiliate_proposal_context", { _token: proposalToken });
++      if (error || !context || (entryActivation === true ? context.offer_type !== "activation_350" : context.offer_type !== "personnalise")) return new Response(JSON.stringify({ error: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
++      proposalContext = context;
++      ref = context.ref;
++    }
+     // Redirects only to our own origins (undefined → existing defaults).
+     const successUrl = rawSuccessUrl ? safeRedirectUrl(rawSuccessUrl, "") || undefined : undefined;
+     const cancelUrl = rawCancelUrl ? safeRedirectUrl(rawCancelUrl, "") || undefined : undefined;
+@@ -496,6 +510,7 @@
+                 guaranteed_appointments: String(entryGuaranteed ?? 0),
+               }
+             : { credit_amount_cents: String(amountCents) }),
++          ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
+           ...(quoteId && { quote_id: String(quoteId) }),
+           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+           ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
+@@ -1269,6 +1284,7 @@
+         contractor_id: contractor.id,
+         plan_id: resolvedPlanCode,
+         billing_interval: interval,
++        ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
+         ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
+         ...(quoteId && { quote_id: String(quoteId) }),
+          ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+@@ -1290,6 +1306,7 @@
+           contractor_id: contractor.id,
+           plan_id: resolvedPlanCode,
+           billing_interval: interval,
++          ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
+           ...(quoteId && { quote_id: String(quoteId) }),
+            ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
+            ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),

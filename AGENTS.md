@@ -78,6 +78,7 @@ See `supabase/AGENTS.md` (live-infrastructure safety, outreach caps, QA payments
 - First-party phone capture uses the existing canonical prospect anchor and capture helper, never signs consent; batch previews keep candidate counts separate from unverified provider readiness. Why: domain publication and tier C do not establish lawful or technically deliverable SMS.
 
 ## Source-of-truth discipline
+- Affiliate offer drafts reuse affiliate_proposals through assignment-checked RPCs; proposal affiliate_id is the affiliate user UUID, unlike assignment affiliate_id. Why: prevent cross-affiliate drafts and preserve existing foreign keys; server pricing and paid evidence remain authoritative.
 
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, DB metadata, provider receipts and test output over chat history.

@@ -17,9 +17,9 @@ export const OFFER_LABELS: Record<OfferType, string> = {
 export function resolveRate(row: { commission_rate?: number | null; commission_pct?: number | null } | null): number | null {
   if (!row) return null;
   const r = row.commission_rate;
-  if (typeof r === "number" && r > 0 && r <= 1) return r;
+  if (typeof r === "number" && r >= 0 && r <= 1) return r;
   const p = row.commission_pct;
-  if (typeof p === "number" && p > 0 && p <= 100) return p / 100;
+  if (typeof p === "number" && p >= 0 && p <= 100) return p / 100;
   return null;
 }
 
@@ -30,7 +30,7 @@ export function activationCommissionCents(rate: number | null): number | null {
 
 /** Commission estimée récurrente mensuelle : seulement si prix mensuel serveur et taux connus. */
 export function recurringCommissionCents(monthlyCents: number | null | undefined, rate: number | null): number | null {
-  if (rate == null || !monthlyCents || monthlyCents <= 0) return null;
+  if (rate == null || monthlyCents == null || !Number.isFinite(monthlyCents) || monthlyCents < 0) return null;
   return Math.round(monthlyCents * rate);
 }
 
