@@ -664,7 +664,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
 
-        const campaign = !forcedContractor && (campaignEntry || hasHeatPumpCampaign(readWorkflow(state.context)) || readHomeCursor()?.campaign === "thermopompe");
+        const campaign = !forcedContractor && (campaignEntry || (!isContractorContext(state.context) && (hasHeatPumpCampaign(readWorkflow(state.context)) || readHomeCursor()?.campaign === "thermopompe")));
         if (campaign && audienceEpochRef.current === 0) {
           // Suspend PRO, never rotate its session or edit the stored account role.
           pauseActiveContractorFlow();
