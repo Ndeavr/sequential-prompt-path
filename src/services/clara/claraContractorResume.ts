@@ -1,4 +1,5 @@
 import { getClaraSessionToken, peekClaraSessionToken } from "./claraSession";
+import { sanitizeHomeCampaignAttribution } from "./claraHomeCampaign";
 
 // Extend the existing in-chat flow memory; never use a business profile as a
 // signal that a new homeowner conversation belongs to a contractor.
@@ -77,8 +78,9 @@ export function readHomeCursor(): ClaraHomeCursor | null {
   try {
     const raw = JSON.parse(sessionStorage.getItem(HOME_CURSOR_KEY) || "null");
     if (!raw || typeof raw.text !== "string" || raw.session_token !== peekClaraSessionToken()) return null;
-    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options : [],
+    if (raw.text.length > 8000) return null;
+    return { text: raw.text, options: Array.isArray(raw.options) ? raw.options.filter((value: unknown) => typeof value === "string" && value.length <= 200).slice(0, 4) : [],
       campaign: raw.campaign === "thermopompe" ? "thermopompe" : undefined,
-      attribution: raw.attribution && typeof raw.attribution === "object" && !Array.isArray(raw.attribution) ? raw.attribution : undefined };
+      attribution: sanitizeHomeCampaignAttribution(raw.attribution) };
   } catch { return null; }
 }

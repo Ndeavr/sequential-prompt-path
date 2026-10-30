@@ -23,6 +23,16 @@ export function homeCampaignAttribution(search: string): Record<string, string> 
   }));
 }
 
+export function sanitizeHomeCampaignAttribution(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const params = new URLSearchParams();
+  for (const key of CONTRACTOR_MARKETING_FIELDS) {
+    const value = (raw as Record<string, unknown>)[key];
+    if (typeof value === "string") params.set(key, value);
+  }
+  return homeCampaignAttribution(params.toString());
+}
+
 /** The same public context is consumed by alex-chat's existing currentPage field. */
 export function homeCampaignContext(active: boolean, pageContext: string): string {
   return active ? `${HEAT_PUMP_CAMPAIGN.context}\n${pageContext}` : pageContext;

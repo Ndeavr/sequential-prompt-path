@@ -31,6 +31,14 @@ describe("heat-pump public campaign", () => {
     expect(hasHeatPumpCampaign({ sub_workflow: "thermopompe" })).toBe(true);
     expect(hasHeatPumpCampaign({ sub_workflow: "admin" })).toBe(false);
   });
+  it("ignores malformed or foreign stored context and bounds saved choices", () => {
+    sessionStorage.setItem("unpro_clara_home_cursor", "{");
+    expect(readHomeCursor()).toBeNull();
+    sessionStorage.setItem("unpro_clara_home_cursor", JSON.stringify({ text: "QA", session_token: "another-session", campaign: "thermopompe" }));
+    expect(readHomeCursor()).toBeNull();
+    sessionStorage.setItem("unpro_clara_home_cursor", JSON.stringify({ text: "QA", session_token: "qa-session", campaign: "admin", options: [42, "Oui"], attribution: { role: "admin", utm_source: "facebook", utm_medium: "<script>" } }));
+    expect(readHomeCursor()).toEqual({ text: "QA", campaign: undefined, options: ["Oui"], attribution: { utm_source: "facebook" } });
+  });
   it("keeps homeowner known answers while excluding contractor history", () => {
     const history = buildClaraHistory([
       { role: "user", text: "Ma maison est à Laval", type: "homeowner" },
