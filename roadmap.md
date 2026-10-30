@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Affiliate offers: persist attributed server drafts, reload/client handoff, enforce assignment ownership; targeted tests and mobile QA. Hosted release requires verified backup preflight before proposal RPC migration.
 - [x] Targeted heat-pump campaign entry: 16 focused tests pass; real guest 390px centrale turn and refresh verified, isolated returning history/role/navigation and desktop verified; harness build OK. Auth/OTP and completed booking unverified; no publication.
 - [x] Bounded CASL capture staged only: canonical observer unchanged, service-only ledger/lease-fenced persistence, 2/run and 20/day, one 24h retry; 111/111 focused tests, Deno and isolated PostgreSQL checks pass. No active Edge changes or remote writes.
 - [ ] Autonomous CASL hosted pilot/schedule blocked: backup integrity unverified; after backup preflight, private Vault credential validity and production-trigger/pilot readback remain required. Real pending rows still zero; schedule disabled, historical 115701 pending and all outreach/recruitment switches unchanged.
