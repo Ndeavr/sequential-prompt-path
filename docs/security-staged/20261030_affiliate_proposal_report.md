@@ -13,7 +13,7 @@ Candidate SQL: `20261030_affiliate_proposal_drafts.sql`; server proposal/checkou
 ## Blocking hosted completion
 No SQL applied and no Edge patch deployed. Current hosted backend does not expose the new proposal RPCs, so the frontend fails explicitly rather than claiming a successful save. This is not publication-ready end-to-end.
 Production backup integrity/preflight is not verified. Auth-session mint for the requesting account failed because no matching auth account exists; authenticated hosted checks were not substituted with a different account.
-The candidate token implementation still requires review: existing legacy resolver returns the entire payload, so storing a reloadable client bearer in that payload must not be released unchanged. Candidate SQL tests do not certify this security condition, RLS on a hosted stack, concurrency, claim/payment linkage or signed webhook attribution.
+The candidate also sanitizes the legacy resolver: owner-only reloadable bearer is never returned in public payload. The isolated test verifies this exclusion. Hosted RLS, concurrency, claim/payment linkage and signed webhook attribution remain unverified and require release checks.
 The staged Edge patch is not executed or certified; no paid state is set by draft saves. Tax/price/webhook policy unchanged.
 
 No email, SMS, live checkout, payment, publication, historical data mutation or production migration performed.

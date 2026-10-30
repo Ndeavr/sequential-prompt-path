@@ -47,3 +47,19 @@ GRANT EXECUTE ON FUNCTION public.resolve_affiliate_proposal_context(text) TO ano
 DROP POLICY IF EXISTS affiliate_manage_own_proposals ON public.affiliate_proposals;
 CREATE POLICY affiliate_read_own_proposals ON public.affiliate_proposals FOR SELECT TO authenticated USING(affiliate_id=auth.uid());
 -- Admin policy stays unchanged. No backfill or historical mutations.
+-- Prevent legacy resolver from exposing the reloadable bearer stored in owner-only payload.
+CREATE OR REPLACE FUNCTION public.resolve_proposal_link(_token text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,extensions AS $$
+DECLARE p public.affiliate_proposals%rowtype;
+BEGIN
+ SELECT * INTO p FROM affiliate_proposals WHERE token_hash=encode(digest(_token,'sha256'),'hex') LIMIT 1;
+ IF p.id IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','not_found'); END IF;
+ IF p.expires_at<=now() THEN RETURN jsonb_build_object('ok',false,'reason','expired'); END IF;
+ IF p.single_use AND p.used_at IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'reason','used'); END IF;
+ IF p.payload->>'draft_version'='1' THEN
+  PERFORM public.resolve_affiliate_proposal_context(_token);
+ ELSE
+  UPDATE affiliate_proposals SET opened_at=coalesce(opened_at,now()) WHERE id=p.id;
+ END IF;
+ RETURN jsonb_build_object('ok',true,'proposal_id',p.id,'plan_slug',p.recommended_plan_slug,'monthly_price_cents',p.monthly_price_cents,'payload',p.payload-'client_token');
+END $$;

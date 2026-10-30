@@ -20,7 +20,7 @@ async function fixture() {
  create table affiliates(id uuid,user_id uuid,referral_code text,status text);
  create table affiliate_assignments(affiliate_id uuid,prospect_id uuid,assigned_at timestamptz default now());
  create table contractors_prospects(id uuid,business_name text);
- create table affiliate_proposals(id uuid default gen_random_uuid(),affiliate_id uuid,prospect_id uuid,recommended_plan_slug text,monthly_price_cents integer,token_hash text,payload jsonb,expires_at timestamptz default now()+interval '7 days',used_at timestamptz,paid_at timestamptz,created_at timestamptz default now());
+ create table affiliate_proposals(id uuid default gen_random_uuid(),affiliate_id uuid,prospect_id uuid,recommended_plan_slug text,monthly_price_cents integer,token_hash text,payload jsonb,expires_at timestamptz default now()+interval '7 days',used_at timestamptz,paid_at timestamptz,single_use boolean default false,opened_at timestamptz,created_at timestamptz default now());
  insert into affiliates values('${affiliate}','${owner}','QA-REF','active');
  insert into affiliate_assignments values('${affiliate}','${prospect}',now());
  insert into contractors_prospects values('${prospect}','Entreprise QA');
@@ -39,6 +39,8 @@ describe("propositions affiliées — isolated SQL", () => {
    expect(reload.rows[0].p.inputs).toMatchObject(input);
    const client=await db.query<{p:any}>("select resolve_affiliate_proposal_context($1) p",[p.token]);
    expect(client.rows[0].p.prospect_id).toBe(prospect); expect(client.rows[0].p.ref).toBe("QA-REF");
+   const legacy=await db.query<{p:any}>("select resolve_proposal_link($1) p",[p.token]);
+   expect(legacy.rows[0].p.payload.client_token).toBeUndefined();
    const again=await db.query<{p:any}>("select affiliate_proposal_draft('save',$1,'personnalise',$2) p",[prospect,JSON.stringify({...input,monthly_capacity:20})]);
    expect(again.rows[0].p.id).toBe(p.id);
   } finally {await db.close();}
