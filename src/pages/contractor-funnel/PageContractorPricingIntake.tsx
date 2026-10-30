@@ -721,7 +721,7 @@ export default function PageContractorPricingIntake() {
           )}
           {simHandoff && (() => {
             const h = simHandoff;
-            const n = (v: number) => formatQuebecNumber(v);
+            const n = (v: number) => formatQuebecNumber(v, "");
             const m = (v: number) => formatQuebecNumber(v, "$");
             const pl: Record<string, string> = { priority: "prioritaire", accepted: "accepté", excluded: "non recherché" };
             return (
