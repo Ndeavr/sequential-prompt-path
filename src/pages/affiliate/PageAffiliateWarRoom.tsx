@@ -1,3 +1,4 @@
+import { resolveRate, formatCad, activationCommissionCents } from "@/features/affiliate/offers";
 import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
 /**
  * UNPRO — Affiliate War Room (Daily Call List)
