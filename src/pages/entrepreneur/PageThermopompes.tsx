@@ -27,6 +27,16 @@ export default function PageThermopompes() {
   const openClara = () => {
     if (draft === null) setDraft(heatPumpDraft(preferences, lang));
     setChatVisible(true);
+    // Bring the (lazy) Clara composer into view and focus it, without sending anything.
+    let tries = 0;
+    const reveal = () => {
+      const box = document.getElementById('heat-pump-clara');
+      const field = box?.querySelector('textarea');
+      if (field) { field.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); field.focus({ preventScroll: true }); return; }
+      if (box && tries === 0) box.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+      if (tries++ < 20) window.setTimeout(reveal, 100);
+    };
+    window.setTimeout(reveal, 50);
   };
   return <div className={`utp${paused ? ' utp-paused' : ''}`}>
     <Helmet><html lang={fr ? 'fr-CA' : 'en-CA'} /><title>{txt('Thermopompes : vos projets, vos rendez-vous | UNPRO', 'Heat pumps: your projects, your appointments | UNPRO')}</title><meta name="description" content={txt('Précisez à Clara les installations de thermopompes que vous recherchez. Découvrez une démonstration animée de vos priorités et les offres UNPRO.', 'Tell Clara which heat pump installations you want. Explore an animated demonstration of your priorities and UNPRO offers.')} /><link rel="canonical" href="https://unpro.ca/entrepreneurs/thermopompes" /></Helmet>
