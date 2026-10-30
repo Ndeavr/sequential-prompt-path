@@ -60,11 +60,6 @@ export default function ScreenPayment() {
         });
         if (error) throw error;
         if (!data?.url) throw new Error("checkout_url_missing");
-        console.info("[checkout:pack_350]", {
-          offer_kind: data.offer_kind,
-          expected_today_cents: data.expected_today_cents,
-          session_id: data.session_id,
-        });
         await updateFunnel({ stripe_session_id: data.session_id });
         redirectToCheckout(data.url);
         return;
