@@ -4,9 +4,14 @@ import { readFileSync } from "node:fs";
 const links = readFileSync("src/lib/activation350Links.ts", "utf8");
 const page = readFileSync("src/pages/entrepreneur/PageActivation350.tsx", "utf8");
 const fast = readFileSync("src/components/entrepreneur/Entry350FastCheckout.tsx", "utf8");
+const payment = readFileSync("src/pages/entrepreneur/activation/ScreenPayment.tsx", "utf8");
 const edge = readFileSync("supabase/functions/create-checkout-session/index.ts", "utf8");
 
 describe("Clara entry350 quote-free handoff", () => {
+  it("does not log Stripe Checkout session IDs in the browser", () => {
+    expect(payment).not.toMatch(/console\.(?:log|info|warn|error|debug)\s*\(/);
+    expect(payment).toContain("await updateFunnel({ stripe_session_id: data.session_id });");
+  });
   it("routes the base activation to its existing landing instead of monthly intake", () => {
     expect(links).toContain("activate: `/entrepreneurs/activation-350?");
     expect(links).toContain('activate.set("activate", "1")');
