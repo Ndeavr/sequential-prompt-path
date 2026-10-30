@@ -40,7 +40,8 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("Ajouter une photo ou un document");
     expect(clara).toContain("Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?");
     expect(clara).toContain('placeholder: "Décrivez votre besoin…"');
-    expect(clara).toContain('const [composerText, setComposerText] = useState("")');
+    expect(clara).toContain('initialComposerText = ""');
+    expect(clara).toContain("useState(initialComposerText)");
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");
     expect(clara).toContain("ClaraContextPanel");
