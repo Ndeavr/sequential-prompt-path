@@ -27,7 +27,7 @@ BEGIN
   END IF;
  ELSIF _action<>'get' THEN RAISE EXCEPTION 'invalid_action'; END IF;
  IF p.id IS NULL THEN RETURN NULL; END IF;
- RETURN jsonb_build_object('id',p.id,'prospect_id',p.prospect_id,'offer_type',p.payload->>'offer_type','token',p.payload->>'client_token','ref',p.payload->>'ref','company_name',p.payload->>'company_name','inputs',p.payload->'inputs','expires_at',p.expires_at);
+ RETURN jsonb_build_object('id',p.id,'prospect_id',p.prospect_id,'affiliate_entity_id',p.payload->>'affiliate_entity_id','offer_type',p.payload->>'offer_type','token',p.payload->>'client_token','ref',p.payload->>'ref','company_name',p.payload->>'company_name','inputs',p.payload->'inputs','expires_at',p.expires_at);
 END $$;
 REVOKE ALL ON FUNCTION public.affiliate_proposal_draft(text,uuid,text,jsonb) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.affiliate_proposal_draft(text,uuid,text,jsonb) TO authenticated,service_role;
@@ -39,7 +39,7 @@ BEGIN
  SELECT * INTO p FROM affiliate_proposals WHERE token_hash=encode(digest(_token,'sha256'),'hex') AND expires_at>now() AND payload->>'draft_version'='1';
  IF p.id IS NULL THEN RAISE EXCEPTION 'expired_or_invalid'; END IF;
  IF NOT EXISTS(SELECT 1 FROM affiliates a JOIN affiliate_assignments s ON s.affiliate_id=a.id WHERE a.id=(p.payload->>'affiliate_entity_id')::uuid AND a.user_id=p.affiliate_id AND a.status='active' AND s.prospect_id=p.prospect_id) THEN RAISE EXCEPTION 'assignment_required'; END IF;
- RETURN jsonb_build_object('id',p.id,'prospect_id',p.prospect_id,'offer_type',p.payload->>'offer_type','ref',p.payload->>'ref','company_name',p.payload->>'company_name','inputs',p.payload->'inputs','expires_at',p.expires_at);
+ RETURN jsonb_build_object('id',p.id,'prospect_id',p.prospect_id,'affiliate_entity_id',p.payload->>'affiliate_entity_id','offer_type',p.payload->>'offer_type','ref',p.payload->>'ref','company_name',p.payload->>'company_name','inputs',p.payload->'inputs','expires_at',p.expires_at);
 END $$;
 REVOKE ALL ON FUNCTION public.resolve_affiliate_proposal_context(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.resolve_affiliate_proposal_context(text) TO anon,authenticated,service_role;

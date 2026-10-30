@@ -12,7 +12,7 @@
 +      if (error || !context || context.offer_type !== "personnalise") return new Response(JSON.stringify({ error: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 +      proposalContext = context;
 +      // Affiliated preparation must not attach the client quote to the affiliate account.
-+      if (user && await svc.rpc("is_affiliate_owner", { _affiliate_id: context.affiliate_entity_id }).then(r => r.data === true)) return new Response(JSON.stringify({ error: "client_confirmation_required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
++      if (user && await userClient.rpc("is_affiliate_owner", { _affiliate_id: context.affiliate_entity_id }).then(r => r.error || r.data === true)) return new Response(JSON.stringify({ error: "client_confirmation_required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 +      body.company_name = context.company_name;
 +    }
  
