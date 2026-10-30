@@ -79,6 +79,28 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
   });
 });
 
+// RED QA gate: legacy ScreenPayment sends offer_kind=pack_350 (NOT offer=entry_pack_350).
+// A 100% discount or $1 payment must not reach any activation/billing writes.
+// Synthetic event and mocked I/O only; do not use the production Stripe/DB stack.
+describe("P0: legacy pack_350 Checkout must reject free or discounted payment", () => {
+  it.each([
+    ["100% promotion", "no_payment_required", 0],
+    ["$1 promotional charge", "paid", 100],
+  ])("blocks %s before billing or paid telemetry", async (_label, payment_status, amount_total) => {
+    const result = await run({
+      ...session("entry_pack_350"),
+      payment_status,
+      amount_total,
+      metadata: { offer_code: "pack_350", offer_kind: "pack_350", user_id: "", onboarding_session_id: "" },
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.ignored).toMatch(/^ignored_/);
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
+    expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
+  });
+});
+
 describe("signature gate", () => {
   it("rejects an invalid Stripe signature before any write or activation", async () => {
     const result = await run(session("entry_activation_350"), true, true);
