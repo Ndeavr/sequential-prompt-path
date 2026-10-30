@@ -40,3 +40,14 @@ describe('heat pump +1M simulator', () => {
     expect(clampField('weeks', 0)).toBe(1);
   });
 });
+import { parseAmount } from '@/lib/heatPumpRevenueSim';
+describe('parseAmount', () => {
+  it('parses FR/EN formatted amounts', () => {
+    expect(parseAmount('1 780 000 $')).toBe(1780000);
+    expect(parseAmount('1\u202f780\u202f000\u00a0$')).toBe(1780000);
+    expect(parseAmount('164000')).toBe(164000);
+    expect(parseAmount('200,5')).toBe(200.5);
+    expect(parseAmount('$1,780,000.50', false)).toBe(1780000.5);
+    expect(parseAmount('')).toBeNull();
+  });
+});

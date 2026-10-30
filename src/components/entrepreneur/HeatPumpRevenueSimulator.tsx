@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, MessageCircle } from 'lucide-react';
+import { parseAmount } from '@/lib/heatPumpRevenueSim';
 import { simulate, clampField, SIM_DEFAULTS, SIM_BOUNDS, type SimInput } from '@/lib/heatPumpRevenueSim';
 
 type NumKey = keyof typeof SIM_BOUNDS;
+const MONEY_KEYS = new Set<NumKey>(['objective', 'avgTicket', 'costPerAppointment', 'monthlySubscription']);
 interface Props { lang: 'fr' | 'en'; planHref: string; onClaraDraft: (text: string) => void }
 
 export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft }: Props) {
@@ -12,19 +14,21 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft 
   const t = (a: string, b: string) => (fr ? a : b);
   const reduce = useReducedMotion();
   const [input, setInput] = useState<SimInput>({ ...SIM_DEFAULTS });
-  const [raw, setRaw] = useState<Record<NumKey, string>>(() =>
-    Object.fromEntries(Object.keys(SIM_BOUNDS).map(k => [k, String(SIM_DEFAULTS[k as NumKey])])) as Record<NumKey, string>);
-  const res = simulate(input);
   const loc = fr ? 'fr-CA' : 'en-CA';
-  const money = (n: number, d = 0) => new Intl.NumberFormat(loc, { style: 'currency', currency: 'CAD', minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+  const money = (n: number, d = 0) => new Intl.NumberFormat(loc, { style: 'currency', currency: 'CAD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+  const display = (k: NumKey, v: number | null) => v === null ? '' : MONEY_KEYS.has(k) ? money(v, Number.isInteger(v) ? 0 : 2) : new Intl.NumberFormat(loc, { maximumFractionDigits: 2 }).format(v);
+  const [raw, setRaw] = useState<Record<NumKey, string>>(() =>
+    Object.fromEntries(Object.keys(SIM_BOUNDS).map(k => [k, display(k as NumKey, SIM_DEFAULTS[k as NumKey] as number)])) as Record<NumKey, string>);
+  const res = simulate(input);
   const num = (n: number) => new Intl.NumberFormat(loc, { maximumFractionDigits: 2 }).format(n);
 
   const setField = (k: NumKey, v: string) => {
     setRaw(r => ({ ...r, [k]: v }));
-    const n = v.trim() === '' ? null : Number(v.replace(',', '.'));
-    setInput(i => ({ ...i, [k]: n === null || !Number.isFinite(n) ? null : clampField(k, n) }));
+    const n = parseAmount(v, fr);
+    setInput(i => ({ ...i, [k]: n === null ? null : clampField(k, n) }));
   };
-  const commit = (k: NumKey) => { const v = input[k]; if (v !== null) setRaw(r => ({ ...r, [k]: String(v) })); };
+  const fromSlider = (k: NumKey, v: string) => { const n = clampField(k, Number(v)); setInput(i => ({ ...i, [k]: n })); setRaw(r => ({ ...r, [k]: display(k, n) })); };
+  const commit = (k: NumKey) => { const v = input[k]; if (v !== null) setRaw(r => ({ ...r, [k]: display(k, v) })); };
 
   const fields: { k: NumKey; label: string; step: number; slider?: boolean; hint?: string }[] = [
     { k: 'objective', label: t('Objectif de chiffre d’affaires ajouté (CAD HT/an)', 'Added annual revenue goal (CAD before tax)'), step: 10000, slider: true },
@@ -57,7 +61,7 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft 
   return (
     <section id="simulateur" className="utp-wrap utp-section" aria-labelledby="sim-title">
       <div className="utp-eyebrow">{t('03 / SIMULATEUR', '03 / SIMULATOR')}</div>
-      <h2 id="sim-title">{t('Et si vous ajoutiez 1 000 000 $', 'What if you added $1,000,000')}<br /><span>{t('à votre chiffre d’affaires annuel?', 'to your annual revenue?')}</span></h2>
+      <h2 id="sim-title" className="utp-sim-title">{t('Et si vous ajoutiez', 'What if you added')} <span className="utp-amount" data-testid="sim-title-amount">{money(input.objective ?? SIM_DEFAULTS.objective!)}</span><br /><span>{t('à votre chiffre d’affaires annuel?', 'to your annual revenue?')}</span></h2>
       <div className="utp-demo-grid">
         <div className="utp-controls">
           <div className="utp-small-title">{t('Vos hypothèses (modifiables)', 'Your assumptions (editable)')}</div>
@@ -65,10 +69,10 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft 
             <label key={f.k} htmlFor={`sim-${f.k}`} className="utp-sim-field">
               <strong>{f.label}</strong>
               {f.hint && <small>{f.hint}</small>}
-              <input id={`sim-${f.k}`} type="number" inputMode="decimal" min={SIM_BOUNDS[f.k][0]} max={SIM_BOUNDS[f.k][1]} step={f.step}
+              <input id={`sim-${f.k}`} type="text" inputMode="decimal" autoComplete="off"
                 value={raw[f.k]} onChange={e => setField(f.k, e.target.value)} onBlur={() => commit(f.k)} />
               {f.slider && <input type="range" aria-label={f.label} min={SIM_BOUNDS[f.k][0]} max={SIM_BOUNDS[f.k][1]} step={f.step}
-                value={input[f.k] ?? SIM_BOUNDS[f.k][0]} onChange={e => setField(f.k, e.target.value)} />}
+                value={input[f.k] ?? SIM_BOUNDS[f.k][0]} onChange={e => fromSlider(f.k, e.target.value)} />}
             </label>
           ))}
           <label className="utp-sim-check"><input type="checkbox" checked={input.alreadyActivated} onChange={e => setInput(i => ({ ...i, alreadyActivated: e.target.checked }))} />
@@ -91,12 +95,12 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft 
             </div>
             <hr />
             <div className="utp-sim-costs">
-              <p><span>{t('RDV', 'Appointments')} ({num(res.plannedAppointments)} × {money(input.costPerAppointment!)})</span><b>{money(res.appointmentCost)}</b></p>
-              <p><span>{t('Abonnement', 'Subscription')} ({money(input.monthlySubscription!)} × 12)</span><b>{money(res.subscriptionCost)}</b></p>
-              <p><span>{t('Activation unique (année 1)', 'One-time activation (year 1)')}</span><b>{money(res.activationCost)}</b></p>
-              <p className="is-total"><span>{t('Coût UNPRO estimé, année 1 (HT)', 'Estimated UNPRO cost, year 1 (before tax)')}</span><b data-testid="sim-total">{money(res.totalCost)}</b></p>
-              <p><span>{t('Moyenne mensuelle, année 1', 'Monthly average, year 1')}</span><b data-testid="sim-month-cost">{money(res.monthlyAverageCost, 2)}</b></p>
-              <p><span>{t('Coût d’acquisition par vente', 'Acquisition cost per sale')}</span><b data-testid="sim-per-sale">{money(res.costPerSale, 2)}</b></p>
+              <p><span>{t('RDV', 'Appointments')} ({num(res.plannedAppointments)} × {money(input.costPerAppointment!)})</span><b className="utp-amount">{money(res.appointmentCost)}</b></p>
+              <p><span>{t('Abonnement', 'Subscription')} ({money(input.monthlySubscription!)} × 12)</span><b className="utp-amount">{money(res.subscriptionCost)}</b></p>
+              <p><span>{t('Activation unique (année 1)', 'One-time activation (year 1)')}</span><b className="utp-amount">{money(res.activationCost)}</b></p>
+              <p className="is-total"><span>{t('Coût UNPRO estimé, année 1 (HT)', 'Estimated UNPRO cost, year 1 (before tax)')}</span><b className="utp-amount" data-testid="sim-total">{money(res.totalCost)}</b></p>
+              <p><span>{t('Moyenne mensuelle, année 1', 'Monthly average, year 1')}</span><b className="utp-amount" data-testid="sim-month-cost">{money(res.monthlyAverageCost, 2)}</b></p>
+              <p><span>{t('Coût d’acquisition par vente', 'Acquisition cost per sale')}</span><b className="utp-amount" data-testid="sim-per-sale">{money(res.costPerSale, 2)}</b></p>
               <p><span>{t('Part du chiffre d’affaires', 'Share of revenue')}</span><b>{num(res.costPctOfRevenue)} %</b></p>
             </div>
           </>)}
