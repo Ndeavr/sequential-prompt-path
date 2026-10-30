@@ -680,14 +680,16 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           const alreadyGreeted = state.messages.some(message => message.text === HEAT_PUMP_CAMPAIGN.greeting);
           const campaignGreeting: Msg = { id: greetingId, role: "assistant", text: HEAT_PUMP_CAMPAIGN.greeting, audience: "homeowner", status: "complete" };
           setMessages(current => reconcileMessages(current, alreadyGreeted ? restored : [...restored, campaignGreeting]));
-          workflowRef.current = { ...nextWorkflowState(readWorkflow(state.context), "homeowner_problem").state, sub_workflow: HEAT_PUMP_CAMPAIGN.intent };
-          rememberWorkflow(workflowRef.current);
-          rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+          workflowRef.current = alreadyGreeted ? readWorkflow(state.context) : { ...nextWorkflowState(readWorkflow(state.context), "homeowner_problem").state, sub_workflow: HEAT_PUMP_CAMPAIGN.intent };
+          if (!alreadyGreeted) {
+            rememberWorkflow(workflowRef.current);
+            rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
+          }
           if (!alreadyGreeted) {
             rememberHomeCursor({ text: HEAT_PUMP_CAMPAIGN.greeting, options: [...HEAT_PUMP_CAMPAIGN.choices], campaign: "thermopompe", attribution: homeCampaignAttribution(location.search) });
             setQuickReplies({ messageId: greetingId, options: [...HEAT_PUMP_CAMPAIGN.choices] });
             void appendClaraMessage({ role: "assistant", text: HEAT_PUMP_CAMPAIGN.greeting, clientMessageId: greetingId, audience: "homeowner" }).catch(() => undefined);
-            trackCopilotEvent("clara_campaign_opened", { intent: HEAT_PUMP_CAMPAIGN.intent, ...homeCampaignAttribution(location.search) });
+            trackCopilotEvent("clara_chat_opened", { intent: HEAT_PUMP_CAMPAIGN.intent, ...homeCampaignAttribution(location.search) });
           } else {
             const cursor = readHomeCursor();
             const last = restored.at(-1);
@@ -1240,7 +1242,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         }
       }
 
-      const nextMode = contractorTurn ? "CONTRACTOR" : detectSurfaceMode(text);
+      const detectedMode = detectSurfaceMode(text);
+      const nextMode = contractorTurn ? "CONTRACTOR" : heatPumpCampaign && detectedMode === "IDLE" ? "PROJECT" : detectedMode;
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
 
