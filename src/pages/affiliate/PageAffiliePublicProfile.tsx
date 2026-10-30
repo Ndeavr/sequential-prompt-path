@@ -129,7 +129,7 @@ export default function PageAffiliePublicProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 text-center">
         <div>
-          <h1 className="text-2xl font-semibold">Affilié introuvable</h1>
+          <h1 className="text-2xl font-semibold">Lien affilié introuvable</h1>
           <p className="mt-2 text-muted-foreground">
             Ce lien n'existe plus ou n'est pas actif.
           </p>
