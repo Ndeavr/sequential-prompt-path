@@ -27,6 +27,7 @@ const CONTRACTOR_LINKS: FooterLink[] = [
 const RESOURCE_LINKS: FooterLink[] = [
   { label: "Journal", to: "/journal" },
   { label: "FAQ", to: "/faq" },
+  { label: "Partenariats fournisseurs", to: "/partenariats-fournisseurs" },
   { label: "Contact", to: "/contact" },
 ];
 
