@@ -46,7 +46,7 @@ La promesse principale n'est pas « plus de leads », mais :
 - Première action sans paiement : identifier votre site / entreprise / NEQ / RBQ selon métier, afficher un aperçu fiable et les prestations/territoires reconnus.
 - Clara demande les nuances utiles, une question à la fois, conserve les réponses; pas de formulaires mensuels non pertinents ni de reprise après login.
 - Activation de base : **350 $ + taxes applicables, paiement unique, profil UNPRO et présence pendant 12 mois**; ne promettre aucun rendez-vous inclus si non prévu par les droits de l'offre. Les rendez-vous exclusifs sont une option séparée, avec droits connus avant paiement.
-- Permettre le paiement via Stripe LIVE uniquement après validation du parcours, taxes et droits; confirmer par webhook signé. Une redirection de succès ne vaut pas paiement.
+- **Décision du 29 octobre 2026 :** l'ouverture commerciale du Checkout Stripe LIVE 350 $ sur le parcours canonique existant est autorisée, sans attendre la clôture de l'audit QA. Cette décision ne prouve ni le déploiement de chaque fonction ni la conformité des droits : ne compter que les paiements réglés, reliés à l'entreprise unique et rapprochés avec webhook signé et droit de 12 mois. Une redirection de succès ne vaut pas paiement.
 - Aucune fausse urgence (« 10 places restantes »), aucun faux volume clients/reviews, aucun score IA inventé.
 
 ## 5. Tableau de bord exécutif minimal
@@ -90,6 +90,12 @@ Voir `docs/marketing/2026-10-acquisition-entrepreneurs-professionnels-ab.md` et 
 6. Développer partenaires/affiliés, organique et campagnes payées soumises au budget explicitement autorisé; canal SMS autorisé séparément.
 
 **Statuts et interdits :** OBJECTIF 3 000 ≠ PLAN TESTÉ ≠ COMMERCIALISATION ≠ REVENUS. Aucun envoi, déploiement, dépense ni écriture production est autorisé par ce document. Chaque étape production nécessitant droit/budget/change gate reste conditionnée à sa vérification réelle.
+
+### Distinction des parcours 350 $ — inspection du source au 30 octobre 2026
+
+- **Chemin canonique source `create-checkout-session` :** le chemin `entryActivation: true` vérifie l'utilisateur authentifié, rattache une fiche entreprise et transmet `offer: entry_activation_350` ainsi que `contractor_id` à Stripe. La décision du fondateur du 29 octobre a levé le blocage commercial de ce chemin; elle **n'a pas validé** la preuve E2E Auth → Stripe TEST → événement signé → registre → 12 mois ni démontré quel code Edge est déployé. Maintenir les gardes d'identité, fiscalité, idempotence, licence et révocation.
+- **Autre chemin source encore appelé par `src/pages/entrepreneur/activation/ScreenPayment.tsx` :** `create-founder-activation-checkout` accepte un checkout invité, conserve `allow_promotion_codes: true`, envoie `offer_kind: pack_350` mais **pas `contractor_id`** dans la metadata Stripe. Ne pas le traiter comme une activation admissible ou une preuve de rattachement entreprise. Vérifier ce parcours sous QA isolée et planifier une correction spécifique validée avant de modifier son comportement LIVE.
+- **Source ≠ déploiement ≠ vente :** ces constats proviennent de `lovable-sync` au SHA `861bfe7c` et ne constituent pas des tests fonctionnels, des reçus de paiement ni un audit des fonctions Edge hébergées. Le [P0 #86](https://github.com/Ndeavr/sequential-prompt-path/issues/86) reste ouvert comme validation QA; aucune nouvelle mutation de paiement, migration, campagne, dépense, communication ou publication n'est autorisée par cette documentation.
 
 ## 8. Validation de l'objectif hebdomadaire
 
