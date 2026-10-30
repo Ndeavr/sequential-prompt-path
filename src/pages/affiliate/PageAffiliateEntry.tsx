@@ -154,12 +154,12 @@ export default function PageAffiliateEntry() {
       return (
         <div className="min-h-screen bg-background text-foreground">
           <Helmet>
-            <title>Affilié introuvable — UNPRO</title>
+            <title>Lien affilié introuvable — UNPRO</title>
             <meta name="robots" content="noindex" />
           </Helmet>
           <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-14">
             <div className="text-sm font-semibold tracking-[0.3em] text-primary">UNPRO</div>
-            <h1 className="mt-8 text-2xl font-semibold tracking-tight">Affilié introuvable</h1>
+            <h1 className="mt-8 text-2xl font-semibold tracking-tight">Lien affilié introuvable</h1>
             <p className="mt-4 text-muted-foreground">
               Ce lien n'existe plus ou n'est pas actif.
             </p>
@@ -230,7 +230,7 @@ export default function PageAffiliateEntry() {
             <Step icon={Send} title="2. UNPRO prend la relève">
               L'invitation et le suivi se font depuis votre tableau de bord.
             </Step>
-            <Step icon={Wallet} title="3. Vous êtes payé">
+            <Step icon={Wallet} title="3. Vous recevez vos commissions">
               Lorsque votre recommandation devient un client payant.
             </Step>
           </div>

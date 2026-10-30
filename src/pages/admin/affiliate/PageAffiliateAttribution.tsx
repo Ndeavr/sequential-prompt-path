@@ -1,8 +1,8 @@
 /**
  * UNPRO — Admin Attribution affiliée
  * Route: /admin/affiliates/attribution
- * Chaîne auditable : Affiliée → prospects → audits → conversions → commissions.
- * Source marquée « Fourni par UNPRO » / « Trouvé par l'affiliée ».
+ * Chaîne auditable : Compte affilié → prospects → audits → conversions → commissions.
+ * Source marquée « Fourni par UNPRO » / « Trouvé par le compte affilié ».
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -88,7 +88,7 @@ export default function PageAffiliateAttribution() {
       <div>
         <h1 className="text-2xl font-bold">Attribution affiliée</h1>
         <p className="text-sm text-muted-foreground">
-          Affiliée → prospects → audits → conversions → commissions. Historique auditable.
+          Compte affilié → prospects → audits → conversions → commissions. Historique auditable.
         </p>
       </div>
 
@@ -153,7 +153,7 @@ export default function PageAffiliateAttribution() {
                                   </td>
                                   <td className="p-2">
                                     <Badge variant={own ? "default" : "secondary"}>
-                                      {own ? "Trouvé par l'affiliée" : "Fourni par UNPRO"}
+                                      {own ? "Trouvé par le compte affilié" : "Fourni par UNPRO"}
                                     </Badge>
                                   </td>
                                   <td className="p-2 text-xs">

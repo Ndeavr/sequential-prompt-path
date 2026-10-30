@@ -2,7 +2,7 @@
  * PageAffiliesPublic — Landing publique du programme affilié UNPRO.
  * Route: /affilies (publique, partageable)
  * Objectif : compréhension < 30 s → CTA « JE COMMENCE! » → onboarding 4 étapes.
- * Aucun taux affiché (le taux est propre à chaque affiliée) — mécanismes réels seulement.
+ * Aucun taux affiché (le taux est propre à chaque compte) — mécanismes réels seulement.
  */
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -74,7 +74,7 @@ const FAQ = [
     a: "Non. Vous ouvrez la porte et envoyez l'évaluation. UNPRO fait la démonstration, l'accompagnement et l'inscription.",
   },
   {
-    q: "Comment suis-je payée ?",
+    q: "Comment recevoir mes commissions ?",
     a: "Quand un entrepreneur que vous avez référé devient client payant, une commission vous est attribuée. Votre taux exact est confirmé dans votre espace dès l'activation.",
   },
   {
@@ -115,12 +115,12 @@ export default function PageAffiliesPublic() {
         <title>Programme affilié UNPRO — Vous ouvrez la porte. UNPRO fait le reste.</title>
         <meta
           name="description"
-          content="Recommandez des entrepreneurs à UNPRO : trouvez, contactez, envoyez l'évaluation IA, suivez. UNPRO prend la relève et vous êtes payée sur chaque inscription."
+          content="Recommandez des entrepreneurs à UNPRO : trouvez, contactez, envoyez l'évaluation IA, suivez. UNPRO prend la relève et vous recevez vos commissions sur chaque inscription."
         />
         <meta property="og:title" content="Programme affilié UNPRO" />
         <meta
           property="og:description"
-          content="Trouvez un entrepreneur, envoyez son évaluation IA, UNPRO prend la relève. Vous êtes payée sur chaque inscription."
+          content="Trouvez un entrepreneur, envoyez son évaluation IA, UNPRO prend la relève. Vous recevez vos commissions sur chaque inscription."
         />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -135,7 +135,7 @@ export default function PageAffiliesPublic() {
           to="/affiliate/login"
           className="text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
         >
-          Déjà affiliée ? Connexion
+          Déjà membre ? Connexion
         </Link>
       </header>
 
@@ -152,7 +152,7 @@ export default function PageAffiliesPublic() {
           </h1>
           <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
             Recommandez des entrepreneurs du Québec. UNPRO les évalue, les accompagne et les inscrit.
-            Vous êtes payée sur chaque inscription.
+            Vous recevez vos commissions sur chaque inscription.
           </p>
           <Link
             ref={heroCtaRef}
@@ -221,7 +221,7 @@ export default function PageAffiliesPublic() {
 
         {/* Rémunération — mécanismes réels, aucun taux public */}
         <section className="mt-16 rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-2xl font-bold">Comment vous êtes payée</h2>
+          <h2 className="text-2xl font-bold">Comment recevoir vos commissions</h2>
           <ul className="mt-5 space-y-4">
             <li className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -247,7 +247,7 @@ export default function PageAffiliesPublic() {
           </ul>
           <p className="mt-5 rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
             Votre taux de commission exact est confirmé dans votre espace dès l'activation — il est
-            propre à chaque affiliée.
+            propre à votre compte.
           </p>
         </section>
 
