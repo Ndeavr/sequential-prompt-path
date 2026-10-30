@@ -15,11 +15,14 @@ import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 
 const DECLARED_NAME_KEY = "unpro_entry350_declared_name";
 
 export default function Entry350FastCheckout({ query }: { query: URLSearchParams }) {
   const navigate = useNavigate();
+  const proposalToken = query.get("proposal");
+  const proposalContext = useProposalContext(proposalToken);
   const [company, setCompany] = useState(() => {
     try { return sessionStorage.getItem(DECLARED_NAME_KEY) || getClaraQualification().business_name || ""; }
     catch { return getClaraQualification().business_name || ""; }
@@ -67,6 +70,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   };
 
   const begin = async () => {
+    if (proposalToken && !proposalContext.proposal) { setErrorText("La proposition doit être vérifiée avant paiement."); return; }
     if (busy) return;
     const name = company.trim();
     if (name.length < 2) { setErrorText("Confirmez le nom de votre entreprise."); return; }
@@ -93,6 +97,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         body: {
           entryActivation: true,
           declaredCompanyName: name,
+          ...(proposalToken ? { affiliateProposalToken: proposalToken } : {}),
           ...(promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
           ...(ref ? { ref } : {}),
           ...(query.get("t") ? { activationToken: query.get("t") } : {}),
@@ -156,6 +161,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">Votre activation UNPRO</p>
       <h2 className="mt-2 text-2xl font-semibold">350 $ + taxes · une seule fois</h2>
       <p className="mt-2 text-sm text-muted-foreground">Profil professionnel et 12 mois de Présence IA UNPRO. Aucun rendez-vous inclus, aucune apparition garantie dans ChatGPT. Licence valide requise pour être recommandé lorsque applicable.</p>
+      {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
       <input id="activation350-business-name" data-testid="entry-350-business-name" autoComplete="organization"
         value={company} onChange={e => { setCompany(e.target.value); setErrorText(null); }} maxLength={160}
@@ -195,7 +201,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       )}
       {info && <p role="status" className="mt-3 text-sm">{info} <Link to="/pro" className="underline">Mon espace entrepreneur</Link></p>}
       <Button type="button" data-testid="entry-350-checkout" onClick={() => void begin()}
-        disabled={busy || Boolean(info) || outcome === "success"} className="mt-4 min-h-12 w-full whitespace-normal">
+        disabled={busy || Boolean(info) || outcome === "success" || Boolean(proposalToken && !proposalContext.proposal)} className="mt-4 min-h-12 w-full whitespace-normal">
         {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Préparation…</> : "Continuer vers le paiement sécurisé"}
       </Button>
       <p className="mt-2 text-xs text-muted-foreground">Connexion requise avant paiement. Clara garde la conversation dans la session en cours.</p>

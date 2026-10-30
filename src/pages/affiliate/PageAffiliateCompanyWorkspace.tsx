@@ -131,7 +131,7 @@ export default function PageAffiliateCompanyWorkspace() {
     );
   }
 
-  if (!prospect) {
+  if (!prospect || !id) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center space-y-3">
@@ -244,12 +244,7 @@ export default function PageAffiliateCompanyWorkspace() {
                 >
                   <PhoneCall className="h-4 w-4" /> Enregistrer un appel
                 </button>
-                <button
-                  onClick={() => updateStatus.mutate("proposal_sent")}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-                >
-                  Proposition envoyée
-                </button>
+                <Link to="#affiliate-offer" onClick={() => document.getElementById("affiliate-offer")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium">Préparer une proposition</Link>
                 <button
                   onClick={() => updateStatus.mutate("won")}
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:opacity-90"
@@ -338,7 +333,7 @@ export default function PageAffiliateCompanyWorkspace() {
           {/* Right sticky */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-6">
-              <AffiliateOffersPanel prospectId={id!} companyName={prospect.business_name} />
+              <AffiliateOffersPanel prospectId={id} companyName={prospect.business_name} trade={prospect.category} city={prospect.city} />
             </div>
           </div>
         </div>

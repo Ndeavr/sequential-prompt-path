@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { rememberClaraReferences } from "@/services/clara/claraSession";
 
 export interface PricingIntakeInput {
+  affiliate_proposal_token?: string;
   trade_primary: string;
   trade_secondary?: string | null;
   city: string;
