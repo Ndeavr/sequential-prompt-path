@@ -686,6 +686,10 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         const lastRestored = restored[restored.length - 1];
         if (cursor && cursor.options.length >= 2 && lastRestored?.role === "assistant" && lastRestored.text.trim() === cursor.text.trim()) {
           setQuickReplies({ messageId: lastRestored.id, options: cursor.options });
+        } else if (lastRestored?.role === "assistant") {
+          // Legacy persisted answers may still contain a raw English/French marker.
+          const restoredChoices = extractQuickReplies(lastRestored.text).options;
+          if (restoredChoices.length >= 2) setQuickReplies({ messageId: lastRestored.id, options: restoredChoices });
         }
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
