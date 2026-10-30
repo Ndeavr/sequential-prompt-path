@@ -1,90 +1,56 @@
-/* UNPRO premium trades: fine architectural ink, never a stick-figure carousel. */
-.unpro-ink-story {
+.utlp-strip {
+  --utlp-h: 200px;
   position: relative;
-  isolation: isolate;
-  width: min(100%, 760px);
-  height: 157px;
-  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  height: var(--utlp-h);
   overflow: hidden;
-  margin: 4px auto 0;
-  border-radius: 22px;
-  pointer-events: none;
   contain: layout paint;
-  background:
-    radial-gradient(ellipse 60% 65% at 43% 58%, hsl(var(--primary) / 0.105), transparent 80%),
-    radial-gradient(ellipse 35% 50% at 72% 48%, hsl(191 100% 58% / 0.055), transparent 82%);
+  background: hsl(48 33% 97%);
+  border-radius: 20px;
+  margin-top: 12px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
 }
-@media (min-width: 768px) { .unpro-ink-story { height: 192px; margin-top: 7px; } }
-.unpro-ink-canvas { display: block; height: 100%; width: 100%; overflow: visible; }
-.unpro-ink-story path,
-.unpro-ink-story circle {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
+@media (min-width: 768px) {
+  .utlp-strip { --utlp-h: 290px; }
 }
-.unpro-ink-atmosphere { color: hsl(var(--primary)); }
-.unpro-ink-atmosphere path,
-.unpro-ink-atmosphere circle {
-  stroke: currentColor;
-  opacity: .15;
-  stroke-width: 1.05;
-  stroke-dasharray: 3 8;
+.utlp-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: utlp-scroll 140s linear infinite;
+  will-change: transform;
 }
-.unpro-ink-outline path { stroke: hsl(var(--foreground) / .87); stroke-width: 2.25; }
-.unpro-ink-stitch path { stroke: hsl(var(--primary) / .85); stroke-width: 1.5; }
-.unpro-ink-finishes path { stroke: hsl(var(--primary) / .26); stroke-width: 1.6; }
-.unpro-ink-worker {
-  transform-origin: 194px 192px;
-  animation: unpro-ink-breathe 6s ease-in-out infinite;
+.utlp-strip[data-paused="true"] .utlp-track { animation-play-state: paused; }
+.utlp-img {
+  display: block;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 2172 / 724;
+  flex: none;
+  user-select: none;
 }
-.unpro-ink-scene {
-  opacity: 0;
-  animation: unpro-ink-fade 28s linear infinite both;
+@keyframes utlp-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
 }
-.unpro-ink-job {
-  stroke: hsl(var(--foreground) / .84);
-  stroke-width: 2.4;
+.utlp-pause {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / 0.9);
+  color: hsl(var(--foreground));
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
 }
-.unpro-ink-job-detail {
-  stroke: hsl(var(--primary) / .82);
-  stroke-width: 1.6;
-}
-.unpro-ink-gesture {
-  stroke: hsl(var(--primary));
-  stroke-width: 2.7;
-}
-.unpro-ink-job,
-.unpro-ink-job-detail,
-.unpro-ink-gesture {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: unpro-ink-write 28s cubic-bezier(.2,.72,.32,1) infinite both;
-}
-@keyframes unpro-ink-fade {
-  0%, 0.7% { opacity: 0; }
-  2.5% { opacity: 1; }
-  11.6% { opacity: 1; }
-  14.2%, 100% { opacity: 0; }
-}
-@keyframes unpro-ink-write {
-  0% { stroke-dashoffset: 1; }
-  4.5% { stroke-dashoffset: 0; }
-  11.6% { stroke-dashoffset: 0; }
-  14.2%, 100% { stroke-dashoffset: -1; }
-}
-@keyframes unpro-ink-breathe {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
-}
-.unpro-ink-paused *,
-.unpro-ink-paused *::before,
-.unpro-ink-paused *::after { animation-play-state: paused !important; }
+.utlp-pause:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  .unpro-ink-story *,
-  .unpro-ink-story *::before,
-  .unpro-ink-story *::after { animation: none !important; }
-  .unpro-ink-scene { opacity: 0; }
-  .unpro-ink-scene:nth-of-type(3) { opacity: 1; }
-  .unpro-ink-job, .unpro-ink-job-detail, .unpro-ink-gesture { stroke-dashoffset: 0; }
+  .utlp-track { animation: none; }
+  .utlp-pause { display: none; }
 }
