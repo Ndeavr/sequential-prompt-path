@@ -1423,18 +1423,20 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const chooseQuickReply = useCallback(
     (option: string) => {
       if (busy) return;
-      setQuickReplies(null);
       trackCopilotEvent("clara_quick_reply_selected", { surface: "home_clara_box", kind: /photo/i.test(option) ? "photo" : "text" });
+      // La réponse « Ajouter une photo » doit ouvrir la photothèque, pas forcer la caméra.
+      // Conserver les choix si le sélecteur est annulé; acceptDirectFiles les retire après sélection.
+      if (/ajouter une photo/i.test(option)) {
+        photoLibraryRef.current?.click();
+        return;
+      }
+      setQuickReplies(null);
       if (option === CHOOSE_ADDRESS || (dossierPendingRef.current && FAKE_DONE.test(option))) {
         setDossierEditAddress(true);
         setDossierOpen(true);
         return;
       }
       if (option === "Continuer sans adresse") dossierPendingRef.current = false;
-      if (/ajouter une photo/i.test(option)) {
-        cameraRef.current?.click();
-        return;
-      }
       // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
       // En parcours entrepreneur, la destination est connue même sans intention détectée.
       if (OPEN_CHOICE.test(option)) {
