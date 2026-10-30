@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import UnproLogo from "@/components/brand/UnproLogo";
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
+import TradesLineArt from "@/components/home-light/TradesLineArt";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function HeroHomeownerLight() {
@@ -57,6 +58,7 @@ export default function HeroHomeownerLight() {
         )}
 
         <ClaraConversationBox surface="home" onConversationActiveChange={setIsConversationActive} />
+        {!isConversationActive && <TradesLineArt />}
       </div>
     </section>
   );

@@ -1,0 +1,31 @@
+.trades-lineart {
+  width: 100%;
+  max-width: 44rem;
+  height: 128px;
+  margin: 0.75rem auto 0;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  overflow: hidden;
+  contain: layout paint;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.07), transparent 70%);
+  pointer-events: none;
+}
+@media (min-width: 768px) { .trades-lineart { height: 176px; } }
+.trades-lineart svg { width: 100%; height: 100%; display: block; }
+.trades-lineart path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.tla-ground { stroke: hsl(var(--primary) / 0.35); stroke-width: 1.2; }
+.tla-ink { stroke: hsl(var(--foreground) / 0.85); stroke-width: 1.8; }
+.tla-accent { stroke: hsl(var(--primary)); stroke-width: 1.6; }
+.tla-scene { opacity: 0; animation: tla-fade 24.5s linear infinite both; }
+.tla-ink, .tla-accent { stroke-dasharray: 1; stroke-dashoffset: 1; animation: tla-draw 24.5s cubic-bezier(.22,1,.36,1) infinite both; }
+.tla-drift { animation: tla-drift 24.5s ease-in-out infinite; }
+@keyframes tla-fade { 0% { opacity: 0 } 2% { opacity: 1 } 13% { opacity: 1 } 16% { opacity: 0 } 100% { opacity: 0 } }
+@keyframes tla-draw { 0% { stroke-dashoffset: 1 } 8% { stroke-dashoffset: 0 } 12.5% { stroke-dashoffset: 0 } 16% { stroke-dashoffset: -1 } 100% { stroke-dashoffset: -1 } }
+@keyframes tla-drift { 0%, 100% { transform: translateX(-6px) } 50% { transform: translateX(6px) } }
+.trades-lineart.is-paused * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .trades-lineart * { animation: none !important; }
+  .tla-scene { opacity: 0; }
+  .tla-scene:first-of-type { opacity: 1; }
+  .tla-ink, .tla-accent { stroke-dashoffset: 0; }
+}
