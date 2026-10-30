@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import ManualContactPanel from "@/components/crm/ManualContactPanel";
 import { OUTCOME_LABELS } from "@/hooks/useManualContactQueue";
 import { ProspectDetailSheet } from "./ProspectDetailSheet";
+import { queueRowPolicy, recoveryStageLabel } from "./queuePolicy";
 
 type Row = {
   prospect_id: string;
@@ -96,10 +97,15 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
           )}
 
           {r.queue === "onboarding_recovery" && (
-            <p className="text-[11px] text-amber-600">
-              Onboarding à reprendre : paiement non reçu, aucun achat confirmé. Coordonnées dans « Fiche prospect »
-              pour vérification manuelle; appel, SMS, courriel et lien d'activation restent bloqués jusqu'à la vérification de conformité.
-            </p>
+            <div className="text-[11px] text-amber-600 space-y-1">
+              <p>{recoveryStageLabel(r.current_stage)}.</p>
+              {r.contact_locked !== false && (
+                <p>
+                  Contact bloqué : {r.blocked_reason ?? "autorisation non démontrée"}. Étape de résolution : un administrateur
+                  UNPRO doit vérifier la preuve de consentement de ce dossier dans « Admissibilité commerciale ». Fiche consultable ci-dessous.
+                </p>
+              )}
+            </div>
           )}
 
           <ManualContactPanel
@@ -109,14 +115,8 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
               contact_locked: r.contact_locked === true,
               opted_out: r.opted_out === true,
             }}
-            // Politique explicite : les reprises d'onboarding restent verrouillées.
-            policy={{
-              contact_locked: r.queue === "onboarding_recovery" || r.contact_locked === true || r.opted_out === true,
-              can_call: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
-              can_sms: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
-              can_email: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
-              blocked_reason: r.blocked_reason,
-            }}
+            // Échec fermé : seules les autorisations renvoyées par le serveur comptent.
+            policy={queueRowPolicy(r)}
             onDone={load}
             onOpenDetail={() => setDetailId(r.prospect_id)}
           />
