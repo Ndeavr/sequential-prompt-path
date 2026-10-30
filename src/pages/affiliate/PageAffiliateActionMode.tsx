@@ -537,14 +537,20 @@ export default function PageAffiliateActionMode() {
             className="h-16 w-full gap-2 rounded-2xl text-base font-bold"
             disabled={loading}
             onClick={() => {
-              if (!prospect) { void loadNext(); return; }
+              if (!prospect) {
+                const a = emptyCtaAction(false, emptyReason, error ?? null);
+                if (a === "add_prospect") { setAddOpen(true); return; }
+                void loadNext(); return;
+              }
               // Échec fermé : jamais d'appel si la permission n'est pas accordée.
               if (!called && canCall) { void onCall(); return; }
               void loadNext(prospect.id);
             }}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && canCall ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
-            {!prospect ? "TROUVER UN PROSPECT" : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
+            {!prospect
+              ? (error ? "RÉESSAYER" : emptyReason ? "AJOUTER UN PROSPECT" : "TROUVER UN PROSPECT")
+              : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
           </Button>
         </div>
       </div>
