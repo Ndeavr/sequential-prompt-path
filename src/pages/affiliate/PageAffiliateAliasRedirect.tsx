@@ -2,7 +2,7 @@
  * PageAffiliateAliasRedirect — alias /a/:slug -> route canonique /:affiliateSlug.
  *
  * L'alias historique lisait la table `affiliates` en direct (bloquée pour les
- * visiteurs anonymes), ce qui affichait « Affilié introuvable » alors que le
+ * visiteurs anonymes), ce qui affichait « Lien affilié introuvable » alors que le
  * lien canonique fonctionnait. On redirige donc vers la route canonique, seule
  * source de vérité (RPC `affiliate_entry_by_slug`), en conservant les
  * paramètres de suivi. Un slug inconnu reste « introuvable » côté canonique.
