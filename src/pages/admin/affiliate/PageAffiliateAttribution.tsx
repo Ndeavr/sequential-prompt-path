@@ -93,7 +93,7 @@ export default function PageAffiliateAttribution() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi icon={Users} label="Affiliées" value={String(totals.affiliates)} />
+        <Kpi icon={Users} label="Comptes affiliés" value={String(totals.affiliates)} />
         <Kpi icon={MousePointerClick} label="Prospects touchés" value={String(totals.leads)} />
         <Kpi icon={Sparkles} label="Audits envoyés" value={String(totals.audits)} />
         <Kpi icon={DollarSign} label="Commissions" value={formatCents(totals.commissions)} />
