@@ -1,4 +1,5 @@
 import { AffiliateVisitSummary } from "@/components/affiliate/AffiliateVisitSummary";
+import { emptyCtaAction } from "@/features/affiliate/warRoom/queuePolicy";
 /**
  * UNPRO — Mode Action Affilié
  * Une seule mission à l'écran : Trouver → Appeler → Envoyer → Suivre → Gagner.
