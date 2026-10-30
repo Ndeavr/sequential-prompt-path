@@ -62,7 +62,7 @@ export default function AffiliateOffersPanel({ prospectId, companyName, trade, c
   {url && <div className="space-y-2 border-t border-border pt-3">
    <p className="text-sm font-semibold">Brouillon sauvegardé — aucun envoi</p>
    <p className="text-xs text-muted-foreground">Prochaine action : vérifier l’aperçu client. Le contact reste soumis aux autorisations de votre dossier.</p>
-   <div className="flex gap-2"><Button variant="outline" size="sm" onClick={async()=>{try {await navigator.clipboard.writeText(url);toast.success("Lien copié");} catch {toast.error("Copie impossible. Ouvrez l’aperçu.");}}><Copy className="mr-1 h-4 w-4"/>Copier le lien</Button><Button variant="outline" size="sm" onClick={()=>window.open(url,"_blank","noopener,noreferrer")}><ExternalLink className="mr-1 h-4 w-4"/>Aperçu client</Button></div>
+   <div className="flex gap-2"><Button variant="outline" size="sm" onClick={async()=>{try {await navigator.clipboard.writeText(url);toast.success("Lien copié");} catch {toast.error("Copie impossible. Ouvrez l’aperçu.");}}}><Copy className="mr-1 h-4 w-4"/>Copier le lien</Button><Button variant="outline" size="sm" onClick={()=>window.open(url,"_blank","noopener,noreferrer")}><ExternalLink className="mr-1 h-4 w-4"/>Aperçu client</Button></div>
   </div>}
   <div className="border-t border-border pt-3 space-y-1 text-sm">
    <h3 className="font-semibold">Commissions</h3>
