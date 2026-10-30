@@ -1215,7 +1215,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       // dans le parcours entrepreneur — jamais de Dossier maison.
       const lastAssistantText = [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
       const contractorTurn = audienceRef.current === "contractor"
-        || (!hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
+        || (!heatPumpCampaign && !hasExplicitHomeownerFlow() && isContractorConversationTurn(text, lastAssistantText));
 
       // Situation RBQ : mêmes 6 statuts que « Mon profil », jamais une 2e validation.
       if (contractorTurn && (mentionsRbq(lastAssistantText) || mentionsRbq(text))) {
@@ -1266,8 +1266,9 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       logClaraWorkflowEvent("intent_detected", { intent: detected });
       const transition = nextWorkflowState(workflowRef.current, detected);
       if (transition.state !== workflowRef.current) {
-        workflowRef.current = transition.state;
-        rememberWorkflow(transition.state);
+        workflowRef.current = heatPumpCampaign && audienceRef.current === "homeowner"
+          ? { ...transition.state, sub_workflow: HEAT_PUMP_CAMPAIGN.intent } : transition.state;
+        rememberWorkflow(workflowRef.current);
       }
       for (const event of transition.events) {
         logClaraWorkflowEvent(event, {
@@ -1324,7 +1325,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             session_token: peekClaraSessionToken(),
             context: {
               surface: "home_clara_box",
-              currentPage: formatClaraPageContext(getClaraPageContext()),
+              currentPage: homeCampaignContext(heatPumpCampaign && audienceRef.current === "homeowner", formatClaraPageContext(getClaraPageContext())),
               mode: nextMode,
               userRole: audienceRef.current,
               conversationSummary: scopedHistory.summary,
@@ -1455,7 +1456,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         focusComposer();
       }
     },
-    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
+    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, heatPumpCampaign, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
   );
 
   const chooseQuickReply = useCallback(
@@ -1867,7 +1868,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
   const lastMessage = messages[messages.length - 1];
   const restoredOptions = lastMessage?.role === "assistant" ? extractQuickReplies(lastMessage.text).options : [];
-  const visibleQuickReplies = quickReplies ?? (lastMessage && restoredOptions.length >= 2
+  const visibleQuickReplies = quickReplies ?? (heatPumpCampaign && audience === "homeowner" && messages.length === 0
+    ? { messageId: "campaign-opening", options: [...HEAT_PUMP_CAMPAIGN.choices] } : lastMessage && restoredOptions.length >= 2
     ? { messageId: lastMessage.id, options: restoredOptions } : null);
 
   return (
@@ -1972,7 +1974,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             {messages.length === 0 && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
-                  <MessageResponse>{audience === "contractor"
+                  <MessageResponse>{heatPumpCampaign && audience === "homeowner" ? HEAT_PUMP_CAMPAIGN.greeting : audience === "contractor"
                     ? (contractorOpening ?? (lang === "fr" ? "Bonjour ! Quels types de contrats souhaitez-vous obtenir ?" : "Hello! What kind of projects would you like to take on?"))
                     : (lang === "fr" ? "Bonjour ! Que voulez-vous améliorer, rénover ou réparer ?" : "Hello! What would you like to improve, renovate or repair?")}</MessageResponse>
                 </MessageContent>
