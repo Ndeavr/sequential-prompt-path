@@ -5853,6 +5853,7 @@ export type Database = {
       affiliate_proposals: {
         Row: {
           affiliate_id: string
+          client_draft_token: string | null
           created_at: string
           expires_at: string
           id: string
@@ -5869,6 +5870,7 @@ export type Database = {
         }
         Insert: {
           affiliate_id: string
+          client_draft_token?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -5885,6 +5887,7 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string
+          client_draft_token?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -100543,6 +100546,15 @@ export type Database = {
         Args: { _offer_id?: string; _promo_code?: string }
         Returns: Json
       }
+      affiliate_proposal_draft: {
+        Args: {
+          _action: string
+          _inputs?: Json
+          _offer_type?: string
+          _prospect_id: string
+        }
+        Returns: Json
+      }
       affiliate_stage_import: {
         Args: {
           p_batch_hash: string
@@ -101611,6 +101623,10 @@ export type Database = {
         Returns: Json
       }
       resolve_activation_link: { Args: { _token: string }; Returns: Json }
+      resolve_affiliate_proposal_context: {
+        Args: { _token: string }
+        Returns: Json
+      }
       resolve_contractor_offer: {
         Args: { p_category_slug: string; p_city: string }
         Returns: Json
