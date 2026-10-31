@@ -228,22 +228,27 @@ Deno.serve(async (req) => {
     }
 
 
-    // Condo / multi-immeubles billing (signed + idempotent above). Isolated from contractor flows.
-    try {
-      if (await handleCondoBillingEvent(supabase, stripe, event)) {
-        await supabase.from("stripe_webhook_events")
-          .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
-          .eq("stripe_event_id", event.id);
-        return new Response(JSON.stringify({ received: true, scope: "condo" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } catch (condoErr) {
-      console.error("[stripe-webhook][condo] handler error", String(condoErr));
-      await supabase.from("stripe_webhook_events").update({ processing_status: "failed", error_message: String(condoErr).slice(0, 500) })
+    // The shared Stripe endpoint has no condo entitlement handler. Do not invoke
+    // an undefined function for every contractor event (which would block ALL
+    // 350 CAD activations). Condo/portfolio payments must NEVER fall through
+    // to the contractor ledger or be acknowledged as fulfilled.
+    // TODO: reconcile the canonical signed webhook with the separate condo
+    // handler in a dedicated, tested integration before permitting condo sales.
+    const condoMetadataCandidates = [
+      sessionObj?.metadata,
+      sessionObj?.subscription_details?.metadata,
+      sessionObj?.parent?.subscription_details?.metadata,
+    ];
+    const isCondoBilling = condoMetadataCandidates.some((m) =>
+      m?.product_type === "condo_premium" || m?.product_type === "portfolio_premium"
+    );
+    if (isCondoBilling) {
+      const { error: condoAuditErr } = await supabase.from("stripe_webhook_events")
+        .update({ processing_status: "failed", error_message: "condo_handler_unavailable" })
         .eq("stripe_event_id", event.id);
-      return new Response(JSON.stringify({ error: "condo_processing_failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (condoAuditErr) console.error("[stripe-webhook][condo] audit failed", condoAuditErr.code ?? "unknown");
+      return new Response(JSON.stringify({ error: "condo_handler_unavailable" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
