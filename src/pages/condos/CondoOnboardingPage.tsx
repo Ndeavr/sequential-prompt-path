@@ -318,7 +318,15 @@ const CondoOnboardingPage = () => {
                     ))}
                   </div>
 
-                  <Button onClick={() => navigate("/condos/dashboard")} className="w-full rounded-xl shadow-glow">
+                  {selection && (
+                    <div className="mb-3 space-y-2">
+                      <Button onClick={pay} disabled={payState.loading} className="min-h-12 w-full whitespace-normal rounded-xl">
+                        {payState.loading ? "Préparation du paiement…" : `Choisir mon forfait — ${getTierForUnits(Number(form.unit_count) || selection.doors).priceTaxIncluded.toLocaleString("fr-CA")}\u00a0$/an + taxes`}
+                      </Button>
+                      {payState.error && <p role="alert" className="text-sm text-destructive">{payState.error}</p>}
+                    </div>
+                  )}
+                  <Button variant={selection ? "outline" : "default"} onClick={() => navigate("/condos/dashboard")} className="w-full rounded-xl">
                     <Sparkles className="h-4 w-4 mr-2" /> Accéder à mon tableau de bord
                   </Button>
                 </CardContent>
