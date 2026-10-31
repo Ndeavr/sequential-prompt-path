@@ -40,21 +40,35 @@ serve(async (req) => {
     // Client authority is limited to the syndicate id; priceId/amount from body are ignored.
     const body = await req.json().catch(() => ({}));
     const syndicateId = typeof body?.syndicateId === "string" ? body.syndicateId : "";
-    if (!UUID.test(syndicateId)) return json({ error: "syndicate_required", message: "Immeuble requis avant le paiement." }, 400);
+    const portfolioId = typeof body?.portfolioId === "string" ? body.portfolioId : "";
+    const kind: "condo" | "portfolio" = portfolioId ? "portfolio" : "condo";
+    const targetId = kind === "portfolio" ? portfolioId : syndicateId;
+    if (!UUID.test(targetId)) return json({ error: "target_required", message: "Immeuble ou portefeuille requis avant le paiement." }, 400);
 
-    const { data: member } = await admin.from("syndicate_members").select("role")
-      .eq("syndicate_id", syndicateId).eq("user_id", user.id).eq("is_active", true).maybeSingle();
-    if (!member || !MANAGER_ROLES.includes(String(member.role))) return json({ error: "forbidden" }, 403);
-
-    const { data: syn } = await admin.from("syndicates").select("id, unit_count").eq("id", syndicateId).maybeSingle();
-    const doors = Number(syn?.unit_count);
-    if (!syn || !Number.isInteger(doors) || doors < 2 || doors > 9999) return json({ error: "invalid_door_count", message: "Nombre de portes invalide." }, 400);
+    let doors = 0;
+    if (kind === "condo") {
+      const { data: member } = await admin.from("syndicate_members").select("role")
+        .eq("syndicate_id", syndicateId).eq("user_id", user.id).eq("is_active", true).maybeSingle();
+      if (!member || !MANAGER_ROLES.includes(String(member.role))) return json({ error: "forbidden" }, 403);
+      const { data: syn } = await admin.from("syndicates").select("id, unit_count").eq("id", syndicateId).maybeSingle();
+      doors = Number(syn?.unit_count);
+      const { data: existing } = await admin.from("condo_subscriptions").select("status").eq("syndicate_id", syndicateId).maybeSingle();
+      if (existing && ["active", "trialing", "past_due"].includes(String(existing.status))) return json({ error: "already_subscribed", message: "Cet immeuble a déjà un abonnement." }, 409);
+    } else {
+      const { data: pf } = await admin.from("portfolios").select("id, user_id, total_doors").eq("id", portfolioId).maybeSingle();
+      if (!pf || pf.user_id !== user.id) return json({ error: "forbidden" }, 403);
+      doors = Number(pf.total_doors);
+      const { data: existing } = await admin.from("portfolio_subscriptions").select("status").eq("portfolio_id", portfolioId).maybeSingle();
+      if (existing && ["active", "past_due"].includes(String(existing.status))) return json({ error: "already_subscribed", message: "Ce portefeuille a déjà un abonnement." }, 409);
+    }
+    if (!Number.isInteger(doors) || doors < 2 || doors > 9999) return json({ error: "invalid_door_count", message: "Nombre de portes invalide." }, 400);
     const tier = TIERS.find((t) => doors >= t.min && doors <= t.max);
 
-    const { data: existing } = await admin.from("condo_subscriptions").select("status").eq("syndicate_id", syndicateId).maybeSingle();
-    if (existing && ["active", "trialing", "past_due"].includes(String(existing.status))) return json({ error: "already_subscribed", message: "Cet immeuble a déjà un abonnement." }, 409);
-
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    if (!Deno.env.get("STRIPE_CONDO_WEBHOOK_SECRET")) {
+      return json({ error: "webhook_not_configured", message: "Paiement temporairement indisponible : confirmation des paiements à configurer." }, 503);
+    }
 
     // Tax gate: base prices are before taxes. Require an active Stripe Tax registration in Canada.
     const regs = await stripe.tax.registrations.list({ status: "active", limit: 100 });
@@ -77,11 +91,20 @@ serve(async (req) => {
       mode: "subscription",
       automatic_tax: { enabled: true },
       customer_update: { address: "auto" },
-      success_url: `${origin}/condos/billing?checkout=success`,
-      cancel_url: `${origin}/condos/billing?checkout=cancelled`,
-      metadata: { supabase_user_id: user.id, syndicate_id: syndicateId, product_type: "condo_premium", doors: String(doors) },
-      subscription_data: { metadata: { syndicate_id: syndicateId, product_type: "condo_premium" } },
-    }, { idempotencyKey: `condo-${syndicateId}-${priceId}-${new Date().toISOString().slice(0, 13)}` });
+      success_url: kind === "portfolio" ? `${origin}/gestionnaires/portefeuille?checkout=success` : `${origin}/condos/billing?checkout=success`,
+      cancel_url: kind === "portfolio" ? `${origin}/gestionnaires/portefeuille?checkout=cancelled` : `${origin}/condos/billing?checkout=cancelled`,
+      metadata: kind === "portfolio"
+        ? { supabase_user_id: user.id, portfolio_id: portfolioId, product_type: "portfolio_premium", doors: String(doors) }
+        : { supabase_user_id: user.id, syndicate_id: syndicateId, product_type: "condo_premium", doors: String(doors) },
+      subscription_data: { metadata: kind === "portfolio" ? { portfolio_id: portfolioId, product_type: "portfolio_premium" } : { syndicate_id: syndicateId, product_type: "condo_premium" } },
+    }, { idempotencyKey: `${kind}-${targetId}-${priceId}-${new Date().toISOString().slice(0, 13)}` });
+
+    if (kind === "portfolio") {
+      await admin.from("portfolio_subscriptions").upsert({
+        portfolio_id: portfolioId, user_id: user.id, doors, price_id: priceId, status: "pending",
+        stripe_customer_id: customerId, stripe_checkout_session_id: session.id, updated_at: new Date().toISOString(),
+      }, { onConflict: "portfolio_id" });
+    }
 
     return json({ url: session.url });
   } catch (e) {
