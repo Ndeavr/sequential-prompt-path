@@ -13,8 +13,8 @@ const TIERS = [
   { min: 2, max: 4, priceId: "price_1TAaMwCvZwK1QnPVFcqGb0fG" },
   { min: 5, max: 10, priceId: "price_1TAaMyCvZwK1QnPVzMClie4G" },
   { min: 11, max: 20, priceId: "price_1TAaMzCvZwK1QnPVkLBKyI5R" },
-  { min: 21, max: 50, priceId: "" },
-  { min: 51, max: 100, priceId: "" },
+  { min: 21, max: 50, priceId: "price_1TAaN0CvZwK1QnPV3G4aIEgk" },
+  { min: 51, max: 100, priceId: "price_1TAaN1CvZwK1QnPVXSpL8Yso" },
   { min: 101, max: 9999, priceId: "price_1TAaN2CvZwK1QnPVg8FJ8NS3" },
 ];
 const MANAGER_ROLES = ["owner", "board_member", "manager", "administrator"];
@@ -64,13 +64,7 @@ serve(async (req) => {
       return json({ error: "tax_not_configured", message: "Paiement temporairement indisponible : taxes à configurer." }, 503);
     }
 
-    // Verify the server-mapped price exists in Stripe (never create prices here).
-    let priceId = tier?.priceId ?? "";
-    if (!priceId) {
-      const prices = await stripe.prices.list({ active: true, limit: 100, type: "recurring" });
-      const target = doors <= 50 ? 75000 : 100000;
-      priceId = prices.data.find((p) => p.currency === "cad" && p.unit_amount === target && p.recurring?.interval === "year")?.id ?? "";
-    }
+    const priceId = tier?.priceId ?? "";
     if (!priceId) return json({ error: "price_unavailable", message: "Paiement temporairement indisponible." }, 503);
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
