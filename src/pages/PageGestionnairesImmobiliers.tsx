@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, CalendarDays, Hammer, Search, ShieldCheck, Wrench } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, ChevronDown, Hammer, Search, ShieldCheck, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,9 +26,9 @@ const DEMO_STEPS = [
 ];
 
 const FAQ = [
-  { q: "Homme à tout faire ou métier spécialisé : qui choisir?", a: "Pour de petits travaux sans risque (poignée, ajustement, retouches), un homme à tout faire peut suffire. Dès qu'il y a plomberie, électricité, gaz ou structure, Clara oriente vers un professionnel détenant la licence ou la certification requise au Québec. Aucune recommandation n'est faite sans cette vérification." },
+  { q: "Quand choisir un homme à tout faire ou un spécialiste?", a: "Pour de petits travaux sans risque (poignée, ajustement, retouches), un homme à tout faire peut suffire. Dès qu'il y a plomberie, électricité, gaz ou structure, Clara oriente vers un professionnel détenant la licence ou la certification requise au Québec. Aucune recommandation n'est faite sans cette vérification." },
   { q: "Puis-je faire une demande pour un logement précis?", a: "Oui. Chaque demande est rattachée à un immeuble et à une unité (par exemple le logement 123), afin que l'intervenant, l'accès et le suivi soient clairs." },
-  { q: "Je gère plusieurs immeubles. Est-ce adapté?", a: "Oui. Une fois connecté, vous choisissez parmi les immeubles de votre compte uniquement. Les portefeuilles comptant plusieurs immeubles font l'objet d'une offre adaptée." },
+  { q: "Je gère plusieurs immeubles. Est-ce adapté?", a: "Oui. Une fois connecté, vous choisissez parmi les immeubles de votre compte uniquement. Le forfait de plusieurs immeubles est calculé selon le nombre total de portes gérées." },
   { q: "Comment se passe la prise de rendez-vous?", a: "Clara qualifie le besoin, l'urgence, les photos et vos disponibilités, puis cherche un professionnel admissible. Un rendez-vous n'est confirmé qu'après confirmation réelle; si aucun professionnel ne correspond, vous en êtes informé honnêtement." },
   { q: "Combien coûte l'offre gestionnaire?", a: "Le prix annuel dépend du nombre de portes. Les paliers sont présentés sur la page des forfaits gestionnaires, avant taxes." },
 ];
@@ -132,7 +132,7 @@ export default function PageGestionnairesImmobiliers() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="min-h-12 gap-2"><a href="#demande">Trouver un professionnel <ArrowRight className="h-4 w-4" aria-hidden="true" /></a></Button>
-            <Button asChild size="lg" variant="outline" className="min-h-12"><Link to="/tarifs/gestionnaires">Voir les forfaits gestionnaires</Link></Button>
+            <Button asChild size="lg" variant="outline" className="min-h-12"><Link to="/tarifs/gestionnaires?type=portfolio">Voir les forfaits gestionnaires</Link></Button>
           </div>
         </div>
         <div className="rounded-3xl border border-primary/20 bg-card p-4"><BuildingsIllustration step={step} /></div>
@@ -210,13 +210,24 @@ export default function PageGestionnairesImmobiliers() {
         <h2 id="gi-faq" className="text-2xl font-bold">Questions fréquentes</h2>
         <div className="mt-4 space-y-3">
           {FAQ.map((f) => (
-            <details key={f.q} className="rounded-2xl border border-border bg-card p-4">
-              <summary className="cursor-pointer font-semibold">{f.q}</summary>
+            <details key={f.q} className="group rounded-2xl border border-border bg-card p-4">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-3 font-semibold leading-snug [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 flex-1">{f.q}</span>
+                <ChevronDown className="mt-0.5 size-5 shrink-0 text-primary transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
               <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>
             </details>
           ))}
         </div>
-        <Button asChild variant="outline" className="mt-6 min-h-12 w-full"><Link to="/tarifs/gestionnaires">Voir les forfaits gestionnaires selon le nombre de portes</Link></Button>
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          Choisissez un forfait selon le nombre total de portes de votre parc immobilier.
+        </p>
+        <Button asChild variant="outline" className="mt-3 !h-auto min-h-12 w-full whitespace-normal px-3 py-3 text-center leading-snug">
+          <Link to="/tarifs/gestionnaires?type=portfolio" className="flex min-w-0 items-center justify-center gap-2">
+            <span className="min-w-0 break-words">Voir les forfaits gestionnaires</span>
+            <ArrowRight className="size-4 shrink-0" aria-hidden="true" />
+          </Link>
+        </Button>
       </section>
     </main>
   );
