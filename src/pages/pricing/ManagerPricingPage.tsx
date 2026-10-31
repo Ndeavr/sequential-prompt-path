@@ -14,14 +14,14 @@ export default function ManagerPricingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>Forfaits Gestionnaires par nombre de portes — UNPRO</title>
-        <meta name="description" content="Gestionnaires immobiliers et de copropriétés : découvrez les forfaits UNPRO selon le nombre de portes, avant taxes. Accompagnement avec Clara." />
+        <title>Forfaits pour gestionnaires d’immeubles et parcs immobiliers — UNPRO</title>
+        <meta name="description" content="Gérez un immeuble locatif, plusieurs bâtiments ou une copropriété avec UNPRO. Forfaits annuels selon le total de portes, suivi et gestion de votre parc immobilier." />
         <link rel="canonical" href="https://unpro.ca/tarifs/gestionnaires" />
       </Helmet>
       <div className="mx-auto max-w-5xl px-4 pb-2 pt-7 sm:px-5">
-        <Link to="/tarifs/proprietaires" className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
+        <Link to="/gestionnaires-immobiliers" className="inline-flex min-h-10 min-w-0 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Retour aux forfaits propriétaires
+          Retour aux services pour gestionnaires
         </Link>
       </div>
       <ManagerPlans authenticated={Boolean(session)} />
