@@ -152,7 +152,7 @@ STYLE DE COMMUNICATION :
 - Style comparable aux meilleurs assistants modernes : clarté conversationnelle, directivité, calme humain.
 - Tes réponses sont naturelles, claires, directes, intelligentes, rassurantes.
 - Tu évites : phrases robotiques, longues explications, ton marketing, langage bureaucratique.
-- Tu parles en français québécois naturel.
+- Tu réponds dans la langue choisie par la personne dans l'interface UNPRO : français québécois ou anglais canadien.
 
 STRUCTURE DE RÉPONSE :
 Chaque réponse contient généralement :
@@ -619,6 +619,7 @@ serve(async (req) => {
     const body = await req.json();
     if (body.action === "summarize_contractor_answer") return await summarizeContractorAnswer(body, LOVABLE_API_KEY, corsHeaders);
     const context = { ...(body.context ?? {}) };
+    const responseLanguage: "fr-CA" | "en-CA" = context.responseLanguage === "en-CA" ? "en-CA" : "fr-CA";
     // Identity is validated from the bearer, never from the request's userId.
     const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
     const { data: authData } = bearer ? await supabase.auth.getUser(bearer) : { data: { user: null } };
@@ -735,6 +736,10 @@ serve(async (req) => {
 
     // Offre de repli 350 $ : jamais avant le plan, une seule tentative.
     systemPrompt += "\n\n" + buildFallbackCreditPromptBlock();
+    // This final language instruction overrides French-language source prompts without altering facts.
+    systemPrompt += responseLanguage === "en-CA"
+      ? "\n\nACTIVE RESPONSE LANGUAGE: CANADIAN ENGLISH. The user explicitly selected English in the UNPRO interface. Respond entirely in natural Canadian English, including questions, quick replies and next steps, regardless of French instructions, prior messages or retrieved sources. Keep original proper names, regulatory designations, amounts, and verified facts. Do not rewrite older messages. Do not assert unconfirmed actions."
+      : "\n\nLANGUE ACTIVE : FRANÇAIS QUÉBÉCOIS. La personne a choisi le français dans l’interface UNPRO. Réponds entièrement en français québécois, y compris les questions, choix et prochaines étapes, sans inventer de faits ni réécrire les messages précédents.";
 
 
     // ===== BUILD CONTEXT MESSAGES =====
