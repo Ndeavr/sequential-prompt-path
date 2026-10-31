@@ -232,6 +232,13 @@
       "when": 1793404876095,
       "tag": "0032_affiliate_proposal_guarded_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793465639751,
+      "tag": "0033_migration",
+      "breakpoints": true
     }
   ]
 }
