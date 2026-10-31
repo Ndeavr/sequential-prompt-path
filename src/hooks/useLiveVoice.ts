@@ -4,6 +4,7 @@
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
 import { ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
@@ -117,6 +118,8 @@ function getExplicitLanguageRequest(text: string): AlexLanguage | null {
 }
 
 export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
+  const { lang } = useLanguage();
+  const selectedLanguage: AlexLanguage = lang === "en" ? "en-CA" : "fr-CA";
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -263,8 +266,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       hasDeliveredFirstAudioRef.current = false;
       bootInProgressRef.current = false;
       alexVoiceService.setRealtimeDiagnostics({ microphoneActive: false, inputLevel: 0, vadState: "idle", asrReceivingAudio: false, ttsState: "idle" });
-      languageSessionRef.current.reset();
-      activeLanguageRef.current = "fr-CA";
+      languageSessionRef.current.forceLock(selectedLanguage);
+      activeLanguageRef.current = selectedLanguage;
 
       // Removed instant-disconnect hard fail — let recovery/retry handle it.
       if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
@@ -303,14 +306,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         const text = (message as any)?.user_transcription_event?.user_transcript as string | undefined;
         if (text && text.trim().length >= 2) {
           callbacksRef.current?.onUserTranscript?.(text);
-          const explicitLanguage = getExplicitLanguageRequest(text);
-          if (explicitLanguage) {
-            languageSessionRef.current.forceLock(explicitLanguage);
-            syncAgentLanguage(explicitLanguage);
-            return;
-          }
-          const nextLanguage = languageSessionRef.current.processUtterance(text);
-          syncAgentLanguage(nextLanguage);
+          // FR/EN selector is authoritative; transcripts cannot silently change it.
+          languageSessionRef.current.forceLock(selectedLanguage);
         }
       }
 
@@ -358,6 +355,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   });
 
   conversationApiRef.current = conversation as any;
+  useEffect(() => {
+    languageSessionRef.current.forceLock(selectedLanguage);
+    if (conversation.status === "connected") syncAgentLanguage(selectedLanguage);
+    else activeLanguageRef.current = selectedLanguage;
+  }, [selectedLanguage, conversation.status, syncAgentLanguage]);
   const isSpeaking = conversation.isSpeaking;
 
   useEffect(() => {
@@ -397,7 +399,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       window.removeEventListener("alex-voice-cleanup", handleCleanup);
       window.removeEventListener("alex-voice-force-kill", handleForceKill);
     };
-  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream, selectedLanguage]);
 
   const start = useCallback(async (options?: StartOptions) => {
     const forced = options?.force;
@@ -440,8 +442,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     connectedAtRef.current = 0;
     alternateTransportTriedRef.current = false;
     lastSessionStartRef.current = null;
-    languageSessionRef.current.reset();
-    activeLanguageRef.current = "fr-CA";
+    languageSessionRef.current.forceLock(selectedLanguage);
+    activeLanguageRef.current = selectedLanguage;
     clearConnectionTimeout();
     setIsConnecting(true);
 
@@ -603,9 +605,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         lockedVoiceIdRef.current = resolvedVoiceId;
 
         const firstName = options?.firstName?.trim() || null;
+        const hello = selectedLanguage === "en-CA" ? "Hello" : "Bonjour";
+        const listening = selectedLanguage === "en-CA" ? "I’m listening." : "Je vous écoute.";
         const defaultFirstMessage = firstName
-          ? `Bonjour ${firstName}. Je vous écoute.`
-          : `Bonjour. Je vous écoute.`;
+          ? `${hello} ${firstName}. ${listening}`
+          : `${hello}. ${listening}`;
         // ONE CLARA : une conversation déjà en cours n'est jamais recommencée.
         // Chaîne vide = la voix reste silencieuse et écoute.
         const personalizedFirstMessage =
@@ -616,7 +620,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         const overrides = {
           agent: {
             firstMessage: personalizedFirstMessage,
-            language: "fr",
+            language: selectedLanguage === "en-CA" ? "en" : "fr",
           },
 
           tts: {
@@ -683,13 +687,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "retry_exhausted");
     console.error("[ElevenLabs V8] Failed after retries:", lastError);
     callbacksRef.current?.onError?.(lastError ?? new Error("voice_unavailable"));
-  }, [isActive, isConnecting, conversation, clearConnectionTimeout, verifyOwnedMicStream, startInputLevelMonitor, stopInputLevelMonitor]);
+  }, [isActive, isConnecting, conversation, clearConnectionTimeout, verifyOwnedMicStream, startInputLevelMonitor, stopInputLevelMonitor, selectedLanguage]);
 
   const stop = useCallback(() => {
     clearConnectionTimeout();
     intentionallyStopped.current = true;
-    languageSessionRef.current.reset();
-    activeLanguageRef.current = "fr-CA";
+    languageSessionRef.current.forceLock(selectedLanguage);
+    activeLanguageRef.current = selectedLanguage;
     conversation.endSession();
     setIsActive(false);
     setIsConnecting(false);
@@ -698,7 +702,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     stopOwnedMicStream();
     hasDeliveredFirstAudioRef.current = false;
     callbacksRef.current?.onDisconnect?.();
-  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream, selectedLanguage]);
 
   useEffect(() => {
     return () => {
