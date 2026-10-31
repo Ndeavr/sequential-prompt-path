@@ -64,7 +64,7 @@ export default function NoMatchConversionCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
       className={`w-full ${maxWidth} rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl ${padding} shadow-[0_0_32px_hsl(var(--primary)/0.08)]`}
-      aria-label="Recherche intelligente active"
+      aria-label="Suivi de votre projet"
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
@@ -86,10 +86,10 @@ export default function NoMatchConversionCard({
           </span>
         )}
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[11px] font-medium ring-1 ring-primary/20 animate-pulse shadow-[0_0_18px_hsl(var(--primary)/0.35)]">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Recherche intelligente active
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Suivi avec votre accord
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-muted text-muted-foreground px-2.5 py-1 text-[11px] font-medium ring-1 ring-border">
-          <BellRing className="h-3 w-3" /> Notification prioritaire
+          <BellRing className="h-3 w-3" /> Professionnel à vérifier
         </span>
       </div>
 

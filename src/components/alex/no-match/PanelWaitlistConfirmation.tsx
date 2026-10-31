@@ -16,13 +16,13 @@ export default function PanelWaitlistConfirmation({ service, city, onBackToHome 
       <div>
         <h2 className="text-lg font-bold text-foreground">Vous êtes sur la liste</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Je surveille pour vous et je vous contacte dès que j'ai une bonne option en <strong>{service}</strong> à <strong>{city}</strong>.
+          Votre demande en <strong>{service}</strong> à <strong>{city}</strong> est conservée.
         </p>
       </div>
       <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2">
         <Bell className="h-4 w-4 text-primary shrink-0" />
         <p className="text-xs text-muted-foreground text-left">
-          Vous recevrez une notification par téléphone ou courriel dès qu'un professionnel est disponible.
+          Nous vous informerons si un professionnel approprié est trouvé. Aucun délai ni rendez-vous n’est garanti.
         </p>
       </div>
       {onBackToHome && (

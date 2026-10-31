@@ -3,7 +3,6 @@
  */
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useEffect } from "react";
 import { useNoMatchRecovery } from "@/hooks/useNoMatchRecovery";
 import NoMatchConversionCard from "@/components/conversion/NoMatchConversionCard";
 import CardJoinWaitlist from "@/components/alex/no-match/CardJoinWaitlist";
@@ -19,12 +18,8 @@ export default function PageNoMatchFallback() {
   const city = params.get("city") || "";
 
   const {
-    step, detect, joinWaitlist, showWaitlistForm, isJoining,
+    step, joinWaitlist, showWaitlistForm, isJoining,
   } = useNoMatchRecovery(sessionId);
-
-  useEffect(() => {
-    if (step === "idle") detect(service || "service", city || "votre secteur");
-  }, []);
 
   return (
     <>
@@ -56,7 +51,7 @@ export default function PageNoMatchFallback() {
               service={service}
               city={city}
               isLoading={isJoining}
-              onSubmit={(data) => joinWaitlist({ ...data, service, city })}
+              onSubmit={(data) => joinWaitlist({ ...data, service, city, projectId: params.get("project") ?? undefined })}
             />
           )}
 

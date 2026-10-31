@@ -3,7 +3,11 @@
  * Replaces every "no provider available" dead-end with conversion-oriented copy.
  */
 
+import { noMatchConsentCopy } from "./demand/noMatchPolicy";
+
 const PRO_NOUNS: Record<string, string> = {
+  capage: "spécialiste du capage de colonnes",
+  ferblanterie: "ferblantier",
   painting: "peintre",
   peinture: "peintre",
   roofing: "couvreur",
@@ -81,9 +85,7 @@ export function buildNoMatchBullets(opts: { isAuthed: boolean; hasEstimate: bool
 }
 
 export function buildAlexVoiceLine(opts: { service?: string; city?: string }): string {
-  const noun = getProNoun(opts.service);
-  const cityFragment = getCityFragment(opts.city);
-  return `Je peux élargir la recherche ou vous prévenir dès qu'un ${noun} compatible devient disponible ${cityFragment}.`;
+  return noMatchConsentCopy(opts.city);
 }
 
 export function getAlexNoMatchProactive(service?: string, city?: string): string {
@@ -92,8 +94,8 @@ export function getAlexNoMatchProactive(service?: string, city?: string): string
 
 export function getNoMatchStatusCopy(opts: { hasEstimate: boolean }): string {
   return opts.hasEstimate
-    ? "Votre estimation a été sauvegardée. Recherche intelligente active."
-    : "Recherche intelligente active. Notification prioritaire disponible avec un compte gratuit.";
+    ? "Votre estimation est conservée. Vous pouvez demander un suivi pour ce projet."
+    : "Avec votre accord, votre demande peut être conservée pour un suivi.";
 }
 
 /** Returns true if any known estimate exists in sessionStorage. */
@@ -116,11 +118,10 @@ export function hasSavedEstimate(): boolean {
 }
 
 export const SOCIAL_PROOF_LINE =
-  "Des centaines de propriétaires utilisent UNPRO chaque semaine pour trouver le bon professionnel.";
+  "La vérification du professionnel précède toute recommandation.";
 
 /** Banned phrases — never expose to users. Used for lint/test. */
 export const BANNED_NO_MATCH_PHRASES = [
-  "Nous n'avons pas encore",
   "Aucun partenaire",
   "Service indisponible",
   "Rien trouvé",
