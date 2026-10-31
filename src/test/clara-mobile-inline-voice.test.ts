@@ -42,6 +42,27 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
     expect(css).toMatch(/\.home-clara-media-menu[^}]*overflow-y: auto/);
   });
 
+  it("expose un seul déclencheur média CameraPlus qui ouvre le menu sans lancer la caméra", () => {
+    expect(box).toContain("import { ArrowUp, Camera, CameraPlus,");
+    expect(box).toContain('<CameraPlus className="h-5 w-5" />');
+    // Le bouton caméra autonome a disparu du composer : seule l'input cachée garde cette étiquette.
+    expect(box.split("aria-label={copy.camera}").length - 1).toBe(1);
+    expect(box).not.toContain("onClick={() => cameraRef.current?.click()}");
+    // Les choix du menu restent intacts.
+    for (const choice of [
+      "Ajouter une photo",
+      "Prendre une photo",
+      "Joindre un document",
+      "Ajouter une vidéo",
+      "Prendre une vidéo",
+      "Téléverser les soumissions",
+      "Importer un plan",
+    ]) {
+      expect(box).toContain(`text: "${choice}"`);
+    }
+  });
+
+
   it("suit le clavier mobile avec le viewport dynamique sans déplacer le document", () => {
     expect(box).not.toContain("window.visualViewport");
     expect(box).not.toContain("scrollIntoView({ block: \"start\"");
