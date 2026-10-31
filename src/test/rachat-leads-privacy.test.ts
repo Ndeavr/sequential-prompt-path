@@ -38,6 +38,24 @@ describe("Rachat de leads — confidentialité et conversion", () => {
     expect(sql).toContain("repurchase_documents_owner_read_or_admin");
     expect(page).toContain("crypto.randomUUID()");
   });
+  it("exige un abonnement payant Rendez-vous UNPRO valide avant tout crédit", () => {
+    expect(sql).toContain("lead_repurchase_has_valid_booking_subscription");
+    expect(sql).toContain("cs.status = 'active'");
+    expect(sql).toContain("cs.payment_status = 'paid'");
+    expect(sql).toContain("cs.current_period_end > now()");
+    expect(sql).toContain("cs.stripe_subscription_id LIKE 'sub_%'");
+    expect(sql).toContain("coalesce(p.appointments_included, 0) > 0");
+    expect(sql).toContain("ce.can_receive_appointments");
+    expect(sql).toContain("trg_repurchase_credit_subscription_guard");
+    expect(sql).toContain("NEW.approved_credit_cents > prior_credit_cents");
+    expect(sql).toContain("RAISE EXCEPTION 'subscription_required_for_lead_credit'");
+  });
+  it("ne considère pas l'activation Présence IA à 350 $ comme un abonnement Rendez-vous", () => {
+    expect(page).toContain("Les crédits sont réservés aux entrepreneurs ayant un abonnement valide au service Rendez-vous UNPRO.");
+    expect(page).toContain("hasValidBookingSubscription !== true");
+    expect(page).toContain("Utilisation suspendue");
+    expect(page).toContain("L'inscription seule, l'activation du profil à 350 $");
+  });
   it("conserve le consentement commercial indépendant et désactivé par défaut", () => {
     expect(sql).toContain("sms_opt_in boolean NOT NULL DEFAULT false");
     expect(sql).toContain("email_opt_in boolean NOT NULL DEFAULT false");
