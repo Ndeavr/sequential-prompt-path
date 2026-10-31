@@ -21,11 +21,13 @@ async function fixture() {
  create table affiliate_assignments(affiliate_id uuid,prospect_id uuid,assigned_at timestamptz default now());
  create table contractors_prospects(id uuid,business_name text);
  create table affiliate_proposals(id uuid default gen_random_uuid(),affiliate_id uuid,prospect_id uuid,recommended_plan_slug text,monthly_price_cents integer,token_hash text,payload jsonb,expires_at timestamptz default now()+interval '7 days',used_at timestamptz,paid_at timestamptz,single_use boolean default false,opened_at timestamptz,created_at timestamptz default now());
+ create function resolve_proposal_link(_token text) returns jsonb language sql as $$ select jsonb_build_object('payload',payload) from affiliate_proposals where token_hash=encode(digest(_token,'sha256'),'hex') $$;
+ grant select,insert,update,delete on affiliate_proposals to authenticated;
  insert into affiliates values('${affiliate}','${owner}','QA-REF','active');
  insert into affiliate_assignments values('${affiliate}','${prospect}',now());
  insert into contractors_prospects values('${prospect}','Entreprise QA');
  select set_config('request.uid','${owner}',false);`);
- await db.exec(readFileSync("docs/security-staged/20261030_affiliate_proposal_drafts.sql","utf8"));
+ await db.exec(readFileSync("docs/security-staged/20261031_affiliate_proposal_delivery.sql","utf8"));
  return db;
 }
 describe("propositions affiliées — isolated SQL", () => {
@@ -46,6 +48,8 @@ describe("propositions affiliées — isolated SQL", () => {
   } finally {await db.close();}
  });
  it("other affiliate refused",async()=>{const db=await fixture();try {await db.exec(`select set_config('request.uid','${other}',false)`); await expect(db.query("select affiliate_proposal_draft('save',$1,'activation_350')",[prospect])).rejects.toThrow("assignment_required");}finally{await db.close();}});
+ it("new drafts reject direct client payment updates while legacy permissions remain unchanged",async()=>{const db=await fixture();try {await db.query("select affiliate_proposal_draft('save',$1,'activation_350')",[prospect]);await db.exec("set role authenticated");await expect(db.exec("update affiliate_proposals set paid_at=now()")).rejects.toThrow("draft_rpc_required");await db.exec("reset role");const r=await db.query<any>("select paid_at,payload from affiliate_proposals");expect(r.rows[0].paid_at).toBeNull();expect(r.rows[0].payload.client_token).toBeUndefined();}finally{await db.close();}});
+ it("rejects out-of-bounds radius and malformed project lists",async()=>{const db=await fixture();try {await expect(db.query("select affiliate_proposal_draft('save',$1,'activation_350',$2)",[prospect,JSON.stringify({service_radius_km:1001})])).rejects.toThrow("invalid_inputs");await expect(db.query("select affiliate_proposal_draft('save',$1,'activation_350',$2)",[prospect,JSON.stringify({preferred_project_types:{a:1}})])).rejects.toThrow("invalid_inputs");}finally{await db.close();}});
  it("anonymous draft refused",async()=>{const db=await fixture();try {await db.exec("select set_config('request.uid','',false)");await expect(db.query("select affiliate_proposal_draft('get',$1)",[prospect])).rejects.toThrow("authentication_required");}finally{await db.close();}});
  it("payment flags cannot be written through draft payload",async()=>{const db=await fixture();try {await db.query("select affiliate_proposal_draft('save',$1,'activation_350',$2)",[prospect,JSON.stringify({paid_at:"2026-10-30",monthly_price_cents:1})]);const r=await db.query<any>("select paid_at,payload,monthly_price_cents from affiliate_proposals");expect(r.rows[0].paid_at).toBeNull();expect(r.rows[0].payload.inputs.paid_at).toBeUndefined();expect(r.rows[0].monthly_price_cents).toBe(0);}finally{await db.close();}});
  it("invalid and expired tokens refused",async()=>{const db=await fixture();try {await expect(db.query("select resolve_affiliate_proposal_context('bad')")).rejects.toThrow("invalid_token");const s=await db.query<any>("select affiliate_proposal_draft('save',$1,'activation_350') p",[prospect]);await db.exec("update affiliate_proposals set expires_at=now()-interval '1 minute'");await expect(db.query("select resolve_affiliate_proposal_context($1)",[s.rows[0].p.token])).rejects.toThrow("expired_or_invalid");}finally{await db.close();}});

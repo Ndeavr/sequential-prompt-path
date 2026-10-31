@@ -225,6 +225,13 @@
       "when": 1793380703276,
       "tag": "0031_supplier_partnership_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793404876095,
+      "tag": "0032_affiliate_proposal_guarded_drafts",
+      "breakpoints": true
     }
   ]
 }

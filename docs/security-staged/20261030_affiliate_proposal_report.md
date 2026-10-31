@@ -1,4 +1,6 @@
-# Affiliate proposals — staged, not released
+# Affiliate proposals — original staging report
+
+Superseded for delivery status by `20261031_affiliate_proposal_delivery_report.md`. Original candidate was not applied: an additive replacement was reviewed, tested and applied instead.
 
 ## Verified locally
 - Existing proposal/assignment identity distinction respected; assignment checks tested in isolated PostgreSQL.
