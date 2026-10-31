@@ -139,3 +139,88 @@ CREATE POLICY "repurchase_files_owner_upload"
         AND s.owner_user_id = (select auth.uid())
     )
   );
+
+
+-- Eligibility for credit GRANT and credit USE is separate from the one-time
+-- $350 profile activation. A valid paid subscription to Rendez-vous UNPRO is
+-- required; a registration, trial, profile-only plan or expired term is not enough.
+--
+-- Internal function: privileged caller only, with fixed search_path. Do not
+-- expose the parameterized variant to regular clients (avoids account probing).
+CREATE OR REPLACE FUNCTION public.lead_repurchase_has_valid_booking_subscription(_owner_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.contractors c
+    JOIN public.contractor_subscriptions cs ON cs.contractor_id = c.id
+    LEFT JOIN public.plans p
+      ON p.code = public.canonical_plan_code(cs.plan_id) AND p.audience = 'contractor'
+    LEFT JOIN public.contractor_entitlements ce ON ce.contractor_id = c.id
+    WHERE c.user_id = _owner_user_id
+      AND cs.status = 'active'
+      AND cs.payment_status = 'paid'
+      AND cs.payment_method <> 'free'
+      AND cs.current_period_end IS NOT NULL
+      AND cs.current_period_end > now()
+      AND (
+        coalesce(p.appointments_included, 0) > 0
+        OR (
+          coalesce(ce.can_receive_appointments, false)
+          AND (ce.valid_until IS NULL OR ce.valid_until > now())
+        )
+      )
+  );
+$$;
+REVOKE ALL ON FUNCTION public.lead_repurchase_has_valid_booking_subscription(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.lead_repurchase_has_valid_booking_subscription(uuid) TO service_role;
+
+-- Safe, own-account only RPC for a contractor-facing notice. Not an authority
+-- for credit issuance; the trigger below independently checks the subscription.
+CREATE OR REPLACE FUNCTION public.lead_repurchase_my_booking_subscription_valid()
+RETURNS boolean
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+  SELECT CASE WHEN auth.uid() IS NULL THEN false
+    ELSE public.lead_repurchase_has_valid_booking_subscription(auth.uid())
+  END;
+$$;
+REVOKE ALL ON FUNCTION public.lead_repurchase_my_booking_subscription_valid() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.lead_repurchase_my_booking_subscription_valid() TO authenticated, service_role;
+
+-- Nobody, including an admin or service role, can issue/raise a lead credit for
+-- an unsubscribed contractor. A lead may remain PENDING until subscription.
+CREATE OR REPLACE FUNCTION public.lead_repurchase_credit_subscription_guard()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+  IF (
+    (NEW.status = 'approved' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM 'approved'))
+    OR NEW.approved_credit_cents > (
+      CASE WHEN TG_OP = 'INSERT' THEN 0 ELSE OLD.approved_credit_cents END
+    )
+  ) AND NOT public.lead_repurchase_has_valid_booking_subscription(NEW.owner_user_id) THEN
+    RAISE EXCEPTION 'subscription_required_for_lead_credit'
+      USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.lead_repurchase_credit_subscription_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS trg_repurchase_credit_subscription_guard ON public.lead_repurchase_submissions;
+CREATE TRIGGER trg_repurchase_credit_subscription_guard
+BEFORE INSERT OR UPDATE ON public.lead_repurchase_submissions
+FOR EACH ROW EXECUTE FUNCTION public.lead_repurchase_credit_subscription_guard();
+
+-- To redeem credit, every future appointment booking/credit spending function
+-- MUST re-check lead_repurchase_has_valid_booking_subscription(owner_user_id)
+-- server-side at transaction time and block use if expired/cancelled/refunded.
+-- This migration does not implement redemption, which stays disabled.
