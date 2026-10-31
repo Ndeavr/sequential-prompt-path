@@ -180,11 +180,11 @@ export default function HomeownerPlans() {
           />
         ))}
       </div>
-      <div className="h-7" aria-hidden="true" />
-      <ManagerPlans authenticated={Boolean(session)} />
       <p className="mx-auto mt-3 max-w-5xl text-center text-[11px] text-muted-foreground">
         * Utilisation raisonnable. Toutes les inclusions sont consultables dans chaque forfait.
       </p>
+      <div className="h-7" aria-hidden="true" />
+      <ManagerPlans authenticated={Boolean(session)} />
     </section>
   );
 }
