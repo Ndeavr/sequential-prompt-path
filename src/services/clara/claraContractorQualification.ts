@@ -331,6 +331,17 @@ export function mapRbqAnswer(answer: string): RbqDeclaration | null {
   const t = (answer ?? "").trim();
   const exact = RBQ_DECLARATION_OPTIONS.find((o) => o.label.toLowerCase() === t.toLowerCase());
   if (exact) return exact.value;
+  // Translate quick-reply labels without changing the RBQ declaration codes or verification status.
+  const englishLabels = [
+    "I have an RBQ licence",
+    "My work doesn't require an RBQ licence",
+    "I'm applying for an RBQ licence",
+    "I'm not sure whether I need one",
+    "I work for an RBQ-licensed business",
+    "Another situation",
+  ];
+  const enIndex = englishLabels.findIndex((label) => label.toLowerCase() === t.toLowerCase());
+  if (enIndex >= 0) return RBQ_DECLARATION_OPTIONS[enIndex].value;
   if (/ne\s+requiert\s+pas|pas\s+(?:besoin|requis|n[ée]cessaire)|exempt/i.test(t)) return "not_required";
   if (/en\s+cours|j['’]attends|demande\s+(?:faite|envoy)/i.test(t)) return "in_progress";
   if (/travaille\s+pour|employ[ée]|salari[ée]/i.test(t)) return "employer_licensed";
