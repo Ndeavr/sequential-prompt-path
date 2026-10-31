@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { ensureQuebecTaxRates } from "../_shared/entry350Tax.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,17 +67,9 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    if (!Deno.env.get("STRIPE_CONDO_WEBHOOK_SECRET")) {
-      return json({ error: "webhook_not_configured", message: "Paiement temporairement indisponible : confirmation des paiements à configurer." }, 503);
-    }
-
-    // Tax gate: base prices are before taxes. Require an active Stripe Tax registration in Canada.
-    const regs = await stripe.tax.registrations.list({ status: "active", limit: 100 });
-    const caRegistered = regs.data.some((r) => r.country === "CA");
-    if (!caRegistered) {
-      console.log("[CONDO-CHECKOUT] blocked: no active CA tax registration");
-      return json({ error: "tax_not_configured", message: "Paiement temporairement indisponible : taxes à configurer." }, 503);
-    }
+    // Confirmations arrive through the canonical signed /stripe-webhook. Taxes: UNPRO manual QC rates (TPS 5 %, TVQ 9,975 %).
+    const taxRates = await ensureQuebecTaxRates(stripe);
+    if (taxRates.length !== 2) return json({ error: "tax_not_configured", message: "Paiement temporairement indisponible : taxes à configurer." }, 503);
 
     const priceId = tier?.priceId ?? "";
     if (!priceId) return json({ error: "price_unavailable", message: "Paiement temporairement indisponible." }, 503);
@@ -87,10 +80,8 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1, tax_rates: taxRates }],
       mode: "subscription",
-      automatic_tax: { enabled: true },
-      customer_update: { address: "auto" },
       success_url: kind === "portfolio" ? `${origin}/gestionnaires/portefeuille?checkout=success` : `${origin}/condos/billing?checkout=success`,
       cancel_url: kind === "portfolio" ? `${origin}/gestionnaires/portefeuille?checkout=cancelled` : `${origin}/condos/billing?checkout=cancelled`,
       metadata: kind === "portfolio"

@@ -228,6 +228,25 @@ Deno.serve(async (req) => {
     }
 
 
+    // Condo / multi-immeubles billing (signed + idempotent above). Isolated from contractor flows.
+    try {
+      if (await handleCondoBillingEvent(supabase, stripe, event)) {
+        await supabase.from("stripe_webhook_events")
+          .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
+          .eq("stripe_event_id", event.id);
+        return new Response(JSON.stringify({ received: true, scope: "condo" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (condoErr) {
+      console.error("[stripe-webhook][condo] handler error", String(condoErr));
+      await supabase.from("stripe_webhook_events").update({ processing_status: "failed", error_message: String(condoErr).slice(0, 500) })
+        .eq("stripe_event_id", event.id);
+      return new Response(JSON.stringify({ error: "condo_processing_failed" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Legacy audit log (kept for backward compat)
     await supabase.from("integration_audit_logs").insert({
       integration_name: "stripe",
