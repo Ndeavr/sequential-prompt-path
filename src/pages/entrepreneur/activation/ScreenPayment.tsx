@@ -3,6 +3,7 @@
  * Plan summary + coupon + tax breakdown + trust + sticky CTA + friendly errors.
  */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CreditCard, Shield, Lock, Loader2, Tag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
 import { CONTRACTOR_PLANS, ENTRY_OFFER } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { claraActivationLinks } from "@/services/clara/claraActivationClose";
 
 const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice, yearly: p.yearlyPrice }])
@@ -27,6 +29,7 @@ const TVQ_RATE = 0.09975;
 export default function ScreenPayment() {
   const { state, updateFunnel } = useActivationFunnel();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [coupon, setCoupon] = useState("");
   const [processing, setProcessing] = useState(false);
   useHesitationRescue({ screenKey: "payment" });
@@ -48,20 +51,15 @@ export default function ScreenPayment() {
     setProcessing(true);
     try {
       if (isFounder) {
-        // Dedicated function: canonical 350 $ one-time entry pack.
-        // The server is the ONLY pricing authority — the browser never validates the amount.
-        const { data, error } = await supabase.functions.invoke("create-founder-activation-checkout", {
-          body: {
-            offer_code: "pack_350",
-            onboarding_session_id: state.id || undefined,
-            success_path: "/entrepreneur/activer/succes",
-            cancel_path: "/entrepreneur/activer/paiement",
-          },
-        });
-        if (error) throw error;
-        if (!data?.url) throw new Error("checkout_url_missing");
-        await updateFunnel({ stripe_session_id: data.session_id });
-        redirectToCheckout(data.url);
+        // Never create a guest Stripe Checkout from this legacy funnel.
+        // The canonical entry page authenticates the buyer, binds the real
+        // contractor record and relies on the signed webhook for 12-month rights.
+        const declaredName = state.business_name.trim();
+        if (declaredName) {
+          try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName); }
+          catch { /* Continue safely if browser storage is unavailable. */ }
+        }
+        navigate(claraActivationLinks(window.location.search).activate);
         return;
       }
 
@@ -215,13 +213,13 @@ export default function ScreenPayment() {
         >
           {processing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
           {isFounder
-            ? `Payer ${total.toFixed(2)}$ et activer mon profil`
+            ? "Continuer vers le paiement sécurisé"
             : `Payer ${total.toFixed(2)}$${periodLabel}`}
         </Button>
       </motion.div>
 
       <StickyMobileCTA
-        label={isFounder ? `Payer ${total.toFixed(2)}$ et activer` : `Payer ${total.toFixed(2)}$${periodLabel}`}
+        label={isFounder ? "Continuer vers le paiement sécurisé" : `Payer ${total.toFixed(2)}$${periodLabel}`}
         onClick={handlePay}
         disabled={processing}
         loading={processing}

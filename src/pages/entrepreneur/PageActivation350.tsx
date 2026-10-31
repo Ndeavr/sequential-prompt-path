@@ -55,7 +55,19 @@ export default function PageActivation350() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onActivate = () => void logFunnelEvent({ event_type: "activation_cta_clicked", metadata: { ref, surface: "activation_350" } });
+  // The ?activate=1 route reveals the payment review below the page header.
+  // Always bring that review into view; repeated CTA clicks must not appear inert.
+  useEffect(() => {
+    if (!reviewOpen) return;
+    document.getElementById("activation-350-review")?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [reviewOpen]);
+
+  const onActivate = () => {
+    void logFunnelEvent({ event_type: "activation_cta_clicked", metadata: { ref, surface: "activation_350" } });
+    if (reviewOpen) {
+      document.getElementById("activation-350-review")?.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+  };
   const ctaCls =
     "flex min-h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-primary px-5 py-3 text-center font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none";
 
