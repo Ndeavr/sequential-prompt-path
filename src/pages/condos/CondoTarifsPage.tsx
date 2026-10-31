@@ -7,18 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { CONDO_PRICING_TIERS } from "@/config/condoPricing";
 import {
   Building2, CheckCircle2, Zap, ArrowRight, ChevronDown, Crown
 } from "lucide-react";
 
-const pricingTiers = [
-  { units: "2–4 unités", price: "150 $", perUnit: "~38 $ / unité" },
-  { units: "5–10 unités", price: "300 $", perUnit: "~30 $ / unité" },
-  { units: "11–20 unités", price: "500 $", perUnit: "~25 $ / unité" },
-  { units: "21–50 unités", price: "750 $", perUnit: "~15 $ / unité" },
-  { units: "51–100 unités", price: "1 000 $", perUnit: "~10 $ / unité" },
-  { units: "101+ unités", price: "1 500 $", perUnit: "Meilleur rapport" },
-];
+const pricingTiers = CONDO_PRICING_TIERS.map(t => ({
+  units: t.units,
+  price: `${new Intl.NumberFormat("fr-CA").format(t.priceAnnualExclTax)} $`,
+  perUnit: t.perUnit,
+}));
 
 const freeFeatures = [
   "Profil immeuble complet",
@@ -46,7 +44,7 @@ const premiumFeatures = [
 ];
 
 const faqs = [
-  { q: "Les prix incluent-ils les taxes?", a: "Oui. Tous les prix affichés incluent la TPS et la TVQ. Vos factures détailleront le sous-total, les taxes et le total." },
+  { q: "Les prix incluent-ils les taxes?", a: "Non. Les prix affichés sont avant taxes. La TPS et la TVQ applicables s’ajoutent lors du paiement; le montant final doit être confirmé avant de payer." },
   { q: "Puis-je commencer gratuitement?", a: "Absolument. Le plan Passeport Immeuble Gratuit est sans limite de durée et inclut toutes les fonctionnalités essentielles de gestion." },
   { q: "Comment fonctionne la facturation?", a: "Les abonnements Premium sont facturés annuellement. Vous recevez une facture détaillée conforme aux exigences fiscales du Québec." },
   { q: "Puis-je changer de plan?", a: "Oui. Vous pouvez passer au Premium à tout moment. Si votre nombre d'unités change, contactez-nous pour ajuster votre plan." },
@@ -102,7 +100,7 @@ const CondoTarifsPage = () => (
                 <Crown className="h-4 w-4 text-warning" />
               </div>
               <p className="text-3xl font-display font-bold text-primary mb-1">À partir de 150 $</p>
-              <p className="text-xs text-muted-foreground mb-6">Par année · Taxes incluses</p>
+              <p className="text-xs text-muted-foreground mb-6">Par année · Taxes applicables en sus</p>
               <div className="space-y-2.5">
                 {premiumFeatures.map((f, i) => (
                   <div key={i} className="flex items-center gap-2.5">
@@ -147,7 +145,7 @@ const CondoTarifsPage = () => (
             ))}
           </div>
         </Card>
-        <p className="text-xs text-muted-foreground text-center mt-3">Tous les prix incluent TPS + TVQ (14,975 %)</p>
+        <p className="text-xs text-muted-foreground text-center mt-3">Tous les tarifs sont annuels, avant taxes. TPS et TVQ applicables en sus.</p>
       </div>
     </section>
 

@@ -28,7 +28,7 @@ export default function SectionCondosPricingCTA({ units }: Props) {
       </div>
 
       <p className="text-muted-foreground text-xs">
-        {units} unités · {total.toLocaleString("fr-CA")} $ / an · {monthly.toFixed(2)} $ / unité / mois
+        {units} unités · {total.toLocaleString("fr-CA")} $ / an + taxes · {monthly.toFixed(2)} $ / unité / mois
       </p>
 
       <Button

@@ -3,7 +3,7 @@
  * Multi-step building registration
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,10 +51,16 @@ const CondoOnboardingPage = () => {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState<FormData>({
     name: "", address: "", city: "", postal_code: "",
-    year_built: "", unit_count: "", building_type: "vertical",
+    year_built: "",
+    unit_count: (() => {
+      const requested = Number(searchParams.get("units"));
+      return Number.isInteger(requested) && requested >= 2 && requested <= 9999 ? String(requested) : "";
+    })(),
+    building_type: "vertical",
     components: [],
   });
 
@@ -119,7 +125,10 @@ const CondoOnboardingPage = () => {
 
   const canNext = () => {
     if (step === 0) return form.address.trim().length > 2 && form.city.trim().length > 1;
-    if (step === 1) return form.unit_count.trim().length > 0;
+    if (step === 1) {
+      const doors = Number(form.unit_count);
+      return Number.isInteger(doors) && doors >= 2 && doors <= 9999;
+    }
     return true;
   };
 
@@ -190,8 +199,8 @@ const CondoOnboardingPage = () => {
                     <Input type="number" value={form.year_built} onChange={e => update("year_built", e.target.value)} placeholder="2005" className="rounded-xl mt-1" />
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Nombre d'unités *</Label>
-                    <Input type="number" value={form.unit_count} onChange={e => update("unit_count", e.target.value)} placeholder="24" className="rounded-xl mt-1" />
+                    <Label className="text-sm font-medium">Nombre de portes (unités) *</Label>
+                    <Input type="number" min={2} max={9999} step={1} value={form.unit_count} onChange={e => update("unit_count", e.target.value)} placeholder="24" className="rounded-xl mt-1" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Type de copropriété</Label>

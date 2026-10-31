@@ -263,7 +263,7 @@ const CondoHomePage = () => {
                     <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Populaire</Badge>
                   </div>
                   <p className="text-2xl font-display font-bold text-primary mb-1">À partir de 150 $ <span className="text-sm font-normal text-muted-foreground">/ an</span></p>
-                  <p className="text-xs text-muted-foreground mb-4">Taxes incluses · Selon le nombre d'unités</p>
+                  <p className="text-xs text-muted-foreground mb-4">Taxes applicables en sus · Selon le nombre d'unités</p>
                   <div className="space-y-2.5">
                     {premiumFeatures.map((f, i) => (
                       <div key={i} className="flex items-center gap-2.5">

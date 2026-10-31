@@ -48,7 +48,7 @@ export default function PanelCondoPaywallSmart({
 
       <div className="text-center space-y-2">
         <p className="text-xs text-muted-foreground">
-          À partir de {tier.priceTaxIncluded}$/mois · {tier.units} · Taxes incluses
+          {tier.priceAnnualExclTax} $/an + taxes · {tier.units}
         </p>
         <Button size="lg" className="w-full gap-2" onClick={handleCheckout}>
           Débloquer maintenant <ArrowRight className="h-4 w-4" />
