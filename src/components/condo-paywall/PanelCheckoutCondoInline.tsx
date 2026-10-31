@@ -27,8 +27,8 @@ export default function PanelCheckoutCondoInline({ unitCount = 6 }: Props) {
       <h3 className="text-lg font-display font-bold text-foreground">
         UNPRO Condo Premium
       </h3>
-      <p className="text-3xl font-bold text-primary">{tier.priceTaxIncluded}$<span className="text-sm font-normal text-muted-foreground">/an</span></p>
-      <p className="text-xs text-muted-foreground">{tier.units} · {tier.perUnit} · TPS/TVQ incluses</p>
+      <p className="text-3xl font-bold text-primary">{tier.priceAnnualExclTax}$<span className="text-sm font-normal text-muted-foreground">/an + taxes</span></p>
+      <p className="text-xs text-muted-foreground">{tier.units} · {tier.perUnit} · TPS/TVQ applicables en sus</p>
       <Button size="lg" className="w-full gap-2" onClick={handlePay} disabled={loading}>
         {loading ? "Redirection…" : <>Payer maintenant <ArrowRight className="h-4 w-4" /></>}
       </Button>
