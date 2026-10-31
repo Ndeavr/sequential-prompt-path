@@ -33,6 +33,8 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(fast).toContain("contractorLoginPath(");
     expect(fast).toContain("entryActivation: true");
     expect(fast).toContain("declaredCompanyName: name");
+    expect(fast).toContain("try { sessionStorage.setItem(DECLARED_NAME_KEY, name); }");
+    expect(fast).toContain("catch { /* The declared name is passed directly to the authenticated server call. */ }");
     expect(fast).not.toContain("computePricingQuote");
     expect(fast).not.toContain("target_monthly_appointments");
     expect(fast).toContain("402,41 $");
