@@ -1,0 +1,33 @@
+name: Clara locale preflight
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/home-light/ClaraConversationBox.tsx'
+      - 'src/components/home-light/ClaraContractorFlow.tsx'
+      - 'src/hooks/useLiveVoice.ts'
+      - 'src/services/clara/claraLocale.ts'
+      - 'src/services/clara/claraContractorQualification.ts'
+      - 'src/test/clara-selected-locale.test.ts'
+      - 'supabase/functions/alex-chat/index.ts'
+      - '.github/workflows/clara-locale-preflight.yml'
+  workflow_dispatch:
+
+jobs:
+  locale:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Focused locale tests
+        run: npx vitest run src/test/clara-selected-locale.test.ts
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Vite production build
+        run: npx vite build
