@@ -26,15 +26,14 @@ export default function LoginPageUnpro() {
   const intent = useMemo(() => readRoleIntent(), []);
   const isContractor = intent?.role === "contractor";
   const business = isContractor ? (intent?.businessName ?? "").trim() : "";
-  const title = isContractor
-    ? (business ? `Activez le profil de ${business}` : "Activez votre profil d'entrepreneur")
-    : "Trouvez le bon pro. Plus vite.";
+  const title = "Bienvenue chez UNPRO";
   const subtitle = isContractor
-    ? "Une vérification rapide, puis vous reprenez où vous étiez."
-    : "Connexion rapide et sécurisée";
+    ? (business ? `Accédez à votre espace professionnel — ${business}` : "Accédez à votre espace professionnel")
+    : "Créez votre compte ou connectez-vous.";
+  const note = mode === "main" ? "Sans mot de passe." : undefined;
 
   return (
-    <AuthCardUnpro title={title} subtitle={subtitle}>
+    <AuthCardUnpro title={title} subtitle={subtitle} note={note}>
       {authError && !redirected && (
         <div
           role="alert"
@@ -46,7 +45,7 @@ export default function LoginPageUnpro() {
             <p className="mt-1 text-muted-foreground">
               {authErrorDescription || "Le fournisseur d'identité a refusé la demande."}
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground/80">Réf. : {authError}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Réf. : {authError}</p>
           </div>
         </div>
       )}
@@ -84,60 +83,42 @@ export default function LoginPageUnpro() {
               trackAuthEvent("auth_method_selected", { method: "sms" });
               setMode("phone");
             }}
-            className="w-full h-12 flex items-center justify-center gap-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
-            style={{
-              background: "hsl(228 30% 13%)",
-              border: "1px solid hsl(228 18% 20%)",
-              color: "hsl(220 20% 93%)",
-              boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.4)",
-            }}
+            className="w-full h-12 flex items-center justify-center gap-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:brightness-110 transition-all active:scale-[0.98]"
           >
             <Smartphone className="h-4 w-4" />
             Recevoir un code par SMS
           </button>
 
-          <div className="flex items-center justify-center gap-4 pt-2">
-            {["Connexion rapide", "Aucun mot de passe", "Accès sécurisé"].map((t) => (
-              <span key={t} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <CheckCircle2 className="h-3 w-3 text-primary/60" />
-                {t}
-              </span>
-            ))}
-          </div>
-
-          <div className="pt-2 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                trackAuthEvent("magic_link_selected");
-                setMode("email");
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-            >
-              Autres options de connexion
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              trackAuthEvent("magic_link_selected");
+              setMode("email");
+            }}
+            className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-input bg-secondary text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+          >
+            <Mail className="h-4 w-4" />
+            Continuer par courriel
+          </button>
         </div>
       )}
 
       {!redirected && !showFallback && mode === "phone" && (
         <div className="space-y-2">
           <PhoneOtpForm onSuccess={goNow} />
-          <button onClick={() => setMode("main")} className="w-full text-xs text-muted-foreground hover:text-foreground">
-            ← Retour
+          <button type="button" onClick={() => setMode("main")} className="w-full min-h-11 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground">
+            ← Retour aux choix de connexion
           </button>
         </div>
       )}
 
       {!redirected && !showFallback && mode === "email" && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-1">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Recevoir un lien par courriel</span>
-          </div>
-          <LoginMagicLinkForm />
-          <button onClick={() => setMode("main")} className="w-full text-xs text-muted-foreground hover:text-foreground">
-            ← Retour
+          <h2 className="text-lg font-semibold text-foreground">Connexion par courriel</h2>
+          <p className="pb-1 text-sm text-muted-foreground">Nous vous enverrons un lien pour créer votre compte ou vous connecter.</p>
+          <LoginMagicLinkForm label="Courriel" placeholder="exemple@courriel.com" ctaLabel="Recevoir mon lien" />
+          <button type="button" onClick={() => setMode("main")} className="w-full min-h-11 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground">
+            ← Retour aux choix de connexion
           </button>
         </div>
       )}
@@ -145,7 +126,7 @@ export default function LoginPageUnpro() {
       <div className="flex items-center justify-center gap-1.5 pt-4">
         <Lock className="h-3 w-3 text-muted-foreground" />
         <span className="text-xs text-muted-foreground">
-          Connexion sécurisée · Restez connecté sans effort
+          Connexion sécurisée, sans mot de passe.
         </span>
       </div>
     </AuthCardUnpro>

@@ -289,7 +289,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                   className="flex items-center justify-center px-3 rounded-xl text-sm font-medium shrink-0 h-12"
                   style={{
                     background: "hsl(228 20% 14% / 0.85)",
-                    border: "1px solid hsl(228 18% 22%)",
+                    border: "1px solid hsl(220 30% 34%)",
                     color: "white",
                   }}
                 >
@@ -306,7 +306,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                   className="flex-1 h-12 px-4 rounded-xl text-[16px] outline-none transition-colors"
                   style={{
                     background: "hsl(228 20% 14% / 0.85)",
-                    border: "1px solid hsl(228 18% 22%)",
+                    border: "1px solid hsl(220 30% 34%)",
                     color: "white",
                     caretColor: "hsl(222 100% 75%)",
                   }}
@@ -317,7 +317,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                 Recevez un code à 6 chiffres par texto
               </p>
               <style>{`
-                input[type="tel"]::placeholder { color: hsl(220 14% 55%); opacity: 1; }
+                input[type="tel"]::placeholder { color: hsl(220 18% 68%); opacity: 1; }
               `}</style>
             </div>
             <Button
