@@ -25,7 +25,8 @@ describe("Clara — transition entrepreneur", () => {
 
   it("attend la fin ou l'annulation réelle de la voix avant la navigation", () => {
     expect(voice).toContain("Promise.race([speech, waitForClose])");
-    expect(voice).toContain('recordClaraVoiceTurn("assistant", CLARA_CONTRACTOR_TRANSITION_TEXT)');
+    expect(voice).toContain("localizeClaraScript(CLARA_CONTRACTOR_TRANSITION_TEXT, langRef.current)");
+    expect(voice).toContain('recordClaraVoiceTurn("assistant", transitionText)');
     expect(voice).toContain("CLARA_CONTRACTOR_VOICE_FINISHED_EVENT");
     expect(box).toContain("CLARA_CONTRACTOR_VOICE_FINISHED_EVENT");
   });
@@ -33,7 +34,7 @@ describe("Clara — transition entrepreneur", () => {
 describe("Clara — choix entrepreneur pilotés par l'audience", () => {
   it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
     // Propriétaire par défaut, sauf entrée entrepreneur forcée ou reprise de la même conversation.
-    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
+    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => heatPumpCampaign \? "homeowner" : forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
     expect(box).toContain("Vérifier mon score IA");
     expect(box).toContain("Obtenir plus de contrats");
     expect(box).toContain("Compléter mon profil");
