@@ -1,4 +1,6 @@
 import { peekClaraSessionToken } from "@/services/clara/claraSession";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+import { localizeClaraScript } from "@/services/clara/claraLocale";
 import { captureClaraContractorAnswer } from "@/services/clara/claraQualificationSummary";
 import ClaraQualificationPreview from "./ClaraQualificationPreview";
 /**
@@ -130,6 +132,8 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 ) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { lang } = useLanguage();
+  const tx = (value: string) => localizeClaraScript(value, lang);
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(false);
   const [step, setStep] = useState<Step>("name");
@@ -163,7 +167,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     const known = getClaraQualification();
     if (known.business_name) {
       void (async () => {
-        await say(`Je reprends avec ${known.business_name}. Vos informations précédentes sont conservées.`);
+        await say(lang === "en" ? `Welcome back, ${known.business_name}. Your previous information has been saved.` : `Je reprends avec ${known.business_name}. Vos informations précédentes sont conservées.`);
         if (known.goals?.length && readFlow().priority) {
           await runAudit();
         } else {
@@ -247,7 +251,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const submitGoals = useCallback(async (selected: GoalKey[], free: string | null) => {
     const labels = [...GOALS.filter((g) => selected.includes(g.key)).map((g) => g.label), ...(free ? [free.slice(0, 80)] : [])];
     if (!labels.length) return;
-    addUser(labels.join(" · "));
+    addUser(labels.map(tx).join(" · "));
     saveClaraQualification({ goals: labels }, "declared");
     void trackFunnelStep("goals_completed", { metadata: { surface: "home_clara_chat", count: labels.length } });
     if (selected.length > 1) {
@@ -262,7 +266,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   const choosePriority = useCallback(async (key: GoalKey) => {
     const goal = GOALS.find((g) => g.key === key);
     if (!goal) return;
-    addUser(goal.label);
+    addUser(tx(goal.label));
     writeFlow({ priority: key });
     await runAudit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -308,12 +312,12 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     const k = getClaraQualification();
     if (!k.primary_trade || k.provenance?.primary_trade !== "declared") {
       return go("trade", k.primary_trade
-        ? `Google indique « ${k.primary_trade} ». Quel est votre métier principal?`
+        ? (lang === "en" ? `Google lists your trade as “${k.primary_trade}”. What is your primary trade?` : `Google indique « ${k.primary_trade} ». Quel est votre métier principal?`)
         : "Quel est votre métier principal?");
     }
     if (!k.service_areas?.length) {
       return go("areas", k.business_city
-        ? `Votre entreprise est à ${k.business_city}. Dans quelles villes acceptez-vous des mandats?`
+        ? (lang === "en" ? `Your business is in ${k.business_city}. Which cities do you serve?` : `Votre entreprise est à ${k.business_city}. Dans quelles villes acceptez-vous des mandats?`)
         : "Dans quelles villes acceptez-vous des mandats?");
     }
     return buildProposal();
@@ -381,16 +385,18 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   }, [nextQuestion, onBusy, say]);
 
   const pick = useCallback(async (label: string, current: Step) => {
-    addUser(label);
-    await answer(label, current);
-  }, [addUser, answer]);
+    addUser(localizeClaraScript(label, lang));
+    await answer(label, current); // canonical value remains unchanged for pricing and matching
+  }, [addUser, answer, lang]);
 
   /* ------------------------------------------------ 7. Proposition */
   const buildProposal = useCallback(async () => {
     proposalReadyRef.current = true;
     setStep("proposal");
     void trackFunnelStep("plan_presented", { offer: "entry_activation_350", metadata: { surface: "home_clara_chat" } });
-    await say(`${OFFER_350.alexBeforeCalculation} Prêt à activer votre profil pour 350 $ + taxes?`);
+    await say(lang === "en"
+      ? "UNPRO activation costs $350 plus applicable taxes, one time. It includes your business profile and 12 months of UNPRO AI presence, with no appointments included by default. Ready to activate?"
+      : `${OFFER_350.alexBeforeCalculation} Prêt à activer votre profil pour 350 $ + taxes?`);
   }, [say]);
 
   const openActivation = async (more = false) => {
@@ -495,7 +501,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   if (step === "pick") {
     return (
-      <div className="home-clara-flow" aria-label="Fiches Google trouvées">
+      <div className="home-clara-flow" aria-label={tx("Fiches Google trouvées")}>
         {candidates.map((c) => (
           <article key={c.place_id} className="home-clara-card">
             <p className="home-clara-card-title">{c.business_name}</p>
@@ -503,17 +509,17 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
             <p className="home-clara-card-meta"><MapPin aria-hidden="true" /> {c.address}</p>
             {c.phone && <p className="home-clara-card-meta"><Phone aria-hidden="true" /> {c.phone}</p>}
             {c.website && <p className="home-clara-card-meta"><ExternalLink aria-hidden="true" /> {c.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</p>}
-            {c.review_count ? <p className="home-clara-card-meta"><Star aria-hidden="true" /> {c.rating} · {c.review_count} avis Google</p> : null}
-            <p className="home-clara-card-source">Source publique : Google</p>
-            <button type="button" className="home-clara-card-primary" onClick={() => void confirmCandidate(c)}>Oui, c’est bien celle-ci</button>
+            {c.review_count ? <p className="home-clara-card-meta"><Star aria-hidden="true" /> {c.rating} · {c.review_count} {lang === "en" ? "Google reviews" : "avis Google"}</p> : null}
+            <p className="home-clara-card-source">{tx("Source publique : Google")}</p>
+            <button type="button" className="home-clara-card-primary" onClick={() => void confirmCandidate(c)}>{tx("Oui, c’est bien celle-ci")}</button>
           </article>
         ))}
-        <div className="home-clara-quick" role="group" aria-label="Autres choix">
-          {lookupError && retry && <button type="button" onClick={() => retry()}>Réessayer</button>}
+        <div className="home-clara-quick" role="group" aria-label={tx("Autres choix")}>
+          {lookupError && retry && <button type="button" onClick={() => retry()}>{tx("Réessayer")}</button>}
           <button type="button" onClick={() => { addUser(candidates.length ? "Ce n’est pas celle-ci" : "Préciser"); void go("name", "Écrivez le nom avec la ville, ou votre site Web."); }}>
-            {candidates.length ? "Aucune de celles-ci" : "Préciser"}
+            {tx(candidates.length ? "Aucune de celles-ci" : "Préciser")}
           </button>
-          {lastQuery && <button type="button" onClick={() => void continueDeclared()}>Continuer avec « {lastQuery.slice(0, 30)} »</button>}
+          {lastQuery && <button type="button" onClick={() => void continueDeclared()}>{lang === "en" ? `Continue with “${lastQuery.slice(0, 30)}”` : `Continuer avec « ${lastQuery.slice(0, 30)} »`}</button>}
         </div>
       </div>
     );
@@ -522,23 +528,23 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
   if (step === "goals") {
     return (
       <div className="home-clara-flow">
-        <div className="home-clara-quick" role="group" aria-label="Objectifs">
+        <div className="home-clara-quick" role="group" aria-label={tx("Objectifs")}>
           {GOALS.map((g) => (
             <button key={g.key} type="button" aria-pressed={goals.includes(g.key)} data-selected={goals.includes(g.key) ? "true" : "false"}
               onClick={() => setGoals((prev) => prev.includes(g.key) ? prev.filter((k) => k !== g.key) : [...prev, g.key])}>
-              {goals.includes(g.key) ? "✓ " : ""}{g.label}
+              {goals.includes(g.key) ? "✓ " : ""}{tx(g.label)}
             </button>
           ))}
         </div>
-        <button type="button" className="home-clara-card-primary" disabled={!goals.length && !freeGoal} onClick={() => void submitGoals(goals, freeGoal)}>Continuer</button>
+        <button type="button" className="home-clara-card-primary" disabled={!goals.length && !freeGoal} onClick={() => void submitGoals(goals, freeGoal)}>{tx("Continuer")}</button>
       </div>
     );
   }
 
   if (step === "priority") {
     return (
-      <div className="home-clara-quick" role="group" aria-label="Objectif prioritaire">
-        {goals.map((k) => <button key={k} type="button" onClick={() => void choosePriority(k)}>{GOALS.find((g) => g.key === k)?.label}</button>)}
+      <div className="home-clara-quick" role="group" aria-label={tx("Objectif prioritaire")}>
+        {goals.map((k) => <button key={k} type="button" onClick={() => void choosePriority(k)}>{tx(GOALS.find((g) => g.key === k)?.label ?? "")}</button>)}
       </div>
     );
   }
@@ -557,16 +563,16 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 
   return (
     <div className="home-clara-flow">
-      {summaryError && <p role="alert" className="home-clara-card-meta">{summaryError}</p>}
+      {summaryError && <p role="alert" className="home-clara-card-meta">{tx(summaryError)}</p>}
       <ClaraQualificationPreview onConfirm={step === "preferences_review" ? () => void nextQuestion() : undefined} />
       {auditCard}
       {quick[step]?.length ? (
-        <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
-          {quick[step]?.map((o) => <button key={o} type="button" onClick={() => void pick(o, step)}>{o}</button>)}
+        <div className="home-clara-quick" role="group" aria-label={tx("Réponses rapides")}>
+          {quick[step]?.map((o) => <button key={o} type="button" onClick={() => void pick(o, step)}>{tx(o)}</button>)}
         </div>
       ) : null}
       {step === "failed" && retry && (
-        <div className="home-clara-quick"><button type="button" onClick={() => retry()}>Réessayer</button></div>
+        <div className="home-clara-quick"><button type="button" onClick={() => retry()}>{tx("Réessayer")}</button></div>
       )}
       {step === "proposal" && (
         <ProposalCard
@@ -581,27 +587,29 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
 });
 
 function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typeof getClaraQualification> }) {
+  const { lang } = useLanguage();
+  const tx = (value: string) => localizeClaraScript(value, lang);
   const isPublic = known.provenance?.business_name === "public";
   const partial = !audit.baseline.matched.merged_sources.length || audit.readiness_score == null;
   const priorities = [...audit.gaps].sort((a, b) => (a.impact === "high" ? -1 : 0) - (b.impact === "high" ? -1 : 0)).slice(0, 3);
   const clear = audit.baseline.missions.filter((m) => m.status === "confirmed");
   const sources = Array.from(new Set(audit.baseline.facts.map((f) => f.source).filter(Boolean)));
-  const date = new Date(audit.generated_at).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+  const date = new Date(audit.generated_at).toLocaleDateString(lang === "en" ? "en-CA" : "fr-CA", { day: "numeric", month: "long", year: "numeric" });
   return (
-    <article className="home-clara-card" aria-label="Résultat de l’analyse">
-      <p className="home-clara-card-title">{partial ? "Analyse partielle" : `Score de préparation : ${audit.readiness_score}/100`}</p>
+    <article className="home-clara-card" aria-label={tx("Résultat de l’analyse")}>
+      <p className="home-clara-card-title">{partial ? tx("Analyse partielle") : (lang === "en" ? `Readiness score: ${audit.readiness_score}/100` : `Score de préparation : ${audit.readiness_score}/100`)}</p>
       <p className="home-clara-card-meta">
         {partial
-          ? "Votre entreprise n’est pas encore dans les registres UNPRO : aucun score n’est calculé."
-          : `${audit.baseline.level}. Méthode : 7 critères UNPRO (identité, métier, territoire, contact, site, RBQ, avis).`}
+          ? (lang === "en" ? "Your business is not yet in UNPRO records, so no score has been calculated." : "Votre entreprise n’est pas encore dans les registres UNPRO : aucun score n’est calculé.")
+          : (lang === "en" ? `Level: ${audit.baseline.level}. Seven UNPRO criteria: identity, trade, service area, contact, website, RBQ, reviews.` : `${audit.baseline.level}. Méthode : 7 critères UNPRO (identité, métier, territoire, contact, site, RBQ, avis).`)}
       </p>
       {isPublic && (
         <p className="home-clara-card-meta">
-          Trouvé publiquement (Google) : {[known.business_name, known.business_city, known.phone && "téléphone", known.website && "site Web"].filter(Boolean).join(", ")}
+          {lang === "en" ? "Found publicly (Google): " : "Trouvé publiquement (Google) : "}{[known.business_name, known.business_city, known.phone && (lang === "en" ? "phone" : "téléphone"), known.website && (lang === "en" ? "website" : "site Web")].filter(Boolean).join(", ")}
         </p>
       )}
       {clear.length > 0 && (
-        <p className="home-clara-card-meta"><CheckCircle2 aria-hidden="true" /> Clair : {clear.map((m) => m.label).join(", ")}</p>
+        <p className="home-clara-card-meta"><CheckCircle2 aria-hidden="true" /> {lang === "en" ? "Confirmed: " : "Clair : "} {clear.map((m) => m.label).join(", ")}</p>
       )}
       {priorities.length > 0 && (
         <ol className="home-clara-card-list">
@@ -609,9 +617,9 @@ function AuditCard({ audit, known }: { audit: AuditResult; known: ReturnType<typ
         </ol>
       )}
       <p className="home-clara-card-source">
-        Sources : {sources.length ? sources.join(", ") : "aucune source vérifiée pour l’instant"} · {date}
+        {lang === "en" ? "Sources: " : "Sources : "}{sources.length ? sources.join(", ") : tx("aucune source vérifiée pour l’instant")} · {date}
       </p>
-      <a className="home-clara-card-link" href="/entrepreneurs/audit-ia">Découvrir mon score IA</a>
+      <a className="home-clara-card-link" href="/entrepreneurs/audit-ia">{tx("Découvrir mon score IA")}</a>
     </article>
   );
 }
@@ -622,25 +630,27 @@ function ProposalCard({ known, opening, onActivate, onMore }: {
   onActivate: () => void;
   onMore: () => void;
 }) {
+  const { lang } = useLanguage();
+  const tx = (value: string) => localizeClaraScript(value, lang);
   const p = known.provenance ?? {};
   const row = (label: string, value: string | null | undefined, key: string) =>
-    value ? <li key={key}><span>{label}</span> <strong>{value}</strong> <em>{PROVENANCE_LABEL[p[key] ?? "declared"]}</em></li> : null;
+    value ? <li key={key}><span>{label}</span> <strong>{value}</strong> <em>{tx(PROVENANCE_LABEL[p[key] ?? "declared"])}</em></li> : null;
   return (
-    <article className="home-clara-card" aria-label="Résumé et proposition">
-      <p className="home-clara-card-title">Résumé</p>
+    <article className="home-clara-card" aria-label={tx("Résumé et proposition")}>
+      <p className="home-clara-card-title">{tx("Résumé")}</p>
       <ul className="home-clara-card-facts">
-        {row("Entreprise", known.business_name, "business_name")}
-        {row("Métier", known.primary_trade, "primary_trade")}
-        {row("Clientèle", known.customer_type, "customer_type")}
-        {row("Siège", known.business_city, "business_city")}
-        {row("Territoires", known.service_areas?.join(", "), "service_areas")}
+        {row(tx("Entreprise"), known.business_name, "business_name")}
+        {row(tx("Métier"), known.primary_trade, "primary_trade")}
+        {row(tx("Clientèle"), known.customer_type, "customer_type")}
+        {row(tx("Siège"), known.business_city, "business_city")}
+        {row(tx("Territoires"), known.service_areas?.join(", "), "service_areas")}
       </ul>
-      <p className="home-clara-card-title">{OFFER_350.card.title}</p>
-      <p className="home-clara-card-meta">Vos services, vos spécialités et votre territoire, présentés clairement sur UNPRO pendant 12 mois. Pas un achat de clics ni de leads partagés.</p>
-      <p className="home-clara-card-price">{OFFER_350.price_label} <small>+ taxes · une seule fois</small></p>
-      <p className="home-clara-card-meta">Aucun rendez-vous inclus. Aucune apparition garantie dans ChatGPT. Le paiement ne remplace pas la vérification des licences requises.</p>
-      <Button type="button" size="lg" className="home-clara-card-primary h-auto min-h-11 w-full whitespace-normal py-3" disabled={opening} onClick={onActivate}>{opening ? "Préparation de votre activation…" : OFFER_350.ctaActivate}</Button>
-      <Button type="button" variant="link" className="h-auto min-h-11 w-full whitespace-normal" disabled={opening} onClick={onMore}>Je veux aussi des rendez-vous exclusifs</Button>
+      <p className="home-clara-card-title">{lang === "en" ? "Business profile + 12 months of UNPRO AI presence" : OFFER_350.card.title}</p>
+      <p className="home-clara-card-meta">{tx("Vos services, vos spécialités et votre territoire, présentés clairement sur UNPRO pendant 12 mois. Pas un achat de clics ni de leads partagés.")}</p>
+      <p className="home-clara-card-price">{OFFER_350.price_label} <small>{tx("+ taxes · une seule fois")}</small></p>
+      <p className="home-clara-card-meta">{tx("Aucun rendez-vous inclus. Aucune apparition garantie dans ChatGPT. Le paiement ne remplace pas la vérification des licences requises.")}</p>
+      <Button type="button" size="lg" className="home-clara-card-primary h-auto min-h-11 w-full whitespace-normal py-3" disabled={opening} onClick={onActivate}>{opening ? tx("Préparation de votre activation…") : (lang === "en" ? "Activate my profile — $350 + tax" : OFFER_350.ctaActivate)}</Button>
+      <Button type="button" variant="link" className="h-auto min-h-11 w-full whitespace-normal" disabled={opening} onClick={onMore}>{tx("Je veux aussi des rendez-vous exclusifs")}</Button>
     </article>
   );
 }

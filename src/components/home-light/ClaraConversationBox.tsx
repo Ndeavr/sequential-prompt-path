@@ -114,6 +114,7 @@ const CHOOSE_ADDRESS = "Choisir mon adresse";
 const FAKE_DONE = /^(c['’]est fait|c['’]est bon|un instant|ok|d['’]accord|fait)\b/i;
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { localizeClaraScript } from "@/services/clara/claraLocale";
 import { Conversation, ConversationContent, ConversationScrollButton, ConversationViewportFollow } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
@@ -328,7 +329,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         voice: "Talk to Clara",
         send: "Send",
         working: "Analyzing…",
-        fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
+        fallback: "I’m here with you. Please rephrase your request in one sentence.",
         reset: "New conversation",
         resetConfirm: "Start a new conversation?",
         resetYes: "Start",
@@ -997,10 +998,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   }, [openContractorAfterTransition]);
 
   /** Écrit une phrase de Clara dans la conversation visible ET canonique. */
-  const sayClara = useCallback(async (text: string, quick?: string[]) => {
+  const sayClara = useCallback(async (rawText: string, rawQuick?: string[]) => {
     if (!mountedRef.current) return;
     const speechAudience = audienceRef.current;
     const speechEpoch = audienceEpochRef.current;
+    const text = localizeClaraScript(rawText, lang);
+    const quick = rawQuick?.map((item) => localizeClaraScript(item, lang));
     // Anti-doublon : si Clara vient déjà de poser exactement cette question,
     // on réaffiche seulement ses choix, sans second tour identique.
     const lastAssistant = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
@@ -1039,11 +1042,12 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     activeTypingIdRef.current = null;
     setMessages((previous) => previous.map((m) => (m.id === messageId ? { ...m, text, status: "complete" } : m)));
     void appendClaraMessage({ role: "assistant", text, clientMessageId: messageId, audience: speechAudience }).catch(() => undefined);
-  }, []);
+  }, [lang]);
 
   homePromptRef.current = () => {
     const cursor = readHomeCursor();
-    void sayClara(cursor?.text ?? "Bien sûr. Décrivez-moi votre projet pour votre propriété en quelques mots.", cursor?.options);
+    const intro = lang === "en" ? "Of course. Tell me about your property project in a few words." : "Bien sûr. Décrivez-moi votre projet pour votre propriété en quelques mots.";
+    void sayClara(cursor?.text ?? intro, cursor?.options);
   };
 
   const addFlowUserMessage = useCallback((text: string) => {
@@ -1118,6 +1122,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
 
   const beginTextContractorTransition = useCallback(async (note: string, transitionText: string = CLARA_CONTRACTOR_TRANSITION_TEXT) => {
+    const transitionCopy = localizeClaraScript(transitionText, lang);
     // Seule la garde d'unicité s'applique : un état « occupé » résiduel ne doit
     // jamais bloquer la transition entrepreneur.
     if (contractorTransitionRef.current) return;
@@ -1128,11 +1133,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
     const assistantId = uid();
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? transitionText : "" }]);
+    setMessages((previous) => [...previous, { id: assistantId, role: "assistant", text: reduceMotion ? transitionCopy : "" }]);
 
     if (!reduceMotion) {
       setClaraTyping(true);
-      await playTyping(transitionText, (value) => {
+      await playTyping(transitionCopy, (value) => {
         setMessages((previous) => previous.map((message) =>
           message.id === assistantId ? { ...message, text: value } : message,
         ));
@@ -1143,11 +1148,11 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
     await appendClaraMessage({
       role: "assistant",
-      text: transitionText,
+      text: transitionCopy,
       clientMessageId: assistantId,
     }).catch(() => undefined);
     await finishContractorTransition(note);
-  }, [finishContractorTransition]);
+  }, [finishContractorTransition, lang]);
 
   askNextRef.current = () => askNextQualification();
   transitionRef.current = (note: string) => beginTextContractorTransition(note, CLARA_CONTRACTOR_ANALYSIS_NOTE);
@@ -1329,6 +1334,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             session_token: peekClaraSessionToken(),
             context: {
               surface: "home_clara_box",
+              responseLanguage: lang === "en" ? "en-CA" : "fr-CA",
               currentPage: homeCampaignContext(heatPumpCampaign && audienceRef.current === "homeowner", formatClaraPageContext(getClaraPageContext())),
               mode: nextMode,
               userRole: audienceRef.current,
