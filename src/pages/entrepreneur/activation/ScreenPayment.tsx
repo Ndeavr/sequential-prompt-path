@@ -17,7 +17,7 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
 import { CONTRACTOR_PLANS, ENTRY_OFFER } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
-import { buildActivation350Links } from "@/lib/activation350Links";
+import { claraActivationLinks } from "@/services/clara/claraActivationClose";
 
 const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice, yearly: p.yearlyPrice }])
@@ -59,7 +59,7 @@ export default function ScreenPayment() {
           try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName); }
           catch { /* Continue safely if browser storage is unavailable. */ }
         }
-        navigate(buildActivation350Links(new URLSearchParams(window.location.search)).activate);
+        navigate(claraActivationLinks(window.location.search).activate);
         return;
       }
 
