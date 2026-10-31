@@ -33,22 +33,19 @@ export default function PageAdminWaitingHomeowners() {
 
   async function generateLanding(city: string, category: string) {
     const slug = `${category}-${city}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    await supabase.from("contractor_recruitment_targets").upsert({
+    const { error } = await supabase.from("contractor_recruitment_targets").upsert({
       city, category, landing_slug: slug, status: "active",
     }, { onConflict: "city,category" });
+    if (error) {
+      toast({ title: "La cible n’a pas été conservée", description: "Réessayez sans lancer de sollicitation.", variant: "destructive" });
+      return;
+    }
     toast({ title: "Landing générée", description: `/pro/demande/${city.toLowerCase()}/${category.toLowerCase()}` });
     window.open(`/pro/demande/${encodeURIComponent(city.toLowerCase())}/${encodeURIComponent(category.toLowerCase())}`, "_blank");
   }
 
   async function launchOutreach(city: string, category: string) {
-    const { error } = await supabase.functions.invoke("outreach-demand-injector", {
-      body: { city, category, action: "queue_outreach" },
-    });
-    if (error) {
-      toast({ title: "Outreach queued via fallback", description: "Sera traité au prochain run." });
-    } else {
-      toast({ title: "Outreach lancé", description: `${category} · ${city}` });
-    }
+    navigate(`/admin/contractors?city=${encodeURIComponent(city)}&category=${encodeURIComponent(category)}&review=1`);
   }
 
   return (
@@ -101,7 +98,7 @@ export default function PageAdminWaitingHomeowners() {
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="ghost" onClick={() => navigate(`/admin/demand-signals?city=${encodeURIComponent(r.city)}&category=${encodeURIComponent(r.category)}`)}><Eye className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => generateLanding(r.city, r.category)}><FileText className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => launchOutreach(r.city, r.category)}><Megaphone className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" title="Examiner les candidats — aucun envoi" aria-label="Examiner les candidats — aucun envoi" onClick={() => launchOutreach(r.city, r.category)}><Megaphone className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => navigate(`/admin/contractors?city=${encodeURIComponent(r.city)}&category=${encodeURIComponent(r.category)}`)}><Users className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>

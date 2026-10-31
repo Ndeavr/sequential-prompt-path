@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type DemandSignalInput = {
   project_id: string;
-  homeowner_id: string;
+  follow_up_consent: boolean;
+  notify_channels: { sms: boolean; email: boolean; push: boolean };
   city: string;
   category: string;
   subcategory?: string | null;
@@ -44,7 +45,7 @@ export function useCreateDemandSignal() {
   return useMutation({
     mutationFn: async (input: DemandSignalInput): Promise<DemandSignalResult> => {
       const { data, error } = await supabase.functions.invoke("demand-signal-create", { body: input });
-      if (error) throw error;
+      if (error || data?.ok !== true || !data.signal?.id) throw new Error("Votre demande n’a pas été conservée. Réessayez ou continuez avec Clara.");
       return data as DemandSignalResult;
     },
   });
@@ -55,11 +56,12 @@ export function useMarketDemand(city?: string | null, category?: string | null) 
     queryKey: ["market_demand", city, category],
     enabled: !!(city && category),
     queryFn: async () => {
+      if (!city || !category) return null;
       const { data, error } = await supabase
         .from("market_demand")
         .select("*")
-        .eq("city", city!)
-        .eq("category", category!.toLowerCase())
+        .eq("city", city)
+        .eq("category", category.toLowerCase())
         .maybeSingle();
       if (error) throw error;
       return data;

@@ -65,6 +65,7 @@ Current instructions and verified live state override these documents. Sensitive
 - Do not modify generated sitemap or corpus files manually when a repository script generates them.
 
 ## Remote data and backend rules
+- No-match security corrections stay outside active Edge directories when deployment is forbidden; demand writes fail closed until the existing SQL matcher enforces verified eligibility and consent. Why: active Edge edits auto-deploy and generic supply cannot establish a match.
 - Autonomous phone evidence capture reuses the canonical observer and fences exact evidence INSERT plus job completion in a service-only ledger transaction; staged release requires backup preflight. Why: stale workers must not create duplicate evidence or legal signatures.
 - CASL machine rechecks reuse enrich-official-website and append observations in official_site_crawl_runs.summary; they never mutate consent/signatures/eligibility, and any machine policy is disabled by default. Why: publication observations are not legal consent.
 - CASL first-party reads only run through pinnedPublicFetch (socket pinned to the validated public IP via custom lookup); caslFirstParty.read() fails closed with unpinned_transport for any other fetch, because a before/after DNS resolve does not control the dialed IP (rebinding/TOCTOU). Why: a blocked feature is preferable to SSRF.

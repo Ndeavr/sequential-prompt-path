@@ -28,9 +28,9 @@ export function useNoMatchRecovery(sessionId: string) {
     mutationFn: (data: WaitlistRequest) => alexNoMatchService.createWaitlist(data),
     onSuccess: () => {
       setStep("waitlist_confirmed");
-      toast.success("Vous êtes sur la liste d'attente. On vous contacte bientôt!");
+      toast.success("Votre demande est conservée. Nous vous informerons si un professionnel approprié est trouvé.");
     },
-    onError: () => toast.error("Erreur lors de l'ajout à la liste d'attente."),
+    onError: () => toast.error("Votre demande n’a pas été conservée. Continuez avec Clara pour confirmer votre projet."),
   });
 
   const detect = useCallback((service: string, city: string, radiusKm?: number, reason?: string) => {
@@ -41,10 +41,12 @@ export function useNoMatchRecovery(sessionId: string) {
     });
   }, [sessionId, detectMutation]);
 
-  const joinWaitlist = useCallback((data: { firstName?: string; phone?: string; email?: string; service: string; city: string; radiusKm?: number; flexibility?: string; urgency?: string }) => {
+  const joinWaitlist = useCallback((data: { projectId?: string; followUpConsent?: boolean; firstName?: string; phone?: string; email?: string; service: string; city: string; radiusKm?: number; flexibility?: string; urgency?: string }) => {
     waitlistMutation.mutate({
       alex_session_id: sessionId,
       user_id: user?.id,
+      project_id: data.projectId,
+      follow_up_consent: data.followUpConsent,
       first_name: data.firstName,
       phone: data.phone,
       email: data.email,

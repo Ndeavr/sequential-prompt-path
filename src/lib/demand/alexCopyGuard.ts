@@ -3,6 +3,8 @@
  * Replaces forbidden "no contractor" phrasing with queue/expansion language.
  */
 
+import { noMatchConsentCopy } from "./noMatchPolicy";
+
 export const FORBIDDEN_NO_MATCH_PHRASES = [
   /aucun entrepreneur/gi,
   /no contractor/gi,
@@ -28,12 +30,9 @@ export function sanitizeAlexNoMatchCopy(text: string, ctx?: { city?: string; cat
 }
 
 export function buildWaitingCopy(ctx?: { city?: string; category?: string; position?: number | null }): string {
-  const cat = ctx?.category ?? "entrepreneur compatible";
-  const city = ctx?.city ?? "votre région";
-  const pos = ctx?.position && ctx.position > 0 ? ` Vous êtes #${ctx.position} en file.` : "";
-  return `Nous étendons la couverture pour ${cat} à ${city}.${pos} Votre recommandation est en préparation.`;
+  return noMatchConsentCopy(ctx?.city);
 }
 
 export function containsForbiddenNoMatchPhrase(text: string): boolean {
-  return FORBIDDEN_NO_MATCH_PHRASES.some((re) => re.test(text));
+  return FORBIDDEN_NO_MATCH_PHRASES.some((re) => { re.lastIndex = 0; return re.test(text); });
 }
