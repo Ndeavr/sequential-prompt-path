@@ -1,15 +1,13 @@
+import { getTierForUnits } from "@/config/condoPricing";
+
 /**
  * UNPRO — Condo Direct Pricing Logic
  * X unités = Y $ / an — no complexity exposed.
  */
 
 export function calculateCondoPrice(units: number): number {
-  const u = Math.max(2, Math.round(units));
-  if (u <= 12) return 180;
-  if (u <= 30) return u * 12;
-  if (u <= 75) return u * 9;
-  if (u <= 150) return u * 7.5;
-  return u * 6;
+  const u = Math.max(2, Math.min(9999, Math.round(Number.isFinite(units) ? units : 2)));
+  return getTierForUnits(u).priceAnnualExclTax;
 }
 
 export function getPricePerUnit(units: number): number {
