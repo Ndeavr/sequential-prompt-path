@@ -164,6 +164,12 @@ AS $$
       AND cs.status = 'active'
       AND cs.payment_status = 'paid'
       AND cs.payment_method <> 'free'
+      -- A real recurring Stripe subscription or verified manual subscription;
+      -- not a one-time profile activation masquerading as an appointment plan.
+      AND (
+        (cs.payment_method = 'stripe' AND cs.stripe_subscription_id LIKE 'sub_%')
+        OR cs.payment_method = 'manual'
+      )
       AND cs.current_period_end IS NOT NULL
       AND cs.current_period_end > now()
       AND (
@@ -200,13 +206,19 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public
-AS $$
+AS $
+DECLARE
+  prior_status text;
+  prior_credit_cents integer := 0;
 BEGIN
+  -- Do not reference OLD on INSERT: OLD is unassigned in that event.
+  IF TG_OP = 'UPDATE' THEN
+    prior_status := OLD.status;
+    prior_credit_cents := OLD.approved_credit_cents;
+  END IF;
   IF (
-    (NEW.status = 'approved' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM 'approved'))
-    OR NEW.approved_credit_cents > (
-      CASE WHEN TG_OP = 'INSERT' THEN 0 ELSE OLD.approved_credit_cents END
-    )
+    (NEW.status = 'approved' AND prior_status IS DISTINCT FROM 'approved')
+    OR NEW.approved_credit_cents > prior_credit_cents
   ) AND NOT public.lead_repurchase_has_valid_booking_subscription(NEW.owner_user_id) THEN
     RAISE EXCEPTION 'subscription_required_for_lead_credit'
       USING ERRCODE = '23514';
