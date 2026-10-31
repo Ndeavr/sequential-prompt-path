@@ -12,6 +12,13 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(payment).not.toMatch(/console\.(?:log|info|warn|error|debug)\s*\(/);
     expect(payment).toContain("await updateFunnel({ stripe_session_id: data.session_id });");
   });
+  it("prevents legacy founder checkout bypass of authenticated $350 activation", () => {
+    expect(payment).not.toContain('create-founder-activation-checkout');
+    expect(payment).toContain('const declaredName = state.business_name.trim();');
+    expect(payment).toContain('sessionStorage.setItem("unpro_entry350_declared_name", declaredName)');
+    expect(payment).toContain('navigate(buildActivation350Links(new URLSearchParams(window.location.search)).activate)');
+    expect(payment).toContain('Continuer vers le paiement sécurisé');
+  });
   it("routes the base activation to its existing landing instead of monthly intake", () => {
     expect(links).toContain("activate: `/entrepreneurs/activation-350?");
     expect(links).toContain('activate.set("activate", "1")');
