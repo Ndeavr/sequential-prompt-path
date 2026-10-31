@@ -10,7 +10,7 @@ import { buildClaraHistory } from "@/services/clara/claraConversationHistory";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, CameraPlus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -2150,16 +2150,13 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
             <PromptInputTools>
               <MediaMenu
                 suggested={mediaGlow}
-                label={copy.attach}
+                label={lang === "fr" ? "Caméra+ : ajouter une photo ou un document" : "Camera+: add a photo or document"}
                 onTakePhoto={() => cameraRef.current?.click()}
                 onChoosePhoto={() => photoLibraryRef.current?.click()}
                 onTakeVideo={() => videoCameraRef.current?.click()}
                 onChooseVideo={() => videoLibraryRef.current?.click()}
                 onChooseDocument={() => docLibraryRef.current?.click()}
               />
-              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} aria-label={copy.camera} title={copy.camera} className="home-clara-tool touch-manipulation rounded-full text-muted-foreground hover:text-foreground">
-                <Camera className="h-5 w-5" />
-              </PromptInputButton>
               <PromptInputButton
                 type="button"
                 onClick={() => void startVoice()}
@@ -2267,7 +2264,7 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
         onClick={() => setOpen((value) => !value)}
         className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
       >
-        <Plus className="h-5 w-5" />
+        <CameraPlus className="h-5 w-5" aria-hidden="true" />
       </PromptInputButton>
       {open && (
         <div
