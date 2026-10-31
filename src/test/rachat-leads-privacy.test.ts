@@ -56,6 +56,16 @@ describe("Rachat de leads — confidentialité et conversion", () => {
     expect(page).toContain("Utilisation suspendue");
     expect(page).toContain("L'inscription seule, l'activation du profil à 350 $");
   });
+  it("présente les quatre incompatibilités sans remplacer le choix du client", () => {
+    expect(page).toContain("Exemple concret d'une demande non retenue");
+    expect(page).toContain("Projet : Rive-Sud");
+    expect(page).toContain("Entreprise : Rive-Nord seulement");
+    expect(page).toContain("Demandé : cellulose");
+    expect(page).toContain("Offert : fibre de verre soufflée");
+    expect(page).toContain("Demandé : polyuréthane");
+    expect(page).toContain("Service non offert");
+    expect(page).toContain("n'a pas demandé");
+  });
   it("conserve le consentement commercial indépendant et désactivé par défaut", () => {
     expect(sql).toContain("sms_opt_in boolean NOT NULL DEFAULT false");
     expect(sql).toContain("email_opt_in boolean NOT NULL DEFAULT false");
