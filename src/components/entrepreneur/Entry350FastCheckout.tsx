@@ -77,7 +77,9 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     setBusy(true);
     setErrorText(null);
     try {
-      sessionStorage.setItem(DECLARED_NAME_KEY, name);
+      // Storage can be denied (privacy mode); it must never block a verified checkout.
+      try { sessionStorage.setItem(DECLARED_NAME_KEY, name); }
+      catch { /* The declared name is passed directly to the authenticated server call. */ }
       const { data: auth, error: authError } = await supabase.auth.getSession();
       if (authError) throw authError;
       if (!auth.session) {
