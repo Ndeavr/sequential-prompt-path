@@ -1,6 +1,20 @@
 # UNPRO — Campagne « UNPRO rachète vos leads! » — v2
 **31 octobre 2026 · Dossier de production éditoriale · NON PUBLIÉ · aucun SMS, courriel ou achat média envoyé · programme d'échange non encore vérifié opérationnel.**
 
+
+## Réalisation technique — 31 octobre 2026
+**SUR BRANCHE GITHUB, NON PUBLIÉ / NON DÉPLOYÉ.** Le projet Lovable lié n'a pas de crédits disponibles au moment de la tentative de modification; implémentation faite directement dans une branche du dépôt existant sans consommer Lovable. Cette section décrit du code soumis à revue, pas un site en production vérifié.
+
+- Page SEO / formulaire FR-QC : src/pages/marketing/PageRachatLeads.tsx ; route /rachat-leads-entrepreneurs.
+- Enregistrement OTP : passage via le login existant en mode téléphone et retour à la campagne, rôle entrepreneur vérifié côté RLS.
+- Formulaire : entreprise, coordonnées client, service, ville, besoin, origine, coût, motif, provenance du consentement; dépôt PDF/images privé. Pas de transfert à d'autres professionnels ni de notification client automatisée.
+- DB : supabase/migrations/20261031154000_lead_repurchase_intake.sql ; tables de soumissions, documents et consentements d'offres + bucket privé et RLS.
+- Espace entrepreneur : statut réel de ses dossiers, offres préférées SMS/courriel sur consentement distinct. Les préférences n'entraînent aucun envoi automatique avant intégration réelle.
+- Crédit : valeur déclarée saisie, mais statut initial pending et zéro crédit accordé; approbation administrateur requise. Pas encore de moteur d'utilisation des crédits/garantie de rendez-vous.
+- Tests : src/test/rachat-leads-privacy.test.ts ; tests de contrat statiques. **La migration, les tests de connexion réel OTP, l'upload en stockage et l'E2E ne sont pas exécutés sur le backend.** Publication interdite tant qu'ils n'ont pas passé.
+- Contenu SMS (DRAFT, non envoyé) : « UNPRO rachète vos leads! Trop loin? Hors service? Ce n'était pas pour vous? On trouve le bon pro pour votre client. Crédit équivalent à la valeur du lead. https://unpro.ca/rachat-leads-entrepreneurs STOP »
+- Avant activation publique : déployer et tester migration+page, vérifier téléphone OTP, droits RLS, documents, suppression/rectification de données, conditions finales et barème exact des crédits, vérifier licence avant offre réelle; ne pas activer d'envoi sans audience consentie et système d'opt-out.
+
 ## RÈGLE ÉDITORIALE PRIORITAIRE
 L'accroche publique est **« UNPRO rachète vos leads! »**, sans guillemets de prudence ni mention « pas en argent » dans le texte publicitaire.
 
