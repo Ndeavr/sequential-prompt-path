@@ -9,23 +9,23 @@ import { ArrowRight, Building2, CheckCircle2, ChevronDown, Info } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CONDO_PRICING_TIERS, getTierForUnits } from "@/config/condoPricing";
+import { isValidDoors, loadSelection, onboardingPath, saveSelection } from "@/lib/managerSelection";
 
 const money = (value: number) => new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 0 }).format(value);
 const moneyDecimal = (value: number) => new Intl.NumberFormat("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
 export default function ManagerPlans({ authenticated }: { authenticated: boolean }) {
-  const [countText, setCountText] = useState("24");
-  const [portfolio, setPortfolio] = useState(false);
+  const initial = typeof window !== "undefined" ? loadSelection() : null;
+  const [countText, setCountText] = useState(String(initial?.doors ?? 24));
+  const [portfolio, setPortfolio] = useState(initial?.type === "portfolio");
   const count = Number(countText);
-  const valid = Number.isInteger(count) && count >= 2 && count <= 9999;
+  const valid = isValidDoors(count);
   const tier = getTierForUnits(valid ? count : 24);
   const yearly = tier.priceTaxIncluded;
-  const perDoorMonthly = valid ? yearly / count / 12 : 0;
-  const onboarding = `/condos/onboarding?units=${count}&source=gestionnaires`;
-  const signupLink = authenticated ? onboarding : `/signup?redirect=${encodeURIComponent(onboarding)}`;
-  const claraLink = `/alex?q=${encodeURIComponent(
-    `Je suis gestionnaire immobilier. J'administre ${valid ? count : "plusieurs"} portes ${portfolio ? "dans plusieurs immeubles" : "et je souhaite une offre UNPRO adaptée"}. Aidez-moi à choisir une offre et à créer mon dossier.`
-  )}`;
+  const perDoorYearly = valid ? yearly / count : 0;
+  const selection = { type: (portfolio ? "portfolio" : "condo") as "portfolio" | "condo", doors: count };
+  const target = onboardingPath(selection);
+  const ctaLink = authenticated ? target : `/signup?redirect=${encodeURIComponent(target)}`;
 
   return (
     <section id="gestionnaires-plans" aria-labelledby="gestionnaires-title" className="px-4 pb-12 sm:px-5">
@@ -82,23 +82,18 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
             </p>
           </div>
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4" aria-live="polite">
-            {!portfolio && valid ? (
+            {valid ? (
               <>
-                <p className="text-xs font-medium text-muted-foreground">UNPRO Condos Premium · {tier.units}</p>
-                <p className="mt-1 text-3xl font-extrabold tabular-nums text-foreground">
-                  {money(yearly)} $ <span className="text-sm font-normal text-muted-foreground">/ an + taxes</span>
+                <p className="text-xs font-medium text-muted-foreground">UNPRO Premium · {tier.units.replace("unités", "portes")} · {count} portes</p>
+                <p className="mt-1 whitespace-nowrap text-3xl font-extrabold tabular-nums text-foreground">
+                  {money(yearly)}&nbsp;$ <span className="text-sm font-normal text-muted-foreground">/ an + taxes</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {moneyDecimal(perDoorMonthly)} $ par porte / mois, avant taxes
+                  {moneyDecimal(perDoorYearly)}&nbsp;$ par porte / an · CAD, avant TPS et TVQ applicables
                 </p>
               </>
             ) : (
-              <>
-                <p className="text-sm font-bold text-foreground">Offre pour votre portefeuille</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Clara vous aide à préciser les immeubles, les accès et les services avant toute tarification.
-                </p>
-              </>
+              <p className="text-sm text-muted-foreground">Entrez le nombre de portes pour voir votre forfait.</p>
             )}
           </div>
         </div>
@@ -109,20 +104,18 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
           <span className="flex items-center gap-1.5"><CheckCircle2 className="size-4 text-primary" /> Documents centralisés</span>
         </div>
 
-        <Button asChild disabled={!valid} className="mt-5 min-h-12 w-full rounded-xl font-semibold">
+        <Button asChild disabled={!valid} className="mt-5 min-h-12 w-full rounded-xl font-semibold whitespace-normal">
           {valid ? (
-            <Link to={portfolio ? claraLink : signupLink}>
-              {portfolio ? "Obtenir une offre adaptée avec Clara" : "Créer mon Passeport Immeuble"}
-              <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+            <Link to={ctaLink} onClick={() => saveSelection(selection)} data-testid="manager-cta">
+              Choisir mon forfait — {money(yearly)}&nbsp;$/an + taxes
+              <ArrowRight className="ml-2 size-4 shrink-0" aria-hidden="true" />
             </Link>
           ) : (
             <span>Entrez le nombre de portes</span>
           )}
         </Button>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          {portfolio
-            ? "Les offres multi-immeubles ne sont pas facturées automatiquement."
-            : "Création du Passeport gratuite. Le plan Premium est choisi séparément, avant paiement."}
+          Votre nombre de portes et votre type de gestion sont conservés jusqu'au paiement.
         </p>
 
         <details className="mt-5 border-t border-border/40 pt-3">
@@ -131,7 +124,7 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
           </summary>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {CONDO_PRICING_TIERS.map((plan) => (
-              <div key={plan.priceId} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${!portfolio && valid && tier.priceId === plan.priceId ? "border-primary/40 bg-primary/5" : "border-border/40"}`}>
+              <div key={plan.priceId} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${valid && tier.priceId === plan.priceId ? "border-primary/40 bg-primary/5" : "border-border/40"}`}>
                 <span className="text-foreground">{plan.units.replace("unités", "portes")}</span>
                 <span className="shrink-0 font-semibold tabular-nums text-foreground">{money(plan.priceTaxIncluded)} $ / an + taxes</span>
               </div>
@@ -139,7 +132,7 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
           </div>
           <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
             <Info className="mt-0.5 size-3.5 shrink-0" />
-            Tarifs annuels du catalogue UNPRO Condos, avant taxes. TPS et TVQ applicables en sus. Les portefeuilles distincts font l’objet d’une offre personnalisée.
+            Tarifs annuels du catalogue UNPRO Condos, avant taxes. TPS et TVQ applicables en sus.
           </p>
         </details>
       </div>
