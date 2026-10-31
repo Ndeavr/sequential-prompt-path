@@ -272,6 +272,45 @@ export default function PageRachatLeads() {
             ))}
           </section>
 
+          <section aria-labelledby="exemple-mauvais-lead" className="mt-12 overflow-hidden rounded-3xl border border-sky-400/20 bg-[#101b2d] p-5 md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-sky-300">Exemple concret d'une demande non retenue</p>
+            <h2 id="exemple-mauvais-lead" className="mt-2 text-2xl font-bold text-white md:text-3xl">
+              Ce n'est pas un mauvais client. C'est un projet qui n'est pas pour vous.
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-slate-200 md:text-base">
+              Un propriétaire de la Rive-Sud cherche à faire isoler son entretoit avec de la cellulose.
+              Il souhaite aussi faire du calfeutrage et appliquer du polyuréthane sur les solives de rive.
+              Or, l'entreprise appelée dessert seulement la Rive-Nord, installe de la fibre de verre soufflée
+              et n'offre ni calfeutrage ni polyuréthane.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {[
+                ["Territoire", "Projet : Rive-Sud", "Entreprise : Rive-Nord seulement"],
+                ["Isolant", "Demandé : cellulose", "Offert : fibre de verre soufflée"],
+                ["Calfeutrage", "Demandé par le client", "Service non offert"],
+                ["Solives de rive", "Demandé : polyuréthane", "Service non offert"],
+              ].map(([label, need, gap]) => (
+                <div key={label} className="rounded-xl border border-white/10 bg-white/[0.045] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">{label}</p>
+                  <p className="mt-2 text-sm text-white">{need}</p>
+                  <p className="mt-1 text-sm text-amber-200">{gap}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-lg font-semibold text-white">
+              Quatre incompatibilités. Un seul lead payé. Mais un vrai projet pour le bon entrepreneur.
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              UNPRO vise à réorienter cette demande vers un professionnel qui dessert le secteur et offre
+              les travaux réellement recherchés, plutôt que de proposer au client un matériau ou un service
+              qu'il n'a pas demandé. Si un seul entrepreneur ne peut pas tout prendre en charge, Clara
+              vérifie d'abord avec le propriétaire s'il souhaite envisager plusieurs spécialistes.
+            </p>
+            <a href="#echanger" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-sky-200 underline underline-offset-4">
+              Récupérer la valeur de mes demandes non retenues <ArrowRight size={16} />
+            </a>
+          </section>
+
           <section id="echanger" className="mt-14 scroll-mt-8 rounded-3xl border border-white/15 bg-[#111c30] p-5 shadow-2xl md:p-8">
             <h2 className="text-2xl font-bold text-white">Échanger un lead</h2>
             <p className="mt-2 text-sm text-slate-300">Créez votre compte entrepreneur, confirmez votre téléphone avec un code et transmettez votre demande.</p>
@@ -321,7 +360,7 @@ export default function PageRachatLeads() {
                       <input className={fieldClass} required maxLength={120} value={draft.client_city} onChange={e=>change("client_city",e.target.value)} placeholder="Terrebonne"/>
                     </label>
                     <label className={labelClass}>Service demandé *
-                      <input className={fieldClass} required minLength={2} maxLength={150} value={draft.service_requested} onChange={e=>change("service_requested",e.target.value)} placeholder="Isolation, toiture, plomberie…"/>
+                      <input className={fieldClass} required minLength={2} maxLength={150} value={draft.service_requested} onChange={e=>change("service_requested",e.target.value)} placeholder="Ex. Isolation entretoit cellulose + calfeutrage + polyuréthane"/>
                     </label>
                     <label className={labelClass}>Pourquoi ce lead n'était pas pour vous? *
                       <select className={fieldClass} value={draft.mismatch_reason} onChange={e=>change("mismatch_reason",e.target.value)}>
@@ -341,7 +380,7 @@ export default function PageRachatLeads() {
                     </label>
                   </div>
                   <label className={labelClass}>Décrivez le besoin du client *
-                    <textarea className={fieldClass} required minLength={5} maxLength={4000} rows={3} value={draft.project_description} onChange={e=>change("project_description",e.target.value)} placeholder="Qu'est-ce que le propriétaire souhaite faire?"/>
+                    <textarea className={fieldClass} required minLength={5} maxLength={4000} rows={3} value={draft.project_description} onChange={e=>change("project_description",e.target.value)} placeholder="Précisez tous les travaux, matériaux demandés et contraintes. Ex. entretoit en cellulose, calfeutrage, polyuréthane sur solives de rive, Rive-Sud."/>
                   </label>
                   <div>
                     <label className={labelClass} htmlFor="lead-files">Téléverser un fichier (facultatif)</label>
