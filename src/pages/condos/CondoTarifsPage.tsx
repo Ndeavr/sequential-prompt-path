@@ -14,21 +14,7 @@ import {
 
 const pricingTiers = CONDO_PRICING_TIERS.map(t => ({
   units: t.units,
-  price: `${new Intl.NumberFormat("fr-CA").format(t.priceAnnualExclTax)} /**
- * UNPRO Condos — Tarifs / Pricing Page
- */
-import { Link } from "react-router-dom";
-import MainLayout from "@/layouts/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
-import { CONDO_PRICING_TIERS } from "@/config/condoPricing";
-import {
-  Building2, CheckCircle2, Zap, ArrowRight, ChevronDown, Crown
-} from "lucide-react";
-
-,
+  price: `${new Intl.NumberFormat("fr-CA").format(t.priceAnnualExclTax)} $`,
   perUnit: t.perUnit,
 }));
 
