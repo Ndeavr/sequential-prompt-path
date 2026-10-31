@@ -25,14 +25,17 @@ serve(async (req) => {
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
 
-    // If webhook secret is configured, verify signature
+    // Strict: signed events only (fail closed). Unsigned payloads could forge active subscriptions.
     const webhookSecret = Deno.env.get("STRIPE_CONDO_WEBHOOK_SECRET");
+    if (!webhookSecret || !sig) {
+      logStep("Rejected unsigned or unconfigured webhook");
+      return new Response(JSON.stringify({ error: "signature_required" }), { status: 400 });
+    }
     let event: Stripe.Event;
-
-    if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } else {
-      event = JSON.parse(body) as Stripe.Event;
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+    } catch (_e) {
+      return new Response(JSON.stringify({ error: "invalid_signature" }), { status: 400 });
     }
 
     logStep("Event received", { type: event.type, id: event.id });
