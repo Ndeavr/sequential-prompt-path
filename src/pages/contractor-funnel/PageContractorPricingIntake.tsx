@@ -981,7 +981,7 @@ export default function PageContractorPricingIntake() {
     const Q = (data as QD).qualification ?? {};
     const qualification = toQuoteContext(Q, cap);
     const { qualification: _q, ...base } = data as QD & Partial<PricingIntakeInput>;
-    const payload = { ...(calc ? calc.payload : qualitativePayload(base, cap)), qualification } as Partial<PricingIntakeInput>;
+    const payload = { ...(calc ? calc.payload : qualitativePayload(base, cap)), qualification } as unknown as Partial<PricingIntakeInput>;
     setSubmitting(true);
     try {
       saveClaraQualification(toClaraPatch(Q, cap), "declared", { replaceLists: true });
