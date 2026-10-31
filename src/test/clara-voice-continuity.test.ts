@@ -61,6 +61,25 @@ describe("Clara voice — reprise de la conversation canonique", () => {
     expect(context).toMatch(/ne te présente pas/i);
   });
 
+  it("keeps a resumed English conversation in English without restarting", () => {
+    const enBrief = brief({ language: "en", pending_question: "Which floor is the balcony on?" });
+    expect(buildVoiceFirstMessage(enBrief, "en")).toBe("I’m listening.");
+    expect(buildVoiceFirstMessage(brief({ pending_question: null }), "en")).toBe("I’m listening. Let's continue.");
+    const context = buildVoiceResumeContext(enBrief, "en") ?? "";
+    expect(context).toContain("Continue the existing conversation in natural Canadian English");
+    expect(context).toContain("Which floor is the balcony on?");
+    expect(context).not.toContain("Tu poursuis une conversation");
+    expect(buildVoiceFirstMessage(enBrief, "fr")).toBe("Je vous écoute.");
+  });
+
+  it("keeps English voice startup and the spoken contractor transition aligned", () => {
+    const overlay = read("src/components/voice/OverlayAlexVoiceFullScreen.tsx");
+    expect(overlay).toContain("buildVoiceFirstMessage(brief, activeLang)");
+    expect(overlay).toContain("buildVoiceResumeContext(brief, activeLang)");
+    expect(overlay).toContain("Hello Clara.");
+    expect(overlay).toContain("elevenlabsService.speak(transitionText)");
+  });
+
   it("n'envoie aucun contexte quand il n'y a rien à reprendre", () => {
     expect(buildVoiceResumeContext(brief({ has_conversation: false }))).toBeNull();
   });
