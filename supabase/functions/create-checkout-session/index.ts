@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
     const stripeTestKey = Deno.env.get("STRIPE_TEST_SECRET_KEY") || "";
     // Comptes QA (e2e+…@unpro.ca ou metadata e2e_test) : TOUJOURS test,
     // jamais de repli live, même sans ?stripe_test=1. Échec fermé.
-    const meta = (userData.user.user_metadata ?? {}) as Record<string, unknown>;
+    // QA status must come from admin-controlled app_metadata, never user-editable user_metadata.
+    const meta = (userData.user.app_metadata ?? {}) as Record<string, unknown>;
     const isE2eAccount =
       /^e2e\+[^@]+@unpro\.ca$/i.test(userEmail || "") || meta.e2e_test === true || meta.e2e_test === "true";
     if (isE2eAccount && !stripeTestKey.startsWith("sk_test_")) {
