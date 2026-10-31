@@ -98,7 +98,7 @@ export default function PageContractorPricingIntake() {
   const proposalContext = useProposalContext(proposalToken);
   const [proposalApplied, setProposalApplied] = useState(false);
   const sessionKey = useMemo(getSessionKey, []);
-  const draftKey = `unpro_pricing_intake_draft:${auditId ?? sessionKey}`;
+  const draftKey = `unpro_pricing_intake_draft:${proposalToken ? `proposal:${proposalToken}` : auditId ?? sessionKey}`;
 
   const [booting, setBooting] = useState<boolean>(Boolean(auditId && auditToken));
   const [audit, setAudit] = useState<AuditContext | null>(null);
@@ -969,7 +969,17 @@ export default function PageContractorPricingIntake() {
   const isLast = safeStep === total - 1;
 
   const submit = async () => {
-    if (proposalToken && (!proposalContext.proposal || !proposalApplied)) return;
+    // A 350 $ activation proposal is not a personalized-plan quote. Never send
+    // its bearer token to compute-pricing-quote (the server correctly rejects it).
+    if (proposalToken && (proposalContext.loading || !proposalContext.proposal)) {
+      toast.error(proposalContext.error ?? "Nous vérifions votre lien de proposition. Réessayez dans un instant.");
+      return;
+    }
+    const isPersonalizedProposal = proposalContext.proposal?.offer_type === "personnalise";
+    if (isPersonalizedProposal && !proposalApplied) {
+      toast.error("Confirmez d’abord les informations de votre proposition personnalisée.");
+      return;
+    }
     const cap = declaredCapacity(data as GoalFields);
     if (!isQualificationReady(data as QD & GoalFields) || !cap) {
       toast.error("Complétez vos objectifs, mandats, territoires et capacité avant le plan.");
@@ -977,7 +987,10 @@ export default function PageContractorPricingIntake() {
     }
     const hasMoney = Boolean((data as GoalFields).goal_amount && (data as GoalFields).goal_amount! > 0);
     const calc = hasMoney ? objectiveToPayload(data) : null;
-    if (hasMoney && !calc) return;
+    if (hasMoney && !calc) {
+      toast.error("Confirmez votre objectif financier et votre capacité avant de calculer le forfait.");
+      return;
+    }
     const Q = (data as QD).qualification ?? {};
     const qualification = toQuoteContext(Q, cap);
     const { qualification: _q, ...base } = data as QD & Partial<PricingIntakeInput>;
@@ -1014,7 +1027,7 @@ export default function PageContractorPricingIntake() {
       },
     });
     try {
-      const quote = await computePricingQuote({ ...payload, ...(proposalToken ? { affiliate_proposal_token: proposalToken } : {}) } as PricingIntakeInput);
+      const quote = await computePricingQuote({ ...payload, ...(isPersonalizedProposal && proposalToken ? { affiliate_proposal_token: proposalToken } : {}) } as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
         city: payload.city ?? null,
@@ -1025,6 +1038,12 @@ export default function PageContractorPricingIntake() {
         const value = searchParams.get(key);
         if (value) carry.set(key, value);
       }
+      if (proposalContext.proposal?.offer_type === "activation_350") {
+        // The 350 $ token is for attribution/activation only. The personalized
+        // quote is independent; preserve the verified affiliate referral code.
+        carry.delete("proposal");
+        if (proposalContext.proposal.ref) carry.set("ref", proposalContext.proposal.ref);
+      }
       navigate(`/entrepreneur/plan-personnalise/${quote.id}${carry.size ? `?${carry}` : ""}`);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Impossible de calculer votre forfait.");
@@ -1034,7 +1053,16 @@ export default function PageContractorPricingIntake() {
 
   const next = () => {
     if (!current.isValid(data)) {
-      toast.error("Complétez les champs pour continuer.");
+      const missing: Record<string, string> = {
+        profile: "Confirmez le nom de l’entreprise, le métier et la ville desservie.",
+        work: "Précisez les types de travaux que vous recherchez ou refusez.",
+        territories: "Confirmez les territoires desservis et les exclusions.",
+        priorities: "Choisissez au moins une priorité pour votre entreprise.",
+        objective: "Confirmez les valeurs nécessaires au calcul de votre objectif.",
+        capacity: "Indiquez combien de rendez-vous vous pouvez recevoir.",
+        summary: "Complétez les informations manquantes dans le résumé.",
+      };
+      toast.error(missing[current.key] ?? "Complétez les champs pour continuer.");
       return;
     }
     if (isLast) void submit();
@@ -1068,7 +1096,8 @@ export default function PageContractorPricingIntake() {
         {proposalToken && <section className="mb-5 rounded-xl border border-border bg-card p-4 text-foreground space-y-2">
           {proposalContext.loading && <p role="status">Lecture de votre proposition…</p>}
           {proposalContext.error && <p role="alert" className="text-destructive">{proposalContext.error}</p>}
-          {proposalContext.proposal && <><p className="font-semibold">Proposition pour {proposalContext.proposal.company_name}</p><p className="text-sm">Objectifs déclarés par votre contact UNPRO, à confirmer. Le prix et les droits seront calculés par le serveur.</p><p className="text-sm">{proposalContext.proposal.inputs.target_monthly_appointments} RDV / mois · capacité {proposalContext.proposal.inputs.monthly_capacity} / mois · panier {proposalContext.proposal.inputs.average_project_value} $ HT · conversion {Number(proposalContext.proposal.inputs.close_rate_estimate ?? 0) * 100} %</p><Button className="h-auto max-w-full whitespace-normal" disabled={proposalApplied} onClick={() => { setData(d => ({ ...d, ...proposalContext.proposal?.inputs })); setManualEntry(true); setBusinessConfirmed(true); setProposalApplied(true); }}> {proposalApplied ? "Informations reprises — modifiables ci-dessous" : "Confirmer et reprendre ces informations"}</Button></>}
+          {proposalContext.proposal?.offer_type === "activation_350" && <p className="text-sm" data-testid="activation-350-upgrade-context">Votre lien d’activation à 350 $ est reconnu. Le forfait de rendez-vous exclusifs est une proposition distincte, calculée selon les informations que vous confirmez ci-dessous. Aucune activation supplémentaire n’est imposée ici.</p>}
+          {proposalContext.proposal?.offer_type === "personnalise" && <><p className="font-semibold">Proposition pour {proposalContext.proposal.company_name}</p><p className="text-sm">Objectifs déclarés par votre contact UNPRO, à confirmer. Le prix et les droits seront calculés par le serveur.</p><p className="text-sm">{proposalContext.proposal.inputs.target_monthly_appointments} RDV / mois · capacité {proposalContext.proposal.inputs.monthly_capacity} / mois · panier {proposalContext.proposal.inputs.average_project_value} $ HT · conversion {Number(proposalContext.proposal.inputs.close_rate_estimate ?? 0) * 100} %</p><Button className="h-auto max-w-full whitespace-normal" disabled={proposalApplied} onClick={() => { setData(d => ({ ...d, ...proposalContext.proposal?.inputs })); setManualEntry(true); setBusinessConfirmed(true); setProposalApplied(true); }}> {proposalApplied ? "Informations reprises — modifiables ci-dessous" : "Confirmer et reprendre ces informations"}</Button></>}
         </section>}
         {/* Fiche rattachée / entreprise analysée — jamais de détour vers l'audit. */}
         {(linked || auditValid) && (
@@ -1142,7 +1171,7 @@ export default function PageContractorPricingIntake() {
           )}
           <button
             onClick={next}
-            disabled={submitting || !current.isValid(data)}
+            disabled={submitting || Boolean(proposalToken && proposalContext.loading)}
             data-testid="intake-next"
             className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
           >
