@@ -9,6 +9,7 @@ import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import { useAuth } from "@/hooks/useAuth";
 import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { ArrowRight, Check, FileUp, Loader2, ShieldCheck } from "lucide-react";
@@ -100,6 +101,7 @@ export default function PageRachatLeads() {
 
   const login = () => {
     void logFunnelEvent({ event_type: "registration_started", step: "rachat_leads" });
+    saveAuthIntent({ returnPath: "/rachat-leads-entrepreneurs", action: "repurchase_lead", roleHint: "contractor" });
     navigate(contractorLoginPath("/rachat-leads-entrepreneurs") + "?method=phone");
   };
 
