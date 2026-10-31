@@ -100,7 +100,7 @@ export default function PageRachatLeads() {
 
   const login = () => {
     void logFunnelEvent({ event_type: "registration_started", step: "rachat_leads" });
-    navigate(contractorLoginPath("/rachat-leads-entrepreneurs"));
+    navigate(contractorLoginPath("/rachat-leads-entrepreneurs") + "?method=phone");
   };
 
   const chooseFiles = (selected: FileList | null) => {
@@ -365,7 +365,7 @@ export default function PageRachatLeads() {
                       <div className="flex flex-wrap justify-between gap-2"><strong className="text-white">{item.service_requested} — {item.client_city}</strong>
                         <span className="text-sky-200">{item.status === "pending" ? "À vérifier" : item.status === "approved" ? "Approuvée" : item.status === "rejected" ? "Refusée" : "Retirée"}</span></div>
                       <p className="mt-1 text-slate-300">Dossier {item.id.slice(0, 8).toUpperCase()} · {item.client_first_name}</p>
-                      {item.status === "approved" && item.approved_credit_cents > 0 && <p className="mt-2 font-semibold text-emerald-300">Crédit confirmé : {money(item.approved_credit_cents)}</p>}
+                      {item.status === "approved" && item.approved_credit_cents > 0 && <p className="mt-2 font-semibold text-emerald-300">Crédit validé : {money(item.approved_credit_cents)}</p>}
                     </div>
                   ))}</div>}
               </div>
