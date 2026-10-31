@@ -28,6 +28,15 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(links).toContain("more: `/entrepreneur/devis-personnalise?");
     expect(page).toContain("reviewOpen && <Entry350FastCheckout query={sp}");
   });
+  it("reveals the $350 payment review after first and repeated activation CTA clicks", () => {
+    expect(page).toContain('const reviewOpen = sp.get("activate") === "1";');
+    expect(page).toContain('if (!reviewOpen) return;');
+    expect(page).toContain('}, [reviewOpen]);');
+    expect(page).toContain('if (reviewOpen) {');
+    expect(page).toContain('document.getElementById("activation-350-review")?.scrollIntoView({ block: "start", behavior: "auto" });');
+    expect(fast).toContain('id="activation-350-review"');
+  });
+
   it("preserves declared business identity through auth, never calculates monthly capacity", () => {
     expect(fast).toContain("getClaraQualification().business_name");
     expect(fast).toContain("contractorLoginPath(");
