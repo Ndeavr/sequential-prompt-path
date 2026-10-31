@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, ChevronDown, Crown, House, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
+import ManagerPlans from "@/components/pricing/ManagerPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeownerPlan } from "@/features/planSystem/useHomeownerPlan";
 
@@ -179,6 +180,8 @@ export default function HomeownerPlans() {
           />
         ))}
       </div>
+      <div className="h-7" aria-hidden="true" />
+      <ManagerPlans authenticated={Boolean(session)} />
       <p className="mx-auto mt-3 max-w-5xl text-center text-[11px] text-muted-foreground">
         * Utilisation raisonnable. Toutes les inclusions sont consultables dans chaque forfait.
       </p>
