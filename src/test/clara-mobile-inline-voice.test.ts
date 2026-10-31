@@ -43,8 +43,8 @@ describe("ONE CLARA — carte mobile et voix intégrée", () => {
   });
 
   it("expose un seul déclencheur média CameraPlus qui ouvre le menu sans lancer la caméra", () => {
-    expect(box).toContain("import { ArrowUp, Camera, CameraPlus,");
-    expect(box).toContain('<CameraPlus className="h-5 w-5" />');
+    expect(box).toContain('import { CameraPlusIcon } from "@/components/icons/CameraPlusIcon";');
+    expect(box).toContain('<CameraPlusIcon className="h-5 w-5" />');
     // Le bouton caméra autonome a disparu du composer : seule l'input cachée garde cette étiquette.
     expect(box.split("aria-label={copy.camera}").length - 1).toBe(1);
     expect(box).not.toContain("onClick={() => cameraRef.current?.click()}");

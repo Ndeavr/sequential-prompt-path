@@ -11,7 +11,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type
 import { useLocation, useNavigate } from "react-router-dom";
 import { HEAT_PUMP_CAMPAIGN, readHomeCampaign, homeCampaignAttribution, homeCampaignContext, hasHeatPumpCampaign } from "@/services/clara/claraHomeCampaign";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, CameraPlus, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { ArrowUp, Camera, EllipsisVertical, FileText, History, Home, Image as ImageIcon, Mic, RotateCcw, SquarePen, Video, X } from "lucide-react";
+import { CameraPlusIcon } from "@/components/icons/CameraPlusIcon";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -2306,7 +2307,7 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
         onClick={() => setOpen((value) => !value)}
         className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
       >
-        <CameraPlus className="h-5 w-5" />
+        <CameraPlusIcon className="h-5 w-5" />
       </PromptInputButton>
       {open && (
         <div
