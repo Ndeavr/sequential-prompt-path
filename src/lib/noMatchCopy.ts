@@ -70,17 +70,17 @@ export interface NoMatchBullet {
 export function buildNoMatchBullets(opts: { isAuthed: boolean; hasEstimate: boolean }): NoMatchBullet[] {
   if (opts.isAuthed) {
     return [
-      { text: "Activer la recherche prioritaire élargie par l'IA" },
-      { text: "Être averti dès qu'un professionnel compatible devient disponible" },
-      { text: "Recevoir des recommandations affinées en continu" },
+      { text: "Confirmer votre projet et votre accord pour un suivi" },
+      { text: "Préciser le service et le territoire recherchés" },
+      { text: "Être informé si un professionnel approprié est trouvé" },
       { text: opts.hasEstimate ? "Conserver votre estimation et votre projet" : "Suivre vos demandes depuis votre espace" },
     ];
   }
   return [
     { text: "Sauvegarder votre projet et votre estimation" },
-    { text: "Recevoir des recommandations prioritaires" },
-    { text: "Être averti automatiquement lorsqu'un professionnel compatible devient disponible" },
-    { text: "Permettre à l'IA UNPRO d'élargir intelligemment la recherche" },
+    { text: "Confirmer votre accord pour un suivi" },
+    { text: "Être informé si un professionnel approprié est trouvé" },
+    { text: "Préciser le service et le territoire recherchés" },
   ];
 }
 
