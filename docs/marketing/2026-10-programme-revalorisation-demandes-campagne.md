@@ -25,6 +25,30 @@ Messages à garder constants :
 
 Les **conditions du programme**, distinctes des créations publicitaires, expliquent la nature non monétaire du crédit, la méthode de détermination de valeur, les consentements, les validations, les modalités d'utilisation et la disponibilité. Les conditions doivent être faciles à consulter **avant la participation**, pas dissimulées. Ne pas rendre la promesse publique tant que la mécanique de crédits, l'attribution et la rédemption ne sont pas fonctionnelles, financées et vérifiées.
 
+## Étude de cas — quatre raisons de refuser le même lead (exemple d'un entrepreneur d'isolation)
+**Situation — demande reçue :** propriétaire sur la **Rive-Sud**; isolation d'entretoit en **cellulose**; veut également **calfeutrage** et **polyuréthane sur les solives de rive**.
+**Entreprise sollicitée :** dessert **la Rive-Nord seulement**, installe de la **fibre de verre soufflée** et **n'offre ni calfeutrage ni polyuréthane**.
+
+| Critère indispensable | Client | Entreprise sollicitée | Match |
+| --- | --- | --- | --- |
+| Territoire | Rive-Sud | Rive-Nord seulement | Incompatible |
+| Matériau isolation entretoit | Cellulose | Fibre de verre soufflée | Incompatible |
+| Service additionnel | Calfeutrage | Non offert | Incompatible |
+| Service additionnel | Polyuréthane pour solives de rive | Non offert | Incompatible |
+
+**Accroche pour la campagne :**
+« Le client est sur la Rive-Sud. Il veut de la cellulose, du calfeutrage et du polyuréthane pour ses solives de rive. Vous êtes sur la Rive-Nord, vous soufflez de la fibre de verre et vous ne faites ni calfeutrage ni polyuréthane. Vous avez payé pour ce lead. **Pour vous, c'est non. Pour le bon entrepreneur, c'est peut-être exactement le projet recherché. UNPRO rachète vos leads!** »
+
+**Important pour le moteur de matching :**
+1. Conserver **toutes** les exigences demandées du propriétaire (pas uniquement « isolation entretoit »). Territoire Rive-Sud, isolant cellulose, calfeutrage et polyuréthane sur solives de rive sont quatre contraintes distinctes.
+2. Ne pas proposer par défaut de remplacer la cellulose par de la fibre de verre. La substitution n'est envisageable qu'après une question explicite au propriétaire, avec son accord.
+3. Rechercher en priorité un professionnel admissible desservant la Rive-Sud et capable de répondre à l'ensemble des travaux. Si aucun n'est disponible, Clara demande **avant tout aiguillage** si le propriétaire accepte plusieurs spécialistes; ne jamais fractionner la demande ou partager les coordonnées entre plusieurs entreprises sans consentement.
+4. Si aucun partenaire compatible n'est vérifié ou disponible, afficher honnêtement l'indisponibilité et la possibilité d'un suivi consenti; ne fabriquer ni nom de professionnel, ni vérification RBQ, ni rendez-vous.
+5. Côté entreprise apporteuse, la demande peut être transmise après autorisation du propriétaire. **Aucun crédit sans abonnement payé, actif et valide au service Rendez-vous UNPRO**. La valeur du crédit est fonction de la preuve d'achat et des conditions; ne pas inventer de prix dans ce cas.
+6. Formulaire actuel : capture la ville, le service principal, les besoins détaillés en texte, la raison principale et les pièces jointes; pour préserver les quatre causes, conseiller explicitement de détailler chaque matériau et chaque service dans la description. Évolution ultérieure possible : tableau structuré de sous-services/différents refus, sans ralentir le MVP.
+
+**Texte d'illustration sur la page SEO** : « Quatre incompatibilités. Un seul lead payé. Mais un vrai projet pour le bon entrepreneur. » Cette étude de cas est illustrative, pas un rendez-vous réel enregistré ni un crédit délivré.
+
 ## 1. MESSAGE MAÎTRE
 
 **UNPRO rachète vos leads!**
