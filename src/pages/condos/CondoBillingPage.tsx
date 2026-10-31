@@ -23,7 +23,8 @@ const CondoBillingPage = () => {
   const handleCheckout = async (priceId: string) => {
     try {
       setLoadingTier(priceId);
-      await startCheckout(priceId, syndicateId);
+      if (!syndicateId) throw new Error("Enregistrez d'abord votre immeuble.");
+      await startCheckout(syndicateId);
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de la création du paiement");
     } finally {

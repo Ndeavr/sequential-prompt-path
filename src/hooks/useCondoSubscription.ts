@@ -23,14 +23,16 @@ export const useCondoSubscription = () => {
     refetchInterval: 60_000,
   });
 
-  const startCheckout = async (priceId: string, syndicateId?: string) => {
-    const { data, error } = await supabase.functions.invoke("create-condo-checkout", {
-      body: { priceId, syndicateId },
-    });
-    if (error) throw error;
-    if (data?.url) {
-      redirectToCheckout(data.url);
+  /** Server maps the tier from the syndicate's door count; no price is sent by the client. */
+  const startCheckout = async (syndicateId: string) => {
+    const { data, error } = await supabase.functions.invoke("create-condo-checkout", { body: { syndicateId } });
+    if (error) {
+      let msg = "Le paiement n'a pas pu être préparé. Réessayez.";
+      try { const b = await (error as any).context?.json?.(); if (b?.message) msg = b.message; } catch { /* ignore */ }
+      throw new Error(msg);
     }
+    if (!data?.url) throw new Error("Le paiement n'a pas pu être préparé. Réessayez.");
+    redirectToCheckout(data.url);
   };
 
   return {

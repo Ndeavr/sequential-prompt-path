@@ -6,6 +6,7 @@ import PanelPlanComparisonCondo from "./PanelPlanComparisonCondo";
 import PanelAlexClosingConversion from "./PanelAlexClosingConversion";
 import { CONDO_PRICING_TIERS, getTierForUnits } from "@/config/condoPricing";
 import { useCondoSubscription } from "@/hooks/useCondoSubscription";
+import { useSyndicates } from "@/hooks/useSyndicate";
 
 interface Props {
   score: number;
@@ -23,11 +24,14 @@ export default function PanelCondoPaywallSmart({
   onUnlock,
 }: Props) {
   const { startCheckout } = useCondoSubscription();
+  const { data: syndicates } = useSyndicates();
+  const syndicateId = syndicates?.[0]?.id;
   const tier = getTierForUnits(unitCount);
 
   const handleCheckout = async () => {
     try {
-      await startCheckout(tier.priceId);
+      if (!syndicateId) throw new Error("Enregistrez d'abord votre immeuble.");
+      await startCheckout(syndicateId);
     } catch {
       // fallback
       onUnlock();
