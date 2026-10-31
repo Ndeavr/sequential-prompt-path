@@ -32,8 +32,8 @@ describe("Clara — transition entrepreneur", () => {
 });
 describe("Clara — choix entrepreneur pilotés par l'audience", () => {
   it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
-    // Propriétaire par défaut, sauf entrée entrepreneur forcée ou reprise de la même conversation.
-    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
+    // Campagne thermopompe explicitement propriétaire; sinon, entrepreneur forcé ou reprise du même fil.
+    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => heatPumpCampaign \? "homeowner" : forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
     expect(box).toContain("Vérifier mon score IA");
     expect(box).toContain("Obtenir plus de contrats");
     expect(box).toContain("Compléter mon profil");
