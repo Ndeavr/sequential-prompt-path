@@ -27,5 +27,5 @@ export function loadSelection(): ManagerSelection | null {
 }
 
 export function onboardingPath(s: ManagerSelection) {
-  return `/condos/onboarding?type=${s.type}&doors=${s.doors}`;
+  return s.type === "portfolio" ? `/gestionnaires/portefeuille?doors=${s.doors}` : `/condos/onboarding?type=condo&doors=${s.doors}`;
 }

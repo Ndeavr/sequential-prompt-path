@@ -40,6 +40,52 @@ serve(async (req) => {
 
     logStep("Event received", { type: event.type, id: event.id });
 
+    // ── Portfolio (multi-immeubles) — signed events only, owner-bound via server metadata ──
+    {
+      const obj: any = event.data.object;
+      const subMeta = obj?.metadata ?? {};
+      const isPortfolio = subMeta.product_type === "portfolio_premium"
+        || obj?.subscription_details?.metadata?.product_type === "portfolio_premium"
+        || obj?.parent?.subscription_details?.metadata?.product_type === "portfolio_premium";
+      if (isPortfolio) {
+        const { error: dupErr } = await supabase.from("portfolio_subscription_events").insert({
+          stripe_event_id: event.id, event_type: event.type,
+          portfolio_id: subMeta.portfolio_id ?? obj?.subscription_details?.metadata?.portfolio_id ?? null,
+          detail: { object_id: obj?.id ?? null, status: obj?.status ?? obj?.payment_status ?? null },
+        });
+        if (dupErr) {
+          logStep("Duplicate or unlogged portfolio event", { id: event.id });
+          return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+        }
+        const now = new Date().toISOString();
+        if (event.type === "checkout.session.completed") {
+          const pid = subMeta.portfolio_id; const uid = subMeta.supabase_user_id;
+          const subId = typeof obj.subscription === "string" ? obj.subscription : obj.subscription?.id;
+          if (obj.payment_status === "paid" && pid && uid && subId) {
+            await supabase.from("portfolio_subscriptions").update({
+              status: "active", stripe_subscription_id: subId, last_event_id: event.id, updated_at: now,
+            }).eq("portfolio_id", pid).eq("user_id", uid);
+          } else if (pid) {
+            await supabase.from("portfolio_subscriptions").update({ status: "pending", last_event_id: event.id, updated_at: now }).eq("portfolio_id", pid);
+          }
+        } else if (event.type === "checkout.session.expired" && subMeta.portfolio_id) {
+          await supabase.from("portfolio_subscriptions").update({ status: "cancelled", last_event_id: event.id, updated_at: now })
+            .eq("portfolio_id", subMeta.portfolio_id).eq("status", "pending");
+        } else if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+          const map: Record<string, string> = { active: "active", past_due: "past_due", unpaid: "past_due", canceled: "cancelled", incomplete_expired: "failed" };
+          const st = event.type === "customer.subscription.deleted" ? "cancelled" : (map[obj.status] ?? null);
+          if (st) await supabase.from("portfolio_subscriptions").update({
+            status: st, last_event_id: event.id, updated_at: now,
+            current_period_end: obj.current_period_end ? new Date(obj.current_period_end * 1000).toISOString() : null,
+          }).eq("stripe_subscription_id", obj.id);
+        } else if (event.type === "invoice.payment_failed") {
+          const subId = typeof obj.subscription === "string" ? obj.subscription : obj.parent?.subscription_details?.subscription;
+          if (subId) await supabase.from("portfolio_subscriptions").update({ status: "past_due", last_event_id: event.id, updated_at: now }).eq("stripe_subscription_id", subId);
+        }
+        return new Response(JSON.stringify({ received: true }), { status: 200 });
+      }
+    }
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;

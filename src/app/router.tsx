@@ -331,6 +331,7 @@ const OnboardingFlow = lazyWithRetry(() => import("@/pages/OnboardingFlow"));
 const PricingPage = lazyWithRetry(() => import("@/pages/PricingPage"));
 const PricingHomeownersPage = lazyWithRetry(() => import("@/pages/PricingHomeownersPage"));
 const ManagerPricingPage = lazyWithRetry(() => import("@/pages/pricing/ManagerPricingPage"));
+const PagePortfolioSubscription = lazyWithRetry(() => import("@/pages/gestionnaires/PagePortfolioSubscription"));
 const PageGestionnairesImmobiliers = lazyWithRetry(() => import("@/pages/PageGestionnairesImmobiliers"));
 const PageUpgradeHomeowner = lazyWithRetry(() => import("@/pages/upgrade/PageUpgradeHomeowner"));
 const PageHomeownerWelcome = lazyWithRetry(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
@@ -1216,6 +1217,7 @@ export const AppRouter = () => (
         <Route path="/tarifs" element={<PricingHomeownersPage />} />
         <Route path="/tarifs/proprietaires" element={<PricingHomeownersPage />} />
         <Route path="/tarifs/gestionnaires" element={<ManagerPricingPage />} />
+        <Route path="/gestionnaires/portefeuille" element={<ProtectedRoute><PagePortfolioSubscription /></ProtectedRoute>} />
         <Route path="/gestionnaires-immobiliers" element={<PageGestionnairesImmobiliers />} />
         <Route path="/tarifs/entrepreneurs" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />

@@ -71853,18 +71853,21 @@ export type Database = {
       portfolio_properties: {
         Row: {
           added_at: string
+          door_count: number | null
           id: string
           portfolio_id: string
           property_id: string
         }
         Insert: {
           added_at?: string
+          door_count?: number | null
           id?: string
           portfolio_id: string
           property_id: string
         }
         Update: {
           added_at?: string
+          door_count?: number | null
           id?: string
           portfolio_id?: string
           property_id?: string
@@ -71893,6 +71896,89 @@ export type Database = {
           },
         ]
       }
+      portfolio_subscription_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          event_type: string
+          id: string
+          portfolio_id: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event_type: string
+          id?: string
+          portfolio_id?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          id?: string
+          portfolio_id?: string | null
+          stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          doors: number
+          id: string
+          last_event_id: string | null
+          portfolio_id: string
+          price_id: string
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          doors: number
+          id?: string
+          last_event_id?: string | null
+          portfolio_id: string
+          price_id: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          doors?: number
+          id?: string
+          last_event_id?: string | null
+          portfolio_id?: string
+          price_id?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_subscriptions_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: true
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolios: {
         Row: {
           created_at: string
@@ -71901,6 +71987,7 @@ export type Database = {
           max_properties: number
           name: string
           plan_type: string
+          total_doors: number | null
           updated_at: string
           user_id: string
         }
@@ -71911,6 +71998,7 @@ export type Database = {
           max_properties?: number
           name: string
           plan_type?: string
+          total_doors?: number | null
           updated_at?: string
           user_id: string
         }
@@ -71921,6 +72009,7 @@ export type Database = {
           max_properties?: number
           name?: string
           plan_type?: string
+          total_doors?: number | null
           updated_at?: string
           user_id?: string
         }
