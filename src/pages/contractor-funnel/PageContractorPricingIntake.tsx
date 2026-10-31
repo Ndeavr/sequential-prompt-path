@@ -934,13 +934,13 @@ export default function PageContractorPricingIntake() {
       const Q = q(d);
       const cap = declaredCapacity(d as GoalFields);
       const rows: Array<[string, string, string]> = [
-        ["Priorités", [...(Q.priorities ?? []), ...(Q.other_goal?.trim() ? [Q.other_goal.trim()] : [])].join(", "), "priorities"],
         ["Travaux recherchés", splitList(Q.preferred_work).join(", "), "work"],
         ["Travaux exclus", Q.no_excluded_work ? "Aucune exclusion" : splitList(Q.excluded_work).join(", "), "work"],
         ["Territoires", splitList(Q.service_areas).join(", "), "territories"],
         ["Secteurs exclus", Q.no_excluded_areas ? "Aucun secteur exclu" : splitList(Q.excluded_areas).join(", "), "territories"],
-        ["Capacité", cap ? (cap.min === cap.max ? `${cap.min} rendez-vous le mois prochain` : `${cap.min} à ${cap.max} rendez-vous le mois prochain`) : "À préciser", "capacity"],
+        ["Priorités", [...(Q.priorities ?? []), ...(Q.other_goal?.trim() ? [Q.other_goal.trim()] : [])].join(", "), "priorities"],
         ...((d as GoalFields).goal_amount ? [["Objectif financier", formatQuebecNumber((d as GoalFields).goal_amount!, "$"), "objective"] as [string, string, string]] : []),
+        ["Capacité", cap ? (cap.min === cap.max ? `${cap.min} rendez-vous le mois prochain` : `${cap.min} à ${cap.max} rendez-vous le mois prochain`) : "À préciser", "capacity"],
       ];
       return (
         <dl className="space-y-3 text-sm" data-testid="intake-summary">
@@ -956,7 +956,7 @@ export default function PageContractorPricingIntake() {
     },
   };
 
-  const steps: Step[] = [profileStep, prioritiesStep, workStep, territoryStep, capacityStep, objectiveStep, summaryStep];
+  const steps: Step[] = [profileStep, workStep, territoryStep, prioritiesStep, objectiveStep, capacityStep, summaryStep];
   const stepsRef = steps;
 
   const total = steps.length;
