@@ -24,6 +24,7 @@ const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVarian
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 const PageVisibiliteIA = lazyWithRetry(() => import("@/pages/marketing/PageVisibiliteIA"));
+const PageRachatLeads = lazyWithRetry(() => import("@/pages/marketing/PageRachatLeads"));
 const AdminVisibiliteIALeads = lazyWithRetry(() => import("@/pages/admin/AdminVisibiliteIALeads"));
 import { LEGACY_REDIRECTS } from "@/config/routeRegistry";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
@@ -1009,6 +1010,7 @@ export const AppRouter = () => (
         <Route path="/ai" element={<Suspense fallback={<LazyFallback />}><PageAICrawlerLanding /></Suspense>} />
         <Route path="/pourquoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageWhyUnpro /></Suspense>} />
         <Route path="/visibilite-ia-entrepreneurs" element={<Suspense fallback={<LazyFallback />}><PageVisibiliteIA /></Suspense>} />
+        <Route path="/rachat-leads-entrepreneurs" element={<Suspense fallback={<LazyFallback />}><PageRachatLeads /></Suspense>} />
         <Route path="/admin/demandes-visibilite-ia" element={<Suspense fallback={<LazyFallback />}><AdminVisibiliteIALeads /></Suspense>} />
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
         <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
