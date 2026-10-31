@@ -503,7 +503,8 @@ Deno.serve(async (req) => {
             let isQaAccount = false;
             if (event.livemode !== true && ownerRow?.user_id) {
               const { data: u } = await supabase.auth.admin.getUserById(ownerRow.user_id);
-              const md = (u?.user?.user_metadata ?? {}) as Record<string, unknown>;
+              // Signed TEST events may provision only accounts with trusted, admin-set QA identity.
+              const md = (u?.user?.app_metadata ?? {}) as Record<string, unknown>;
               isQaAccount = /^e2e\+[^@]+@unpro\.ca$/i.test(u?.user?.email ?? "") || md.e2e_test === true || md.e2e_test === "true";
             }
             const decision = entryActivationDecision({
