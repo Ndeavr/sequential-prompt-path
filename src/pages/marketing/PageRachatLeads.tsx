@@ -69,19 +69,24 @@ export default function PageRachatLeads() {
   });
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefFeedback, setPrefFeedback] = useState("");
+  // Display-only status; the server trigger is authoritative for credits.
+  const [hasValidBookingSubscription, setHasValidBookingSubscription] = useState<boolean | null>(null);
   const canSubmit = isAuthenticated && (role === "contractor" || role === "admin");
 
   const change = (name: keyof Draft, value: string) => setDraft(old => ({ ...old, [name]: value }));
   const refresh = useCallback(async () => {
     if (!user?.id || !canSubmit) return;
-    const [entries, preferences] = await Promise.all([
+    const [entries, preferences, subscription] = await Promise.all([
       supabase.from("lead_repurchase_submissions" as any)
         .select("id,client_first_name,service_requested,client_city,status,approved_credit_cents,created_at")
         .eq("owner_user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("lead_repurchase_offer_preferences" as any)
         .select("company_name,services,territory,preferred_hours,sms_opt_in,email_opt_in")
         .eq("owner_user_id", user.id).maybeSingle(),
+      supabase.rpc("lead_repurchase_my_booking_subscription_valid" as any),
     ]);
+    // Unknown/missing migration is NOT considered an active subscription.
+    setHasValidBookingSubscription(subscription.error ? null : subscription.data === true);
     if (!entries.error) setSubmissions((entries.data ?? []) as unknown as Entry[]);
     if (preferences.data) {
       const p = preferences.data as unknown as typeof prefs & { company_name: string };
@@ -270,6 +275,20 @@ export default function PageRachatLeads() {
           <section id="echanger" className="mt-14 scroll-mt-8 rounded-3xl border border-white/15 bg-[#111c30] p-5 shadow-2xl md:p-8">
             <h2 className="text-2xl font-bold text-white">Échanger un lead</h2>
             <p className="mt-2 text-sm text-slate-300">Créez votre compte entrepreneur, confirmez votre téléphone avec un code et transmettez votre demande.</p>
+            <p className="mt-3 text-sm font-medium text-sky-100">
+              Les crédits sont réservés aux entrepreneurs ayant un abonnement valide au service Rendez-vous UNPRO.
+            </p>
+            {canSubmit && hasValidBookingSubscription !== true && (
+              <div role="status" className="mt-4 rounded-xl border border-amber-300/25 bg-amber-200/10 p-4 text-sm text-amber-100">
+                {hasValidBookingSubscription === false
+                  ? "Aucun abonnement Rendez-vous UNPRO valide n'est confirmé pour votre entreprise."
+                  : "Impossible de confirmer votre abonnement Rendez-vous UNPRO pour le moment."}
+                {" "}Vous pouvez déposer une demande, mais aucun crédit ne pourra être accordé ou utilisé tant que votre abonnement admissible n'est pas valide.
+                <a className="mt-2 block font-semibold text-sky-200 underline" href="/entrepreneur/devis-personnalise">
+                  Découvrir les forfaits de rendez-vous UNPRO
+                </a>
+              </div>
+            )}
             {isLoading ? <p className="mt-5 flex items-center gap-2 text-slate-200"><Loader2 className="animate-spin" size={18}/> Vérification de votre compte…</p> :
               !isAuthenticated ? (
                 <button type="button" onClick={login} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#73c2ff] px-4 py-4 font-bold text-slate-950 md:w-auto">
@@ -367,7 +386,16 @@ export default function PageRachatLeads() {
                       <div className="flex flex-wrap justify-between gap-2"><strong className="text-white">{item.service_requested} — {item.client_city}</strong>
                         <span className="text-sky-200">{item.status === "pending" ? "À vérifier" : item.status === "approved" ? "Approuvée" : item.status === "rejected" ? "Refusée" : "Retirée"}</span></div>
                       <p className="mt-1 text-slate-300">Dossier {item.id.slice(0, 8).toUpperCase()} · {item.client_first_name}</p>
-                      {item.status === "approved" && item.approved_credit_cents > 0 && <p className="mt-2 font-semibold text-emerald-300">Crédit validé : {money(item.approved_credit_cents)}</p>}
+                      {item.status === "approved" && item.approved_credit_cents > 0 && (
+                        <p className="mt-2 font-semibold text-emerald-300">
+                          Crédit validé : {money(item.approved_credit_cents)}
+                          {hasValidBookingSubscription !== true && (
+                            <span className="block text-xs font-normal text-amber-100">
+                              Utilisation suspendue : abonnement Rendez-vous UNPRO valide requis.
+                            </span>
+                          )}
+                        </p>
+                      )}
                     </div>
                   ))}</div>}
               </div>
@@ -408,6 +436,7 @@ export default function PageRachatLeads() {
                 <p>Le rachat s'effectue sous forme de crédits de services UNPRO et non de paiement en argent. Chaque demande est examinée avant acceptation et attribution.</p>
                 <p>Pour une demande achetée, le crédit correspond à sa valeur d'acquisition prouvée en dollars canadiens, hors taxes récupérables. Les coûts groupés et les demandes sans coût documenté nécessitent une méthode ou un barème accepté avant attribution. Aucun crédit n'est émis automatiquement au dépôt.</p>
                 <p>La transmission de coordonnées et de pièces exige l'autorisation valable du propriétaire. Sans cette autorisation, ne transmettez pas les données : dirigez plutôt le propriétaire vers Clara pour qu'il s'inscrive lui-même.</p>
+                <p>Pour bénéficier des crédits, l'entreprise doit être titulaire d'un abonnement payant actif et valide au service de rendez-vous UNPRO, incluant un droit aux rendez-vous. L'inscription seule, l'activation du profil à 350 $ et un abonnement Présence IA sans rendez-vous ne suffisent pas. Une demande peut être soumise avant abonnement, mais les crédits ne sont accordés qu'après validation de ce droit. Si l'abonnement expire, est résilié ou remboursé, l'utilisation des crédits est suspendue jusqu'au rétablissement d'un abonnement admissible.</p>
                 <p>Les crédits n'offrent pas d'accès garanti à un rendez-vous; toute utilisation exige une offre réelle, qualifiée, compatible et disponible. Les crédits ne constituent pas un paiement Stripe et ne remplacent pas automatiquement l'activation UNPRO à 350 $ + taxes applicables.</p>
                 <p>Les doublons, les demandes fictives, les coûts invérifiables ou les dossiers sans consentement suffisant peuvent être refusés. La confidentialité des données, les modalités d'expiration, les litiges et les retraits font partie du règlement complet à approuver avant tout lancement du programme.</p>
               </div>
