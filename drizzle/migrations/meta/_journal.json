@@ -253,6 +253,13 @@
       "when": 1793466713783,
       "tag": "0035_condo_subscriptions_server_write_only",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793469251121,
+      "tag": "0036_revoke_subscription_extra_privileges",
+      "breakpoints": true
     }
   ]
 }

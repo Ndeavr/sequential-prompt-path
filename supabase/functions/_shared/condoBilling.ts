@@ -43,21 +43,30 @@ export async function handleCondoBillingEvent(supabase: any, stripe: any, event:
   const obj: any = event?.data?.object ?? {};
   const now = new Date().toISOString();
 
-  // Refund / dispute: resolve the subscription via the charge's invoice, then revoke.
+  // Refund / dispute: resolve the subscription via the charge's invoice (or invoice_payments for
+  // current API versions where charge.invoice is gone). Full refund / dispute revoke; partial = audit only.
   if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
-    const charge = event.type === "charge.dispute.created" && typeof obj.charge === "string"
-      ? await stripe.charges.retrieve(obj.charge).catch(() => null)
+    const chargeRef = event.type === "charge.dispute.created" ? obj.charge : null;
+    const charge = event.type === "charge.dispute.created"
+      ? (typeof chargeRef === "string" ? await stripe.charges.retrieve(chargeRef).catch(() => null) : chargeRef)
       : obj;
     const subId = charge ? await subscriptionIdForCharge(stripe, charge) : null;
     if (!subId) return false;
+    const { data: cRows } = await supabase.from("condo_subscriptions").select("id").eq("stripe_subscription_id", subId);
+    const { data: pRows } = await supabase.from("portfolio_subscriptions").select("id").eq("stripe_subscription_id", subId);
+    if ((cRows?.length ?? 0) + (pRows?.length ?? 0) === 0) return false;
+    if (event.type === "charge.refunded" && isPartialRefund(charge)) {
+      console.log("[condo-billing] partial refund audited, access kept", {
+        subId, event: event.id, amount: charge.amount, refunded: charge.amount_refunded,
+      });
+      return true;
+    }
     const reason = event.type === "charge.refunded" ? "refunded" : "disputed";
-    const { data: c } = await supabase.from("condo_subscriptions").update({ status: reason, plan_tier: "free" })
-      .eq("stripe_subscription_id", subId).select("id");
-    const { data: p } = await supabase.from("portfolio_subscriptions").update({ status: "cancelled", last_event_id: event.id, updated_at: now })
-      .eq("stripe_subscription_id", subId).select("id");
-    const hit = (c?.length ?? 0) + (p?.length ?? 0) > 0;
-    if (hit) console.log("[condo-billing] revoked", { subId, reason, event: event.id });
-    return hit;
+    await supabase.from("condo_subscriptions").update({ status: reason, plan_tier: "free" }).eq("stripe_subscription_id", subId);
+    await supabase.from("portfolio_subscriptions").update({ status: "cancelled", last_event_id: event.id, updated_at: now })
+      .eq("stripe_subscription_id", subId);
+    console.log("[condo-billing] revoked", { subId, reason, event: event.id });
+    return true;
   }
 
   const product = condoProductType(obj);
@@ -137,11 +146,50 @@ export async function handleCondoBillingEvent(supabase: any, stripe: any, event:
     const s = obj.subscription ?? obj.parent?.subscription_details?.subscription;
     const subId = typeof s === "string" ? s : s?.id;
     if (subId) {
-      await supabase.from("condo_subscriptions").update({ status: "past_due" }).eq("stripe_subscription_id", subId);
-      await supabase.from("portfolio_subscriptions").update({ status: "past_due", last_event_id: event.id, updated_at: now }).eq("stripe_subscription_id", subId);
+      // Only downgrade rows currently active; never touch refunded/disputed/cancelled rows.
+      await supabase.from("condo_subscriptions").update({ status: "past_due" }).eq("stripe_subscription_id", subId).eq("status", "active");
+      await supabase.from("portfolio_subscriptions").update({ status: "past_due", last_event_id: event.id, updated_at: now })
+        .eq("stripe_subscription_id", subId).eq("status", "active");
     }
     return true;
   }
 
+  if (event.type === "invoice.payment_succeeded" || event.type === "invoice.paid") {
+    const s = obj.subscription ?? obj.parent?.subscription_details?.subscription;
+    const subId = typeof s === "string" ? s : s?.id;
+    if (!subId || !obj.id) return true;
+    // Re-verify against Stripe: invoice really paid with money, subscription active, same product.
+    const inv = await stripe.invoices.retrieve(obj.id);
+    const sub = await stripe.subscriptions.retrieve(subId);
+    const okInvoice = inv?.status === "paid" && Number(inv?.amount_paid ?? 0) > 0 && inv?.livemode === event.livemode;
+    const okSub = sub?.status === "active" && condoProductType(sub) === product;
+    if (!okInvoice || !okSub) {
+      console.log("[condo-billing] renewal not verified, no change", { event: event.id, inv: inv?.status, sub: sub?.status });
+      return true;
+    }
+    const item = sub?.items?.data?.[0];
+    const endSec = item?.current_period_end ?? sub.current_period_end;
+    const startSec = item?.current_period_start ?? sub.current_period_start;
+    const end = endSec ? new Date(endSec * 1000).toISOString() : null;
+    // Restore only past_due rows: refunded/disputed/cancelled are never reactivated by an invoice.
+    if (product === "portfolio_premium") {
+      await supabase.from("portfolio_subscriptions").update({ status: "active", current_period_end: end, last_event_id: event.id, updated_at: now })
+        .eq("stripe_subscription_id", subId).eq("status", "past_due");
+    } else {
+      await supabase.from("condo_subscriptions").update({
+        status: "active", plan_tier: "premium", current_period_end: end,
+        current_period_start: startSec ? new Date(startSec * 1000).toISOString() : null,
+      }).eq("stripe_subscription_id", subId).eq("status", "past_due");
+    }
+    console.log("[condo-billing] renewal verified", { subId, event: event.id });
+    return true;
+  }
+
   return true; // other condo/portfolio events: acknowledged, no rights change
+}
+
+export function isPartialRefund(charge: any): boolean {
+  const amount = Number(charge?.amount ?? 0);
+  const refunded = Number(charge?.amount_refunded ?? 0);
+  return charge?.refunded !== true && amount > 0 && refunded > 0 && refunded < amount;
 }
