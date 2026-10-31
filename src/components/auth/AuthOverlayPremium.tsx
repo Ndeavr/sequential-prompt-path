@@ -19,6 +19,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { Button } from "@/components/ui/button";
 import { readRoleIntent } from "@/services/auth/roleIntent";
 
 type OverlayView = "main" | "sms" | "magic";
@@ -136,12 +137,7 @@ export default function AuthOverlayPremium() {
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0"
-            style={{
-              background: "hsl(228 40% 4% / 0.85)",
-              backdropFilter: "blur(12px) saturate(0.5)",
-              WebkitBackdropFilter: "blur(12px) saturate(0.5)",
-            }}
+            className="auth-overlay-backdrop absolute inset-0"
             aria-hidden="true"
           />
 
@@ -151,29 +147,27 @@ export default function AuthOverlayPremium() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full max-w-md overflow-y-auto rounded-2xl"
+            className="auth-overlay-card alex-immersive relative z-10 w-full max-w-md overflow-y-auto rounded-2xl"
             style={{
-              background: "hsl(228 30% 11% / 0.97)",
-              border: "1px solid hsl(228 20% 20% / 0.6)",
-              boxShadow: "var(--shadow-2xl), 0 0 60px -10px hsl(222 100% 65% / 0.12)",
               maxHeight: keyboardOffset ? `calc(100dvh - ${keyboardOffset + 24}px)` : "90dvh",
             }}
           >
             {/* Close */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => closeAuthOverlay()}
-              className="absolute top-3 right-3 z-20 p-2 rounded-full transition-colors"
-              style={{ color: "hsl(220 14% 55%)" }}
+              className="absolute top-3 right-3 z-20 min-h-11 min-w-11 rounded-full text-muted-foreground"
               aria-label="Fermer"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
 
-            <div className="px-6 pt-7 pb-6 space-y-5">
+            <div className="px-4 sm:px-6 pt-7 pb-6 space-y-5">
               {/* Header */}
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-2">
-                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center" style={{ background: "hsl(222 100% 65% / 0.1)" }}>
+                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-muted">
                     <UnproIcon size={40} variant="primary" />
                   </div>
                 </div>
@@ -192,13 +186,9 @@ export default function AuthOverlayPremium() {
               {/* Pending action badge */}
               {actionLabel && (
                 <div
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs"
-                  style={{
-                    background: "hsl(222 100% 65% / 0.08)",
-                    border: "1px solid hsl(222 100% 65% / 0.15)",
-                  }}
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm bg-muted border border-border"
                 >
-                  <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   <span className="text-muted-foreground">
                     <span className="text-foreground font-medium">{actionLabel}</span>
                     {" · "}Nous reprendrons exactement là où vous étiez.
@@ -210,32 +200,26 @@ export default function AuthOverlayPremium() {
               {view === "main" && (
                 <div className="space-y-3">
                   {/* Google */}
-                  <OAuthButtons />
+                  <OAuthButtons className="auth-overlay-google" />
 
                   {/* SMS button */}
-                  <button
+                  <Button
                     type="button"
                     onClick={() => {
                       trackAuthEvent("auth_method_selected", { method: "sms" });
                       setView("sms");
                     }}
-                    className="w-full h-12 flex items-center justify-center gap-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
-                    style={{
-                      background: "hsl(228 30% 13%)",
-                      border: "1px solid hsl(228 18% 20%)",
-                      color: "hsl(220 20% 93%)",
-                      boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.4)",
-                    }}
+                    className="w-full h-12 gap-3 rounded-xl text-sm font-semibold"
                   >
                     <Smartphone className="h-4 w-4" />
                     Recevoir un code par texto
-                  </button>
+                  </Button>
 
                   {/* Trust microcopy */}
-                  <div className="flex items-center justify-center gap-4 pt-2">
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 pt-2">
                     {["Connexion rapide", "Aucun mot de passe", "Accès sécurisé"].map((t) => (
-                      <span key={t} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-primary/60" />
+                      <span key={t} className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 shrink-0" />
                         {t}
                       </span>
                     ))}
@@ -243,16 +227,17 @@ export default function AuthOverlayPremium() {
 
                   {/* Secondary: magic link */}
                   <div className="pt-2 text-center">
-                    <button
+                    <Button
+                      variant="ghost"
                       type="button"
                       onClick={() => {
                         trackAuthEvent("magic_link_selected");
                         setView("magic");
                       }}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                      className="min-h-11 text-sm text-muted-foreground underline underline-offset-2"
                     >
                       Autres options de connexion
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -261,12 +246,13 @@ export default function AuthOverlayPremium() {
               {view === "sms" && (
                 <div className="space-y-2">
                   <PhoneOtpForm onSuccess={() => closeAuthOverlay()} />
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => setView("main")}
-                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors pt-1"
+                    className="w-full min-h-11 text-sm text-muted-foreground"
                   >
                     ← Retour
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -278,19 +264,20 @@ export default function AuthOverlayPremium() {
                     <span className="text-sm font-medium text-foreground">Recevoir un lien par courriel</span>
                   </div>
                   <LoginMagicLinkForm ctaLabel="Continuer" />
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => setView("main")}
-                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="w-full min-h-11 text-sm text-muted-foreground"
                   >
                     ← Retour
-                  </button>
+                  </Button>
                 </div>
               )}
 
               {/* Security footer */}
-              <div className="flex items-center justify-center gap-1.5 pt-1">
-                <Lock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[11px] text-muted-foreground">
+              <div className="flex items-center justify-center gap-1.5 pt-1 text-center">
+                <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
                   Connexion sécurisée · Restez connecté sans effort
                 </span>
               </div>
