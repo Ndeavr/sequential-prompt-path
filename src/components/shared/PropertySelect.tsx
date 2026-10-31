@@ -90,7 +90,7 @@ export default function PropertySelect({
           Vous gérez {list.length}+ propriétés? Passez à un{" "}
           <button
             type="button"
-            onClick={() => navigate("/contact")}
+            onClick={() => navigate("/gestionnaires-immobiliers")}
             className="text-primary underline underline-offset-2 hover:text-primary/80"
           >
             compte gestionnaire
