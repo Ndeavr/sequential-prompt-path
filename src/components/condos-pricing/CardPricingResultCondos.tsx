@@ -32,13 +32,13 @@ export default function CardPricingResultCondos({ units }: Props) {
             </p>
             <p className="font-display text-4xl sm:text-5xl font-bold text-foreground">
               {total.toLocaleString("fr-CA")} $
-              <span className="text-base font-medium text-muted-foreground ml-1">/ an</span>
+              <span className="text-base font-medium text-muted-foreground ml-1">/ an + taxes</span>
             </p>
           </motion.div>
         </AnimatePresence>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
-          <span>{perUnit.toFixed(2)} $ / unité / an</span>
+          <span>{perUnit.toFixed(2)} $ / unité / an + taxes</span>
           <span className="hidden sm:inline">·</span>
           <span>{perUnitMonth.toFixed(2)} $ / unité / mois</span>
         </div>
