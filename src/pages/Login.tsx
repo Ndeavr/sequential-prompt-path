@@ -17,7 +17,8 @@ import { Smartphone, Lock } from "lucide-react";
 import UnproIcon from "@/components/brand/UnproIcon";
 
 const Login = () => {
-  const [showPhone, setShowPhone] = useState(false);
+  const phoneFirst = new URLSearchParams(window.location.search).get("method") === "phone";
+  const [showPhone, setShowPhone] = useState(phoneFirst);
   const { isAuthenticated, role, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -95,9 +96,7 @@ const Login = () => {
             )}
 
             {/* OAuth buttons - primary */}
-            <OAuthButtons />
-
-            <AuthDivider text="ou connectez-vous par téléphone" />
+            {!phoneFirst && <><OAuthButtons /><AuthDivider text="ou connectez-vous par téléphone" /></>}
 
             {/* Phone OTP - secondary */}
             {showPhone ? (
