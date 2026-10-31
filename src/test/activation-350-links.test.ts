@@ -24,8 +24,32 @@ describe("Page activation 350 $ — liens", () => {
   });
 });
 
+describe("Lien affilié 350 $ vers forfait de rendez-vous exclusifs", () => {
+  const intake = readFileSync("src/pages/contractor-funnel/PageContractorPricingIntake.tsx", "utf8");
+  it("ne transfère jamais le jeton de l'activation 350 au calcul d'un devis mensuel", () => {
+    expect(intake).toContain('proposalContext.proposal?.offer_type === "personnalise"');
+    expect(intake).toContain("isPersonalizedProposal && proposalToken ? { affiliate_proposal_token: proposalToken } : {}");
+    expect(intake).toContain('carry.delete("proposal")');
+  });
+  it("conserve le code affilié validé et écarte le faux récapitulatif vide", () => {
+    expect(intake).toContain('carry.set("ref", proposalContext.proposal.ref)');
+    expect(intake).toContain('data-testid="activation-350-upgrade-context"');
+    expect(intake).toContain('proposalContext.proposal?.offer_type === "personnalise" && <>');
+  });
+  it("donne une explication au lieu d'un bouton silencieusement désactivé", () => {
+    expect(intake).not.toContain("disabled={submitting || !current.isValid(data)}");
+    expect(intake).toContain("toast.error(missing[current.key]");
+  });
+});
+
 describe("Page activation 350 $ — textes", () => {
   const src = readFileSync("src/pages/entrepreneur/PageActivation350.tsx", "utf8");
+  it("résout le code de référence du lien 350 côté serveur avant d'ouvrir le checkout", () => {
+    expect(src).toContain("useProposalContext(proposalToken)");
+    expect(src).toContain("if (proposalRef) q.set(\"ref\", proposalRef)");
+    expect(src).toContain("<Entry350FastCheckout query={attributedParams} />");
+    expect(src).toContain("proposalToken && !proposalRef");
+  });
   it("marketing sans calcul fiscal; total et 0 RDV au récapitulatif", () => {
     expect(src).not.toContain("402,41");
     expect(src).not.toContain("se choisissent séparément");

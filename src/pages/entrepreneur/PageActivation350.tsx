@@ -19,6 +19,7 @@ import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout
 import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
+import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 
 export const ACTIVATION_350_APPT_DISCLOSURE =
   "Profil + 12 mois de présence UNPRO.";
@@ -43,8 +44,20 @@ const BENEFITS = [
 
 export default function PageActivation350() {
   const [sp] = useSearchParams();
-  const ref = normalizeRef(sp.get("ref"));
-  const links = useMemo(() => buildActivation350Links(sp), [sp]);
+  const proposalToken = sp.get("proposal");
+  const proposalContext = useProposalContext(proposalToken);
+  // A verified activation-proposal link carries the affiliate reference in its
+  // server-resolved context, even when the public URL has no ?ref parameter.
+  const proposalRef = proposalContext.proposal?.offer_type === "activation_350"
+    ? normalizeRef(proposalContext.proposal.ref)
+    : null;
+  const attributedParams = useMemo(() => {
+    const q = new URLSearchParams(sp);
+    if (proposalRef) q.set("ref", proposalRef);
+    return q;
+  }, [sp, proposalRef]);
+  const ref = proposalRef ?? normalizeRef(sp.get("ref"));
+  const links = useMemo(() => buildActivation350Links(attributedParams), [attributedParams]);
   const [chatOpen, setChatOpen] = useState(true);
   const reviewOpen = sp.get("activate") === "1";
 
@@ -93,7 +106,11 @@ export default function PageActivation350() {
           </Link>
         </div>
 
-        {reviewOpen && <Entry350FastCheckout query={sp} />}
+        {reviewOpen && (proposalToken && proposalContext.loading
+          ? <p role="status" className="rounded-xl border border-border p-4 text-sm">Vérification du lien affilié en cours…</p>
+          : proposalToken && !proposalRef
+            ? <p role="alert" className="rounded-xl border border-destructive/40 p-4 text-sm">Cette proposition affiliée n’est pas valide ou a expiré. Demandez un nouveau lien à votre contact UNPRO.</p>
+            : <Entry350FastCheckout query={attributedParams} />)}
 
         <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Visibilité IA</p>
         <h2 className="mt-3 text-[2rem] font-bold leading-[1.1] sm:text-4xl">
