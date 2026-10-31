@@ -5,10 +5,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle2, ChevronDown, Crown, House, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, ChevronDown, Crown, House, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
-import ManagerPlans from "@/components/pricing/ManagerPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeownerPlan } from "@/features/planSystem/useHomeownerPlan";
 
@@ -183,8 +182,15 @@ export default function HomeownerPlans() {
       <p className="mx-auto mt-3 max-w-5xl text-center text-[11px] text-muted-foreground">
         * Utilisation raisonnable. Toutes les inclusions sont consultables dans chaque forfait.
       </p>
-      <div className="h-7" aria-hidden="true" />
-      <ManagerPlans authenticated={Boolean(session)} />
+      <div className="mx-auto mt-7 max-w-5xl">
+        <Button asChild variant="outline" className="h-auto min-h-14 w-full gap-3 rounded-2xl border-primary/25 bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 sm:text-base">
+          <Link to="/tarifs/gestionnaires" aria-label="Vous êtes gestionnaire de plusieurs unités? Voir les forfaits Gestionnaires">
+            <Building2 className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-left whitespace-normal">Vous êtes gestionnaire de plusieurs unités?</span>
+            <ArrowRight className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
     </section>
   );
 }
