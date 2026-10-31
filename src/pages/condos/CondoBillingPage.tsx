@@ -73,8 +73,8 @@ const CondoBillingPage = () => {
                   <span className="font-medium text-sm">{t.units}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-display font-bold text-primary">
-                      {t.priceTaxIncluded} $
-                      <span className="text-xs font-normal text-muted-foreground"> / an</span>
+                      {t.priceAnnualExclTax} $
+                      <span className="text-xs font-normal text-muted-foreground"> / an + taxes</span>
                     </span>
                     <Button
                       size="sm"
@@ -92,7 +92,7 @@ const CondoBillingPage = () => {
           </div>
 
           <p className="text-xs text-muted-foreground text-center">
-            Tous les prix incluent TPS + TVQ (14,975 %). Facturation annuelle.
+            Prix avant taxes. TPS/TVQ applicables en sus. Facturation annuelle.
           </p>
         </>
       )}
