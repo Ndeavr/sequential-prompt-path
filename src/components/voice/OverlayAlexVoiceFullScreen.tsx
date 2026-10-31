@@ -1085,6 +1085,9 @@ export default function OverlayAlexVoiceFullScreen() {
     "Clara écoute…": "Clara is listening…",
     "Je vous écoute.": "I’m listening.",
     "Clara est là.": "Clara is here.",
+    "Clara se prépare…": "Clara is getting ready…",
+    "Clara vous parle": "Clara is speaking",
+    "Erreur de démarrage": "Startup error",
     "Connexion de Clara…": "Connecting Clara…",
     "Vous parlez…": "You’re speaking…",
     "Réflexion…": "Thinking…",
@@ -1214,7 +1217,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 <p className="text-[10px] text-muted-foreground">{localizedStatusText}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => store.setDisplayMode("floating")} className="rounded-full">Réduire</Button>
+            <Button variant="ghost" size="sm" onClick={() => store.setDisplayMode("floating")} className="rounded-full">{lang === "en" ? "Minimize" : "Réduire"}</Button>
             <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
               <X className="w-5 h-5" />
             </Button>
@@ -1245,7 +1248,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
               {transcripts.length === 0 && !isStabilizing && isSessionActive && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">Clara est prête. Parlez…</p>
+                  <p className="text-sm text-muted-foreground">{lang === "en" ? "Clara is ready. Go ahead…" : "Clara est prête. Parlez…"}</p>
                 </div>
               )}
             </div>
@@ -1257,13 +1260,13 @@ export default function OverlayAlexVoiceFullScreen() {
               <button
                 type="button"
                 onClick={handleResumeVoice}
-                aria-label="Reprendre la session vocale"
+                aria-label={lang === "en" ? "Resume voice session" : "Reprendre la session vocale"}
                 className="flex flex-col items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
                 <span className="opacity-60">
-                  <AlexMorphingOrb state="idle" size="lg" ariaLabel={isCompleted ? "Conversation terminée" : "Clara en pause"} />
+                  <AlexMorphingOrb state="idle" size="lg" ariaLabel={lang === "en" ? (isCompleted ? "Conversation ended" : "Clara paused") : (isCompleted ? "Conversation terminée" : "Clara en pause")} />
                 </span>
-                <span className="text-sm text-foreground/80">{haltedLabel}</span>
+                <span className="text-sm text-foreground/80">{voiceLabel(haltedLabel)}</span>
               </button>
             ) : (
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />
@@ -1290,7 +1293,7 @@ export default function OverlayAlexVoiceFullScreen() {
             {isRecoveringNow ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Zap className="w-4 h-4 animate-pulse" /> {recovery.phaseLabel || 'Réinitialisation…'}
+                  <Zap className="w-4 h-4 animate-pulse" /> {lang === "en" ? "Reconnecting…" : (recovery.phaseLabel || "Réinitialisation…")}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -1299,16 +1302,16 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isError ? (
               <>
                 <Button onClick={handleRetry} className="rounded-full gap-2 px-6" variant="default">
-                  <Zap className="w-4 h-4" /> Réinitialiser Clara
+                  <Zap className="w-4 h-4" /> {lang === "en" ? "Restart Clara" : "Réinitialiser Clara"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
-                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                  <MessageSquare className="w-4 h-4" /> {lang === "en" ? "Switch to chat" : "Passer au chat"}
                 </Button>
               </>
             ) : isStabilizing ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4 animate-spin" /> Clara démarre…
+                  <Sparkles className="w-4 h-4 animate-spin" /> {lang === "en" ? "Starting Clara…" : "Clara démarre…"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -1317,16 +1320,16 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isPaused ? (
               <>
                 <Button onClick={handleResumeVoice} className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4" /> Reprendre
+                  <Sparkles className="w-4 h-4" /> {lang === "en" ? "Resume" : "Reprendre"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
-                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                  <MessageSquare className="w-4 h-4" /> {lang === "en" ? "Switch to chat" : "Passer au chat"}
                 </Button>
               </>
             ) : (
               <>
                 <Button onClick={handleClose} variant="destructive" className="rounded-full gap-2 px-8">
-                  <PhoneOff className="w-5 h-5" /> Raccrocher
+                  <PhoneOff className="w-5 h-5" /> {lang === "en" ? "End call" : "Raccrocher"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" size="icon" className="rounded-full">
                   <MessageSquare className="w-4 h-4" />
