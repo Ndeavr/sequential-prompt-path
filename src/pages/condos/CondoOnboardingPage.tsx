@@ -3,7 +3,7 @@
  * Multi-step building registration
  */
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { loadSelection, parseSelection, saveSelection } from "@/lib/managerSelection";
 import { getTierForUnits } from "@/config/condoPricing";
 import { useCondoSubscription } from "@/hooks/useCondoSubscription";
@@ -88,20 +88,7 @@ const CondoOnboardingPage = () => {
   };
 
   if (isPortfolio && selection) {
-    const t = getTierForUnits(selection.doors);
-    return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-        <Card className="w-full max-w-lg"><CardContent className="space-y-4 p-6">
-          <h1 className="text-xl font-bold">Votre parc de {selection.doors} portes</h1>
-          <p className="text-sm text-muted-foreground">Plusieurs immeubles / parc locatif · {t.units.replace("unités", "portes")}</p>
-          <p className="whitespace-nowrap text-2xl font-extrabold tabular-nums">{t.priceTaxIncluded.toLocaleString("fr-CA")}&nbsp;$ / an + taxes</p>
-          <p role="status" className="rounded-xl border border-border p-3 text-sm">
-            Abonnement multi-immeubles temporairement indisponible : le portefeuille consolidé et les taxes sont en cours de configuration. Votre sélection est conservée; aucun paiement n'est demandé.
-          </p>
-          <Button variant="outline" className="min-h-11 w-full" onClick={() => navigate("/tarifs/gestionnaires")}>Modifier ma sélection</Button>
-        </CardContent></Card>
-      </div>
-    );
+    return <Navigate to={`/gestionnaires/portefeuille?doors=${selection.doors}`} replace />;
   }
 
   const progress = ((step + 1) / STEPS.length) * 100;
