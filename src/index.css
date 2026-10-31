@@ -4,6 +4,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Existing auth overlay: brand surfaces scoped here, never to other routes. */
+:root {
+  --auth-modal-start: #071329;
+  --auth-modal-end: #102345;
+  --auth-electric: #1269F3;
+  --auth-electric-hover: #0F5CD8;
+  --auth-electric-pressed: #0C4DB8;
+  --auth-chrome: #E8EEF8;
+  --auth-white: #FFFFFF;
+  --auth-ink: #1A1A2E;
+  --auth-backdrop: hsl(216 75% 94% / 0.94);
+  --auth-modal-gradient: linear-gradient(160deg, var(--auth-modal-start), var(--auth-modal-end));
+}
+.dark { --auth-backdrop: hsl(220 71% 9% / 0.94); }
+.auth-overlay-backdrop {
+  background: var(--auth-backdrop);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.auth-overlay-card.alex-immersive {
+  --foreground: 0 0% 100%;
+  --muted-foreground: 218 53% 94%;
+  --primary: 217 90% 51%;
+  --primary-strong: 217 90% 51%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 218 53% 94%;
+  --background: 216 71% 9%;
+  --muted: 218 62% 17%;
+  --border: 217 32% 42%;
+  background: var(--auth-modal-gradient);
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-2xl);
+}
+.auth-overlay-card button:not(.auth-overlay-google button):not(.text-muted-foreground) {
+  background-color: var(--auth-electric);
+  color: var(--auth-white);
+}
+.auth-overlay-card button:not(.auth-overlay-google button):not(.text-muted-foreground):hover {
+  background-color: var(--auth-electric-hover);
+}
+.auth-overlay-card button:not(.auth-overlay-google button):not(.text-muted-foreground):active {
+  background-color: var(--auth-electric-pressed);
+}
+.auth-overlay-card .auth-overlay-google button {
+  background: var(--auth-white) !important;
+  color: var(--auth-ink) !important;
+  border-color: var(--auth-chrome) !important;
+}
+.auth-overlay-card .auth-overlay-google button:hover,
+.auth-overlay-card .auth-overlay-google button:active {
+  background: var(--auth-chrome) !important;
+}
+.auth-overlay-card button:focus-visible,
+.auth-overlay-card input:focus-visible {
+  outline: 2px solid var(--auth-chrome);
+  outline-offset: 3px;
+}
+.auth-overlay-card input {
+  min-width: 0;
+  background: var(--auth-modal-start) !important;
+  color: var(--auth-white) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.auth-overlay-card input::placeholder {
+  color: var(--auth-chrome) !important;
+  opacity: 1;
+}
+.auth-overlay-card input[autocomplete="one-time-code"],
+.auth-overlay-card input[name="otp"] ~ input {
+  flex-shrink: 1;
+  min-height: 44px;
+}
+
 @layer base {
   :root {
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
