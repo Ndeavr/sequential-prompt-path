@@ -1,0 +1,338 @@
+--- a/supabase/functions/alex-no-match-handle/index.ts
++++ b/supabase/functions/alex-no-match-handle/index.ts
+@@ -1,4 +1,6 @@
+-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
++import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
++
++import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+ 
+ const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+@@ -11,9 +13,34 @@
+   try {
+     const { action, ...payload } = await req.json();
+     const supabase = createClient(
+-      Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
++      Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+     );
+ 
++    if (["retry", "stats"].includes(action)) {
++      const caller = await requireAdminCaller(req, corsHeaders);
++      if (!caller.ok) return caller.response;
++      if (action === "retry") return reply({ ok: false, error: "verified_matching_required", matched: 0 }, 409);
++    } else {
++      const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") ?? "";
++      const { data: auth, error: authError } = await supabase.auth.getUser(token);
++      if (authError || !auth?.user) return reply({ ok: false, error: "unauthorized" }, 401);
++      if (!["detect", "waitlist-create"].includes(action)) return reply({ ok: false, error: "invalid_action" }, 400);
++      if (!/^[0-9a-f-]{36}$/i.test(payload.project_id ?? "") || typeof payload.alex_session_id !== "string" || payload.alex_session_id.length > 120) return reply({ ok: false, error: "confirmed_project_required" }, 400);
++      const { data: project, error: projectError } = await supabase.from("projects").select("id,user_id,matching_status,status").eq("id", payload.project_id).eq("user_id", auth.user.id).maybeSingle();
++      if (projectError || !project || project.matching_status !== "empty" || ["draft", "cancelled", "completed"].includes(project.status)) return reply({ ok: false, error: "confirmed_no_match_required" }, 403);
++      const { data: signal, error: signalError } = await supabase.from("demand_signals").select("id,city,category,metadata,status").eq("project_id", project.id).eq("homeowner_id", auth.user.id).maybeSingle();
++      if (signalError || !signal || signal.status !== "waiting" || signal.metadata?.follow_up_consent !== true) return reply({ ok: false, error: "consented_demand_required" }, 409);
++      payload.user_id = auth.user.id;
++      payload.service = signal.category;
++      payload.city = signal.city;
++      if (action === "waitlist-create" && (payload.follow_up_consent !== true || !(typeof payload.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) || typeof payload.phone === "string" && /^\+?[0-9 ()-]{10,25}$/.test(payload.phone)))) return reply({ ok: false, error: "consent_contact_required" }, 400);
++      const table = action === "detect" ? "alex_no_match_cases" : "alex_waitlist_requests";
++      const { data: existing, error: existingError } = await supabase.from(table).select("id").eq("alex_session_id", project.id).eq("service", signal.category).eq("city", signal.city).limit(1).maybeSingle();
++      if (existingError) return reply({ ok: false, error: "persistence_unavailable" }, 503);
++      if (existing) return reply({ ok: true, [action === "detect" ? "case_id" : "waitlist_id"]: existing.id });
++      payload.alex_session_id = project.id;
++    }
++
+     // ACTION: detect — log a no-match case
+     if (action === "detect") {
+       const { alex_session_id, service, city, radius_km, constraints, detected_reason } = payload;
+@@ -49,64 +76,11 @@
+       }).select().single();
+       if (wlErr) throw wlErr;
+ 
+-      // Create initial retry job
+-      await supabase.from("alex_match_retry_queue").insert({
+-        waitlist_request_id: wl.id,
+-        next_retry_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+-        retry_count: 0,
+-        last_attempt_status: "pending",
+-      });
+-
+       return new Response(JSON.stringify({ ok: true, waitlist_id: wl.id }), {
+         headers: { ...corsHeaders, "Content-Type": "application/json" },
+       });
+     }
+ 
+-    // ACTION: retry — attempt to find a match for pending waitlist items
+-    if (action === "retry") {
+-      const { data: pending } = await supabase.from("alex_match_retry_queue")
+-        .select("*, alex_waitlist_requests(*)")
+-        .lte("next_retry_at", new Date().toISOString())
+-        .neq("last_attempt_status", "match_found")
+-        .limit(20);
+-
+-      let matched = 0;
+-      for (const item of pending || []) {
+-        const wl = item.alex_waitlist_requests;
+-        if (!wl || wl.status !== "active") continue;
+-
+-        // Try to find contractor
+-        const { data: contractors } = await supabase.from("contractors")
+-          .select("id, business_name, specialty, city, aipp_score")
+-          .eq("status", "active")
+-          .order("aipp_score", { ascending: false })
+-          .limit(3);
+-
+-        const found = (contractors || []).length > 0;
+-        const nextRetry = new Date(Date.now() + (found ? 0 : 60 * 60 * 1000));
+-
+-        await supabase.from("alex_match_retry_queue").update({
+-          retry_count: item.retry_count + 1,
+-          last_attempt_status: found ? "match_found" : "no_match",
+-          next_retry_at: nextRetry.toISOString(),
+-        }).eq("id", item.id);
+-
+-        if (found && contractors) {
+-          matched++;
+-          await supabase.from("alex_waitlist_requests").update({ status: "matched" }).eq("id", wl.id);
+-          await supabase.from("alex_match_notifications").insert({
+-            waitlist_request_id: wl.id,
+-            contractor_id: contractors[0].id,
+-            notification_status: "pending",
+-          });
+-        }
+-      }
+-
+-      return new Response(JSON.stringify({ ok: true, processed: (pending || []).length, matched }), {
+-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+-      });
+-    }
+-
+     // ACTION: stats — admin analytics
+     if (action === "stats") {
+       const [cases, waitlist, retries] = await Promise.all([
+@@ -147,9 +121,11 @@
+       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+     });
+   } catch (err) {
+-    console.error("alex-no-match-handle error:", err);
+-    return new Response(JSON.stringify({ error: err.message }), {
++    console.error("alex-no-match-handle persistence failed");
++    return new Response(JSON.stringify({ error: "persistence_unavailable" }), {
+       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+     });
+   }
+ });
++
++function reply(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
+--- a/supabase/functions/demand-signal-create/index.ts
++++ b/supabase/functions/demand-signal-create/index.ts
+@@ -7,107 +7,15 @@
+   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+ 
+   try {
+-    const body = await req.json();
+-    const {
+-      project_id,
+-      homeowner_id,
+-      city,
+-      category,
+-      subcategory = null,
+-      postal_code = null,
+-      estimated_project_value = 0,
+-      estimated_ltv = 0,
+-      urgency_score = 5,
+-      notify_channels = { sms: true, email: true, push: true },
+-      metadata = {},
+-    } = body ?? {};
+-
+-    if (!project_id || !homeowner_id || !city || !category) {
+-      return json({ ok: false, error: "missing_fields" }, 400);
+-    }
+-
+-    const sb = createClient(
+-      Deno.env.get("SUPABASE_URL")!,
+-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+-    );
+-
+-    const normalizedCity = String(city).trim();
+-    const normalizedCategory = String(category).trim().toLowerCase();
+-
+-    // Idempotent upsert on project_id
+-    const { data: existing } = await sb
+-      .from("demand_signals")
+-      .select("id, position_in_queue, status")
+-      .eq("project_id", project_id)
+-      .maybeSingle();
+-
+-    let signalId = existing?.id;
+-
+-    if (!signalId) {
+-      const { data: ins, error: insErr } = await sb
+-        .from("demand_signals")
+-        .insert({
+-          project_id,
+-          homeowner_id,
+-          city: normalizedCity,
+-          category: normalizedCategory,
+-          subcategory,
+-          postal_code,
+-          estimated_project_value,
+-          estimated_ltv,
+-          urgency_score,
+-          notify_channels,
+-          metadata,
+-        })
+-        .select("id")
+-        .single();
+-      if (insErr) throw insErr;
+-      signalId = ins.id;
+-    }
+-
+-    // Refreshed by trigger — re-read for position + market context
+-    const { data: signal } = await sb
+-      .from("demand_signals")
+-      .select("id, position_in_queue, status, matched_contractor_id, city, category")
+-      .eq("id", signalId!)
+-      .single();
+-
+-    const { data: market } = await sb
+-      .from("market_demand")
+-      .select("homeowner_count, supply_count, gap_score, pressure_score, estimated_revenue")
+-      .eq("city", normalizedCity)
+-      .eq("category", normalizedCategory)
+-      .maybeSingle();
+-
+-    const { data: target } = await sb
+-      .from("contractor_recruitment_targets")
+-      .select("landing_slug, status")
+-      .eq("city", normalizedCity)
+-      .eq("category", normalizedCategory)
+-      .maybeSingle();
+-
+-    // Telemetry
+-    await sb.from("acquisition_events").insert({
+-      event_type: "demand_signal.created",
+-      payload: {
+-        signal_id: signalId,
+-        city: normalizedCity,
+-        category: normalizedCategory,
+-        position: signal?.position_in_queue,
+-        has_supply: (market?.supply_count ?? 0) > 0,
+-      },
+-    }).catch(() => {});
+-
+-    return json({
+-      ok: true,
+-      signal,
+-      market,
+-      recruitment_target: target,
+-      has_match_path: (market?.supply_count ?? 0) > 0,
+-    });
++    const sb = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
++    const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") ?? "";
++    const { data, error } = await sb.auth.getUser(token);
++    if (error || !data?.user) return json({ ok: false, error: "unauthorized" }, 401);
++    // Existing SQL auto-matcher lacks RBQ/capacity/availability gates. No safe write until repaired.
++    return json({ ok: false, error: "verified_matching_and_consent_required" }, 409);
+   } catch (e) {
+     console.error("demand-signal-create error", e);
+-    return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
++    return json({ ok: false, error: "request_unavailable" }, 500);
+   }
+ });
+ 
+--- a/supabase/functions/outreach-demand-injector/index.ts
++++ b/supabase/functions/outreach-demand-injector/index.ts
+@@ -4,9 +4,13 @@
+ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+ import { buildDemandIntro } from "../_shared/demandInjector.ts";
+ 
++import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
++
+ Deno.serve(async (req) => {
+   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+ 
++  const caller = await requireAdminCaller(req, corsHeaders);
++  if (!caller.ok) return caller.response;
+   try {
+     const body = await req.json().catch(() => ({}));
+     const { city, category, action = "intro" } = body ?? {};
+@@ -18,24 +22,10 @@
+       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+     );
+ 
+-    const intro = await buildDemandIntro(city, category);
+-
+-    if (action === "queue_outreach") {
+-      await sb.from("acquisition_events").insert({
+-        event_type: "recruitment_target.activated",
+-        payload: { city, category, intro: intro.intro, homeowner_count: intro.homeowner_count },
+-      }).catch(() => {});
+-
+-      await sb.from("contractor_recruitment_targets")
+-        .update({ status: "recruiting", updated_at: new Date().toISOString() })
+-        .eq("city", city)
+-        .eq("category", String(category).toLowerCase());
+-    }
+-
+-    return json({ ok: true, ...intro });
++    return json({ ok: false, error: "consented_demand_review_required", sent: 0, queued: 0 }, 409);
+   } catch (e) {
+     console.error("outreach-demand-injector error", e);
+-    return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
++    return json({ ok: false, error: "request_unavailable" }, 500);
+   }
+ });
+ 
+--- a/supabase/functions/recruitment-landing-resolver/index.ts
++++ b/supabase/functions/recruitment-landing-resolver/index.ts
+@@ -12,47 +12,11 @@
+     const category = url.searchParams.get("category");
+     if (!city || !category) return json({ ok: false, error: "city+category required" }, 400);
+ 
+-    const sb = createClient(
+-      Deno.env.get("SUPABASE_URL")!,
+-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+-    );
+-
+-    const normalizedCity = decodeURIComponent(city).trim();
+-    const normalizedCategory = decodeURIComponent(category).trim().toLowerCase();
+-
+-    const [{ data: market }, { data: target }, { data: neighbors }] = await Promise.all([
+-      sb.from("market_demand")
+-        .select("homeowner_count, total_projects, estimated_revenue, estimated_ltv, avg_urgency, supply_count, gap_score, pressure_score, last_signal_at")
+-        .eq("city", normalizedCity)
+-        .eq("category", normalizedCategory)
+-        .maybeSingle(),
+-      sb.from("contractor_recruitment_targets")
+-        .select("id, landing_slug, status, priority_score, waiting_count, estimated_revenue")
+-        .eq("city", normalizedCity)
+-        .eq("category", normalizedCategory)
+-        .maybeSingle(),
+-      sb.from("market_demand")
+-        .select("city, category, homeowner_count, estimated_revenue, pressure_score")
+-        .eq("category", normalizedCategory)
+-        .neq("city", normalizedCity)
+-        .order("pressure_score", { ascending: false })
+-        .limit(5),
+-    ]);
+-
+-    return json({
+-      ok: true,
+-      city: normalizedCity,
+-      category: normalizedCategory,
+-      market: market ?? {
+-        homeowner_count: 0, total_projects: 0, estimated_revenue: 0, estimated_ltv: 0,
+-        avg_urgency: 0, supply_count: 0, gap_score: 0, pressure_score: 0, last_signal_at: null,
+-      },
+-      recruitment_target: target,
+-      neighbor_segments: neighbors ?? [],
+-    });
++    if (city.length > 120 || category.length > 120 || /[<>\x00-\x1f]/.test(city + category)) return json({ ok: false, error: "invalid_segment" }, 400);
++    return json({ ok: true, city: city.trim(), category: category.trim().toLowerCase(), market: null, recruitment_target: null, neighbor_segments: [], demand_verified: false });
+   } catch (e) {
+     console.error("recruitment-landing-resolver error", e);
+-    return json({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
++    return json({ ok: false, error: "request_unavailable" }, 500);
+   }
+ });
+ 
