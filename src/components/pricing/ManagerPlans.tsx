@@ -19,7 +19,7 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
   const count = Number(countText);
   const valid = Number.isInteger(count) && count >= 2 && count <= 9999;
   const tier = getTierForUnits(valid ? count : 24);
-  const yearly = tier.priceTaxIncluded;
+  const yearly = tier.priceAnnualExclTax;
   const perDoorMonthly = valid ? yearly / count / 12 : 0;
   const onboarding = `/condos/onboarding?units=${count}&source=gestionnaires`;
   const signupLink = authenticated ? onboarding : `/signup?redirect=${encodeURIComponent(onboarding)}`;
@@ -86,10 +86,10 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
               <>
                 <p className="text-xs font-medium text-muted-foreground">UNPRO Condos Premium · {tier.units}</p>
                 <p className="mt-1 text-3xl font-extrabold tabular-nums text-foreground">
-                  {money(yearly)} $ <span className="text-sm font-normal text-muted-foreground">/ an</span>
+                  {money(yearly)} $ <span className="text-sm font-normal text-muted-foreground">/ an + taxes</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {moneyDecimal(perDoorMonthly)} $ par porte / mois · TPS et TVQ incluses
+                  {moneyDecimal(perDoorMonthly)} $ par porte / mois, avant taxes
                 </p>
               </>
             ) : (
@@ -133,13 +133,13 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
             {CONDO_PRICING_TIERS.map((plan) => (
               <div key={plan.priceId} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${!portfolio && valid && tier.priceId === plan.priceId ? "border-primary/40 bg-primary/5" : "border-border/40"}`}>
                 <span className="text-foreground">{plan.units.replace("unités", "portes")}</span>
-                <span className="shrink-0 font-semibold tabular-nums text-foreground">{money(plan.priceTaxIncluded)} $ / an</span>
+                <span className="shrink-0 font-semibold tabular-nums text-foreground">{money(plan.priceAnnualExclTax)} $ / an + taxes</span>
               </div>
             ))}
           </div>
           <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
             <Info className="mt-0.5 size-3.5 shrink-0" />
-            Tarifs du catalogue UNPRO Condos pour une copropriété. Taxes incluses. La tarification des portefeuilles distincts reste à définir.
+            Tarifs annuels du catalogue UNPRO Condos, avant taxes. TPS et TVQ applicables en sus. Les portefeuilles distincts font l’objet d’une offre personnalisée.
           </p>
         </details>
       </div>
