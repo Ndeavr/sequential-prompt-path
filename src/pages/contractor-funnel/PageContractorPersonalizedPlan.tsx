@@ -582,6 +582,21 @@ export default function PageContractorPersonalizedPlan() {
                 {typeof quote.input_payload?.monthly_capacity === "number" && (
                   <p className="mt-2 text-sm text-white/80" data-testid="plan-capacity">Votre capacité déclarée pour le mois prochain : {quote.input_payload.monthly_capacity} rendez-vous.</p>
                 )}
+                {(() => {
+                  const qc = quote.input_payload?.qualification as { priorities?: string[]; preferred_work?: string[]; excluded_work?: string[]; no_excluded_work?: boolean; service_areas?: string[]; excluded_areas?: string[]; no_excluded_areas?: boolean } | undefined;
+                  if (!qc) return null;
+                  const j = (v?: string[]) => (v ?? []).join(", ");
+                  return (
+                    <dl className="mt-3 space-y-1 text-sm text-white/80" data-testid="plan-declared-preferences">
+                      <dt className="text-xs uppercase tracking-wider text-white/60">Vos préférences (déclarées)</dt>
+                      {qc.priorities?.length ? <dd>Priorités : {j(qc.priorities)}</dd> : null}
+                      {qc.preferred_work?.length ? <dd>Travaux recherchés : {j(qc.preferred_work)}</dd> : null}
+                      <dd>Travaux exclus : {qc.no_excluded_work ? "aucune exclusion" : j(qc.excluded_work) || "—"}</dd>
+                      {qc.service_areas?.length ? <dd>Territoires : {j(qc.service_areas)}</dd> : null}
+                      <dd>Secteurs exclus : {qc.no_excluded_areas ? "aucun" : j(qc.excluded_areas) || "—"}</dd>
+                    </dl>
+                  );
+                })()}
                 <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
                   {entryTier
                     ? "Pour atteindre vos objectifs, nous vous recommandons de commencer avec cette entente."
