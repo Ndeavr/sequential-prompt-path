@@ -132,11 +132,11 @@ export default function ContractorPublicExperience({ profileData, compact = fals
   return (
     <article className={`alex-immersive min-h-full bg-background text-foreground ${compact ? "text-[13px]" : ""}`}>
       <section ref={(node) => { sectionRefs.current.overview = node; }} className="scroll-mt-28">
-        <div className={`relative overflow-hidden ${compact ? "h-56" : "h-[310px] sm:h-[380px]"}`}>
+        <div className={`relative overflow-hidden ${compact ? "h-56" : cover ? "h-[310px] sm:h-[380px]" : "h-48 sm:h-56"}`}>
           {cover ? (
             <img src={cover} alt={`Réalisation de ${contractor.business_name}`} className="h-full w-full object-cover" />
           ) : (
-            <div className="h-full w-full bg-muted" aria-hidden="true" />
+            <div className="h-full w-full bg-gradient-to-br from-[#152443] via-[#0c1629] to-background" aria-hidden="true" />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background" />
           <div className="absolute inset-x-0 bottom-0 px-4 pb-5 sm:px-6">
@@ -184,7 +184,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
         </div>
       </nav>
 
-      <div className="space-y-4 px-4 py-5 sm:px-6">
+      <div className="space-y-4 px-4 pt-5 pb-32 sm:px-6 sm:pb-8">
         {(contractor.description || contractor.legal_name || website || phone) && <section className="rounded-xl border border-border bg-card p-4" aria-label="À propos"><h2 className="font-semibold">À propos de {contractor.business_name}</h2>{contractor.description && <p className="mt-2 whitespace-pre-line break-words text-sm text-text-secondary">{contractor.description}</p>}{contractor.legal_name && <p className="mt-2 text-xs text-muted-foreground">Nom légal : {contractor.legal_name}</p>}<div className="mt-3 flex flex-wrap gap-3 text-sm">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary underline">Site web de l’entreprise<ExternalLink className="h-3 w-3" /></a>}{phone && <a href={`tel:${phone}`} className="text-primary underline">{contractor.phone}</a>}</div></section>}
         <section aria-labelledby="compatibility-title">
           <Button
@@ -252,7 +252,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
               title="Avis Google"
               rating={hasGoogleAggregate ? contractor.rating : null}
               count={hasGoogleAggregate ? contractor.review_count : 0}
-              provenance={googleSource ? "Source : fiche Google liée" : "Source Google non liée"}
+              provenance={googleSource?.sync_status === "manual_snapshot" ? "Source : Google · relevé manuel" : googleSource ? "Source : fiche Google liée" : "Source Google non liée"}
               href={googleSource?.profile_url}
             />
           </div>
