@@ -47,6 +47,10 @@ serve(async (req) => {
 
         const userId = session.metadata?.supabase_user_id;
         const syndicateId = session.metadata?.syndicate_id;
+        if (session.payment_status !== "paid") {
+          logStep("Checkout completed without confirmed payment", { status: session.payment_status });
+          break;
+        }
         if (!userId || !syndicateId) {
           logStep("Missing metadata", { userId, syndicateId });
           break;
