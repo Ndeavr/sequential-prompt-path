@@ -12,7 +12,7 @@ export default function DisplayUnitsToPriceMapping({ currentUnits }: Props) {
         Exemples de tarification
       </h2>
       <p className="text-sm text-muted-foreground text-center">
-        Simple. Transparent. Adapté à votre immeuble.
+        Simple. Transparent. Tarifs annuels avant taxes.
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
