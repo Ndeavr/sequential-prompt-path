@@ -78,7 +78,8 @@ Deno.serve(async (req) => {
       displayedPriceCents,
       displayedGuaranteedAppointments,
       includeProfileFee,
-      ref,
+      ref: rawRef,
+      affiliateProposalToken,
       offerId,
       professionCode,
       activationToken,
@@ -141,6 +142,36 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    let ref = rawRef;
+    let proposalContext: Record<string, unknown> | null = null;
+    const proposalFailure = () => new Response(JSON.stringify({ error: "invalid_proposal", code: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const resolveProposal = async (token: unknown) => {
+      if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return null;
+      const { data, error } = await serviceClient.rpc("resolve_affiliate_proposal_context", { _token: token });
+      if (error || !data) return null;
+      const { data: affiliate, error: affiliateError } = await serviceClient.from("affiliates").select("user_id").eq("id", data.affiliate_entity_id).single();
+      if (affiliateError || !affiliate || affiliate.user_id === userId) return null;
+      return data as Record<string, unknown>;
+    };
+    if (action !== "reconcile") {
+      // Quote binding is authoritative; a separate bearer cannot relabel another quote.
+      if (quoteId) {
+        const { data: q, error } = await serviceClient.from("contractor_pricing_quotes").select("user_id, input_payload").eq("id", quoteId).maybeSingle();
+        if (error || !q || (q.user_id && q.user_id !== userId)) return proposalFailure();
+        const binding = q.input_payload?.affiliate_proposal_id;
+        if (binding) {
+          const { data: p, error: proposalError } = await serviceClient.from("affiliate_proposals").select("client_draft_token").eq("id", binding).single();
+          if (proposalError || !p || (affiliateProposalToken !== undefined && affiliateProposalToken !== p.client_draft_token)) return proposalFailure();
+          proposalContext = await resolveProposal(p.client_draft_token);
+          if (!proposalContext || proposalContext.offer_type !== "personnalise" || proposalContext.id !== binding || proposalContext.prospect_id !== q.input_payload?.affiliate_prospect_id || entryActivation === true) return proposalFailure();
+        } else if (affiliateProposalToken !== undefined) return proposalFailure();
+      } else if (affiliateProposalToken !== undefined) {
+        proposalContext = await resolveProposal(affiliateProposalToken);
+        if (!proposalContext || entryActivation !== true || proposalContext.offer_type !== "activation_350") return proposalFailure();
+      }
+      if (proposalContext) ref = proposalContext.ref;
+    }
 
     // ── RÉCONCILIATION (retour de paiement / reconnexion) ─────────────────
     // Lecture Stripe côté serveur. N'active jamais directement : si Stripe
@@ -496,6 +527,7 @@ Deno.serve(async (req) => {
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
               }
             : { credit_amount_cents: String(amountCents) }),
+          ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
           ...(quoteId && { quote_id: String(quoteId) }),
           ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
           ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),
@@ -1269,6 +1301,7 @@ Deno.serve(async (req) => {
         contractor_id: contractor.id,
         plan_id: resolvedPlanCode,
         billing_interval: interval,
+        ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
         ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         ...(quoteId && { quote_id: String(quoteId) }),
          ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
@@ -1290,6 +1323,7 @@ Deno.serve(async (req) => {
           contractor_id: contractor.id,
           plan_id: resolvedPlanCode,
           billing_interval: interval,
+          ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
           ...(quoteId && { quote_id: String(quoteId) }),
            ...(verifiedProspectId && { prospect_id: verifiedProspectId }),
            ...(verifiedActivationToken && { activation_token: verifiedActivationToken }),

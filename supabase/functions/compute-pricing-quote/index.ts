@@ -362,7 +362,23 @@ Deno.serve(async (req) => {
     const { data: userData } = await userClient.auth.getUser();
     const user = userData?.user ?? null;
 
-    const body = (await req.json()) as Input & { action?: string; quote_id?: string };
+    const body = (await req.json()) as Input & { action?: string; quote_id?: string; affiliate_proposal_token?: string; affiliate_proposal_id?: string; affiliate_ref?: string; affiliate_prospect_id?: string };
+    // Attribution is resolved server-side, never accepted from supplied IDs.
+    delete body.affiliate_proposal_id;
+    delete body.affiliate_ref;
+    delete body.affiliate_prospect_id;
+    let proposalContext: Record<string, unknown> | null = null;
+    if (body.affiliate_proposal_token !== undefined) {
+      if (typeof body.affiliate_proposal_token !== "string" || !/^[0-9a-f]{64}$/.test(body.affiliate_proposal_token)) return new Response(JSON.stringify({ error: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: context, error } = await svc.rpc("resolve_affiliate_proposal_context", { _token: body.affiliate_proposal_token });
+      if (error || !context || context.offer_type !== "personnalise") return new Response(JSON.stringify({ error: "invalid_proposal" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (user) {
+        const { data: affiliate, error: affiliateError } = await svc.from("affiliates").select("user_id").eq("id", context.affiliate_entity_id).single();
+        if (affiliateError || !affiliate || affiliate.user_id === user.id) return new Response(JSON.stringify({ error: "client_confirmation_required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      proposalContext = context;
+      body.company_name = context.company_name;
+    }
 
     /**
      * Lecture d'un devis invité. Un entrepreneur arrivé par SMS n'a pas encore
@@ -1358,7 +1374,7 @@ Deno.serve(async (req) => {
       annual_savings_cents: annualSavingsCents,
       competition_level: competitionLevel,
       source: body.source ?? null,
-      input_payload: body as unknown as Record<string, unknown>,
+      input_payload: { ...body, affiliate_proposal_token: undefined, ...(proposalContext ? { affiliate_proposal_id: proposalContext.id, affiliate_ref: proposalContext.ref, affiliate_prospect_id: proposalContext.prospect_id } : {}) },
 
       breakdown,
     };
