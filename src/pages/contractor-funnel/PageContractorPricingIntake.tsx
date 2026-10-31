@@ -35,6 +35,11 @@ import { avgTicketFor, closeRateFor } from "@/config/scanCapacityTickets";
 import { formatQuebecNumber, parseQuebecNumber } from "@/lib/formatting";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 import { Button } from "@/components/ui/button";
+import { saveClaraQualification, flushClaraQualification } from "@/services/clara/claraContractorQualification";
+import {
+  INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, hasWork, hasTerritories, declaredCapacity,
+  isQualificationReady, prefillQualification, toClaraPatch, toQuoteContext, qualitativePayload, splitList,
+} from "@/lib/contractorIntakeQualification";
 
 type Step = {
   key: string;
@@ -298,6 +303,11 @@ export default function PageContractorPricingIntake() {
 
   /* Déclaré à Clara : affiché tel quel, jamais redemandé ni chiffré. */
   const [claraDeclared, setClaraDeclared] = useState<{ serviceAreas: string[]; goals: string[]; preferences?: ReturnType<typeof getKnownContractorContext>["preferences"] }>({ serviceAreas: [], goals: [] });
+  // Réponses déjà connues : préremplies et modifiables, jamais réécrites sur une saisie.
+  useEffect(() => {
+    if (!hydrated) return;
+    setData((d) => ({ ...d, qualification: prefillQualification((d as QD).qualification, claraDeclared) } as Partial<PricingIntakeInput>));
+  }, [claraDeclared, hydrated]);
 
   /* ---------- Fiche entrepreneur rattachée au compte : source prioritaire ---------- */
   const [linked, setLinked] = useState<{ id: string; business_name: string | null; address: string | null } | null>(null);
@@ -652,9 +662,9 @@ export default function PageContractorPricingIntake() {
 
   const objectiveStep: Step = {
     key: "objective",
-    question: "Combien d'argent aimeriez-vous faire de plus cette année avec votre entreprise?",
-    hint: "Un montant suffit. Nous le traduisons en rendez-vous, avec des hypothèses que vous pouvez corriger.",
-    isValid: (d) => Boolean(objectiveToPayload(d)),
+    question: "Souhaitez-vous préciser un objectif financier? (facultatif)",
+    hint: "Laissez vide si votre priorité n'est pas un montant. Si vous en indiquez un, nous le traduisons en rendez-vous avec des hypothèses modifiables.",
+    isValid: (d) => !((d as GoalFields).goal_amount && (d as GoalFields).goal_amount! > 0) || Boolean(objectiveToPayload(d)),
     render: (d, set) => {
       const g = d as GoalFields;
       const kind = g.goal_kind ?? "sales";
@@ -753,9 +763,116 @@ export default function PageContractorPricingIntake() {
             </div>
           )}
           {simSummary}
+        </div>
+      );
+    },
+  };
+
+  const q = (d: Partial<PricingIntakeInput>) => ((d as QD).qualification ?? {}) as IntakeQualification;
+  const setQ = (d: Partial<PricingIntakeInput>, patch: Partial<IntakeQualification>) =>
+    set({ qualification: { ...q(d), ...patch } } as Partial<PricingIntakeInput>);
+  const field = "w-full min-h-12 rounded-xl border border-white/25 bg-white/[0.06] px-4 py-3 text-[16px] text-white placeholder:text-white/55 focus:outline-none focus:ring-2 focus:ring-amber-400";
+  const labelCls = "mb-1.5 block text-sm font-medium text-white/90";
+  const NoneToggle = ({ on, onChange, children }: { on: boolean; onChange: (v: boolean) => void; children: React.ReactNode }) => (
+    <button type="button" aria-pressed={on} onClick={() => onChange(!on)}
+      className={`mt-2 min-h-11 rounded-full border px-4 text-sm ${on ? "border-amber-400 bg-amber-500/20 text-amber-100" : "border-white/20 bg-white/[0.04] text-white/85"}`}>
+      {children}
+    </button>
+  );
+
+  const prioritiesStep: Step = {
+    key: "priorities",
+    question: "Parlez-nous de vos objectifs",
+    hint: "Augmenter votre rentabilité, obtenir de meilleurs mandats ou travailler plus près de chez vous? Clara apprend à connaître votre entreprise pour vous proposer un plan adapté.",
+    isValid: (d) => hasPriorities(q(d)),
+    render: (d) => {
+      const cur = q(d).priorities ?? [];
+      return (
+        <div className="space-y-4" data-testid="intake-priorities">
+          <p className="text-sm text-white/75">Choisissez une ou plusieurs priorités.</p>
+          <div className="flex flex-wrap gap-2">
+            {INTAKE_PRIORITIES.map((p) => {
+              const on = cur.includes(p);
+              return (
+                <button key={p} type="button" aria-pressed={on}
+                  onClick={() => setQ(d, { priorities: on ? cur.filter((x) => x !== p) : [...cur, p] })}
+                  className={`min-h-11 rounded-full border px-4 py-2 text-left text-sm ${on ? "border-amber-400 bg-amber-500/20 text-amber-100" : "border-white/20 bg-white/[0.04] text-white/85"}`}>
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+          <div>
+            <label htmlFor="intake-other-goal" className={labelCls}>Autre objectif (facultatif)</label>
+            <input id="intake-other-goal" className={field} value={q(d).other_goal ?? ""} maxLength={80}
+              onChange={(e) => setQ(d, { other_goal: e.target.value })} placeholder="Ex. Travailler moins les fins de semaine" />
+          </div>
+        </div>
+      );
+    },
+  };
+
+  const workStep: Step = {
+    key: "work",
+    question: "Quels mandats voulez-vous faire?",
+    hint: "Ex. « J’installe des thermopompes, mais je veux surtout des installations centrales complètes, à Laval et sur la Rive-Nord. »",
+    isValid: (d) => hasWork(q(d)),
+    render: (d) => (
+      <div className="space-y-4" data-testid="intake-work">
+        <div>
+          <label htmlFor="intake-preferred-work" className={labelCls}>Spécialités et travaux recherchés</label>
+          <textarea id="intake-preferred-work" rows={2} className={field} value={q(d).preferred_work ?? ""}
+            onChange={(e) => setQ(d, { preferred_work: e.target.value })} placeholder="Ex. installations centrales complètes" />
+        </div>
+        <div>
+          <label htmlFor="intake-excluded-work" className={labelCls}>Travaux que vous ne voulez pas</label>
+          <textarea id="intake-excluded-work" rows={2} className={field} disabled={q(d).no_excluded_work}
+            value={q(d).no_excluded_work ? "" : q(d).excluded_work ?? ""}
+            onChange={(e) => setQ(d, { excluded_work: e.target.value })} placeholder="Ex. petites réparations" />
+          <NoneToggle on={Boolean(q(d).no_excluded_work)} onChange={(v) => setQ(d, { no_excluded_work: v })}>Aucune exclusion</NoneToggle>
+        </div>
+        <p className="text-[12px] text-white/65">Séparez par des virgules. Informations déclarées, non vérifiées.</p>
+      </div>
+    ),
+  };
+
+  const territoryStep: Step = {
+    key: "territories",
+    question: "Où voulez-vous travailler?",
+    hint: "Les territoires desservis peuvent être différents de l'adresse de votre entreprise.",
+    isValid: (d) => hasTerritories(q(d)),
+    render: (d) => (
+      <div className="space-y-4" data-testid="intake-territories">
+        <div>
+          <label htmlFor="intake-areas" className={labelCls}>Territoires desservis</label>
+          <textarea id="intake-areas" rows={2} className={field} value={q(d).service_areas ?? ""}
+            onChange={(e) => setQ(d, { service_areas: e.target.value })} placeholder="Ex. Laval, Rive-Nord" />
+        </div>
+        <div>
+          <label htmlFor="intake-excluded-areas" className={labelCls}>Secteurs à éviter</label>
+          <textarea id="intake-excluded-areas" rows={2} className={field} disabled={q(d).no_excluded_areas}
+            value={q(d).no_excluded_areas ? "" : q(d).excluded_areas ?? ""}
+            onChange={(e) => setQ(d, { excluded_areas: e.target.value })} placeholder="Ex. Centre-ville de Montréal" />
+          <NoneToggle on={Boolean(q(d).no_excluded_areas)} onChange={(v) => setQ(d, { no_excluded_areas: v })}>Aucun secteur exclu</NoneToggle>
+        </div>
+      </div>
+    ),
+  };
+
+  const capacityStep: Step = {
+    key: "capacity",
+    question: "Quelle est votre capacité réaliste?",
+    hint: "Nous ne proposons jamais plus que ce que vous pouvez accueillir.",
+    isValid: (d) => declaredCapacity(d as GoalFields) !== null,
+    render: (d, set) => {
+      const g = d as GoalFields;
+      const setG = (p: Partial<GoalFields>) => set(p as Partial<PricingIntakeInput>);
+      return (
+        <div className="space-y-3">
           {(() => {
             const range: CapacityRange | "" = g.capacity_range ?? (typeof g.next_month_appointments === "number" ? "other" : "");
             const bounds = capacityBounds(g);
+            const sim = simulateGoal(d); const calc = sim.ok ? sim : null;
             const warn = calc ? capacityWarning(calc.cadence, bounds) : null;
             return (
               <div className="space-y-2" data-testid="capacity-choice">
@@ -808,19 +925,72 @@ export default function PageContractorPricingIntake() {
     },
   };
 
-  const steps: Step[] = [profileStep, objectiveStep];
+  const summaryStep: Step = {
+    key: "summary",
+    question: "Votre profil avant le plan",
+    hint: "Vérifiez et modifiez au besoin. Ces préférences sont déclarées, non vérifiées.",
+    isValid: (d) => isQualificationReady(d as QD & GoalFields),
+    render: (d) => {
+      const Q = q(d);
+      const cap = declaredCapacity(d as GoalFields);
+      const rows: Array<[string, string, string]> = [
+        ["Priorités", [...(Q.priorities ?? []), ...(Q.other_goal?.trim() ? [Q.other_goal.trim()] : [])].join(", "), "priorities"],
+        ["Travaux recherchés", splitList(Q.preferred_work).join(", "), "work"],
+        ["Travaux exclus", Q.no_excluded_work ? "Aucune exclusion" : splitList(Q.excluded_work).join(", "), "work"],
+        ["Territoires", splitList(Q.service_areas).join(", "), "territories"],
+        ["Secteurs exclus", Q.no_excluded_areas ? "Aucun secteur exclu" : splitList(Q.excluded_areas).join(", "), "territories"],
+        ["Capacité", cap ? (cap.min === cap.max ? `${cap.min} rendez-vous le mois prochain` : `${cap.min} à ${cap.max} rendez-vous le mois prochain`) : "À préciser", "capacity"],
+        ...((d as GoalFields).goal_amount ? [["Objectif financier", formatQuebecNumber((d as GoalFields).goal_amount!, "$"), "objective"] as [string, string, string]] : []),
+      ];
+      return (
+        <dl className="space-y-3 text-sm" data-testid="intake-summary">
+          {rows.map(([k, v, target]) => (
+            <div key={k} className="flex items-start justify-between gap-3 border-b border-white/10 pb-2">
+              <div className="min-w-0"><dt className="text-white/65">{k}</dt><dd className="break-words text-white">{v || "À préciser"}</dd></div>
+              <button type="button" className="min-h-11 shrink-0 px-2 text-sm text-amber-300 underline underline-offset-2"
+                onClick={() => setStep(stepsRef.findIndex((x) => x.key === target))}>Modifier</button>
+            </div>
+          ))}
+        </dl>
+      );
+    },
+  };
+
+  const steps: Step[] = [profileStep, prioritiesStep, workStep, territoryStep, capacityStep, objectiveStep, summaryStep];
+  const stepsRef = steps;
 
   const total = steps.length;
-  const safeStep = Math.min(step, total - 1);
+  // Un brouillon repris ne saute jamais une étape requise incomplète.
+  const firstInvalid = steps.findIndex((s) => !s.isValid(data));
+  const safeStep = Math.min(step, total - 1, firstInvalid >= 0 ? firstInvalid : total - 1);
+  // Ramène l'état au premier écran incomplet : remplir un champ n'avance jamais seul.
+  useEffect(() => { if (hydrated && safeStep < step) setStep(safeStep); }, [hydrated, safeStep, step]);
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
   const submit = async () => {
     if (proposalToken && (!proposalContext.proposal || !proposalApplied)) return;
-    const calc = objectiveToPayload(data);
-    if (!calc) return;
-    const payload = calc.payload;
+    const cap = declaredCapacity(data as GoalFields);
+    if (!isQualificationReady(data as QD & GoalFields) || !cap) {
+      toast.error("Complétez vos objectifs, mandats, territoires et capacité avant le plan.");
+      return;
+    }
+    const hasMoney = Boolean((data as GoalFields).goal_amount && (data as GoalFields).goal_amount! > 0);
+    const calc = hasMoney ? objectiveToPayload(data) : null;
+    if (hasMoney && !calc) return;
+    const Q = (data as QD).qualification ?? {};
+    const qualification = toQuoteContext(Q, cap);
+    const { qualification: _q, ...base } = data as QD & Partial<PricingIntakeInput>;
+    const payload = { ...(calc ? calc.payload : qualitativePayload(base, cap)), qualification } as unknown as Partial<PricingIntakeInput>;
     setSubmitting(true);
+    try {
+      saveClaraQualification(toClaraPatch(Q, cap), "declared", { replaceLists: true });
+      await flushClaraQualification();
+    } catch {
+      toast.error("Vos préférences n'ont pas pu être enregistrées. Réessayez.");
+      setSubmitting(false);
+      return;
+    }
     void trackFunnelStep("profile_completed", {
       subjectId: payload.company_name ?? null,
       city: payload.city ?? null,
@@ -833,8 +1003,9 @@ export default function PageContractorPricingIntake() {
         horizon: (data as GoalFields).horizon ?? "12m",
         goal_amount: (data as GoalFields).goal_amount ?? null,
         margin_pct: (data as GoalFields).margin_pct ?? null,
-        contracts_needed: calc.contracts,
-        appointments_needed_total: calc.appointmentsTotal,
+        contracts_needed: calc?.contracts ?? null,
+        appointments_needed_total: calc?.appointmentsTotal ?? null,
+        financial_goal_declared: hasMoney,
         average_project_value: payload.average_project_value ?? null,
         close_rate_estimate: payload.close_rate_estimate ?? null,
         target_monthly_appointments: payload.target_monthly_appointments ?? null,
@@ -882,7 +1053,7 @@ export default function PageContractorPricingIntake() {
   }
 
   return (
-    <div data-clara-page="contractor-pricing" data-clara-step={step === 0 ? "Entreprise à confirmer" : "Objectif et capacité du mois prochain"} className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
+    <div data-clara-page="contractor-pricing" data-clara-step={current.question} className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
       <Helmet>
         <title>Votre plan personnalisé · UNPRO</title>
       </Helmet>
@@ -913,10 +1084,10 @@ export default function PageContractorPricingIntake() {
           </div>
         )}
 
-        {/* Progression stable : 3 étapes (entreprise, objectif, entente) puis confirmation */}
+        {/* Progression : nombre réel d'écrans */}
         <div className="mb-8">
           <div className="flex items-center gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {steps.map((_, i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
@@ -926,7 +1097,7 @@ export default function PageContractorPricingIntake() {
             ))}
           </div>
           <p className="text-xs text-white/50 mt-3 tracking-wider uppercase" data-testid="intake-step-label">
-            Étape {safeStep + 1} sur 3
+            Étape {safeStep + 1} sur {total}
           </p>
         </div>
 
@@ -979,7 +1150,7 @@ export default function PageContractorPricingIntake() {
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                {isLast ? "Voir ma proposition" : summaryReady && !editingProfile ? "Confirmer et continuer" : "Continuer"}
+                {isLast ? "Voir mon plan personnalisé" : summaryReady && !editingProfile ? "Confirmer et continuer" : "Continuer"}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -1192,6 +1363,8 @@ function Toggle({
 }
 
 /* ---------- Objectif de contrats → rendez-vous recommandés ---------- */
+
+type QD = { qualification?: IntakeQualification };
 
 export type GoalFields = {
   contract_goal_value?: number;
