@@ -1,7 +1,7 @@
 /**
  * UNPRO — Tarifs Gestionnaires.
  * Reuses the existing condo Stripe catalog: no duplicate product, price or billing system.
- * Multi-building/rental portfolios are qualified by Clara, not mis-sold a one-syndicate subscription.
+ * Same server-mapped tier for one condo or a multi-building portfolio; selection persists to checkout.
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -44,7 +44,7 @@ export default function ManagerPlans({ authenticated }: { authenticated: boolean
 
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Un Passeport Immeuble, les documents et le suivi d'entretien au même endroit.
-          Pour les copropriétés, le prix annuel varie selon le nombre de portes.
+          Le prix annuel varie selon le nombre total de portes.
         </p>
 
         <fieldset className="mt-5 grid gap-2 sm:grid-cols-2" aria-label="Type de gestion">

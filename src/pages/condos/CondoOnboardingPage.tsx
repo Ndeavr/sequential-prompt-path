@@ -2,8 +2,11 @@
  * UNPRO Condos — Onboarding Flow
  * Multi-step building registration
  */
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { loadSelection, parseSelection, saveSelection } from "@/lib/managerSelection";
+import { getTierForUnits } from "@/config/condoPricing";
+import { useCondoSubscription } from "@/hooks/useCondoSubscription";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,10 +54,16 @@ const CondoOnboardingPage = () => {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [selection] = useState(() => parseSelection(params) ?? loadSelection());
+  const isPortfolio = selection?.type === "portfolio";
+  const { startCheckout } = useCondoSubscription();
+  const [payState, setPayState] = useState<{ loading: boolean; error: string | null }>({ loading: false, error: null });
+  useEffect(() => { if (selection) saveSelection(selection); }, [selection]);
 
   const [form, setForm] = useState<FormData>({
     name: "", address: "", city: "", postal_code: "",
-    year_built: "", unit_count: "", building_type: "vertical",
+    year_built: "", unit_count: selection && !isPortfolio ? String(selection.doors) : "", building_type: "vertical",
     components: [],
   });
 
@@ -65,6 +74,35 @@ const CondoOnboardingPage = () => {
       components: prev.components.includes(c) ? prev.components.filter(x => x !== c) : [...prev.components, c],
     }));
   };
+
+  const pay = async () => {
+    if (!createdId) return;
+    setPayState({ loading: true, error: null });
+    try {
+      await startCheckout(createdId);
+    } catch (e: any) {
+      setPayState({ loading: false, error: e?.message || "Le paiement n'a pas pu être préparé. Réessayez." });
+      return;
+    }
+    setPayState({ loading: false, error: null });
+  };
+
+  if (isPortfolio && selection) {
+    const t = getTierForUnits(selection.doors);
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <Card className="w-full max-w-lg"><CardContent className="space-y-4 p-6">
+          <h1 className="text-xl font-bold">Votre parc de {selection.doors} portes</h1>
+          <p className="text-sm text-muted-foreground">Plusieurs immeubles / parc locatif · {t.units.replace("unités", "portes")}</p>
+          <p className="whitespace-nowrap text-2xl font-extrabold tabular-nums">{t.priceTaxIncluded.toLocaleString("fr-CA")}&nbsp;$ / an + taxes</p>
+          <p role="status" className="rounded-xl border border-border p-3 text-sm">
+            Abonnement multi-immeubles temporairement indisponible : le portefeuille consolidé et les taxes sont en cours de configuration. Votre sélection est conservée; aucun paiement n'est demandé.
+          </p>
+          <Button variant="outline" className="min-h-11 w-full" onClick={() => navigate("/tarifs/gestionnaires")}>Modifier ma sélection</Button>
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
