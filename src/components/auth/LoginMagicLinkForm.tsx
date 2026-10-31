@@ -22,11 +22,15 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 interface Props {
   ctaLabel?: string;
   successMessage?: string;
+  label?: string;
+  placeholder?: string;
 }
 
 export default function LoginMagicLinkForm({
   ctaLabel = "Recevoir un lien de connexion",
   successMessage = "Lien envoyé ! Vérifiez votre courriel.",
+  label,
+  placeholder = "votre@courriel.com",
 }: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -117,7 +121,13 @@ export default function LoginMagicLinkForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3" noValidate>
       <div>
+        {label && (
+          <label htmlFor="magic-link-email" className="mb-1.5 block text-sm font-medium" style={{ color: "hsl(220 30% 92%)" }}>
+            {label}
+          </label>
+        )}
         <input
+          id="magic-link-email"
           type="email"
           inputMode="email"
           autoComplete="email"
@@ -125,7 +135,7 @@ export default function LoginMagicLinkForm({
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="send"
-          placeholder="votre@courriel.com"
+          placeholder={placeholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onBlur={() => setTouched(true)}
@@ -137,7 +147,7 @@ export default function LoginMagicLinkForm({
             background: "hsl(228 20% 14% / 0.85)",
             border: showError
               ? "1px solid hsl(0 75% 60% / 0.7)"
-              : "1px solid hsl(228 18% 22%)",
+              : "1px solid hsl(220 30% 34%)",
             color: "white",
             // @ts-ignore — vendor placeholder color
             ["--tw-placeholder-opacity" as any]: 1,
@@ -168,7 +178,7 @@ export default function LoginMagicLinkForm({
         )}
       </Button>
       <style>{`
-        input[type="email"]::placeholder { color: hsl(220 14% 55%); opacity: 1; }
+        input[type="email"]::placeholder { color: hsl(220 18% 68%); opacity: 1; }
       `}</style>
     </form>
   );
