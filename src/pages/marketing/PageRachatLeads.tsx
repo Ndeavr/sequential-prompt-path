@@ -304,7 +304,7 @@ export default function PageRachatLeads() {
               UNPRO vise à réorienter cette demande vers un professionnel qui dessert le secteur et offre
               les travaux réellement recherchés, plutôt que de proposer au client un matériau ou un service
               qu'il n'a pas demandé. Si un seul entrepreneur ne peut pas tout prendre en charge, Clara
-              vérifie d'abord avec le propriétaire s'il souhaite envisager plusieurs spécialistes.
+              doit d'abord confirmer avec le propriétaire s'il accepte plusieurs spécialistes.
             </p>
             <a href="#echanger" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-sky-200 underline underline-offset-4">
               Récupérer la valeur de mes demandes non retenues <ArrowRight size={16} />
