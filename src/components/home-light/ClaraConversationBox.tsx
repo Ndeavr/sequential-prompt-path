@@ -2304,6 +2304,10 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
         aria-haspopup="menu"
         aria-expanded={open}
         title={label}
+        // Keep textarea focus: a blur here closes the Android keyboard,
+        // resizes visualViewport and makes the composer/menu jump.
+        onPointerDown={(event) => event.preventDefault()}
+        onMouseDown={(event) => event.preventDefault()}
         onClick={() => setOpen((value) => !value)}
         className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
       >
@@ -2320,6 +2324,8 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
               key={key}
               type="button"
               role="menuitem"
+              onPointerDown={(event) => event.preventDefault()}
+              onMouseDown={(event) => event.preventDefault()}
               className="flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
               onClick={() => {
                 setOpen(false);
