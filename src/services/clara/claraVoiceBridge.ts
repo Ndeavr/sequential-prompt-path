@@ -71,7 +71,7 @@ export async function loadClaraVoiceBrief(): Promise<ClaraVoiceBrief | null> {
  * Consigne de reprise envoyée à l'agent vocal : résumé + derniers tours +
  * question en attente. Jamais l'historique brut complet.
  */
-export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string | null {
+export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null, lang: "fr" | "en" = "fr"): string | null {
   if (!brief || !brief.has_conversation) return null;
 
   const facts: string[] = [];
@@ -84,19 +84,26 @@ export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string |
     .map((m) => `${m.role === "user" ? "Client" : "Clara"} : ${m.text}`)
     .join("\n");
 
-  const lines = [
-    "CONTINUITÉ — même conversation, canal vocal.",
-    "Tu poursuis une conversation déjà commencée. Ne te présente pas.",
-    "Ne recommence pas la conversation. Ne redemande jamais une information déjà connue.",
-    "Interprète la prochaine phrase du client comme une réponse ou une continuation.",
-  ];
+  const lines = lang === "en"
+    ? [
+        "CONTINUITY — same conversation, voice channel.",
+        "Continue the existing conversation in natural Canadian English. Do not introduce yourself again.",
+        "Do not restart or repeat questions already answered.",
+        "Treat the user's next utterance as an answer or continuation.",
+      ]
+    : [
+        "CONTINUITÉ — même conversation, canal vocal.",
+        "Tu poursuis une conversation déjà commencée. Ne te présente pas.",
+        "Ne recommence pas la conversation. Ne redemande jamais une information déjà connue.",
+        "Interprète la prochaine phrase du client comme une réponse ou une continuation.",
+      ];
   if (facts.length > 0) lines.push(`État connu — ${facts.join(" · ")}`);
   if (brief.summary) lines.push(`Contexte antérieur déclaré :\n${brief.summary}`);
   if (turns) lines.push(`Derniers échanges :\n${turns}`);
   if (brief.pending_question) {
-    lines.push(
-      `Question déjà posée et affichée à l'écran : « ${brief.pending_question} » — attends la réponse du client sans la reposer à voix haute, et traite sa première phrase comme la réponse à cette question.`,
-    );
+    lines.push(lang === "en"
+      ? `Question already displayed: “${brief.pending_question}”. Wait for the user to answer; do not repeat it aloud. Use the selected English language for the response.`
+      : `Question déjà posée et affichée à l'écran : « ${brief.pending_question} » — attends la réponse du client sans la reposer à voix haute, et traite sa première phrase comme la réponse à cette question.`);
   }
   return lines.join("\n");
 }
@@ -109,10 +116,10 @@ export function buildVoiceResumeContext(brief: ClaraVoiceBrief | null): string |
  *  - conversation en cours sans question → courte relance de continuité;
  *  - aucune conversation → `null` : la salutation habituelle s'applique.
  */
-export function buildVoiceFirstMessage(brief: ClaraVoiceBrief | null): string | null {
+export function buildVoiceFirstMessage(brief: ClaraVoiceBrief | null, lang: "fr" | "en" = "fr"): string | null {
   if (!brief || !brief.has_conversation) return null;
-  if (brief.pending_question) return "Je vous écoute.";
-  return "Je vous écoute, on continue.";
+  if (lang === "en") return brief.pending_question ? "I’m listening." : "I’m listening. Let's continue.";
+  return brief.pending_question ? "Je vous écoute." : "Je vous écoute, on continue.";
 }
 
 /* ─── Écriture des tours parlés dans la conversation canonique ─── */

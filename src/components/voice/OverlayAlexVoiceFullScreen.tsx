@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+import { localizeClaraScript } from "@/services/clara/claraLocale";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
 import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
@@ -101,6 +103,9 @@ function deriveOrbStateV2(state: LockedVoiceState, isSpeaking: boolean): AlexOrb
 export default function OverlayAlexVoiceFullScreen() {
   const store = useAlexVoiceLockedStore();
   const { user } = useAuth();
+  const { lang } = useLanguage();
+  const langRef = useRef<"fr" | "en">(lang);
+  langRef.current = lang;
   const scrollRef = useRef<HTMLDivElement>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,13 +154,14 @@ export default function OverlayAlexVoiceFullScreen() {
   const contextHint = store.contextHint;
   const intent = store.intent;
   const buildGreeting = useCallback(() => {
+    if (lang === "en") return firstName ? `Hello ${firstName}. I’m listening.` : "Hello. I’m listening.";
     return buildAlexOpening({
       firstName,
       intent: intent ?? undefined,
       hint: contextHint,
       feature: store.feature,
     });
-  }, [firstName, contextHint, intent, store.feature]);
+  }, [firstName, contextHint, intent, store.feature, lang]);
 
 
 
@@ -377,7 +383,7 @@ export default function OverlayAlexVoiceFullScreen() {
         nudgeTimerRef.current = setTimeout(() => {
           if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
           try {
-            const seed = "Bonjour Clara.";
+            const seed = langRef.current === "en" ? "Hello Clara." : "Bonjour Clara.";
             console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
             (conversation as any)?.sendUserMessage?.(seed);
           } catch (e) {
@@ -612,7 +618,8 @@ export default function OverlayAlexVoiceFullScreen() {
         const s = getStore();
         if (!s.isOverlayOpen) return;
         completeVoice("contractor_transition");
-        recordClaraVoiceTurn("assistant", CLARA_CONTRACTOR_TRANSITION_TEXT);
+        const transitionText = localizeClaraScript(CLARA_CONTRACTOR_TRANSITION_TEXT, langRef.current);
+        recordClaraVoiceTurn("assistant", transitionText);
 
         let closed = false;
         const waitForClose = new Promise<void>((resolve) => {
@@ -623,7 +630,7 @@ export default function OverlayAlexVoiceFullScreen() {
           window.addEventListener(CLARA_VOICE_CLOSED_EVENT, onClosed, { once: true });
         });
         elevenlabsService.init();
-        const speech = elevenlabsService.speak(CLARA_CONTRACTOR_TRANSITION_TEXT).catch(() => undefined);
+        const speech = elevenlabsService.speak(transitionText).catch(() => undefined);
         await Promise.race([speech, waitForClose]);
         if (!closed) try { elevenlabsService.stop(); } catch {}
         window.dispatchEvent(new CustomEvent(CLARA_CONTRACTOR_VOICE_FINISHED_EVENT, { detail: { note } }));
@@ -779,8 +786,9 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const brief = await loadClaraVoiceBrief();
         claraBriefRef.current = brief;
-        const resumeContext = [buildVoiceResumeContext(brief), formatClaraPageContext(getClaraPageContext())].filter(Boolean).join("\n\n");
-        const continuation = buildVoiceFirstMessage(brief);
+        const activeLang = langRef.current;
+        const resumeContext = [buildVoiceResumeContext(brief, activeLang), formatClaraPageContext(getClaraPageContext())].filter(Boolean).join("\n\n");
+        const continuation = buildVoiceFirstMessage(brief, activeLang);
         const hasConversation = Boolean(brief?.has_conversation);
         const shouldGreet = !hasConversation && !hasGreeted();
 
@@ -841,7 +849,7 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("error");
         if (err?.name === "NotAllowedError" || err?.message?.includes("Permission")) {
           alexVoiceService.setMicPermission("denied");
-          toast.error("Micro désactivé", { description: "Vous pouvez continuer par chat.", duration: 3000 });
+          toast.error(langRef.current === "en" ? "Microphone disabled" : "Micro désactivé", { description: langRef.current === "en" ? "You can continue in chat." : "Vous pouvez continuer par chat.", duration: 3000 });
           bailToChat("permission_denied");
         } else {
           // Boot failure → bail straight to chat (no false retry, no dead-end)
@@ -1068,6 +1076,25 @@ export default function OverlayAlexVoiceFullScreen() {
 
   if (!store.isOverlayOpen) return null;
 
+  const voiceLabelsEn: Record<string, string> = {
+    "Conversation terminée — toucher pour reprendre": "Conversation ended — tap to resume",
+    "En pause — toucher pour reprendre": "Paused — tap to resume",
+    "Clara démarre…": "Clara is starting…",
+    "Clara répond…": "Clara is replying…",
+    "Clara réfléchit…": "Clara is thinking…",
+    "Clara écoute…": "Clara is listening…",
+    "Je vous écoute.": "I’m listening.",
+    "Clara est là.": "Clara is here.",
+    "Clara se prépare…": "Clara is getting ready…",
+    "Clara vous parle": "Clara is speaking",
+    "Erreur de démarrage": "Startup error",
+    "Connexion de Clara…": "Connecting Clara…",
+    "Vous parlez…": "You’re speaking…",
+    "Réflexion…": "Thinking…",
+    "Clara parle…": "Clara is speaking…",
+    "Session vocale": "Voice session"
+  };
+  const voiceLabel = (value: string) => lang === "en" ? (voiceLabelsEn[value] ?? value) : value;
   const state = store.machineState;
   const isError = state === "error_recoverable" || state === "error_fatal";
   const isCompleted = state === "completed";
@@ -1101,6 +1128,8 @@ export default function OverlayAlexVoiceFullScreen() {
     : state === "speaking" ? "Clara parle…"
     : "Session vocale";
 
+  const localizedCalmCaption = voiceLabel(calmCaption);
+  const localizedStatusText = voiceLabel(statusText);
   const isFloating = store.displayMode === "floating";
 
   // La home héberge visuellement le moteur vocal global dans sa carte Clara.
@@ -1121,7 +1150,7 @@ export default function OverlayAlexVoiceFullScreen() {
         <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="État vocal de Clara" gesturesDisabled />
         <div className="home-clara-voice-copy">
           <strong>Clara Voice</strong>
-          <span role="status">{statusText}</span>
+          <span role="status">{localizedStatusText}</span>
         </div>
         {isPaused && (
           <Button type="button" variant="outline" size="sm" onClick={handleResumeVoice}>
@@ -1143,7 +1172,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Compact assistance leaves the page usable while the same voice session continues.
   if (isFloating) {
-    return <ClaraVoiceDock caption={calmCaption} paused={isPaused} context={pageContext}
+    return <ClaraVoiceDock caption={localizedCalmCaption} paused={isPaused} context={pageContext}
       transcripts={transcripts} onPause={() => pauseVoice("user_pause")}
       onResume={handleResumeVoice} onClose={handleClose} onChat={handleFallbackChat} />;
   }
@@ -1185,10 +1214,10 @@ export default function OverlayAlexVoiceFullScreen() {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-foreground font-display">Clara Voice</h2>
-                <p className="text-[10px] text-muted-foreground">{statusText}</p>
+                <p className="text-[10px] text-muted-foreground">{localizedStatusText}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => store.setDisplayMode("floating")} className="rounded-full">Réduire</Button>
+            <Button variant="ghost" size="sm" onClick={() => store.setDisplayMode("floating")} className="rounded-full">{lang === "en" ? "Minimize" : "Réduire"}</Button>
             <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
               <X className="w-5 h-5" />
             </Button>
@@ -1219,7 +1248,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
               {transcripts.length === 0 && !isStabilizing && isSessionActive && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">Clara est prête. Parlez…</p>
+                  <p className="text-sm text-muted-foreground">{lang === "en" ? "Clara is ready. Go ahead…" : "Clara est prête. Parlez…"}</p>
                 </div>
               )}
             </div>
@@ -1231,13 +1260,13 @@ export default function OverlayAlexVoiceFullScreen() {
               <button
                 type="button"
                 onClick={handleResumeVoice}
-                aria-label="Reprendre la session vocale"
+                aria-label={lang === "en" ? "Resume voice session" : "Reprendre la session vocale"}
                 className="flex flex-col items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
                 <span className="opacity-60">
-                  <AlexMorphingOrb state="idle" size="lg" ariaLabel={isCompleted ? "Conversation terminée" : "Clara en pause"} />
+                  <AlexMorphingOrb state="idle" size="lg" ariaLabel={lang === "en" ? (isCompleted ? "Conversation ended" : "Clara paused") : (isCompleted ? "Conversation terminée" : "Clara en pause")} />
                 </span>
-                <span className="text-sm text-foreground/80">{haltedLabel}</span>
+                <span className="text-sm text-foreground/80">{voiceLabel(haltedLabel)}</span>
               </button>
             ) : (
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />
@@ -1264,7 +1293,7 @@ export default function OverlayAlexVoiceFullScreen() {
             {isRecoveringNow ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Zap className="w-4 h-4 animate-pulse" /> {recovery.phaseLabel || 'Réinitialisation…'}
+                  <Zap className="w-4 h-4 animate-pulse" /> {lang === "en" ? "Reconnecting…" : (recovery.phaseLabel || "Réinitialisation…")}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -1273,16 +1302,16 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isError ? (
               <>
                 <Button onClick={handleRetry} className="rounded-full gap-2 px-6" variant="default">
-                  <Zap className="w-4 h-4" /> Réinitialiser Clara
+                  <Zap className="w-4 h-4" /> {lang === "en" ? "Restart Clara" : "Réinitialiser Clara"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
-                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                  <MessageSquare className="w-4 h-4" /> {lang === "en" ? "Switch to chat" : "Passer au chat"}
                 </Button>
               </>
             ) : isStabilizing ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4 animate-spin" /> Clara démarre…
+                  <Sparkles className="w-4 h-4 animate-spin" /> {lang === "en" ? "Starting Clara…" : "Clara démarre…"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -1291,16 +1320,16 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isPaused ? (
               <>
                 <Button onClick={handleResumeVoice} className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4" /> Reprendre
+                  <Sparkles className="w-4 h-4" /> {lang === "en" ? "Resume" : "Reprendre"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
-                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                  <MessageSquare className="w-4 h-4" /> {lang === "en" ? "Switch to chat" : "Passer au chat"}
                 </Button>
               </>
             ) : (
               <>
                 <Button onClick={handleClose} variant="destructive" className="rounded-full gap-2 px-8">
-                  <PhoneOff className="w-5 h-5" /> Raccrocher
+                  <PhoneOff className="w-5 h-5" /> {lang === "en" ? "End call" : "Raccrocher"}
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" size="icon" className="rounded-full">
                   <MessageSquare className="w-4 h-4" />
