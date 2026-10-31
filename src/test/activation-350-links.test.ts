@@ -44,6 +44,12 @@ describe("Lien affilié 350 $ vers forfait de rendez-vous exclusifs", () => {
 
 describe("Page activation 350 $ — textes", () => {
   const src = readFileSync("src/pages/entrepreneur/PageActivation350.tsx", "utf8");
+  it("résout le code de référence du lien 350 côté serveur avant d'ouvrir le checkout", () => {
+    expect(src).toContain("useProposalContext(proposalToken)");
+    expect(src).toContain("if (proposalRef) q.set(\"ref\", proposalRef)");
+    expect(src).toContain("<Entry350FastCheckout query={attributedParams} />");
+    expect(src).toContain("proposalToken && !proposalRef");
+  });
   it("marketing sans calcul fiscal; total et 0 RDV au récapitulatif", () => {
     expect(src).not.toContain("402,41");
     expect(src).not.toContain("se choisissent séparément");
