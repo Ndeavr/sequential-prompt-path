@@ -5,6 +5,7 @@ const links = readFileSync("src/lib/activation350Links.ts", "utf8");
 const page = readFileSync("src/pages/entrepreneur/PageActivation350.tsx", "utf8");
 const fast = readFileSync("src/components/entrepreneur/Entry350FastCheckout.tsx", "utf8");
 const payment = readFileSync("src/pages/entrepreneur/activation/ScreenPayment.tsx", "utf8");
+const close = readFileSync("src/services/clara/claraActivationClose.ts", "utf8");
 const edge = readFileSync("supabase/functions/create-checkout-session/index.ts", "utf8");
 
 describe("Clara entry350 quote-free handoff", () => {
@@ -16,7 +17,9 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(payment).not.toContain('create-founder-activation-checkout');
     expect(payment).toContain('const declaredName = state.business_name.trim();');
     expect(payment).toContain('sessionStorage.setItem("unpro_entry350_declared_name", declaredName)');
-    expect(payment).toContain('navigate(buildActivation350Links(new URLSearchParams(window.location.search)).activate)');
+    expect(payment).toContain('navigate(claraActivationLinks(window.location.search).activate)');
+    expect(close).toContain('const stored = getStoredAttribution()');
+    expect(close).toContain('if (!params.has("ref") && stored?.refCode) params.set("ref", stored.refCode)');
     expect(payment).toContain('Continuer vers le paiement sécurisé');
   });
   it("routes the base activation to its existing landing instead of monthly intake", () => {
