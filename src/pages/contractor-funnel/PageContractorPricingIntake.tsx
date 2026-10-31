@@ -963,6 +963,8 @@ export default function PageContractorPricingIntake() {
   // Un brouillon repris ne saute jamais une étape requise incomplète.
   const firstInvalid = steps.findIndex((s) => !s.isValid(data));
   const safeStep = Math.min(step, total - 1, firstInvalid >= 0 ? firstInvalid : total - 1);
+  // Ramène l'état au premier écran incomplet : remplir un champ n'avance jamais seul.
+  useEffect(() => { if (hydrated && safeStep < step) setStep(safeStep); }, [hydrated, safeStep, step]);
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
