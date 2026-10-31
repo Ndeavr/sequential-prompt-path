@@ -1,6 +1,23 @@
 # UNPRO — Campagne « Vos mauvais leads ont encore de la valeur »
 **Préparation du 31 octobre 2026 — STATUT : CONCEPT ET COPIES PRÊTS POUR VALIDATION, NON PUBLIÉS, AUCUN ENVOI, AUCUN BUDGET ENGAGÉ.**
 
+
+## Message maître resserré — priorité campagne (31 octobre)
+
+**H1 / Accroche :** « Combien de fois avez-vous dit à un client : “On fait pas ça.” “C'est trop loin.” “On est complets.” ? »
+
+**Corps :** « Ou accepté une rencontre pour réaliser ensuite que ce projet n'était pas pour vous? Pire : vous aviez payé pour obtenir cette demande. Et si ces demandes que vous refusez pouvaient encore vous rapporter quelque chose? »
+
+**Chute :** « UNPRO rachète vos “mauvais” leads… **en crédits UNPRO, pas en argent**. Avec l'accord du propriétaire, les demandes admissibles peuvent devenir des crédits pour des rendez-vous exclusifs, qualifiés et compatibles avec vos services, votre territoire et votre horaire, selon les conditions du programme. »
+
+**Signature :** « Le problème, ce n'est pas toujours le lead. C'est qu'il n'était pas pour vous. »
+
+**Règle de ton :** ne pas normaliser les rendez-vous où l'entrepreneur ne se présente pas sans prévenir. Dans la copie, préférer « accepté une rencontre puis réalisé que ce n'était pas le bon projet »; le fait de manquer un rendez-vous est un manquement, pas une promesse UNPRO.
+
+**SMS très court (après validation et consentement)** : « “On fait pas ça.” “Trop loin.” “Pas le bon projet.” Vos demandes refusées pourraient valoir des crédits UNPRO, pas du cash. Avec accord du client. [LIEN] STOP ».
+
+**Meta angle** : « Vous avez payé pour ce lead. Mais ce projet n'était pas pour vous. Et s'il pouvait encore vous rapporter des crédits UNPRO? » Bulle « crédits, pas argent » toujours visible. Aucune promesse d'un programme actif tant qu'il n'est pas lancé.
+
 ## 1. Positionnement
 **Accroche volontairement provocatrice :** « UNPRO rachète vos “mauvais” leads. »
 **Explication INDISSOCIABLE de l'accroche, dès la première exposition :** « Pas en argent : en crédits UNPRO, selon l'admissibilité des demandes. » Ne jamais faire croire à un achat en espèces.
