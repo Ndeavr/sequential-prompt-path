@@ -1630,7 +1630,7 @@
   .min-h-svh { min-height: 100svh; }
 
   .admin-theme,
-  .alex-immersive {
+  .alex-immersive:not(.auth-overlay-card) {
     background: hsl(var(--background)) !important;
   }
 
