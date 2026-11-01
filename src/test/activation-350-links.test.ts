@@ -53,3 +53,14 @@ describe("Page activation 350 $ — textes", () => {
     expect(existsSync("src/assets/unpro-audit-ia-final-16x9.mp4.asset.json")).toBe(true);
   });
 });
+
+import { buildActivation350Links as b350 } from "@/lib/activation350Links";
+describe("proposal token scope", () => {
+  it("keeps proposal on activate but not on the appointments option", () => {
+    const t = "a".repeat(64);
+    const l = b350(new URLSearchParams(`proposal=${t}&ref=ABC`));
+    expect(l.activate).toContain(`proposal=${t}`);
+    expect(l.more).not.toContain("proposal=");
+    expect(l.more).toContain("ref=ABC");
+  });
+});
