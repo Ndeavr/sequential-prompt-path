@@ -60,7 +60,6 @@ const STRIPE_TEST_KEY = Deno.env.get("STRIPE_TEST_SECRET_KEY") ?? (STRIPE_KEY.st
 const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
 
 const FIXTURE_RETENTION_DAYS = 7;
-const QA_FIXTURE_MARKER = "Fixture QA UNPRO";
 
 const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
 

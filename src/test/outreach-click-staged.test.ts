@@ -11,7 +11,12 @@ function stagedSource() {
 async function runCase(mode: string) {
   let handler: ((req: Request) => Promise<Response>) | undefined;
   const writes: unknown[] = [], requests: string[] = [];
-  const fixture = "https://example.test/functions/v1/qa-e2e-fixture?run=fixture1";
+  // The destination the selftest must verify is the PUBLISHED frontend route,
+  // not the legacy Edge fixture. An SPA returns index.html (HTTP 200) for any
+  // unknown route, so the deployed bundle marker is the only real proof.
+  const fixture = "https://unpro.ca/qa/e2e-fixture?run=fixture1";
+  const bundle = "https://unpro.ca/assets/index-fixture.js";
+  const indexHtml = '<html><script src="/assets/index-fixture.js"></script></html>';
   const chain: Record<string, unknown> = {};
   chain.insert = () => chain;
   chain.update = (row: unknown) => { writes.push(row); return chain; };
@@ -25,12 +30,16 @@ async function runCase(mode: string) {
     createTrackedLink: async () => "https://unpro.ca/r/fixture123",
     wrapAllUrls: async (body: string) => ({ body }),
     validateCta: () => ({ ok: true, cta_urls: ["https://unpro.ca/r/fixture123"], has_tracked_cta: true }),
+    isTrackedUrl: (url: string) => url.includes("/r/"),
+    trackingIdFromUrl: (url: string) => url.split("/r/")[1] ?? "",
     withReplyFooter: (html: string) => html, recordEmailEvent: async () => {}, sanitizeTags: (v: unknown) => v,
     Response, Date, console: { log() {} }, setTimeout: (fn: () => void) => { fn(); return 0; },
+    URL,
     fetch: async (url: string) => {
       requests.push(url);
       if (url.includes("outreach-shortlink-resolve")) return new Response(JSON.stringify({ redirect_url: mode === "wrong_target" ? "https://unpro.ca/" : fixture }), { status: mode === "resolver_error" ? 403 : 200 });
-      if (url.includes("qa-e2e-fixture")) return new Response(mode === "blank_spa" ? "<html>App</html>" : "Fixture QA UNPRO", { status: mode === "landing_error" ? 500 : 200 });
+      if (url === fixture) return new Response(indexHtml, { status: mode === "landing_error" ? 500 : 200 });
+      if (url === bundle) return new Response(mode === "blank_spa" ? "const app=1;" : 'const m="UNPRO-QA-E2E-FIXTURE-V1";const r="/qa/e2e-fixture";');
       return new Response(JSON.stringify({ id: "synthetic-provider-id" }));
     },
   };
@@ -52,7 +61,8 @@ describe("staged existing selftest — synthetic adapters only", () => {
   it("exact fixture content passes locally without opening any gate", async () => {
     const { result, writes, requests } = await runCase("valid");
     expect(result.ok).toBe(true);
-    expect(requests.some(url => url.includes("qa-e2e-fixture"))).toBe(true);
+    expect(requests.some(url => url.includes("/qa/e2e-fixture"))).toBe(true);
+    expect(requests.some(url => url.includes("/assets/index-fixture.js"))).toBe(true);
     expect(writes.some(row => (row as { gated?: boolean }).gated === false)).toBe(false);
   });
 });

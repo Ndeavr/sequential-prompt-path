@@ -14,13 +14,14 @@ function load(path: string, context: Record<string, unknown>, suffix = "") {
   }).outputText, context);
 }
 
-function database(rows: unknown[], state: unknown = null) {
+function database(rows: unknown[], state: unknown = null, inserts: Record<string, unknown[]> = {}) {
   return {
     from(table: string) {
       const chain: Record<string, unknown> = {};
       for (const method of ["select", "insert", "upsert", "update", "delete", "eq", "lt", "like", "contains", "order", "limit"]) {
         chain[method] = (value: unknown) => {
           if (table === "outreach_e2e_full_runs" && method === "insert") rows.push(value);
+          if (method === "insert") (inserts[table] ||= []).push(value);
           return chain;
         };
       }
@@ -77,18 +78,25 @@ describe("prelaunch evidence — no external provider or database", () => {
   it.each(["queued", "delivered"])("existing E2E handler never passes with %s SMS and connectivity-only Stripe", async smsStatus => {
     let handler: ((req: Request) => Promise<Response>) | undefined;
     const rows: unknown[] = [];
-    const env: Record<string, string> = { SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", SUPABASE_ANON_KEY: "fixture", TWILIO_ACCOUNT_SID: "fixture", TWILIO_AUTH_TOKEN: "fixture", TWILIO_PHONE_NUMBER: "+15005550006", STRIPE_TEST_SECRET_KEY: "sk_test_fixture" };
+    const inserts: Record<string, unknown[]> = {};
+    // Internal owner-authorized test destination: the run must exercise the SMS
+    // path instead of failing on a missing destination.
+    const env: Record<string, string> = { SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "fixture", SUPABASE_ANON_KEY: "fixture", TWILIO_ACCOUNT_SID: "fixture", TWILIO_AUTH_TOKEN: "fixture", TWILIO_PHONE_NUMBER: "+15005550006", TWILIO_TEST_TO: "+15145550100", STRIPE_TEST_SECRET_KEY: "sk_test_fixture" };
     const context = {
-      createClient: () => database(rows, { status: "sent" }), smsDeliveryConfirmed, funnelIncrementConfirmed, paymentProofError,
+      createClient: () => database(rows, { status: "sent" }, inserts), smsDeliveryConfirmed, funnelIncrementConfirmed, paymentProofError,
       Deno: { env: { get: (key: string) => env[key] }, serve: (fn: typeof handler) => { handler = fn; } },
-      crypto: webcrypto, Request, Response, URLSearchParams, Date, btoa, console,
+      crypto: webcrypto, Request, Response, URLSearchParams, Date, btoa, console, URL,
       setTimeout: (fn: () => void) => { fn(); return 0; },
       fetch: async (url: string) => {
-        if (url.includes("r-redirect")) return new Response("", { status: 302, headers: { location: "https://example.test/qa-e2e-fixture" } });
-        if (url.includes("qa-e2e-fixture")) return new Response("Fixture QA UNPRO");
+        // The redirect must land exactly on the destination that was registered
+        // for this run — the published frontend QA route.
+        const registered = (inserts.acquisition_tracking_links ?? []).at(-1) as { destination_url?: string } | undefined;
+        if (url.includes("r-redirect")) return new Response("", { status: 302, headers: { location: registered?.destination_url ?? "https://unpro.ca/" } });
+        if (url.startsWith("https://unpro.ca/qa/e2e-fixture")) return new Response('<html><script src="/assets/index-fixture.js"></script></html>');
+        if (url === "https://unpro.ca/assets/index-fixture.js") return new Response('const m="UNPRO-QA-E2E-FIXTURE-V1";const r="/qa/e2e-fixture";');
         const body = url.includes("outreach-resend-send") ? { ok: true, resend_id: "fixture-email" }
           : url.includes("Messages") ? { sid: "fixture-sms", status: smsStatus }
-          : url.includes("outreach-shortlink-resolve") ? { redirect_url: "https://example.test/qa-e2e-fixture" }
+          : url.includes("outreach-shortlink-resolve") ? { redirect_url: registered?.destination_url ?? "https://unpro.ca/" }
           : { id: "cs_test_fixture", livemode: false, status: "expired" };
         return new Response(JSON.stringify(body));
       },

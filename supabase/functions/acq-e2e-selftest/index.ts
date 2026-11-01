@@ -20,6 +20,11 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
 const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
 
+// The QA landing is the PUBLISHED frontend route (the same address a real
+// recipient is sent to), never the legacy Edge fixture.
+const PUBLIC_SITE = "https://unpro.ca";
+const QA_ROUTE_MARKER = "UNPRO-QA-E2E-FIXTURE-V1";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const sb = createClient(SUPABASE_URL, SRK);
@@ -57,7 +62,7 @@ Deno.serve(async (req) => {
 
   try {
     // STEP 1 — render + wrap + validate
-    const fixtureUrl = `${SUPABASE_URL}/functions/v1/qa-e2e-fixture?run=${runId.slice(0, 8)}`;
+    const fixtureUrl = `${PUBLIC_SITE}/qa/e2e-fixture?run=${runId.slice(0, 8)}`;
     const fixtureLink = await createTrackedLink(fixtureUrl, { campaign: "e2e_selftest", channel: "email", metadata: { qa_fixture: true, run_id: runId } });
     const html = withReplyFooter(`
       <p>Bonjour,</p>
@@ -155,14 +160,27 @@ Deno.serve(async (req) => {
       });
       const resolved = await resolve.json().catch(() => ({}));
       const dest = (resolved as any)?.redirect_url as string | undefined;
-      // Resolve only the exact synthetic target, then verify its actual content.
+      // Resolve only the exact synthetic target, then prove the PUBLISHED
+      // frontend really serves that QA route. An SPA answers HTTP 200 with
+      // index.html for unknown routes, so a 200 or a page text proves nothing:
+      // the deployed JS bundle must contain the QA route marker.
       let ok = false;
+      let detail = "";
       if (resolve.ok && dest === fixtureUrl) {
         const landing = await fetch(fixtureUrl, { headers: { "User-Agent": "unpro-qa-selftest" } });
-        const content = await landing.text();
-        ok = landing.ok && content.includes("Fixture QA UNPRO");
+        const html = await landing.text();
+        if (!landing.ok) {
+          detail = `landing HTTP ${landing.status} — route not served`;
+        } else {
+          const srcs = [...html.matchAll(/<script[^>]+src="([^"]+\.js)"/g)].map(m => new URL(m[1], PUBLIC_SITE).toString());
+          for (const s of srcs) {
+            const js = await (await fetch(s)).text();
+            if (js.includes(QA_ROUTE_MARKER) && js.includes("/qa/e2e-fixture")) { ok = true; break; }
+          }
+          detail = `landing HTTP ${landing.status} scripts=${srcs.length} route_marker_verified=${ok}`;
+        }
       }
-      await append("click_redirect", ok ? "pass" : "fail", ok ? `resolved anonymously → ${dest}` : `HTTP ${resolve.status} ${JSON.stringify(resolved).slice(0, 200)}`);
+      await append("click_redirect", ok ? "pass" : "fail", ok ? `resolved anonymously → ${dest} · ${detail}` : `HTTP ${resolve.status} ${JSON.stringify(resolved).slice(0, 200)} · ${detail}`);
       if (!ok) failedStep ||= "click_redirect";
     } else {
       criticalSkips.push("click_redirect");
