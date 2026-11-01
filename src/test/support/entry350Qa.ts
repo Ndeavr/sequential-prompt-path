@@ -1,3 +1,4 @@
+import { handleCondoBillingEvent } from "../../../supabase/functions/_shared/condoBilling";
 import { PGlite } from "@electric-sql/pglite";
 import Stripe from "stripe";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
@@ -266,7 +267,7 @@ export async function createQa(taxApproved = true) {
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
+    const imports={handleCondoBillingEvent,...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
