@@ -705,6 +705,8 @@ const PageAIPPScoreReveal = lazyWithRetry(() => import("@/pages/entrepreneur/Pag
 // Contractor Pro
 const ProDashboard = lazyWithRetry(() => import("@/pages/pro/ProDashboard"));
 const ProProfile = lazyWithRetry(() => import("@/pages/pro/ProProfile"));
+const PageRecyclerUnLead = lazyWithRetry(() => import("@/pages/pro/PageRecyclerUnLead"));
+const AdminLeadReferrals = lazyWithRetry(() => import("@/pages/admin/AdminLeadReferrals"));
 const ProAIPPScore = lazyWithRetry(() => import("@/pages/pro/ProAIPPScore"));
 const ProReviews = lazyWithRetry(() => import("@/pages/pro/ProReviews"));
 const ProDocuments = lazyWithRetry(() => import("@/pages/pro/ProDocuments"));
@@ -1507,6 +1509,7 @@ export const AppRouter = () => (
         {/* Contractor Pro */}
         <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
         <Route path="/pro/profile" element={<ProtectedRoute requiredRole="contractor"><ProProfile /></ProtectedRoute>} />
+        <Route path="/pro/recycler-un-lead" element={<ProtectedRoute requiredRole="contractor"><Suspense fallback={<LazyFallback />}><PageRecyclerUnLead /></Suspense></ProtectedRoute>} />
         <Route path="/pro/aipp-score" element={<ProtectedRoute requiredRole="contractor"><ProAIPPScore /></ProtectedRoute>} />
         <Route path="/pro/reviews" element={<ProtectedRoute requiredRole="contractor"><ProReviews /></ProtectedRoute>} />
         <Route path="/pro/documents" element={<ProtectedRoute requiredRole="contractor"><ProDocuments /></ProtectedRoute>} />
@@ -1610,6 +1613,7 @@ export const AppRouter = () => (
         <Route path="/admin/media" element={<AdminProtectedRoute><AdminMedia /></AdminProtectedRoute>} />
         <Route path="/admin/validation" element={<AdminProtectedRoute><AdminValidation /></AdminProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<AdminProtectedRoute><AdminAnswerEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/leads-recycles" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminLeadReferrals /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/demandes-equipes-ventes" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminSalesTeamRequests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/operations" element={<AdminProtectedRoute><AdminOperationsHub /></AdminProtectedRoute>} />
         <Route path="/admin/command" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderCommand /></Suspense></AdminProtectedRoute>} />

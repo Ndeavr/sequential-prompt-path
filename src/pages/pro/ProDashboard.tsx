@@ -61,6 +61,11 @@ const ProDashboard = () => {
           </div>
           <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => navigate(`/pro/profile/public/${profile.id}`)}>Voir ma fiche</Button><Button variant="ghost" className="h-auto min-h-11 whitespace-normal" onClick={() => navigate("/pro/profile")}>Compléter mon logo et mes photos</Button></div>
         </section>}
+        <section className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-2" aria-label="Recycler un lead">
+          <h2 className="font-semibold text-foreground">Recycler un lead</h2>
+          <p className="text-sm text-muted-foreground">Une demande hors territoire, spécialité ou disponibilité? Transmettez-la à UNPRO pour évaluation.</p>
+          <Button className="h-auto min-h-11 whitespace-normal" onClick={() => navigate("/pro/recycler-un-lead")} data-testid="pro-recycle-lead">Recycler un lead</Button>
+        </section>
         <ProNextActionCard profile={profile} appointments={appts} />
         <ContractorAffiliateTeaser />
 
