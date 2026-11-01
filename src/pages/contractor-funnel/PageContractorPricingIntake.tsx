@@ -1141,6 +1141,17 @@ export default function PageContractorPricingIntake() {
           </p>
         </div>
 
+        <ClaraFormAssistant
+          form="contractor_pricing"
+          step={current.question}
+          inlineLabel="Parler à Clara"
+          formIntake={{ onBeforeOpen: () => shareIntakeDraftWithClara(toIntakeDraft(dataRef.current)) }}
+        />
+        {claraFilled.length > 0 && (
+          <p role="status" data-testid="clara-filled-fields" className="mb-3 text-sm text-white/80">
+            Rempli avec Clara (déclaré, modifiable) : {claraFilled.map((f) => INTAKE_FIELD_LABELS.fr[f]).join(", ")}
+          </p>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={current.key}
@@ -1160,17 +1171,6 @@ export default function PageContractorPricingIntake() {
               <p className="text-sm text-white/60 mb-6">{current.hint}</p>
             )}
 
-            <ClaraFormAssistant
-              form="contractor_pricing"
-              step={current.question}
-              inlineLabel="Parler à Clara"
-              formIntake={{ onBeforeOpen: () => shareIntakeDraftWithClara(toIntakeDraft(dataRef.current)) }}
-            />
-            {claraFilled.length > 0 && (
-              <p role="status" data-testid="clara-filled-fields" className="mb-3 text-sm text-white/80">
-                Rempli avec Clara (déclaré, modifiable) : {claraFilled.map((f) => INTAKE_FIELD_LABELS.fr[f]).join(", ")}
-              </p>
-            )}
             <div className="rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl p-5">
               {safeStep === 0 && simSummary}
               {current.render(data, set)}
