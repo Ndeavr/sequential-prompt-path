@@ -17,6 +17,8 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
+// Eager on purpose: the E2E test verifies this route marker in the main bundle.
+import PageQaE2eFixture from "@/pages/qa/PageQaE2eFixture";
 // HomeAbSwitch kept on disk for legacy A/B variants (/v2, /v3).
 import MainLayout from "@/layouts/MainLayout";
 const PageHomeVariantB = lazyWithRetry(() => import("@/pages/home/PageHomeVariantB"));
@@ -1062,6 +1064,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/:slug/reclamer" element={<Suspense fallback={<LazyFallback />}><PageClaimWizard /></Suspense>} />
         <Route path="/entrepreneur/:slug" element={<Suspense fallback={<LazyFallback />}><ContractorSeoPage /></Suspense>} />
         <Route path="/login" element={<LoginPageUnpro />} />
+        <Route path="/qa/e2e-fixture" element={<PageQaE2eFixture />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/signup" element={<LoginPageUnpro />} />
         <Route path="/role" element={<PreLoginRolePage />} />
