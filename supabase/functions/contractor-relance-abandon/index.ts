@@ -199,17 +199,51 @@ Deno.serve(async (req) => {
     const { data: quotes, error: qErr } = await query;
     if (qErr) return json({ error: qErr.message }, 500);
 
-    const summary = { candidates: quotes?.length ?? 0, created: 0, skipped: 0, emailed: 0 };
+    // `queued` = accepté dans la file d'envoi, PAS livré. Les échecs sont persistés
+    // sur le lead (metadata_json.admin_alert) et réessayés (max 3) aux prochains passages.
+    const summary = { candidates: quotes?.length ?? 0, created: 0, skipped: 0, queued: 0, alert_failed: 0, alert_retried: 0, contact_missing: 0 };
+    const MAX_ALERT_ATTEMPTS = 3;
+    const sendAlert = async (leadId: string, meta: Record<string, unknown>, templateData: Record<string, unknown>, quoteId: string) => {
+      const prev = (meta.admin_alert ?? {}) as Record<string, unknown>;
+      const attempt = Number(prev.attempts ?? 0) + 1;
+      const { data: res, error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contractor-abandon-admin-alert",
+          recipientEmail: ADMIN_ALERT_EMAIL,
+          idempotencyKey: `abandon-alert-${quoteId}${attempt > 1 ? `-r${attempt}` : ""}`,
+          templateData,
+        },
+      });
+      const queued = !mailErr && (res as { queued?: boolean } | null)?.queued === true;
+      const admin_alert = {
+        status: queued ? "queued" : "failed",
+        attempts: attempt,
+        last_attempt_at: new Date().toISOString(),
+        last_error: queued ? null : (mailErr?.message ?? "not_queued"),
+        delivery_confirmed: false,
+      };
+      await supabase.from("contractor_leads").update({ metadata_json: { ...meta, admin_alert } }).eq("id", leadId);
+      if (queued) summary.queued++; else { summary.alert_failed++; console.error("[relance] alert", admin_alert.last_error); }
+    };
 
     for (const quote of (quotes ?? []) as Quote[]) {
       // Déduplication : un seul lead de relance actif par devis.
       const { data: existing } = await supabase
         .from("contractor_leads")
-        .select("id")
+        .select("id, metadata_json")
         .eq("source_type", "checkout_abandon")
         .filter("metadata_json->>quote_id", "eq", quote.id)
         .limit(1);
-      if (existing && existing.length > 0) { summary.skipped++; continue; }
+      if (existing && existing.length > 0) {
+        const ex = existing[0] as { id: string; metadata_json: Record<string, unknown> | null };
+        const meta = ex.metadata_json ?? {};
+        const al = (meta.admin_alert ?? {}) as Record<string, unknown>;
+        if (!dryRun && al.status === "failed" && Number(al.attempts ?? 0) < MAX_ALERT_ATTEMPTS && meta.alert_payload) {
+          summary.alert_retried++;
+          await sendAlert(ex.id, meta, meta.alert_payload as Record<string, unknown>, quote.id);
+        } else summary.skipped++;
+        continue;
+      }
 
       const input = (quote.input_payload ?? {}) as Record<string, unknown>;
       const attribution = (input.attribution ?? {}) as Record<string, unknown>;
@@ -243,7 +277,20 @@ Deno.serve(async (req) => {
 
       if (dryRun) { summary.skipped++; continue; }
 
-      const { error: insertErr } = await supabase.from("contractor_leads").insert({
+      // Coordonnées : devis d'abord, sinon fiche entrepreneur liée. Jamais inventées.
+      let email = str(input.email);
+      let phone = str(input.phone);
+      if ((!email || !phone) && quote.contractor_id) {
+        const { data: c } = await supabase.from("contractors").select("email, phone").eq("id", quote.contractor_id).maybeSingle();
+        email = email ?? str((c as { email?: unknown } | null)?.email);
+        phone = phone ?? str((c as { phone?: unknown } | null)?.phone);
+      }
+      const contactMissing = !email && !phone;
+      if (contactMissing) summary.contact_missing++;
+      (metadata as Record<string, unknown>).contact_missing = contactMissing;
+      (metadata as Record<string, unknown>).contact_source = contactMissing ? null : (str(input.email) || str(input.phone) ? "quote" : "contractor");
+
+      const { data: lead, error: insertErr } = await supabase.from("contractor_leads").insert({
         source_type: "checkout_abandon",
         source_label: "Abandon avant paiement",
         company_name: quote.company_name,
@@ -252,8 +299,8 @@ Deno.serve(async (req) => {
         category_primary: quote.trade_primary,
         category_secondary: str(input.trade_secondary),
         trade: quote.trade_primary,
-        email: str(input.email),
-        phone: str(input.phone),
+        email,
+        phone,
         website_url: str(input.website_url),
         contractor_id: quote.contractor_id,
         assigned_affiliate_id: affiliateId,
@@ -264,7 +311,7 @@ Deno.serve(async (req) => {
         payment_started_at: quote.updated_at,
         next_follow_up_at: new Date().toISOString(),
         metadata_json: metadata,
-      });
+      }).select("id").single();
       if (insertErr) { summary.skipped++; console.error("[relance] insert", insertErr.message); continue; }
       summary.created++;
 
@@ -274,16 +321,11 @@ Deno.serve(async (req) => {
         .eq("id", quote.id);
 
       // Une seule alerte interne par dossier.
-      const { error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "contractor-abandon-admin-alert",
-          recipientEmail: ADMIN_ALERT_EMAIL,
-          idempotencyKey: `abandon-alert-${quote.id}`,
-          templateData: {
+      const alertPayload = {
             businessName: quote.company_name ?? "Entreprise inconnue",
             contactName: str(input.contact_name),
-            email: str(input.email),
-            phone: str(input.phone),
+            email,
+            phone,
             city: quote.city,
             tradePrimary: quote.trade_primary,
             tradeSecondary: str(input.trade_secondary),
@@ -299,11 +341,9 @@ Deno.serve(async (req) => {
             quoteId: quote.id,
             auditId: str(input.audit_id),
             occurredAt: new Date().toISOString(),
-          },
-        },
-      });
-      if (!mailErr) summary.emailed++;
-      else console.error("[relance] email", mailErr.message);
+          };
+      const leadId = (lead as { id: string }).id;
+      await sendAlert(leadId, { ...metadata, alert_payload: alertPayload }, alertPayload, quote.id);
     }
 
     return json({ ok: true, ...summary });
