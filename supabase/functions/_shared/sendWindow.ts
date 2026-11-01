@@ -4,7 +4,7 @@
 // system alerts) bypass the window. Founder Mode also bypasses.
 //
 // Rules (default, mirrored in DB table `outbound_send_window_policy`):
-//   Commercial SMS/email/calls — Mon–Fri 09:00–17:00; weekends blocked.
+//   Commercial SMS/email/calls/push — Mon–Fri 09:00–17:00; weekends blocked.
 //   Founder Mode NEVER waives the commercial send window.
 // All times America/Montreal.
 
@@ -58,13 +58,13 @@ const DEFAULT_WINDOWS: Record<Channel, Array<{ weekday: number; start: number; e
     { weekday: 6, start: 0, end: 0, enabled: false },
   ],
   push: [
-    { weekday: 0, start: 540, end: 1260, enabled: true },
-    { weekday: 1, start: 480, end: 1260, enabled: true },
-    { weekday: 2, start: 480, end: 1260, enabled: true },
-    { weekday: 3, start: 480, end: 1260, enabled: true },
-    { weekday: 4, start: 480, end: 1260, enabled: true },
-    { weekday: 5, start: 480, end: 1260, enabled: true },
-    { weekday: 6, start: 540, end: 1260, enabled: true },
+    { weekday: 0, start: 0, end: 0, enabled: false },
+    { weekday: 1, start: 540, end: 1020, enabled: true },
+    { weekday: 2, start: 540, end: 1020, enabled: true },
+    { weekday: 3, start: 540, end: 1020, enabled: true },
+    { weekday: 4, start: 540, end: 1020, enabled: true },
+    { weekday: 5, start: 540, end: 1020, enabled: true },
+    { weekday: 6, start: 0, end: 0, enabled: false },
   ],
 };
 
