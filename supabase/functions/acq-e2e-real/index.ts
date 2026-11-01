@@ -90,7 +90,7 @@ const STEPS = [
 
 async function logStep(run_group: string, r: StepResult) {
   await sb.from("outreach_e2e_full_runs").insert({
-    run_group, step_index: r.index, step: r.step, step_status: r.status,
+    run_group, step_index: r.index, step: r.step, step_status: r.status === "not_run" ? "skipped" : r.status,
     step_payload: r.payload ?? {}, duration_ms: r.duration_ms,
     error: r.error ?? null,
   });
