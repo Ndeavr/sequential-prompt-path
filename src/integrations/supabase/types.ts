@@ -35253,6 +35253,169 @@ export type Database = {
           },
         ]
       }
+      contractor_lead_referrals: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          attestation_text: string
+          attestation_version: string
+          attested_at: string
+          city_or_postal: string
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          contractor_id: string
+          created_at: string
+          credit_status: string
+          declared_agreement_date: string | null
+          declared_agreement_mode: string | null
+          dedupe_hash: string
+          id: string
+          idempotency_key: string
+          is_synthetic: boolean
+          locale: string
+          project_description: string
+          reference: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          service_requested: string
+          status: string
+          submitted_by: string
+          timeline: string | null
+          transfer_reason: string
+          transfer_reason_other: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          attestation_text: string
+          attestation_version: string
+          attested_at?: string
+          city_or_postal: string
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          contractor_id: string
+          created_at?: string
+          credit_status?: string
+          declared_agreement_date?: string | null
+          declared_agreement_mode?: string | null
+          dedupe_hash: string
+          id?: string
+          idempotency_key: string
+          is_synthetic?: boolean
+          locale?: string
+          project_description: string
+          reference?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_requested: string
+          status?: string
+          submitted_by: string
+          timeline?: string | null
+          transfer_reason: string
+          transfer_reason_other?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          attestation_text?: string
+          attestation_version?: string
+          attested_at?: string
+          city_or_postal?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          contractor_id?: string
+          created_at?: string
+          credit_status?: string
+          declared_agreement_date?: string | null
+          declared_agreement_mode?: string | null
+          dedupe_hash?: string
+          id?: string
+          idempotency_key?: string
+          is_synthetic?: boolean
+          locale?: string
+          project_description?: string
+          reference?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_requested?: string
+          status?: string
+          submitted_by?: string
+          timeline?: string | null
+          transfer_reason?: string
+          transfer_reason_other?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_referrals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_leads: {
         Row: {
           activation_status: string
