@@ -60,7 +60,7 @@ const QA_FIXTURE_MARKER = "Fixture QA UNPRO";
 
 const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-type StepStatus = "pass" | "fail" | "skipped";
+type StepStatus = "not_run" | "pass" | "fail" | "skipped";
 interface StepResult {
   index: number;
   step: string;
@@ -114,6 +114,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   await purgeExpiredFixtures();
+  // channels=email: SMS steps are recorded not_run (never pass). A run with any
+  // not_run step is NOT a full pass, so the shared multi-channel gate stays closed.
+  const reqBody = await req.json().catch(() => ({}));
+  const emailOnly = (reqBody as any)?.channels === "email";
 
   const run_group = crypto.randomUUID();
   const synthId = crypto.randomUUID();
@@ -128,6 +132,10 @@ Deno.serve(async (req) => {
   // Helper to run a single step, short-circuit on failure
   const step = async (index: number, fn: () => Promise<{ payload?: Record<string, unknown>; error?: string; repair?: string }>) => {
     const name = STEPS[index];
+    if (emailOnly && (index === 6 || index === 7)) {
+      const nr: StepResult = { index, step: name, status: "not_run", duration_ms: 0, error: "sms_disabled_email_only_run" };
+      results.push(nr); await logStep(run_group, nr); return;
+    }
     if (failed) {
       const skipped: StepResult = { index, step: name, status: "skipped", duration_ms: 0, error: "skipped after earlier failure" };
       results.push(skipped); await logStep(run_group, skipped); return;
@@ -396,6 +404,7 @@ Deno.serve(async (req) => {
   });
 
   const pass = !failed && results.every(r => r.status === "pass");
+  const email_channel_pass = !failed && results.every(r => r.status === "pass" || (emailOnly && r.status === "not_run"));
   const cleanupVerified = results[13]?.status === "pass";
   const total_ms = Date.now() - t0;
 
@@ -406,14 +415,14 @@ Deno.serve(async (req) => {
     pass, cleanup_completed: cleanupVerified,
     total_duration_ms: total_ms,
     synthetic_contractor_id: synthId,
-    step_payload: { results, failed },
+    step_payload: { results, failed, email_only: emailOnly, email_channel_pass },
     error: failed ? failed.error : null,
   });
 
   await sb.rpc("evaluate_outreach_gate" as any);
 
   return new Response(JSON.stringify({
-    run_group, pass, total_ms,
+    run_group, pass, email_only: emailOnly, email_channel_pass, total_ms,
     failed_step: failed ? { index: failed.index + 1, step: failed.step, error: failed.error, repair: failed.repair } : null,
     steps: results,
   }), { headers: { ...cors, "Content-Type": "application/json" } });
