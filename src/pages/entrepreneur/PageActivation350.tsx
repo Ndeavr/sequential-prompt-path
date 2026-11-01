@@ -75,9 +75,21 @@ export default function PageActivation350() {
         <UnproLogo size={110} variant="primary" animated={false} />
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Inscription</p>
-        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] sm:text-4xl">Votre expertise mérite les bons clients</h1>
+        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] sm:text-4xl">Les prochains contrats que vous voulez? Dites-nous lesquels.</h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Inscrivez votre entreprise sur UNPRO : vos spécialités, les mandats que vous voulez et votre territoire, présentés clairement aux propriétaires de votre région.
+          Votre spécialité. Votre territoire. Les travaux que vous aimez faire. Présentez votre entreprise sur UNPRO et précisez les mandats que vous recherchez.
+        </p>
+        <ul className="mt-4 space-y-1 text-sm text-muted-foreground" aria-label="Exemples de préférences">
+          <li>« Des thermopompes centrales plutôt que des réparations »</li>
+          <li>« De la peinture intérieure, seulement dans mon secteur »</li>
+          <li>« De l'isolation d'entretoit »</li>
+        </ul>
+        <Link to={links.activate} onClick={onActivate} className={`mt-5 ${ctaCls}`}>
+          Je veux ces opportunités <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Inscription : 350 $ + taxes • Profil et 12 mois de présence sur UNPRO</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Comment ça marche : Clara note vos types de travaux, vos secteurs et vos préférences. Les jumelages se font selon les demandes compatibles, votre disponibilité et votre admissibilité. Les rendez-vous dépendent de l'offre choisie et des demandes reçues ; l'offre exacte est affichée avant tout paiement.
         </p>
 
         <div className="mt-5 rounded-[28px] border border-border bg-card p-5" data-testid="activation-350-offer">
