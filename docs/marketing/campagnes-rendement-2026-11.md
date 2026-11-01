@@ -72,3 +72,18 @@ Distinguer queued / sent / delivered / paid. Suivre : paiements réels distincts
 - SMS : OUTREACH_ENABLED=false ; gate autopilot gated=true (no_recent_e2e_pass, score opérationnel 30/95).
 - CASL : 2 preuves revues par un humain sur 872, toutes deux courriel, hors segments ciblés ; 0 preuve SMS revue.
 - Chauds : les 12 abandons checkout récents n'ont ni courriel ni téléphone.
+
+## Vague optimisée 2026-11-01 — statut
+| Campagne | Statut | Envoyé |
+|---|---|---|
+| A Activation (objet A seul ; objet B réservé vague 2) | Prête, non configurée | 0 |
+| B Équipes (lien `/directeur-des-ventes` non publié → retenue) | Prête | 0 |
+| C Distributeurs | Prête | 0 |
+| Relance J+3 ouvrables (unique, arrêt sur réponse) | Prête | 0 |
+
+Textes A/B/C/relance/SMS : version fondateur du 2026-11-01, sans RDV inclus dans 350 $, sans échange de leads présenté comme service.
+
+Blocage vérifié 2026-11-01 13:58 UTC : aucun NS pour `notify.unpro.ca` chez Cloudflare (zone `unpro.ca`). Records requis :
+- NS `notify` → `ns3.lovable.cloud`
+- NS `notify` → `ns4.lovable.cloud`
+SMS : zéro preuve CASL revue par canal → aucun envoi SMS admissible.
