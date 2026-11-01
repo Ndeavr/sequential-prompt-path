@@ -16,7 +16,7 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(links).toContain("activate: `/entrepreneurs/activation-350?");
     expect(links).toContain('activate.set("activate", "1")');
     expect(links).toContain("more: `/entrepreneur/devis-personnalise?");
-    expect(page).toContain("reviewOpen && <Entry350FastCheckout query={sp}");
+    expect(page).toMatch(/reviewOpen\s*&&\s*<div[^>]*>\s*<Entry350FastCheckout query=\{sp\}\s*\/>/);
   });
   it("preserves declared business identity through auth, never calculates monthly capacity", () => {
     expect(fast).toContain("getClaraQualification().business_name");
