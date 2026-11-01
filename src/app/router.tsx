@@ -93,6 +93,7 @@ const PageFournisseurPeinturePlusContrats = lazyWithRetry(() => import("@/pages/
 const PageApparaitreRechercheIA2026 = lazyWithRetry(() => import("@/pages/articles/PageApparaitreRechercheIA2026"));
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
 const PageDirecteurDesVentes = lazyWithRetry(() => import("@/pages/sales/PageDirecteurDesVentes"));
+const PageQaE2eFixture = lazyWithRetry(() => import("@/pages/qa/PageQaE2eFixture"));
 const AdminSalesTeamRequests = lazyWithRetry(() => import("@/pages/admin/AdminSalesTeamRequests"));
 const PagePartenariatsFournisseurs = lazyWithRetry(() => import("@/pages/partners/PagePartenariatsFournisseurs"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
@@ -1186,6 +1187,7 @@ export const AppRouter = () => (
         <Route path="/book/cancel" element={<BookingPaymentCancel />} />
         <Route path="/partners" element={<PartnersPage />} />
         <Route path="/directeur-des-ventes" element={<Suspense fallback={<LazyFallback />}><PageDirecteurDesVentes /></Suspense>} />
+        <Route path="/qa/e2e-fixture" element={<Suspense fallback={<LazyFallback />}><PageQaE2eFixture /></Suspense>} />
         <Route path="/partenariats-fournisseurs" element={<Suspense fallback={<LazyFallback />}><PagePartenariatsFournisseurs /></Suspense>} />
         <Route path="/describe-project" element={<DescribeProjectPage />} />
         <Route path="/compare-quotes" element={<CompareQuotesPage />} />

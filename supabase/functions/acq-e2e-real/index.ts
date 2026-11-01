@@ -123,6 +123,10 @@ Deno.serve(async (req) => {
   const synthId = crypto.randomUUID();
   const slug = `__e2e_${run_group.slice(0, 8)}`;
   const fixtureUrl = `${SUPABASE_URL}/functions/v1/qa-e2e-fixture?run=${run_group.slice(0, 8)}`;
+  // Humans clicking the tracked link land on a noindex frontend QA page; the
+  // edge fixture above stays the machine-verified content marker (the platform
+  // serves function HTML as text/plain to browsers).
+  const humanFixtureUrl = `https://unpro.ca/qa/e2e-fixture?run=${run_group.slice(0, 8)}`;
   const t0 = Date.now();
   const results: StepResult[] = [];
   let failed: StepResult | null = null;
@@ -308,7 +312,7 @@ Deno.serve(async (req) => {
     });
     try { await r.text(); } catch { /* noop */ }
     const location = r.headers.get("location") ?? "";
-    if (r.status >= 300 && r.status < 400 && location.includes("qa-e2e-fixture")) {
+    if (r.status >= 300 && r.status < 400 && (location.includes("qa-e2e-fixture") || location.includes("/qa/e2e-fixture"))) {
       return { payload: { http_status: r.status, resolved_url: (resolved as any).redirect_url, redirect_location: location } };
     }
     return { error: `HTTP ${r.status} location=${location} (expected 3xx → qa-e2e-fixture)`, repair: "Check r-redirect edge function logs" };
