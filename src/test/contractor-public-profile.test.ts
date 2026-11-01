@@ -19,15 +19,18 @@ describe("contractor public profile contract", () => {
   });
 
   it("uses an unknown compatibility state and contextual Clara handoff", () => {
-    expect(publicExperience).toContain('"— %"');
-    expect(publicExperience).toContain("Appuyez pour afficher votre score");
+    expect(publicExperience).not.toContain('"— %"');
+    expect(publicExperience).not.toContain("Clara complétera seulement");
+    expect(publicExperience).toContain("Est-ce le bon pro pour mon projet ?");
     expect(publicExperience).toContain("Recueillir seulement les renseignements manquants");
   });
 
   it("labels review provenance without fake review fallbacks", () => {
     expect(publicExperience).toContain('title="Avis UNPRO"');
     expect(publicExperience).toContain('title="Avis Google"');
-    expect(publicExperience).toContain("Aucun avis public disponible.");
+    expect(publicExperience).not.toContain("Aucun avis public disponible.");
+    expect(publicExperience).not.toContain("Source Google non liée");
+    expect(publicExperience).toContain("Lire les avis sur Google");
     expect(publicExperience).not.toContain("DEMO_REVIEWS");
   });
 
