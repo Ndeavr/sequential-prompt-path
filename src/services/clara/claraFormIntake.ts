@@ -164,7 +164,7 @@ function valueOf(d: IntakeDraft, f: IntakeField, lang: IntakeLang): string {
 
 export function intakeSummary(d: IntakeDraft, lang: IntakeLang): string {
   const L = INTAKE_FIELD_LABELS[lang];
-  return ORDER.filter((f) => isFieldFilled(d, f)).map((f) => `${L[f]} : ${valueOf(d, f, lang)}`).join("\n");
+  return ORDER.filter((f) => isFieldFilled(d, f)).map((f) => `${L[f]}${lang === "fr" ? " : " : ": "}${valueOf(d, f, lang)}`).join("\n");
 }
 
 export interface FormIntakeContext {
@@ -263,7 +263,7 @@ export function answerIntake(ctx: FormIntakeContext, raw: string, lang: IntakeLa
   }
   ctx.apply(draft, changed);
   persist(draft, false);
-  const noted = changed.map((f) => `${INTAKE_FIELD_LABELS[lang][f]} : ${valueOf(draft, f, lang)}`).join(" · ");
+  const noted = changed.map((f) => `${INTAKE_FIELD_LABELS[lang][f]}${lang === "fr" ? " : " : ": "}${valueOf(draft, f, lang)}`).join(" · ");
   return ask(draft, ctx, lang, `${lang === "fr" ? "Noté" : "Noted"} — ${noted}.\n`);
 }
 
