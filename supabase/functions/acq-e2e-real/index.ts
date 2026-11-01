@@ -46,10 +46,10 @@ function normalizeE164(raw: string): string {
   return `+${digits}`;
 }
 const TWILIO_FROM = normalizeE164(Deno.env.get("TWILIO_PHONE_NUMBER") ?? "");
-// Real verified test recipient confirms actual delivery; the Twilio magic
-// number (+15005550006) only ever stays "queued" and therefore FAILS the
-// delivery step honestly.
-const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? "") || "+15005550006";
+// Only an explicitly configured internal test destination is ever used.
+// No magic-number fallback (it can never deliver) and never a prospect number.
+const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "");
+const TWILIO_MSG_SVC = (Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") ?? "").trim();
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 // TEST-mode key only. A live key is refused: this selftest must never touch live mode.
 const STRIPE_TEST_KEY = Deno.env.get("STRIPE_TEST_SECRET_KEY") ?? (STRIPE_KEY.startsWith("sk_test_") ? STRIPE_KEY : "");
