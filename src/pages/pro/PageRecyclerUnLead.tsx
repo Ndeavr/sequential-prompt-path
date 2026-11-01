@@ -98,7 +98,7 @@ export default function PageRecyclerUnLead() {
     setSending(true); setFailure(null);
     const r = await submitLeadReferral(form, keyRef.current, L);
     setSending(false);
-    if (!r.ok) { setFailure(r.error === "no_contractor_profile" ? t.noProfile : t.fail); return; }
+    if (r.ok === false) { setFailure(r.error === "no_contractor_profile" ? t.noProfile : t.fail); return; }
     setDone({ reference: r.reference, duplicate: r.duplicate });
     setForm(EMPTY_LEAD_REFERRAL);
     try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* */ }
