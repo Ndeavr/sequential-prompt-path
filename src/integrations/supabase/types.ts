@@ -83385,6 +83385,102 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_team_requests: {
+        Row: {
+          annual_revenue_goal_cad: number | null
+          average_ticket_cad: number | null
+          close_rate_pct: number | null
+          company: string
+          consent_text: string
+          consented_at: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          idempotency_key: string
+          ip_hash: string | null
+          is_synthetic: boolean
+          last_name: string
+          locale: string | null
+          marketing_opt_in: boolean
+          objectives: string[]
+          phone: string | null
+          priority_mandates: string | null
+          refused_mandates: string | null
+          role: string
+          sellers_count: number
+          specialties: string
+          status: string
+          territories: string
+          travel_radius_km: number | null
+          utm: Json
+          website: string | null
+          weekly_capacity: number | null
+        }
+        Insert: {
+          annual_revenue_goal_cad?: number | null
+          average_ticket_cad?: number | null
+          close_rate_pct?: number | null
+          company: string
+          consent_text: string
+          consented_at?: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          idempotency_key: string
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          last_name: string
+          locale?: string | null
+          marketing_opt_in?: boolean
+          objectives?: string[]
+          phone?: string | null
+          priority_mandates?: string | null
+          refused_mandates?: string | null
+          role: string
+          sellers_count: number
+          specialties: string
+          status?: string
+          territories: string
+          travel_radius_km?: number | null
+          utm?: Json
+          website?: string | null
+          weekly_capacity?: number | null
+        }
+        Update: {
+          annual_revenue_goal_cad?: number | null
+          average_ticket_cad?: number | null
+          close_rate_pct?: number | null
+          company?: string
+          consent_text?: string
+          consented_at?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          idempotency_key?: string
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          last_name?: string
+          locale?: string | null
+          marketing_opt_in?: boolean
+          objectives?: string[]
+          phone?: string | null
+          priority_mandates?: string | null
+          refused_mandates?: string | null
+          role?: string
+          sellers_count?: number
+          specialties?: string
+          status?: string
+          territories?: string
+          travel_radius_km?: number | null
+          utm?: Json
+          website?: string | null
+          weekly_capacity?: number | null
+        }
+        Relationships: []
+      }
       sales_voice_prompts: {
         Row: {
           content: string

@@ -260,6 +260,13 @@
       "when": 1793469251121,
       "tag": "0036_revoke_subscription_extra_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793539570399,
+      "tag": "0037_sales_team_requests",
+      "breakpoints": true
     }
   ]
 }
