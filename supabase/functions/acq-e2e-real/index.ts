@@ -46,10 +46,14 @@ function normalizeE164(raw: string): string {
   return `+${digits}`;
 }
 const TWILIO_FROM = normalizeE164(Deno.env.get("TWILIO_PHONE_NUMBER") ?? "");
-// Real verified test recipient confirms actual delivery; the Twilio magic
-// number (+15005550006) only ever stays "queued" and therefore FAILS the
-// delivery step honestly.
-const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? "") || "+15005550006";
+// Only an explicitly configured internal test destination is ever used.
+// No magic-number fallback (it can never deliver) and never a prospect number.
+const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "");
+const TWILIO_MSG_SVC = (Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") ?? "").trim();
+// The tracked link must point at the real public frontend QA page; the test
+// verifies that exact destination (redirect target + deployed route marker).
+const PUBLIC_SITE = "https://unpro.ca";
+const QA_ROUTE_MARKER = "UNPRO-QA-E2E-FIXTURE-V1";
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 // TEST-mode key only. A live key is refused: this selftest must never touch live mode.
 const STRIPE_TEST_KEY = Deno.env.get("STRIPE_TEST_SECRET_KEY") ?? (STRIPE_KEY.startsWith("sk_test_") ? STRIPE_KEY : "");
@@ -122,7 +126,7 @@ Deno.serve(async (req) => {
   const run_group = crypto.randomUUID();
   const synthId = crypto.randomUUID();
   const slug = `__e2e_${run_group.slice(0, 8)}`;
-  const fixtureUrl = `${SUPABASE_URL}/functions/v1/qa-e2e-fixture?run=${run_group.slice(0, 8)}`;
+  const fixtureUrl = `${PUBLIC_SITE}/qa/e2e-fixture?run=${run_group.slice(0, 8)}`;
   const t0 = Date.now();
   const results: StepResult[] = [];
   let failed: StepResult | null = null;
@@ -250,7 +254,9 @@ Deno.serve(async (req) => {
     if (!TWILIO_FROM) return { error: `TWILIO_PHONE_NUMBER missing or unparseable (raw_len=${rawFrom.length})`, repair: "Set TWILIO_PHONE_NUMBER to E.164 (e.g. +15145551234)" };
     if (!/^\+\d{10,15}$/.test(TWILIO_FROM)) return { error: `TWILIO_PHONE_NUMBER invalid after normalize: ${TWILIO_FROM}`, repair: "Use E.164 format +15145551234" };
     const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
-    const body = new URLSearchParams({ From: TWILIO_FROM, To: TWILIO_TEST_TO, Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
+    if (!/^\+\d{10,15}$/.test(TWILIO_TEST_TO)) return { error: "internal_test_destination_missing", repair: "Configure ADMIN_TEST_PHONE (internal, owner-authorized) in E.164" };
+    const body = new URLSearchParams({ To: TWILIO_TEST_TO, Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
+    if (TWILIO_MSG_SVC.startsWith("MG")) body.set("MessagingServiceSid", TWILIO_MSG_SVC); else body.set("From", TWILIO_FROM);
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
       method: "POST", headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" }, body,
     });
@@ -308,10 +314,10 @@ Deno.serve(async (req) => {
     });
     try { await r.text(); } catch { /* noop */ }
     const location = r.headers.get("location") ?? "";
-    if (r.status >= 300 && r.status < 400 && location.includes("qa-e2e-fixture")) {
+    if (r.status >= 300 && r.status < 400 && location === fixtureUrl) {
       return { payload: { http_status: r.status, resolved_url: (resolved as any).redirect_url, redirect_location: location } };
     }
-    return { error: `HTTP ${r.status} location=${location} (expected 3xx → qa-e2e-fixture)`, repair: "Check r-redirect edge function logs" };
+    return { error: `HTTP ${r.status} location=${location} (expected 3xx → exactly ${fixtureUrl})`, repair: "Check r-redirect edge function logs" };
   });
 
   // 10 — verify click event landed in acquisition_events
@@ -325,13 +331,19 @@ Deno.serve(async (req) => {
     return { error: "no clicked event recorded", repair: "Verify r-redirect logs acquisition_events" };
   });
 
-  // 11 — load landing page: require HTTP 200 AND the QA fixture marker
+  // 11 — the exact sent destination must be served by the published frontend
+  // AND the deployed bundle must contain the QA route marker (an SPA 200 alone
+  // proves nothing: unknown routes also return index.html).
   await step(10, async () => {
     const r = await fetch(fixtureUrl);
-    const body = await r.text();
-    if (r.ok && body.includes(QA_FIXTURE_MARKER)) return { payload: { http_status: r.status, marker_verified: true } };
-    if (r.ok) return { error: "HTTP 200 but QA fixture marker missing — destination is not the labeled fixture", repair: "Check qa-e2e-fixture deployment" };
-    return { error: `HTTP ${r.status}`, repair: "Check qa-e2e-fixture edge function" };
+    const html = await r.text();
+    if (!r.ok) return { error: `HTTP ${r.status} for ${fixtureUrl}`, repair: "Publish frontend" };
+    const srcs = [...html.matchAll(/<script[^>]+src="([^"]+\.js)"/g)].map(m => new URL(m[1], PUBLIC_SITE).toString());
+    for (const s of srcs) {
+      const js = await (await fetch(s)).text();
+      if (js.includes(QA_ROUTE_MARKER) && js.includes("/qa/e2e-fixture")) return { payload: { http_status: r.status, destination: fixtureUrl, route_marker_verified: true } };
+    }
+    return { error: "QA route marker absent from published bundle — route not deployed", repair: "Publish frontend with /qa/e2e-fixture route" };
   });
 
   // 12 — Stripe TEST checkout: create + retrieve + expire a real TEST Checkout
