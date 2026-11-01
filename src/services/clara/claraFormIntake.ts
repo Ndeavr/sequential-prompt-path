@@ -177,6 +177,8 @@ export interface FormIntakeContext {
 }
 
 let active: FormIntakeContext | null = null;
+/** Dernière question posée : une saisie faite entre-temps dans le formulaire est conservée. */
+let lastAsked: IntakeField | null = null;
 export function registerClaraFormIntake(ctx: FormIntakeContext | null) { active = ctx; }
 export function getClaraFormIntake(): FormIntakeContext | null { return active; }
 
@@ -201,6 +203,7 @@ export function shareIntakeDraftWithClara(d: IntakeDraft) {
 
 function ask(d: IntakeDraft, ctx: FormIntakeContext, lang: IntakeLang, prefix = ""): IntakeReply {
   const f = nextIntakeField(d, ctx.stepKey);
+  lastAsked = f;
   if (!f) {
     const head = lang === "fr" ? "Voici ce que j’ai noté, tel que déclaré :" : "Here is what I noted, as declared:";
     const tail = lang === "fr" ? "Est-ce exact ? Vous pouvez corriger n’importe quel point." : "Is this right? You can correct anything.";
@@ -237,6 +240,12 @@ export function answerIntake(ctx: FormIntakeContext, raw: string, lang: IntakeLa
   }
   if (!pending && /^(corriger|correct)\s*$/i.test(text)) {
     return { text: lang === "fr" ? "Que voulez-vous corriger ? Par exemple : « territoires : Laval, Longueuil »." : "What should I correct? For example: “areas: Laval, Longueuil”." };
+  }
+  if (lastAsked && lastAsked !== pending && isFieldFilled(d, lastAsked) && !CORRECTION.test(text)) {
+    const kept = lastAsked;
+    return ask(d, ctx, lang, lang === "fr"
+      ? `Vous avez déjà rempli « ${INTAKE_FIELD_LABELS.fr[kept]} » dans le formulaire (${valueOf(d, kept, lang)}); je garde votre saisie.\n`
+      : `You already filled “${INTAKE_FIELD_LABELS.en[kept]}” in the form (${valueOf(d, kept, lang)}); I’m keeping it.\n`);
   }
   let target = pending;
   let answer = text;
