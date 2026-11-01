@@ -146,7 +146,12 @@ export default function PageDirecteurDesVentes() {
                   <div role="status">
                     <CheckCircle2 size={32} className="text-primary" aria-hidden="true" />
                     <p>{t("Votre demande est enregistrée. Une offre adaptée à votre équipe sera préparée selon vos mandats, vos territoires et la demande réelle dans votre région. Aucun prix, volume ni paiement n’est engagé à ce stade.", "Your request is saved. A tailored offer will be prepared based on your mandates, territories and real demand in your region. No price, volume or payment is committed at this stage.")}</p>
-                    <div className="dv-row"><Link className="utp-button" to={buildSalesClaraLink(form)}>{t("Continuer avec Clara", "Continue with Clara")} <ArrowRight size={18} /></Link></div>
+                    <div className="dv-row">
+                      <Link className="utp-button" to="/entrepreneurs/activation-350?activate=1&from=directeur-des-ventes">{t("Activer mon entreprise — 350 $ + taxes", "Activate my business — $350 + tax")} <ArrowRight size={18} /></Link>
+                      <Link className="dv-ghost" to={`/entrepreneur/devis-personnalise?${new URLSearchParams({ from: "directeur-des-ventes", entreprise: form.company.trim(), metier: form.specialties.split(/[,;]/)[0].trim(), ville: form.territories.split(/[,;]/)[0].trim() }).toString()}`}>{t("Obtenir mon plan personnalisé", "Get my personalized plan")}</Link>
+                    </div>
+                    <p className="utp-fine">{t("Activation : profil et 12 mois de présence IA sur UNPRO. Aucun rendez-vous inclus par défaut ; les droits exacts et la quantité de rendez-vous d’un plan personnalisé sont précisés avant paiement.", "Activation: profile and 12 months of AI presence on UNPRO. No appointments included by default; exact rights and appointment volume of a personalized plan are specified before payment.")}</p>
+                    <Link className="utp-link" to={buildSalesClaraLink(form)}>{t("Poser une question à Clara", "Ask Clara a question")} →</Link>
                   </div>
                 ) : step === 0 ? (<>
                   {input("company", t("Entreprise", "Company"))}
