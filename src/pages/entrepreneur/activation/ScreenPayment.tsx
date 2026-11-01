@@ -3,6 +3,7 @@
  * Plan summary + coupon + tax breakdown + trust + sticky CTA + friendly errors.
  */
 import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CreditCard, Shield, Lock, Loader2, Tag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
 import { CONTRACTOR_PLANS, ENTRY_OFFER } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { buildActivation350Links } from "@/lib/activation350Links";
 
 const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice, yearly: p.yearlyPrice }])
@@ -25,6 +27,8 @@ const TPS_RATE = 0.05;
 const TVQ_RATE = 0.09975;
 
 export default function ScreenPayment() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { state, updateFunnel } = useActivationFunnel();
   const { toast } = useToast();
   const [coupon, setCoupon] = useState("");
@@ -45,27 +49,17 @@ export default function ScreenPayment() {
   const savings = 0;
 
   const handlePay = async () => {
+    if (isFounder) {
+      // Reuse the authenticated entry checkout; never create a guest session.
+      if (state.business_name.trim()) {
+        try { sessionStorage.setItem("unpro_entry350_declared_name", state.business_name.trim()); }
+        catch { /* The existing review can collect the name again. */ }
+      }
+      navigate(buildActivation350Links(searchParams).activate);
+      return;
+    }
     setProcessing(true);
     try {
-      if (isFounder) {
-        // Dedicated function: canonical 350 $ one-time entry pack.
-        // The server is the ONLY pricing authority — the browser never validates the amount.
-        const { data, error } = await supabase.functions.invoke("create-founder-activation-checkout", {
-          body: {
-            offer_code: "pack_350",
-            onboarding_session_id: state.id || undefined,
-            success_path: "/entrepreneur/activer/succes",
-            cancel_path: "/entrepreneur/activer/paiement",
-          },
-        });
-        if (error) throw error;
-        if (!data?.url) throw new Error("checkout_url_missing");
-        await updateFunnel({ stripe_session_id: data.session_id });
-        redirectToCheckout(data.url);
-        return;
-      }
-
-
       const planCode = state.selected_plan || "pro_v2";
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
         body: {

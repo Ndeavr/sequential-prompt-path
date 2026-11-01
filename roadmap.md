@@ -1,5 +1,7 @@
 # Roadmap — P0 contractor acquisition golden path
 
+- [ ] P0 2026-11-01 minimal entry350 alignment: founder handoff to authenticated activation review; test current quote-free backend without replacing other offers; deploy only checkout and publish tested frontend. No real payment or sending.
+
 - [x] Clara composer single media trigger: one CameraPlus button replaces the separate + and camera buttons, opens the existing 7-choice media menu, mic and send unchanged; 10 focused tests, harness build OK, live mobile 390px and desktop 1280px verified on unpro.ca. Published.
 - [x] Targeted no-match preview subset: consent/project client checks, exact column-cladding normalization, truthful landing→existing activation and admin review; 38 isolated tests, 390px intercepted browser and harness build OK. Four server containment handlers staged only; no remote writes/contact/payment/publication.
 - [ ] Complete no-match hosted trigger blocked: current SQL matcher and direct INSERT paths lack verified eligibility/consent, atomic case/waitlist/signal dedupe required; no-deployment limit prevents releasing endpoint containment. Full contextual Clara/profile and Stripe TEST E2E unverified. See docs/security-staged/no-match-20261031/REPORT.md.
