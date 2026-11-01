@@ -42,8 +42,17 @@ async function pingResend(): Promise<Result> {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return { service_name: "resend", status: "missing", required_for: ["outreach_email"], error_message: "RESEND_API_KEY absent" };
   try {
-    const r = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${key}` } });
-    if (r.status === 401) return { service_name: "resend", status: "invalid", required_for: ["outreach_email"], error_message: "Clé Resend invalide" };
+    // Same circuit as outreach-resend-send: lovc_ keys go through the connector gateway.
+    const viaGateway = key.startsWith("lovc_");
+    const lovable = Deno.env.get("LOVABLE_API_KEY") ?? "";
+    if (viaGateway && !lovable) return { service_name: "resend", status: "missing", required_for: ["outreach_email"], error_message: "LOVABLE_API_KEY absent (gateway circuit)" };
+    const url = viaGateway ? "https://connector-gateway.lovable.dev/resend/domains" : "https://api.resend.com/domains";
+    const headers: Record<string, string> = viaGateway
+      ? { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": key }
+      : { Authorization: `Bearer ${key}` };
+    const r = await fetch(url, { headers });
+    // Sending-only keys return 401 on /domains: that is "unknown", not an invalid key.
+    if (r.status === 401) return { service_name: "resend", status: "limited", required_for: ["outreach_email"], error_message: `domains_unreadable_401 (${viaGateway ? "gateway" : "direct"}); send path not tested here` };
     return { service_name: "resend", status: r.ok ? "connected" : "limited", required_for: ["outreach_email"] };
   } catch (e) {
     return { service_name: "resend", status: "invalid", required_for: ["outreach_email"], error_message: String(e) };
