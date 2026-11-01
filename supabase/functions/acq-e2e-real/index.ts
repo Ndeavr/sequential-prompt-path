@@ -188,12 +188,12 @@ Deno.serve(async (req) => {
     trackerId = Math.random().toString(36).slice(2, 12);
     const expires = new Date(Date.now() + FIXTURE_RETENTION_DAYS * 864e5).toISOString();
     const { error } = await sb.from("acquisition_tracking_links").insert({
-      id: trackerId, destination_url: fixtureUrl,
+      id: trackerId, destination_url: humanFixtureUrl,
       channel: "email", campaign: "__e2e_real",
       metadata: { run_group, e2e_expires_at: expires, qa_fixture: true },
     });
     if (error) return { error: error.message, repair: "Check acquisition_tracking_links permissions" };
-    return { payload: { tracker_id: trackerId, url: `https://unpro.ca/r/${trackerId}`, destination: fixtureUrl, e2e_expires_at: expires } };
+    return { payload: { tracker_id: trackerId, url: `https://unpro.ca/r/${trackerId}`, destination: humanFixtureUrl, machine_marker_url: fixtureUrl, e2e_expires_at: expires } };
   });
 
   // 4 — generate outreach
