@@ -62,7 +62,7 @@ export default function PageRecyclerUnLead() {
   const L = lang === "en" ? "en" : "fr";
   const t = T[L];
   const [form, setForm] = useState<LeadReferralForm>(() => {
-    try { return { ...EMPTY_LEAD_REFERRAL, ...JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "{}"), attestation: false }; } catch { return EMPTY_LEAD_REFERRAL; }
+    try { return { ...EMPTY_LEAD_REFERRAL, ...JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? "{}"), attestation: false }; } catch { return EMPTY_LEAD_REFERRAL; }
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
@@ -73,9 +73,9 @@ export default function PageRecyclerUnLead() {
   const [loadErr, setLoadErr] = useState(false);
 
   useEffect(() => {
-    // Coordonnées client non conservées dans le navigateur au-delà du brouillon en cours.
+    // Brouillon limité à cet onglet (sessionStorage) : reprise après connexion, jamais l’attestation.
     const { attestation: _a, ...draft } = form;
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* indisponible */ }
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* indisponible */ }
   }, [form]);
 
   const load = useCallback(async () => {
@@ -101,7 +101,7 @@ export default function PageRecyclerUnLead() {
     if (!r.ok) { setFailure(r.error === "no_contractor_profile" ? t.noProfile : t.fail); return; }
     setDone({ reference: r.reference, duplicate: r.duplicate });
     setForm(EMPTY_LEAD_REFERRAL);
-    try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* */ }
     keyRef.current = newKey();
     void load();
   };
