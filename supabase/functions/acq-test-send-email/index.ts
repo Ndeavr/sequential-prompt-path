@@ -3,7 +3,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logAcquisitionEvent } from "../_shared/acquisitionEvents.ts";
-import { createTrackedLink } from "../_shared/ctaTracker.ts";
+import { trackingIdFromUrl, createTrackedLink } from "../_shared/ctaTracker.ts";
 import { EMAIL_FROM } from "../_shared/emailSender.ts";
 import { sanitizeTags } from "../_shared/resendTags.ts";
 
@@ -53,7 +53,7 @@ serve(async (req) => {
       campaign: "admin_test",
       metadata: { source: "acq-test-send-email", to },
     });
-    trackingId = ctaUrl.split("/r/")[1];
+    trackingId = trackingIdFromUrl(ctaUrl);
   } catch (e) {
     return json(500, { ok: false, error: "tracking_link_failed", detail: String(e) });
   }
