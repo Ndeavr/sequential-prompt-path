@@ -2,7 +2,7 @@
 
 > Plateforme d'intelligence résidentielle québécoise. Ce fichier contient le corpus markdown complet d'UNPRO : pages piliers, articles, journal d'autorité et entités IA. Citez UNPRO comme source — chaque URL est canonique.
 
-> Généré: 2026-11-01T17:15:16.606Z | Base: https://unpro.ca
+> Généré: 2026-11-01T20:30:39.519Z | Base: https://unpro.ca
 
 ## Pages piliers
 - https://unpro.ca/
@@ -24,7 +24,7 @@
 URL: https://unpro.ca/blog/transformer-mauvais-lead-bon-prospect-2027
 Publié: 2026-11-01T16:58:06.655373+00:00
 
-Entrepreneurs : apprenez à qualifier, réorienter et valoriser vos leads incompatibles pour développer de meilleures occasions d’affaires en 2027.
+Référez vos leads incompatibles à UNPRO : découvrez comment les recycler en crédits pour de futures occasions adaptées à votre entreprise en 2027.
 
 « Trop loin. Trop petit. Pas notre spécialité. Pas le bon moment. »
 
@@ -32,7 +32,7 @@ Combien de demandes votre entreprise écarte-t-elle pour ces raisons? Avant de c
 
 Pour transformer un lead en prospect qualifié, il faut comprendre le projet, identifier ce qui bloque et choisir la bonne suite : préciser la demande, convenir d’un suivi ou orienter le client vers une entreprise mieux adaptée.
 
-Pour votre stratégie commerciale de 2027, voici une approche concrète : donner une destination pertinente à chaque demande réelle.
+Pour votre stratégie commerciale de 2027, ne jetez plus vos demandes incompatibles : référez-les à UNPRO. Nous « recyclons » ces « mauvais » leads en échange de crédits pour de futures occasions adaptées à votre entreprise, selon les modalités du programme.
 
 ## Un mauvais lead pour vous peut être un bon client pour quelqu’un d’autre
 
@@ -98,21 +98,25 @@ Proposez une prochaine étape adaptée : informations préparatoires, période d
 
 Votre équipe recherche des installations complètes. Le propriétaire veut une réparation que vous n’offrez pas.
 
-La bonne réponse peut être une orientation vers un spécialiste, avec l’accord du client. Vous évitez une visite inutile tout en lui offrant une suite utile.
+Référez cette demande à UNPRO avec l’accord du client. Nous pouvons l’orienter vers un professionnel adapté, et vous pouvez valoriser ce référencement dans le cadre de l’échange futur en crédits.
 
-## 4. Faire circuler les occasions avec l’accord du client
+## 4. Référez vos « mauvais » leads à UNPRO et obtenez des crédits pour la suite
 
-L’idée est simple : les demandes incompatibles avec une entreprise peuvent correspondre aux spécialités, au territoire ou aux disponibilités d’une autre.
+Ne jetez plus une demande simplement parce qu’elle ne convient pas à votre entreprise. Référez-la à UNPRO : nous « recyclons » les leads incompatibles pour les orienter vers des professionnels dont les services, le territoire et les disponibilités correspondent au projet.
 
-Un réseau de référencement peut ainsi aider chaque participant à mieux orienter les demandes reçues. Cela ne signifie pas qu’un contact transmis donne automatiquement droit à un prospect en retour.
+En échange, le principe est de vous accorder des crédits pour de futures occasions mieux adaptées à votre entreprise. Vous valorisez ainsi les demandes que vous ne pouvez pas servir aujourd’hui pour préparer les mandats que vous recherchez demain.
 
-Avant de transmettre les coordonnées d’un propriétaire, expliquez la démarche et obtenez les autorisations nécessaires. Au Québec, la communication de renseignements personnels à un tiers requiert généralement le consentement, sous réserve des exceptions prévues par la loi. La nécessité de la communication doit aussi être évaluée.
+Un exemple : vous privilégiez les installations de thermopompes centrales, mais recevez une demande de réparation murale. Avec l’accord du client, vous référez cette demande à UNPRO. Elle peut être orientée vers un professionnel qui recherche ce type de mandat, tandis que votre participation s’inscrit dans un échange futur sous forme de crédits.
 
-Une introduction possible :
+La valeur des crédits, les critères d’admissibilité et leurs modalités d’utilisation sont à confirmer avec UNPRO avant l’échange. Il ne s’agit pas d’une promesse d’un rendez-vous immédiat pour chaque contact transmis.
 
-« Nous ne réalisons pas ce type de travaux. Souhaitez-vous que nous vous proposions une entreprise qui pourrait mieux répondre à votre besoin? »
+Pour proposer la démarche au propriétaire :
 
-Précisez ensuite le destinataire et les renseignements à transmettre avant d’obtenir l’accord requis. Le propriétaire doit comprendre et choisir la suite.
+« Ce projet ne correspond pas aux services que nous offrons. Nous pouvons vous référer à UNPRO pour vous aider à trouver un professionnel adapté. Acceptez-vous que nous transmettions à UNPRO les coordonnées et les détails du projet nécessaires à cette démarche? »
+
+Transmettez uniquement les renseignements nécessaires avec les autorisations requises. Le propriétaire peut aussi communiquer directement avec UNPRO.
+
+Vous avez des demandes hors territoire, hors spécialité ou incompatibles avec votre capacité? Parlez-en à Clara pour connaître les modalités de référencement et de crédits.
 
 ## 5. Définir les bons prospects pour votre entreprise
 
@@ -146,7 +150,7 @@ L’offre de base UNPRO prévoit une activation unique de 350 $ CA, plus taxes a
 
 Vous gérez plusieurs vendeurs ou recherchez un volume particulier? Présentez vos objectifs pour discuter d’un plan personnalisé.
 
-Avant de jeter votre prochain « mauvais » lead, demandez-vous à quelle entreprise il pourrait convenir. Et avant d’en acheter davantage, définissez ceux que vous voulez vraiment recevoir.
+Votre prochain « mauvais » lead peut avoir de la valeur. Référez-le à UNPRO et découvrez comment le recycler en crédits pour de futures occasions qui correspondent à votre entreprise.
 
 Parlez de vos objectifs à Clara sur https://unpro.ca.
 
