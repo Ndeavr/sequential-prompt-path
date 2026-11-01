@@ -377,6 +377,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const [voiceTip, setVoiceTip] = useState<string | null>(null);
   const [inputSuggestion, setInputSuggestion] = useState<"media" | "design" | null>(null);
   const [mediaGlow, setMediaGlow] = useState(false);
+  const [mediaMenuOpen, setMediaMenuOpen] = useState(false);
   const inputSuggestionsShown = useRef(new Set<string>());
   const voiceTipShown = useRef(false);
   const voiceCooldownUntil = useRef(0);
@@ -1472,18 +1473,20 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const chooseQuickReply = useCallback(
     (option: string) => {
       if (busy) return;
-      setQuickReplies(null);
       trackCopilotEvent("clara_quick_reply_selected", { surface: "home_clara_box", kind: /photo/i.test(option) ? "photo" : "text" });
+      // Le raccourci ouvre le même menu que Caméra+.
+      // Conserver les choix si le sélecteur est annulé; acceptDirectFiles les retire après sélection.
+      if (/ajouter une photo/i.test(option)) {
+        setMediaMenuOpen(true);
+        return;
+      }
+      setQuickReplies(null);
       if (option === CHOOSE_ADDRESS || (dossierPendingRef.current && FAKE_DONE.test(option))) {
         setDossierEditAddress(true);
         setDossierOpen(true);
         return;
       }
       if (option === "Continuer sans adresse") dossierPendingRef.current = false;
-      if (/ajouter une photo/i.test(option)) {
-        cameraRef.current?.click();
-        return;
-      }
       // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
       // En parcours entrepreneur, la destination est connue même sans intention détectée.
       if (OPEN_CHOICE.test(option)) {
@@ -2197,8 +2200,10 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
               <MediaMenu
+                open={mediaMenuOpen}
+                setOpen={setMediaMenuOpen}
                 suggested={mediaGlow}
-                label={copy.attach}
+                label={lang === "fr" ? "Caméra+ : ajouter une photo ou un document" : "Camera+: add a photo or document"}
                 onTakePhoto={() => cameraRef.current?.click()}
                 onChoosePhoto={() => photoLibraryRef.current?.click()}
                 onTakeVideo={() => videoCameraRef.current?.click()}
@@ -2254,6 +2259,8 @@ function ClaraSubmitButton({ busy, hasText, label }: { busy: boolean; hasText: b
 }
 
 interface MediaMenuProps {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   suggested?: boolean;
   label: string;
   onTakePhoto: () => void;
@@ -2271,8 +2278,7 @@ interface MediaMenuProps {
  * directement au-dessus du bouton et chaque choix ouvre son sélecteur natif
  * dans le même geste utilisateur.
  */
-function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo, onChooseDocument }: MediaMenuProps) {
-  const [open, setOpen] = useState(false);
+function MediaMenu({ open, setOpen, suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo, onChooseDocument }: MediaMenuProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2289,7 +2295,7 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
     { key: "cp", icon: ImageIcon, text: "Ajouter une photo", run: onChoosePhoto },

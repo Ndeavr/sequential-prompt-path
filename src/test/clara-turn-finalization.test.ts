@@ -69,6 +69,16 @@ describe("Clara — réponses rapides", () => {
     expect(options).toEqual(["📷 Ajouter une photo", "Continuer sans photo"]);
   });
 
+  it("ouvre le menu média pour la réponse photo et conserve le choix si le sélecteur est annulé", () => {
+    const block = source.slice(source.indexOf("const chooseQuickReply"), source.indexOf("const chooseIntentSuggestion"));
+    expect(block).toMatch(/if \(\/ajouter une photo\/i\.test\(option\)\) \{\s*setMediaMenuOpen\(true\)/);
+    expect(block).not.toMatch(/cameraRef\.current\?\.click\(\)/);
+    expect(block.indexOf("setQuickReplies(null)")).toBeGreaterThan(block.indexOf("setMediaMenuOpen(true)"));
+    expect(source).toMatch(/ref=\{photoLibraryRef\} type="file" accept="image\/\*" multiple className="hidden"/);
+    expect(source).toMatch(/ref=\{cameraRef\} type="file" accept="image\/\*" capture="environment"/);
+    expect(source).toMatch(/const acceptDirectFiles[\s\S]*setQuickReplies\(null\)/);
+  });
+
   it("envoie le choix comme un vrai message utilisateur", () => {
     expect(source).toContain("chooseQuickReply");
     expect(source).toMatch(/chooseQuickReply[\s\S]*void send\(option\)/);

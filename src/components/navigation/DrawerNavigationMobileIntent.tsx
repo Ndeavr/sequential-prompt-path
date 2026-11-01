@@ -56,7 +56,7 @@ export default function DrawerNavigationMobileIntent({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-x-0 bottom-0 z-[55] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[55]"
       style={{ top: drawerTop }}
     >
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />

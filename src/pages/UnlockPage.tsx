@@ -56,12 +56,15 @@ const UnlockPage = () => {
   }, [isAmbassador]);
 
   const handleCTA = () => {
+    const destination = isAmbassador
+      ? "/contractor-onboarding?offer=ambassador-lifetime"
+      : intent.destinationPath;
     if (user) {
-      navigate(intent.destinationPath);
+      navigate(destination);
     } else {
       // Save intent so user is redirected after signup/login
       saveAuthIntent({
-        returnPath: intent.destinationPath,
+        returnPath: destination,
         action: "unlock_intent",
         metadata: { intent: intentSlug, referrerId, variant },
       });
@@ -176,21 +179,19 @@ function AmbassadorLanding({
   onCTA: () => void;
   isAuthenticated: boolean;
 }) {
-  const remaining = offerStatus?.remaining ?? 50;
-  const total = offerStatus?.totalSlots ?? 50;
-  const percentUsed = ((total - remaining) / total) * 100;
+  const isSoldOut = offerStatus !== null && offerStatus.remaining <= 0;
 
   const benefits = [
     { icon: Shield, label: "Aucun frais mensuel — à vie" },
-    { icon: Star, label: "Badge Ambassadeur vérifié" },
-    { icon: Zap, label: "Priorité dans les résultats" },
-    { icon: TrendingUp, label: "Visibilité premium garantie" },
+    { icon: Star, label: "Profil d’entreprise et présence IA UNPRO" },
+    { icon: Zap, label: "Rendez-vous exclusifs qualifiés inclus annuellement" },
+    { icon: TrendingUp, label: "Volume annuel établi selon votre marché" },
   ];
 
   const steps = [
-    { step: "1", title: "Réserve ta place", desc: "Inscris-toi pour sécuriser l'offre." },
-    { step: "2", title: "Complète ton profil", desc: "Ajoute tes services et ta zone." },
-    { step: "3", title: "Reçois des rendez-vous", desc: "Les clients te trouvent directement." },
+    { step: "1", title: "Présentez votre entreprise", desc: "Précisez votre région, vos spécialités et votre capacité." },
+    { step: "2", title: "Obtenez votre offre personnalisée", desc: "Le nombre annuel de rendez-vous et les conditions sont confirmés avant tout paiement." },
+    { step: "3", title: "Confirmez votre adhésion", desc: "Un paiement unique de 19 995 $ plus taxes applicables, selon les conditions de votre offre." },
   ];
 
   return (
@@ -203,59 +204,48 @@ function AmbassadorLanding({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="relative max-w-sm mx-auto text-center"
+            className="relative max-w-2xl mx-auto text-center"
           >
             <div className="h-16 w-16 rounded-2xl mx-auto mb-5 flex items-center justify-center bg-gradient-to-br from-amber-500/20 to-yellow-500/10 shadow-[0_0_30px_-6px_hsl(38_92%_50%/0.3)] ring-1 ring-amber-500/20">
               <Crown className="h-8 w-8 text-amber-500" />
             </div>
 
             <Badge className="mb-3 bg-amber-500/15 text-amber-600 dark:text-amber-400 border-0 text-[11px] font-bold">
-              Offre limitée — {remaining} / {total} places
+              Offre limitée à 50 entreprises
             </Badge>
 
             <h1 className="text-2xl font-bold text-foreground font-display leading-tight mb-3">
-              Pas de frais mensuels… <span className="text-amber-500">jamais</span>.
+              Votre place parmi les <span className="text-amber-500">50 entreprises partenaires</span>.
             </h1>
 
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Réservée aux prochains {remaining} entrepreneurs.
+              Un investissement unique. Des rendez-vous exclusifs qualifiés inclus chaque année.
             </p>
           </motion.div>
         </section>
 
-        {/* Scarcity counter */}
         <section className="px-5 pb-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-sm mx-auto"
-          >
-            <div className="rounded-2xl bg-card border border-amber-500/10 p-4 shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-foreground">Places restantes</span>
-                <span className="text-xl font-bold text-amber-500 font-display">{remaining}</span>
-              </div>
-              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentUsed}%` }}
-                  transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-400"
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-1.5">
-                {total - remaining} entrepreneurs ont déjà réclamé leur place
-              </p>
-            </div>
-          </motion.div>
+          <div className="max-w-2xl mx-auto rounded-2xl bg-card border border-amber-500/20 p-6 sm:p-8 text-center">
+            <p className="text-sm text-muted-foreground mb-2">Paiement unique</p>
+            <p className="text-4xl sm:text-5xl font-bold text-amber-500 whitespace-nowrap">19 995 $</p>
+            <p className="text-xs text-muted-foreground mt-2">CAD · plus taxes applicables · aucun frais mensuel pour l’offre incluse</p>
+            <h2 className="text-lg font-semibold mt-6">Combien de rendez-vous par année ?</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              Le nombre de rendez-vous inclus annuellement dépend de votre région, de votre spécialité,
+              des services recherchés et de votre capacité d’accueil. Votre volume annuel et les conditions
+              applicables sont établis dans une offre personnalisée, avant tout paiement.
+            </p>
+            <p className="text-xs text-muted-foreground mt-4">
+              L’inscription gratuite ne réserve pas une place et n’active pas cette offre.
+            </p>
+          </div>
         </section>
 
         {/* Benefits */}
         <section className="px-5 pb-8">
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-2xl mx-auto">
             <h2 className="text-lg font-bold text-foreground font-display text-center mb-4">
-              Ce que tu obtiens
+              Ce que comprend votre offre
             </h2>
             <div className="space-y-2">
               {benefits.map((b, i) => (
@@ -279,7 +269,7 @@ function AmbassadorLanding({
 
         {/* How it works */}
         <section className="px-5 pb-8">
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-2xl mx-auto">
             <h2 className="text-lg font-bold text-foreground font-display text-center mb-4">
               Comment ça marche
             </h2>
@@ -307,26 +297,27 @@ function AmbassadorLanding({
 
         {/* CTA */}
         <section className="px-5 pb-12">
-          <div className="max-w-sm mx-auto text-center">
+          <div className="max-w-2xl mx-auto text-center">
             <Button
               onClick={onCTA}
+              disabled={isSoldOut}
               size="lg"
               className="w-full rounded-2xl h-12 text-base font-bold gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-xl shadow-amber-500/25"
             >
               {isAuthenticated ? (
                 <>
                   <Crown className="h-5 w-5" />
-                  Réserver ma place
+                  {isSoldOut ? "Offre complète" : "Obtenir mon offre personnalisée"}
                 </>
               ) : (
                 <>
                   <Lock className="h-5 w-5" />
-                  Créer mon compte gratuit
+                  {isSoldOut ? "Offre complète" : "Créer mon compte pour obtenir mon offre"}
                 </>
               )}
             </Button>
             <p className="text-[10px] text-muted-foreground mt-3">
-              Aucun paiement requis. Crée ton profil et l'offre est activée.
+              Aucun paiement à cette étape. Le volume annuel, les conditions et la disponibilité sont confirmés avant votre engagement.
             </p>
 
             {!isAuthenticated && (

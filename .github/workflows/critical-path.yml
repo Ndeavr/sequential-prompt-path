@@ -5,13 +5,25 @@ on:
     branches: [lovable-sync]
   pull_request:
     branches: [main, lovable-sync]
+  workflow_dispatch:
 
 concurrency:
   group: critical-founder-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  source-target:
+    name: Require the active Lovable source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject changes aimed at the inactive mirror
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.head_ref != 'lovable-sync'
+        run: |
+          echo '::error::Target lovable-sync. main is a mirror, not the source deployed by Lovable.'
+          exit 1
+
   verify:
+    needs: source-target
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -28,12 +40,16 @@ jobs:
         run: npm ci
 
       - name: Test, typecheck, lint critical path, and build
-        run: npm run ci:critical
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        # Dependencies are installed above. Tests/build must never contact production.
+        # Preserve Node's setup-node PATH inside the isolated network namespace.
+        run: sudo --preserve-env=PATH,NODE_OPTIONS unshare --net bash -c 'ip link set lo up; npm run ci:critical'
 
   mirror-main:
     name: Keep main aligned with the active source
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/lovable-sync'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/lovable-sync'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -45,6 +61,10 @@ jobs:
       - name: Mirror without discarding independent work
         run: |
           git fetch origin main lovable-sync
+          if [ "$(git rev-parse origin/lovable-sync)" != "$(git rev-parse HEAD)" ]; then
+            echo 'A newer active commit exists; its verified run will update the mirror.'
+            exit 0
+          fi
           git merge-base --is-ancestor origin/main HEAD || {
             echo 'main contains independent work. Reconcile both histories; never force-push.'
             exit 1
