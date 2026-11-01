@@ -39,8 +39,30 @@ Sujet : Un partenariat pour votre réseau d'installateurs?
 - B : « Vos meilleurs vendeurs perdent-ils leur temps avec les mauvais prospects? »
 Destination : qualification directeur (/directeur-des-ventes) après publication vérifiée. Texte long : voir campagne-directeur-des-ventes.md.
 
-## Apporteurs — « Valorisez vos demandes non servies » (NON DIFFUSABLE)
-Concept interne « On achète vos leads » : non diffusable avant conditions de rachat et budget approuvés. Aucune promesse de paiement, aucune collecte ni transfert de données de propriétaires : seulement intérêt professionnel et catégories/territoires agrégés. Positionnement exclusif conservé, jamais de leads partagés.
+## Échange de demandes — gestionnaires (PROPOSITION DE PROGRAMME, NON DIFFUSABLE)
+Remplace l'ancien angle « On achète vos leads » / apporteurs. Cible : gestionnaires et directions d'entreprises qui reçoivent de vraies demandes hors spécialité, territoire ou capacité. Ce sont des clients potentiels UNPRO, pas des vendeurs de fichiers.
+
+Accroche : « S'adresse aux gestionnaires qui ont reçu des demandes non compatibles avec leur entreprise. Au lieu de les envoyer à la corbeille, échangez-les contre des leads valides pour votre entreprise! »
+
+Texte :
+> Un bon client. Pas pour votre entreprise?
+> Ne jetez plus ces demandes à la corbeille. Mauvais territoire, mauvais type de travaux ou agenda déjà plein : une demande qui ne vous convient pas peut convenir à un autre professionnel. Avec UNPRO, proposez vos demandes admissibles à l'échange pour recevoir des occasions correspondant à vos spécialités et à votre territoire.
+
+CTA : « Échanger mes demandes »
+Variante directe : « Vos leads ne vous conviennent pas? Échangez-les pour des demandes qui vous correspondent. »
+
+Interdits : rachat en argent, ratio 1 pour 1, crédits ou valeur, disponibilité ou vente garantie, promesse d'échange effectif. Le système d'échange n'existe pas encore.
+
+À définir avant toute activation réelle :
+- critères d'admissibilité d'une demande (réelle, récente, projet résidentiel identifiable) ;
+- validation humaine/serveur et détection des doublons ;
+- exclusivité : une demande attribuée à un seul professionnel compatible, jamais partagée ;
+- mécanisme d'attribution et de contrepartie (aucune valeur fixée d'avance) ;
+- consentement du client propriétaire à la transmission ; aucune donnée personnelle transférée avant base valable.
+
+Page /directeur-des-ventes — prévu, non implémenté : intérêt « J'ai des demandes à échanger » recueillant seulement catégories, territoires et volume agrégés + besoins recherchés, sans backend d'échange ni tarif.
+
+Diffusion bloquée jusqu'à offre et parcours fonctionnels vérifiés.
 
 ## Mesure
 Distinguer queued / sent / delivered / paid. Suivre : paiements réels distincts + activation, recettes HT, livrés réellement, réponses qualifiées, coûts. Aucun gagnant A/B déclaré sur 5 contacts par variante.
