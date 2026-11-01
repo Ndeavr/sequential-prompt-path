@@ -96,6 +96,10 @@ export default function PageContractorPricingIntake() {
   const activationToken = searchParams.get("t");
   const proposalToken = searchParams.get("proposal");
   const proposalContext = useProposalContext(proposalToken);
+  // Une proposition activation_350 n'est valide que sur la page d'activation : le serveur
+  // la refuse ici (invalid_proposal). On l'ignore pour le devis, sans bloquer la saisie.
+  const proposalIncompatible = Boolean(proposalContext.proposal && proposalContext.proposal.offer_type !== "personnalise");
+  const quoteProposalToken = proposalIncompatible ? null : proposalToken;
   const [proposalApplied, setProposalApplied] = useState(false);
   const sessionKey = useMemo(getSessionKey, []);
   const draftKey = `unpro_pricing_intake_draft:${auditId ?? sessionKey}`;
@@ -969,7 +973,7 @@ export default function PageContractorPricingIntake() {
   const isLast = safeStep === total - 1;
 
   const submit = async () => {
-    if (proposalToken && (!proposalContext.proposal || !proposalApplied)) return;
+    if (quoteProposalToken && (!proposalContext.proposal || !proposalApplied)) return;
     const cap = declaredCapacity(data as GoalFields);
     if (!isQualificationReady(data as QD & GoalFields) || !cap) {
       toast.error("Complétez vos objectifs, mandats, territoires et capacité avant le plan.");
@@ -1014,7 +1018,7 @@ export default function PageContractorPricingIntake() {
       },
     });
     try {
-      const quote = await computePricingQuote({ ...payload, ...(proposalToken ? { affiliate_proposal_token: proposalToken } : {}) } as PricingIntakeInput);
+      const quote = await computePricingQuote({ ...payload, ...(quoteProposalToken ? { affiliate_proposal_token: quoteProposalToken } : {}) } as PricingIntakeInput);
       void trackFunnelStep("quote_computed", {
         subjectId: quote.id,
         city: payload.city ?? null,
@@ -1068,7 +1072,8 @@ export default function PageContractorPricingIntake() {
         {proposalToken && <section className="mb-5 rounded-xl border border-border bg-card p-4 text-foreground space-y-2">
           {proposalContext.loading && <p role="status">Lecture de votre proposition…</p>}
           {proposalContext.error && <p role="alert" className="text-destructive">{proposalContext.error}</p>}
-          {proposalContext.proposal && <><p className="font-semibold">Proposition pour {proposalContext.proposal.company_name}</p><p className="text-sm">Objectifs déclarés par votre contact UNPRO, à confirmer. Le prix et les droits seront calculés par le serveur.</p><p className="text-sm">{proposalContext.proposal.inputs.target_monthly_appointments} RDV / mois · capacité {proposalContext.proposal.inputs.monthly_capacity} / mois · panier {proposalContext.proposal.inputs.average_project_value} $ HT · conversion {Number(proposalContext.proposal.inputs.close_rate_estimate ?? 0) * 100} %</p><Button className="h-auto max-w-full whitespace-normal" disabled={proposalApplied} onClick={() => { setData(d => ({ ...d, ...proposalContext.proposal?.inputs })); setManualEntry(true); setBusinessConfirmed(true); setProposalApplied(true); }}> {proposalApplied ? "Informations reprises — modifiables ci-dessous" : "Confirmer et reprendre ces informations"}</Button></>}
+          {proposalIncompatible && <div role="status" className="space-y-2"><p className="font-semibold">Ce lien concernait l'activation du profil (350 $ + taxes).</p><p className="text-sm">Remplissez le formulaire ci-dessous pour obtenir votre plan de rendez-vous personnalisé ; votre saisie et votre référence sont conservées.</p><a className="text-sm underline" href={`/entrepreneurs/activation-350?proposal=${encodeURIComponent(proposalToken ?? "")}&activate=1`}>Revenir à l'activation du profil</a></div>}
+          {proposalContext.proposal && !proposalIncompatible && <><p className="font-semibold">Proposition pour {proposalContext.proposal.company_name}</p><p className="text-sm">Objectifs déclarés par votre contact UNPRO, à confirmer. Le prix et les droits seront calculés par le serveur.</p><p className="text-sm">{proposalContext.proposal.inputs.target_monthly_appointments} RDV / mois · capacité {proposalContext.proposal.inputs.monthly_capacity} / mois · panier {proposalContext.proposal.inputs.average_project_value} $ HT · conversion {Number(proposalContext.proposal.inputs.close_rate_estimate ?? 0) * 100} %</p><Button className="h-auto max-w-full whitespace-normal" disabled={proposalApplied} onClick={() => { setData(d => ({ ...d, ...proposalContext.proposal?.inputs })); setManualEntry(true); setBusinessConfirmed(true); setProposalApplied(true); }}> {proposalApplied ? "Informations reprises — modifiables ci-dessous" : "Confirmer et reprendre ces informations"}</Button></>}
         </section>}
         {/* Fiche rattachée / entreprise analysée — jamais de détour vers l'audit. */}
         {(linked || auditValid) && (
