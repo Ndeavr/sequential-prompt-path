@@ -46,10 +46,10 @@ function normalizeE164(raw: string): string {
   return `+${digits}`;
 }
 const TWILIO_FROM = normalizeE164(Deno.env.get("TWILIO_PHONE_NUMBER") ?? "");
-// Real verified test recipient confirms actual delivery; the Twilio magic
-// number (+15005550006) only ever stays "queued" and therefore FAILS the
-// delivery step honestly.
-const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? "") || "+15005550006";
+// Only an explicitly configured internal test destination is ever used.
+// No magic-number fallback (it can never deliver) and never a prospect number.
+const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "");
+const TWILIO_MSG_SVC = (Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") ?? "").trim();
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 // TEST-mode key only. A live key is refused: this selftest must never touch live mode.
 const STRIPE_TEST_KEY = Deno.env.get("STRIPE_TEST_SECRET_KEY") ?? (STRIPE_KEY.startsWith("sk_test_") ? STRIPE_KEY : "");
@@ -250,7 +250,9 @@ Deno.serve(async (req) => {
     if (!TWILIO_FROM) return { error: `TWILIO_PHONE_NUMBER missing or unparseable (raw_len=${rawFrom.length})`, repair: "Set TWILIO_PHONE_NUMBER to E.164 (e.g. +15145551234)" };
     if (!/^\+\d{10,15}$/.test(TWILIO_FROM)) return { error: `TWILIO_PHONE_NUMBER invalid after normalize: ${TWILIO_FROM}`, repair: "Use E.164 format +15145551234" };
     const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
-    const body = new URLSearchParams({ From: TWILIO_FROM, To: TWILIO_TEST_TO, Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
+    if (!/^\+\d{10,15}$/.test(TWILIO_TEST_TO)) return { error: "internal_test_destination_missing", repair: "Configure ADMIN_TEST_PHONE (internal, owner-authorized) in E.164" };
+    const body = new URLSearchParams({ To: TWILIO_TEST_TO, Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
+    if (TWILIO_MSG_SVC.startsWith("MG")) body.set("MessagingServiceSid", TWILIO_MSG_SVC); else body.set("From", TWILIO_FROM);
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
       method: "POST", headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" }, body,
     });
