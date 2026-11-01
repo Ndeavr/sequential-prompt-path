@@ -115,6 +115,10 @@ export type FunnelEventType =
   | "fallback_350_payment_success"
   | "fallback_350_payment_failed"
   | "fallback_350_declined"
+  | "sales_team_page_view"
+  | "sales_team_step"
+  | "sales_team_submitted"
+  | "sales_team_shared"
   | "paid";
 
 export type FunnelEventSource =

@@ -92,6 +92,8 @@ const PageMoinsSoumissionsPlusFactures = lazyWithRetry(() => import("@/pages/art
 const PageFournisseurPeinturePlusContrats = lazyWithRetry(() => import("@/pages/articles/PageFournisseurPeinturePlusContrats"));
 const PageApparaitreRechercheIA2026 = lazyWithRetry(() => import("@/pages/articles/PageApparaitreRechercheIA2026"));
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
+const PageDirecteurDesVentes = lazyWithRetry(() => import("@/pages/sales/PageDirecteurDesVentes"));
+const AdminSalesTeamRequests = lazyWithRetry(() => import("@/pages/admin/AdminSalesTeamRequests"));
 const PagePartenariatsFournisseurs = lazyWithRetry(() => import("@/pages/partners/PagePartenariatsFournisseurs"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
@@ -1183,6 +1185,7 @@ export const AppRouter = () => (
         <Route path="/book/demo" element={<BookingClientDemoPage />} />
         <Route path="/book/cancel" element={<BookingPaymentCancel />} />
         <Route path="/partners" element={<PartnersPage />} />
+        <Route path="/directeur-des-ventes" element={<Suspense fallback={<LazyFallback />}><PageDirecteurDesVentes /></Suspense>} />
         <Route path="/partenariats-fournisseurs" element={<Suspense fallback={<LazyFallback />}><PagePartenariatsFournisseurs /></Suspense>} />
         <Route path="/describe-project" element={<DescribeProjectPage />} />
         <Route path="/compare-quotes" element={<CompareQuotesPage />} />
@@ -1604,6 +1607,7 @@ export const AppRouter = () => (
         <Route path="/admin/media" element={<AdminProtectedRoute><AdminMedia /></AdminProtectedRoute>} />
         <Route path="/admin/validation" element={<AdminProtectedRoute><AdminValidation /></AdminProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<AdminProtectedRoute><AdminAnswerEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/demandes-equipes-ventes" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminSalesTeamRequests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/operations" element={<AdminProtectedRoute><AdminOperationsHub /></AdminProtectedRoute>} />
         <Route path="/admin/command" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderCommand /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/waiting-homeowners" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminWaitingHomeowners /></Suspense></AdminProtectedRoute>} />
