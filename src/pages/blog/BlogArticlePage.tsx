@@ -203,6 +203,20 @@ export default function BlogArticlePage() {
           <ArticleContentWithVisuals html={article.content_html || ""} slug={article.slug} />
         </motion.div>
 
+        {article.slug === "transformer-mauvais-lead-bon-prospect-2027" && (
+          <section className="rounded-2xl border border-border bg-card p-5 space-y-3" aria-label="Comment transmettre un lead à UNPRO?">
+            <h2 className="text-xl font-bold text-foreground">Comment transmettre un lead à UNPRO?</h2>
+            <ol className="list-decimal pl-5 space-y-1 text-foreground">
+              <li>Connectez-vous à votre espace entrepreneur.</li>
+              <li>Ouvrez « Recycler un lead ».</li>
+              <li>Indiquez le client (téléphone ou courriel), la ville, le service, le projet et la raison du transfert.</li>
+              <li>Attestez que le client vous a autorisé à transmettre ses coordonnées à UNPRO.</li>
+              <li>Suivez le statut dans votre historique : reçue, en évaluation, acceptée ou refusée. Les crédits futurs sont évalués par UNPRO.</li>
+            </ol>
+            <Link to="/pro/recycler-un-lead" className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 font-semibold text-primary-foreground">Recycler un lead</Link>
+          </section>
+        )}
+
         {/* FAQ Section */}
         {faqs.length > 0 && (
           <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-4">
