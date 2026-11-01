@@ -2,7 +2,7 @@
 // Sends 1 real email (+ optional SMS) to founder address, polls for delivery/open/click,
 // then opens the autopilot gate for 24h if every step passes.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { createTrackedLink, wrapAllUrls, validateCta, withReplyFooter } from "../_shared/ctaTracker.ts";
+import { createTrackedLink, wrapAllUrls, validateCta, withReplyFooter, trackingIdFromUrl, isTrackedUrl } from "../_shared/ctaTracker.ts";
 import { recordEmailEvent } from "../_shared/outreachEvents.ts";
 import { sanitizeTags } from "../_shared/resendTags.ts";
 
@@ -145,8 +145,8 @@ Deno.serve(async (req) => {
     // STEP 4 — click via the PUBLIC anonymous path: resolve the /r/ token with
     // the anon key (like PageShortLinkRedirect does), then follow the redirect.
     // Fetching unpro.ca/r/... directly only proves the SPA served HTTP 200.
-    const firstTracked = v.cta_urls.find(u => /\/r\//.test(u));
-    const trackedToken = firstTracked?.split("/r/")[1]?.split(/[?#]/)[0] ?? "";
+    const firstTracked = v.cta_urls.find(u => isTrackedUrl(u));
+    const trackedToken = firstTracked ? trackingIdFromUrl(firstTracked) : "";
     if (trackedToken && ANON_KEY) {
       const resolve = await fetch(`${SUPABASE_URL}/functions/v1/outreach-shortlink-resolve`, {
         method: "POST",
