@@ -35,14 +35,18 @@ describe("acq-e2e-real — lien tracké persistant avec expiration explicite", (
 });
 
 describe("acq-e2e-real — destination synthétique réelle et parcours public anonyme", () => {
-  it("utilise la fixture QA étiquetée comme destination", () => {
-    expect(e2e).toContain("qa-e2e-fixture");
-    expect(e2e).toContain('QA_FIXTURE_MARKER = "Fixture QA UNPRO"');
+  it("utilise la route frontend publiée comme destination", () => {
+    expect(e2e).toContain('const PUBLIC_SITE = "https://unpro.ca"');
+    expect(e2e).toContain('`${PUBLIC_SITE}/qa/e2e-fixture?run=');
+    expect(e2e).toContain('QA_ROUTE_MARKER = "UNPRO-QA-E2E-FIXTURE-V1"');
+    // La destination vérifiée est exactement celle qui a été envoyée.
+    expect(e2e).toContain("location === fixtureUrl");
   });
 
-  it("vérifie le contenu de la landing, pas seulement HTTP 200", () => {
-    expect(e2e).toContain("body.includes(QA_FIXTURE_MARKER)");
-    expect(e2e).toContain("QA fixture marker missing");
+  it("vérifie le marqueur de route dans le bundle publié, pas seulement HTTP 200", () => {
+    expect(e2e).toContain('js.includes(QA_ROUTE_MARKER) && js.includes("/qa/e2e-fixture")');
+    expect(e2e).toContain("QA route marker absent from published bundle");
+    expect(e2e).toContain("route_marker_verified: true");
   });
 
   it("exerce le clic via le résolveur public avec la clé anon (pas le service role)", () => {
