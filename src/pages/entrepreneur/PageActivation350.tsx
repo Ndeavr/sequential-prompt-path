@@ -174,7 +174,7 @@ export default function PageActivation350() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
         <Link to={links.activate} onClick={onActivate} className={ctaCls}>
-          Inscrire mon entreprise — 350 $ + taxes
+          Inscrire mon entreprise · 350 $
         </Link>
       </div>
     </main>
