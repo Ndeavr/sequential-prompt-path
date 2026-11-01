@@ -118,4 +118,15 @@ describe("qa-e2e-fixture — page QA étiquetée, sans paiement ni données", ()
     expect(fixture).toContain("noindex,nofollow");
     expect(fixture).not.toContain("stripe");
   });
+
+  it("la route frontend publiée est la destination réellement envoyée", () => {
+    const page = read("src/pages/qa/PageQaE2eFixture.tsx");
+    expect(page).toContain('QA_ROUTE_MARKER = "UNPRO-QA-E2E-FIXTURE-V1"');
+    expect(page).toContain("noindex,nofollow");
+    expect(page).not.toContain("stripe");
+    const router = read("src/app/router.tsx");
+    expect(router).toContain('path="/qa/e2e-fixture"');
+    // Le selftest vise la même destination frontend, pas la fixture Edge.
+    expect(read("supabase/functions/acq-e2e-selftest/index.ts")).toContain('`${PUBLIC_SITE}/qa/e2e-fixture?run=');
+  });
 });
