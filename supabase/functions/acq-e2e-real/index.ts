@@ -123,6 +123,10 @@ Deno.serve(async (req) => {
   const synthId = crypto.randomUUID();
   const slug = `__e2e_${run_group.slice(0, 8)}`;
   const fixtureUrl = `${SUPABASE_URL}/functions/v1/qa-e2e-fixture?run=${run_group.slice(0, 8)}`;
+  // Humans clicking the tracked link land on a noindex frontend QA page; the
+  // edge fixture above stays the machine-verified content marker (the platform
+  // serves function HTML as text/plain to browsers).
+  const humanFixtureUrl = `https://unpro.ca/qa/e2e-fixture?run=${run_group.slice(0, 8)}`;
   const t0 = Date.now();
   const results: StepResult[] = [];
   let failed: StepResult | null = null;
@@ -184,12 +188,12 @@ Deno.serve(async (req) => {
     trackerId = Math.random().toString(36).slice(2, 12);
     const expires = new Date(Date.now() + FIXTURE_RETENTION_DAYS * 864e5).toISOString();
     const { error } = await sb.from("acquisition_tracking_links").insert({
-      id: trackerId, destination_url: fixtureUrl,
+      id: trackerId, destination_url: humanFixtureUrl,
       channel: "email", campaign: "__e2e_real",
       metadata: { run_group, e2e_expires_at: expires, qa_fixture: true },
     });
     if (error) return { error: error.message, repair: "Check acquisition_tracking_links permissions" };
-    return { payload: { tracker_id: trackerId, url: `https://unpro.ca/r/${trackerId}`, destination: fixtureUrl, e2e_expires_at: expires } };
+    return { payload: { tracker_id: trackerId, url: `https://unpro.ca/r/${trackerId}`, destination: humanFixtureUrl, machine_marker_url: fixtureUrl, e2e_expires_at: expires } };
   });
 
   // 4 — generate outreach
@@ -308,7 +312,7 @@ Deno.serve(async (req) => {
     });
     try { await r.text(); } catch { /* noop */ }
     const location = r.headers.get("location") ?? "";
-    if (r.status >= 300 && r.status < 400 && location.includes("qa-e2e-fixture")) {
+    if (r.status >= 300 && r.status < 400 && (location.includes("qa-e2e-fixture") || location.includes("/qa/e2e-fixture"))) {
       return { payload: { http_status: r.status, resolved_url: (resolved as any).redirect_url, redirect_location: location } };
     }
     return { error: `HTTP ${r.status} location=${location} (expected 3xx → qa-e2e-fixture)`, repair: "Check r-redirect edge function logs" };
