@@ -169,12 +169,16 @@ Deno.serve(async (req) => {
       if (resolve.ok && dest === fixtureUrl) {
         const landing = await fetch(fixtureUrl, { headers: { "User-Agent": "unpro-qa-selftest" } });
         const html = await landing.text();
-        const srcs = [...html.matchAll(/<script[^>]+src="([^"]+\.js)"/g)].map(m => new URL(m[1], PUBLIC_SITE).toString());
-        for (const s of srcs) {
-          const js = await (await fetch(s)).text();
-          if (js.includes(QA_ROUTE_MARKER) && js.includes("/qa/e2e-fixture")) { ok = true; break; }
+        if (!landing.ok) {
+          detail = `landing HTTP ${landing.status} — route not served`;
+        } else {
+          const srcs = [...html.matchAll(/<script[^>]+src="([^"]+\.js)"/g)].map(m => new URL(m[1], PUBLIC_SITE).toString());
+          for (const s of srcs) {
+            const js = await (await fetch(s)).text();
+            if (js.includes(QA_ROUTE_MARKER) && js.includes("/qa/e2e-fixture")) { ok = true; break; }
+          }
+          detail = `landing HTTP ${landing.status} scripts=${srcs.length} route_marker_verified=${ok}`;
         }
-        detail = `landing HTTP ${landing.status} scripts=${srcs.length} route_marker_verified=${ok}`;
       }
       await append("click_redirect", ok ? "pass" : "fail", ok ? `resolved anonymously → ${dest} · ${detail}` : `HTTP ${resolve.status} ${JSON.stringify(resolved).slice(0, 200)} · ${detail}`);
       if (!ok) failedStep ||= "click_redirect";
