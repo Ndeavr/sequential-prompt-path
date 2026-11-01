@@ -134,7 +134,7 @@ export default function PageDirecteurDesVentes() {
         </section>
 
         {step !== null && (
-          <section className="utp-wrap utp-section" aria-labelledby="dv-q" ref={formRef as never}>
+          <section className="utp-wrap utp-section" aria-labelledby="dv-q">
             <div ref={formRef}>
               <h2 id="dv-q">{state === "done" ? t("Demande reçue.", "Request received.") : t("Les besoins de votre équipe", "Your team’s needs")}</h2>
               <div className="dv-card">
