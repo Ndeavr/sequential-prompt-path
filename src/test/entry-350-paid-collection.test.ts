@@ -79,6 +79,21 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
   });
 });
 
+// The canonical Stripe endpoint must not mistake contractor events for condo
+// billing, nor silently acknowledge condo entitlements without a handler.
+describe("signed condo billing isolation on the canonical webhook", () => {
+  it.each(["condo_premium", "portfolio_premium"])("fails closed for %s rather than granting contractor rights", async (product_type) => {
+    const result = await run({
+      ...session("entry_pack_350"),
+      metadata: { product_type, syndicate_id: "synthetic-only", portfolio_id: "synthetic-only" },
+    });
+    expect(result.status).toBe(503);
+    expect(result.body).toEqual({ error: "condo_handler_unavailable" });
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
+  });
+});
+
 // RED QA gate: legacy ScreenPayment sends offer_kind=pack_350 (NOT offer=entry_pack_350).
 // A 100% discount or $1 payment must not reach any activation/billing writes.
 // Synthetic event and mocked I/O only; do not use the production Stripe/DB stack.
