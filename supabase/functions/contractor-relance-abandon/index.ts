@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
             quoteId: quote.id,
             auditId: str(input.audit_id),
             occurredAt: new Date().toISOString(),
-          },;
+          };
       const leadId = (lead as { id: string }).id;
       await sendAlert(leadId, { ...metadata, alert_payload: alertPayload }, alertPayload, quote.id);
     }
