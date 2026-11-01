@@ -265,3 +265,19 @@ export function answerIntake(ctx: FormIntakeContext, raw: string, lang: IntakeLa
   const noted = changed.map((f) => `${INTAKE_FIELD_LABELS[lang][f]} : ${valueOf(draft, f, lang)}`).join(" · ");
   return ask(draft, ctx, lang, `${lang === "fr" ? "Noté" : "Noted"} — ${noted}.\n`);
 }
+
+const FIELD_KEYS: Record<IntakeField, Array<keyof IntakeQualification>> = {
+  preferred_work: ["preferred_work"], excluded_work: ["excluded_work", "no_excluded_work"],
+  service_areas: ["service_areas"], excluded_areas: ["excluded_areas", "no_excluded_areas"],
+  priorities: ["priorities", "other_goal"], capacity: [],
+};
+/** Copie dans le formulaire SEULEMENT les champs que Clara vient de remplir; le reste de la saisie est intact. */
+export function mergeIntakeDraft<T extends IntakeDraft>(current: T, incoming: IntakeDraft, changed: IntakeField[]): T {
+  const q: IntakeQualification = { ...(current.qualification ?? {}) };
+  const next = { ...current, qualification: q } as T;
+  for (const f of changed) {
+    for (const k of FIELD_KEYS[f]) (q as Record<string, unknown>)[k] = incoming.qualification?.[k];
+    if (f === "capacity") { next.capacity_range = incoming.capacity_range; next.next_month_appointments = incoming.next_month_appointments; }
+  }
+  return next;
+}

@@ -13,7 +13,9 @@ import { claraFieldKeyForLabel } from "@/services/clara/claraPageContext";
  * démonstration. Sans audit valide, l'entrepreneur cherche son entreprise
  * réelle (Google via `business-lookup`) avant toute autre question.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
+import { registerClaraFormIntake, shareIntakeDraftWithClara, mergeIntakeDraft, INTAKE_FIELD_LABELS, type IntakeDraft, type IntakeField } from "@/services/clara/claraFormIntake";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseHandoffParams, loadHandoff, goalConflicts, handoffToGoalFields, type SimHandoff } from "@/lib/heatPumpSimHandoff";
 import { Helmet } from "react-helmet-async";
@@ -972,6 +974,39 @@ export default function PageContractorPricingIntake() {
   const current = steps[safeStep];
   const isLast = safeStep === total - 1;
 
+  /* Clara remplit ce même formulaire (brouillon courant lu à chaque tour, jamais soumis). */
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const [claraFilled, setClaraFilled] = useState<IntakeField[]>([]);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data: auth }) => {
+      const m = (auth.user?.user_metadata ?? {}) as Record<string, unknown>;
+      const n = [m.first_name, m.given_name].find((v) => typeof v === "string" && v.trim().length > 1) as string | undefined;
+      if (n) setFirstName(n.trim());
+    }).catch(() => undefined);
+  }, []);
+  const toIntakeDraft = (d: Partial<PricingIntakeInput>): IntakeDraft => ({
+    qualification: (d as QD).qualification ?? {},
+    capacity_range: (d as GoalFields).capacity_range,
+    next_month_appointments: (d as GoalFields).next_month_appointments,
+  });
+  useEffect(() => {
+    registerClaraFormIntake({
+      getDraft: () => toIntakeDraft(dataRef.current),
+      apply: (incoming, changed) => {
+        setData((d) => mergeIntakeDraft(d as Partial<PricingIntakeInput> & IntakeDraft, incoming, changed) as Partial<PricingIntakeInput>);
+        setClaraFilled(changed);
+      },
+      firstName,
+      businessName: (data.company_name as string | undefined) || linked?.business_name || audit?.business_name || null,
+      stepKey: current.key,
+      stepLabel: current.question,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstName, data.company_name, linked?.business_name, audit?.business_name, current.key, current.question]);
+  useEffect(() => () => registerClaraFormIntake(null), []);
+
   const submit = async () => {
     if (quoteProposalToken && (!proposalContext.proposal || !proposalApplied)) return;
     const cap = declaredCapacity(data as GoalFields);
@@ -1125,6 +1160,17 @@ export default function PageContractorPricingIntake() {
               <p className="text-sm text-white/60 mb-6">{current.hint}</p>
             )}
 
+            <ClaraFormAssistant
+              form="contractor_pricing"
+              step={current.question}
+              inlineLabel="Parler à Clara"
+              formIntake={{ onBeforeOpen: () => shareIntakeDraftWithClara(toIntakeDraft(dataRef.current)) }}
+            />
+            {claraFilled.length > 0 && (
+              <p role="status" data-testid="clara-filled-fields" className="mb-3 text-sm text-white/80">
+                Rempli avec Clara (déclaré, modifiable) : {claraFilled.map((f) => INTAKE_FIELD_LABELS.fr[f]).join(", ")}
+              </p>
+            )}
             <div className="rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl p-5">
               {safeStep === 0 && simSummary}
               {current.render(data, set)}
