@@ -35,3 +35,5 @@ Treat every Supabase project as live infrastructure.
 - The CA$350 entry's 12-month Présence IA is resolved only by `contractor_plan_code()`: earliest `entry_activation_350_paid` ledger row cross-checked against a LIVE signed `stripe_webhook_events` payload (paid, 35000 CAD subtotal), voided by a `deactivated` stripe_webhook row (refund/dispute); subscriptions take precedence. Why: one entitlement source, no TEST/forged/replay extension.
 
 - `create-checkout-session` LIVE CA$350 entry is released (founder decision 2026-10-29) and no longer checks `entry350TaxCollectionApproved`; other callers (`create-activation-checkout`) still require `ENTRY350_LIVE_CHECKOUT_RELEASED`="true". Why: commercial go-live without weakening auth, tax contract, signed webhook or idempotency.
+
+- Sales-team requests (/directeur-des-ventes): edge `submit-sales-team-request` only, admin-read RLS, idempotency key returns existing row, no outbound message, no offer before review. Why: no fake success, duplicates or public contact exposure.
