@@ -127,6 +127,7 @@ import {
   usePromptInputAttachments,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
+import { answerIntake, buildIntakeGreeting, getClaraFormIntake } from "@/services/clara/claraFormIntake";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 import { prepareImageForUpload } from "@/services/clara/claraMedia";
@@ -287,9 +288,11 @@ interface ClaraConversationBoxProps {
   /** Première question du parcours entrepreneur, seulement pour une nouvelle entreprise. */
   contractorOpening?: string;
   heading?: string;
+  /** Clara remplit le formulaire visible de la page (même session entrepreneur). */
+  formIntake?: boolean;
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "" }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "", formIntake = false }: ClaraConversationBoxProps) {
   const forcedContractor = forcedAudience === "contractor";
   const location = useLocation();
   const campaignEntry = !forcedContractor && surface === "home" ? readHomeCampaign(location.search, location.pathname) : null;
@@ -1156,6 +1159,17 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   }, [finishContractorTransition, lang]);
 
   askNextRef.current = () => askNextQualification();
+
+  // Ouverture depuis un formulaire : salutation contextuelle unique par onglet, puis UNE question.
+  useEffect(() => {
+    if (!formIntake) return;
+    const intake = getClaraFormIntake();
+    const key = `unpro_clara_form_intake_greeted:${location.pathname}`;
+    try { if (!intake || window.sessionStorage.getItem(key)) return; window.sessionStorage.setItem(key, "1"); } catch { if (!intake) return; }
+    const greeting = buildIntakeGreeting(intake, lang === "fr" ? "fr" : "en");
+    void sayClara(greeting.text, greeting.quickReplies);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formIntake]);
   transitionRef.current = (note: string) => beginTextContractorTransition(note, CLARA_CONTRACTOR_ANALYSIS_NOTE);
 
   useEffect(() => {
@@ -1176,6 +1190,25 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       if (!text || busy) return;
       if (!messages.some((message) => message.role === "user")) {
         logQuestion(text, { source: "chat_composer", lang: lang === "fr" ? "fr-CA" : "en-CA" });
+      }
+
+      // Formulaire visible : la réponse remplit ses champs, une question à la fois.
+      const intake = formIntake ? getClaraFormIntake() : null;
+      if (intake && audienceRef.current === "contractor") {
+        const userId = uid();
+        setError(null);
+        setQuickReplies(null);
+        setMessages((previous) => [...previous, { id: userId, role: "user", text, audience: "contractor" }]);
+        void appendClaraMessage({ role: "user", text, clientMessageId: userId, audience: "contractor" }).catch(() => undefined);
+        setBusy(true);
+        try {
+          const reply = answerIntake(intake, text, lang === "fr" ? "fr" : "en");
+          await sayClara(reply.text, reply.quickReplies);
+        } finally {
+          if (mountedRef.current) setBusy(false);
+          focusComposer();
+        }
+        return;
       }
 
       // Parcours entrepreneur dans le chat : la réponse libre lui revient.
@@ -1467,7 +1500,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         focusComposer();
       }
     },
-    [askNextQualification, contractorFlow, beginTextContractorTransition, busy, copy.fallback, focusComposer, heatPumpCampaign, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
+    [askNextQualification, contractorFlow, formIntake, beginTextContractorTransition, busy, copy.fallback, focusComposer, heatPumpCampaign, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
   );
 
   const chooseQuickReply = useCallback(
@@ -1984,7 +2017,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           {/* Les messages commencent en haut, juste sous la barre d'outils :
               aucune zone vide artificielle avant le premier échange. */}
           <ConversationContent className="flex flex-col justify-start gap-3 px-5 py-3 sm:px-6">
-            {messages.length === 0 && (
+            {messages.length === 0 && !formIntake && (
               <Message from="assistant">
                 <MessageContent className="home-clara-message leading-relaxed">
                   <MessageResponse>{heatPumpCampaign && audience === "homeowner" ? HEAT_PUMP_CAMPAIGN.greeting : audience === "contractor"
@@ -2046,7 +2079,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
               </div>
             )}
             {nextStepRetry && <button type="button" className="home-clara-card-primary" onClick={() => void continuePricingRef.current()}>Reprendre ma proposition</button>}
-            {contractorFlow && audience === "contractor" && (
+            {contractorFlow && audience === "contractor" && !formIntake && (
               <ClaraContractorFlow
                 ref={contractorFlowRef}
                 say={(text) => sayClara(text)}
@@ -2055,7 +2088,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
                 opening={contractorOpening}
               />
             )}
-            {!contractorFlow && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
+            {!contractorFlow && !formIntake && audience === "contractor" && !quickReplies && !busy && !transitionPause && !qualificationStepRef.current && (
               <div className="home-clara-quick" role="group" aria-label="Choix entrepreneur" data-audience="contractor">
                 {contractorSuggestionsWithScore(
                   resolveContractorJourneyState({ hasProfile: !!ownContractor, publicStatus: (ownContractor as { public_status?: string | null } | null)?.public_status ?? null, flowStarted: hasActiveContractorFlow() }),

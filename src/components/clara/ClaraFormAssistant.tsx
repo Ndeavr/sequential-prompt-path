@@ -10,11 +10,15 @@ import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 interface ClaraFormAssistantProps {
-  form: "contractor_audit" | "affiliate_onboarding" | "account_onboarding" | "page_assistance";
+  form: "contractor_audit" | "affiliate_onboarding" | "account_onboarding" | "page_assistance" | "contractor_pricing";
   step?: string | number;
+  /** Bouton visible dans la page (au lieu du bouton flottant) ; libellé fourni. */
+  inlineLabel?: string;
+  /** Clara remplit ce formulaire ; appelé AVANT l'ouverture pour transmettre le brouillon. */
+  formIntake?: { onBeforeOpen: () => void };
 }
 
-export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantProps) {
+export default function ClaraFormAssistant({ form, step, inlineLabel, formIntake }: ClaraFormAssistantProps) {
   const [open, setOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -30,7 +34,7 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
   }, [form, step]);
 
   const setAssistanceOpen = (next: boolean) => {
-    if (next) setHasOpened(true);
+    if (next) { formIntake?.onBeforeOpen(); setHasOpened(true); }
     setOpen(next);
     trackCopilotEvent(next ? "clara_form_assistance_opened" : "clara_form_assistance_closed", {
       surface: form,
@@ -40,7 +44,11 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
 
   return (
     <>
-      {!open && (
+      {inlineLabel ? (
+        <Button ref={triggerRef} type="button" size="lg" onClick={() => setAssistanceOpen(!open)} className="mb-4 w-full min-h-[48px]" aria-expanded={open} aria-controls="clara-form-assistance" data-testid="clara-form-intake-trigger">
+          <MessageCircle aria-hidden="true" /> {inlineLabel}
+        </Button>
+      ) : !open && (
         <Button ref={triggerRef} type="button" onClick={() => setAssistanceOpen(true)} className="clara-form-assistant-trigger" aria-label="Demander à Clara" aria-expanded={false} aria-controls="clara-form-assistance">
           <MessageCircle aria-hidden="true" /> Clara
         </Button>
@@ -56,7 +64,7 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
               <Minus aria-hidden="true" />
             </Button>
           </div>
-          <ClaraConversationBox onDestinationOpened={() => setAssistanceOpen(false)} />
+          <ClaraConversationBox onDestinationOpened={() => setAssistanceOpen(false)} {...(formIntake ? { formIntake: true, forcedAudience: "contractor" as const } : {})} />
         </aside>
       )}
     </>
@@ -64,12 +72,12 @@ export default function ClaraFormAssistant({ form, step }: ClaraFormAssistantPro
 }
 
 /** Reuse the same minimized assistant on pages opened by Clara.
- * Audit and affiliate forms already own their contextual assistant. */
+ * Audit, affiliate and pricing forms already own their contextual assistant. */
 export function ClaraPageAssistant() {
   const location = useLocation();
   const state = location.state as { fromClara?: boolean; claraIntent?: ClaraWorkflowIntent } | null;
   if (!state?.fromClara || !state.claraIntent) return null;
   const destination = resolveClaraDestination(state.claraIntent);
-  if (destination?.path !== location.pathname || ["/entrepreneurs/audit-ia", "/affilies/onboarding"].includes(location.pathname)) return null;
+  if (destination?.path !== location.pathname || ["/entrepreneurs/audit-ia", "/affilies/onboarding", "/entrepreneur/devis-personnalise"].includes(location.pathname)) return null;
   return <ClaraFormAssistant key={location.pathname} form="page_assistance" />;
 }
