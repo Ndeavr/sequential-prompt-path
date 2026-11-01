@@ -396,6 +396,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
 
 
   const hydrated = useRef(false);
+  const [mediaMenuOpen, setMediaMenuOpen] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
   const photoLibraryRef = useRef<HTMLInputElement>(null);
@@ -1481,7 +1482,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       }
       if (option === "Continuer sans adresse") dossierPendingRef.current = false;
       if (/ajouter une photo/i.test(option)) {
-        cameraRef.current?.click();
+        setMediaMenuOpen(true);
         return;
       }
       // Un choix « Ouvrir … » n'est jamais un simple message : il ouvre vraiment.
@@ -2159,7 +2160,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         {voiceTip && <div className="home-clara-input-tip" role="note"><span>{voiceTip}</span><button type="button" aria-label="Fermer la suggestion de microphone" onClick={() => { setVoiceTip(null); setVoiceGlow(false); }}><X className="h-4 w-4" /></button></div>}
         {inputSuggestion && !voiceTip && <div className="home-clara-input-tip" role="note">
           <div>
-            {inputSuggestion === "media" ? <><p>Une photo ou une courte vidéo m’aiderait à mieux comprendre.</p><div className="flex gap-2 mt-2"><button type="button" onClick={() => { setInputSuggestion(null); photoLibraryRef.current?.click(); }}>Ajouter une photo</button><button type="button" onClick={() => { setInputSuggestion(null); videoLibraryRef.current?.click(); }}>Ajouter une vidéo</button></div></>
+            {inputSuggestion === "media" ? <><p>Une photo ou une courte vidéo m’aiderait à mieux comprendre.</p><div className="flex gap-2 mt-2"><button type="button" onClick={() => { setInputSuggestion(null); setMediaMenuOpen(true); }}>Ajouter une photo</button><button type="button" onClick={() => { setInputSuggestion(null); videoLibraryRef.current?.click(); }}>Ajouter une vidéo</button></div></>
               : <><p>Aimeriez-vous voir de quoi ces rénovations auraient l’air chez vous?</p><button type="button" className="mt-2" onClick={() => { setInputSuggestion(null); void runOpen("design_generation", "Visualiser mes rénovations"); }}>Voir avec ma photo</button><p className="text-muted-foreground mt-1">Illustration du résultat possible.</p></>}
           </div>
           <button type="button" aria-label="Fermer la suggestion" onClick={() => { setInputSuggestion(null); setMediaGlow(false); }}><X className="h-4 w-4" /></button>
@@ -2197,6 +2198,8 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
               <MediaMenu
+                open={mediaMenuOpen}
+                setOpen={setMediaMenuOpen}
                 suggested={mediaGlow}
                 label={copy.attach}
                 onTakePhoto={() => cameraRef.current?.click()}
@@ -2254,6 +2257,8 @@ function ClaraSubmitButton({ busy, hasText, label }: { busy: boolean; hasText: b
 }
 
 interface MediaMenuProps {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   suggested?: boolean;
   label: string;
   onTakePhoto: () => void;
@@ -2271,8 +2276,7 @@ interface MediaMenuProps {
  * directement au-dessus du bouton et chaque choix ouvre son sélecteur natif
  * dans le même geste utilisateur.
  */
-function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo, onChooseDocument }: MediaMenuProps) {
-  const [open, setOpen] = useState(false);
+function MediaMenu({ open, setOpen, suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo, onChooseDocument }: MediaMenuProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2289,7 +2293,7 @@ function MediaMenu({ suggested, label, onTakePhoto, onChoosePhoto, onTakeVideo, 
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   const items: Array<{ key: string; icon: typeof Camera; text: string; run: () => void }> = [
     { key: "cp", icon: ImageIcon, text: "Ajouter une photo", run: onChoosePhoto },
