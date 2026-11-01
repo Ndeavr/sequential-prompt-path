@@ -25,7 +25,10 @@ export function buildActivation350Links(sp: URLSearchParams) {
   activate.set("activate", "1");
   // Option rendez-vous : même parcours existant, ouvert sur la vue personnalisée
   // (prix et volume calculés par le serveur, consentement séparé).
+  // Le jeton d'une proposition activation_350 n'est valide que pour l'activation :
+  // le serveur refuse un devis personnalisé qui le porte (invalid_proposal).
   const more = new URLSearchParams(carry);
+  more.delete("proposal");
   more.set("from", "activation_350_more");
   more.set("view", "personalized");
   return {
