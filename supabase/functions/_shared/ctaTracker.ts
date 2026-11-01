@@ -1,6 +1,7 @@
 // PROTECTED — CTA tracker helper. Every outreach URL MUST go through /r/{id}.
 // Provides: createTrackedLink, wrapAllUrls, extractUrls, validateCta.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { resolvePreviewSlug, previewLinkUrl } from "./linkPreview.ts";
 
 const TRACKER_BASE = "https://unpro.ca/r/";
 const INTERNAL_HOST_RE = /^https?:\/\/(?:[a-z0-9-]+\.)*unpro\.ca\b/i;
@@ -34,6 +35,12 @@ function sb(): SupabaseClient {
 }
 
 export async function createTrackedLink(destination_url: string, ctx: TrackCtx = {}): Promise<string> {
+  const m = (ctx.metadata ?? {}) as Record<string, unknown>;
+  const preview_slug = resolvePreviewSlug({
+    objective: m.preview_objective as string, campaign: ctx.campaign, service: m.service as string,
+    audience: m.audience as string, lang: m.lang as string, destination_url,
+    heat_pump_declared: m.heat_pump_declared === true,
+  });
   for (let attempt = 0; attempt < 3; attempt++) {
     const id = shortId(10);
     const { error } = await sb().from("acquisition_tracking_links").insert({
@@ -44,9 +51,10 @@ export async function createTrackedLink(destination_url: string, ctx: TrackCtx =
       profile_id: ctx.profile_id ?? null,
       campaign: ctx.campaign ?? null,
       channel: ctx.channel ?? "email",
-      metadata: ctx.metadata ?? {},
+      metadata: { ...m, preview_slug },
     });
-    if (!error) return `${TRACKER_BASE}${id}`;
+    // Objective-specific preview page (OG in initial HTML); humans are forwarded to /r/{id} unchanged.
+    if (!error) return previewLinkUrl(preview_slug, id);
     if (!String(error.message).includes("duplicate")) throw new Error(`tracker_insert_failed: ${error.message}`);
   }
   throw new Error("tracker_insert_failed_collision");
@@ -58,8 +66,15 @@ export function extractUrls(body: string): string[] {
   return Array.from(new Set(matches.map((u) => u.replace(/[.,;:!?)]+$/, ""))));
 }
 
+const PREVIEW_LINK_RE = /^https:\/\/unpro\.ca\/p\/[a-z0-9-]+\.html\?c=([a-z0-9]{6,32})$/i;
+
+export function trackingIdFromUrl(u: string): string {
+  const p = u.match(PREVIEW_LINK_RE); if (p) return p[1];
+  return u.split("/r/")[1]?.split(/[?#]/)[0] ?? "";
+}
+
 export function isTrackedUrl(u: string): boolean {
-  return u.startsWith(TRACKER_BASE) || /\/r\/[a-z0-9]{6,}/i.test(u);
+  return u.startsWith(TRACKER_BASE) || /\/r\/[a-z0-9]{6,}/i.test(u) || PREVIEW_LINK_RE.test(u);
 }
 
 /** Replace every internal (unpro.ca) URL in `body` with a tracked /r/{id}. External URLs untouched. */
