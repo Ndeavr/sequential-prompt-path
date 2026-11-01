@@ -991,8 +991,9 @@ export default function PageContractorPricingIntake() {
     capacity_range: (d as GoalFields).capacity_range,
     next_month_appointments: (d as GoalFields).next_month_appointments,
   });
+  const intakeCtxRef = useRef<Parameters<typeof registerClaraFormIntake>[0]>(null);
   useEffect(() => {
-    registerClaraFormIntake({
+    intakeCtxRef.current = Object.assign(intakeCtxRef.current ?? {}, {
       getDraft: () => toIntakeDraft(dataRef.current),
       apply: (incoming, changed) => {
         setData((d) => mergeIntakeDraft(d as Partial<PricingIntakeInput> & IntakeDraft, incoming, changed) as Partial<PricingIntakeInput>);
@@ -1003,6 +1004,7 @@ export default function PageContractorPricingIntake() {
       stepKey: current.key,
       stepLabel: current.question,
     });
+    registerClaraFormIntake(intakeCtxRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstName, data.company_name, linked?.business_name, audit?.business_name, current.key, current.question]);
   useEffect(() => () => registerClaraFormIntake(null), []);
