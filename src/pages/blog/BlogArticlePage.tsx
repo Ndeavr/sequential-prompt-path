@@ -16,15 +16,18 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisuals";
-import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
+import { editorialModifiedDate } from "@/seo/editorialDates";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
+import BlogImage, { blogImageAlt, absoluteImageUrl } from "@/components/blog/BlogImage";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { openAlex } = useAlexVoice();
   useEngagementTracking();
   const reduceMotion = useReducedMotion();
+  const { setLang } = useLanguage();
 
   const { data: article, isLoading, isError, refetch } = useQuery({
     queryKey: ["blog-article", slug],
@@ -43,17 +46,21 @@ export default function BlogArticlePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const lang: "fr" | "en" = article?.language === "en" ? "en" : "fr";
+  useEffect(() => { if (article?.language === "fr" || article?.language === "en") setLang(article.language); }, [article?.language]);
+
   const stuck = useLoadingTimeout(isLoading, 4000, "blog_article");
 
   // Related articles
   const { data: related } = useQuery({
-    queryKey: ["blog-related", article?.category],
+    queryKey: ["blog-related", lang, article?.category, slug],
     queryFn: async () => {
       const { data } = await supabase
         .from("blog_articles")
         .select("id, title, slug, category, city, reading_time_minutes, featured_image_url")
         .eq("status", "published")
         .eq("category", article.category)
+        .eq("language", lang)
         .neq("slug", slug)
         .limit(3);
       return data as any[] || [];
@@ -143,12 +150,15 @@ export default function BlogArticlePage() {
       <Helmet>
         <title>{article.seo_title || `${article.title} | UNPRO`}</title>
         <meta name="description" content={article.meta_description || ""} />
+        <html lang={lang === "en" ? "en-CA" : "fr-CA"} />
         <link rel="canonical" href={`https://unpro.ca/blog/${article.slug}`} />
+        {article.translation_slug && <link rel="alternate" hrefLang={lang === "en" ? "en-CA" : "fr-CA"} href={`https://unpro.ca/blog/${article.slug}`} />}
+        {article.translation_slug && <link rel="alternate" hrefLang={lang === "en" ? "fr-CA" : "en-CA"} href={`https://unpro.ca/blog/${article.translation_slug}`} />}
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.meta_description} />
         <meta property="og:url" content={`https://unpro.ca/blog/${article.slug}`} />
         <meta property="og:type" content="article" />
-        {article.featured_image_url && <meta property="og:image" content={article.featured_image_url} />}
+        {article.featured_image_url && <meta property="og:image" content={absoluteImageUrl(article.featured_image_url)} />}
         {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
         {faqJsonLd && <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>}
       </Helmet>
@@ -157,7 +167,7 @@ export default function BlogArticlePage() {
 
         {/* Breadcrumb */}
         <nav className="text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-primary">Accueil</Link>
+          <Link to="/" className="hover:text-primary">{lang === "en" ? "Home" : "Accueil"}</Link>
           {" / "}
           <Link to="/blog" className="hover:text-primary">Blog</Link>
           {" / "}
@@ -169,7 +179,7 @@ export default function BlogArticlePage() {
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {article.category && <span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{article.category}</span>}
             {article.city && <><span>•</span><span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{article.city}</span></>}
-            {article.published_at && <><span>•</span><span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />Publié le <time dateTime={article.published_at}>{formatEditorialDate(article.published_at)}</time></span></>}
+            {article.published_at && <><span>•</span><span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{lang === "en" ? "Published" : "Publié le"} <time dateTime={article.published_at}>{new Date(article.published_at).toLocaleDateString(lang === "en" ? "en-CA" : "fr-CA", { year: "numeric", month: "long", day: "numeric" })}</time></span></>}
             {article.reading_time_minutes && <><span>•</span><span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{article.reading_time_minutes} min</span></>}
           </div>
           <div className="flex items-center justify-between">
@@ -186,13 +196,11 @@ export default function BlogArticlePage() {
         </motion.header>
 
         {/* Featured Image */}
-        {article.featured_image_url && (
-          <img
-            src={article.featured_image_url}
-            alt={`${article.title} — illustration de l’article`}
-            className="w-full rounded-xl object-cover max-h-96"
-            loading="lazy"
-          />
+        <BlogImage src={article.featured_image_url} alt={blogImageAlt(article, lang)} priority className="rounded-xl" />
+        {article.translation_slug && (
+          <Link to={`/blog/${article.translation_slug}`} hrefLang={lang === "en" ? "fr-CA" : "en-CA"} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
+            {lang === "en" ? "Lire en français" : "Read in English"}
+          </Link>
         )}
 
         {/* Content */}
@@ -221,7 +229,7 @@ export default function BlogArticlePage() {
         {/* FAQ Section */}
         {faqs.length > 0 && (
           <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-4">
-            <h2 className="text-2xl font-bold text-foreground">Questions fréquentes</h2>
+            <h2 className="text-2xl font-bold text-foreground">{lang === "en" ? "Frequently asked questions" : "Questions fréquentes"}</h2>
             <div className="space-y-2">
               {faqs.map((faq: any, i: number) => (
                 <FaqItem key={i} question={faq.question || faq.q} answer={faq.answer || faq.a} />
@@ -233,7 +241,7 @@ export default function BlogArticlePage() {
         {/* Internal Links */}
         {internalLinks.length > 0 && (
           <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">À lire aussi</h2>
+            <h2 className="text-xl font-semibold text-foreground">{lang === "en" ? "Read also" : "À lire aussi"}</h2>
             <div className="flex flex-wrap gap-2">
               {internalLinks.map((link: any, i: number) => (
                 <Link
@@ -251,7 +259,7 @@ export default function BlogArticlePage() {
         {/* Related Articles */}
         {related && related.length > 0 && (
           <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Articles connexes</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{lang === "en" ? "Related articles" : "Articles connexes"}</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {related.map((r: any) => (
                 <Link key={r.id} to={`/blog/${r.slug}`} className="group rounded-lg border border-border p-4 hover:shadow-md transition">
@@ -270,20 +278,20 @@ export default function BlogArticlePage() {
           transition={{ delay: 0.4 }}
           className="rounded-xl bg-primary/5 border border-primary/20 p-6 text-center space-y-3"
         >
-          <h3 className="text-lg font-semibold text-foreground">Une question sur ce sujet?</h3>
-          <p className="text-muted-foreground text-sm">Clara, notre assistant IA, peut vous aider à comprendre et vous guider vers la meilleure solution.</p>
+          <h3 className="text-lg font-semibold text-foreground">{lang === "en" ? "A question about this topic?" : "Une question sur ce sujet?"}</h3>
+          <p className="text-muted-foreground text-sm">{lang === "en" ? "Clara, our AI assistant, can help you understand and guide you to the right next step." : "Clara, notre assistante IA, peut vous aider à comprendre et vous guider vers la meilleure solution."}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => openAlex("general")}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
             >
-              <Sparkles className="h-4 w-4" /> Parler à Clara
+              <Sparkles className="h-4 w-4" /> {lang === "en" ? "Talk to Clara" : "Parler à Clara"}
             </button>
             <Link
               to="/decrire-mon-projet"
               className="inline-flex items-center gap-2 border border-border px-6 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
             >
-              Décrire mon projet <ArrowRight className="h-4 w-4" />
+              {lang === "en" ? "Describe my project" : "Décrire mon projet"} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </motion.div>
