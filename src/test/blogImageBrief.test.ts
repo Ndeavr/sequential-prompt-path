@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildImageBrief } from "./brief.ts";
+import { buildImageBrief } from "../../supabase/functions/blog-image-generator/brief";
 describe("blog image brief", () => {
   it("never embeds the title and forbids text", () => {
     const b = buildImageBrief({ slug: "ia-attirer-clients-entrepreneurs-quebec", category: "entrepreneur" });
