@@ -2,7 +2,7 @@ import { useState } from "react";
 
 /** Stable topic fallback (no text in pixels). Chosen deterministically, never loops. */
 import passportAsset from "@/assets/blog/blog-passport.webp.asset.json";
-export const BLOG_FALLBACK_IMAGE: string = passportAsset.url;
+export const BLOG_FALLBACK_IMAGE: string = `https://unpro.ca${passportAsset.url}`;
 
 export function blogImageAlt(
   a: { category?: string | null; city?: string | null; title?: string | null },
