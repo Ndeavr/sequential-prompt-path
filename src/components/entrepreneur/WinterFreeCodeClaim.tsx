@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { saveReturnPath } from "@/lib/authReturn";
 
 const KEY = "unpro_winter_free_code";
 const REASONS: Record<string, string> = {
@@ -13,6 +14,7 @@ const REASONS: Record<string, string> = {
   business_already_has_offer: "Votre entreprise a déjà reçu une offre d'activation. Une seule par entreprise.",
   city_not_eligible: "La ville principale de votre entreprise ne correspond pas à ce code.",
   service_not_offered: "Ce code est réservé aux entreprises qui offrent ce service sur leur profil.",
+  offer_no_longer_active: "L'offre de votre entreprise n'est plus active. Elle ne peut pas être réactivée par un nouveau code.",
   exhausted: "Les 25 places de ce code sont toutes prises.",
   retry_conflict: "Une demande est déjà en cours. Réessayez dans un instant.",
 };
@@ -24,7 +26,13 @@ export default function WinterFreeCodeClaim({ initialCode }: { initialCode?: str
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<{ ok: boolean; msg: string; end?: string; start?: string } | null>(null);
 
-  useEffect(() => { supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session)); }, []);
+  const en = typeof document !== "undefined" && document.documentElement.lang?.startsWith("en");
+  const back = "/entrepreneurs/activation-350?code=" + encodeURIComponent(code);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
   useEffect(() => { if (code) sessionStorage.setItem(KEY, code); }, [code]);
 
   const claim = async () => {
@@ -34,7 +42,7 @@ export default function WinterFreeCodeClaim({ initialCode }: { initialCode?: str
     const { data, error } = await supabase.rpc("claim_scoped_free_activation" as never, { p_code: code.trim() } as never);
     setBusy(false);
     const d = data as { ok?: boolean; reason?: string; founder_start?: string; founder_end?: string } | null;
-    if (error || !d) { setRes({ ok: false, msg: "Le serveur n'a pas confirmé. Rien n'a été activé ; vous pouvez réessayer sans risque de doublon." }); return; }
+    if (error || !d) { setRes({ ok: false, msg: en ? "Status not confirmed: the answer was lost. Retry — a second try never creates a duplicate and shows the real status." : "Statut non confirmé : la réponse s'est perdue. Réessayez — un nouvel essai ne crée jamais de doublon et affiche l'état réel." }); return; }
     if (d.ok) {
       void logFunnelEvent({ event_type: "free_offer_accepted", metadata: { surface: "activation_350", offer: "hiver_abris_2026" } });
       sessionStorage.removeItem(KEY);
@@ -51,7 +59,7 @@ export default function WinterFreeCodeClaim({ initialCode }: { initialCode?: str
       {res?.ok ? (
         <p className="mt-3 text-sm" role="status"><strong>{res.msg}</strong> 0 $ facturé. Du {fmt(res.start)} au {fmt(res.end)}. Aucune reconduction payante.</p>
       ) : authed === false ? (
-        <Link to={`/login?redirect=${encodeURIComponent("/entrepreneurs/activation-350?code=" + code)}`} className="mt-3 block text-sm font-semibold text-primary underline">Se connecter pour appliquer le code (il sera conservé)</Link>
+        <Link to={`/login?returnTo=${encodeURIComponent(back)}`} onClick={() => saveReturnPath(back, "checkout")} className="mt-3 block text-sm font-semibold text-primary underline">Se connecter pour appliquer le code (il sera conservé)</Link>
       ) : (
         <div className="mt-3 flex gap-2">
           <input aria-label="Code d'activation" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="min-h-11 flex-1 rounded-[18px] border border-input bg-background px-3 text-sm" placeholder="HIVER-…" />
@@ -59,6 +67,11 @@ export default function WinterFreeCodeClaim({ initialCode }: { initialCode?: str
         </div>
       )}
       {res && !res.ok && <p className="mt-2 text-sm text-destructive" role="alert">{res.msg}</p>}
+      {res && !res.ok && res.msg === REASONS.no_business && (
+        <Link to={`/join/profile?returnTo=${encodeURIComponent(back)}`} onClick={() => saveReturnPath(back, "contractor_onboarding")} className="mt-2 block text-sm font-semibold text-primary underline">
+          {en ? "Create my business profile (no payment)" : "Créer le profil de mon entreprise (sans paiement)"}
+        </Link>
+      )}
     </div>
   );
 }
