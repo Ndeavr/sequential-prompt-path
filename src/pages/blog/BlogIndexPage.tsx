@@ -11,7 +11,6 @@ import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
-import { formatEditorialDate } from "@/seo/editorialDates";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import BlogImage, { blogImageAlt } from "@/components/blog/BlogImage";
 

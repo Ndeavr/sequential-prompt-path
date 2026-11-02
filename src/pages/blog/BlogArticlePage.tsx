@@ -16,7 +16,7 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisuals";
-import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
+import { editorialModifiedDate } from "@/seo/editorialDates";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
 import BlogImage, { blogImageAlt } from "@/components/blog/BlogImage";
