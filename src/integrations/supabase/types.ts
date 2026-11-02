@@ -23451,6 +23451,48 @@ export type Database = {
         }
         Relationships: []
       }
+      casl_campaign_policies: {
+        Row: {
+          active: boolean
+          campaign_key: string
+          channel_scope: string[]
+          created_at: string
+          notes: string | null
+          offer_code: string
+          offer_operational: boolean
+          season_services: string[]
+          status: string
+          territories: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          campaign_key: string
+          channel_scope?: string[]
+          created_at?: string
+          notes?: string | null
+          offer_code: string
+          offer_operational?: boolean
+          season_services?: string[]
+          status?: string
+          territories?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          campaign_key?: string
+          channel_scope?: string[]
+          created_at?: string
+          notes?: string | null
+          offer_code?: string
+          offer_operational?: boolean
+          season_services?: string[]
+          status?: string
+          territories?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       casl_consent_evidence: {
         Row: {
           auto_captured: boolean
@@ -23594,6 +23636,78 @@ export type Database = {
             columns: ["outbound_company_id"]
             isOneToOne: false
             referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      casl_machine_decisions: {
+        Row: {
+          actor: string
+          block_reasons: string[]
+          campaign_key: string
+          commercial_breakdown: Json
+          commercial_score: number
+          created_at: string
+          decision: string
+          destination_normalized: string
+          destination_type: string
+          evidence_id: string
+          expires_at: string | null
+          id: string
+          inputs: Json
+          inputs_sha256: string
+          legal_reasons: string[]
+          policy_version: string
+        }
+        Insert: {
+          actor?: string
+          block_reasons?: string[]
+          campaign_key: string
+          commercial_breakdown?: Json
+          commercial_score?: number
+          created_at?: string
+          decision: string
+          destination_normalized: string
+          destination_type: string
+          evidence_id: string
+          expires_at?: string | null
+          id?: string
+          inputs: Json
+          inputs_sha256: string
+          legal_reasons?: string[]
+          policy_version: string
+        }
+        Update: {
+          actor?: string
+          block_reasons?: string[]
+          campaign_key?: string
+          commercial_breakdown?: Json
+          commercial_score?: number
+          created_at?: string
+          decision?: string
+          destination_normalized?: string
+          destination_type?: string
+          evidence_id?: string
+          expires_at?: string | null
+          id?: string
+          inputs?: Json
+          inputs_sha256?: string
+          legal_reasons?: string[]
+          policy_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "casl_machine_decisions_campaign_key_fkey"
+            columns: ["campaign_key"]
+            isOneToOne: false
+            referencedRelation: "casl_campaign_policies"
+            referencedColumns: ["campaign_key"]
+          },
+          {
+            foreignKeyName: "casl_machine_decisions_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "casl_consent_evidence"
             referencedColumns: ["id"]
           },
         ]
@@ -100825,6 +100939,7 @@ export type Database = {
       }
     }
     Functions: {
+      _casl_host: { Args: { u: string }; Returns: string }
       acq_increment_slot: {
         Args: { p_city: string; p_trade: string }
         Returns: boolean
@@ -101033,6 +101148,23 @@ export type Database = {
         Returns: undefined
       }
       canonical_plan_code: { Args: { _code: string }; Returns: string }
+      casl_machine_evaluate: {
+        Args: {
+          p_campaign_key: string
+          p_capture: Json
+          p_dry_run?: boolean
+          p_evidence_id: string
+        }
+        Returns: Json
+      }
+      casl_send_basis: {
+        Args: {
+          p_campaign_key: string
+          p_destination_type: string
+          p_destinations: string[]
+        }
+        Returns: Json
+      }
       check_founder_eligibility: {
         Args: { p_category_slug: string; p_city: string }
         Returns: Json
