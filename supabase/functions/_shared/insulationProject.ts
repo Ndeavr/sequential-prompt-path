@@ -39,7 +39,7 @@ export function captureInsulationTurn(previous: InsulationContext, answer: strin
     // Only exact choices paired to the preceding question may fill readiness.
     // Free text remains in canonical history for clarification, not certification.
     for (const item of POST_FIRE_QUESTIONS) {
-      if (q === norm(item.q) && item.options.some(option => option.value === answer)) {
+      if ((q === norm(item.q) || q === item.key || q === "project_context." + item.key) && item.options.some(option => option.value === answer)) {
         Object.assign(out, { [item.key]: answer });
       }
     }
@@ -90,8 +90,13 @@ export function postFireGuidance(raw: unknown): string {
     "Réutiliser les renseignements déjà donnés; clarifier les réponses libres sans inventer de choix. Une question à la fois. " +
     "Recueillir ville, bâtiment, rôle, surfaces, étapes préalables, délai et canal de retour dans le parcours existant. Faire confirmer un résumé corrigeable et le consentement avant la soumission par la cliente. " +
     "Aucune entreprise recommandée sans compétence après sinistre, surfaces, territoire, licence et assurance vérifiés côté serveur. Un spécialiste d’entretoit ne couvre pas implicitement les murs ou planchers. " +
-    "Premier contact anonymisé; aucune adresse exacte, coordonnées ou pièce privée transmise sans consentement. Ne jamais annoncer enregistrement, contact, disponibilité ou rendez-vous sans preuve serveur. " +
+    "Recherche et sollicitation : résumé ANONYMISÉ secteur/travaux seulement; aucune identité, coordonnée, adresse exacte ni pièce privée transmise aux entrepreneurs, même avec consentement. N'utilise jamais l'expression « demande réelle ». Ne jamais annoncer enregistrement, contact, disponibilité ou rendez-vous sans preuve serveur. " +
     "Ne promettre un retour ultérieur que si un suivi persistant est effectivement enregistré dans le parcours existant.";
+}
+/** Server lock: prohibited/unknown post-fire access suspends all qualification and matching. */
+export function isPostFireSuspended(raw: unknown): boolean {
+  const c = sanitizeInsulationContext(raw);
+  return c.insulation_post_fire === "declared" && (!c.post_fire_access || c.post_fire_access === "prohibited" || c.post_fire_access === "unknown") && c.post_fire_access !== undefined;
 }
 export function nextInsulationQuestion(raw: unknown, category?: string | null, subType?: string | null) {
   const c = sanitizeInsulationContext(raw);
