@@ -1,7 +1,7 @@
 /**
  * UNPRO — Revenue Wall
  * Sticky ribbon injected in AdminLayout header. Real numbers from v_launch_funnel.
- * Purpose: every admin page shows today's revenue vs $5 goal.
+ * Purpose: every admin page shows today's confirmed payment COUNT vs a 5-contract goal (not dollars).
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +39,7 @@ export default function RevenueWall() {
     >
       <span className="flex items-center gap-1.5 font-medium">
         <DollarSign className="h-3 w-3" />
-        Aujourd'hui : <span className="tabular-nums font-bold">${paid}</span> / ${GOAL}
+        Aujourd'hui : <span className="tabular-nums font-bold">{paid}</span> / {GOAL} paiements
       </span>
       <span className="tabular-nums">
         {hit ? "🎉 Objectif atteint" : `${remaining} contrat${remaining > 1 ? "s" : ""} restant${remaining > 1 ? "s" : ""}`}
