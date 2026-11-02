@@ -46,3 +46,13 @@ Brouillon d'invitation (à personnaliser après validation, un seul canal : cour
 | Piscine Terrebonne | non trouvé sur /location-abris-auto/ | — | — | non |
 
 Action admin : dans /admin/commercial-eligibility, relire et signer (ou refuser) la preuve 32e0d2e7. Créer les fiches ProAbris et Abris Laval par l'import manuel existant avant de leur rattacher une preuve.
+
+## Mise à jour 17 h UTC — fiches et preuves PENDING (aucune signature)
+| Entreprise | Fiche | Preuve pending |
+|---|---|---|
+| ProAbris (gratuit) | créée fc89952c | ed7684d3 |
+| Abris Laval (gratuit) | créée 85b3c03f | ff0fadef |
+| REN Nettoyage conduits (payant) | créée c088614f | 3a7d10a3 |
+| EXO Nettoyage Ventilation (payant) | existante c420453e | b8f34326 |
+| Net-Air (payant) | existante ff163185 | 6f3b03ba |
+Doublons vérifiés (domaine/courriel/téléphone), 0 suppression, 0 envoi antérieur, aucun refus observé. Téléphones non validés SMS. Courriel non écrit dans les fiches EXO/Net-Air existantes (preuve seulement). Revue : /admin/commercial-eligibility.
