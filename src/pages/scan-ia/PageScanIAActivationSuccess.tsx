@@ -1,84 +1,43 @@
-import { useEffect, useState } from "react";
+/**
+ * The Stripe Checkout return URL is not a receipt or an entitlement check.
+ * Never call the legacy scan-ia-activation-confirm function from the browser:
+ * a deployed older version can mark an arbitrary report activated without
+ * matching a signed webhook, unique business and 12-month entitlement.
+ * This screen is intentionally passive until the isolated E2E gate is proven.
+ */
 import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { Helmet } from "react-helmet-async";
-import { supabase } from "@/integrations/supabase/client";
 
 export default function PageScanIAActivationSuccess() {
-  const [sp] = useSearchParams();
-  const token = sp.get("st");
-  const sessionId = sp.get("cs");
-  const [status, setStatus] = useState<"pending" | "paid" | "error">(sessionId ? "pending" : "paid");
-
-  useEffect(() => {
-    if (!sessionId || !token) return;
-    let attempts = 0;
-    let cancelled = false;
-    const tick = async () => {
-      attempts += 1;
-      const { data, error } = await supabase.functions.invoke("scan-ia-activation-confirm", {
-        body: { session_id: sessionId, session_token: token },
-      });
-      if (cancelled) return;
-      if (!error && data?.paid) {
-        setStatus("paid");
-        return;
-      }
-      if (attempts < 8) {
-        setTimeout(tick, 1500);
-      } else {
-        setStatus("error");
-      }
-    };
-    tick();
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, token]);
+  const [params] = useSearchParams();
+  const hasCompleteReference = Boolean(params.get("cs") && params.get("st"));
 
   return (
-    <div className="alex-immersive flex min-h-screen items-center justify-center bg-[#050816] px-6 text-readable">
+    <main className="alex-immersive flex min-h-screen items-center justify-center bg-[#050816] px-6 text-readable">
       <Helmet>
-        <title>Activation confirmée — UNPRO</title>
+        <title>Vérification de l'activation — UNPRO</title>
       </Helmet>
-
       <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur">
-        {status === "pending" ? (
-          <>
-            <Loader2 className="mx-auto mb-6 h-10 w-10 animate-spin text-sky-400" />
-            <h1 className="mb-3 text-2xl font-semibold text-white">Confirmation du paiement…</h1>
-            <p className="text-white/60 text-sm">Encore quelques secondes.</p>
-          </>
-        ) : status === "error" ? (
-          <>
-            <h1 className="mb-3 text-2xl font-semibold text-white">Nous vérifions votre paiement</h1>
-            <p className="mb-6 text-white/70 text-sm">
-              Cela peut prendre une minute. Vous pouvez créer votre compte dès maintenant.
-            </p>
-            <Link
-              to={`/signup?scan=${encodeURIComponent(token ?? "")}`}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-semibold text-[#050816]"
-            >
-              Créer mon compte <ArrowRight className="h-5 w-5" />
-            </Link>
-          </>
-        ) : (
-          <>
-            <CheckCircle2 className="mx-auto mb-6 h-14 w-14 text-emerald-400" />
-            <h1 className="mb-3 text-3xl font-semibold text-white">Activation confirmée</h1>
-            <p className="mb-8 text-white/70">
-              Votre profil IA est en cours d'activation. Créez votre compte pour finaliser
-              votre configuration et commencer à recevoir des rendez-vous.
-            </p>
-            <Link
-              to={`/signup?scan=${encodeURIComponent(token ?? "")}`}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-semibold text-[#050816] transition hover:-translate-y-0.5"
-            >
-              Créer mon compte <ArrowRight className="h-5 w-5" />
-            </Link>
-          </>
-        )}
+        <ShieldAlert className="mx-auto mb-6 h-12 w-12 text-amber-400" aria-hidden="true" />
+        <h1 className="mb-3 text-2xl font-semibold text-white">
+          {hasCompleteReference ? "Vérification de votre activation" : "Lien de retour incomplet"}
+        </h1>
+        <p className="mb-4 text-sm text-white/70">
+          {hasCompleteReference
+            ? "Le retour de Stripe ne confirme ni le paiement ni l'activation. UNPRO doit rapprocher le règlement, le webhook Stripe signé, votre entreprise et les droits de présence de 12 mois."
+            : "Ce lien ne contient pas toutes les références nécessaires pour vérifier votre tentative de paiement. Aucune activation n'est confirmée."}
+        </p>
+        <p className="mb-6 text-sm text-white/70">
+          Si vous avez été débité, ne payez pas de nouveau. Contactez l'équipe UNPRO pour faire vérifier votre dossier.
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center justify-center rounded-2xl border border-white/30 px-6 py-3 text-sm font-semibold text-white"
+        >
+          Retour à l'accueil
+        </Link>
       </div>
-    </div>
+    </main>
   );
 }
