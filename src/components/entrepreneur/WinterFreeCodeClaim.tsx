@@ -30,13 +30,13 @@ export default function WinterFreeCodeClaim({ initialCode }: { initialCode?: str
   const claim = async () => {
     if (busy || !code.trim()) return;
     setBusy(true); setRes(null);
-    void logFunnelEvent({ event_type: "free_code_submitted", metadata: { surface: "activation_350", offer: "hiver_abris_2026" } });
+    void logFunnelEvent({ event_type: "activation_cta_clicked", metadata: { surface: "activation_350", offer: "hiver_abris_2026" } });
     const { data, error } = await supabase.rpc("claim_scoped_free_activation" as never, { p_code: code.trim() } as never);
     setBusy(false);
     const d = data as { ok?: boolean; reason?: string; founder_start?: string; founder_end?: string } | null;
     if (error || !d) { setRes({ ok: false, msg: "Le serveur n'a pas confirmé. Rien n'a été activé ; vous pouvez réessayer sans risque de doublon." }); return; }
     if (d.ok) {
-      void logFunnelEvent({ event_type: "free_code_accepted", metadata: { surface: "activation_350", offer: "hiver_abris_2026" } });
+      void logFunnelEvent({ event_type: "free_offer_accepted", metadata: { surface: "activation_350", offer: "hiver_abris_2026" } });
       sessionStorage.removeItem(KEY);
       setRes({ ok: true, msg: "Activation offerte confirmée.", start: d.founder_start, end: d.founder_end });
     } else setRes({ ok: false, msg: REASONS[d.reason || ""] || "Ce code ne peut pas être appliqué." });
