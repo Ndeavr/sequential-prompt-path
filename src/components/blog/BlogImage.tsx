@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 /** Stable topic fallback (no text in pixels). Chosen deterministically, never loops. */
-export const BLOG_FALLBACK_IMAGE = "/blog-images/home-renovation-records.jpg";
+import passportAsset from "@/assets/blog/blog-passport.webp.asset.json";
+export const BLOG_FALLBACK_IMAGE: string = `https://unpro.ca${passportAsset.url}`;
 
 export function blogImageAlt(
   a: { category?: string | null; city?: string | null; title?: string | null },
