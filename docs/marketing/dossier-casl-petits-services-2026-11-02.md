@@ -35,3 +35,14 @@ Brouillon d'invitation (à personnaliser après validation, un seul canal : cour
 ## Les 2 courriels qui avaient une preuve revue : cause d'exclusion actuelle
 - info@excavationsicard.ca : n'est pas une nouvelle entreprise. 4 courriels de prospection ont déjà été envoyés (15, 22, 29 août et 5 sept. 2026 ; Resend e22aa367…, d4cb9d33…, 944f3ddd…, 6c3f7843…).
 - info@maplewoodpainting.ca : déjà relancé le 29 octobre. Ce n'est plus un premier contact, et le délai de relance n'est pas écoulé.
+
+## Vérification des sites — 2026-11-02 ~17:00 UTC (automatique, non signée)
+| Entreprise | Courriel trouvé sur la source | SHA-256 page | Mention de refus | Preuve PENDING |
+|---|---|---|---|---|
+| ProAbris | oui, info@proabris.com (https://proabris.com/) | efb07311… | aucune observée | non créée : aucune fiche prospect (la base exige un lien) |
+| Tempozo | non trouvé (site inaccessible par lecture directe, page lue sans courriel) | — | — | non |
+| Locabris | oui, locabris.ca@gmail.com (https://locabris.ca/) | fa8b6324… | aucune observée | **créée** 32e0d2e7, is_valid=false, en attente de revue humaine |
+| Abris Laval | oui, info@abrislaval.com (https://abrislaval.com/) | 879f4f3d… | aucune observée | non créée : aucune fiche prospect |
+| Piscine Terrebonne | non trouvé sur /location-abris-auto/ | — | — | non |
+
+Action admin : dans /admin/commercial-eligibility, relire et signer (ou refuser) la preuve 32e0d2e7. Créer les fiches ProAbris et Abris Laval par l'import manuel existant avant de leur rattacher une preuve.
