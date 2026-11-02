@@ -33,7 +33,6 @@ const SUPABASE_KEY =
 // --------------------------------------------------------------------------
 const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/alex", changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-unpro", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-pas-trois-soumissions", changefreq: "monthly", priority: "0.9" },
@@ -108,21 +107,22 @@ function writeSitemap(file: string, urls: string[]) {
   writeFileSync(resolve(`public/${file}`), xml);
 }
 
+class SourceError extends Error {}
+
+// Throws on any API failure so the caller keeps the last valid snapshot.
+// A successful response with zero rows is a real empty result.
 async function sb<T = any>(path: string): Promise<T[]> {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+  if (!SUPABASE_URL || !SUPABASE_KEY) throw new SourceError("missing credentials");
+  let r: Response;
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
-    if (!r.ok) {
-      console.warn(`[sitemaps] ${path} → HTTP ${r.status}`);
-      return [];
-    }
-    return (await r.json()) as T[];
   } catch (e) {
-    console.warn(`[sitemaps] ${path} → ${e instanceof Error ? e.message : e}`);
-    return [];
+    throw new SourceError(`${path} → ${e instanceof Error ? e.message : e}`);
   }
+  if (!r.ok) throw new SourceError(`${path} → HTTP ${r.status}`);
+  return (await r.json()) as T[];
 }
 
 // --------------------------------------------------------------------------
@@ -334,52 +334,33 @@ async function buildLlmsFull() {
 // Main
 // --------------------------------------------------------------------------
 async function main() {
-  try {
-    const [pages, blog, journal, ai, problems, contractors] = await Promise.all([
-      buildPages(),
-      buildBlog(),
-      buildJournal(),
-      buildAiEntities(),
-      buildProblems(),
-      buildContractors(),
-    ]);
-
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
-
-    const corpus = await buildLlmsFull();
-
-    console.log(
-      `[sitemaps] pages=${pages} blog=${blog} journal=${journal} ai=${ai} problems=${problems} contractors=${contractors} | llms-full: blog=${corpus.blog} journal=${corpus.journal} ai=${corpus.aiEntities}`,
-    );
-  } catch (e) {
-    console.warn(`[sitemaps] fatal: ${e instanceof Error ? e.message : e} — writing empty fallbacks`);
-    for (const f of [
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]) {
-      writeSitemap(f, []);
+  const sources: [string, () => Promise<number>][] = [
+    ["sitemap-pages.xml", buildPages],
+    ["sitemap-blog.xml", buildBlog],
+    ["sitemap-journal.xml", buildJournal],
+    ["sitemap-ai-entities.xml", buildAiEntities],
+    ["sitemap-problems.xml", buildProblems],
+    ["sitemap-contractors.xml", buildContractors],
+  ];
+  const results = await Promise.allSettled(sources.map(([, fn]) => fn()));
+  const summary: string[] = [];
+  results.forEach((res, i) => {
+    const file = sources[i][0];
+    if (res.status === "fulfilled") summary.push(`${file}=${res.value}`);
+    else {
+      const msg = res.reason instanceof Error ? res.reason.message : String(res.reason);
+      console.warn(`[sitemaps] ${file} source error (${msg}) — previous snapshot kept`);
+      summary.push(`${file}=KEPT`);
     }
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
-    writeFileSync(resolve("public/llms-full.txt"), "# UNPRO — corpus indisponible\n");
+  });
+  buildIndex(sources.map(([f]) => f));
+  try {
+    const c = await buildLlmsFull();
+    summary.push(`llms-full blog=${c.blog} journal=${c.journal} ai=${c.aiEntities}`);
+  } catch (e) {
+    console.warn(`[sitemaps] llms-full source error (${e instanceof Error ? e.message : e}) — previous snapshot kept`);
   }
+  console.log(`[sitemaps] ${summary.join(" ")}`);
 }
 
 main();
