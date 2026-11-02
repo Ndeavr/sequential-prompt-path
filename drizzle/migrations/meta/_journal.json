@@ -288,6 +288,13 @@
       "when": 1793631479798,
       "tag": "0040_winter_free_hardening_and_sms_80_20",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793641033479,
+      "tag": "0041_blog_articles_language",
+      "breakpoints": true
     }
   ]
 }
