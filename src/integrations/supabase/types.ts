@@ -20098,6 +20098,7 @@ export type Database = {
           id: string
           internal_linking_json: Json | null
           is_gated: boolean
+          language: string
           meta_description: string | null
           published_at: string | null
           reading_time_minutes: number | null
@@ -20109,6 +20110,7 @@ export type Database = {
           subtitle: string | null
           tags: string[] | null
           title: string
+          translation_slug: string | null
           updated_at: string
           word_count: number | null
         }
@@ -20127,6 +20129,7 @@ export type Database = {
           id?: string
           internal_linking_json?: Json | null
           is_gated?: boolean
+          language?: string
           meta_description?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -20138,6 +20141,7 @@ export type Database = {
           subtitle?: string | null
           tags?: string[] | null
           title: string
+          translation_slug?: string | null
           updated_at?: string
           word_count?: number | null
         }
@@ -20156,6 +20160,7 @@ export type Database = {
           id?: string
           internal_linking_json?: Json | null
           is_gated?: boolean
+          language?: string
           meta_description?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -20167,6 +20172,7 @@ export type Database = {
           subtitle?: string | null
           tags?: string[] | null
           title?: string
+          translation_slug?: string | null
           updated_at?: string
           word_count?: number | null
         }
