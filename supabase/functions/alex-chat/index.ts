@@ -601,7 +601,7 @@ L'utilisateur signale un problème urgent. Tu dois :
 - Exemple : "Compris. Une photo de la zone m'aiderait à aller plus vite."`;
 }
 
-import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext } from "../_shared/insulationProject.ts";
+import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext, postFireGuidance } from "../_shared/insulationProject.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -718,8 +718,9 @@ serve(async (req) => {
       systemPrompt += "\nPARCOURS ACTIF ENTREPRENEUR : rester sur métier, territoires déclarés, objectifs, capacité et plan; ne pas lancer un diagnostic propriétaire. Les données de propriété de l'historique ne sont pas les territoires de l'entreprise. Données entrepreneur déclarées : " + JSON.stringify(context.contractorQualification || {});
     }
     else systemPrompt += "\nPARCOURS ACTIF PROPRIÉTAIRE : interprète les réponses courtes à partir des tours précédents (ex. durée d'une fuite). Ne relance pas une inscription entrepreneur et ne repose pas une question déjà répondue. Le parcours PRO est suspendu, pas effacé.";
-    if (audience === "homeowner" && insulationContext.insulation_zone === "attic") {
+    if (audience === "homeowner" && (insulationContext.insulation_zone === "attic" || insulationContext.insulation_post_fire === "declared")) {
       const next = nextInsulationQuestion(insulationContext);
+      systemPrompt += "\n" + postFireGuidance(insulationContext);
       systemPrompt += "\nISOLATION : état connu et souhait déclaré sont distincts. Humidité, glace et moisissure ne prouvent jamais la nécessité de tout retirer. Un isolant sec et sain peut rester. Vermiculite/amiante soupçonné : évaluation spécialisée, aucune recommandation de retrait sans expertise vérifiée. Contexte déclaré : " + JSON.stringify(insulationContext);
       if (next) systemPrompt += "\nPose UNE seule question neutre, sans autre question : " + next.q + " Choix naturels et Je ne sais pas. Ne repose pas les faits déjà connus.";
     }
