@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { loadOwnedDesignBrief } from "../_shared/designBrief.ts";
 import { CLARA_EXTRACTION_MODEL } from "../_shared/claraModelSelection.ts";
 
-import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext } from "../_shared/insulationProject.ts";
+import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext, isPostFireSuspended } from "../_shared/insulationProject.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -262,7 +262,8 @@ Deno.serve(async (req) => {
       graph.missing_dimensions.push("budget");
     }
 
-    if (nextInsulationQuestion(graph.project_context, graph.problem.category, graph.problem.sub_type)) {
+    const postFireSuspended = isPostFireSuspended(graph.project_context);
+    if (postFireSuspended || nextInsulationQuestion(graph.project_context, graph.problem.category, graph.problem.sub_type)) {
       graph.ready_for_match = false;
       breakdown.ready_for_match = false;
     }
@@ -283,6 +284,11 @@ Deno.serve(async (req) => {
       extracted: extracted as Record<string, unknown>,
       score_delta: breakdown.total - (session.score ?? 0),
     });
+
+    // Server lock: prohibited/unknown post-fire access suspends qualification; no generic next question, no matching.
+    if (postFireSuspended) {
+      return new Response(JSON.stringify({ status: "suspended", reason: "post_fire_access_not_authorized", score: breakdown.total, next_question: null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Decision: ask next OR recommend
     if (!breakdown.ready_for_match) {
