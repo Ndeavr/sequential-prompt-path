@@ -6,6 +6,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { marked } from "marked";
 import { Helmet } from "react-helmet-async";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin, Sparkles } from "lucide-react";
@@ -200,7 +201,7 @@ export default function BlogArticlePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
-          <ArticleContentWithVisuals html={article.content_html || ""} slug={article.slug} />
+          <ArticleContentWithVisuals html={article.content_html || (article.content_markdown ? (marked.parse(article.content_markdown, { async: false }) as string) : "")} slug={article.slug} />
         </motion.div>
 
         {article.slug === "transformer-mauvais-lead-bon-prospect-2027" && (
