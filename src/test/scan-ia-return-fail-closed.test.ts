@@ -30,7 +30,7 @@ describe("P0: Scan IA Stripe return must fail closed", () => {
     expect(legacyEdge).toContain("signed_activation_verification_required");
     expect(legacyEdge).toContain("activated: false");
     expect(legacyEdge).toContain("paid: false");
-    expect(legacyEdge).toMatch(/return json\\([\\s\\S]*410,/);
+    expect(legacyEdge).toMatch(/return json\([\s\S]*410,/);
     expect(legacyEdge).not.toContain("sessions.retrieve(");
     expect(legacyEdge).not.toContain("createClient(");
     expect(legacyEdge).not.toContain(".update(");
