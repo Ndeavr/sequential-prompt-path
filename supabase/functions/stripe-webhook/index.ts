@@ -5,7 +5,7 @@ import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_sh
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
 import { webhookEntryDecision } from "../_shared/webhookAuth.ts";
-import { classifyWebhookAuditInsert } from "../_shared/webhookAuditPersistence.ts";
+import { classifyWebhookAuditInsert, assertWebhookAuditFinalized } from "../_shared/webhookAuditPersistence.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -2126,10 +2126,16 @@ Deno.serve(async (req) => {
       .eq("action_name", event.id);
 
 
-    await supabase
+    // Do not acknowledge Stripe until the canonical terminal audit receipt
+    // is actually committed. A failed/zero-row update must cause HTTP 5xx
+    // so Stripe can retry safely (same-session ledger writes are idempotent).
+    const { data: finalRow, error: finalError } = await supabase
       .from("stripe_webhook_events")
       .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
-      .eq("stripe_event_id", event.id);
+      .eq("stripe_event_id", event.id)
+      .select("stripe_event_id")
+      .maybeSingle();
+    assertWebhookAuditFinalized({ data: finalRow, error: finalError }, event.id);
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
