@@ -17,8 +17,8 @@ export const FUNNEL_STAGES = [
   { key: "alex_started", label: "Clara Started" },
   { key: "profile_started", label: "Profile Started" },
   { key: "checkout_started", label: "Checkout Started" },
-  { key: "payment_success", label: "Payment ✓" },
-  { key: "activated", label: "Activated" },
+  { key: "payment_success", label: "Signal paiement · non vérifié" },
+  { key: "activated", label: "Signal activation · non vérifié" },
 ] as const;
 
 export type FunnelStageKey = typeof FUNNEL_STAGES[number]["key"];
@@ -46,7 +46,7 @@ async function fetchCounts(period: FunnelPeriod) {
 
   // launch_leads — stock counters (leads created in period)
   // For "today" we still count today's newly-scraped leads; other stages are event-based below.
-  let q = supabase.from("launch_leads" as any).select("lead_status,phone,created_at").limit(50000);
+  let q = supabase.from("launch_leads" as any).select("phone,created_at").limit(50000);
   if (from) q = q.gte("created_at", from);
   const { data: leads } = await q;
   const arr = (leads ?? []) as any[];
@@ -72,16 +72,10 @@ async function fetchCounts(period: FunnelPeriod) {
   counts.alex_started = cnt("alex_started");
   counts.profile_started = cnt("registration_started") + cnt("signup_started") + cnt("profile_started");
   counts.checkout_started = cnt("checkout_started");
+  // Historical diagnostic event counts only. An app event is NOT a unique paid
+  // business, authenticated Stripe LIVE receipt, signed webhook, or entitlement.
   counts.payment_success = cnt("payment_succeeded") + cnt("payment_success");
   counts.activated = cnt("contractor_activated") + cnt("activated");
-
-  // Fallback: if event stream is empty for period, back-fill from launch_leads.lead_status
-  // ("all" period without any events would otherwise show 0 downstream)
-  if (counts.activated === 0) {
-    const passPaid = new Set(["PAID","ACTIVATED"]);
-    counts.payment_success = Math.max(counts.payment_success, arr.filter(l => passPaid.has(l.lead_status)).length);
-    counts.activated = Math.max(counts.activated, arr.filter(l => l.lead_status === "ACTIVATED").length);
-  }
 
   return counts;
 }
