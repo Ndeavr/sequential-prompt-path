@@ -50,3 +50,12 @@ ACCEPTATION AVANT MISE EN SERVICE
 - Réponse entreprise -> notification cliente via canal consenti, idempotence et pas de fausse réservation.
 - Erreur réseau / session perdue / documents privés / mobile : parcours récupérable.
 - Tests sans vrai paiement, SMS ni courriel externe.
+
+== DÉCISIONS FONDATEUR 2026-11-02 (remplacent toute formulation contraire) ==
+- Adresse de la maison recueillie dès le début, confidentielle; une question à la fois, reprise du contexte.
+- Pendant recherche/sollicitation : AUCUNE identité, coordonnée, adresse exacte ni document transmis aux entrepreneurs, même avec consentement. Résumé anonymisé secteur/travaux seulement. Jamais « demande réelle ».
+- Entrepreneur trouvé, inscrit et admissible → UNE alerte privée UNPRO + courriel transactionnel « Un professionnel a été trouvé pour votre projet » menant à l'alerte (bouton « Réserver ce pro »), jamais à un calendrier externe.
+- Connexion/inscription puis retour exact à l'alerte; liaison invité→propriétaire par preuve de possession vérifiée uniquement; aucune donnée personnelle en URL; accès croisé interdit.
+- La cliente choisit son créneau via la réservation existante (adresse préremplie modifiable); confirmation seulement après succès serveur, revalidation admissibilité/disponibilité.
+- Idempotence alerte/courriel/réservation; états tenté/envoyé/livré distincts; aucun cron doublon.
+- Après incendie : accès interdit/inconnu = suspension serveur (alex-qualify-turn status "suspended"); aucun match sans compétence sinistre/surfaces/territoire/licence/assurance vérifiées; entretoit ≠ murs/planchers.
