@@ -281,6 +281,13 @@
       "when": 1793630493755,
       "tag": "0039_winter_small_service_free_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793631479798,
+      "tag": "0040_winter_free_hardening_and_sms_80_20",
+      "breakpoints": true
     }
   ]
 }

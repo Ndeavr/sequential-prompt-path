@@ -67093,6 +67093,7 @@ export type Database = {
           day_local: string
           dedupe_key: string
           id: string
+          lane: string
           prospect_id: string | null
         }
         Insert: {
@@ -67100,6 +67101,7 @@ export type Database = {
           day_local: string
           dedupe_key: string
           id?: string
+          lane?: string
           prospect_id?: string | null
         }
         Update: {
@@ -67107,6 +67109,7 @@ export type Database = {
           day_local?: string
           dedupe_key?: string
           id?: string
+          lane?: string
           prospect_id?: string | null
         }
         Relationships: []
@@ -102002,7 +102005,7 @@ export type Database = {
         Returns: Json
       }
       reserve_outreach_sms_slot: {
-        Args: { p_dedupe_key: string; p_prospect_id?: string }
+        Args: { p_dedupe_key: string; p_lane?: string; p_prospect_id?: string }
         Returns: Json
       }
       reserve_places_external_call: {
