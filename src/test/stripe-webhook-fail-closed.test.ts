@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { webhookEntryDecision, verificationSecrets } from "../../supabase/functions/_shared/webhookAuth";
+import { assertWebhookAuditFinalized } from "../../supabase/functions/_shared/webhookAuditPersistence";
 
 const LIVE = "whsec_live_abc";
 const TEST = "whsec_test_xyz";
@@ -91,5 +92,27 @@ describe("câblage stripe-webhook", () => {
   it("l'ancien garde permissif a disparu", () => {
     expect(wh).not.toContain("!webhookSecret && !isReplay");
     expect(wh).not.toContain("constructEventAsync(body, sig, webhookSecret ?? \"\")");
+  });
+});
+
+describe("webhook — terminal audit receipt before HTTP 200", () => {
+  it("accepts only a durable matching event row", () => {
+    expect(() => assertWebhookAuditFinalized({ data: { stripe_event_id: "evt_ok" }, error: null }, "evt_ok")).not.toThrow();
+    expect(() => assertWebhookAuditFinalized({ data: null, error: null }, "evt_ok"))
+      .toThrow("webhook_audit_finalization_failed");
+    expect(() => assertWebhookAuditFinalized({ data: { stripe_event_id: "evt_other" }, error: null }, "evt_ok"))
+      .toThrow("webhook_audit_finalization_failed");
+    expect(() => assertWebhookAuditFinalized({ data: { stripe_event_id: "evt_ok" }, error: { code: "08006" } }, "evt_ok"))
+      .toThrow("webhook_audit_finalization_failed");
+  });
+
+  it("checks the real handler's final receipt before acknowledging the webhook", () => {
+    const wh = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
+    const lastProcessed = wh.lastIndexOf('processing_status: "processed"');
+    const terminal = wh.slice(lastProcessed, wh.indexOf("} catch (error: unknown)", lastProcessed));
+    expect(lastProcessed).toBeGreaterThan(0);
+    expect(terminal).toContain('.select("stripe_event_id")');
+    expect(terminal).toContain('assertWebhookAuditFinalized({ data: finalRow, error: finalError }, event.id)');
+    expect(terminal.indexOf("assertWebhookAuditFinalized")).toBeLessThan(terminal.indexOf("received: true"));
   });
 });

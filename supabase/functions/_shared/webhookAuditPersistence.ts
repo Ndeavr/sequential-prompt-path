@@ -18,3 +18,20 @@ export function classifyWebhookAuditInsert(
   ) return "redelivery";
   return "unavailable";
 }
+
+/**
+ * Stripe must retry if the terminal webhook audit state was not durably stored.
+ * A 2xx response without this row would strand a paid entry350 entitlement
+ * behind the processed+success gate (or mask a missing audit receipt).
+ */
+export function assertWebhookAuditFinalized(
+  result: {
+    data?: { stripe_event_id: string } | null;
+    error?: { code?: string | null } | null;
+  },
+  expectedEventId: string,
+): void {
+  if (result.error || result.data?.stripe_event_id !== expectedEventId) {
+    throw new Error("webhook_audit_finalization_failed");
+  }
+}
