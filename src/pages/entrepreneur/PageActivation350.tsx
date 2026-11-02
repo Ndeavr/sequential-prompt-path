@@ -19,6 +19,7 @@ import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout
 import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
+import WinterFreeCodeClaim from "@/components/entrepreneur/WinterFreeCodeClaim";
 
 export const ACTIVATION_350_APPT_DISCLOSURE =
   "Profil + 12 mois de présence UNPRO.";
@@ -111,6 +112,8 @@ export default function PageActivation350() {
             </Button>
           </div>
         </div>
+
+        {(sp.get("code") || "").toUpperCase().startsWith("HIVER-") || sp.get("offre") === "hiver" ? <WinterFreeCodeClaim initialCode={sp.get("code")} /> : null}
 
         {reviewOpen && <div id="inscription" className="scroll-mt-4"><Entry350FastCheckout query={sp} /></div>}
 
