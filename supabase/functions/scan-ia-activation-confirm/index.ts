@@ -1,7 +1,17 @@
-// scan-ia-activation-confirm — verifies Stripe session and marks activation.
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
+/**
+ * Legacy Scan IA confirmation endpoint — deliberately fail-closed.
+ *
+ * Stripe Checkout's return URL and any browser-provided report token are not
+ * proof of a signed payment event or a 12-month business entitlement.
+ * The old handler could write activated_at via service-role credentials based
+ * on a paid Checkout session and an unrelated, caller-supplied session_token.
+ *
+ * Do not restore a write path here until issue #86 has an isolated E2E proof
+ * tying signed Stripe webhook -> unique business -> payment ledger ->
+ * 12-month entitlement (plus replay/idempotency and refund handling).
+ *
+ * This source change does NOT verify any deployed Edge function.
+ */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -9,46 +19,29 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) return json({ paid: false, error: "Stripe indisponible." }, 503);
-
-    const { session_id, session_token } = await req.json().catch(() => ({}));
-    if (!session_id) return json({ paid: false, error: "session_id manquant." }, 400);
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const cs = await stripe.checkout.sessions.retrieve(session_id);
-    const paid = cs.payment_status === "paid";
-
-    if (paid) {
-      const url = Deno.env.get("SUPABASE_URL") ?? "";
-      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-      if (url && key) {
-        const sb = createClient(url, key);
-        const token = session_token || cs.client_reference_id || cs.metadata?.session_token;
-        if (token) {
-          const { data } = await sb
-            .from("scan_ia_reports")
-            .update({ stripe_session_id: session_id, activated_at: new Date().toISOString() })
-            .eq("session_token", token)
-            .select("id")
-            .maybeSingle();
-          return json({ paid: true, report_id: data?.id ?? null });
-        }
-      }
-    }
-
-    return json({ paid, status: cs.payment_status });
-  } catch (e) {
-    console.error("scan-ia-activation-confirm error:", e);
-    return json({ paid: false, error: e instanceof Error ? e.message : String(e) }, 500);
+Deno.serve((req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
+
+  if (req.method !== "POST") {
+    return json({ paid: false, activated: false, code: "method_not_allowed" }, 405);
+  }
+
+  // NEVER interpret a Checkout session ID or session_token as activation proof.
+  // No Stripe retrieval, Supabase service-role client, or database writes.
+  return json(
+    {
+      paid: false,
+      activated: false,
+      code: "signed_activation_verification_required",
+      message: "Activation non confirmée. Si vous avez payé, contactez UNPRO sans repayer.",
+    },
+    410,
+  );
 });
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
