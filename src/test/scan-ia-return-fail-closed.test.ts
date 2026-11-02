@@ -5,8 +5,14 @@ const page = readFileSync("src/pages/scan-ia/PageScanIAActivationSuccess.tsx", "
 
 describe("P0: Scan IA Stripe return must fail closed", () => {
   it("remains passive even when a legacy Edge function is still deployed", () => {
-    expect(page).not.toMatch(/functions\\.invoke|supabase\\.from\\(|fetch\\s*\\(|useEffect\\s*\\(|setTimeout\\s*\\(/);
-    expect(page).not.toMatch(/Activation confirmée|Votre profil IA est en cours d'activation|CheckCircle2/);
+    expect(page).not.toContain("functions.invoke");
+    expect(page).not.toContain("supabase.from(");
+    expect(page).not.toContain("fetch(");
+    expect(page).not.toContain("useEffect(");
+    expect(page).not.toContain("setTimeout(");
+    expect(page).not.toContain("Activation confirmée");
+    expect(page).not.toContain("Votre profil IA est en cours d'activation");
+    expect(page).not.toContain("CheckCircle2");
     expect(page).toContain("webhook Stripe signé");
     expect(page).toContain("ne payez pas de nouveau");
   });
@@ -14,6 +20,9 @@ describe("P0: Scan IA Stripe return must fail closed", () => {
   it("does not grant success for missing references or pass an untrusted token to signup", () => {
     expect(page).toContain('params.get("cs") && params.get("st")');
     expect(page).toContain("Lien de retour incomplet");
-    expect(page).not.toMatch(/\\/signup\\?scan=|encodeURIComponent|activated_at|stripe_session_id/);
+    expect(page).not.toContain("/signup?scan=");
+    expect(page).not.toContain("encodeURIComponent");
+    expect(page).not.toContain("activated_at");
+    expect(page).not.toContain("stripe_session_id");
   });
 });
