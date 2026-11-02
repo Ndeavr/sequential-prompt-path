@@ -33,6 +33,7 @@ const PageProjectCreatedSuccess = lazyWithRetry(() => import("@/pages/PageProjec
 const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendations"));
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
+import PageLanguagePolicy from "@/pages/static/PageLanguagePolicy";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
