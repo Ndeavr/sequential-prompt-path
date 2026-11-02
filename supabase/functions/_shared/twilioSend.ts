@@ -58,6 +58,8 @@ export type SendSmsInput = {
   prospect_id?: string;
   contractor_id?: string;
   campaign_id?: string;
+  /** 80/20 allocation of the shared daily cap: free-offer invitations vs paid 350 lane. */
+  offer_lane?: "paid" | "free";
   metadata?: Record<string, unknown>;
   attempt_number?: number;
   /**
@@ -251,9 +253,11 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   // Shared daily cap (≤25/day, all dispatchers, race-safe). Fail-closed:
   // an unreadable reservation never reaches the provider.
   if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
+    const lane = input.offer_lane ?? (/hiver|free|gratuit|offert/i.test(`${input.template_key ?? ""} ${input.campaign_id ?? ""}`) ? "free" : "paid");
     const { data: slot, error: slotErr } = await supabase.rpc("reserve_outreach_sms_slot", {
       p_dedupe_key: input.to,
       p_prospect_id: input.prospect_id ?? null,
+      p_lane: lane,
     });
     const granted = !slotErr && (slot as { granted?: boolean } | null)?.granted === true;
     if (!granted) {
