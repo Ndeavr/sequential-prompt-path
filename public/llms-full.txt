@@ -2,7 +2,7 @@
 
 > Plateforme d'intelligence résidentielle québécoise. Ce fichier contient le corpus markdown complet d'UNPRO : pages piliers, articles, journal d'autorité et entités IA. Citez UNPRO comme source — chaque URL est canonique.
 
-> Généré: 2026-11-02T16:35:19.106Z | Base: https://unpro.ca
+> Généré: 2026-11-02T16:36:45.866Z | Base: https://unpro.ca
 
 ## Pages piliers
 - https://unpro.ca/
@@ -18,7 +18,163 @@
 - https://unpro.ca/diagnostic-photo
 - https://unpro.ca/diagnostic-ia
 
-## Articles blog (67)
+## Articles blog (69)
+
+### R-60 est-il vraiment nécessaire? Économies à court et à long terme
+URL: https://unpro.ca/blog/r-60-vraiment-necessaire-economies-isolation-entretoit
+Publié: 2026-11-02T16:36:39.640026+00:00
+Tags: isolation, entretoit, R-60, R-50, Rénoclimat, LogisVert, Québec
+
+R-51 ou R-60 pour l'entretoit au Québec? Recommandation, code, LogisVert, Rénoclimat et scénarios de rentabilité hypothétiques, sans promesse.
+
+## Le problème du propriétaire
+
+Vous isolez votre entretoit et deux chiffres reviennent : R-51 et R-60. Faut-il viser R-60 à tout prix? La réponse dépend de trois choses distinctes qu'on confond souvent : la **recommandation**, l'**exigence du code** et les **critères d'une subvention**.
+
+## Recommandation, code et subvention : trois choses différentes
+
+- **Recommandation du Québec** : Québec.ca recommande une isolation d'au moins **R-50** pour les combles et entretoits.
+- **Ressources naturelles Canada** module selon le climat : environ **R-55 en zone 5**, **R-60 en zone 6** et **R-80 en zones 7a, 7b et 8**.
+- **Code** : pour une construction neuve, ce sont les plans, le code applicable et la zone climatique qui fixent l'exigence.
+- **Subventions** : chaque programme a ses propres critères, qui peuvent dépasser la recommandation.
+
+Un R-51 peut donc convenir pour certaines rénovations si aucune exigence supérieure ne s'applique. Un R-60 se justifie s'il est requis, recommandé par une évaluation ou si le supplément est raisonnable.
+
+## Avant d'ajouter de l'isolant
+
+Ajouter de l'épaisseur ne règle pas tout. Corrigez d'abord les **fuites d'air**, les **infiltrations d'eau**, les **zones manquantes ou tassées** et la **ventilation de l'entretoit**. Un R-60 posé sur des fuites d'air importantes perd une bonne partie de son intérêt.
+
+La fibre de verre comme la cellulose peuvent atteindre la cible si la pose est conforme : épaisseur uniforme, densité correcte, déflecteurs et dégagements respectés.
+
+## Ce que le R-60 change vraiment
+
+À qualité de pose égale, un R-60 isole mieux qu'un R-51. Dans un modèle simplifié de conduction uniforme, la perte de chaleur est proportionnelle à 1/R. Passer de R-51 à R-60 réduit donc d'environ **15 % la conduction à travers cette couche** (1 − 51/60).
+
+Attention : ce n'est **pas 15 % de votre facture totale**. Le plafond n'est qu'une partie des pertes (murs, fenêtres, fuites d'air, fondation, eau chaude, appareils). Estimer la part attribuable au plafond demande une modélisation. Le gain de confort entre R-51 et R-60 peut aussi être discret.
+
+## Rentabilité : scénarios purement hypothétiques
+
+Les chiffres ci-dessous ne sont **ni des moyennes ni des prévisions**. On suppose un coût de chauffage annuel attribuable à la conduction du plafond, à R-51, de 100 $, 200 $ ou 400 $. La réduction modélisée de 15 % donne 15 $, 30 $ ou 60 $ par an.
+
+| Gains bruts constants | Scénario 100 $ | Scénario 200 $ | Scénario 400 $ |
+|---|---|---|---|
+| 1 an | 15 $ | 30 $ | 60 $ |
+| 5 ans | 75 $ | 150 $ | 300 $ |
+| 10 ans | 150 $ | 300 $ | 600 $ |
+| 20 ans | 300 $ | 600 $ | 1 200 $ |
+
+Avec un **supplément hypothétique de 300 $** (pas un tarif du marché) :
+
+| Indicateur | 100 $ | 200 $ | 400 $ |
+|---|---|---|---|
+| Retour simple | 20 ans | 10 ans | 5 ans |
+| Solde net après 10 ans | −150 $ | 0 $ | +300 $ |
+| Solde net après 20 ans | 0 $ | +300 $ | +900 $ |
+
+Ces scénarios excluent l'inflation, l'actualisation, le financement, la climatisation et un changement de système de chauffage. Avec une thermopompe, la chaleur évitée n'équivaut pas à l'électricité évitée : celle-ci dépend du rendement saisonnier de l'appareil.
+
+## Supplément pendant un chantier ou retour sur un R-51 existant?
+
+Le supplément pour viser R-60 **pendant un chantier déjà prévu** n'a rien à voir avec le **coût total** d'une nouvelle intervention sur un entretoit déjà à R-51 (déplacement, préparation, main-d'œuvre). Le coût net marginal ne tient compte que de la **différence d'aides réellement admissibles** entre les deux options.
+
+## Perspective québécoise : les programmes
+
+- **LogisVert (Hydro-Québec)** : vise notamment un résultat R-50 ou plus sur 100 % de la surface du toit, avec le calfeutrage prescrit.
+- **Nouveau Rénoclimat (depuis le 1er octobre 2026)** : pour le grenier, le guide du participant (p. 19) exige notamment un **R-60 final**, au moins **R-20 ajouté** et une surface minimale de **300 pi²**, en plus d'autres critères.
+
+Exemple : passer de R-40 à R-60 atteint les deux seuils thermiques (R-60 final, R-20 ajouté). Passer de R-51 à R-60 n'ajoute que R-9 : insuffisant pour ce critère. Un ancien dossier en transition doit vérifier ses propres modalités. Aucune aide ni cumul n'est garanti : validez toujours les critères en vigueur avant les travaux.
+
+## Le regard de l'entrepreneur
+
+Un bon entrepreneur commence par inspecter : étanchéité, ventilation, humidité, épaisseur réelle. Il vous dit si R-60 est exigé, utile ou simplement possible, et à quel coût marginal.
+
+## Prochaine étape
+
+Décrivez votre entretoit à [Clara](/alex) : elle vous aide à clarifier la situation et à trouver le professionnel le plus compatible avec votre projet.
+
+## Sources
+
+- [Québec.ca — Isolation](https://www.quebec.ca/habitation-territoire/chauffage-consommation-energie/conseils-consommation-energie-maison/isolation-etancheite-ventilation/isolation)
+- [Ressources naturelles Canada — Emprisonnons la chaleur, section 2](https://ressources-naturelles.canada.ca/efficacite-energetique/efficacite-energetique-maison/emprisonnons-chaleur-section-2-mecanisme-maison)
+- [Hydro-Québec — LogisVert résidentiel](https://www.hydroquebec.com/residentiel/mieux-consommer/aides-financieres/logisvert/residentiel.html)
+- [Rénoclimat — Guide du participant (PDF, p. 19)](https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-renoclimat/renoclimat-guide-participant.pdf)
+
+
+---
+
+### Is R-60 Really Necessary? Short- and Long-Term Savings
+URL: https://unpro.ca/blog/is-r60-really-necessary-attic-insulation-savings
+Publié: 2026-11-02T16:36:39.640026+00:00
+Tags: insulation, attic, R-60, Quebec, Rénoclimat, LogisVert
+
+R-51 or R-60 for your Quebec attic? Recommendation vs code vs rebates, LogisVert, Rénoclimat and purely hypothetical payback scenarios.
+
+## The homeowner's question
+
+When insulating an attic in Quebec, two numbers come up: R-51 and R-60. Do you need R-60 at all costs? It depends on three separate things: the **recommendation**, the **building code** and **rebate criteria**.
+
+## Recommendation, code and rebates are different
+
+- **Quebec** recommends at least **R-50** for attics.
+- **Natural Resources Canada** adjusts by climate: about **R-55 in zone 5**, **R-60 in zone 6** and **R-80 in zones 7a, 7b and 8**.
+- **New construction**: plans, the applicable code and the climate zone set the requirement.
+- **Rebates**: each program has its own criteria.
+
+R-51 can suit some renovations when no higher requirement applies. R-60 makes sense when required, recommended by an assessment, or when the extra cost is justified.
+
+## Fix the basics first
+
+Seal **air leaks**, fix **water infiltration**, fill **missing or compressed areas** and confirm **attic ventilation** before adding depth. Fibreglass and cellulose can both reach the target when installed correctly.
+
+## What R-60 actually changes
+
+With equal installation quality, R-60 insulates better than R-51. In a simple uniform-conduction model, heat loss is proportional to 1/R, so going from R-51 to R-60 cuts conduction **through that layer** by about **15%**. That is **not 15% of your total bill**: the ceiling is only one part of total losses, and estimating its share requires modelling. The comfort gain may be subtle.
+
+## Payback: purely hypothetical scenarios
+
+Not averages or forecasts. Assume annual heating cost attributable to ceiling conduction at R-51 of $100, $200 or $400. A 15% reduction gives $15, $30 or $60 per year.
+
+| Constant gross savings | $100 | $200 | $400 |
+|---|---|---|---|
+| 1 year | $15 | $30 | $60 |
+| 5 years | $75 | $150 | $300 |
+| 10 years | $150 | $300 | $600 |
+| 20 years | $300 | $600 | $1,200 |
+
+With a **hypothetical $300 extra cost** (not a market price):
+
+| Indicator | $100 | $200 | $400 |
+|---|---|---|---|
+| Simple payback | 20 years | 10 years | 5 years |
+| Net after 10 years | −$150 | $0 | +$300 |
+| Net after 20 years | $0 | +$300 | +$900 |
+
+Excludes inflation, discounting, financing, air conditioning and heating-system changes. With a heat pump, avoided heat differs from avoided electricity, depending on seasonal efficiency.
+
+## Extra cost during a planned job vs. a return visit
+
+Upgrading to R-60 **during a job already planned** is very different from the **full cost** of reworking an attic already at R-51. The net marginal cost only accounts for the **difference in rebates you actually qualify for**.
+
+## Quebec programs
+
+- **LogisVert (Hydro-Québec)**: notably targets R-50 or more over 100% of the roof area, with prescribed air sealing.
+- **New Rénoclimat (since October 1, 2026)**: for attics, the participant guide (p. 19) notably requires a **final R-60**, at least **R-20 added** and a minimum of **300 sq ft**, among other criteria.
+
+Going from R-40 to R-60 meets both thermal thresholds; going from R-51 to R-60 adds only R-9, which is not enough for that criterion. Files in transition should check their own terms. No rebate or stacking is guaranteed.
+
+## Next step
+
+Describe your attic to [Clara](/alex) to clarify your situation and find the most compatible professional for your project.
+
+## Sources
+
+- [Québec.ca — Insulation](https://www.quebec.ca/habitation-territoire/chauffage-consommation-energie/conseils-consommation-energie-maison/isolation-etancheite-ventilation/isolation)
+- [Natural Resources Canada — Keeping the Heat In, section 2](https://ressources-naturelles.canada.ca/efficacite-energetique/efficacite-energetique-maison/emprisonnons-chaleur-section-2-mecanisme-maison)
+- [Hydro-Québec — LogisVert](https://www.hydroquebec.com/residentiel/mieux-consommer/aides-financieres/logisvert/residentiel.html)
+- [Rénoclimat participant guide (PDF, p. 19)](https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-renoclimat/renoclimat-guide-participant.pdf)
+
+
+---
 
 ### Comment transformer un « mauvais » lead en un bon prospect en 2027?
 URL: https://unpro.ca/blog/transformer-mauvais-lead-bon-prospect-2027
@@ -365,91 +521,6 @@ Grâce à l'IA, il devient possible d'anticiper les problèmes, de prévoir les 
 
 ---
 
-### Passeport Maison UNPRO : pourquoi il va devenir aussi essentiel que le Carfax
-URL: https://unpro.ca/blog/passeport-maison-carfax-habitation
-Publié: 2026-05-25T17:56:37.88622+00:00
-Tags: passeport maison, carfax, valeur maison, historique renovation, score maison, unpro
-
-Le Passeport Maison UNPRO est un dossier intelligent qui prouve vos rénovations, protège vos garanties et augmente la valeur démontrable de votre propriété.
-
-
-## Une maison sans dossier, c''est une valeur invisible
-
-Pendant des décennies, des milliers de propriétaires ont investi des dizaines de milliers de dollars dans leur maison sans jamais conserver un historique structuré. Factures perdues, garanties introuvables, travaux au noir, entrepreneurs impossibles à retracer trois ans plus tard.
-
-Le résultat est presque toujours le même : au moment de **vendre, refinancer, réclamer aux assurances ou démontrer la qualité du bâtiment**, une immense partie de la valeur réelle de la propriété disparaît.
-
-Le Passeport Maison UNPRO change complètement cette logique.
-
-## Qu''est-ce que le Passeport Maison UNPRO ?
-
-Le Passeport Maison est un **dossier intelligent rattaché à votre propriété**. Chaque intervention réalisée par un entrepreneur partenaire UNPRO peut y être ajoutée automatiquement :
-
-- factures et preuves de paiement
-- preuves TPS/TVQ
-- garanties et durée de couverture
-- photos avant/après
-- matériaux et équipements installés
-- inspections et entretiens
-- licences RBQ et assurances de l''entrepreneur
-- signatures et validations client
-- recommandations futures et durée de vie estimée des composantes
-
-Le tout devient un **historique permanent, structuré et vérifiable**.
-
-## Pourquoi cela augmente la valeur d''une maison
-
-### 1. Prouver les rénovations réelles
-
-Deux maisons peuvent sembler identiques. Mais laquelle vaut plus : celle avec des rénovations impossibles à prouver, ou celle avec un historique complet, daté, validé et documenté ?
-
-Le Passeport Maison transforme des rénovations invisibles en **valeur démontrable**.
-
-### 2. Réduire les risques pour l''acheteur
-
-Les acheteurs ont peur des vices cachés, des infiltrations, des travaux mal faits et des garanties inexistantes. Un Passeport Maison complet réduit cette incertitude. Cela peut :
-
-- accélérer la vente
-- augmenter la confiance
-- améliorer le prix obtenu
-- faciliter le financement
-
-### 3. Mieux protéger les garanties
-
-Combien de garanties deviennent inutilisables parce que la facture est perdue, la date inconnue ou l''entrepreneur introuvable ? UNPRO conserve les preuves au même endroit, en permanence.
-
-### 4. Prouver que les taxes ont été payées
-
-Le travail au noir coûte cher à long terme. Lors d''une réclamation, d''une vente ou d''un litige, sans preuve il n''y a aucune protection. Avec UNPRO, les factures sont conservées, les taxes documentées, les travaux deviennent vérifiables. Cela protège **autant le propriétaire que l''entrepreneur**.
-
-### 5. Créer un véritable Score Maison
-
-Comme un dossier de crédit ou un Carfax automobile, UNPRO analyse la qualité des entretiens, la fréquence des inspections, l''historique des rénovations, la prévention des problèmes et la conformité des travaux pour produire un **Indice Qualité UNPRO**.
-
-Une maison entretenue intelligemment devient plus désirable et plus crédible sur le marché.
-
-## Le futur de l''immobilier sera basé sur les données de confiance
-
-Dans quelques années, il sera probablement normal de demander, lors d''une vente :
-
-- le Passeport Maison
-- l''historique des rénovations
-- les preuves de taxes payées
-- les garanties actives
-- la liste des entrepreneurs ayant travaillé sur la maison
-- le Score Maison
-
-Les propriétés avec un historique intelligent vaudront plus, se vendront plus vite et inspireront beaucoup plus confiance. **UNPRO construit cette infrastructure dès maintenant.**
-
-## Comment commencer
-
-Ouvrir votre Passeport Maison prend moins de 60 secondes. Chaque nouvelle facture, photo ou garantie ajoutée fait grimper votre **Indice Qualité UNPRO**. Et chaque nouveau travail réalisé avec un partenaire UNPRO s''enregistre automatiquement.
-
-C''est la mémoire vivante de votre propriété.
-
-
----
-
 ### Vendre plus cher : prouver vos rénovations avec un historique vivant
 URL: https://unpro.ca/blog/valeur-maison-historique-renovations-quebec
 Publié: 2026-05-25T17:56:37.88622+00:00
@@ -600,6 +671,91 @@ Premium. Professionnel. Architectural. C''est la nouvelle monnaie de l''entrepre
 Activez votre profil entrepreneur UNPRO, ajoutez votre RBQ, vos assurances et vos premières réalisations. Chaque action est mesurée, chaque preuve compte, chaque projet enrichit votre score.
 
 Votre prochain rendez-vous qualifié commence maintenant.
+
+
+---
+
+### Passeport Maison UNPRO : pourquoi il va devenir aussi essentiel que le Carfax
+URL: https://unpro.ca/blog/passeport-maison-carfax-habitation
+Publié: 2026-05-25T17:56:37.88622+00:00
+Tags: passeport maison, carfax, valeur maison, historique renovation, score maison, unpro
+
+Le Passeport Maison UNPRO est un dossier intelligent qui prouve vos rénovations, protège vos garanties et augmente la valeur démontrable de votre propriété.
+
+
+## Une maison sans dossier, c''est une valeur invisible
+
+Pendant des décennies, des milliers de propriétaires ont investi des dizaines de milliers de dollars dans leur maison sans jamais conserver un historique structuré. Factures perdues, garanties introuvables, travaux au noir, entrepreneurs impossibles à retracer trois ans plus tard.
+
+Le résultat est presque toujours le même : au moment de **vendre, refinancer, réclamer aux assurances ou démontrer la qualité du bâtiment**, une immense partie de la valeur réelle de la propriété disparaît.
+
+Le Passeport Maison UNPRO change complètement cette logique.
+
+## Qu''est-ce que le Passeport Maison UNPRO ?
+
+Le Passeport Maison est un **dossier intelligent rattaché à votre propriété**. Chaque intervention réalisée par un entrepreneur partenaire UNPRO peut y être ajoutée automatiquement :
+
+- factures et preuves de paiement
+- preuves TPS/TVQ
+- garanties et durée de couverture
+- photos avant/après
+- matériaux et équipements installés
+- inspections et entretiens
+- licences RBQ et assurances de l''entrepreneur
+- signatures et validations client
+- recommandations futures et durée de vie estimée des composantes
+
+Le tout devient un **historique permanent, structuré et vérifiable**.
+
+## Pourquoi cela augmente la valeur d''une maison
+
+### 1. Prouver les rénovations réelles
+
+Deux maisons peuvent sembler identiques. Mais laquelle vaut plus : celle avec des rénovations impossibles à prouver, ou celle avec un historique complet, daté, validé et documenté ?
+
+Le Passeport Maison transforme des rénovations invisibles en **valeur démontrable**.
+
+### 2. Réduire les risques pour l''acheteur
+
+Les acheteurs ont peur des vices cachés, des infiltrations, des travaux mal faits et des garanties inexistantes. Un Passeport Maison complet réduit cette incertitude. Cela peut :
+
+- accélérer la vente
+- augmenter la confiance
+- améliorer le prix obtenu
+- faciliter le financement
+
+### 3. Mieux protéger les garanties
+
+Combien de garanties deviennent inutilisables parce que la facture est perdue, la date inconnue ou l''entrepreneur introuvable ? UNPRO conserve les preuves au même endroit, en permanence.
+
+### 4. Prouver que les taxes ont été payées
+
+Le travail au noir coûte cher à long terme. Lors d''une réclamation, d''une vente ou d''un litige, sans preuve il n''y a aucune protection. Avec UNPRO, les factures sont conservées, les taxes documentées, les travaux deviennent vérifiables. Cela protège **autant le propriétaire que l''entrepreneur**.
+
+### 5. Créer un véritable Score Maison
+
+Comme un dossier de crédit ou un Carfax automobile, UNPRO analyse la qualité des entretiens, la fréquence des inspections, l''historique des rénovations, la prévention des problèmes et la conformité des travaux pour produire un **Indice Qualité UNPRO**.
+
+Une maison entretenue intelligemment devient plus désirable et plus crédible sur le marché.
+
+## Le futur de l''immobilier sera basé sur les données de confiance
+
+Dans quelques années, il sera probablement normal de demander, lors d''une vente :
+
+- le Passeport Maison
+- l''historique des rénovations
+- les preuves de taxes payées
+- les garanties actives
+- la liste des entrepreneurs ayant travaillé sur la maison
+- le Score Maison
+
+Les propriétés avec un historique intelligent vaudront plus, se vendront plus vite et inspireront beaucoup plus confiance. **UNPRO construit cette infrastructure dès maintenant.**
+
+## Comment commencer
+
+Ouvrir votre Passeport Maison prend moins de 60 secondes. Chaque nouvelle facture, photo ou garantie ajoutée fait grimper votre **Indice Qualité UNPRO**. Et chaque nouveau travail réalisé avec un partenaire UNPRO s''enregistre automatiquement.
+
+C''est la mémoire vivante de votre propriété.
 
 
 ---
@@ -852,54 +1008,6 @@ Mais comparer mécaniquement trois prix n’est plus la seule façon de se prot�
 
 ---
 
-### Comment vérifier un entrepreneur au Québec : guide UNPRO
-URL: https://unpro.ca/blog/comment-verifier-entrepreneur-quebec-guide
-Publié: 2026-03-23T17:03:35.749109+00:00
-Tags: vérification, entrepreneur, RBQ, AIPP, confiance
-
-Guide pour vérifier un entrepreneur au Québec. Licence RBQ, assurances, avis et score AIPP UNPRO.
-
-## Vérifier un entrepreneur au Québec
-
-Avant de signer un contrat, vérifiez toujours votre entrepreneur. UNPRO simplifie cette étape.
-
-### 5 vérifications essentielles
-
-1. **Licence RBQ** — Obligatoire pour travaux > 5 000$
-2. **Assurance responsabilité** — Minimum 2M$ recommandé
-3. **CNESST** — Couverture accidents de travail
-4. **Avis clients** — Sur UNPRO et Google
-5. **Score AIPP** — Indicateur de confiance UNPRO
-
-### Comment vérifier la licence RBQ?
-
-1. Demandez le numéro de licence
-2. Vérifiez sur rbq.gouv.qc.ca
-3. Confirmez que les sous-catégories correspondent
-4. Vérifiez la date d'expiration
-
-### Red flags
-
-- Pas de contrat écrit
-- Demande de paiement complet à l'avance
-- Pas de licence visible
-- Prix très en dessous du marché
-- Pression pour signer rapidement
-
-### Le score AIPP
-
-Le score AIPP (Authenticité, Intelligence, Performance, Preuve) d'UNPRO évalue automatiquement :
-- Les vérifications officielles
-- La qualité du profil
-- Les avis clients
-- L'historique de performance
-
----
-
-*Vérifiez gratuitement un entrepreneur sur UNPRO.*
-
----
-
 ### Excavation et terrassement à Laval : permis et coûts
 URL: https://unpro.ca/blog/excavation-terrassement-laval-permis-couts
 Publié: 2026-03-23T17:03:35.749109+00:00
@@ -977,41 +1085,51 @@ La toiture est votre première ligne de défense contre les éléments. À Longu
 
 ---
 
-### Isolation du grenier à Montréal : guide et subventions
-URL: https://unpro.ca/blog/isolation-grenier-montreal-guide-subventions
+### Comment vérifier un entrepreneur au Québec : guide UNPRO
+URL: https://unpro.ca/blog/comment-verifier-entrepreneur-quebec-guide
 Publié: 2026-03-23T17:03:35.749109+00:00
-Tags: isolation, grenier, montréal, cellulose, subventions
+Tags: vérification, entrepreneur, RBQ, AIPP, confiance
 
-Guide isolation du grenier à Montréal. Options, subventions et spécialistes vérifiés.
+Guide pour vérifier un entrepreneur au Québec. Licence RBQ, assurances, avis et score AIPP UNPRO.
 
-## Isolation du grenier à Montréal
+## Vérifier un entrepreneur au Québec
 
-Le grenier est la zone la plus critique pour l'isolation. 30% des pertes de chaleur passent par le toit.
+Avant de signer un contrat, vérifiez toujours votre entrepreneur. UNPRO simplifie cette étape.
 
-### Options d'isolation
+### 5 vérifications essentielles
 
-| Type | R-Value | Coût/pi² |
-|------|---------|----------|
-| Cellulose soufflée | R-60 | 1.50$ - 3$ |
-| Laine de verre | R-40 | 1$ - 2$ |
-| Mousse polyuréthane | R-60+ | 3$ - 6$ |
+1. **Licence RBQ** — Obligatoire pour travaux > 5 000$
+2. **Assurance responsabilité** — Minimum 2M$ recommandé
+3. **CNESST** — Couverture accidents de travail
+4. **Avis clients** — Sur UNPRO et Google
+5. **Score AIPP** — Indicateur de confiance UNPRO
 
-### Subventions
+### Comment vérifier la licence RBQ?
 
-- **Rénoclimat** : jusqu'à 1 275$ pour l'isolation
-- **LogisVert** : aide supplémentaire pour R-60+
-- **Canada Greener Homes** : jusqu'à 5 000$
+1. Demandez le numéro de licence
+2. Vérifiez sur rbq.gouv.qc.ca
+3. Confirmez que les sous-catégories correspondent
+4. Vérifiez la date d'expiration
 
-### Signes d'isolation insuffisante
+### Red flags
 
-- Glace sur le toit (barrages de glace)
-- 2e étage froid en hiver
-- Factures élevées
-- Grenier très chaud en été
+- Pas de contrat écrit
+- Demande de paiement complet à l'avance
+- Pas de licence visible
+- Prix très en dessous du marché
+- Pression pour signer rapidement
+
+### Le score AIPP
+
+Le score AIPP (Authenticité, Intelligence, Performance, Preuve) d'UNPRO évalue automatiquement :
+- Les vérifications officielles
+- La qualité du profil
+- Les avis clients
+- L'historique de performance
 
 ---
 
-*Trouvez un spécialiste en isolation vérifié à Montréal sur UNPRO.*
+*Vérifiez gratuitement un entrepreneur sur UNPRO.*
 
 ---
 
@@ -1050,6 +1168,44 @@ Les haies de cèdres sont omniprésentes à Laval. Un entretien régulier mainti
 ---
 
 *Trouvez un spécialiste de haies vérifié à Laval sur UNPRO.*
+
+---
+
+### Isolation du grenier à Montréal : guide et subventions
+URL: https://unpro.ca/blog/isolation-grenier-montreal-guide-subventions
+Publié: 2026-03-23T17:03:35.749109+00:00
+Tags: isolation, grenier, montréal, cellulose, subventions
+
+Guide isolation du grenier à Montréal. Options, subventions et spécialistes vérifiés.
+
+## Isolation du grenier à Montréal
+
+Le grenier est la zone la plus critique pour l'isolation. 30% des pertes de chaleur passent par le toit.
+
+### Options d'isolation
+
+| Type | R-Value | Coût/pi² |
+|------|---------|----------|
+| Cellulose soufflée | R-60 | 1.50$ - 3$ |
+| Laine de verre | R-40 | 1$ - 2$ |
+| Mousse polyuréthane | R-60+ | 3$ - 6$ |
+
+### Subventions
+
+- **Rénoclimat** : jusqu'à 1 275$ pour l'isolation
+- **LogisVert** : aide supplémentaire pour R-60+
+- **Canada Greener Homes** : jusqu'à 5 000$
+
+### Signes d'isolation insuffisante
+
+- Glace sur le toit (barrages de glace)
+- 2e étage froid en hiver
+- Factures élevées
+- Grenier très chaud en été
+
+---
+
+*Trouvez un spécialiste en isolation vérifié à Montréal sur UNPRO.*
 
 ---
 
@@ -1210,6 +1366,46 @@ L'entrepreneur général charge typiquement 15-25% du coût total des travaux.
 ---
 
 *Trouvez un entrepreneur général vérifié à Longueuil sur UNPRO.*
+
+---
+
+### Béton et fondation à Montréal : réparation et imperméabilisation
+URL: https://unpro.ca/blog/beton-fondation-montreal-reparation
+Publié: 2026-03-23T17:02:51.707233+00:00
+Tags: fondation, montréal, béton, fissure, drain français
+
+Guide réparation de fondation à Montréal. Coûts, signes d'alerte et spécialistes vérifiés.
+
+## Béton et fondation à Montréal
+
+Les fondations montréalaises subissent le gel-dégel et les sols argileux. La réparation précoce évite des coûts exponentiels.
+
+### Types de réparations
+
+| Intervention | Coût |
+|-------------|------|
+| Injection de fissure | 500$ - 1 500$ |
+| Imperméabilisation extérieure | 5 000$ - 15 000$ |
+| Drain français | 8 000$ - 20 000$ |
+| Pieutage | 15 000$ - 50 000$ |
+
+### Signes d'alerte
+
+- Fissures horizontales (urgent)
+- Fissures en escalier
+- Infiltrations au sous-sol
+- Portes qui ne ferment plus
+- Planchers inclinés
+
+### Prévention
+
+- Drainage loin de la fondation
+- Gouttières fonctionnelles
+- Grade positif autour de la maison
+
+---
+
+*Trouvez un spécialiste en fondation vérifié à Montréal sur UNPRO.*
 
 ---
 
@@ -1394,46 +1590,6 @@ Idéalement en octobre. Les meilleurs déneigeurs sont réservés dès novembre.
 
 ---
 
-### Béton et fondation à Montréal : réparation et imperméabilisation
-URL: https://unpro.ca/blog/beton-fondation-montreal-reparation
-Publié: 2026-03-23T17:02:51.707233+00:00
-Tags: fondation, montréal, béton, fissure, drain français
-
-Guide réparation de fondation à Montréal. Coûts, signes d'alerte et spécialistes vérifiés.
-
-## Béton et fondation à Montréal
-
-Les fondations montréalaises subissent le gel-dégel et les sols argileux. La réparation précoce évite des coûts exponentiels.
-
-### Types de réparations
-
-| Intervention | Coût |
-|-------------|------|
-| Injection de fissure | 500$ - 1 500$ |
-| Imperméabilisation extérieure | 5 000$ - 15 000$ |
-| Drain français | 8 000$ - 20 000$ |
-| Pieutage | 15 000$ - 50 000$ |
-
-### Signes d'alerte
-
-- Fissures horizontales (urgent)
-- Fissures en escalier
-- Infiltrations au sous-sol
-- Portes qui ne ferment plus
-- Planchers inclinés
-
-### Prévention
-
-- Drainage loin de la fondation
-- Gouttières fonctionnelles
-- Grade positif autour de la maison
-
----
-
-*Trouvez un spécialiste en fondation vérifié à Montréal sur UNPRO.*
-
----
-
 ### Peinture intérieure et extérieure à Montréal : prix et conseils
 URL: https://unpro.ca/blog/peinture-interieure-exterieure-montreal-prix
 Publié: 2026-03-23T17:01:44.942086+00:00
@@ -1511,43 +1667,6 @@ L'entrée de cour en asphalte est un classique au Québec. À Laval, les cycles 
 
 ---
 
-### Portes de garage à Laval : installation et réparation
-URL: https://unpro.ca/blog/portes-garage-laval-installation-reparation
-Publié: 2026-03-23T17:01:44.942086+00:00
-Tags: porte garage, laval, installation, réparation, isolation
-
-Guide portes de garage à Laval. Prix, types, réparations et installateurs vérifiés.
-
-## Portes de garage à Laval
-
-La porte de garage est la plus grande ouverture de votre maison. Elle affecte l'isolation, la sécurité et l'apparence.
-
-### Types de portes
-
-| Type | Coût installé |
-|------|----------|
-| Acier simple | 800$ - 1 500$ |
-| Acier isolé R-16 | 1 200$ - 2 500$ |
-| Aluminium/verre | 2 000$ - 5 000$ |
-| Bois | 2 500$ - 6 000$ |
-
-### Réparations courantes
-
-- Ressorts cassés : 200$ - 400$
-- Remplacement câbles : 150$ - 300$
-- Ouvre-porte motorisé : 400$ - 800$
-- Coupe-froid : 100$ - 200$
-
-### Isolation
-
-Une porte R-16 ou R-18 est recommandée à Laval pour les garages chauffés. Économies de chauffage de 15-20%.
-
----
-
-*Trouvez un installateur de portes de garage vérifié à Laval sur UNPRO.*
-
----
-
 ### Climatisation et ventilation à Montréal : guide 2026
 URL: https://unpro.ca/blog/climatisation-ventilation-montreal-guide
 Publié: 2026-03-23T17:01:44.942086+00:00
@@ -1620,6 +1739,43 @@ Les briques et la maçonnerie sont essentielles à l'intégrité structurale de 
 ---
 
 *Trouvez un maçon vérifié à Laval sur UNPRO.*
+
+---
+
+### Portes de garage à Laval : installation et réparation
+URL: https://unpro.ca/blog/portes-garage-laval-installation-reparation
+Publié: 2026-03-23T17:01:44.942086+00:00
+Tags: porte garage, laval, installation, réparation, isolation
+
+Guide portes de garage à Laval. Prix, types, réparations et installateurs vérifiés.
+
+## Portes de garage à Laval
+
+La porte de garage est la plus grande ouverture de votre maison. Elle affecte l'isolation, la sécurité et l'apparence.
+
+### Types de portes
+
+| Type | Coût installé |
+|------|----------|
+| Acier simple | 800$ - 1 500$ |
+| Acier isolé R-16 | 1 200$ - 2 500$ |
+| Aluminium/verre | 2 000$ - 5 000$ |
+| Bois | 2 500$ - 6 000$ |
+
+### Réparations courantes
+
+- Ressorts cassés : 200$ - 400$
+- Remplacement câbles : 150$ - 300$
+- Ouvre-porte motorisé : 400$ - 800$
+- Coupe-froid : 100$ - 200$
+
+### Isolation
+
+Une porte R-16 ou R-18 est recommandée à Laval pour les garages chauffés. Économies de chauffage de 15-20%.
+
+---
+
+*Trouvez un installateur de portes de garage vérifié à Laval sur UNPRO.*
 
 ---
 
