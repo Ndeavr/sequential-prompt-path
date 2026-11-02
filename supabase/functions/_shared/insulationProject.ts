@@ -96,7 +96,7 @@ export function postFireGuidance(raw: unknown): string {
 /** Server lock: prohibited/unknown post-fire access suspends all qualification and matching. */
 export function isPostFireSuspended(raw: unknown): boolean {
   const c = sanitizeInsulationContext(raw);
-  return c.insulation_post_fire === "declared" && (!c.post_fire_access || c.post_fire_access === "prohibited" || c.post_fire_access === "unknown") && c.post_fire_access !== undefined;
+  return c.insulation_post_fire === "declared" && (c.post_fire_access === "prohibited" || c.post_fire_access === "unknown");
 }
 export function nextInsulationQuestion(raw: unknown, category?: string | null, subType?: string | null) {
   const c = sanitizeInsulationContext(raw);
