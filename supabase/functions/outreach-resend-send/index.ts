@@ -63,14 +63,10 @@ Deno.serve(async (req) => {
       if (e2) return true;
       return (s ?? []).length > 0;
     },
-    hasReviewedEmailConsent: async (email) => {
-      const { data, error } = await sb.from("casl_consent_evidence")
-        .select("id, lawful_basis, source_url, retrieved_at, expires_at, refusal_statement_found")
-        .eq("destination_type", "email").eq("destination_normalized", email).eq("is_valid", true)
-        .not("reviewer_id", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (error || !data) return false;
-      return !!data.lawful_basis && String(data.source_url ?? "").startsWith("https://") && !!data.retrieved_at &&
-        data.refusal_statement_found !== true && (!data.expires_at || new Date(data.expires_at) > new Date());
+    // Human signature OR current machine auto-validation for this exact recipient + campaign (fail-closed).
+    hasReviewedEmailConsent: async (email, campaign) => {
+      const { data, error } = await sb.rpc("casl_send_basis", { p_destination_type: "email", p_destinations: [email], p_campaign_key: campaign ?? "" });
+      return !error && (data as any)?.ok === true;
     },
     createUnsubscribeToken: async (email) => {
       // Reuse an unused token ≤60 days old so a retry sends an identical payload.

@@ -59,7 +59,7 @@ export interface Deps {
   /** "unknown" = cannot be proven (e.g. send-only key gets 401 on /domains). Only "verified" passes. */
   senderDomainVerified: (domain: string) => Promise<DomainProof>;
   isSuppressed: (email: string) => Promise<boolean>; // must throw/true on read error
-  hasReviewedEmailConsent: (email: string) => Promise<boolean>;
+  hasReviewedEmailConsent: (email: string, campaign?: string) => Promise<boolean>;
   createUnsubscribeToken: (email: string) => Promise<string>;
   claim: (key: string, email: string, campaign: string) => Promise<string>;
   settle: (key: string, status: "sent" | "failed_retryable" | "failed_final", providerId: string | null, error: string | null) => Promise<void>;
@@ -134,7 +134,7 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
     if (domain !== "verified") return block(423, "SENDER_DOMAIN_NOT_VERIFIED", d.senderDomain);
     if (!d.postalAddress.trim()) return block(423, "SENDER_POSTAL_ADDRESS_MISSING");
     if (await d.isSuppressed(to).catch(() => true)) return block(409, "RECIPIENT_SUPPRESSED");
-    if (!(await d.hasReviewedEmailConsent(to).catch(() => false))) return block(423, "NO_REVIEWED_CASL_EVIDENCE");
+    if (!(await d.hasReviewedEmailConsent(to, campaign).catch(() => false))) return block(423, "NO_REVIEWED_CASL_EVIDENCE");
 
     claimKey = await d.sha256(`${to}|${campaign}`);
     const decision = await d.claim(claimKey, to, campaign).catch(() => "claim_unavailable");
