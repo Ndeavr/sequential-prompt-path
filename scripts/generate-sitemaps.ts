@@ -58,6 +58,14 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/articles/moins-de-soumissions-plus-de-factures", changefreq: "monthly", priority: "0.8" },
   { path: "/articles/badges-choix-consommateur-2026", changefreq: "monthly", priority: "0.7" },
   { path: "/articles/verifier-grenier-avant-fenetres-thermopompe", changefreq: "monthly", priority: "0.7" },
+  { path: "/calendrier-intelligent", changefreq: "monthly", priority: "0.7" },
+  { path: "/entrepreneurs", changefreq: "weekly", priority: "0.8" },
+  { path: "/entrepreneurs/thermopompes", changefreq: "monthly", priority: "0.7" },
+  { path: "/directeur-des-ventes", changefreq: "monthly", priority: "0.6" },
+  { path: "/gestionnaires-immobiliers", changefreq: "monthly", priority: "0.7" },
+  { path: "/tarifs/proprietaires", changefreq: "monthly", priority: "0.6" },
+  { path: "/tarifs/gestionnaires", changefreq: "monthly", priority: "0.6" },
+  { path: "/partenariats-fournisseurs", changefreq: "monthly", priority: "0.6" },
 ];
 
 // --------------------------------------------------------------------------
@@ -214,9 +222,9 @@ async function buildContractors() {
 // Sitemap index
 // --------------------------------------------------------------------------
 function buildIndex(children: string[]) {
-  const now = new Date().toISOString();
+  // No <lastmod> on index entries: generation time is not a content change.
   const entries = children.map(
-    (c) => `  <sitemap>\n    <loc>${BASE_URL}/${c}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`,
+    (c) => `  <sitemap>\n    <loc>${BASE_URL}/${c}</loc>\n  </sitemap>`,
   );
   const xml = `${xmlHeader("sitemapindex")}\n${entries.join("\n")}\n</sitemapindex>\n`;
   writeFileSync(resolve("public/sitemap.xml"), xml);
