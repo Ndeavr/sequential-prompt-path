@@ -1,0 +1,52 @@
+UNPRO — Clara : isolation d'un immeuble après incendie
+Date : 2026-11-02
+STATUT : spécification préparée, non implémentée/non testée. Ce document ne crée aucune demande cliente, aucun envoi, aucun suivi programmé.
+
+OBJECTIF
+La cliente remplit elle-même sa demande avec Clara sur unpro.ca. Clara recueille les informations, fait confirmer le résumé et l'autorisation de partage, puis le système recherche et contacte les entreprises admissibles. Retour à la cliente uniquement à partir de réponses confirmées.
+
+MESSAGE À TRANSMETTRE
+Bonjour! Vous pouvez décrire vos travaux d’isolation après incendie sur https://unpro.ca en précisant « Isolation d’un immeuble après un incendie ». Clara, notre assistante, vous guidera pour fournir les informations sur le bâtiment, les zones à isoler et vos délais. Vous pourrez aussi joindre vos photos ou votre devis de travaux.
+
+ACCUEIL ET COLLECTE — UNE QUESTION À LA FOIS
+Reconnaître le contexte et reprendre les réponses déjà données. Ne pas créer de projet réel depuis cette spécification.
+1. Dans quelle ville se trouve l’immeuble? Recueillir ensuite adresse, type de bâtiment, nombre de logements et rôle de la cliente (propriétaire, gestionnaire, syndicat ou représentante).
+2. Quelles parties doivent être isolées : entretoit, murs, planchers ou plusieurs zones? Superficie approximative si connue, matériaux demandés ou devis existant. Ne pas supposer qu’un isolateur d’entretoit couvre les autres surfaces.
+3. Où en est le chantier après l’incendie? Accès autorisé, nettoyage/retrait et assèchement terminés ou encore à prévoir, rapport ou devis de l’assureur disponible? Éléments déclarés seulement; Clara ne certifie ni sécurité d’accès, ni structure, ni décontamination.
+4. Quel délai et quelles disponibilités pour une visite? Budget si connu, personne autorisée à approuver les travaux, coordination assureur/entrepreneur général.
+5. Coordonnées et canal de retour souhaité, photos/plans/devis utiles, accord explicite sur les informations à partager avec les entreprises retenues.
+Ces cinq thèmes sont abordés progressivement, pas par un formulaire géant ni cinq questions composées. Poser seulement les précisions indispensables. Ne pas demander de document d’identité ni de numéro complet de dossier d’assurance par défaut.
+Si la cliente décrit un incendie en cours ou un accès interdit, suspendre la qualification du chantier et l’orienter vers les intervenants compétents; ne pas lui demander d’entrer ou de prendre des photos.
+Si nettoyage, assèchement, évaluation ou retrait spécialisé sont encore nécessaires, qualifier les étapes et rechercher les spécialités correspondantes avant l’isolation.
+
+CONFIRMATION
+Faire valider un résumé corrigeable. Sauvegarder dans le modèle canonique existant avec propriété du dossier, RLS et documents privés. La cliente soumet elle-même. Ne dire « demande enregistrée » qu’après réponse serveur réussie.
+Conserver étapes, contexte, consentement et canal de retour entre sessions. Ne pas inventer une URL contextuelle non prise en charge.
+
+RECHERCHE ET SOLLICITATION
+Réutiliser matching, recherche et file de prospection existants. Filtrer territoire, parties à isoler, expérience déclarée et vérifiée après sinistre, capacité, disponibilité, assurances et qualifications obligatoires vérifiées.
+Licence requise non vérifiée/invalide/suspendue/expirée => aucune recommandation. Ne jamais assimiler profil payant à admissibilité technique.
+Isolation Solution Royal : uniquement entretoit dans son périmètre confirmé; exclure murs/planchers/uréthane/mousse giclée/toits plats, ne pas présumer capacité après incendie.
+Chercher d’abord parmi les partenaires admissibles, puis recruter si nécessaire. Créer ou relier une fiche entreprise sans doublon. Profil UNPRO requis avant présentation à la cliente; ne pas attribuer de paiement, activation ou vérification sans preuve.
+Premier contact professionnel : résumé anonymisé ville/type/surfaces/délais, question capacité et disponibilité, invitation à compléter le profil. Ne pas utiliser l’expression « demande réelle » dans le message, ne pas transmettre adresse exacte, identité, coordonnées, photos privées ni dossier assurance avant consentement approprié.
+Toute sollicitation suit la politique de preuves approuvée, les désinscriptions, caps, heures et contrôles actifs. Aucune signature humaine fabriquée. Si le chemin automatique n’est pas déployé/testé, montrer le blocage exact.
+Une validation commerciale ne garantit pas que l’entreprise peut exécuter ces travaux. Aucune diffusion de lead partagé.
+
+RETOUR CLIENTE
+États réels : demande confirmée / recherche / entreprises contactées / réponses attendues / disponibilité confirmée / rendez-vous confirmé.
+Une tentative fournisseur n’est pas une livraison; une livraison n’est pas une acceptation.
+Dès réponse admissible confirmée, proposer le meilleur choix (ou au plus trois justifiés), présenter les points vérifiés, recueillir l’accord de la cliente et réserver seulement via le parcours existant confirmé.
+Sans réponse ou sans entreprise adaptée, annoncer honnêtement la recherche en cours ou l’absence de partenaire; ne pas inventer disponibilité ou délai de réponse.
+Le retour asynchrone nécessite un événement/job persistant, idempotent, dans l’infrastructure existante, associé au dossier et au canal consenti. Sans mécanisme effectivement enregistré, Clara ne promet pas « je vous reviens » : fournir le statut et le moyen de consulter le suivi. Pas de nouveau cron doublon.
+Accusé de réception et échéance de suivi uniquement s’ils sont réellement configurés.
+
+ACCEPTATION AVANT MISE EN SERVICE
+- Cas synthétique bâtiment après incendie : collecte, reprise, consentement, soumission et persistance du résumé.
+- Murs versus entretoit : exclusions de spécialité respectées.
+- Accès non autorisé / travaux préalables manquants : pas de chantier présenté comme prêt.
+- Licence non vérifiée : aucune recommandation.
+- Premier contact anonymisé; aucun envoi sans admissibilité.
+- Aucune entreprise disponible : statut honnête, suivi persistant ou absence de suivi explicitée.
+- Réponse entreprise -> notification cliente via canal consenti, idempotence et pas de fausse réservation.
+- Erreur réseau / session perdue / documents privés / mobile : parcours récupérable.
+- Tests sans vrai paiement, SMS ni courriel externe.
