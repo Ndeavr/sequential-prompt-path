@@ -59,3 +59,9 @@ ACCEPTATION AVANT MISE EN SERVICE
 - La cliente choisit son créneau via la réservation existante (adresse préremplie modifiable); confirmation seulement après succès serveur, revalidation admissibilité/disponibilité.
 - Idempotence alerte/courriel/réservation; états tenté/envoyé/livré distincts; aucun cron doublon.
 - Après incendie : accès interdit/inconnu = suspension serveur (alex-qualify-turn status "suspended"); aucun match sans compétence sinistre/surfaces/territoire/licence/assurance vérifiées; entretoit ≠ murs/planchers.
+
+== RÈGLE GÉNÉRALE 2026-11-02 (toutes demandes, 3 univers) ==
+Le parcours demande → recherche → alerte UNPRO → courriel vers l'alerte → « Réserver ce pro » s'applique à TOUTE demande sans entrepreneur admissible (rénovation/construction, entretien/services, immobilier/professionnels); l'incendie n'est qu'une spécialisation.
+Demande exprimée, confirmée et qualifiée (localisation confidentielle, service, besoins) = priorité de recherche/recrutement service × territoire dans les files existantes, devant la prospection générique. Incomplète = Clara complète d'abord, aucune recherche large.
+Besoins dédupliqués par service × territoire (ville ou 3 premiers caractères du code postal) sans fusion ni exposition des dossiers privés. La priorité ne lève aucune exigence (admissibilité, preuves, consentement, suppression, plafonds, heures); aucun interrupteur global ni campagne massive.
+Aucun délai/suivi promis sans job persistant; état honnête « recherche en cours ». Helpers : supabase/functions/_shared/demandRecruitment.ts (pas encore branché aux files).
