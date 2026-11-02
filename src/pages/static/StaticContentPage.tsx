@@ -7,6 +7,7 @@ import { CallUnproLink } from "@/components/contact/CallUnproLink";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Sparkles } from "lucide-react";
+import LegalFooterBar from "@/components/legal/LegalFooterBar";
 
 type StaticSlug =
   | "a-propos"
@@ -145,6 +146,7 @@ export default function StaticContentPage({ slug }: { slug: StaticSlug }) {
   if (!content) return null;
 
   return (
+    <>
     <main className="landing-warm min-h-screen">
       <div className="mx-auto max-w-3xl px-5 py-10 md:py-16">
         <Link
@@ -188,5 +190,7 @@ export default function StaticContentPage({ slug }: { slug: StaticSlug }) {
         </div>
       </div>
     </main>
+    <LegalFooterBar />
+    </>
   );
 }

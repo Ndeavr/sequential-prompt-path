@@ -28,12 +28,9 @@ const RESOURCE_LINKS: FooterLink[] = [
   { label: "Journal", to: "/journal" },
   { label: "FAQ", to: "/faq" },
   { label: "Partenariats fournisseurs", to: "/partenariats-fournisseurs" },
-  { label: "Contact", to: "/contact" },
 ];
 
 const TRUST_LINKS: FooterLink[] = [
-  { label: "Politique de confidentialité", to: "/confidentialite" },
-  { label: "Conditions d'utilisation", to: "/conditions" },
   { label: "Vérification RBQ", to: "/verifier-entrepreneur" },
 ];
 
@@ -68,7 +65,7 @@ export default function SiteFooterPremium() {
       aria-label="Pied de page UNPRO"
       className="alex-immersive relative border-t border-white/10"
     >
-      <div className="mx-auto max-w-7xl px-6 pt-16 md:pt-20 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20">
+      <div className="mx-auto max-w-7xl px-6 pt-16 md:pt-20 pb-8">
         {/* Brand block */}
         <div className="max-w-2xl mb-14 md:mb-16">
           <UnproLogo size={168} tone="dark" className="mb-5" />
@@ -93,11 +90,9 @@ export default function SiteFooterPremium() {
 
         {/* Bottom bar */}
         <div className="mt-16 pt-6 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>UNPRO © {new Date().getFullYear()}</div>
           <div className="italic text-foreground/70">
             Votre maison devrait se souvenir de tout.
           </div>
-          <div>Québec • Canada</div>
         </div>
       </div>
     </footer>

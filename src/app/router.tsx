@@ -33,6 +33,7 @@ const PageProjectCreatedSuccess = lazyWithRetry(() => import("@/pages/PageProjec
 const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendations"));
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
+import PageLanguagePolicy from "@/pages/static/PageLanguagePolicy";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
@@ -1414,6 +1415,7 @@ export const AppRouter = () => (
         <Route path="/conditions" element={<StaticContentPage slug="conditions" />} />
         <Route path="/confidentialite" element={<StaticContentPage slug="confidentialite" />} />
         <Route path="/cookies" element={<StaticContentPage slug="cookies" />} />
+        <Route path="/politique-linguistique" element={<PageLanguagePolicy />} />
         <Route path="/sitemap" element={<SeoSitemapPage />} />
         <Route path="/accessibilite" element={<StaticContentPage slug="accessibilite" />} />
 
