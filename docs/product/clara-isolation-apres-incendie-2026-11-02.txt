@@ -59,3 +59,11 @@ ACCEPTATION AVANT MISE EN SERVICE
 - La cliente choisit son créneau via la réservation existante (adresse préremplie modifiable); confirmation seulement après succès serveur, revalidation admissibilité/disponibilité.
 - Idempotence alerte/courriel/réservation; états tenté/envoyé/livré distincts; aucun cron doublon.
 - Après incendie : accès interdit/inconnu = suspension serveur (alex-qualify-turn status "suspended"); aucun match sans compétence sinistre/surfaces/territoire/licence/assurance vérifiées; entretoit ≠ murs/planchers.
+
+## Premier rendez-vous offert sur invitation (décision fondateur, 2 nov 2026)
+- Champ : entreprise recrutée/qualifiée pour répondre à une demande propriétaire déjà exprimée sans partenaire admissible. Ni universel, ni 3 RDV gratuits, ni gratuité de l'activation.
+- Conditions inchangées : profil minimal utile, identité/contact fiables, compatibilité, qualifications obligatoires vérifiées, activation 350 $ + taxes payée LIVE confirmée par webhook signé.
+- Texte avant paiement : « Activation — 350 $ + taxes, profil et 12 mois de présence IA UNPRO. Dans le cadre de cette invitation, votre premier rendez-vous qualifié est offert. »
+- Aucune date ni réservation promise avant choix/confirmation de la cliente.
+- Droit : invitation créée serveur, liée à la demande ET à l'entreprise ; un seul droit `first_offered` par invitation (clé d'idempotence), 0 $ de frais, aucun débit de forfait payant. Aucun paramètre URL/client ne confère ce droit. Annulation/report : règles existantes.
+- Règles : supabase/functions/_shared/appointmentRelease.ts (tests src/test/appointment-release.test.ts).
