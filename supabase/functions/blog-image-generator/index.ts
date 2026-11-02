@@ -1,3 +1,4 @@
+import { buildImageBrief } from "./brief.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -20,7 +21,7 @@ serve(async (req) => {
     // Get articles missing featured image
     const { data: articles, error } = await supabase
       .from("blog_articles")
-      .select("id, title, category, city, slug")
+      .select("id, category, city, slug")
       .eq("status", "published")
       .is("featured_image_url", null)
       .limit(3);
@@ -36,7 +37,7 @@ serve(async (req) => {
 
     for (const article of articles) {
       try {
-        const imagePrompt = `Documentary-style photograph taken on a real job site. Subject: "${article.title}". Category: ${article.category || "home services"}. Location: ${article.city || "Quebec"}, Canada. Requirements: MUST look like a real photo taken by a contractor or homeowner on-site — natural imperfect lighting, real tools visible, real materials (pink fiberglass batts, blown-in cellulose, OSB sheathing, wood framing, etc.), slight grain or phone-camera quality is OK. NO studio lighting, NO perfectly posed models, NO stock photo aesthetics, NO text overlays. Think Google Maps user photo or a contractor's portfolio photo. 16:9 landscape.`;
+        const imagePrompt = buildImageBrief(article);
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
