@@ -118,7 +118,7 @@ export default function HeroV2({ onTrackCta }: Props) {
         </p>
       </motion.div>
 
-      {/* Trust row */
+      {/* Trust row */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
