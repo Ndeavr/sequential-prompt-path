@@ -75468,6 +75468,53 @@ export type Database = {
           },
         ]
       }
+      promo_code_scopes: {
+        Row: {
+          category_slug: string
+          city_key: string
+          city_label: string
+          created_at: string
+          months: number
+          offer_code: string
+          promo_code_id: string
+          seat_cap: number
+          service_pattern: string
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          city_key: string
+          city_label: string
+          created_at?: string
+          months?: number
+          offer_code: string
+          promo_code_id: string
+          seat_cap: number
+          service_pattern: string
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          city_key?: string
+          city_label?: string
+          created_at?: string
+          months?: number
+          offer_code?: string
+          promo_code_id?: string
+          seat_cap?: number
+          service_pattern?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_scopes_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: true
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promo_codes: {
         Row: {
           active: boolean
@@ -101046,6 +101093,7 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_scoped_free_activation: { Args: { p_code: string }; Returns: Json }
       compute_email_system_status: { Args: never; Returns: Json }
       compute_extra_appointment_value: {
         Args: {
@@ -101780,6 +101828,7 @@ export type Database = {
         Returns: string
       }
       nightly_log_retention: { Args: never; Returns: undefined }
+      normalize_city_key: { Args: { p: string }; Returns: string }
       normalize_local_service_category: {
         Args: { p_label: string }
         Returns: string
