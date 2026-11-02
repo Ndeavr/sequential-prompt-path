@@ -12,44 +12,53 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
 import { formatEditorialDate } from "@/seo/editorialDates";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+import BlogImage, { blogImageAlt } from "@/components/blog/BlogImage";
 
 
-const CATEGORIES = [
-  { key: "all", label: "Tous" },
-  { key: "passeport-maison", label: "Passeport Maison" },
-  { key: "toiture", label: "Toiture" },
-  { key: "isolation", label: "Isolation" },
-  { key: "renovation", label: "Rénovation" },
-  { key: "urgence", label: "Urgences" },
-  { key: "condo", label: "Condo / Loi 16" },
-  { key: "cout", label: "Guides de coûts" },
-  { key: "entrepreneur", label: "Choix entrepreneur" },
-  { key: "comparaison", label: "Comparaisons" },
+const CATEGORIES: { key: string; fr: string; en: string }[] = [
+  { key: "all", fr: "Tous", en: "All" },
+  { key: "passeport-maison", fr: "Passeport Maison", en: "Home Passport" },
+  { key: "toiture", fr: "Toiture", en: "Roofing" },
+  { key: "isolation", fr: "Isolation", en: "Insulation" },
+  { key: "renovation", fr: "Rénovation", en: "Renovation" },
+  { key: "urgence", fr: "Urgences", en: "Emergencies" },
+  { key: "condo", fr: "Condo / Loi 16", en: "Condo / Bill 16" },
+  { key: "cout", fr: "Guides de coûts", en: "Cost guides" },
+  { key: "entrepreneur", fr: "Choix entrepreneur", en: "Choosing a contractor" },
+  { key: "comparaison", fr: "Comparaisons", en: "Comparisons" },
 ];
+
+const T = {
+  fr: { h1: "Conseils d'experts pour vos projets", sub: "Guides pratiques, erreurs à éviter et astuces de pros, par UNPRO.", empty: "Aucun article dans cette langue pour le moment.", error: "Impossible de charger les articles.", retry: "Réessayer", cta: "Besoin d'aide pour votre projet?", ctaSub: "Clara vous aide à clarifier votre besoin et à trouver le professionnel le plus compatible.", ctaBtn: "Parler à Clara", how: "Comment ça fonctionne", lang: "Langue des articles" },
+  en: { h1: "Expert advice for your home projects", sub: "Practical guides, mistakes to avoid and pro tips, by UNPRO.", empty: "No articles in this language yet.", error: "Unable to load articles.", retry: "Retry", cta: "Need help with your project?", ctaSub: "Clara helps you clarify your need and find the most compatible professional.", ctaBtn: "Talk to Clara", how: "How it works", lang: "Article language" },
+};
 
 export default function BlogIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("category") || "all";
   useEngagementTracking();
   const alexVoice = useAlexVoice();
+  const { lang, setLang } = useLanguage();
+  const t = T[lang];
 
-  const { data: articles, isLoading } = useQuery({
-    queryKey: ["blog-articles", category],
+  const { data: articles, isLoading, isError, refetch } = useQuery({
+    queryKey: ["blog-articles", lang, category],
     queryFn: async () => {
       let query = supabase
         .from("blog_articles")
         .select("id, title, subtitle, slug, category, city, audience_type, meta_description, published_at, reading_time_minutes, word_count, featured_image_url, tags")
         .eq("status", "published")
         .eq("audience_type", "public")
-        .order("published_at", { ascending: false })
-        .limit(30);
+        .eq("language", lang);
 
       if (category !== "all") {
         query = query.eq("category", category);
       }
 
-      const { data } = await query;
-      return data as any[] || [];
+      const { data, error } = await query.order("published_at", { ascending: false }).limit(200);
+      if (error) throw error;
+      return (data as any[]) || [];
     },
   });
 
@@ -77,12 +86,16 @@ export default function BlogIndexPage() {
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12 space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground">
-            Conseils d'experts pour vos projets
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Guides pratiques, erreurs à éviter et astuces de pros. Par UNPRO, le système intelligent de rendez-vous garantis.
-          </p>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground">{t.h1}</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t.sub}</p>
+          <div role="group" aria-label={t.lang} className="inline-flex rounded-full border border-border p-1">
+            {(["fr", "en"] as const).map((l) => (
+              <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}
+                className={`min-h-11 px-4 rounded-full text-sm font-medium ${lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                {l === "fr" ? "Français" : "English"}
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         {/* Category Filter */}
@@ -97,7 +110,7 @@ export default function BlogIndexPage() {
                   : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
-              {cat.label}
+              {cat[lang]}
             </button>
           ))}
         </div>
@@ -122,14 +135,7 @@ export default function BlogIndexPage() {
                   to={`/blog/${article.slug}`}
                   className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg transition"
                 >
-                  {article.featured_image_url && (
-                    <img
-                      src={article.featured_image_url}
-                      alt={`${article.category} ${article.city || "québec"} entrepreneur`}
-                      className="w-full h-48 object-cover"
-                      loading="lazy"
-                    />
-                  )}
+                  <BlogImage src={article.featured_image_url} alt={blogImageAlt(article, lang)} priority={i === 0} />
                   <div className="p-5 space-y-3">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {article.category && (
@@ -150,7 +156,7 @@ export default function BlogIndexPage() {
                       {article.published_at && (
                         <span className="flex items-center gap-1">
                           <CalendarDays className="h-3 w-3" />
-                          <time dateTime={article.published_at}>{formatEditorialDate(article.published_at)}</time>
+                          <time dateTime={article.published_at}>{new Date(article.published_at).toLocaleDateString(lang === "en" ? "en-CA" : "fr-CA", { year: "numeric", month: "long", day: "numeric" })}</time>
                         </span>
                       )}
                     </div>
@@ -161,10 +167,14 @@ export default function BlogIndexPage() {
           </div>
         )}
 
-        {articles && articles.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
-            <p>Aucun article pour le moment. Revenez bientôt!</p>
+        {isError && (
+          <div className="text-center py-16 text-muted-foreground space-y-3">
+            <p>{t.error}</p>
+            <button onClick={() => refetch()} className="min-h-11 px-5 rounded-lg border border-border">{t.retry}</button>
           </div>
+        )}
+        {!isError && articles && articles.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground"><p>{t.empty}</p></div>
         )}
 
         {/* CTA */}
@@ -174,14 +184,14 @@ export default function BlogIndexPage() {
           transition={{ delay: 0.3 }}
           className="mt-16 rounded-xl bg-primary/5 border border-primary/20 p-8 text-center space-y-4"
         >
-          <h2 className="text-2xl font-bold text-foreground">Besoin d'un entrepreneur maintenant?</h2>
-          <p className="text-muted-foreground">UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.</p>
+          <h2 className="text-2xl font-bold text-foreground">{t.cta}</h2>
+          <p className="text-muted-foreground">{t.ctaSub}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button onClick={() => alexVoice.openAlex("general")} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition">
-              Obtenir mon rendez-vous <ArrowRight className="h-4 w-4" />
+              {t.ctaBtn} <ArrowRight className="h-4 w-4" />
             </button>
             <Link to="/comment-ca-marche" className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-lg font-medium hover:bg-accent transition text-foreground">
-              Comment ça fonctionne
+              {t.how}
             </Link>
           </div>
         </motion.div>

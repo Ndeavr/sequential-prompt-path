@@ -19,12 +19,15 @@ import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisua
 import { editorialModifiedDate, formatEditorialDate } from "@/seo/editorialDates";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
+import BlogImage, { blogImageAlt } from "@/components/blog/BlogImage";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { openAlex } = useAlexVoice();
   useEngagementTracking();
   const reduceMotion = useReducedMotion();
+  const { setLang } = useLanguage();
 
   const { data: article, isLoading, isError, refetch } = useQuery({
     queryKey: ["blog-article", slug],
@@ -43,17 +46,21 @@ export default function BlogArticlePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const lang: "fr" | "en" = article?.language === "en" ? "en" : "fr";
+  useEffect(() => { if (article?.language === "fr" || article?.language === "en") setLang(article.language); }, [article?.language]);
+
   const stuck = useLoadingTimeout(isLoading, 4000, "blog_article");
 
   // Related articles
   const { data: related } = useQuery({
-    queryKey: ["blog-related", article?.category],
+    queryKey: ["blog-related", lang, article?.category, slug],
     queryFn: async () => {
       const { data } = await supabase
         .from("blog_articles")
         .select("id, title, slug, category, city, reading_time_minutes, featured_image_url")
         .eq("status", "published")
         .eq("category", article.category)
+        .eq("language", lang)
         .neq("slug", slug)
         .limit(3);
       return data as any[] || [];
@@ -143,12 +150,15 @@ export default function BlogArticlePage() {
       <Helmet>
         <title>{article.seo_title || `${article.title} | UNPRO`}</title>
         <meta name="description" content={article.meta_description || ""} />
+        <html lang={lang === "en" ? "en-CA" : "fr-CA"} />
         <link rel="canonical" href={`https://unpro.ca/blog/${article.slug}`} />
+        {article.translation_slug && <link rel="alternate" hrefLang={lang === "en" ? "en-CA" : "fr-CA"} href={`https://unpro.ca/blog/${article.slug}`} />}
+        {article.translation_slug && <link rel="alternate" hrefLang={lang === "en" ? "fr-CA" : "en-CA"} href={`https://unpro.ca/blog/${article.translation_slug}`} />}
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.meta_description} />
         <meta property="og:url" content={`https://unpro.ca/blog/${article.slug}`} />
         <meta property="og:type" content="article" />
-        {article.featured_image_url && <meta property="og:image" content={article.featured_image_url} />}
+        {article.featured_image_url && <meta property="og:image" content={article.featured_image_url.startsWith("/") ? `https://unpro.ca${article.featured_image_url}` : article.featured_image_url} />}
         {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
         {faqJsonLd && <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>}
       </Helmet>
@@ -186,13 +196,11 @@ export default function BlogArticlePage() {
         </motion.header>
 
         {/* Featured Image */}
-        {article.featured_image_url && (
-          <img
-            src={article.featured_image_url}
-            alt={`${article.title} — illustration de l’article`}
-            className="w-full rounded-xl object-cover max-h-96"
-            loading="lazy"
-          />
+        <BlogImage src={article.featured_image_url} alt={blogImageAlt(article, lang)} priority className="rounded-xl" />
+        {article.translation_slug && (
+          <Link to={`/blog/${article.translation_slug}`} hrefLang={lang === "en" ? "fr-CA" : "en-CA"} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
+            {lang === "en" ? "Lire en français" : "Read in English"}
+          </Link>
         )}
 
         {/* Content */}
