@@ -100,9 +100,9 @@ export default function HeroV2({ onTrackCta }: Props) {
         <Button
           size="lg"
           className="w-full h-14 rounded-xl text-base font-bold gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.35)]"
-          onClick={() => { onTrackCta("hero_primary_book", "hero"); navigate(campaignLink("/entrepreneurs/audit-ia", search)); }}
+          onClick={() => { onTrackCta("hero_primary_entry350", "hero"); navigate(campaignLink("/entrepreneurs/activation-350", search, { activate: "1" })); }}
         >
-          {fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}
+          {fr ? "Inscrire mon entreprise · 350 $ + taxes" : "Activate my business · CAD 350 + taxes"}
           <ArrowRight className="w-5 h-5" />
         </Button>
         <Button
@@ -111,11 +111,14 @@ export default function HeroV2({ onTrackCta }: Props) {
           className="w-full h-12 rounded-xl text-sm border-primary/30 hover:bg-primary/5"
           onClick={() => { onTrackCta("hero_secondary_plan_ia", "hero"); navigate(campaignLink("/entrepreneurs/audit-ia", search)); }}
         >
-          {fr ? "Découvrir mon profil UNPRO" : "Explore my UNPRO profile"}
+          {fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          {fr ? "Profil + 12 mois sur UNPRO. Rendez-vous distincts; aucun contrat garanti." : "UNPRO profile + 12 months. Appointments sold separately; no guaranteed contracts."}
+        </p>
       </motion.div>
 
-      {/* Trust row */}
+      {/* Trust row */
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

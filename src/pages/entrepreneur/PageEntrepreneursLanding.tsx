@@ -48,7 +48,10 @@ const PageEntrepreneursLanding = () => {
           <p className="mt-3 text-base text-muted-foreground">{fr ? OFFER_350.paymentNote : "One-time activation: CAD 350 plus applicable taxes. No subscription."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? OFFER_350.disclaimer : "No appointments or results are promised. Appointments require a separate confirmed quote before payment."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
-          <Button asChild variant="outline" className="mt-6 h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/activation-350", search, { activate: "1" })}>{fr ? "Inscrire mon entreprise — 350 $ + taxes" : "Activate my business — CAD 350 + taxes"}</Link></Button>
+            <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
+          </div>
         </section>
         <div className="mx-auto max-w-4xl px-5 pb-12">
           <Link
