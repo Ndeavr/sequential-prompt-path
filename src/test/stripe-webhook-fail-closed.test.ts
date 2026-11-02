@@ -106,6 +106,18 @@ describe("webhook — terminal audit receipt before HTTP 200", () => {
       .toThrow("webhook_audit_finalization_failed");
   });
 
+  it("checks the condo early-return receipt before acknowledging Stripe", () => {
+    const wh = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
+    const start = wh.indexOf("if (await handleCondoBillingEvent(");
+    const end = wh.indexOf("} catch (condoErr)", start);
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const condo = wh.slice(start, end);
+    expect(condo).toContain('.select("stripe_event_id")');
+    expect(condo).toContain('assertWebhookAuditFinalized({ data: condoFinalRow, error: condoFinalError }, event.id)');
+    expect(condo.indexOf("assertWebhookAuditFinalized")).toBeLessThan(condo.indexOf('scope: "condo"'));
+  });
+
   it("checks the real handler's final receipt before acknowledging the webhook", () => {
     const wh = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
     const lastProcessed = wh.lastIndexOf('processing_status: "processed"');

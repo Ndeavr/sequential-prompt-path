@@ -232,9 +232,15 @@ Deno.serve(async (req) => {
     // Condo / multi-immeubles billing (signed + idempotent above). Isolated from contractor flows.
     try {
       if (await handleCondoBillingEvent(supabase, stripe, event)) {
-        await supabase.from("stripe_webhook_events")
+        // The early condo return must honor the same durable audit receipt
+        // required by the contractor branch before acknowledging Stripe.
+        const { data: condoFinalRow, error: condoFinalError } = await supabase
+          .from("stripe_webhook_events")
           .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
-          .eq("stripe_event_id", event.id);
+          .eq("stripe_event_id", event.id)
+          .select("stripe_event_id")
+          .maybeSingle();
+        assertWebhookAuditFinalized({ data: condoFinalRow, error: condoFinalError }, event.id);
         return new Response(JSON.stringify({ received: true, scope: "condo" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
