@@ -1414,6 +1414,7 @@ export const AppRouter = () => (
         <Route path="/conditions" element={<StaticContentPage slug="conditions" />} />
         <Route path="/confidentialite" element={<StaticContentPage slug="confidentialite" />} />
         <Route path="/cookies" element={<StaticContentPage slug="cookies" />} />
+        <Route path="/politique-linguistique" element={<PageLanguagePolicy />} />
         <Route path="/sitemap" element={<SeoSitemapPage />} />
         <Route path="/accessibilite" element={<StaticContentPage slug="accessibilite" />} />
 

@@ -10,6 +10,7 @@ import { useLocation } from "react-router-dom";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SectionMemoireMaison from "@/components/layout/SectionMemoireMaison";
 import SiteFooterPremium from "@/components/layout/SiteFooterPremium";
+import LegalFooterBar from "@/components/legal/LegalFooterBar";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
@@ -68,6 +69,7 @@ const MainLayout = ({ children, hideMemorySection, hideFooter }: MainLayoutProps
       {showSEOGrid && <FooterSEOGrid />}
       {!hideMemorySection && <SectionMemoireMaison />}
       {!isLightHome && !hideFooter && <SiteFooterPremium />}
+      {!hideFooter && <LegalFooterBar withLogo={isLightHome} />}
       {/* Global dock-safe spacer — guarantees footer + last block clear
           the fixed BottomDock on mobile even if body:has() is unsupported. */}
       {!isLightHome && <BottomDockSafeArea />}

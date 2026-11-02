@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import UnproLogo from "@/components/brand/UnproLogo";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { openCookiePreferences } from "@/lib/cookieConsent";
+import CookieConsentBanner from "@/components/legal/CookieConsentBanner";
 
 export const LEGAL_LINKS = {
   fr: [
@@ -63,6 +64,7 @@ export default function LegalFooterBar({ withLogo = false }: { withLogo?: boolea
           <p>{c.made}</p>
         </div>
       </div>
+      <CookieConsentBanner />
     </footer>
   );
 }
