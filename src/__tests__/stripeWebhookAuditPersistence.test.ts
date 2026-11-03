@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyWebhookAuditInsert } from "../../supabase/functions/_shared/webhookAuditPersistence";
+import { assertWebhookAuditFinalized, classifyWebhookAuditInsert } from "../../supabase/functions/_shared/webhookAuditPersistence";
 
 describe("signed Stripe webhook durable event audit gate", () => {
   it("allows fulfillment path only after successful event receipt insertion", () => {
@@ -21,5 +21,35 @@ describe("signed Stripe webhook durable event audit gate", () => {
     { code: "23503", message: "foreign key violation" },
   ])("requests Stripe retry on unverified or failed persistence: $code", (error) => {
     expect(classifyWebhookAuditInsert(error)).toBe("unavailable");
+  });
+
+  describe("terminal receipt: never ACK a missing or foreign event", () => {
+    const eventId = "evt_signed_entry350_001";
+    const failure = "webhook_audit_finalization_failed";
+
+    it("accepts a successful persisted terminal receipt for the exact event", () => {
+      expect(() => assertWebhookAuditFinalized({
+        data: { stripe_event_id: eventId },
+        error: null,
+      }, eventId)).not.toThrow();
+    });
+
+    it("rejects a database error even when a matching row is returned", () => {
+      expect(() => assertWebhookAuditFinalized({
+        data: { stripe_event_id: eventId },
+        error: { code: "08006" },
+      }, eventId)).toThrow(failure);
+    });
+
+    it("rejects an empty update result instead of acknowledging Stripe", () => {
+      expect(() => assertWebhookAuditFinalized({ data: null, error: null }, eventId)).toThrow(failure);
+    });
+
+    it("rejects a different Stripe event receipt even when the update reports success", () => {
+      expect(() => assertWebhookAuditFinalized({
+        data: { stripe_event_id: "evt_foreign" },
+        error: null,
+      }, eventId)).toThrow(failure);
+    });
   });
 });
