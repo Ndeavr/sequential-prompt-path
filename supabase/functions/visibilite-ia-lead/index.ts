@@ -153,8 +153,7 @@ Deno.serve(async (req) => {
     utm_term: data.utm_term || null,
     consent_context: "Formulaire public — demande d'analyse de visibilité IA. Consentement au contact au sujet de cette demande.",
     submitted_at: new Date().toISOString(),
-    ip: req.headers.get("x-forwarded-for") ?? null,
-    user_agent: req.headers.get("user-agent") ?? null,
+    // Keep raw proxy IP and browser User-Agent out of durable CRM lead payloads.
   };
 
   const { data: inserted, error } = await sb
