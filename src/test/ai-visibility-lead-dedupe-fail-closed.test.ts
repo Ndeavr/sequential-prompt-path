@@ -11,7 +11,7 @@ const compiled = ts.transpileModule(stripped, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: boolean; companyName?: string; requestHeaders?: Record<string, string> }) {
+function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: boolean; companyName?: string; requestHeaders?: Record<string, string>; bodyOverrides?: Record<string, unknown> }) {
   let handler: ((request: Request) => Promise<Response>) | undefined;
   const inserts: unknown[] = [];
   const outbound = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 202 }));
@@ -63,6 +63,7 @@ function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: 
       phone: "450 234 5678",
       primary_service: "Entretien ménager",
       company_website_confirm: "",
+      ...(options?.bodyOverrides ?? {}),
     }),
   }));
   return { run, inserts, outbound };
@@ -108,6 +109,37 @@ describe("Public AI visibility lead — dedupe read is a hard prerequisite", () 
     expect(payload).not.toHaveProperty("ip");
     expect(payload).not.toHaveProperty("user_agent");
     expect(payload).toMatchObject({ source: "visibilite_ia_entrepreneurs" });
+  });
+
+  it("does not treat browser-supplied paid, CASL or marketing flags as verified evidence", async () => {
+    const h = harness("new", {
+      bodyOverrides: {
+        marketing_opt_in: true,
+        consent_signed: true,
+        casl_reviewer_id: "forged-reviewer",
+        payment_status: "paid",
+        onboarding_token: "forged-access-token",
+      },
+    });
+    const response = await h.run();
+    expect(response.status).toBe(200);
+    expect(h.inserts).toHaveLength(1);
+    const record = h.inserts[0] as {
+      status: string;
+      matching_status: string;
+      payload: Record<string, unknown>;
+    };
+    expect(record.status).toBe("new");
+    expect(record.matching_status).toBe("manual");
+    for (const key of [
+      "marketing_opt_in", "consent_signed", "casl_reviewer_id",
+      "payment_status", "onboarding_token",
+    ]) {
+      expect(record).not.toHaveProperty(key);
+      expect(record.payload).not.toHaveProperty(key);
+    }
+    // Not a verified marketing opt-in; no automatic outbound message.
+    expect(h.outbound).not.toHaveBeenCalled();
   });
 
   it("HTML-escapes user-controlled lead fields in the internal notification", async () => {
