@@ -70,6 +70,37 @@ describe('isolated SQL/session safety',()=>{
     expect(await plan()).toBeNull();
   });
 });
+describe.each(['personal','invited'] as const)('%s terminal Stripe audit retry — isolated signed webhook',kind=>{
+  it('returns 500 on the final audit write and replays one original 350 receipt',async()=>{
+    const s=await create(kind);
+    const receiptId='evt_local_0';
+    qa.failTerminalAuditOnce();
+    const failed=await qa.deliver(s);
+    expect(failed.status).toBe(500);
+    expect(failed.body.error).toBe('webhook_audit_finalization_failed');
+    const firstAudit=(await qa.db.query<any>(
+      'select processing_status, success from stripe_webhook_events where stripe_event_id=$1',[receiptId],
+    )).rows[0];
+    expect(firstAudit.processing_status).not.toBe('processed');
+    expect(firstAudit.success).not.toBe(true);
+    const first=(await qa.db.query<any>(
+      "select contractor_id, created_at, metadata from contractor_activation_ledger where action='entry_activation_350_paid'",
+    )).rows;
+    expect(first).toHaveLength(1);
+
+    const replay=await qa.deliver(s);
+    expect(replay.status).toBe(200);
+    const finalAudit=(await qa.db.query<any>(
+      'select processing_status, success from stripe_webhook_events where stripe_event_id=$1',[receiptId],
+    )).rows[0];
+    expect(finalAudit).toMatchObject({processing_status:'processed',success:true});
+    const after=(await qa.db.query<any>(
+      "select contractor_id, created_at, metadata from contractor_activation_ledger where action='entry_activation_350_paid'",
+    )).rows;
+    expect(after).toEqual(first);
+    expect((await qa.deliver(s)).body.duplicate).toBe(true);
+  });
+});
 describe.each(['personal','invited'] as const)('%s actual creation → signed handler → real SQL RLS/resolver',kind=>{
   it('paid receipt grants only presence, duplicate does not extend, refund+dispute revoke',async()=>{
     const s=await create(kind);const target=kind==='personal'?OWNER:OTHER;const token=kind==='personal'?qa.ownerToken:qa.otherToken;

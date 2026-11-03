@@ -36,6 +36,7 @@ export async function createQa(taxApproved = true) {
   const calls: string[] = [];
   let deliveryLive = true;
   let failTable: string | null = null;
+  let failTerminalWebhookAudit = false;
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
@@ -196,6 +197,14 @@ export async function createQa(taxApproved = true) {
           then:(res:any,rej:any)=>execute().then(res,rej),
         };
         async function execute() {
+          // Simulate the *terminal* audit update after payment/entitlement writes.
+          // Never inject credentials, remote providers, or production data.
+          if (table==='stripe_webhook_events' && operation==='update' &&
+              (payload as Row | undefined)?.processing_status==='processed' &&
+              failTerminalWebhookAudit) {
+            failTerminalWebhookAudit=false;
+            return {data:null,error:{message:'Injected terminal audit failure',code:'08006'}};
+          }
           if (failTable===table && operation!=='read') {failTable=null;return {data:null,error:{message:'Injected isolated failure'}};}
           if (!CORE.has(table)) {
             const rows=peripheral.get(table) ?? [];
@@ -303,5 +312,6 @@ export async function createQa(taxApproved = true) {
   }
   return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,
     failNext:(table:string)=>{failTable=table;},
+    failTerminalAuditOnce:()=>{failTerminalWebhookAudit=true;},
     close:()=>db.close()};
 }
