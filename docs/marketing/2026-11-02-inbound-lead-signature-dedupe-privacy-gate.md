@@ -1,14 +1,14 @@
 # UNPRO — Inbound opt-in / lead form: ingestion de confiance (préparation, 2026-11-02)
 
 **État : document de conception / contrôle, NON implémenté, NON déployé.**
-**Base inspectée :** `lovable-sync` @ `63693cd02d14c54dd7865f31008ee9462b3b02f3`.
+**Base revalidée :** `lovable-sync` @ `2d058b663beb3db61c2c66f852bbe51b6086c43b` (2026-11-03, PR #173 fusionnée ; aucun déploiement vérifié).
 **Priorité :** après la validation E2E du paiement 350 $ / webhook signé / droit de présence 12 mois ([P0 #86](https://github.com/Ndeavr/sequential-prompt-path/issues/86)).
 **Objectif :** préparer des demandes entrantes *volontaires* via pages UNPRO ou, seulement après approbation, formulaires partenaires/publicitaires. Aucun nouveau prestataire, campagne, envoi ni budget n'est autorisé par ce document.
 
 ## 1. Inventaire réel : réutiliser, ne pas détourner
 
 - `supabase/functions/submit-sales-team-request/index.ts` → table `sales_team_requests`. Validation Zod, clé d'idempotence 16–64 caractères, honeypot, limite par IP hachée, `follow_up_consent: true`, texte de consentement, case `marketing_opt_in` distincte et optionnelle; aucun SMS/email sortant dans cette fonction. **Cette clé fournie par le navigateur ne prouve PAS qu'un webhook externe est authentique**; le formulaire utilisateur reste distinct de l'ingestion fournisseur.
-- `supabase/functions/visibilite-ia-lead/index.ts` → table `leads`, `lead_type = contractor`, dédoublonnage application sur téléphone + source / 24 h et notification interne Resend. Cet endpoint est public, ne vérifie pas de signature fournisseur, inscrit un texte générique de consentement, et met une IP dans `payload`. **Ne pas le connecter directement à un export de leads publicitaires ni y déduire un opt-in marketing.** Son contrôle anti-doublon `SELECT` puis `INSERT` n'est pas une garantie transactionnelle sous concurrence.
+- `supabase/functions/visibilite-ia-lead/index.ts` → table `leads`, `lead_type = contractor`, dédoublonnage application sur téléphone + source / 24 h et notification interne Resend. Cet endpoint est public, ne vérifie pas de signature fournisseur et inscrit un texte générique de consentement lié à la demande ponctuelle. Depuis [PR #173](https://github.com/Ndeavr/sequential-prompt-path/pull/173), son code ne persiste plus l'IP brute ni le `User-Agent` dans le `payload` CRM (test synthétique, déploiement non vérifié). **Ne pas le connecter directement à un export de leads publicitaires ni y déduire un opt-in marketing.** Son contrôle anti-doublon `SELECT` puis `INSERT` n'est pas une garantie transactionnelle sous concurrence.
 - `supabase/functions/process-form-submission/index.ts` peut déclencher des emails sur un `submission_id`; **ne pas l'invoquer depuis une nouvelle ingestion** (aucun message, même transactionnel, sans qualification et garde-fous spécifiques).
 - `contractor_funnel_events` et `logFunnelEvent` sont les voies d'analytics existantes : `source` / `event_source` = origine technique et **non** canal commercial.
 - L'attribution revendiquée (`utm_*`, `ref`, `affiliate_code`) et la permission de contacter sont des concepts différents. Ni un identifiant CRM ni un `PAID` historique ne devient preuve Stripe.
@@ -35,7 +35,7 @@
 
 ## 4. Décision de lancement / état des preuves
 
-- **Vérifié dans le code source** : formulaires cités et contrôles locaux décrits au §1. Aucune preuve d'intégration Meta/Google active, de budget autorisé ou de webhook signé entrant.
+- **Vérifié dans le code source** : formulaires cités et contrôles locaux décrits au §1, y compris la minimisation des en-têtes réseau dans le code fusionné #173. Aucune preuve de déploiement de ce correctif, d'intégration Meta/Google active, de budget autorisé ou de webhook signé entrant.
 - **Non implémenté** : adaptateur fournisseur, unicité DB inter-sources, consentements versionnés complets et revue CASL de cette nouvelle voie.
 - **Interdit par défaut** : création/activation de campagnes, envoi d'invitations, import de listes, auto-signature CASL, nouvelle dépense, migration SQL, modification de cron/flags ou déploiement.
 - **Gates** : fermer d'abord le P0 #86 en environnement isolé, puis revue technique sécurité/privacy/RLS, revue CASL humaine, tests verts et autorisations séparées pour intégration, publication et médias. Ne jamais afficher une rareté de rendez-vous ou liste d'attente sans preuves de capacité fraîche et réelle.
