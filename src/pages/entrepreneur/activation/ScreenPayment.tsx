@@ -209,13 +209,13 @@ export default function ScreenPayment() {
         >
           {processing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
           {isFounder
-            ? `Payer ${total.toFixed(2)}$ et activer mon profil`
+            ? `Continuer vers l'activation — ${total.toFixed(2)}$`
             : `Payer ${total.toFixed(2)}$${periodLabel}`}
         </Button>
       </motion.div>
 
       <StickyMobileCTA
-        label={isFounder ? `Payer ${total.toFixed(2)}$ et activer` : `Payer ${total.toFixed(2)}$${periodLabel}`}
+        label={isFounder ? `Continuer vers l'activation — ${total.toFixed(2)}$` : `Payer ${total.toFixed(2)}$${periodLabel}`}
         onClick={handlePay}
         disabled={processing}
         loading={processing}
