@@ -94,6 +94,7 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
       step: "checkout_unavailable",
       current_path: "/entrepreneurs/activation-350",
       token: "",
+      suppress_prospect_ref: true,
       metadata: { surface: "activation_350", phase: "pre_stripe_session" },
     }]);
     expect(JSON.stringify(failures)).not.toContain("synthetic-private-token");
