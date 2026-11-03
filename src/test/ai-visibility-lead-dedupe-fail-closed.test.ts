@@ -142,6 +142,47 @@ describe("Public AI visibility lead — dedupe read is a hard prerequisite", () 
     expect(h.outbound).not.toHaveBeenCalled();
   });
 
+  it("silently ignores honeypot submissions before any dedupe read or notification", async () => {
+    // A failing dedupe read would return 503 if the bot input reached the DB.
+    const h = harness("read_error", {
+      notify: true,
+      bodyOverrides: { company_website_confirm: "https://bot.example" },
+    });
+    const response = await h.run();
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, duplicate: false });
+    expect(h.inserts).toHaveLength(0);
+    expect(h.outbound).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid phone before touching CRM or notifying anyone", async () => {
+    const h = harness("read_error", { notify: true, bodyOverrides: { phone: "1234567" } });
+    const response = await h.run();
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_input" });
+    expect(h.inserts).toHaveLength(0);
+    expect(h.outbound).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid website before touching CRM or notifying anyone", async () => {
+    const h = harness("read_error", { notify: true, bodyOverrides: { website: "https://localhost" } });
+    const response = await h.run();
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_input" });
+    expect(h.inserts).toHaveLength(0);
+    expect(h.outbound).not.toHaveBeenCalled();
+  });
+
+  it("normalizes Canadian dial formats to one E.164 phone in the CRM payload", async () => {
+    const h = harness("new", { bodyOverrides: { phone: "+1 (450) 234-5678" } });
+    const response = await h.run();
+    expect(response.status).toBe(200);
+    expect(h.inserts).toHaveLength(1);
+    const record = h.inserts[0] as { payload: Record<string, unknown> };
+    expect(record.payload.phone).toBe("+14502345678");
+    expect(h.outbound).not.toHaveBeenCalled();
+  });
+
   it("HTML-escapes user-controlled lead fields in the internal notification", async () => {
     const companyName = "<script>alert('x')</script> & Services";
     const h = harness("new", { notify: true, companyName });
