@@ -67,8 +67,8 @@ export default function PageActivation350() {
   return (
     <main className="home-light activation-clara-page min-h-screen bg-background pb-28 text-foreground sm:pb-10">
       <Helmet>
-        <title>Inscrire mon entreprise — 350 $ + taxes | UNPRO</title>
-        <meta name="description" content="Rendez votre entreprise plus facile à comprendre pour les moteurs de recherche et les assistants IA. Profil UNPRO + 12 mois d'optimisation, 350 $ + taxes." />
+        <title>Profil AIPP — activation unique 350 $ + taxes | UNPRO</title>
+        <meta name="description" content="Le profil AIPP est un profil professionnel structuré qui aide les outils IA à comprendre votre entreprise. 12 mois de présence IA sur UNPRO, activation unique 350 $ + taxes." />
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -76,25 +76,14 @@ export default function PageActivation350() {
         <UnproLogo size={110} variant="primary" animated={false} />
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Entrepreneurs · Inscription</p>
-        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] sm:text-4xl">Les prochains contrats que vous voulez? Dites-nous lesquels.</h1>
+        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] sm:text-4xl">Votre entreprise est-elle bien comprise par les intelligences artificielles&nbsp;?</h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Votre spécialité. Votre territoire. Les travaux que vous aimez faire. Présentez votre entreprise sur UNPRO et précisez les mandats que vous recherchez.
-        </p>
-        <ul className="mt-4 space-y-1 text-sm text-muted-foreground" aria-label="Exemples de préférences">
-          <li>« Des thermopompes centrales plutôt que des réparations »</li>
-          <li>« De la peinture intérieure, seulement dans mon secteur »</li>
-          <li>« De l'isolation d'entretoit »</li>
-        </ul>
-        <Link to={links.activate} onClick={onActivate} className={`mt-5 ${ctaCls}`}>
-          Je veux ces opportunités <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-        <p className="mt-2 text-center text-xs text-muted-foreground">Inscription : 350 $ + taxes • Profil et 12 mois de présence sur UNPRO</p>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Comment ça marche : Clara note vos types de travaux, vos secteurs et vos préférences. Les jumelages se font selon les demandes compatibles, votre disponibilité et votre admissibilité. Les rendez-vous dépendent de l'offre choisie et des demandes reçues ; l'offre exacte est affichée avant tout paiement.
+          Le profil AIPP est un profil professionnel structuré pour les recherches IA : il rassemble vos services, votre expertise, vos secteurs et vos preuves de confiance. Même si votre entreprise n'a pas besoin de clients supplémentaires, cette présence IA reste utile.
         </p>
 
         <div className="mt-5 rounded-[28px] border border-border bg-card p-5" data-testid="activation-350-offer">
-          <p className="text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes · paiement unique</span></p>
+          <p className="text-lg font-semibold">Profil AIPP + 12 mois de présence IA sur UNPRO</p>
+          <p className="mt-1 text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes · activation unique</span></p>
           <ul className="mt-4 space-y-2 text-sm">
             {["Profil entreprise UNPRO complet", "12 mois de présence sur UNPRO", "Vos préférences : mandats voulus, exclusions et territoires desservis", "Aucun abonnement, aucun renouvellement automatique"].map((x) => (
               <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{x}</li>
@@ -105,13 +94,26 @@ export default function PageActivation350() {
           </p>
           <div className="mt-5 space-y-3">
             <Link to={links.activate} onClick={onActivate} className={ctaCls} data-testid="activation-350-cta">
-              Inscrire mon entreprise <ArrowRight className="h-4 w-4" aria-hidden />
+              Activer mon profil AIPP — 350 $ + taxes <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <Button type="button" variant="outline" className="min-h-11 w-full rounded-[18px]" aria-expanded={chatOpen} aria-controls="activation-clara-chat" onClick={() => setChatOpen((o) => !o)}>
               {chatOpen ? <Minus className="h-4 w-4" aria-hidden /> : <MessageCircle className="h-4 w-4" aria-hidden />} Parler à Clara
             </Button>
           </div>
         </div>
+
+        <p className="mt-4 text-sm text-muted-foreground">
+          Vous désirez aussi des rendez-vous exclusifs&nbsp;? C'est une option distincte, jamais incluse par défaut. <Link to={links.more} className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Voir les options</Link>
+        </p>
+
+        <p className="mt-4 text-sm text-muted-foreground">
+          Comment ça marche : Clara note vos types de travaux, vos secteurs et vos préférences. Les jumelages se font selon les demandes compatibles, votre disponibilité et votre admissibilité. Les rendez-vous dépendent de l'offre choisie et des demandes reçues ; l'offre exacte est affichée avant tout paiement.
+        </p>
+        <ul className="mt-3 space-y-1 text-sm text-muted-foreground" aria-label="Exemples de préférences">
+          <li>« Des thermopompes centrales plutôt que des réparations »</li>
+          <li>« De la peinture intérieure, seulement dans mon secteur »</li>
+          <li>« De l'isolation d'entretoit »</li>
+        </ul>
 
         {(sp.get("code") || "").toUpperCase().startsWith("HIVER-") || sp.get("offre") === "hiver" ? <WinterFreeCodeClaim initialCode={sp.get("code")} /> : null}
 
@@ -156,7 +158,7 @@ export default function PageActivation350() {
           </div>
 
           <Link to={links.activate} onClick={onActivate} className={`mt-5 ${ctaCls}`}>
-            Inscrire mon entreprise <ArrowRight className="h-4 w-4" aria-hidden />
+            Activer mon profil AIPP <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
           <p className="mt-3 text-sm text-muted-foreground" data-testid="activation-350-appointments">{ACTIVATION_350_APPT_DISCLOSURE}</p>
 
@@ -189,7 +191,7 @@ export default function PageActivation350() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
         <Link to={links.activate} onClick={onActivate} className={ctaCls}>
-          Inscrire mon entreprise · 350 $
+          Activer mon profil AIPP · 350 $
         </Link>
       </div>
     </main>
