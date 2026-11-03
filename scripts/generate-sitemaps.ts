@@ -48,6 +48,7 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/services", changefreq: "weekly", priority: "0.8" },
   { path: "/problemes", changefreq: "weekly", priority: "0.8" },
   { path: "/tarifs", changefreq: "weekly", priority: "0.7" },
+  { path: "/communaute", changefreq: "monthly", priority: "0.7" },
   { path: "/faq", changefreq: "monthly", priority: "0.7" },
   { path: "/a-propos", changefreq: "monthly", priority: "0.6" },
   { path: "/journal", changefreq: "weekly", priority: "0.8" },

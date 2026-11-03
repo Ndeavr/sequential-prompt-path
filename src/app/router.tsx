@@ -97,6 +97,7 @@ const PageApparaitreRechercheIA2026 = lazyWithRetry(() => import("@/pages/articl
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
 const PageDirecteurDesVentes = lazyWithRetry(() => import("@/pages/sales/PageDirecteurDesVentes"));
 const AdminSalesTeamRequests = lazyWithRetry(() => import("@/pages/admin/AdminSalesTeamRequests"));
+const Community = lazyWithRetry(() => import("@/pages/Community"));
 const PagePartenariatsFournisseurs = lazyWithRetry(() => import("@/pages/partners/PagePartenariatsFournisseurs"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
@@ -1192,6 +1193,7 @@ export const AppRouter = () => (
         <Route path="/book/cancel" element={<BookingPaymentCancel />} />
         <Route path="/partners" element={<PartnersPage />} />
         <Route path="/directeur-des-ventes" element={<Suspense fallback={<LazyFallback />}><PageDirecteurDesVentes /></Suspense>} />
+        <Route path="/communaute" element={<Suspense fallback={<LazyFallback />}><Community /></Suspense>} />
         <Route path="/partenariats-fournisseurs" element={<Suspense fallback={<LazyFallback />}><PagePartenariatsFournisseurs /></Suspense>} />
         <Route path="/describe-project" element={<DescribeProjectPage />} />
         <Route path="/compare-quotes" element={<CompareQuotesPage />} />
