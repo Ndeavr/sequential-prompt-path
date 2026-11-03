@@ -102,6 +102,19 @@ export default function PageActivation350() {
           </div>
         </div>
 
+        <p className="mt-4 text-sm text-muted-foreground">
+          Vous désirez aussi des rendez-vous exclusifs&nbsp;? C'est une option distincte, jamais incluse par défaut. <Link to={links.more} className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Voir les options</Link>
+        </p>
+
+        <p className="mt-4 text-sm text-muted-foreground">
+          Comment ça marche : Clara note vos types de travaux, vos secteurs et vos préférences. Les jumelages se font selon les demandes compatibles, votre disponibilité et votre admissibilité. Les rendez-vous dépendent de l'offre choisie et des demandes reçues ; l'offre exacte est affichée avant tout paiement.
+        </p>
+        <ul className="mt-3 space-y-1 text-sm text-muted-foreground" aria-label="Exemples de préférences">
+          <li>« Des thermopompes centrales plutôt que des réparations »</li>
+          <li>« De la peinture intérieure, seulement dans mon secteur »</li>
+          <li>« De l'isolation d'entretoit »</li>
+        </ul>
+
         {(sp.get("code") || "").toUpperCase().startsWith("HIVER-") || sp.get("offre") === "hiver" ? <WinterFreeCodeClaim initialCode={sp.get("code")} /> : null}
 
         {reviewOpen && <div id="inscription" className="scroll-mt-4"><Entry350FastCheckout query={sp} /></div>}
@@ -145,7 +158,7 @@ export default function PageActivation350() {
           </div>
 
           <Link to={links.activate} onClick={onActivate} className={`mt-5 ${ctaCls}`}>
-            Inscrire mon entreprise <ArrowRight className="h-4 w-4" aria-hidden />
+            Activer mon profil AIPP <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
           <p className="mt-3 text-sm text-muted-foreground" data-testid="activation-350-appointments">{ACTIVATION_350_APPT_DISCLOSURE}</p>
 
@@ -178,7 +191,7 @@ export default function PageActivation350() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
         <Link to={links.activate} onClick={onActivate} className={ctaCls}>
-          Inscrire mon entreprise · 350 $
+          Activer mon profil AIPP · 350 $
         </Link>
       </div>
     </main>
