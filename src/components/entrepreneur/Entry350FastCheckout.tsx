@@ -37,6 +37,7 @@ function recordPreCheckoutBlock(
     current_path: "/entrepreneurs/activation-350",
     // Le logger hérite sinon d'un éventuel jeton sensible dans l'attribution.
     token: "",
+    suppress_prospect_ref: true,
     metadata: { surface: "activation_350", phase: "pre_stripe_session" },
   });
 }
@@ -104,7 +105,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       if (authError) throw authError;
       if (!auth.session) {
         // L'authentification est un transfert attendu, pas un paiement échoué.
-        void logFunnelEvent({ event_type: "auth_started", step: "entry350_auth_handoff", current_path: "/entrepreneurs/activation-350", token: "", metadata: { surface: "activation_350" } });
+        void logFunnelEvent({ event_type: "auth_started", step: "entry350_auth_handoff", current_path: "/entrepreneurs/activation-350", token: "", suppress_prospect_ref: true, metadata: { surface: "activation_350" } });
         navigate(contractorLoginPath(window.location.pathname + window.location.search));
         return;
       }
