@@ -21,8 +21,9 @@ const DECLARED_NAME_KEY = "unpro_entry350_declared_name";
 
 /**
  * Diagnostic première partie, avant toute création de session Stripe.
- * N'envoie ni identité, ni texte d'erreur distant, ni code promo/affilié,
- * ni URL avec proposition ou jeton. La télémétrie est non bloquante et ne
+ * N'ajoute aux métadonnées ni identité, ni erreur distante, ni code promo,
+ * ni URL avec jeton. L'attribution habituelle (UTM/affilié) reste disponible.
+ * La télémétrie est non bloquante et ne
  * prouve jamais un paiement.
  */
 function recordPreCheckoutBlock(
@@ -34,6 +35,8 @@ function recordPreCheckoutBlock(
     event_type: "entry_350_checkout_failed",
     step,
     current_path: "/entrepreneurs/activation-350",
+    // Le logger hérite sinon d'un éventuel jeton sensible dans l'attribution.
+    token: "",
     metadata: { surface: "activation_350", phase: "pre_stripe_session" },
   });
 }
@@ -101,7 +104,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       if (authError) throw authError;
       if (!auth.session) {
         // L'authentification est un transfert attendu, pas un paiement échoué.
-        void logFunnelEvent({ event_type: "auth_started", step: "entry350_auth_handoff", current_path: "/entrepreneurs/activation-350", metadata: { surface: "activation_350" } });
+        void logFunnelEvent({ event_type: "auth_started", step: "entry350_auth_handoff", current_path: "/entrepreneurs/activation-350", token: "", metadata: { surface: "activation_350" } });
         navigate(contractorLoginPath(window.location.pathname + window.location.search));
         return;
       }
