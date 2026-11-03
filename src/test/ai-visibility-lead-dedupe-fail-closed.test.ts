@@ -11,7 +11,7 @@ const compiled = ts.transpileModule(stripped, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: boolean; companyName?: string }) {
+function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: boolean; companyName?: string; requestHeaders?: Record<string, string> }) {
   let handler: ((request: Request) => Promise<Response>) | undefined;
   const inserts: unknown[] = [];
   const outbound = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 202 }));
@@ -56,7 +56,7 @@ function harness(mode: "read_error" | "duplicate" | "new", options?: { notify?: 
   if (!handler) throw new Error("Deno handler not registered");
   const run = async () => handler!(new Request("https://synthetic.test/form", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(options?.requestHeaders ?? {}) },
     body: JSON.stringify({
       company_name: options?.companyName ?? "Synthetic Services",
       contact_name: "Example Tester",
@@ -94,6 +94,20 @@ describe("Public AI visibility lead — dedupe read is a hard prerequisite", () 
     expect(await response.json()).toMatchObject({ ok: true, duplicate: false });
     expect(h.inserts).toHaveLength(1);
     expect(h.outbound).not.toHaveBeenCalled();
+  });
+
+  it("does not store raw request IP or browser User-Agent inside the CRM lead", async () => {
+    const h = harness("new", { requestHeaders: {
+      "x-forwarded-for": "192.0.2.42",
+      "user-agent": "SyntheticBrowser/1.0",
+    } });
+    const response = await h.run();
+    expect(response.status).toBe(200);
+    expect(h.inserts).toHaveLength(1);
+    const payload = (h.inserts[0] as { payload: Record<string, unknown> }).payload;
+    expect(payload).not.toHaveProperty("ip");
+    expect(payload).not.toHaveProperty("user_agent");
+    expect(payload).toMatchObject({ source: "visibilite_ia_entrepreneurs" });
   });
 
   it("HTML-escapes user-controlled lead fields in the internal notification", async () => {
