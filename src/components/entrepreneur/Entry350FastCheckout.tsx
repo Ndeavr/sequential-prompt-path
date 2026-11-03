@@ -172,6 +172,11 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         logFunnelEvent({
           event_type: "stripe_checkout_started",
           step: "entry350_checkout_created",
+          // Never inherit a token or query string from the landing URL into
+          // checkout analytics. Stripe/CRM retain their own server-side linkage.
+          current_path: "/entrepreneurs/activation-350",
+          token: "",
+          suppress_prospect_ref: true,
           metadata: { surface: "activation_350", entry_activation: true },
         }).catch(() => undefined),
         new Promise<void>((resolve) => setTimeout(resolve, 500)),
