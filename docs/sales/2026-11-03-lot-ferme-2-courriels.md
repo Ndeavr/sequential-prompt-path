@@ -7,7 +7,7 @@ Statut : brouillons uniquement. Aucun envoi, aucune file insérée, aucun interr
 | | Maple Wood Painting & Home Improvement | Excavation Sicard |
 |---|---|---|
 | Prospect | 8856168a-a61e-4fa1-a893-d51077dcd90e | 3f59b337-9b97-4a42-b531-673e9fff936d |
-| Preuve CASL | cd0840bf… is_valid=true, humain 23 oct, refus=false, SHA 21914535… | f247a859… is_valid=true, humain 23 oct, refus=false, SHA 21ecab44… |
+| Preuve CASL | cd0840bf… is_valid=true, humain 23 oct, refus=false, SHA 21914535… | f247a859… is_valid=true, humain 23 oct, refus=false, SHA 21ecab41… |
 | Source | https://www.maplewoodpainting.ca/ (site officiel) | https://excavationsicard.ca/ (site officiel) |
 | suppressed_emails / suppression_index | aucune entrée | aucune entrée |
 | do_not_contact | false | false |
