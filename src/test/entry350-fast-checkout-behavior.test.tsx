@@ -54,6 +54,25 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     expect(mock.telemetry).toHaveBeenCalledTimes(1);
   });
 
+  it("never attaches activation or referral URL tokens to successful Checkout analytics", async () => {
+    start("?t=synthetic-private-activation-token&ref=SECRET-REF");
+    await waitFor(() => expect(mock.redirect).toHaveBeenCalledExactlyOnceWith("https://checkout.stripe.com/c/pay/cs_test_synthetic"));
+    const handoffs = mock.telemetry.mock.calls
+      .map(([input]) => input)
+      .filter(input => input.event_type === "stripe_checkout_started");
+    expect(handoffs).toEqual([{
+      event_type: "stripe_checkout_started",
+      step: "entry350_checkout_created",
+      current_path: "/entrepreneurs/activation-350",
+      token: "",
+      suppress_prospect_ref: true,
+      metadata: { surface: "activation_350", entry_activation: true },
+    }]);
+    expect(JSON.stringify(handoffs)).not.toContain("synthetic-private-activation-token");
+    expect(JSON.stringify(handoffs)).not.toContain("SECRET-REF");
+    expect(JSON.stringify(handoffs)).not.toContain("Atelier de test");
+  });
+
   it("does not let rejected optional analytics block a verified Checkout URL", async () => {
     mock.telemetry.mockRejectedValue(new Error("synthetic analytics outage"));
     start();
