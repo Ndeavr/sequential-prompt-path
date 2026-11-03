@@ -65,7 +65,10 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     start();
     expect(await screen.findByRole("alert")).toHaveTextContent("Le paiement n'est pas encore ouvert");
     expect(mock.redirect).not.toHaveBeenCalled();
-    expect(mock.telemetry).not.toHaveBeenCalled();
+    expect(mock.telemetry).toHaveBeenCalledWith(expect.objectContaining({
+      event_type: "entry_350_checkout_failed", step: "live_gate_closed",
+      current_path: "/entrepreneurs/activation-350",
+    }));
   });
 
   it("does not redirect when no valid checkout URL was returned", async () => {
@@ -73,6 +76,28 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     start();
     expect(await screen.findByRole("alert")).toHaveTextContent("Impossible d'ouvrir le paiement");
     expect(mock.redirect).not.toHaveBeenCalled();
-    expect(mock.telemetry).not.toHaveBeenCalled();
+    expect(mock.telemetry).toHaveBeenCalledWith(expect.objectContaining({
+      event_type: "entry_350_checkout_failed", step: "checkout_unavailable",
+      metadata: { surface: "activation_350", phase: "pre_stripe_session" },
+    }));
+  });
+
+  it("does not leak a proposal or referral token in pre-checkout blocker telemetry", async () => {
+    mock.invoke.mockResolvedValue({ data: { error: "provider_error" }, error: null });
+    start("?t=synthetic-private-token&ref=PRIVATE-REF");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Impossible d'ouvrir le paiement");
+    const failures = mock.telemetry.mock.calls
+      .map(([input]) => input)
+      .filter(input => input.event_type === "entry_350_checkout_failed");
+    expect(failures).toEqual([{
+      event_type: "entry_350_checkout_failed",
+      step: "checkout_unavailable",
+      current_path: "/entrepreneurs/activation-350",
+      metadata: { surface: "activation_350", phase: "pre_stripe_session" },
+    }]);
+    expect(JSON.stringify(failures)).not.toContain("synthetic-private-token");
+    expect(JSON.stringify(failures)).not.toContain("PRIVATE-REF");
+    expect(JSON.stringify(failures)).not.toContain("Atelier de test");
+    expect(mock.redirect).not.toHaveBeenCalled();
   });
 });
