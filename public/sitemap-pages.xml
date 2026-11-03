@@ -81,6 +81,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://unpro.ca/communaute</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://unpro.ca/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

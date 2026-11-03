@@ -79,3 +79,13 @@ Se désinscrire : {lien généré à l'envoi}
 
 ## Stripe
 Vérifié par le fondateur le 3 nov 2026 : aucun paiement LIVE à 350 $ ; seulement trois anciennes charges internes à 1 $. 0 activation 350 payée confirmée.
+
+## Relance Maple Wood — revalidation 3 nov 2026 15:20 UTC : NON ENVOYÉ
+
+Autorisation fondateur reçue (Maple Wood seul, 1 courriel). Revalidation avant tout changement :
+- Preuve cd0840bf : is_valid, reviewer humain, refus=false, source HTTPS officielle — OK.
+- suppressed_emails / sms_opt_outs / outreach_unsubscribes / réponses : aucune entrée — OK.
+- **Bloquant : `outreach_messages` 104757a2 — courriel envoyé le 2026-10-29 19:26 UTC à info@maplewoodpainting.ca, objet « Re: Maple Wood Painting — invitation UNPRO », depuis une boîte Gmail personnelle (provider id 1a18920571bc9b81).** Il y a 5 jours : le délai minimal de 7 jours n'est pas atteint (premier envoi possible : 2026-11-05 19:26 UTC). Le « Re: » indique un fil existant ; vérifier la boîte Gmail pour une éventuelle réponse ou un refus avant toute relance.
+- RBQ 5874-2479-01 : non vérifiée (registre non interrogeable automatiquement ici).
+
+Conséquence : aucun code d'autorisation ponctuelle déployé, aucun envoi, aucun drapeau modifié (OUTREACH_ENABLED=false, recruitment_controls global=false, autopilot gated=true).
