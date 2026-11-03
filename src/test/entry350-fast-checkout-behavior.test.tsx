@@ -93,6 +93,7 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
       event_type: "entry_350_checkout_failed",
       step: "checkout_unavailable",
       current_path: "/entrepreneurs/activation-350",
+      token: "",
       metadata: { surface: "activation_350", phase: "pre_stripe_session" },
     }]);
     expect(JSON.stringify(failures)).not.toContain("synthetic-private-token");
