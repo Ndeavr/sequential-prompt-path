@@ -143,4 +143,26 @@ describe("staged $350 presence resolver — webhook terminal success gate (not d
     await receipt("cs_new", { daysAgo: 1 });
     expect(await plan(OWNER)).toBeNull();
   });
+
+  it("honors the exact 12-calendar-month boundary, not a rounded day count", async () => {
+    await receipt("cs_boundary");
+    // Synthetic timestamps relative to the database clock: the access
+    // resolver must remain valid just inside twelve calendar months.
+    await db.query(
+      `UPDATE public.contractor_activation_ledger
+       SET created_at = now() - interval '12 months' + interval '10 minutes'
+       WHERE metadata->>'stripe_session_id' = $1`,
+      ["cs_boundary"],
+    );
+    expect(await plan(OWNER)).toBe("presence");
+
+    // Same signed event and identity, only the original receipt has expired.
+    await db.query(
+      `UPDATE public.contractor_activation_ledger
+       SET created_at = now() - interval '12 months' - interval '10 minutes'
+       WHERE metadata->>'stripe_session_id' = $1`,
+      ["cs_boundary"],
+    );
+    expect(await plan(OWNER)).toBeNull();
+  });
 });
