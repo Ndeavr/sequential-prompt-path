@@ -144,6 +144,8 @@ export interface LogFunnelEventInput {
    */
   prospect_id?: string | null;
   token?: string | null;
+  /** Omit inherited non-UUID prospect refs from this event\'s metadata. */
+  suppress_prospect_ref?: boolean;
   /** Marque explicitement l'événement comme QA/test (exclu des vues de production). */
   is_test?: boolean;
   /**
@@ -308,7 +310,7 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
     const rawProspect =
       input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null;
     const prospectId = rawProspect && UUID_RE.test(rawProspect) ? rawProspect : null;
-    const prospectRef = rawProspect && !prospectId ? rawProspect : null;
+    const prospectRef = rawProspect && !prospectId && !input.suppress_prospect_ref ? rawProspect : null;
 
     const { error } = await supabase.from("contractor_funnel_events").insert({
       dedupe_key: input.dedupe_key ?? null,

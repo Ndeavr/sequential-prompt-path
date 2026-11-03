@@ -19,6 +19,29 @@ import { useProposalContext } from "@/features/affiliate/components/ProposalCont
 
 const DECLARED_NAME_KEY = "unpro_entry350_declared_name";
 
+/**
+ * Diagnostic première partie, avant toute création de session Stripe.
+ * N'ajoute aux métadonnées ni identité, ni erreur distante, ni code promo,
+ * ni URL avec jeton. L'attribution habituelle (UTM/affilié) reste disponible.
+ * La télémétrie est non bloquante et ne
+ * prouve jamais un paiement.
+ */
+function recordPreCheckoutBlock(
+  step: "proposal_unverified" | "company_missing" | "promo_unavailable"
+    | "live_gate_closed" | "checkout_recovery" | "business_name_required"
+    | "checkout_unavailable",
+) {
+  void logFunnelEvent({
+    event_type: "entry_350_checkout_failed",
+    step,
+    current_path: "/entrepreneurs/activation-350",
+    // Le logger hérite sinon d'un éventuel jeton sensible dans l'attribution.
+    token: "",
+    suppress_prospect_ref: true,
+    metadata: { surface: "activation_350", phase: "pre_stripe_session" },
+  });
+}
+
 export default function Entry350FastCheckout({ query }: { query: URLSearchParams }) {
   const navigate = useNavigate();
   const proposalToken = query.get("proposal");
@@ -70,10 +93,10 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   };
 
   const begin = async () => {
-    if (proposalToken && !proposalContext.proposal) { setErrorText("La proposition doit être vérifiée avant paiement."); return; }
+    if (proposalToken && !proposalContext.proposal) { recordPreCheckoutBlock("proposal_unverified"); setErrorText("La proposition doit être vérifiée avant paiement."); return; }
     if (busy) return;
     const name = company.trim();
-    if (name.length < 2) { setErrorText("Confirmez le nom de votre entreprise."); return; }
+    if (name.length < 2) { recordPreCheckoutBlock("company_missing"); setErrorText("Confirmez le nom de votre entreprise."); return; }
     setBusy(true);
     setErrorText(null);
     try {
@@ -81,6 +104,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       const { data: auth, error: authError } = await supabase.auth.getSession();
       if (authError) throw authError;
       if (!auth.session) {
+        // L'authentification est un transfert attendu, pas un paiement échoué.
+        void logFunnelEvent({ event_type: "auth_started", step: "entry350_auth_handoff", current_path: "/entrepreneurs/activation-350", token: "", suppress_prospect_ref: true, metadata: { surface: "activation_350" } });
         navigate(contractorLoginPath(window.location.pathname + window.location.search));
         return;
       }
@@ -109,6 +134,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       });
       const reply = await readReply(data, error);
       if (reply?.code === "promo_used" || reply?.code === "promo_invalid" || reply?.code === "promo_unavailable") {
+        recordPreCheckoutBlock("promo_unavailable");
         setPromo({ state: "refused", message: reply.code === "promo_used" ? "Ce code a déjà été utilisé. Retirez-le pour payer le prix normal." : "Ce code n'est plus disponible. Retirez-le pour payer le prix normal." });
         return;
       }
@@ -121,16 +147,19 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         return;
       }
       if (reply?.code === "entry350_live_not_released") {
+        recordPreCheckoutBlock("live_gate_closed");
         setErrorText("Le paiement n'est pas encore ouvert. Rien n'a été facturé.");
         return;
       }
       if (reply?.code === "checkout_recovery_available") {
+        recordPreCheckoutBlock("checkout_recovery");
         // The authenticated company/contact are kept server-side for support.
         // A failed Checkout creation is never presented as a paid transaction.
         setErrorText("Le paiement n'a pas pu s'ouvrir. Vos informations d'inscription sont conservées. Vous pouvez réessayer ou demander de l'aide.");
         return;
       }
       if (reply?.code === "business_name_required") {
+        recordPreCheckoutBlock("business_name_required");
         setErrorText("Confirmez le nom de votre entreprise avant le paiement.");
         return;
       }
@@ -149,6 +178,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       ]);
       redirectToCheckout(reply.url);
     } catch {
+      recordPreCheckoutBlock("checkout_unavailable");
       setErrorText("Impossible d'ouvrir le paiement. Vos réponses sont conservées. Réessayez.");
     } finally {
       setBusy(false);
