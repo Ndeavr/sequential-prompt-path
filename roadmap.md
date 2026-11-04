@@ -1,4 +1,6 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] UNPRO public branding local pass: three career canonicals corrected; 29 existing tests, 16 synthetic staged redirect cases and browser checks pass; homepage SEO preserved. Server patch staged only; no deployment/publication.
+- [ ] UNPRO branding release: server patch needs deployment authorization; Google-owned consent branding needs founder credentials/configuration and synthetic QA. See docs/audits/unpro-public-brand-2026-11-04.md.
 
 - [x] P0 2026-11-01 minimal entry350 alignment: founder now hands off to existing authenticated review; current 1474-line checkout reused unchanged and deployed alone. 43 targeted synthetic/static tests pass, harness build OK, guest login/name retention verified. Publication requested after checks; real authenticated Stripe/paid E2E deliberately not executed, no payments or sending.
 
