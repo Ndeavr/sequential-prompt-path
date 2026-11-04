@@ -84,6 +84,7 @@ export default function PageActivation350() {
         <div className="mt-5 rounded-[28px] border border-border bg-card p-5" data-testid="activation-350-offer">
           <p className="text-lg font-semibold">Profil AIPP + 12 mois de présence IA sur UNPRO</p>
           <p className="mt-1 text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes · activation unique</span></p>
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="activation-350-monthly-equivalent">L’équivalent de 29,17 $ par mois pendant un an — 350 $ + taxes, payable en un versement.</p>
           <ul className="mt-4 space-y-2 text-sm">
             {["Profil entreprise UNPRO complet", "12 mois de présence sur UNPRO", "Vos préférences : mandats voulus, exclusions et territoires desservis", "Aucun abonnement, aucun renouvellement automatique"].map((x) => (
               <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{x}</li>
