@@ -1,0 +1,43 @@
+--- supabase/functions/outreach-resend-send/handler.ts	2026-11-04 17:27:52.503903028 +0000
++++ staged/outreach-single-grant/handler.ts	2026-11-04 17:32:00.520954948 +0000
+@@ -66,6 +66,9 @@
+   sha256: (s: string) => Promise<string>;
+   providerSend: (payload: Record<string, unknown>, idempotencyKey: string | null) => Promise<{ status: number; body: any }>;
+   log: (row: Record<string, unknown>) => Promise<void>;
++  /** Unconsumed, unexpired grant for this exact address+campaign whose evidence is human-signed; null otherwise. */
++  findSingleSendGrant?: (email: string, campaign: string) => Promise<{ id: string } | null>;
++  consumeSingleSendGrant?: (grantId: string, providerId: string) => Promise<void>;
+ }
+ 
+ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+@@ -120,13 +123,21 @@
+   if (body.purpose === "internal_test" && !internal) return block(403, "INTERNAL_TEST_EXTERNAL_RECIPIENT");
+ 
+   let claimKey: string | null = null;
++  let grantId: string | null = null;
+   const headers: Record<string, string> = {};
+   let text = body.text ?? htmlToText(html);
+   if (commercial) {
+     if (FORBIDDEN_COPY.some((r) => r.test(html) || r.test(body.subject) || r.test(text))) return block(422, "FORBIDDEN_OFFER_COPY");
+     const campaign = (body.campaign ?? body.template_name ?? "").trim();
+     if (!campaign) return block(422, "MISSING_CAMPAIGN");
+-    if (!(await d.outreachEnabled().catch(() => false))) return block(423, "OUTREACH_DISABLED");
++    // STAGED: a one-time, expiring grant bound to ONE address + campaign + reviewed evidence
++    // may stand in for the global switch only. It never bypasses the autopilot gate,
++    // domain proof, suppression, CASL review, claim or cooldown below.
++    if (!(await d.outreachEnabled().catch(() => false))) {
++      const g = d.findSingleSendGrant ? await d.findSingleSendGrant(to, campaign).catch(() => null) : null;
++      if (!g) return block(423, "OUTREACH_DISABLED");
++      grantId = g.id;
++    }
+     const gate = await d.autopilotOpen().catch(() => ({ allowed: false, reason: "gate_unreadable" }));
+     if (!gate.allowed) return block(423, "AUTOPILOT_GATED", gate.reason ?? "");
+     const domain = await d.senderDomainVerified(d.senderDomain).catch(() => "unknown" as const);
+@@ -183,6 +194,7 @@
+     return block(502, "PROVIDER_STATE_UNKNOWN", "accepted_without_provider_id");
+   }
+   if (claimKey) await d.settle(claimKey, "sent", id, null);
++  if (grantId && d.consumeSingleSendGrant) await d.consumeSingleSendGrant(grantId, id).catch(() => undefined);
+   await d.log({ message_id: messageId, template_name: body.template_name ?? "outreach-resend-send", recipient_email: to,
+     status: "sent", metadata: { resend_id: id, sender: d.senderFrom, commercial } });
+   return { status: 200, body: { ok: true, message_id: messageId, resend_id: id, sender: d.senderFrom, commercial } };
