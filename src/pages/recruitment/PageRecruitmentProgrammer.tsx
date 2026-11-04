@@ -53,7 +53,7 @@ export default function PageRecruitmentProgrammer() {
       <Helmet>
         <title>Programmeur Full-Stack IA — Carrières UNPRO</title>
         <meta name="description" content="UNPRO recrute un programmeur full-stack IA pour bâtir une plateforme SaaS premium. React, TypeScript, Supabase, PostgreSQL, Stripe, IA. Builder recherché." />
-        <link rel="canonical" href="https://sequential-prompt-path.lovable.app/carrieres/programmeur" />
+        <link rel="canonical" href="https://unpro.ca/carrieres/programmeur" />
       </Helmet>
 
       {/* Hero */}

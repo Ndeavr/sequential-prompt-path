@@ -26,7 +26,7 @@ export default function PageCareers() {
       <Helmet>
         <title>Carrières UNPRO — Rejoins une startup ambitieuse</title>
         <meta name="description" content="UNPRO recrute des builders. Représentants terrain et programmeurs full-stack IA. Rejoins une plateforme SaaS premium qui redéfinit les services résidentiels." />
-        <link rel="canonical" href="https://sequential-prompt-path.lovable.app/carrieres" />
+        <link rel="canonical" href="https://unpro.ca/carrieres" />
       </Helmet>
 
       <section className="min-h-[85vh] flex flex-col items-center justify-center px-4 py-20 relative overflow-hidden">

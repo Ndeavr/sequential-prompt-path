@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] UNPRO public branding: correct career canonicals, stage public server-link fixes without deployment, validate targeted URLs and read-only OAuth; custom Google branding requires founder-owned credentials.
 
 - [x] P0 2026-11-01 minimal entry350 alignment: founder now hands off to existing authenticated review; current 1474-line checkout reused unchanged and deployed alone. 43 targeted synthetic/static tests pass, harness build OK, guest login/name retention verified. Publication requested after checks; real authenticated Stripe/paid E2E deliberately not executed, no payments or sending.
 
