@@ -1,6 +1,8 @@
 // Resend key diagnostic — never logs the full key.
 // Returns prefix/suffix/length + live Resend API responses.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
+import { classifyKeyDiagnose } from "../_shared/providerHealthSemantics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +21,8 @@ async function readBody(r: Response) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const caller = await requireAdminCaller(req, corsHeaders, "resend-key-diagnose");
+  if (!caller.ok) return caller.response;
 
   const raw = Deno.env.get("RESEND_API_KEY") ?? "";
   const trimmed = raw.trim();
@@ -96,19 +100,16 @@ Deno.serve(async (req) => {
       : `api-keys HTTP ${apiKeys.status} ${apiKeys.message ?? ""} | domains HTTP ${domains.status} ${domains.message ?? ""}`.slice(0, 500),
   });
 
-  // Root cause classification
-  let root_cause = "unknown";
-  let repair = "manual_required";
-  if (!diag.present) { root_cause = "missing_secret"; repair = "add_secret RESEND_API_KEY"; }
-  else if (trimmed.startsWith("lovc_") && (apiKeys.status >= 200 && apiKeys.status < 300)) { root_cause = "ok_gateway"; repair = "none (Lovable connector key via gateway)"; }
-  else if (trimmed.startsWith("lovc_")) { root_cause = "gateway_unreachable"; repair = `Lovable gateway returned HTTP ${apiKeys.status}. Check LOVABLE_API_KEY or reconnect the Resend connector.`; }
-  else if (diag.has_whitespace) { root_cause = "whitespace_corruption"; repair = "Re-save secret without whitespace/newline"; }
-  else if (apiKeys.status === 401 || apiKeys.status === 403) { root_cause = "revoked_key_or_no_scope"; repair = "Rotate RESEND_API_KEY (Full access)"; }
-  else if (apiKeys.status === 400 && (apiKeys.message ?? "").toLowerCase().includes("invalid")) { root_cause = "revoked_or_unknown_key"; repair = "Regenerate key in Resend dashboard, then update_secret RESEND_API_KEY"; }
-  else if (domains.status >= 200 && domains.status < 300 && !domains.verified) { root_cause = "no_verified_domain"; repair = "Verify a sending domain in Resend"; }
-  else if (apiKeys.status === 200 || (domains.status >= 200 && domains.status < 300)) { root_cause = "ok"; repair = "none"; }
+  // Root cause classification (shared, tested semantics)
+  const verdict = classifyKeyDiagnose({
+    present: diag.present, gatewayKey: isGatewayKey, hasWhitespace: diag.has_whitespace,
+    apiKeys: { status: apiKeys.status, body: apiKeys.raw_excerpt ?? apiKeys.message },
+    domains: { status: domains.status, body: domains.raw_excerpt ?? domains.message, verified: domains.verified },
+  });
+  const { root_cause, repair, domain_state } = verdict;
+  if (domain_state === "unknown") domains.verified = "UNKNOWN";
 
   return new Response(JSON.stringify({
-    diag, api_keys: apiKeys, domains, root_cause, repair,
+    diag, api_keys: apiKeys, domains, domain_state, root_cause, repair,
   }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });

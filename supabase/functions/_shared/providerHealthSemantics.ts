@@ -133,3 +133,59 @@ export function detectSilentProcessingAnomaly(
   }
   return { anomaly: consecutive >= threshold, consecutive, since };
 }
+
+/**
+ * resend-key-diagnose root-cause classification (pure, testable).
+ * A 401/403 with the explicit send-only body means "read scope absent",
+ * never "key invalid" nor "gateway unreachable"; domain state stays UNKNOWN.
+ * Nothing is declared healthy without a real 2xx proof.
+ */
+export type DiagnoseProbe = { status: number; body?: unknown };
+export type DiagnoseVerdict = {
+  root_cause: string;
+  repair: string;
+  domain_state: "verified" | "unverified" | "unknown";
+};
+
+export function classifyKeyDiagnose(input: {
+  present: boolean;
+  gatewayKey: boolean;
+  hasWhitespace: boolean;
+  apiKeys: DiagnoseProbe;
+  domains: DiagnoseProbe & { verified?: string | null };
+}): DiagnoseVerdict {
+  const { apiKeys, domains } = input;
+  const ok = (s: number) => s >= 200 && s < 300;
+  const authFail = (s: number) => s === 401 || s === 403;
+  const domain_state: DiagnoseVerdict["domain_state"] = ok(domains.status)
+    ? (domains.verified ? "verified" : "unverified")
+    : "unknown";
+  if (!input.present) return { root_cause: "missing_secret", repair: "add_secret RESEND_API_KEY", domain_state };
+  const sendOnly =
+    (authFail(apiKeys.status) && isRestrictedSendOnlyBody(apiKeys.body)) ||
+    (authFail(domains.status) && isRestrictedSendOnlyBody(domains.body));
+  const anyInvalid =
+    (authFail(apiKeys.status) && !isRestrictedSendOnlyBody(apiKeys.body)) ||
+    (authFail(domains.status) && !isRestrictedSendOnlyBody(domains.body));
+  if (sendOnly && !anyInvalid) {
+    return {
+      root_cause: "send_only_scope_unverified_send",
+      repair: "none_required_for_reads; sending capability unproven until a real provider acceptance + delivered webhook",
+      domain_state,
+    };
+  }
+  if (input.gatewayKey && ok(apiKeys.status)) {
+    return { root_cause: domain_state === "unverified" ? "no_verified_domain" : "ok_gateway", repair: domain_state === "unverified" ? "Verify a sending domain in Resend" : "none", domain_state };
+  }
+  if (input.gatewayKey && authFail(apiKeys.status)) {
+    return { root_cause: "gateway_auth_rejected", repair: `Gateway returned HTTP ${apiKeys.status} without send-only marker. Check the Resend connection.`, domain_state };
+  }
+  if (input.gatewayKey) {
+    return { root_cause: "gateway_unreachable", repair: `Gateway returned HTTP ${apiKeys.status}.`, domain_state };
+  }
+  if (input.hasWhitespace) return { root_cause: "whitespace_corruption", repair: "Re-save secret without whitespace/newline", domain_state };
+  if (authFail(apiKeys.status)) return { root_cause: "revoked_key_or_no_scope", repair: "Check RESEND_API_KEY validity", domain_state };
+  if (domain_state === "unverified") return { root_cause: "no_verified_domain", repair: "Verify a sending domain in Resend", domain_state };
+  if (ok(apiKeys.status) || ok(domains.status)) return { root_cause: "ok", repair: "none", domain_state };
+  return { root_cause: "unknown", repair: "manual_required", domain_state };
+}
