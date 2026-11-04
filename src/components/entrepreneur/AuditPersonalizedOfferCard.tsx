@@ -99,11 +99,7 @@ export function AuditPersonalizedOfferCard({
   const startCheckout = async () => {
     setLoading(true);
     setError(null);
-    void logFunnelEvent({
-      event_type: "stripe_checkout_started",
-      metadata: { audit_id: auditId, plan_id: plan.slug, score, surface: "audit_ia" },
-    });
-        try {
+    try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         window.location.assign(`/auth?next=${encodeURIComponent(returnPath)}`);
@@ -149,17 +145,28 @@ export function AuditPersonalizedOfferCard({
       const payload = data as { url?: string; error?: string } | null;
       if (payload?.error) throw new Error(payload.error);
       if (!payload?.url) throw new Error("url_manquante");
+      // A Checkout event means the server returned an actual session URL, not
+      // a click, login handoff, or quote-intake navigation. No secrets or PII.
+      void logFunnelEvent({
+        event_type: "stripe_checkout_started",
+        step: "audit_checkout_created",
+        current_path: "/entrepreneurs/audit-ia",
+        token: "",
+        suppress_prospect_ref: true,
+        metadata: { surface: "audit_ia", plan_id: plan.slug, phase: "stripe_session_created" },
+      });
       redirectToCheckout(payload.url);
       window.setTimeout(() => setLoading(false), 2500);
-    } catch (e) {
+    } catch {
+      // No settled Stripe payment exists at this stage. Do not mislabel an
+      // upstream/session failure as a payment failure or log raw error text.
       void logFunnelEvent({
-        event_type: "stripe_payment_failed",
-        metadata: {
-          audit_id: auditId,
-          plan_id: plan.slug,
-          surface: "audit_ia",
-          reason: e instanceof Error ? e.message : String(e),
-        },
+        event_type: "activation_error",
+        step: "audit_checkout_unavailable",
+        current_path: "/entrepreneurs/audit-ia",
+        token: "",
+        suppress_prospect_ref: true,
+        metadata: { surface: "audit_ia", plan_id: plan.slug, phase: "pre_stripe_session" },
       });
       setError("Le paiement n'a pas pu démarrer. Vos informations sont conservées, vous pouvez réessayer.");
       setLoading(false);
