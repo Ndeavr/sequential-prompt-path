@@ -4,6 +4,7 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CONTRACTOR_PLAN_ENTRY_ROUTE } from "@/lib/routing/contractorPlanRoute";
 import { campaignLink } from "@/lib/contractorCampaignLinks";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 
@@ -16,8 +17,8 @@ export default function StickyMobileCTAV2({ onTrackCta }: Props) {
   const { search } = useLocation();
   const { lang } = useLanguage();
   const handleClick = () => {
-    onTrackCta("sticky_entry350", "sticky");
-    navigate(campaignLink("/entrepreneurs/activation-350", search, { activate: "1" }));
+    onTrackCta("sticky_objectives", "sticky");
+    navigate(campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" }));
   };
 
   return (
@@ -27,7 +28,7 @@ export default function StickyMobileCTAV2({ onTrackCta }: Props) {
           onClick={handleClick}
           className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 shadow-[0_8px_24px_hsl(var(--primary)/0.4)] active:scale-[0.98] transition-transform"
         >
-          {lang === "fr" ? "Activer mon profil · 350 $ + taxes" : "Activate profile · CAD 350 + taxes"}
+          {lang === "fr" ? "Définir mes objectifs" : "Set my goals"}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

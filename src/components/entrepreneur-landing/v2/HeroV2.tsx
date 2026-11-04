@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Zap, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CONTRACTOR_PLAN_ENTRY_ROUTE } from "@/lib/routing/contractorPlanRoute";
 import { campaignLink } from "@/lib/contractorCampaignLinks";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import UnproLogo from "@/components/brand/UnproLogo";
@@ -79,11 +80,11 @@ export default function HeroV2({ onTrackCta }: Props) {
       >
         <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground leading-[1.1] tracking-tight">
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {fr ? "Professionnels et entreprises de services" : "Professionals and service businesses"}
+            {fr ? "Prêt à prendre plus de contrats?" : "Ready to take on more contracts?"}
           </span>
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
-          {fr ? "Courtiers, notaires, arpenteurs, entreprises d’entretien et rénovateurs : un seul parcours pour faire connaître votre entreprise, vos services et votre région." : "Brokers, notaries, surveyors, maintenance companies and renovators: one journey to make your business, services and region known."}
+          {fr ? "Quels mandats voulez-vous, dans quel territoire et combien pouvez-vous en prendre? Définissons un plan selon vos spécialités, vos objectifs et votre capacité." : "Which projects do you want, where, and how many can you take on? Let’s define a plan around your specialties, goals and capacity."}
         </p>
         <p className="mt-3 text-xs font-semibold text-primary/90">
           {fr ? "Immobilier · Entretien · Rénovation" : "Real estate · Property care · Renovation"}
@@ -100,9 +101,9 @@ export default function HeroV2({ onTrackCta }: Props) {
         <Button
           size="lg"
           className="w-full h-14 rounded-xl text-base font-bold gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.35)]"
-          onClick={() => { onTrackCta("hero_primary_entry350", "hero"); navigate(campaignLink("/entrepreneurs/activation-350", search, { activate: "1" })); }}
+          onClick={() => { onTrackCta("hero_primary_objectives", "hero"); navigate(campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" })); }}
         >
-          {fr ? "Inscrire mon entreprise · 350 $ + taxes" : "Activate my business · CAD 350 + taxes"}
+          {fr ? "Parlons de mes objectifs" : "Let’s discuss my goals"}
           <ArrowRight className="w-5 h-5" />
         </Button>
         <Button
@@ -114,7 +115,7 @@ export default function HeroV2({ onTrackCta }: Props) {
           {fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          {fr ? "Profil + 12 mois sur UNPRO. Rendez-vous distincts; aucun contrat garanti." : "UNPRO profile + 12 months. Appointments sold separately; no guaranteed contracts."}
+          {fr ? "Vos besoins d’abord. Votre plan et son prix ensuite, avant tout paiement." : "Your needs first. Your plan and its price next, before any payment."}
         </p>
       </motion.div>
 

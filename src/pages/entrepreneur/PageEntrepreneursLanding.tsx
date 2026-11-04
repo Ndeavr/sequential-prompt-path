@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import { CONTRACTOR_PLAN_ENTRY_ROUTE } from "@/lib/routing/contractorPlanRoute";
 import { campaignLink } from "@/lib/contractorCampaignLinks";
-import { OFFER_350 } from "@/lib/copy/offer350";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useCallback } from "react";
@@ -44,12 +44,12 @@ const PageEntrepreneursLanding = () => {
         <SectionSolutionV2 />
         <SectionHowItWorksV2 />
         <section className="mx-auto max-w-4xl px-5 py-10">
-          <h2 className="text-2xl font-semibold">{fr ? OFFER_350.card.title : "Profile + 12 months of AI Presence on UNPRO"}</h2>
-          <p className="mt-3 text-base text-muted-foreground">{fr ? OFFER_350.paymentNote : "One-time activation: CAD 350 plus applicable taxes. No subscription."}</p>
-          <p className="mt-3 text-base text-muted-foreground">{fr ? OFFER_350.disclaimer : "No appointments or results are promised. Appointments require a separate confirmed quote before payment."}</p>
+          <h2 className="text-2xl font-semibold">{fr ? "Un plan à la mesure de vos objectifs" : "A plan built around your goals"}</h2>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "Parlez-nous de vos spécialités, de votre territoire et de votre capacité à prendre de nouveaux mandats." : "Tell us about your specialties, territory and capacity for new projects."}</p>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous examinez ensuite le contenu du plan, les rendez-vous inclus s’il y a lieu et le prix complet avant de décider." : "Then review the plan, any included appointments and the full price before deciding."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/activation-350", search, { activate: "1" })}>{fr ? "Inscrire mon entreprise — 350 $ + taxes" : "Activate my business — CAD 350 + taxes"}</Link></Button>
+            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" })}>{fr ? "Définir mes objectifs" : "Set my goals"}</Link></Button>
             <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
           </div>
         </section>
