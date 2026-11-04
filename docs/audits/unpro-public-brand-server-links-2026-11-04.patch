@@ -1,0 +1,45 @@
+--- a/supabase/functions/design-checkout/index.ts
++++ b/supabase/functions/design-checkout/index.ts
+@@ -1,4 +1,5 @@
+ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
++import { resolveInvitedCheckoutOrigin } from "../_shared/checkoutGuards.ts";
+ import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ 
+@@ -36,7 +37,7 @@
+       customerId = customers.data[0].id;
+     }
+ 
+-    const origin = req.headers.get("origin") || "https://sequential-prompt-path.lovable.app";
++    const origin = resolveInvitedCheckoutOrigin(req.headers.get("origin"), stripeKey.startsWith("sk_test_") ? "test" : "live");
+ 
+     const session = await stripe.checkout.sessions.create({
+       customer: customerId,
+--- a/supabase/functions/create-booking-checkout/index.ts
++++ b/supabase/functions/create-booking-checkout/index.ts
+@@ -1,4 +1,5 @@
+ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
++import { resolveInvitedCheckoutOrigin } from "../_shared/checkoutGuards.ts";
+ import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ 
+@@ -39,7 +40,7 @@
+     }
+ 
+     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+-    const origin = req.headers.get("origin") || "https://sequential-prompt-path.lovable.app";
++    const origin = resolveInvitedCheckoutOrigin(req.headers.get("origin"), stripeKey.startsWith("sk_test_") ? "test" : "live");
+ 
+     // Calculate split
+     const unproFeeCents = Math.round(price_cents * UNPRO_FEE_RATE);
+--- a/supabase/functions/launch-prospection-campaign/index.ts
++++ b/supabase/functions/launch-prospection-campaign/index.ts
+@@ -74,7 +74,7 @@
+       const existingSet = new Set((existingLinks ?? []).map((l: any) => l.prospect_id));
+ 
+       const newLinks = [];
+-      const baseUrl = req.headers.get("origin") || "https://sequential-prompt-path.lovable.app";
++      const baseUrl = "https://unpro.ca";
+ 
+       for (const p of prospects) {
+         if (existingSet.has(p.id)) continue;
