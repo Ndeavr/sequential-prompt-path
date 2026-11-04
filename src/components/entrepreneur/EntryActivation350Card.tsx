@@ -28,10 +28,24 @@ export function EntryActivation350Card(p: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Do not inherit invitation tokens or query strings into analytics. A failed
+  // checkout request may contain upstream error details; never persist them.
+  const recordQuoteCardEvent = (eventType: "entry_350_clicked" | "entry_350_checkout_failed") => {
+    void logFunnelEvent({
+      event_type: eventType,
+      contractor_id: p.contractorId ?? null,
+      step: eventType === "entry_350_clicked" ? "quote_card_clicked" : "checkout_unavailable",
+      current_path: "/entrepreneurs/activation-350",
+      token: "",
+      suppress_prospect_ref: true,
+      metadata: { surface: "entry_350_quote_card", phase: "pre_stripe_session" },
+    });
+  };
+
   const start = async () => {
     setLoading(true);
     setError(null);
-    void logFunnelEvent({ event_type: "entry_350_clicked", contractor_id: p.contractorId ?? null, metadata: { quote_id: p.quoteId } });
+    recordQuoteCardEvent("entry_350_clicked");
     try {
       const { data: s } = await supabase.auth.getSession();
       if (!s?.session) { setLoading(false); p.onLogin(); return; }
@@ -69,8 +83,8 @@ export function EntryActivation350Card(p: Props) {
       if (!payload?.url) throw new Error("url_manquante");
       redirectToCheckout(payload.url);
       setTimeout(() => setLoading(false), 2500);
-    } catch (e) {
-      void logFunnelEvent({ event_type: "entry_350_checkout_failed", contractor_id: p.contractorId ?? null, metadata: { quote_id: p.quoteId, reason: e instanceof Error ? e.message : String(e) } });
+    } catch {
+      recordQuoteCardEvent("entry_350_checkout_failed");
       setError(ENTRY_350.errorRetry);
       toast.error("Le paiement n'a pas pu démarrer.");
       setLoading(false);
