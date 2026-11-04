@@ -89,3 +89,11 @@ Autorisation fondateur reçue (Maple Wood seul, 1 courriel). Revalidation avant 
 - RBQ 5874-2479-01 : non vérifiée (registre non interrogeable automatiquement ici).
 
 Conséquence : aucun code d'autorisation ponctuelle déployé, aucun envoi, aucun drapeau modifié (OUTREACH_ENABLED=false, recruitment_controls global=false, autopilot gated=true).
+
+## Passage 4 nov 2026 17:04 UTC — « One 350 today »
+- system_flags.OUTREACH_ENABLED=false ; outreach_autopilot_gate.gated=true → `outreach-resend-send` refuse tout envoi. Non contourné.
+- billing_checkout_sessions des 30 derniers jours : 0 (aucun checkout abandonné récent à relancer).
+- Courriels journalisés 24 h (acq_email_logs) : 0.
+- Exclus : Excavation Sicard (séquence épuisée), Maple Wood (cooldown jusqu'au 5 nov 19 h 26 UTC), info@cliniquedelatoiturefca.com (refus 3 nov).
+- Envois : 0. Provider IDs : aucun. Paiements 350 LIVE : 0 (vérif. fondateur 3 nov ; non revérifié aujourd'hui).
+- Action minimale requise : autorisation ponctuelle serveur à destinataire unique lié à une preuve CASL (déjà autorisée pour Maple Wood) — utilisable dès le 5 nov 19 h 26 UTC.
