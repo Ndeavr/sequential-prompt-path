@@ -50,4 +50,16 @@ describe("CAD 350 invited checkout must not enter legacy SMS $1 fulfillment", ()
       "A 350 $ invited checkout would be swallowed by the earlier legacy SMS branch before the 12-month ledger."
     ).toBe(false);
   });
+
+  it("also excludes alternate $350 offer metadata from the earlier $1 handler", () => {
+    // Source-only guard for two documented paid $350 variants. A future refactor
+    // must keep their metadata out of the historical SMS $1 path too.
+    const legacyStart = signedWebhook.indexOf("// SMS OUTREACH flow:");
+    const entryStart = signedWebhook.indexOf("// ENTRY PACK 350 $ flow");
+    expect(legacyStart).toBeGreaterThanOrEqual(0);
+    expect(entryStart).toBeGreaterThan(legacyStart);
+    const legacyCode = signedWebhook.slice(legacyStart, entryStart);
+    expect(legacyCode).toMatch(/session\\.metadata\\?\\.offer\\s*!==\\s*["']entry_activation_350["']/);
+    expect(legacyCode).toMatch(/session\\.metadata\\?\\.offer_kind\\s*!==\\s*["']pack_350["']/);
+  });
 });
