@@ -290,8 +290,8 @@ Deno.serve(async (req) => {
         },
       });
     } catch (stripeErr: any) {
-      console.error("[create-activation-checkout] stripe_error", stripeErr?.message || stripeErr);
-      return json({ error: "stripe_error", detail: stripeErr?.message || String(stripeErr), stage: "stripe_create" }, 502);
+      console.error("[create-activation-checkout] stripe_create_failed");
+      return json({ error: "stripe_error", stage: "stripe_create" }, 502);
     }
 
 
@@ -325,11 +325,11 @@ Deno.serve(async (req) => {
         },
       });
       if (persistError) {
-        console.error("[create-activation-checkout] session_persist_failed", persistError.message);
+        console.error("[create-activation-checkout] session_persist_failed");
         return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
       }
     } catch (e) {
-      console.error("[create-activation-checkout] session_persist_failed", e);
+      console.error("[create-activation-checkout] session_persist_failed");
       return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
     }
 
@@ -376,7 +376,7 @@ Deno.serve(async (req) => {
 
     return json({ url: session.url, session_id: session.id });
   } catch (e: any) {
-    console.error("[create-activation-checkout] fatal", e?.message || e);
-    return json({ error: "internal_error", detail: e?.message || String(e), stage: "fatal" }, 500);
+    console.error("[create-activation-checkout] fatal");
+    return json({ error: "internal_error", stage: "fatal" }, 500);
   }
 });
