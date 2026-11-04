@@ -120,7 +120,9 @@ Deno.serve(async (req) => {
     const paidLeads = leads.filter((l: any) => ["PAID", "ACTIVATED"].includes(l.lead_status));
     const activatedLeads = leads.filter((l: any) => l.lead_status === "ACTIVATED");
 
-    const paidCount = Math.max(evPaid.length, paidLeads.length);
+    // These legacy CRM and client-event signals are NOT verified LIVE $350 sales.
+    // No signed Stripe receipt, unique company, entitlement or refund reconciliation exists here.
+    const paidSignalsUnverified = Math.max(evPaid.length, paidLeads.length);
     const activatedCount = Math.max(evActivated.length, activatedLeads.length);
 
     const raw = [
@@ -138,9 +140,9 @@ Deno.serve(async (req) => {
       { key: "signup_started", label: "Inscription commencée", count: evSignupStart.length, lastAt: lastAt(evSignupStart), err: topEventError(["registration_started", "signup_started"]) },
       { key: "signup_completed", label: "Inscription terminée", count: evSignupDone.length, lastAt: lastAt(evSignupDone), err: null },
       { key: "checkout_opened", label: "Checkout ouvert", count: evCheckoutOpen.length, lastAt: lastAt(evCheckoutOpen), err: topEventError(["checkout_started", "stripe_checkout_opened"]) },
-      { key: "payment_success", label: "Paiement réussi", count: paidCount, lastAt: paidLeads[0]?.paid_at ?? lastAt(evPaid), err: null },
-      { key: "activated", label: "Compte activé", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? lastAt(evActivated), err: null },
-      { key: "recommendable", label: "Recommandable par Clara", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? null, err: null },
+      { key: "payment_success", label: "Signaux paiement — NON vérifiés Stripe", count: paidSignalsUnverified, lastAt: paidLeads[0]?.paid_at ?? lastAt(evPaid), err: null },
+      { key: "activated", label: "Activation CRM — droits NON vérifiés", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? lastAt(evActivated), err: null },
+      { key: "recommendable", label: "Activation déclarée — licence NON vérifiée", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? null, err: null },
     ];
 
     const anchor = raw[0].count || 1;
@@ -242,6 +244,9 @@ Deno.serve(async (req) => {
       prefill_coverage: prefillCoverage,
       sms_7d_summary: sevenDaySmsSummary(sms as any[]),
       stages,
+      // Legacy stage keys kept for existing consumers, but their counts are
+      // explicitly NOT the commercial paid/entitlement/recommendable KPI.
+      unverified_legacy_indicators: ["payment_success", "activated", "recommendable"],
       real_pipeline: realPipeline,
       canary_preview: canaryPreview,
       canary_readiness: canaryReadiness,
