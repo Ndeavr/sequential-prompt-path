@@ -59,7 +59,7 @@ describe("CAD 350 invited checkout must not enter legacy SMS $1 fulfillment", ()
     expect(legacyStart).toBeGreaterThanOrEqual(0);
     expect(entryStart).toBeGreaterThan(legacyStart);
     const legacyCode = signedWebhook.slice(legacyStart, entryStart);
-    expect(legacyCode).toMatch(/session\\.metadata\\?\\.offer\\s*!==\\s*["']entry_activation_350["']/);
-    expect(legacyCode).toMatch(/session\\.metadata\\?\\.offer_kind\\s*!==\\s*["']pack_350["']/);
+    expect(legacyCode).toMatch(/session\.metadata\?\.offer\s*!==\s*["']entry_activation_350["']/);
+    expect(legacyCode).toMatch(/session\.metadata\?\.offer_kind\s*!==\s*["']pack_350["']/);
   });
 });
