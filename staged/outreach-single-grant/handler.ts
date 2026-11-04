@@ -123,6 +123,7 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
   if (body.purpose === "internal_test" && !internal) return block(403, "INTERNAL_TEST_EXTERNAL_RECIPIENT");
 
   let claimKey: string | null = null;
+  let grantId: string | null = null;
   const headers: Record<string, string> = {};
   let text = body.text ?? htmlToText(html);
   if (commercial) {
@@ -132,7 +133,6 @@ export async function handleSend(authHeader: string | null, raw: unknown, d: Dep
     // STAGED: a one-time, expiring grant bound to ONE address + campaign + reviewed evidence
     // may stand in for the global switch only. It never bypasses the autopilot gate,
     // domain proof, suppression, CASL review, claim or cooldown below.
-    let grantId: string | null = null;
     if (!(await d.outreachEnabled().catch(() => false))) {
       const g = d.findSingleSendGrant ? await d.findSingleSendGrant(to, campaign).catch(() => null) : null;
       if (!g) return block(423, "OUTREACH_DISABLED");
