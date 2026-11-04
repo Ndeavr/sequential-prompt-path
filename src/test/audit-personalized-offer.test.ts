@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   recommendPlanFromScore,
@@ -35,8 +36,7 @@ describe("offre personnalisée après le score IA", () => {
 
 describe("audit offer checkout telemetry integrity", () => {
   it("records Stripe checkout only after the server returns a session URL, not on click or intake", () => {
-    const fs = require("node:fs") as typeof import("node:fs");
-    const source = fs.readFileSync("src/components/entrepreneur/AuditPersonalizedOfferCard.tsx", "utf8");
+    const source = readFileSync("src/components/entrepreneur/AuditPersonalizedOfferCard.tsx", "utf8");
     const start = source.indexOf("const startCheckout = async () => {");
     const quoteHandoff = source.indexOf("if (!quoteId)", start);
     const validatedUrl = source.indexOf('if (!payload?.url) throw', start);
@@ -50,8 +50,7 @@ describe("audit offer checkout telemetry integrity", () => {
   });
 
   it("does not leak tokens, audit IDs or raw provider errors into funnel telemetry", () => {
-    const fs = require("node:fs") as typeof import("node:fs");
-    const source = fs.readFileSync("src/components/entrepreneur/AuditPersonalizedOfferCard.tsx", "utf8");
+    const source = readFileSync("src/components/entrepreneur/AuditPersonalizedOfferCard.tsx", "utf8");
     const start = source.indexOf("const startCheckout = async () => {");
     const eventSection = source.slice(start, source.indexOf("  return (", start));
     expect(eventSection).not.toContain('event_type: "stripe_payment_failed"');
