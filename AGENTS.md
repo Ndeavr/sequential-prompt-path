@@ -24,6 +24,12 @@ Applies repo-wide.
 
 Current instructions and verified live state override these documents. Sensitive operational details go only in untracked `.codex-private/`.
 
+## Public-repository privacy gate
+
+- This repository is **public**. Before any GitHub commit, PR, issue, test fixture, documentation or CI artifact, verify that it contains **no identifiable prospect/customer or communications records**: personal names linked to business contacts, phone numbers, email addresses, Gmail/message IDs, identifiable STOP/refusals, IPs, session/checkout/CRM bearer tokens, signed URLs, consent signatures, secret values or raw provider payloads. Publicly listed business contacts are **not** exempt. Prefer synthetic examples and aggregate, non-identifying counts.
+- Keep row-level acquisition evidence, suppression, human CASL reviews and provider IDs in the **existing access-controlled CRM/communications systems**, not public GitHub history. Public docs can describe schema, controls, aggregate counts and outcomes, but **never** serve as consent or STOP authority. Review the exact proposed diff and PR text before publishing.
+- If an exposure is identified, **do not merge, cherry-pick or rebase the contaminated commits** into `lovable-sync`. Censoring the latest file does not erase old Git objects; arrange a separate access-controlled privacy/incident review for history remediation. Never force-push, rewrite shared history or delete evidence without explicit authorization and an impact plan.
+
 ## Communication and autonomy
 
 - Use the language of the user's current message; default to concise Canadian French for UNPRO product copy.
