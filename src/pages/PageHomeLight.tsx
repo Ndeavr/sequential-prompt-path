@@ -15,10 +15,11 @@ import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorR
 
 export default function PageHomeLight() {
   const { lang } = useLanguage();
-  const title = lang === "fr" ? "UNPRO | Le bon professionnel. Pour le bon besoin." : "UNPRO | The right professional. For the right need.";
+  const title = lang === "fr" ? "UNPRO | De la soumission à la réalisation" : "UNPRO | The right professional. For the right need.";
   const description = lang === "fr"
-    ? "UNPRO vous aide à trouver un professionnel selon votre situation, vos critères et votre région. Immobilier, entretien, rénovation et réparations au Québec."
+    ? "Le lien le plus court entre une soumission et la réalisation. L’IA au service de la rénovation, de l’entretien et de l’immobilier. Clara vous aide à trouver le bon professionnel."
     : "UNPRO helps you find a professional based on your situation, criteria and region. Real estate, property care, renovation and repairs in Quebec.";
+  const ogImage = lang === "fr" ? "https://unpro.ca/og/link/unpro-v1.jpg" : DEFAULT_OG_IMAGE;
   useEffect(() => {
     trackCopilotEvent("homepage_loaded");
   }, []);
@@ -51,14 +52,14 @@ export default function PageHomeLight() {
           />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://unpro.ca/" />
-          <meta property="og:image" content={DEFAULT_OG_IMAGE} />
+          <meta property="og:image" content={ogImage} />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={title} />
           <meta
             name="twitter:description"
             content={description}
           />
-          <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
+          <meta name="twitter:image" content={ogImage} />
           <link rel="canonical" href="https://unpro.ca/" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
