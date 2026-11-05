@@ -81,3 +81,27 @@ describe("CAD 350 active founder payment screen", () => {
     expect(founderPath).not.toContain("create-stripe-checkout-session");
   });
 });
+
+
+describe("CAD 350 founder legacy checkout must use durable entry-pack fulfillment", () => {
+  it("sends canonical metadata instead of the obsolete kind-only path", () => {
+    const founderCaller = readFileSync(
+      "supabase/functions/create-founder-activation-checkout/index.ts", "utf8"
+    );
+    const metadataStart = founderCaller.indexOf("metadata: {");
+    expect(metadataStart).toBeGreaterThan(-1);
+    const metadata = founderCaller.slice(metadataStart, founderCaller.indexOf("},", metadataStart));
+    expect(metadata).toContain('offer: "entry_pack_350"');
+    expect(metadata).toContain('offer_kind: "pack_350"');
+    expect(metadata).toContain('amount_cents: String(OFFER_350.price_cents)');
+    expect(founderCaller).toContain('mode: "payment"');
+    expect(founderCaller).toContain('automatic_tax: { enabled: true }');
+
+    // This same canonical offer is checked for real payment and exact
+    // pre-tax amount before the existing 12-month entitlement ledger.
+    expect(signedWebhook).toContain("const block = entry350PaymentBlockReason(session);");
+    expect(signedWebhook).toContain('if (session.metadata?.offer === "entry_pack_350") {');
+    expect(signedWebhook).toContain('action: "entry_activation_350_paid"');
+    // Source guard only: signed Stripe TEST + Auth/RLS E2E is still required.
+  });
+});
