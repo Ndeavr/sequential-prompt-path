@@ -1,6 +1,6 @@
 # Roadmap — P0 contractor acquisition golden path
 - [x] Approved combined-savings campaign implementation: shared FR/EN vision/editorial/press copy, 9 formula tests, six mobile routes/canonicals/no-overflow, desktop and existing Clara/onboarding handoffs verified; harness build OK. No backend, outreach or pricing changes.
-- [ ] Combined-savings publication verification: publish authorized content and verify production routes; existing critical security findings remain outside this task.
+- [ ] Combined-savings publication verification: requested for revision 38b6d52cd; one production check still served old content on all six HTTP200 routes. Await deployment completion evidence; 83 existing critical security findings remain outside scope. See docs/campaigns/combined-savings-2027-2036.md.
 - [x] UNPRO public branding local pass: three career canonicals corrected; 29 existing tests, 16 synthetic staged redirect cases and browser checks pass; homepage SEO preserved. Server patch staged only; no deployment/publication.
 - [ ] UNPRO branding release: server patch needs deployment authorization; Google-owned consent branding needs founder credentials/configuration and synthetic QA. See docs/audits/unpro-public-brand-2026-11-04.md.
 

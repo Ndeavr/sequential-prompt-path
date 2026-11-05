@@ -61,3 +61,11 @@ The press page keeps its original March 30, 2026 publication date and carries a 
 Classic client-rendered route metadata is visible after JavaScript execution. Social crawlers that do not run JavaScript still receive the unchanged homepage fallback; distinct route-specific social previews are not guaranteed by this stack. Homepage FR/EN metadata and social imagery remain untouched.
 
 The separate `/impact` per-journey scenario and contractor five-year onboarding projection remain unchanged: neither was the old homeowner 100,000 × CAD20,000 campaign. No old campaign formula was found in the active source; unrelated slider limits, timeouts and internal “Alex 100M” identifiers are not campaign copy.
+
+## Release verification — November 5, 2026
+
+- Release requested against revision `38b6d52cd` on the existing unpro.ca deployment; the publication tool scheduled it but did not return completion evidence.
+- Local: 9/9 focused formula tests pass; all six routes render with self-canonical metadata and no page exceptions or horizontal overflow at 390px. FR/EN methodology and FAQ pass at 320px; desktop 1280px checked visually. Both CTAs reach existing flows: homepage Clara and personalized-plan redirect to `/entrepreneur/devis-personnalise?from=vision`. No form submission, payment or external message was performed.
+- Automatic harness build/typecheck: latest entry `build OK` at 20:01:01 UTC. No manual build or typecheck executed. Sitemap generation completed; existing contractor-public-view fetch returned HTTP401 and its contractor sitemap is empty, unchanged from the starting version. Six campaign sitemap entries are present. No fabricated lastmod added.
+- Production checked once after the publication request: all six URLs returned HTTP200 but still rendered the old release (vision fallback, missing article, old press text, unavailable English pages). No production JavaScript page exception captured. **Campaign publication is not verified; the public deployment still served the old content at this check.** No assertion that waiting guarantees success.
+- Security publication check reports 83 existing critical findings; publication was nevertheless scheduled by the platform. None was changed or declared resolved.
