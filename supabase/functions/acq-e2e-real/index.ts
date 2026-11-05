@@ -20,7 +20,7 @@
 //  - cleanup_completed is true only when the deferred-cleanup stamp is verified.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { smsDeliveryConfirmed, funnelIncrementConfirmed, paymentProofError } from "./assertions.ts";
+import { smsDeliveryConfirmed, funnelIncrementConfirmed, testPaymentProofOk } from "./assertions.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -118,6 +118,88 @@ async function purgeExpiredFixtures() {
     .eq("onboarding_status", "synthetic")
     .like("business_name", "E2E __e2e_%")
     .lt("created_at", new Date(Date.now() - FIXTURE_RETENTION_DAYS * 864e5).toISOString());
+}
+
+// Phase B — verify a completed TEST payment for a previous run and, only when
+// every proof is real, record the summary pass the gate reads. Proofs required:
+//  1. steps 0-10 of that run all passed (read back from outreach_e2e_full_runs);
+//  2. Stripe readback: the run's own session is paid/complete, livemode=false,
+//     exactly 100 CAD, metadata.run_group + e2e matching;
+//  3. stripe_webhook_events holds a checkout.session.completed row for that
+//     exact session with livemode=false — inserted only after real Stripe
+//     signature verification by stripe-webhook;
+//  4. run_group-tagged funnel events exist;
+//  5. the QA fixture carries its deferred-cleanup expiration stamp.
+async function verifyPaymentPhase(run_group: string) {
+  const fail = (error: string, extra: Record<string, unknown> = {}) =>
+    new Response(JSON.stringify({ run_group, pass: false, phase: "verify_payment", error, ...extra }),
+      { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+
+  if (!STRIPE_TEST_KEY.startsWith("sk_test_")) return fail("no Stripe TEST key available");
+
+  const { data: steps } = await sb.from("outreach_e2e_full_runs")
+    .select("step,step_status,step_payload").eq("run_group", run_group).neq("step", "summary");
+  if (!steps?.length) return fail("unknown run_group — no steps recorded");
+  const byStep = new Map(steps.map((s: any) => [s.step, s]));
+  const notPassed = STEPS.slice(0, 11).filter((name) => (byStep.get(name) as any)?.step_status !== "pass");
+  if (notPassed.length) return fail(`prior run incomplete: steps not passed: ${notPassed.join(",")}`);
+  const sessionId = (byStep.get("stripe_test_checkout") as any)?.step_payload?.session_id as string | undefined;
+  if (!sessionId) return fail("prior run has no stripe session_id");
+
+  const auth = { Authorization: `Bearer ${STRIPE_TEST_KEY}` };
+  const got = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, { headers: auth });
+  const session = await got.json().catch(() => null);
+  if (!got.ok || !session) return fail(`Stripe retrieve HTTP ${got.status}`);
+
+  const { data: webhookRow } = await sb.from("stripe_webhook_events")
+    .select("id,stripe_event_id,event_type,session_id,livemode,success,received_at")
+    .eq("event_type", "checkout.session.completed").eq("session_id", sessionId).eq("livemode", false)
+    .order("received_at", { ascending: false }).limit(1).maybeSingle();
+
+  if (!testPaymentProofOk(session as any, webhookRow as any, { run_group, session_id: sessionId })) {
+    return fail(paymentProofPendingReason(session as any, webhookRow as any), {
+      session_status: (session as any)?.status ?? null,
+      payment_status: (session as any)?.payment_status ?? null,
+      livemode: (session as any)?.livemode ?? null,
+      webhook_received: Boolean(webhookRow),
+    });
+  }
+
+  const { count } = await sb.from("acquisition_events").select("id", { count: "exact", head: true })
+    .contains("metadata", { run_group } as any);
+  if (!funnelIncrementConfirmed(count)) return fail("0 acquisition_events carry this run_group");
+
+  const { data: link } = await sb.from("acquisition_tracking_links").select("id,metadata")
+    .eq("campaign", "__e2e_real").contains("metadata", { run_group } as any).limit(1).maybeSingle();
+  const stamped = Boolean((link as any)?.metadata?.e2e_expires_at);
+  if (!stamped) return fail("QA fixture missing deferred-cleanup expiration stamp");
+
+  await sb.from("outreach_e2e_full_runs").insert({
+    run_group, step_index: 99, step: "summary", step_status: "pass", pass: true,
+    cleanup_completed: true,
+    step_payload: {
+      two_phase: true, verified_at: new Date().toISOString(),
+      stripe_session_id: sessionId, stripe_event_id: (webhookRow as any)?.stripe_event_id ?? null,
+      amount_total: 100, currency: "cad", livemode: false,
+    },
+  });
+  await sb.rpc("evaluate_outreach_gate" as any);
+
+  return new Response(JSON.stringify({
+    run_group, pass: true, phase: "verify_payment",
+    stripe_session_id: sessionId, stripe_event_id: (webhookRow as any)?.stripe_event_id ?? null,
+    webhook_received_at: (webhookRow as any)?.received_at ?? null,
+  }), { headers: { ...cors, "Content-Type": "application/json" } });
+}
+
+function paymentProofPendingReason(session: any, webhookRow: any): string {
+  if (!session) return "stripe session unreadable";
+  if (session.livemode !== false) return "session is not TEST mode";
+  if (session.metadata?.run_group == null || session.metadata?.e2e !== "true") return "session missing e2e metadata";
+  if (session.payment_status !== "paid" || session.status !== "complete") return `payment not completed (status=${session.status}, payment_status=${session.payment_status})`;
+  if (session.amount_total !== 100 || session.currency !== "cad") return "amount/currency mismatch";
+  if (!webhookRow) return "signed webhook not received yet (no checkout.session.completed row for this session)";
+  return "webhook row mismatch";
 }
 
 Deno.serve(async (req) => {
