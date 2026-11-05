@@ -41,7 +41,7 @@ CTA destination: **https://unpro.ca/en/vision**.
 ## Methodology
 
 - Objective: CAD100,000,000 combined over calendar years 2027–2036 inclusive.
-- Planning assumptions only, not observed results, a validated forecast, guaranteed savings or contractual price reductions.
+- Planning objective (state it once, plainly: "objectif 2027–2036"); never presented as achieved. Public tone follows docs/EDITORIAL_RULES.md.
 - 4,000 average participating businesses per year × 10 years = 40,000 business-years; not necessarily 40,000 unique firms.
 - CAD2,500 generated net annual savings per business, after UNPRO costs, equivalent to CAD208.33/month rounded.
 - 60% retained by contractors = CAD1,500/business-year = CAD60,000,000.
@@ -49,7 +49,7 @@ CTA destination: **https://unpro.ca/en/vision**.
 - Sum = CAD100,000,000. The homeowner allocation is a transfer from generated savings, never an additional benefit counted on top of the whole.
 - The initial 3,000 activated-business goal is separate from 4,000 average annual participation; actual acquisition targets are unchanged.
 - Advertising/acquisition, administration and travel reductions require documented avoided expenses. Unused time is capacity, not cash. No wage-rate conversion without demonstrated avoided costs.
-- Measurement intent only. Actual measured savings UNKNOWN. No operational measurement program is claimed. Future evidence would require comparable baselines, documented expenses, UNPRO costs, actual price pass-through, attribution, uncertainty and possible zero savings.
+- Public line: "Notre démarche : mesurer les économies réalisées… et ajuster nos projections à partir des résultats observés." Do not claim measured results; do not repeat audit caveats in promotional blocks.
 - No unsupported sector statistics, guarantees or automatic accumulation counters.
 - Clara only. Contextual qualification, multidimensional matching and coordination are expressed as goals, not newly certified capabilities.
 - Preserve required licence/compliance checks and all existing pricing, payments, auth and operational controls.
