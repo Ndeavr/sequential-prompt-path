@@ -97,7 +97,7 @@ describe("prelaunch evidence — no external provider or database", () => {
         const body = url.includes("outreach-resend-send") ? { ok: true, resend_id: "fixture-email" }
           : url.includes("Messages") ? { sid: "fixture-sms", status: smsStatus }
           : url.includes("outreach-shortlink-resolve") ? { redirect_url: registered?.destination_url ?? "https://unpro.ca/" }
-          : { id: "cs_test_fixture", livemode: false, status: "expired" };
+          : { id: "cs_test_fixture", url: "https://checkout.stripe.test/fixture", livemode: false, status: "open", payment_status: "unpaid" };
         return new Response(JSON.stringify(body));
       },
     };
