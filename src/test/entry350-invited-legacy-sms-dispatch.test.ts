@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { entry350PaymentBlockReason } from "../../supabase/functions/_shared/checkoutGuards";
 import { readFileSync } from "node:fs";
 
 // Source-only P0 sentinel: no Stripe call, DB, user information, live charge,
@@ -103,5 +104,35 @@ describe("CAD 350 founder legacy checkout must use durable entry-pack fulfillmen
     expect(signedWebhook).toContain('if (session.metadata?.offer === "entry_pack_350") {');
     expect(signedWebhook).toContain('action: "entry_activation_350_paid"');
     // Source guard only: signed Stripe TEST + Auth/RLS E2E is still required.
+  });
+});
+
+// Pure synthetic guard: this does not call Stripe, create a sale, or test a
+// signed event in an isolated E2E environment.
+describe("CAD 350 net pretax fulfillment guard", () => {
+  it("rejects discounted non-PROMO sessions even if the subtotal is 35000", () => {
+    const fullPrice = {
+      payment_status: "paid", mode: "payment", currency: "cad",
+      amount_subtotal: 35000, amount_total: 40241,
+      total_details: { amount_tax: 5241, amount_discount: 0 },
+      metadata: { offer: "entry_pack_350" },
+    };
+    expect(entry350PaymentBlockReason(fullPrice)).toBeNull();
+    // Fail closed even if another charge masks a Stripe Checkout discount.
+    expect(entry350PaymentBlockReason({
+      ...fullPrice, total_details: { amount_tax: 5241, amount_discount: 100 },
+    })).toBe("ignored_amount_mismatch");
+    // Realistic $10 reduction also decreases the taxable amount.
+    expect(entry350PaymentBlockReason({
+      ...fullPrice, amount_total: 39103,
+      total_details: { amount_tax: 5103, amount_discount: 1000 },
+    })).toBe("ignored_amount_mismatch");
+    expect(entry350PaymentBlockReason({
+      ...fullPrice, metadata: { offer: "entry_pack_350", entry_tax_contract: "qc-exclusive-v1" },
+      total_details: { amount_tax: 5241, amount_discount: 100 },
+    })).toBe("ignored_amount_mismatch");
+    expect(entry350PaymentBlockReason({
+      ...fullPrice, payment_status: "no_payment_required", amount_total: 0,
+    })).toBe("ignored_unpaid");
   });
 });
