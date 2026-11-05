@@ -50,6 +50,13 @@ const TWILIO_FROM = normalizeE164(Deno.env.get("TWILIO_PHONE_NUMBER") ?? "");
 // No magic-number fallback (it can never deliver) and never a prospect number.
 const TWILIO_TEST_TO = normalizeE164(Deno.env.get("TWILIO_TEST_TO") ?? Deno.env.get("ADMIN_TEST_PHONE") ?? "");
 const TWILIO_MSG_SVC = (Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") ?? "").trim();
+// Canonical signed status callback (same as _shared/twilioSend.ts) so the real
+// Twilio delivery webhook records this test SMS in sms_events_v2 — canonical
+// evidence, never a synthetic health update.
+const SMS_STATUS_CALLBACK_SECRET = Deno.env.get("SMS_STATUS_CALLBACK_SECRET") ?? "";
+const SIGNED_STATUS_CALLBACK_URL = SMS_STATUS_CALLBACK_SECRET
+  ? `${SUPABASE_URL}/functions/v1/twilio-status-v2?token=${encodeURIComponent(SMS_STATUS_CALLBACK_SECRET)}`
+  : "";
 // The tracked link must point at the real public frontend QA page; the test
 // verifies that exact destination (redirect target + deployed route marker).
 const PUBLIC_SITE = "https://unpro.ca";
