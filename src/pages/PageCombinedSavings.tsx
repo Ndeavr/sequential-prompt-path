@@ -19,6 +19,8 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
   const title = kind === 'vision' ? copy.headline : kind === 'article' ? copy.articleTitle : copy.pressTitle;
   const totals = calculateCombinedSavings();
   const money = (n: number) => new Intl.NumberFormat(lang === 'fr' ? 'fr-CA' : 'en-CA', { maximumFractionDigits: 0 }).format(n);
+  const frCreative = lang === 'fr' && kind === 'vision';
+  const creativePath = '/campaigns/unpro-100-millions-ia.png';
   const sectionClass = 'border-t border-border py-10 md:py-14 space-y-5';
   return <div className="landing-warm min-h-screen bg-background text-foreground" lang={lang === 'fr' ? 'fr-CA' : 'en-CA'}>
     <Helmet>
@@ -33,6 +35,11 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
       <meta property="og:type" content={kind === 'vision' ? 'website' : 'article'} />
       <meta property="og:url" content={url} />
       <meta property="og:locale" content={lang === 'fr' ? 'fr_CA' : 'en_CA'} />
+      {frCreative && <meta property="og:image" content={`https://unpro.ca${creativePath}`} />}
+      {frCreative && <meta property="og:image:width" content="1122" />}
+      {frCreative && <meta property="og:image:height" content="1402" />}
+      {frCreative && <meta property="og:image:alt" content="UNPRO — 100 millions $ — Et si on économisait ensemble?" />}
+      {frCreative && <meta name="twitter:image" content={`https://unpro.ca${creativePath}`} />}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={`${title} | UNPRO`} />
       <meta name="twitter:description" content={copy.intro} />
@@ -56,7 +63,7 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
           <Button variant="ghost" asChild><Link to={paths.press}>{copy.pressLabel}</Link></Button>
         </nav>
       </div>
-      <figure className="mx-auto max-w-6xl px-5"><img src={campaignPhoto} alt={lang === 'fr' ? 'Travaux de rénovation résidentielle' : 'Residential renovation work'} className="aspect-[3/1] min-h-44 w-full object-cover" /></figure>
+      {frCreative ? <figure className="mx-auto max-w-md px-5"><img src={creativePath} width={1122} height={1402} alt="UNPRO — 100 millions $. Et si on économisait ensemble? Grâce à l’intelligence artificielle d’UNPRO. Entrepreneurs : moins de dépenses. Propriétaires : plus d’économies." className="h-auto w-full" /><figcaption className="mt-3 text-sm"><a href={creativePath} download="unpro-100-millions-ia.png" className="font-semibold text-primary underline">Télécharger le visuel de campagne (PNG)</a></figcaption></figure> : <figure className="mx-auto max-w-6xl px-5"><img src={campaignPhoto} alt={lang === 'fr' ? 'Travaux de rénovation résidentielle' : 'Residential renovation work'} className="aspect-[3/1] min-h-44 w-full object-cover" /></figure>}
       <div className="mx-auto max-w-6xl px-5">
         <section className={`${sectionClass} mt-10 grid gap-10 md:grid-cols-2`} aria-label={lang === 'fr' ? 'Deux bénéficiaires' : 'Two beneficiaries'}>
           <div className="space-y-4"><p className="text-5xl font-semibold text-primary">60 M$</p><h2 className="text-2xl font-semibold">{copy.entrepreneurTitle}</h2><p className="leading-relaxed">{copy.entrepreneurBody}</p><Button asChild><Link to="/entrepreneur/plan-personnalise?from=vision" onClick={() => setLang(lang)}>{copy.entrepreneurCta}<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
