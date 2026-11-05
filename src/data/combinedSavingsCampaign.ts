@@ -5,7 +5,7 @@ export const SAVINGS_MODEL = {
   measuredSavings: null,
 } as const;
 
-export function calculateCombinedSavings(businesses = SAVINGS_MODEL.averageBusinesses, annual = SAVINGS_MODEL.annualNetSavings, years = SAVINGS_MODEL.years) {
+export function calculateCombinedSavings(businesses: number = SAVINGS_MODEL.averageBusinesses, annual: number = SAVINGS_MODEL.annualNetSavings, years: number = SAVINGS_MODEL.years) {
   const generated = businesses * annual * years;
   return { businessYears: businesses * years, generated, entrepreneur: generated * SAVINGS_MODEL.entrepreneurShare, homeowner: generated * SAVINGS_MODEL.homeownerShare, monthly: annual / 12 };
 }
