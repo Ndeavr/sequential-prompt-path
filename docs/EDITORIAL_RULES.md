@@ -16,6 +16,11 @@ Applies to the site, articles, press releases, ads, SEO metadata, Clara public c
 - Never fabricate verification, testimonials, savings, results or functionality.
 - One honest, short label (e.g. "Objectif 2027–2036") is enough. Put assumptions **once** in a readable methodology/FAQ section.
 
+## Objective wording
+- The label alone is enough: "Notre objectif : 100 millions $ d'économies d'ici 2036."
+- Never append a defensive negation after "notre objectif / notre ambition": no "pas un résultat déjà acquis", "not already achieved", "pas encore atteint", "Non, pas encore".
+- FAQ questions are framed positively ("Où en est l'objectif?"), not as "Est-ce déjà fait? Non."
+
 ## Remove from promotional copy
 Internal audit formulations do not belong in heroes, articles, campaign blocks, SEO, ads or scripts:
 "pas une prévision validée", "aucun programme de mesure opérationnel", "économies réelles inconnues",
