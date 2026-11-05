@@ -381,6 +381,7 @@ const PropertyGraphPage = lazyWithRetry(() => import("@/pages/PropertyGraphPage"
 const PagePasseportMaison = lazyWithRetry(() => import("@/pages/PagePasseportMaison"));
 const AlexChat = lazyWithRetry(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazyWithRetry(() => import("@/pages/AuthorityDashboardPage"));
+const PageCombinedSavings = lazyWithRetry(() => import("@/pages/PageCombinedSavings"));
 const PressRelease = lazyWithRetry(() => import("@/pages/PressRelease"));
 const AlexVoicePage = lazyWithRetry(() => import("@/pages/AlexVoicePage"));
 const AlexVoiceRealtimePage = lazyWithRetry(() => import("@/pages/AlexVoiceRealtimePage"));
@@ -1257,6 +1258,11 @@ export const AppRouter = () => (
         <Route path="/carte" element={<PropertyMapPage />} />
         <Route path="/flywheel" element={<FlywheelPage />} />
         <Route path="/communique" element={<PressRelease />} />
+        <Route path="/vision" element={<PageCombinedSavings />} />
+        <Route path="/en/vision" element={<PageCombinedSavings />} />
+        <Route path="/articles/economiser-ensemble" element={<PageCombinedSavings kind="article" />} />
+        <Route path="/en/articles/saving-together" element={<PageCombinedSavings kind="article" />} />
+        <Route path="/en/press-release" element={<PressRelease />} />
         <Route path="/authority" element={<AuthorityDashboardPage />} />
         <Route path="/energy" element={<EnergyPage />} />
         <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
