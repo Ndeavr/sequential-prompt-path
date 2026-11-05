@@ -32,6 +32,7 @@ const SUPABASE_KEY =
 // dynamic sitemap below.
 // --------------------------------------------------------------------------
 const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] = [
+  ...["/vision", "/en/vision", "/articles/economiser-ensemble", "/en/articles/saving-together", "/communique", "/en/press-release"].map(path => ({ path, changefreq: "monthly", priority: "0.8" })),
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/alex", changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },
@@ -215,9 +216,8 @@ async function buildContractors() {
 // Sitemap index
 // --------------------------------------------------------------------------
 function buildIndex(children: string[]) {
-  const now = new Date().toISOString();
   const entries = children.map(
-    (c) => `  <sitemap>\n    <loc>${BASE_URL}/${c}</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`,
+    (c) => `  <sitemap>\n    <loc>${BASE_URL}/${c}</loc>\n  </sitemap>`,
   );
   const xml = `${xmlHeader("sitemapindex")}\n${entries.join("\n")}\n</sitemapindex>\n`;
   writeFileSync(resolve("public/sitemap.xml"), xml);
