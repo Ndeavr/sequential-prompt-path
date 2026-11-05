@@ -71,7 +71,6 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
         </section>
         <section id="modele" className={`${sectionClass} scroll-mt-5`}>
           <h2 className="text-3xl font-semibold">{copy.methodTitle}</h2>
-          <p className="font-semibold">{copy.unknown}</p>
           <div role="img" aria-label={copy.transfer} className="flex h-10 w-full overflow-hidden"><div className="flex w-3/5 items-center justify-center bg-primary text-primary-foreground font-semibold">60 %</div><div className="flex w-2/5 items-center justify-center bg-success text-success-foreground font-semibold">40 %</div></div>
           <p className="text-lg font-semibold leading-relaxed">{copy.formula}</p>
           <p className="leading-relaxed">{copy.participation}</p><p className="leading-relaxed">{copy.net}</p><p className="leading-relaxed">{copy.transfer}</p>
