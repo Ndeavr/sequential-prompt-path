@@ -263,11 +263,29 @@ Deno.serve(async (req) => {
     if (!/^\+\d{10,15}$/.test(TWILIO_TEST_TO)) return { error: "internal_test_destination_missing", repair: "Configure ADMIN_TEST_PHONE (internal, owner-authorized) in E.164" };
     const body = new URLSearchParams({ To: TWILIO_TEST_TO, Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
     if (TWILIO_MSG_SVC.startsWith("MG")) body.set("MessagingServiceSid", TWILIO_MSG_SVC); else body.set("From", TWILIO_FROM);
+    if (SIGNED_STATUS_CALLBACK_URL) body.set("StatusCallback", SIGNED_STATUS_CALLBACK_URL);
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
       method: "POST", headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" }, body,
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return { error: `Twilio HTTP ${r.status}: ${(j as any)?.message ?? ""}`, repair: "Verify Twilio credentials + sender number" };
+    // Canonical audit row (same table the production sender uses) so the real
+    // Twilio status webhook can record delivery — twilio-status-v2 only updates
+    // pre-existing SIDs. This is a real send with a real SID, not a synthetic row.
+    if ((j as any)?.sid) {
+      await sb.from("sms_events_v2").insert({
+        message_type: "test",
+        normalized_phone: TWILIO_TEST_TO,
+        from_number: TWILIO_FROM || null,
+        twilio_sid: (j as any).sid,
+        status: "queued",
+        attempt_number: 1,
+        sent_at: new Date().toISOString(),
+        status_callback_url: SIGNED_STATUS_CALLBACK_URL || null,
+        metadata: { run_group, e2e: true, source: "acq-e2e-real" },
+        provider_response: { twilio_accept: j },
+      });
+    }
     return { payload: { sid: (j as any).sid, status: (j as any).status, to: TWILIO_TEST_TO } };
   });
 
@@ -352,8 +370,11 @@ Deno.serve(async (req) => {
     return { error: "QA route marker absent from published bundle — route not deployed", repair: "Publish frontend with /qa/e2e-fixture route" };
   });
 
-  // 12 — Stripe TEST checkout: create + retrieve + expire a real TEST Checkout
-  // Session. A live key or a mere balance GET never counts as a pass.
+  // 12 — Stripe TEST checkout, phase A: create a real TEST Checkout Session
+  // tied to this run and LEAVE IT OPEN so a human can complete it with a test
+  // card. The run honestly fails with `awaiting_test_payment` until phase B
+  // (verify_run_group) confirms BOTH the paid TEST session readback AND the
+  // signature-verified webhook row. Connectivity alone never passes.
   await step(11, async () => {
     if (!STRIPE_TEST_KEY.startsWith("sk_test_")) return {
       error: "no Stripe TEST key available (STRIPE_TEST_SECRET_KEY missing and STRIPE_SECRET_KEY is not sk_test_*)",
@@ -365,27 +386,24 @@ Deno.serve(async (req) => {
       success_url: `${fixtureUrl}&ok=1`,
       cancel_url: fixtureUrl,
       "line_items[0][price_data][currency]": "cad",
-      "line_items[0][price_data][product_data][name]": "UNPRO E2E selftest (no charge)",
+      "line_items[0][price_data][product_data][name]": "UNPRO E2E selftest (QA 1 $ TEST)",
       "line_items[0][price_data][unit_amount]": "100",
       "line_items[0][quantity]": "1",
       "metadata[run_group]": run_group,
       "metadata[e2e]": "true",
+      "payment_intent_data[metadata][run_group]": run_group,
+      "payment_intent_data[metadata][e2e]": "true",
     });
     const created = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: auth, body: createBody });
     const cj = await created.json().catch(() => ({}));
     if (!created.ok || !(cj as any)?.id) return { error: `Stripe create HTTP ${created.status}: ${(cj as any)?.error?.message ?? ""}`, repair: "Check STRIPE_TEST_SECRET_KEY" };
     if ((cj as any).livemode !== false) return { error: "checkout session created in LIVE mode — aborting", repair: "Use a sk_test_ key only" };
     const sid = (cj as any).id as string;
-    const got = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sid}`, { headers: auth });
-    await got.text();
-    if (!got.ok) return { error: `Stripe retrieve HTTP ${got.status}`, repair: "Check Stripe test connectivity" };
-    const exp = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sid}/expire`, { method: "POST", headers: auth });
-    const ej = await exp.json().catch(() => ({}));
-    if (!exp.ok) return { error: `Stripe expire HTTP ${exp.status}`, repair: "Expire the test session manually in Stripe dashboard" };
+    const checkoutUrl = (cj as any).url as string;
     return {
-      error: paymentProofError(),
-      repair: "Run isolated QA with a completed TEST payment and a genuinely received signed webhook; connectivity alone cannot release outreach",
-      payload: { session_id: sid, livemode: false, final_status: (ej as any)?.status ?? "expired", charged: false, connectivity_verified: true, signed_payment_verified: false },
+      error: `awaiting_test_payment: session ${sid} created and left open`,
+      repair: `Complete the TEST payment at the checkout_url (Stripe test card 4242 4242 4242 4242), then re-invoke this function with {"verify_run_group":"${run_group}"}`,
+      payload: { session_id: sid, checkout_url: checkoutUrl, livemode: false, amount_total: 100, currency: "cad", run_group, phase: "awaiting_payment" },
     };
   });
 
