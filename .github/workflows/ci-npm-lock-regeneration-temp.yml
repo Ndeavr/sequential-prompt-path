@@ -1,0 +1,40 @@
+# Temporary, branch-scoped bootstrap to regenerate npm lock deterministically.
+# This file deletes itself from the resulting change; no production deployment.
+name: Temporary UNPRO npm lock regeneration
+on:
+  push:
+    branches:
+      - fix/ci-npm-lock-20261105
+permissions:
+  contents: write
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Regenerate npm lock without package scripts and prove npm ci
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          test "$(git diff --name-only)" = "package-lock.json" || {
+            echo "::error::Lock repair changed files other than package-lock.json"
+            git diff --name-only
+            exit 1
+          }
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Commit only regenerated lockfile and remove bootstrap
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git rm --quiet .github/workflows/ci-npm-lock-regeneration-temp.yml
+          git diff --cached --check
+          git commit -m 'fix(ci): regenerate npm lock for Lovable dev plugins'
+          git push origin HEAD:refs/heads/fix/ci-npm-lock-20261105
