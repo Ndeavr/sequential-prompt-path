@@ -3,6 +3,7 @@
 Applies repo-wide.
 
 <!-- LOVABLE:BEGIN -->
+- Public copy follows [docs/EDITORIAL_RULES.md](docs/EDITORIAL_RULES.md): benefit, mechanism, action; targets never shown as achieved; audit caveats stay out of promotional copy. Why: defensive internal wording was hurting conversion without adding truth.
 - The combined-savings campaign shares one file-backed bilingual model and renderer across vision, editorial and press routes; /impact remains a separate per-journey scenario. Why: prevent divergent financial claims without changing product data.
 - Clara uses one bounded audience-history selector over canonical messages; role switches suspend workflows without rotating sessions. Why: preserve follow-ups without audience leakage.
 - Public addresses reuse guest ownership and the existing quota RPC, explicit origins and minimal fields. Why: no open Google proxy.
