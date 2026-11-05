@@ -211,6 +211,12 @@ Deno.serve(async (req) => {
   const reqBody = await req.json().catch(() => ({}));
   const emailOnly = (reqBody as any)?.channels === "email";
 
+  // Phase B entry: verify a completed TEST payment for an earlier run.
+  const verifyRunGroup = (reqBody as any)?.verify_run_group;
+  if (typeof verifyRunGroup === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(verifyRunGroup)) {
+    return await verifyPaymentPhase(verifyRunGroup);
+  }
+
   const run_group = crypto.randomUUID();
   const synthId = crypto.randomUUID();
   const slug = `__e2e_${run_group.slice(0, 8)}`;
@@ -539,8 +545,14 @@ Deno.serve(async (req) => {
 
   await sb.rpc("evaluate_outreach_gate" as any);
 
+  const awaitingPayment = (failed?.step === "stripe_test_checkout" && (failed.payload as any)?.checkout_url)
+    ? { run_group, checkout_url: (failed.payload as any).checkout_url, session_id: (failed.payload as any).session_id,
+        next: `Complete the TEST payment, then POST {"verify_run_group":"${run_group}"}` }
+    : null;
+
   return new Response(JSON.stringify({
     run_group, pass, email_only: emailOnly, email_channel_pass, total_ms,
+    awaiting_payment: awaitingPayment,
     failed_step: failed ? { index: failed.index + 1, step: failed.step, error: failed.error, repair: failed.repair } : null,
     steps: results,
   }), { headers: { ...cors, "Content-Type": "application/json" } });
