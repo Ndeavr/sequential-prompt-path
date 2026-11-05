@@ -97,6 +97,8 @@ Deno.serve(async (req) => {
         },
       },
       metadata: {
+        // The signed webhook grants the durable 12-month entry entitlement only for this canonical offer.
+        offer: "entry_pack_350",
         offer_code: "pack_350",
         offer_kind: "pack_350",
         user_id: userId ?? "",
