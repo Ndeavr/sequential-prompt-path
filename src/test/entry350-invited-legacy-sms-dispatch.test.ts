@@ -63,3 +63,21 @@ describe("CAD 350 invited checkout must not enter legacy SMS $1 fulfillment", ()
     expect(legacyCode).toMatch(/session\.metadata\?\.offer_kind\s*!==\s*["']pack_350["']/);
   });
 });
+
+
+// Additional source-only guard for the active UI. A real Stripe TEST/Auth/RLS
+// signed-webhook E2E gate remains required before any live payment change.
+describe("CAD 350 active founder payment screen", () => {
+  it("does not reintroduce guest founder checkout before canonical activation", () => {
+    const screen = readFileSync("src/pages/entrepreneur/activation/ScreenPayment.tsx", "utf8");
+    const start = screen.indexOf("const handlePay = async () => {");
+    const nextPath = screen.indexOf("setProcessing(true);", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(nextPath).toBeGreaterThan(start);
+    const founderPath = screen.slice(start, nextPath);
+    expect(founderPath).toContain("if (isFounder) {");
+    expect(founderPath).toMatch(/navigate\(buildActivation350Links\(searchParams\)\.activate\);\s*return;/);
+    expect(founderPath).not.toContain("create-founder-activation-checkout");
+    expect(founderPath).not.toContain("create-stripe-checkout-session");
+  });
+});
