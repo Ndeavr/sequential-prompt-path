@@ -43,7 +43,7 @@ export const CAMPAIGN_COPY = {
     risk: 'Les licences requises, l’assurance, la qualité du travail et les besoins du bâtiment restent prioritaires. Une baisse de coût ne justifie pas de contourner les vérifications.',
     homeownerCta: 'Parler à Clara', entrepreneurCta: 'Définir mes objectifs', faqTitle: 'Les questions essentielles',
     faqs: [
-      ['Les 100 millions $ ont-ils déjà été économisés?', 'Non. C’est notre objectif pour 2027–2036. Nous ajusterons nos projections à partir des résultats observés.'],
+      ['Où en est l’objectif de 100 millions $?', 'C’est notre objectif pour 2027–2036. Nous ajusterons nos projections à partir des résultats observés.'],
       ['Qui profite des économies?', 'Le scénario attribue 60 % aux entrepreneurs et 40 % aux propriétaires par une répercussion dans les prix.'],
       ['Chaque projet économise-t-il 1 000 $?', 'Non. Les 1 000 $ représentent la part annuelle d’une entreprise, répartie sur tous ses projets.'],
       ['Comment vérifier des économies nettes?', 'Comparer des dépenses documentées à une référence pertinente, soustraire les coûts UNPRO et distinguer coûts évités, temps disponible et changements attribuables à d’autres facteurs.'],
@@ -77,7 +77,7 @@ export const CAMPAIGN_COPY = {
     risk: 'Required licences, insurance, work quality and building needs remain priorities. Lower costs never justify skipping verification.',
     homeownerCta: 'Talk to Clara', entrepreneurCta: 'Define my goals', faqTitle: 'Essential questions',
     faqs: [
-      ['Has $100 million already been saved?', 'No. It is our objective for 2027–2036. We will adjust our projections based on observed results.'],
+      ['Where does the $100 million objective stand?', 'It is our objective for 2027–2036. We will adjust our projections based on observed results.'],
       ['Who benefits?', 'The scenario allocates 60% to contractors and 40% to homeowners through prices.'],
       ['Does every project save $1,000?', 'No. $1,000 is one business’s annual pass-through across all its projects.'],
       ['How can net savings be verified?', 'Compare documented expenses against a relevant baseline, subtract UNPRO costs and separate avoided expenses, available time and changes caused by other factors.'],
