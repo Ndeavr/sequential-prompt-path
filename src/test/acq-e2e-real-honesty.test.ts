@@ -75,11 +75,13 @@ describe("acq-e2e-real — Stripe réellement TEST", () => {
     expect(e2e).toContain("live keys are refused");
   });
 
-  it("crée, relit et expire une vraie session Checkout TEST (aucun prélevement)", () => {
+  it("crée une session Checkout TEST puis exige une preuve de paiement distincte", () => {
     expect(e2e).toContain("api.stripe.com/v1/checkout/sessions");
     expect(e2e).toContain("/expire");
     expect(e2e).toContain("livemode !== false");
-    expect(e2e).toContain("charged: false");
+    expect(e2e).toContain("awaiting_test_payment");
+    expect(e2e).toContain("verify_run_group");
+    expect(e2e).toContain("testPaymentProofOk(");
   });
 
   it("un simple GET balance ne suffit plus", () => {

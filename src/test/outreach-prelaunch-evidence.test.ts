@@ -97,7 +97,7 @@ describe("prelaunch evidence — no external provider or database", () => {
         const body = url.includes("outreach-resend-send") ? { ok: true, resend_id: "fixture-email" }
           : url.includes("Messages") ? { sid: "fixture-sms", status: smsStatus }
           : url.includes("outreach-shortlink-resolve") ? { redirect_url: registered?.destination_url ?? "https://unpro.ca/" }
-          : { id: "cs_test_fixture", livemode: false, status: "expired" };
+          : { id: "cs_test_fixture", url: "https://checkout.stripe.test/fixture", livemode: false, status: "open", payment_status: "unpaid" };
         return new Response(JSON.stringify(body));
       },
     };
@@ -106,7 +106,11 @@ describe("prelaunch evidence — no external provider or database", () => {
     const result = await (await handler(new Request("https://example.test", { method: "POST" }))).json();
     expect(result.pass).toBe(false);
     expect(result.failed_step.step).toBe(smsStatus === "queued" ? "verify_sms_delivered" : "stripe_test_checkout");
-    if (smsStatus === "delivered") expect(result.failed_step.error).toContain("signed_test_payment_unverified");
+    if (smsStatus === "delivered") {
+      expect(result.failed_step.error).toContain("awaiting_test_payment");
+      expect(result.awaiting_payment?.session_id).toBe("cs_test_fixture");
+      expect(result.awaiting_payment?.next).toContain("verify_run_group");
+    }
     expect(rows.some(row => (row as { pass?: boolean }).pass === true)).toBe(false);
   });
 });
