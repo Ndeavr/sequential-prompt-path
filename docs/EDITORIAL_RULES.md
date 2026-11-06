@@ -45,3 +45,9 @@ Internal audit formulations do not belong in heroes, articles, campaign blocks, 
 - Homeowners: lead with finding the right professional, a clearer project and value for the property.
 - The 100-million-dollar objective expresses the collective vision; it does not replace the contractor product explanation.
 - Within the first screen and next section, explain who the product serves, what Clara does, what registration provides and the next action. Preserve actual appointment entitlements at the purchase decision.
+
+## Contractor language and the 100M campaign
+- Talk like the customer: « soumissions pour rien », « déplacements inutiles », « mandats que tu veux », « tes spécialités, ton territoire, tes préférences ». Explain what better profitability means for time, energy and expenses.
+- Describe poor project fit without calling people worthless. Avoid abstract phrases such as « rechercher une compatibilité » when « chercher le bon match » explains it.
+- Keep the 100-million-dollar shared-savings objective visible in both campaign variants. Entrepreneurs: suitable profitable work. Homeowners: the right pro without chasing three quotes.
+- The homeowner message removes a chore; it does not prohibit comparing quotes or promise that every project has a match.

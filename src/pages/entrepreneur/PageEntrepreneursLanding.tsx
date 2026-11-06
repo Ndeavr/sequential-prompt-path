@@ -53,6 +53,11 @@ const PageEntrepreneursLanding = () => {
             <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
           </div>
         </section>
+        <section className="mx-auto max-w-4xl px-5 pb-10">
+          <h2 className="text-2xl font-semibold">{fr ? "100 millions $ : notre objectif d’économies partagées" : "$100 million: our shared savings objective"}</h2>
+          <p className="mt-3 text-muted-foreground">{fr ? "Moins de soumissions et de déplacements pour rien. Plus de temps pour les bons mandats. Des coûts réduits dont les propriétaires peuvent aussi profiter. Voilà la vision qui nous rassemble." : "Fewer wasted quotes and trips. More time for the right jobs. Lower costs that homeowners can benefit from too. That is our shared vision."}</p>
+          <Link to={fr ? "/vision" : "/en/vision"} className="mt-4 inline-block font-semibold text-primary underline">{fr ? "Découvre notre objectif de 100 millions $" : "Explore our $100 million objective"}</Link>
+        </section>
         <div className="mx-auto max-w-4xl px-5 pb-12">
           <Link
             to={campaignLink("/entrepreneurs/rendez-vous-intelligents", search)}

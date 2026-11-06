@@ -20,7 +20,7 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
   const totals = calculateCombinedSavings();
   const money = (n: number) => new Intl.NumberFormat(lang === 'fr' ? 'fr-CA' : 'en-CA', { maximumFractionDigits: 0 }).format(n);
   const frCreative = lang === 'fr' && kind === 'vision';
-  const creativePath = '/campaigns/unpro-100-millions-ia.png';
+  const creativePath = '/campaigns/unpro-100m-proprietaires.webp';
   const sectionClass = 'border-t border-border py-10 md:py-14 space-y-5';
   return <div className="landing-warm min-h-screen bg-background text-foreground" lang={lang === 'fr' ? 'fr-CA' : 'en-CA'}>
     <Helmet>
@@ -63,7 +63,12 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
           <Button variant="ghost" asChild><Link to={paths.press}>{copy.pressLabel}</Link></Button>
         </nav>
       </div>
-      {frCreative ? <figure className="mx-auto max-w-md px-5"><img src={creativePath} width={1122} height={1402} alt="UNPRO — 100 millions $. Et si on économisait ensemble? Grâce à l’intelligence artificielle d’UNPRO. Entrepreneurs : moins de dépenses. Propriétaires : plus d’économies." className="h-auto w-full" /><figcaption className="mt-3 text-sm"><a href={creativePath} download="unpro-100-millions-ia.png" className="font-semibold text-primary underline">Télécharger le visuel de campagne (PNG)</a></figcaption></figure> : <figure className="mx-auto max-w-6xl px-5"><img src={campaignPhoto} alt={lang === 'fr' ? 'Travaux de rénovation résidentielle' : 'Residential renovation work'} className="aspect-[3/1] min-h-44 w-full object-cover" /></figure>}
+      {frCreative ? <div className="mx-auto grid max-w-5xl gap-6 px-5 md:grid-cols-2">
+        {[
+          { path: '/campaigns/unpro-100m-entrepreneurs.webp', audience: 'Entrepreneurs', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Moins de soumissions pour rien. Plus de mandats faits pour toi.' },
+          { path: creativePath, audience: 'Propriétaires', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Ton projet. Le bon pro. Sans courir après trois soumissions.' },
+        ].map(({ path, audience, alt }) => <figure key={path}><img src={path} width={1122} height={1402} alt={alt} className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm"><a href={path} download className="font-semibold text-primary underline">{audience} : télécharger le visuel</a></figcaption></figure>)}
+      </div> : <figure className="mx-auto max-w-6xl px-5"><img src={campaignPhoto} alt={lang === 'fr' ? 'Travaux de rénovation résidentielle' : 'Residential renovation work'} className="aspect-[3/1] min-h-44 w-full object-cover" /></figure>}
       <div className="mx-auto max-w-6xl px-5">
         <section className={`${sectionClass} mt-10 grid gap-10 md:grid-cols-2`} aria-label={lang === 'fr' ? 'Deux bénéficiaires' : 'Two beneficiaries'}>
           <div className="space-y-4"><p className="text-5xl font-semibold text-primary">60 M$</p><h2 className="text-2xl font-semibold">{copy.entrepreneurTitle}</h2><p className="leading-relaxed">{copy.entrepreneurBody}</p><Button asChild><Link to="/entrepreneur/plan-personnalise?from=vision" onClick={() => setLang(lang)}>{copy.entrepreneurCta}<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>

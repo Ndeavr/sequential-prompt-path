@@ -78,11 +78,11 @@ export default function HeroV2({ onTrackCta }: Props) {
       >
         <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground leading-[1.1] tracking-tight">
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {fr ? "Développez votre entreprise avec les bons projets." : "Grow your business with the right projects."}
+            {fr ? "Moins de soumissions pour rien. Plus de mandats faits pour toi." : "Less time quoting the wrong jobs. More work that fits you."}
           </span>
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
-          {fr ? "UNPRO rapproche les propriétaires et les professionnels. Clara recueille les besoins des clients et recherche une compatibilité avec vos spécialités, votre territoire et vos préférences. L’objectif : concentrer vos efforts sur les projets qui font avancer votre entreprise." : "UNPRO connects homeowners with professionals. Clara gathers project needs and looks for a fit with your specialties, service area and preferences. The goal: focus your effort on projects that help your business grow."}
+          {fr ? "Tanné de courir après des prospects trop loin, hors de tes spécialités ou pour des travaux que tu ne veux pas faire? Clara pose les questions aux propriétaires et cherche le bon match avec TON entreprise. Mets ton énergie sur les mandats qui te conviennent." : "Tired of chasing prospects outside your area, your specialties or the work you want to do? Clara asks homeowners about their projects and looks for the right fit with YOUR business. Put your energy into jobs that work for you."}
         </p>
         <p className="mt-3 text-xs font-semibold text-primary/90">
           {fr ? "Rénovation–Construction · Entretien · Immobilier" : "Renovation–Construction · Property care · Real estate"}
@@ -113,7 +113,7 @@ export default function HeroV2({ onTrackCta }: Props) {
           {fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          {fr ? "Vos spécialités, votre territoire, vos objectifs : construisons votre plan." : "Your specialties, service area and goals shape your plan."}
+          {fr ? "Ton temps. Ton énergie. Tes profits. Commençons par les mandats que tu veux." : "Your time. Your energy. Your profit. Start with the jobs you want."}
         </p>
       </motion.div>
 
