@@ -30,26 +30,26 @@ const PageEntrepreneursLanding = () => {
   return (
     <>
       <Helmet>
-        <title>{fr ? "Professionnels et entreprises — Immobilier, entretien, rénovation | UNPRO" : "Professionals and businesses — Real estate, maintenance, renovation | UNPRO"}</title>
+        <title>{fr ? "Les bons projets pour développer votre entreprise | UNPRO" : "Grow your business with the right projects | UNPRO"}</title>
         <meta
           name="description"
-          content={fr ? "Courtiers, professionnels, entreprises d’entretien et rénovateurs : découvrez votre audit et votre profil UNPRO. Professions réglementées sous examen." : "Brokers, property professionals, maintenance companies and renovators: discover your UNPRO audit and profile. Regulated professions subject to review."}
+          content={fr ? "Rénovation–Construction, entretien et immobilier : présentez vos spécialités à UNPRO. Clara recherche une compatibilité entre les projets des propriétaires et votre entreprise." : "Renovation–Construction, property care and real estate: introduce your specialties to UNPRO. Clara looks for a fit between homeowner projects and your business."}
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs" />
       </Helmet>
 
       <div className="min-h-screen bg-background pb-24 lg:pb-0">
         <HeroV2 onTrackCta={trackCta} />
-        <SectionPainV2 />
-        <SectionSolutionV2 />
         <SectionHowItWorksV2 />
+        <SectionSolutionV2 />
+        <SectionPainV2 />
         <section className="mx-auto max-w-4xl px-5 py-10">
-          <h2 className="text-2xl font-semibold">{fr ? "Un plan à la mesure de vos objectifs" : "A plan built around your goals"}</h2>
-          <p className="mt-3 text-base text-muted-foreground">{fr ? "Parlez-nous de vos spécialités, de votre territoire et de votre capacité à prendre de nouveaux mandats." : "Tell us about your specialties, territory and capacity for new projects."}</p>
-          <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous examinez ensuite le contenu du plan, les rendez-vous inclus s’il y a lieu et le prix complet avant de décider." : "Then review the plan, any included appointments and the full price before deciding."}</p>
+          <h2 className="text-2xl font-semibold">{fr ? "Ce que votre inscription vous apporte" : "What your registration provides"}</h2>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "L’activation de base comprend votre profil entreprise et 12 mois de présence IA sur UNPRO. Votre profil rassemble vos services, votre expertise, vos territoires et les mandats que vous recherchez." : "Base activation includes your business profile and 12 months of AI presence on UNPRO. Your profile brings together your services, expertise, service areas and preferred projects."}</p>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous choisissez ensuite le plan adapté à vos objectifs. Son prix complet et les rendez-vous inclus, s’il y a lieu, sont présentés avant le paiement." : "Choose the plan that fits your goals. You see the full price and any included appointments before payment."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" })}>{fr ? "Définir mes objectifs" : "Set my goals"}</Link></Button>
+            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" })}>{fr ? "Définir les projets que je veux" : "Define my ideal projects"}</Link></Button>
             <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
           </div>
         </section>

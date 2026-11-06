@@ -39,3 +39,9 @@ Internal audit formulations do not belong in heroes, articles, campaign blocks, 
 
 ## Approved formulation
 "Notre démarche : mesurer les économies réalisées grâce à l'intelligence artificielle d'UNPRO et ajuster nos projections à partir des résultats observés."
+
+## Audience priorities
+- Entrepreneurs: lead with suitable contracts, business growth, sales performance and profitability. Explain Clara’s matching mechanism immediately. Time and cost savings support that outcome.
+- Homeowners: lead with finding the right professional, a clearer project and value for the property.
+- The 100-million-dollar objective expresses the collective vision; it does not replace the contractor product explanation.
+- Within the first screen and next section, explain who the product serves, what Clara does, what registration provides and the next action. Preserve actual appointment entitlements at the purchase decision.
