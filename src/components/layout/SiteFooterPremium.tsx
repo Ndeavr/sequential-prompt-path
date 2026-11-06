@@ -17,6 +17,7 @@ const HOMEOWNER_LINKS: FooterLink[] = [
 ];
 
 const CONTRACTOR_LINKS: FooterLink[] = [
+  { label: "Améliorer ma visibilité IA", to: "/visibilite-ia-entrepreneurs" },
   { label: "Communauté UNPRO", to: "/communaute" },
   { label: "Être recommandé par l'IA", to: "/entrepreneurs" },
   { label: "Voir comment l'IA voit mon entreprise", to: "/entrepreneurs/audit-ia" },

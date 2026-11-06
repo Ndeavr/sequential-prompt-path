@@ -43,6 +43,14 @@ const PageEntrepreneursLanding = () => {
         <SectionPainV2 />
         <SectionSolutionV2 />
         <SectionHowItWorksV2 />
+        <section className="mx-auto max-w-4xl px-5 py-10" aria-labelledby="visibility-heading">
+          <h2 id="visibility-heading" className="text-2xl font-semibold">{fr ? "Plus de visibilité pour votre entreprise" : "More visibility for your business"}</h2>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "Rénovation - Construction, entretien et services immobiliers : découvrez comment présenter vos spécialités aux moteurs de recherche et aux assistants IA." : "Renovation, construction, maintenance and real estate services: learn how to present your specialties to search engines and AI assistants."}</p>
+          <ul className="mt-5 space-y-3 text-primary underline underline-offset-4">
+            <li><Link to={campaignLink("/visibilite-ia-entrepreneurs", search)}>{fr ? "Améliorer ma visibilité en ligne et dans l’IA" : "Improve my online and AI visibility"}</Link></li>
+            <li><Link to={campaignLink("/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur", search)}>{fr ? "Comment apparaître dans les résultats de recherche IA" : "How to appear in AI search results (French guide)"}</Link></li>
+          </ul>
+        </section>
         <section className="mx-auto max-w-4xl px-5 py-10">
           <h2 className="text-2xl font-semibold">{fr ? "Un plan à la mesure de vos objectifs" : "A plan built around your goals"}</h2>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Parlez-nous de vos spécialités, de votre territoire et de votre capacité à prendre de nouveaux mandats." : "Tell us about your specialties, territory and capacity for new projects."}</p>
