@@ -28,7 +28,7 @@ export default function StickyMobileCTAV2({ onTrackCta }: Props) {
           onClick={handleClick}
           className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 shadow-[0_8px_24px_hsl(var(--primary)/0.4)] active:scale-[0.98] transition-transform"
         >
-          {lang === "fr" ? "Définir mes objectifs" : "Set my goals"}
+          {lang === "fr" ? "Définir les projets que je veux" : "Define my ideal projects"}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
