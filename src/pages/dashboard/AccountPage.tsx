@@ -99,9 +99,12 @@ const AccountPage = () => {
 
       {/* Calendar connection (per active role) */}
       <div className="max-w-lg mt-6 space-y-4">
-        {hasHomeowner && <CardCalendarConnectionRole role="homeowner" surface="account" />}
-        {hasContractor && <CardCalendarConnectionRole role="contractor" surface="account" />}
-        {!hasHomeowner && !hasContractor && <CardCalendarConnectionRole role="homeowner" surface="account" />}
+        {/* One calendar card per view: connections are per user, not per role. */}
+        <CardCalendarConnectionRole
+          role={hasContractor ? "contractor" : "homeowner"}
+          surface="account"
+          returnTo="/dashboard/account"
+        />
       </div>
 
       {/* Cross-role CTAs */}
