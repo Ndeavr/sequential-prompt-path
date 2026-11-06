@@ -34,6 +34,10 @@ const SUPABASE_KEY =
 const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] = [
   ...["/vision", "/en/vision", "/articles/economiser-ensemble", "/en/articles/saving-together", "/communique", "/en/press-release"].map(path => ({ path, changefreq: "monthly", priority: "0.8" })),
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/entrepreneurs", changefreq: "weekly", priority: "0.9" },
+  { path: "/visibilite-ia-entrepreneurs", changefreq: "monthly", priority: "0.9" },
+  { path: "/entrepreneurs/audit-ia", changefreq: "monthly", priority: "0.9" },
+  { path: "/entrepreneurs/comment-ca-marche", changefreq: "monthly", priority: "0.8" },
   { path: "/alex", changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-unpro", changefreq: "monthly", priority: "0.9" },
@@ -268,7 +272,7 @@ async function buildLlmsFull() {
   out.push(`> Généré: ${new Date().toISOString()} | Base: ${BASE_URL}`);
   out.push("");
   out.push("## Pages piliers");
-  for (const r of PILLAR_ROUTES.slice(0, 12)) {
+  for (const r of PILLAR_ROUTES) {
     out.push(`- ${BASE_URL}${r.path}`);
   }
   out.push("");
