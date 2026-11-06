@@ -63,6 +63,19 @@ export default function CardCalendarConnectionRole({
         </p>
       )}
 
+      {!loading && (
+        <ul aria-label="Statut des calendriers" className="mb-4 space-y-1 text-sm">
+          <li data-testid="status-google" className="text-foreground">
+            <span className="font-semibold">Google Agenda :</span>{" "}
+            {isConnected ? "connecté (lecture des disponibilités)" : "non connecté"}
+          </li>
+          <li data-testid="status-apple" className="text-foreground">
+            <span className="font-semibold">Apple Calendar :</span>{" "}
+            {hasExternalAppleFeed ? "lien d'abonnement sortant créé" : "aucun lien créé"}
+          </li>
+        </ul>
+      )}
+
       {!loading && !isConnected && (
         <div className="space-y-2.5 mb-5">
           {hasExternalAppleFeed && (
@@ -78,7 +91,7 @@ export default function CardCalendarConnectionRole({
             surface={surface}
             role={role}
             returnTo={returnTo}
-            label={prompt?.primary_cta ?? "Connecter Google Calendar"}
+            label="Connecter Google Agenda"
             className="w-full"
           />
           {showAppleCTA && !hasExternalAppleFeed && (
