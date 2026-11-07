@@ -102,26 +102,23 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
     })();
   }, [user]);
 
+  const commit = (next: IsrDraft) => { setDraft(next); writeDraft(next); };
   const update = (patch: Partial<IsrAnswers>) => {
-    setDraft(prev => {
-      const answers = { ...prev.answers, ...patch };
-      const next: IsrDraft = { ...prev, answers, step: nextQuestion(answers, prev.campaign), savedAt: Date.now() };
-      if (prev.step === 0 && next.step > 0) void trackEvent({ eventType: "isr_campaign_intake_started", category: "contractor", entityType: "contractor", entityId: profile?.contractorId, metadata: isrEventMetadata(prev) }, user?.id);
-      writeDraft(next);
-      return next;
-    });
+    const answers = { ...draft.answers, ...patch };
+    const next: IsrDraft = { ...draft, answers, step: nextQuestion(answers, draft.campaign), savedAt: Date.now() };
+    if (draft.step === 0 && next.step > 0 && !startedLogged.current) {
+      startedLogged.current = true;
+      void trackEvent({ eventType: "isr_campaign_intake_started", category: "contractor", entityType: "contractor", entityId: profile?.contractorId, metadata: isrEventMetadata(draft) }, user?.id);
+    }
+    commit(next);
   };
+  const startedLogged = useRef(false);
+  /** One step back: clears only that question's answer (address text is kept for editing). */
   const goBack = () => {
-    setDraft(prev => {
-      const keys: (keyof IsrAnswers)[][] = [["address", "city", "addressId"], ["concern"], ["timing"], ["availability"]];
-      const target = Math.max(0, prev.step - 1);
-      const answers = { ...prev.answers };
-      for (const k of keys[target]) (answers as Record<string, unknown>)[k] = k === "addressId" ? null : (k === "address" || k === "city") ? answers[k] : null;
-      if (target === 0) answers.addressId = null;
-      const next = { ...prev, answers, step: target };
-      writeDraft(next);
-      return next;
-    });
+    const target = Math.max(0, draft.step - 1);
+    const clear: Partial<IsrAnswers>[] = [{ addressId: null }, { concern: null }, { timing: null }, { availability: null }];
+    if (target === 0) setEditingAddress(true);
+    commit({ ...draft, answers: { ...draft.answers, ...clear[target] }, step: target, savedAt: Date.now() });
   };
 
   const requestsOpen = isrRequestsOpen(profile);
