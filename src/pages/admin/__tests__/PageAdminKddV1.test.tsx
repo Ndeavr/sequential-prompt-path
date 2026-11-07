@@ -4,14 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 
-const loadMock = vi.fn();
-vi.mock("@/services/kddV1Service", () => {
+const { loadMock, KddAccessDeniedError } = vi.hoisted(() => {
   class KddAccessDeniedError extends Error {}
-  return { loadKddV1: (...a: unknown[]) => loadMock(...a), KddAccessDeniedError };
+  return { loadMock: vi.fn(), KddAccessDeniedError };
 });
+vi.mock("@/services/kddV1Service", () => ({ loadKddV1: (...a: unknown[]) => loadMock(...a), KddAccessDeniedError }));
 
 import PageAdminKddV1 from "@/pages/admin/PageAdminKddV1";
-import { KddAccessDeniedError } from "@/services/kddV1Service";
 import { buildInsights, computeCohorts, computeDemand, computeEntry350, computePace } from "@/lib/kdd/kddV1";
 
 function renderPage() {
