@@ -40,14 +40,14 @@ describe("PageAdminKddV1 states", () => {
   beforeEach(() => loadMock.mockReset());
 
   it("shows access denied without any figures for non-admins", async () => {
-    loadMock.mockRejectedValue(new KddAccessDeniedError("x"));
+    loadMock.mockImplementation(async () => { throw new KddAccessDeniedError("x"); });
     renderPage();
     expect(await screen.findByText("Accès réservé aux administrateurs.")).toBeTruthy();
     expect(screen.queryByText(/Entreprises vérifiées/)).toBeNull();
   });
 
   it("shows an error with retry and no false zero", async () => {
-    loadMock.mockRejectedValue(new Error("network"));
+    loadMock.mockImplementation(async () => { throw new Error("network"); });
     renderPage();
     expect(await screen.findByText(/Aucun chiffre n'est affiché/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Réessayer" })).toBeTruthy();
