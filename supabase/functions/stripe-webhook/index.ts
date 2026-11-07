@@ -160,8 +160,8 @@ Deno.serve(async (req) => {
       agent_name: evtMd.agent_name ?? null,
       acquisition_origin: evtMd.acquisition_origin ?? null,
       human_unpro_touches: evtMd.human_unpro_touches ?? null,
-      activation_token: evtMd.activation_token ?? null,
-      landing_token: evtMd.landing_token ?? null,
+      // Bearer links are consumed for identity resolution, never duplicated in
+      // broadly queried revenue attribution metadata.
       campaign_id: evtMd.campaign_id ?? null,
       offer: evtMd.offer ?? evtMd.offer_kind ?? null,
     };
@@ -942,7 +942,7 @@ Deno.serve(async (req) => {
               .maybeSingle();
 
             if (!prospect) {
-              console.error("[stripe-webhook] sms_outreach prospect not found", landingToken);
+              console.error("[stripe-webhook] sms_outreach prospect not found", session.id);
               break;
             }
 
@@ -1054,7 +1054,6 @@ Deno.serve(async (req) => {
                   currency: session.currency ?? "cad",
                   stripe_session_id: session.id,
                   paid_at: paidAtIso,
-                  landing_token: landingToken,
                 },
               } as never).then(() => {}, () => {});
             }
@@ -1066,7 +1065,7 @@ Deno.serve(async (req) => {
               previous_status: "checkout_started",
               new_status: recommendable ? "recommendable" : "paid_1_dollar",
               source: "stripe_webhook",
-              metadata: { session_id: session.id, landing_token: landingToken },
+              metadata: { session_id: session.id },
             } as never).then(() => {}, () => {});
 
             // Step 6 — trigger match recomputation (idempotent, best-effort)
