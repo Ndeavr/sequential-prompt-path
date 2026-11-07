@@ -1,6 +1,9 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
 import { contractorDraftName, normalizeContractorEntry } from "@/lib/contractorProfileEntry";
 import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
+import { dossierValue, type DraftEvidence } from "@/lib/claraContractorWorkspace";
+import { ClaraWorkPanel, PresencePreview } from "@/components/entrepreneur/ClaraContractorWorkspace";
+import { Textarea } from "@/components/ui/textarea";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -90,6 +93,9 @@ export default function PageMatchingProfileWizard() {
   const [reviewed, setReviewed] = useState(false);
   const [declaredName, setDeclaredName] = useState(sp.get("entreprise") ?? "");
   const [declaredWebsite, setDeclaredWebsite] = useState(normalizeContractorEntry(sp.get("website") ?? "", "website")?.website ?? "");
+  const [declaredDescription, setDeclaredDescription] = useState("");
+  const [descriptionSource, setDescriptionSource] = useState<"saved" | "account" | "none">("none");
+  const [draftMeta, setDraftMeta] = useState<DraftEvidence | null>(null);
 
   const sessionKey = useMemo(getSessionKey, []);
   // L'URL ne sert que de repli d'affichage : l'identité réelle vient du serveur.
@@ -165,18 +171,25 @@ export default function PageMatchingProfileWizard() {
           setDeclaredName(current => contractorDraftName(current, profile.business_name, null));
           const website = profile.answers?.company_website;
           if (typeof website === "string") setDeclaredWebsite(website);
+          setDraftMeta(draftEvidenceOf(profile, resolvedTrade(response?.audit?.trade ?? urlTrade)));
         }
-        if (simpleEntry && !profile && !profileRequest.error && !response?.error) {
+        const savedDescription = profile?.answers?.company_description;
+        if (simpleEntry && !profileRequest.error && !response?.error && !(typeof savedDescription === "string" && savedDescription.trim())) {
           const { data: session, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) throw sessionError;
           if (session.session?.user) {
             const { data: owned, error: ownedError } = await supabase.from("contractors")
-              .select("business_name").eq("user_id", session.session.user.id)
+              .select("business_name, description").eq("user_id", session.session.user.id)
               .order("updated_at", { ascending: false }).limit(1).maybeSingle();
             if (ownedError) throw ownedError;
             if (cancelled) return;
-            setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
+            if (!profile) setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
+            const fromAccount = dossierValue(null, owned?.description);
+            if (fromAccount.source === "account") { setDeclaredDescription(fromAccount.value.slice(0, 600)); setDescriptionSource("account"); }
           }
+        } else if (typeof savedDescription === "string" && savedDescription.trim()) {
+          setDeclaredDescription(savedDescription);
+          setDescriptionSource("saved");
         }
         if (profileRequest.error || response?.error) {
           const message = await friendlyProfileError(profileRequest.error, response, "Impossible de reprendre le profil. Réessayez.");
@@ -251,6 +264,7 @@ export default function PageMatchingProfileWizard() {
         setSaveError(await friendlyProfileError(error, response, fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again."));
         return null;
       }
+      if (response?.profile) setDraftMeta(draftEvidenceOf(response.profile, resolvedTrade(trade)));
       return response?.profile ?? null;
       } catch {
         setSaveError(fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again.");
