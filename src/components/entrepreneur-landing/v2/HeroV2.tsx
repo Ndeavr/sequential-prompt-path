@@ -1,4 +1,5 @@
 /** Website-first entry into the existing progressive matching profile. */
+import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ export default function HeroV2({ onTrackCta }: Props) {
       <div className="mx-auto mb-12 flex max-w-5xl flex-wrap items-center justify-between gap-3">
         <UnproLogo size={92} variant="primary" animated={false} />
         <LanguageToggle lang={lang} onChange={setLang} />
-        <Button variant="ghost" onClick={() => navigate(`/auth?returnTo=${encodeURIComponent(contractorProfileEntryPath(search, lang))}`)}>
+        <Button variant="ghost" onClick={() => navigate(contractorLoginPath(contractorProfileEntryPath(search, lang)))}>
           {fr ? "Connexion" : "Sign in"}
         </Button>
       </div>

@@ -1,4 +1,5 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
+import { normalizeContractorEntry } from "@/lib/contractorProfileEntry";
 import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 /**
  * UNPRO — /entrepreneurs/profil
@@ -83,7 +84,11 @@ export default function PageMatchingProfileWizard() {
   const explicitEn = (() => {
     try { return localStorage.getItem("unpro-lang") === "en"; } catch { return false; }
   })();
-  const fr = !(explicitEn && lang === "en");
+  const fr = sp.get("lang") ? sp.get("lang") !== "en" : !(explicitEn && lang === "en");
+  const simpleEntry = sp.get("entry") === "profile";
+  const [reviewed, setReviewed] = useState(false);
+  const [declaredName, setDeclaredName] = useState(sp.get("entreprise") ?? "");
+  const [declaredWebsite, setDeclaredWebsite] = useState(normalizeContractorEntry(sp.get("website") ?? "", "website")?.website ?? "");
 
   const sessionKey = useMemo(getSessionKey, []);
   // L'URL ne sert que de repli d'affichage : l'identité réelle vient du serveur.
@@ -96,7 +101,7 @@ export default function PageMatchingProfileWizard() {
   const affiliateRef = sp.get("ref");
 
   const [audit, setAudit] = useState<AuditContext | null>(null);
-  const businessName = audit?.business_name ?? urlBusinessName;
+  const businessName = audit?.business_name ?? (simpleEntry ? declaredName : urlBusinessName);
   const city = audit?.city ?? urlCity;
   const trade = audit?.trade ?? urlTrade;
 
@@ -154,6 +159,11 @@ export default function PageMatchingProfileWizard() {
 
         const response = profileRequest.data as MatchingProfileResponse | null;
         const profile = response?.profile;
+        if (simpleEntry && profile) {
+          if (typeof profile.business_name === "string") setDeclaredName(profile.business_name);
+          const website = profile.answers?.company_website;
+          if (typeof website === "string") setDeclaredWebsite(website);
+        }
         if (profileRequest.error || response?.error) {
           const message = await friendlyProfileError(profileRequest.error, response, "Impossible de reprendre le profil. Réessayez.");
           if (cancelled) return;
@@ -167,7 +177,8 @@ export default function PageMatchingProfileWizard() {
           // Reprise exacte : l'étape enregistrée prime, sans jamais dépasser la
           // première question réellement sans réponse.
           const list = questionsForTrade(resolvedAudit?.trade ?? urlTrade);
-          const firstUnanswered = list.findIndex((q) => !isFilled(profile.answers![q.key]));
+          const restoredAnswers = profile.answers;
+          const firstUnanswered = list.findIndex((q) => !isFilled(restoredAnswers?.[q.key]));
           const fallback = firstUnanswered === -1 ? list.length - 1 : firstUnanswered;
           const savedStep = Number(response?.current_step ?? profile.current_step ?? 0);
           setIndex(Math.min(Math.max(savedStep, 0), fallback));
@@ -214,6 +225,7 @@ export default function PageMatchingProfileWizard() {
       setSaving(true);
       const { data, error } = await invokeMatchingProfile({
           ...context,
+          ...(simpleEntry ? { business_name: declaredName.trim() } : {}),
           action: complete ? "complete" : "save",
           answers: next,
           current_step: nextStep,
@@ -226,7 +238,7 @@ export default function PageMatchingProfileWizard() {
       }
       return response?.profile ?? null;
     },
-    [context],
+    [context, simpleEntry, declaredName],
   );
 
   const q = questions[index];
@@ -314,7 +326,7 @@ export default function PageMatchingProfileWizard() {
       current_path: "/entrepreneurs/profil",
       metadata: { audit_id: auditId, outreach_token: activationToken },
     });
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(sp);
     if (businessName) params.set("entreprise", businessName);
     if (city) params.set("ville", city);
     if (trade) params.set("metier", trade);
@@ -330,7 +342,7 @@ export default function PageMatchingProfileWizard() {
       const destination = await resumeContractorActivation(businessName ?? null);
       navigate(destination
         ? `${destination}${destination === "/pro" || !params.size ? "" : `?${params.toString()}`}`
-        : `/entrepreneur/devis-personnalise?${params.toString()}`);
+        : simpleEntry ? `/entrepreneurs/activation-350?${new URLSearchParams({ ...Object.fromEntries(params), activate: "1" }).toString()}` : `/entrepreneur/devis-personnalise?${params.toString()}`);
     } catch {
       setActivationError("Impossible de retrouver votre activation. Vos réponses sont conservées. Réessayez.");
       setActivationRouting(false);
@@ -338,7 +350,7 @@ export default function PageMatchingProfileWizard() {
   }
 
   return (
-    <div className="audit-gold min-h-[100dvh] bg-background text-foreground">
+    <div className={`${simpleEntry ? "alex-immersive" : "audit-gold"} min-h-[100dvh] bg-background text-foreground`}>
       <Helmet>
         <title>{fr ? "Compléter mon profil professionnel | UNPRO" : "Complete my professional profile | UNPRO"}</title>
         <meta name="robots" content="noindex" />
@@ -452,6 +464,25 @@ export default function PageMatchingProfileWizard() {
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             {fr ? "Reprise de votre profil…" : "Resuming your profile…"}
           </div>
+        ) : simpleEntry && !reviewed ? (
+          <section className="space-y-5" data-testid="profile-draft-review">
+            <h1 className="text-2xl font-semibold">{fr ? "Votre profil UNPRO" : "Your UNPRO profile"}</h1>
+            <p className="text-sm text-muted-foreground">{fr ? "Clara : Commençons avec les informations que vous déclarez. Quel est le nom de votre entreprise?" : "Let’s start with the information you provide. What is your business name?"}</p>
+            <div><label htmlFor="draft-company" className="mb-2 block text-sm">{fr ? "Entreprise · déclaré" : "Business · declared"}</label><Input id="draft-company" value={declaredName} maxLength={160} onChange={event => setDeclaredName(event.target.value)} /></div>
+            <div><label htmlFor="draft-website" className="mb-2 block text-sm">{fr ? "Site Web · déclaré" : "Website · declared"}</label><Input id="draft-website" inputMode="url" value={declaredWebsite} onChange={event => setDeclaredWebsite(event.target.value)} /></div>
+            <p className="break-words text-sm text-muted-foreground">{fr ? "Source : vos informations. Le contenu du site n’a pas été importé. Complétez les informations manquantes avec Clara." : "Source: your information. Website content has not been imported. Complete the missing information below."}</p>
+            <dl className="space-y-2 text-sm">{['services_wanted', 'services_refused', 'territories'].map(key => <div key={key} className="border-b border-border py-2"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{Array.isArray(answers[key]) && (answers[key] as string[]).length ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>)}</dl>
+            <p className="text-sm text-muted-foreground">{fr ? "Les licences requises font l’objet d’une vérification distincte." : "Required licences are verified separately."}</p>
+            <Button disabled={saving || !normalizeContractorEntry(declaredName, "name") || Boolean(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"))} className="h-auto min-h-12 w-full whitespace-normal" onClick={async () => {
+              const next = { ...answers, company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '', company_identity_provenance: 'declared' };
+              const saved = await save(next, false, index);
+              if (!saved) return;
+              setAnswers(next);
+              try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName.trim()); } catch { /* server draft remains */ }
+              setReviewed(true);
+              void logFunnelEvent({ event_type: 'registration_step_company', token: '', suppress_prospect_ref: true, metadata: { surface: 'simple_profile', has_website: Boolean(declaredWebsite) } });
+            }}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
+          </section>
         ) : done ? (
           <div className="space-y-4">
             <section className="rounded-[24px] border border-success/40 bg-[hsl(152_69%_31%/0.06)] p-5 shadow-sm sm:p-7">
@@ -464,8 +495,8 @@ export default function PageMatchingProfileWizard() {
               </h1>
               <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
                 {fr
-                  ? "Vos services, territoires et disponibilités sont maintenant structurés. Vous devenez admissible aux recommandations UNPRO, et votre profil est préparé pour la découverte par les assistants IA."
-                  : "Your services, territories and availability are now structured. You become eligible for UNPRO recommendations, and your profile is prepared for AI assistant discovery."}
+                  ? "Vos services, territoires et disponibilités sont maintenant structurés. Votre profil décrit les projets qui correspondent à votre entreprise. L’admissibilité aux recommandations sera vérifiée séparément."
+                  : "Your services, territories and availability are now structured. Your profile describes the projects that fit your business. Recommendation eligibility is checked separately."}
               </p>
               <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
                 {fr
@@ -474,13 +505,14 @@ export default function PageMatchingProfileWizard() {
               </p>
             </section>
 
-            <HowItWorksBlock lang={fr ? "fr" : "en"} />
+            {simpleEntry && !hasFreeYear && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation unique : 350 $ CA + taxes, payable en un versement." : "One-time activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2 text-muted-foreground">{fr ? "Aucun rendez-vous inclus par défaut. Vos droits existants et les taxes sont vérifiés avant le paiement sécurisé. Les options de rendez-vous restent distinctes." : "No appointments included by default. Existing entitlements and taxes are checked before secure payment. Appointment options remain separate."}</p></section>}
+            {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 
             <Button
               onClick={() => void goToNextActivation()}
               disabled={activationRouting}
               size="lg"
-              className="gold-btn h-14 w-full rounded-2xl border-0 text-[15px] font-bold hover:text-primary-foreground"
+              className="h-14 w-full rounded-2xl border-0 text-[15px] font-bold hover:text-primary-foreground"
             >
               {activationRouting ? (
                 <>
@@ -514,6 +546,8 @@ export default function PageMatchingProfileWizard() {
             )}
           </div>
         ) : q ? (
+          <div>
+          {simpleEntry && <Button variant="link" className="mb-3" onClick={() => setReviewed(false)}>{fr ? "Revoir mon brouillon" : "Review my draft"}</Button>}
           <QuestionCard
             key={q.key}
             q={q}
@@ -527,6 +561,7 @@ export default function PageMatchingProfileWizard() {
             onBack={index > 0 ? () => setIndex((i) => i - 1) : undefined}
             onCommit={commit}
           />
+          </div>
         ) : null}
       </main>
     </div>
