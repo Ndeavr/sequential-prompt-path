@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeContractorEntry, contractorProfileEntryPath } from '@/lib/contractorProfileEntry';
+import { contractorDraftName, normalizeContractorEntry, contractorProfileEntryPath } from '@/lib/contractorProfileEntry';
 
 describe('existing contractor profile entry', () => {
+  it('resumes a saved identity instead of silently replacing it from the entry URL', () => {
+    expect(contractorDraftName('Incoming QA', 'Saved QA', 'Owned QA')).toBe('Saved QA');
+  });
+  it('uses the authenticated company when no matching draft exists', () => {
+    expect(contractorDraftName('Incoming QA', null, 'Owned QA')).toBe('Owned QA');
+  });
+  it('retains a fresh guest declaration without an existing identity', () => {
+    expect(contractorDraftName('Incoming QA', null, null)).toBe('Incoming QA');
+  });
   it('normalizes a website and strips potentially sensitive query/hash', () => {
     expect(normalizeContractorEntry('example.com/services?token=synthetic#contact', 'website')).toEqual({ name: '', website: 'https://example.com/services' });
   });

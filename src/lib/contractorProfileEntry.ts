@@ -1,4 +1,10 @@
 /** Public business identity only; no contact data or bearer tokens in URLs. */
+export function contractorDraftName(incoming: string, saved: unknown, owned: unknown): string {
+  if (typeof saved === 'string' && saved.trim()) return saved;
+  if (typeof owned === 'string' && owned.trim()) return owned;
+  return incoming;
+}
+
 export function normalizeContractorEntry(value: string, kind: "website" | "name") {
   const raw = value.trim();
   if (kind === "name") return raw.length >= 2 && raw.length <= 160 ? { name: raw, website: "" } : null;

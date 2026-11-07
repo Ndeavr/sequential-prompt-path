@@ -1,5 +1,5 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
-import { normalizeContractorEntry } from "@/lib/contractorProfileEntry";
+import { contractorDraftName, normalizeContractorEntry } from "@/lib/contractorProfileEntry";
 import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 /**
  * UNPRO — /entrepreneurs/profil
@@ -111,6 +111,7 @@ export default function PageMatchingProfileWizard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [chipDraft, setChipDraft] = useState("");
   const [founderEntitlement, setFounderEntitlement] = useState<FreeServiceEntitlement | null>(null);
@@ -160,9 +161,21 @@ export default function PageMatchingProfileWizard() {
         const response = profileRequest.data as MatchingProfileResponse | null;
         const profile = response?.profile;
         if (simpleEntry && profile) {
-          if (typeof profile.business_name === "string") setDeclaredName(profile.business_name);
+          setDeclaredName(current => contractorDraftName(current, profile.business_name, null));
           const website = profile.answers?.company_website;
           if (typeof website === "string") setDeclaredWebsite(website);
+        }
+        if (simpleEntry && !profile && !profileRequest.error && !response?.error) {
+          const { data: session, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          if (session.session?.user) {
+            const { data: owned, error: ownedError } = await supabase.from("contractors")
+              .select("business_name").eq("user_id", session.session.user.id)
+              .order("updated_at", { ascending: false }).limit(1).maybeSingle();
+            if (ownedError) throw ownedError;
+            if (cancelled) return;
+            setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
+          }
         }
         if (profileRequest.error || response?.error) {
           const message = await friendlyProfileError(profileRequest.error, response, "Impossible de reprendre le profil. Réessayez.");
@@ -223,6 +236,8 @@ export default function PageMatchingProfileWizard() {
   const save = useCallback(
     async (next: Answers, complete = false, nextStep?: number) => {
       setSaving(true);
+      setSaveError(null);
+      try {
       const { data, error } = await invokeMatchingProfile({
           ...context,
           ...(simpleEntry ? { business_name: declaredName.trim() } : {}),
@@ -230,15 +245,20 @@ export default function PageMatchingProfileWizard() {
           answers: next,
           current_step: nextStep,
       });
-      setSaving(false);
       const response = data as MatchingProfileResponse | null;
       if (error || response?.error) {
-        setLoadError(await friendlyProfileError(error, response, "La sauvegarde a échoué. Réessayez."));
+        setSaveError(await friendlyProfileError(error, response, fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again."));
         return null;
       }
       return response?.profile ?? null;
+      } catch {
+        setSaveError(fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again.");
+        return null;
+      } finally {
+        setSaving(false);
+      }
     },
-    [context, simpleEntry, declaredName],
+    [context, simpleEntry, declaredName, fr],
   );
 
   const q = questions[index];
@@ -403,7 +423,7 @@ export default function PageMatchingProfileWizard() {
           </section>
         )}
 
-        {!loading && !audit && !businessName && !cameFromFounderSignup && (
+        {!simpleEntry && !loading && !audit && !businessName && !cameFromFounderSignup && (
           <section className="mb-5 rounded-2xl border border-border bg-card p-4 text-[13px] text-muted-foreground">
             {fr
               ? "Aucun audit n'est rattaché à cette session. Vos réponses sont conservées, et vous pouvez lancer votre audit gratuit pour rattacher votre entreprise."
@@ -451,12 +471,13 @@ export default function PageMatchingProfileWizard() {
           </section>
         )}
 
+        {saveError && <p role="alert" className="mb-4 text-sm text-destructive">{saveError}</p>}
         {loadError ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
-            <p className="font-semibold text-destructive">Votre progression n’a pas été perdue.</p>
+            <p className="font-semibold text-destructive">{fr ? "Votre progression n’a pas été perdue." : "Your progress has been kept."}</p>
             <p className="mt-1 text-muted-foreground">{loadError}</p>
             <Button className="mt-3" variant="outline" onClick={() => window.location.reload()}>
-              Réessayer
+              {fr ? "Réessayer" : "Try again"}
             </Button>
           </div>
         ) : loading ? (
@@ -467,12 +488,10 @@ export default function PageMatchingProfileWizard() {
         ) : simpleEntry && !reviewed ? (
           <section className="space-y-5" data-testid="profile-draft-review">
             <h1 className="text-2xl font-semibold">{fr ? "Votre profil UNPRO" : "Your UNPRO profile"}</h1>
-            <p className="text-sm text-muted-foreground">{fr ? "Clara : Commençons avec les informations que vous déclarez. Quel est le nom de votre entreprise?" : "Let’s start with the information you provide. What is your business name?"}</p>
-            <div><label htmlFor="draft-company" className="mb-2 block text-sm">{fr ? "Entreprise · déclaré" : "Business · declared"}</label><Input id="draft-company" value={declaredName} maxLength={160} onChange={event => setDeclaredName(event.target.value)} /></div>
-            <div><label htmlFor="draft-website" className="mb-2 block text-sm">{fr ? "Site Web · déclaré" : "Website · declared"}</label><Input id="draft-website" inputMode="url" value={declaredWebsite} onChange={event => setDeclaredWebsite(event.target.value)} /></div>
-            <p className="break-words text-sm text-muted-foreground">{fr ? "Source : vos informations. Le contenu du site n’a pas été importé. Complétez les informations manquantes avec Clara." : "Source: your information. Website content has not been imported. Complete the missing information below."}</p>
+            <p className="text-sm text-muted-foreground">{fr ? "Confirmez le nom de votre entreprise, puis précisez les projets qui vous intéressent." : "Confirm your business name, then tell us which projects interest you."}</p>
+            <div><label htmlFor="draft-company" className="mb-2 block text-sm">{fr ? "Entreprise" : "Business"}</label><Input id="draft-company" value={declaredName} maxLength={160} onChange={event => setDeclaredName(event.target.value)} /></div>
+            <div><label htmlFor="draft-website" className="mb-2 block text-sm">{fr ? "Site Web" : "Website"}</label><Input id="draft-website" inputMode="url" value={declaredWebsite} onChange={event => setDeclaredWebsite(event.target.value)} /></div>
             <dl className="space-y-2 text-sm">{['services_wanted', 'services_refused', 'territories'].map(key => <div key={key} className="border-b border-border py-2"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{Array.isArray(answers[key]) && (answers[key] as string[]).length ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>)}</dl>
-            <p className="text-sm text-muted-foreground">{fr ? "Les licences requises font l’objet d’une vérification distincte." : "Required licences are verified separately."}</p>
             <Button disabled={saving || !normalizeContractorEntry(declaredName, "name") || Boolean(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"))} className="h-auto min-h-12 w-full whitespace-normal" onClick={async () => {
               const next = { ...answers, company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '', company_identity_provenance: 'declared' };
               const saved = await save(next, false, index);
@@ -495,17 +514,17 @@ export default function PageMatchingProfileWizard() {
               </h1>
               <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
                 {fr
-                  ? "Vos services, territoires et disponibilités sont maintenant structurés. Votre profil décrit les projets qui correspondent à votre entreprise. L’admissibilité aux recommandations sera vérifiée séparément."
-                  : "Your services, territories and availability are now structured. Your profile describes the projects that fit your business. Recommendation eligibility is checked separately."}
+                  ? "Vos services, territoires et disponibilités sont maintenant structurés. Votre profil décrit les projets qui correspondent à votre entreprise."
+                  : "Your services, territories and availability are now structured. Your profile describes the projects that fit your business."}
               </p>
-              <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+              {!simpleEntry && <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
                 {fr
                   ? "UNPRO ne garantit ni position ni recommandation dans ChatGPT. Aucune plateforme d'IA ne vend de classement."
                   : "UNPRO guarantees no placement or recommendation in ChatGPT. No AI platform sells ranking."}
-              </p>
+              </p>}
             </section>
 
-            {simpleEntry && !hasFreeYear && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation unique : 350 $ CA + taxes, payable en un versement." : "One-time activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2 text-muted-foreground">{fr ? "Aucun rendez-vous inclus par défaut. Vos droits existants et les taxes sont vérifiés avant le paiement sécurisé. Les options de rendez-vous restent distinctes." : "No appointments included by default. Existing entitlements and taxes are checked before secure payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2 text-muted-foreground">{fr ? "Cette offre de base comprend le profil et la présence IA. Vos promotions, vos droits existants et les rendez-vous inclus dans votre offre, s’il y a lieu, sont confirmés avant le paiement. Les options de rendez-vous restent distinctes." : "The base offer includes your profile and AI presence. Your promotions, existing entitlements and any appointments included in your offer are confirmed before payment. Appointment options remain separate."}</p></section>}
             {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 
             <Button
