@@ -45,3 +45,9 @@ Other contractor slugs keep the DB `contractor_campaigns` template. Pages are `n
 - Duplicate ISR-like contractor rows exist (two unpublished); the canonical row is the one owning slug `isolation-solution-royal`.
 - Optional photos not collected (no owner-safe upload wired in this slice).
 - Not published; QA synthetic only.
+
+## SEO subsidies page — 2026-11-07
+- Indexable FR route: `/c/isolation-solution-royal/subventions-renoclimat-logisvert`; registered in sitemap generator and linked from FR campaign pages.
+- Original content with local attic photo, canonical, Article/FAQ structured data. No fictional EN alternate route.
+- Official sources: Québec Rénoclimat October 1, 2026 update and participant guide; Hydro-Québec LogisVert residential page/guide. Technical R-60/R-20/300 sq ft criteria and $1.75/sq ft; house ceiling $2,000. LogisVert $1,500 requires roof insulation and caulking, R-50 over entire roof. No combined subsidy promise or blanket contractor accreditation claim.
+- CTA reuses existing ISR address-first free 60-minute inspection journey. Calendar/auth prerequisites documented above remain unresolved; this content update does not enable slot booking.

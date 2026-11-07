@@ -13,6 +13,8 @@ import { ShieldCheck, Clock, MapPin, CheckCircle2 } from "lucide-react";
 import { resolveIsrCampaign } from "@/lib/isrCampaign";
 import IsrCampaignLanding from "@/pages/isr/IsrCampaignLanding";
 
+import IsrSubsidiesPage from "@/pages/isr/IsrSubsidiesPage";
+
 interface Campaign {
   id: string;
   contractor_id: string;
@@ -27,6 +29,7 @@ interface Campaign {
 
 export default function PageContractorCampaignLanding() {
   const { contractorSlug = "", intentSlug = "" } = useParams();
+  if (contractorSlug === "isolation-solution-royal" && intentSlug === "subventions-renoclimat-logisvert") return <IsrSubsidiesPage />;
   const isr = resolveIsrCampaign(contractorSlug, intentSlug);
   if (isr) return <IsrCampaignLanding key={intentSlug} campaign={isr.key} lang={isr.lang} />;
   return <DbCampaignLanding contractorSlug={contractorSlug} intentSlug={intentSlug} />;

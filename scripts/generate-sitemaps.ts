@@ -33,6 +33,7 @@ const SUPABASE_KEY =
 // --------------------------------------------------------------------------
 const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] = [
   ...["/vision", "/en/vision", "/articles/economiser-ensemble", "/en/articles/saving-together", "/communique", "/en/press-release"].map(path => ({ path, changefreq: "monthly", priority: "0.8" })),
+  { path: "/c/isolation-solution-royal/subventions-renoclimat-logisvert", changefreq: "monthly", priority: "0.8" },
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/alex", changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },

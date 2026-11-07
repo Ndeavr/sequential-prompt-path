@@ -316,6 +316,7 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
         </ul>
       </section>
 
+      {fr && <p className="mx-auto max-w-3xl px-5 pb-8"><Link className="text-primary underline" to="/c/isolation-solution-royal/subventions-renoclimat-logisvert">Subventions Rénoclimat et LogisVert : critères et montants →</Link></p>}
       <footer className="mx-auto max-w-3xl px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] text-xs text-muted-foreground">{t("Propulsé par UNPRO", "Powered by UNPRO")}</footer>
     </main>
   );

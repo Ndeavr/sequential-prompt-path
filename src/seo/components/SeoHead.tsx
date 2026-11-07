@@ -11,6 +11,7 @@ interface SeoHeadProps {
   description: string;
   canonical?: string;
   noindex?: boolean;
+  includeAlternates?: boolean;
   ogImage?: string;
   ogType?: string;
   /** Optional explicit EN counterpart URL (full https://...) */
@@ -22,7 +23,7 @@ interface SeoHeadProps {
 }
 
 const SeoHead = ({
-  title, description, canonical, noindex, ogImage, ogType = "website",
+  title, description, canonical, noindex, ogImage, ogType = "website", includeAlternates = true,
   englishCanonical, frenchCanonical, lang = "fr-CA",
 }: SeoHeadProps) => {
   useEffect(() => {
@@ -68,9 +69,13 @@ const SeoHead = ({
       }
       el.href = href;
     };
+    if (includeAlternates) {
     setHreflang("fr-CA", frUrl);
     setHreflang("en-CA", enUrl);
     setHreflang("x-default", frUrl);
+    } else {
+      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+    }
 
     // OG
     setMeta("og:title", title, "property");
@@ -89,7 +94,7 @@ const SeoHead = ({
     setMeta("twitter:title", title);
     setMeta("twitter:description", description);
     setMeta("twitter:image", effectiveOgImage);
-  }, [title, description, canonical, noindex, ogImage, ogType, englishCanonical, frenchCanonical, lang]);
+  }, [title, description, canonical, noindex, ogImage, ogType, englishCanonical, frenchCanonical, lang, includeAlternates]);
 
   return null;
 };
