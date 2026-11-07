@@ -1,6 +1,9 @@
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
 import { contractorDraftName, normalizeContractorEntry } from "@/lib/contractorProfileEntry";
 import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
+import { dossierValue, type DraftEvidence } from "@/lib/claraContractorWorkspace";
+import { ClaraWorkPanel, PresencePreview } from "@/components/entrepreneur/ClaraContractorWorkspace";
+import { Textarea } from "@/components/ui/textarea";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -61,6 +64,7 @@ import {
 
 
 type Answers = Record<string, unknown>;
+const DOSSIER_KEYS = ["services_wanted", "services_refused", "territories"] as const;
 /** Company identity resolved server-side from the validated audit. */
 type AuditContext = {
   audit_id: string;
@@ -90,6 +94,9 @@ export default function PageMatchingProfileWizard() {
   const [reviewed, setReviewed] = useState(false);
   const [declaredName, setDeclaredName] = useState(sp.get("entreprise") ?? "");
   const [declaredWebsite, setDeclaredWebsite] = useState(normalizeContractorEntry(sp.get("website") ?? "", "website")?.website ?? "");
+  const [declaredDescription, setDeclaredDescription] = useState("");
+  const [descriptionSource, setDescriptionSource] = useState<"saved" | "account" | "none">("none");
+  const [draftMeta, setDraftMeta] = useState<DraftEvidence | null>(null);
 
   const sessionKey = useMemo(getSessionKey, []);
   // L'URL ne sert que de repli d'affichage : l'identité réelle vient du serveur.
@@ -165,18 +172,27 @@ export default function PageMatchingProfileWizard() {
           setDeclaredName(current => contractorDraftName(current, profile.business_name, null));
           const website = profile.answers?.company_website;
           if (typeof website === "string") setDeclaredWebsite(website);
+          setDraftMeta(draftEvidenceOf(profile, resolvedTrade(response?.audit?.trade ?? urlTrade)));
         }
-        if (simpleEntry && !profile && !profileRequest.error && !response?.error) {
+        const savedDescription = profile?.answers?.company_description;
+        if (simpleEntry && !profileRequest.error && !response?.error && !(typeof savedDescription === "string" && savedDescription.trim())) {
           const { data: session, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) throw sessionError;
           if (session.session?.user) {
             const { data: owned, error: ownedError } = await supabase.from("contractors")
-              .select("business_name").eq("user_id", session.session.user.id)
+              .select("business_name, description").eq("user_id", session.session.user.id)
               .order("updated_at", { ascending: false }).limit(1).maybeSingle();
-            if (ownedError) throw ownedError;
+            // Identity lookup is required only for a fresh draft; the optional
+            // description prefill never blocks resuming a saved draft.
+            if (ownedError && !profile) throw ownedError;
             if (cancelled) return;
-            setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
+            if (!profile) setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
+            const fromAccount = dossierValue(null, owned?.description);
+            if (fromAccount.source === "account") { setDeclaredDescription(fromAccount.value.slice(0, 600)); setDescriptionSource("account"); }
           }
+        } else if (typeof savedDescription === "string" && savedDescription.trim()) {
+          setDeclaredDescription(savedDescription);
+          setDescriptionSource("saved");
         }
         if (profileRequest.error || response?.error) {
           const message = await friendlyProfileError(profileRequest.error, response, "Impossible de reprendre le profil. Réessayez.");
@@ -251,6 +267,7 @@ export default function PageMatchingProfileWizard() {
         setSaveError(await friendlyProfileError(error, response, fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again."));
         return null;
       }
+      if (response?.profile) setDraftMeta(draftEvidenceOf(response.profile, resolvedTrade(trade)));
       return response?.profile ?? null;
       } catch {
         setSaveError(fr ? "La sauvegarde a échoué. Réessayez." : "Your changes could not be saved. Please try again.");
@@ -259,7 +276,7 @@ export default function PageMatchingProfileWizard() {
         setSaving(false);
       }
     },
-    [context, simpleEntry, declaredName, fr],
+    [context, simpleEntry, declaredName, fr, trade],
   );
 
   const q = questions[index];
@@ -293,6 +310,29 @@ export default function PageMatchingProfileWizard() {
     } else {
       setIndex((i) => i + 1);
     }
+  }
+
+  const draftValid = Boolean(normalizeContractorEntry(declaredName, "name")) && !(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"));
+
+  /** Saves the confirmed dossier, then continues one question at a time. */
+  async function confirmDraft(targetIndex?: number) {
+    if (!draftValid) return;
+    const description = declaredDescription.trim().slice(0, 600);
+    const next = {
+      ...answers,
+      company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '',
+      company_description: description,
+      company_identity_provenance: 'declared',
+    };
+    // A completed profile stays completed when only the dossier is re-confirmed.
+    const saved = await save(next, done && targetIndex === undefined, index);
+    if (!saved) return;
+    setAnswers(next);
+    if (description) setDescriptionSource("saved");
+    try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName.trim()); } catch { /* server draft remains */ }
+    if (typeof targetIndex === "number") { setIndex(targetIndex); setDone(false); }
+    setReviewed(true);
+    void logFunnelEvent({ event_type: 'registration_step_company', token: '', suppress_prospect_ref: true, metadata: { surface: 'simple_profile', has_website: Boolean(declaredWebsite) } });
   }
 
   async function goToNextActivation() {
@@ -492,16 +532,18 @@ export default function PageMatchingProfileWizard() {
             <p className="text-sm text-muted-foreground">{fr ? "Confirmez le nom de votre entreprise, puis précisez les projets qui vous intéressent." : "Confirm your business name, then tell us which projects interest you."}</p>
             <div><label htmlFor="draft-company" className="mb-2 block text-sm">{fr ? "Entreprise" : "Business"}</label><Input id="draft-company" value={declaredName} maxLength={160} onChange={event => setDeclaredName(event.target.value)} /></div>
             <div><label htmlFor="draft-website" className="mb-2 block text-sm">{fr ? "Site Web" : "Website"}</label><Input id="draft-website" inputMode="url" value={declaredWebsite} onChange={event => setDeclaredWebsite(event.target.value)} /></div>
-            <dl className="space-y-2 text-sm">{['services_wanted', 'services_refused', 'territories'].map(key => <div key={key} className="border-b border-border py-2"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{Array.isArray(answers[key]) && (answers[key] as string[]).length ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>)}</dl>
-            <Button disabled={saving || !normalizeContractorEntry(declaredName, "name") || Boolean(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"))} className="h-auto min-h-12 w-full whitespace-normal" onClick={async () => {
-              const next = { ...answers, company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '', company_identity_provenance: 'declared' };
-              const saved = await save(next, false, index);
-              if (!saved) return;
-              setAnswers(next);
-              try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName.trim()); } catch { /* server draft remains */ }
-              setReviewed(true);
-              void logFunnelEvent({ event_type: 'registration_step_company', token: '', suppress_prospect_ref: true, metadata: { surface: 'simple_profile', has_website: Boolean(declaredWebsite) } });
-            }}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
+            <div>
+              <label htmlFor="draft-description" className="mb-2 block text-sm">{fr ? "Description de l'entreprise" : "Business description"}</label>
+              <Textarea id="draft-description" rows={3} maxLength={600} value={declaredDescription} onChange={event => { setDeclaredDescription(event.target.value); setDescriptionSource("saved"); }} placeholder={fr ? "Ce que vous faites, pour qui, et ce qui vous distingue." : "What you do, for whom, and what sets you apart."} />
+              {descriptionSource === "account" && <p className="mt-1 text-xs text-muted-foreground">{fr ? "Reprise de votre compte UNPRO · à confirmer" : "From your UNPRO account · to confirm"}</p>}
+            </div>
+            <dl className="space-y-2 text-sm">{DOSSIER_KEYS.map(key => {
+              const filled = Array.isArray(answers[key]) && (answers[key] as string[]).length > 0;
+              const qIndex = questions.findIndex(item => item.key === key);
+              return <div key={key} className="flex items-start justify-between gap-3 border-b border-border py-2"><div className="min-w-0"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{filled ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>{qIndex >= 0 && <Button type="button" variant="outline" size="sm" className="min-h-11 shrink-0" disabled={saving || !draftValid} onClick={() => void confirmDraft(qIndex)}>{filled ? (fr ? 'Modifier' : 'Edit') : (fr ? 'Compléter' : 'Complete')}</Button>}</div>;
+            })}</dl>
+            <Button disabled={saving || !draftValid} className="h-auto min-h-12 w-full whitespace-normal" onClick={() => void confirmDraft()}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
+            <ClaraWorkPanel fr={fr} draft={draftMeta ?? { savedAt: null, status: null, completedAt: null, missingKeys: null, website: normalizeContractorEntry(declaredWebsite, "website")?.website || null, trade }} />
           </section>
         ) : done ? (
           <div className="space-y-4">
@@ -525,7 +567,10 @@ export default function PageMatchingProfileWizard() {
               </p>}
             </section>
 
-            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2 text-muted-foreground">{fr ? "Cette offre de base comprend le profil et la présence IA. Vos promotions, vos droits existants et les rendez-vous inclus dans votre offre, s’il y a lieu, sont confirmés avant le paiement. Les options de rendez-vous restent distinctes." : "The base offer includes your profile and AI presence. Your promotions, existing entitlements and any appointments included in your offer are confirmed before payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && <PresencePreview fr={fr} name={declaredName.trim() || businessName || ""} website={declaredWebsite} city={city} trade={trade} answers={answers} />}
+            {simpleEntry && <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => setReviewed(false)}>{fr ? "Modifier mon dossier" : "Edit my dossier"}</Button>}
+            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2" data-testid="profile-activation-appointments">{fr ? "Rendez-vous inclus dans l'activation de base : aucun." : "Appointments included in the base activation: none."}</p><p className="mt-2 text-muted-foreground">{fr ? "Une promotion ou un droit déjà accordé à votre compte est confirmé et affiché avant le paiement. Les options de rendez-vous restent distinctes." : "Any promotion or entitlement already granted to your account is confirmed and shown before payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && <ClaraWorkPanel fr={fr} draft={draftMeta ?? { savedAt: null, status: null, completedAt: null, missingKeys: null, website: normalizeContractorEntry(declaredWebsite, "website")?.website || null, trade }} />}
             {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 
             <Button
@@ -586,6 +631,24 @@ export default function PageMatchingProfileWizard() {
       </main>
     </div>
   );
+}
+
+function resolvedTrade(value: string | null | undefined): string | null {
+  return value ?? null;
+}
+
+/** Server row → panel evidence. Unknown shapes stay unknown (null), never zero. */
+function draftEvidenceOf(profile: Record<string, unknown>, trade: string | null): DraftEvidence {
+  const answers = (profile.answers ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" && v ? v : null);
+  return {
+    savedAt: str(profile.updated_at) ?? str(profile.created_at),
+    status: str(profile.status),
+    completedAt: str(profile.completed_at),
+    missingKeys: Array.isArray(profile.missing_matching_fields) ? (profile.missing_matching_fields as unknown[]).filter((k): k is string => typeof k === "string") : null,
+    website: str(answers.company_website),
+    trade,
+  };
 }
 
 function isFilled(v: unknown): boolean {
