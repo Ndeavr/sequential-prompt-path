@@ -122,3 +122,5 @@
 ## Editorial tone pass (2026-11-05)
 - [x] Rule docs/EDITORIAL_RULES.md + AGENTS link; campaign, /impact copy lightened; audit in docs/campaigns/editorial-tone-audit-2026-11-05.md.
 - [ ] DB-stored articles/templates not reviewed row by row (needs separate authorized pass).
+
+- [x] Clara contractor workspace v1 (entry → dossier → private preview → canonical checkout → factual panel), local only, not published. Open: safe owner-auth website analysis wrapper (backend review).
