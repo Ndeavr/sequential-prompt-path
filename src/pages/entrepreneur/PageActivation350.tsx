@@ -16,6 +16,7 @@ import { captureAttribution, trackReferralEvent } from "@/hooks/useReferralAttri
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
+import { ClaraWorkPanel } from "@/components/entrepreneur/ClaraContractorWorkspace";
 import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
@@ -119,6 +120,7 @@ export default function PageActivation350() {
         {(sp.get("code") || "").toUpperCase().startsWith("HIVER-") || sp.get("offre") === "hiver" ? <WinterFreeCodeClaim initialCode={sp.get("code")} /> : null}
 
         {reviewOpen && <div id="inscription" className="scroll-mt-4"><Entry350FastCheckout query={sp} /></div>}
+        {sp.get("checkout") === "success" && <div className="mt-4"><ClaraWorkPanel fr returnedFromCheckout /></div>}
 
         <div id="activation-clara-chat" className="activation-clara-chat mt-4" hidden={!chatOpen}>
           <ClaraConversationBox
