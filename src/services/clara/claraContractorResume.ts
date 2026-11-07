@@ -64,7 +64,7 @@ export function pauseActiveContractorFlow(): void {
 
 // Curseur propriétaire : dernière question maison sans réponse, par conversation.
 const HOME_CURSOR_KEY = "unpro_clara_home_cursor";
-export interface ClaraHomeCursor { text: string; options: string[]; campaign?: "thermopompe"; attribution?: Record<string, string> }
+export interface ClaraHomeCursor { text: string; options: string[]; campaign?: "thermopompe" | "economies-100m"; attribution?: Record<string, string> }
 
 export function rememberHomeCursor(cursor: ClaraHomeCursor | null): void {
   try {
@@ -80,7 +80,7 @@ export function readHomeCursor(): ClaraHomeCursor | null {
     if (!raw || typeof raw.text !== "string" || raw.session_token !== peekClaraSessionToken()) return null;
     if (raw.text.length > 8000) return null;
     return { text: raw.text, options: Array.isArray(raw.options) ? raw.options.filter((value: unknown) => typeof value === "string" && value.length <= 200).slice(0, 4) : [],
-      campaign: raw.campaign === "thermopompe" ? "thermopompe" : undefined,
+      campaign: raw.campaign === "thermopompe" || raw.campaign === "economies-100m" ? raw.campaign : undefined,
       attribution: sanitizeHomeCampaignAttribution(raw.attribution) };
   } catch { return null; }
 }

@@ -22,7 +22,7 @@ export default function HeroV2({ onTrackCta }: Props) {
   return (
     <section className="relative px-5 pb-12 pt-6">
       <div className="mx-auto mb-12 flex max-w-5xl flex-wrap items-center justify-between gap-3">
-        <UnproLogo size={92} variant="primary" animated={false} />
+        <UnproLogo size={92} variant="primary" tone="dark" animated={false} />
         <LanguageToggle lang={lang} onChange={setLang} />
         <Button variant="ghost" onClick={() => navigate(contractorLoginPath(contractorProfileEntryPath(search, lang)))}>
           {fr ? "Connexion" : "Sign in"}

@@ -53,6 +53,7 @@ Current instructions and verified live state override these documents. Sensitive
 - Matching and eligibility truth lives in the backend. UI scores must not invent or override backend eligibility.
 - Database migrations are the canonical schema source. Do not hand-edit generated Supabase types as a schema change.
 - Do not create a parallel implementation when a canonical flow, table, edge function, or component already exists.
+- Website-first contractor entry reuses the matching-profile wizard and canonical activation/resume gates; saved/account identity takes precedence over incoming declarations until explicit review. Why: preserve ownership, promotions and payment truth without a parallel onboarding service.
 
 ## Contractor eligibility and trust
 
