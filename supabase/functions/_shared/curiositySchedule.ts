@@ -24,19 +24,22 @@ export function nextSendDate(enrollmentDate: Date, nextStep: number): Date {
   return d;
 }
 
-// Fenêtre d'envoi 9h-20h America/Toronto.
+// Commercial curiosity outreach: weekdays 09:00–17:00 America/Toronto only.
+// Transactional messages use a separate path, not this commercial scheduler.
 export function isWithinSendWindow(now: Date): boolean {
   const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Toronto", hour: "2-digit", hour12: false,
+    timeZone: "America/Toronto", weekday: "short", hour: "2-digit", hour12: false,
   });
-  const h = parseInt(fmt.format(now), 10);
-  return h >= 9 && h < 20;
+  const parts = fmt.formatToParts(now);
+  const weekday = parts.find((p) => p.type === "weekday")?.value;
+  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "", 10);
+  return weekday !== "Sat" && weekday !== "Sun" && hour >= 9 && hour < 17;
 }
 
 export function nextWindowOpening(now: Date): Date {
-  // Avance jusqu'à la prochaine occurrence de 9h America/Toronto.
+  // Avance à la prochaine heure ouvrable autorisée, y compris après un vendredi 17 h.
   const out = new Date(now);
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 7 * 24 + 2; i++) {
     out.setUTCMinutes(0, 0, 0);
     out.setUTCHours(out.getUTCHours() + 1);
     if (isWithinSendWindow(out)) return out;

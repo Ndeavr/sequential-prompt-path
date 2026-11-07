@@ -4,8 +4,8 @@
 // system alerts) bypass the window. Founder Mode also bypasses.
 //
 // Rules (default, mirrored in DB table `outbound_send_window_policy`):
-//   SMS   — Mon-Fri 09:00-17:00, Sat 10:00-13:00, Sun blocked
-//   Email — Mon-Fri 07:00-18:00, Sat 09:00-12:00, Sun blocked
+//   Commercial SMS/email/calls/push — Mon–Fri 09:00–17:00; weekends blocked.
+//   Founder Mode NEVER waives the commercial send window.
 // All times America/Montreal.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -37,16 +37,16 @@ const DEFAULT_WINDOWS: Record<Channel, Array<{ weekday: number; start: number; e
     { weekday: 3, start: 540, end: 1020, enabled: true  },
     { weekday: 4, start: 540, end: 1020, enabled: true  },
     { weekday: 5, start: 540, end: 1020, enabled: true  },
-    { weekday: 6, start: 600, end: 780,  enabled: true  },
+    { weekday: 6, start: 0, end: 0, enabled: false },
   ],
   email: [
     { weekday: 0, start: 0,   end: 0,    enabled: false },
-    { weekday: 1, start: 420, end: 1080, enabled: true  },
-    { weekday: 2, start: 420, end: 1080, enabled: true  },
-    { weekday: 3, start: 420, end: 1080, enabled: true  },
-    { weekday: 4, start: 420, end: 1080, enabled: true  },
-    { weekday: 5, start: 420, end: 1080, enabled: true  },
-    { weekday: 6, start: 540, end: 720,  enabled: true  },
+    { weekday: 1, start: 540, end: 1020, enabled: true  },
+    { weekday: 2, start: 540, end: 1020, enabled: true  },
+    { weekday: 3, start: 540, end: 1020, enabled: true  },
+    { weekday: 4, start: 540, end: 1020, enabled: true  },
+    { weekday: 5, start: 540, end: 1020, enabled: true  },
+    { weekday: 6, start: 0, end: 0, enabled: false },
   ],
   call: [
     { weekday: 0, start: 0,   end: 0,    enabled: false },
@@ -55,16 +55,16 @@ const DEFAULT_WINDOWS: Record<Channel, Array<{ weekday: number; start: number; e
     { weekday: 3, start: 540, end: 1020, enabled: true  },
     { weekday: 4, start: 540, end: 1020, enabled: true  },
     { weekday: 5, start: 540, end: 1020, enabled: true  },
-    { weekday: 6, start: 600, end: 780,  enabled: true  },
+    { weekday: 6, start: 0, end: 0, enabled: false },
   ],
   push: [
-    { weekday: 0, start: 540, end: 1260, enabled: true },
-    { weekday: 1, start: 480, end: 1260, enabled: true },
-    { weekday: 2, start: 480, end: 1260, enabled: true },
-    { weekday: 3, start: 480, end: 1260, enabled: true },
-    { weekday: 4, start: 480, end: 1260, enabled: true },
-    { weekday: 5, start: 480, end: 1260, enabled: true },
-    { weekday: 6, start: 540, end: 1260, enabled: true },
+    { weekday: 0, start: 0, end: 0, enabled: false },
+    { weekday: 1, start: 540, end: 1020, enabled: true },
+    { weekday: 2, start: 540, end: 1020, enabled: true },
+    { weekday: 3, start: 540, end: 1020, enabled: true },
+    { weekday: 4, start: 540, end: 1020, enabled: true },
+    { weekday: 5, start: 540, end: 1020, enabled: true },
+    { weekday: 6, start: 0, end: 0, enabled: false },
   ],
 };
 
@@ -172,7 +172,8 @@ export async function assertSendAllowed(opts: {
   at?: Date;
 }): Promise<SendAllowed> {
   if (isTransactional(opts.messageClass)) return { ok: true };
-  if (opts.founderBypass) return { ok: true };
+  // A founder-mode flag may bypass other launch controls, but not the statutory
+  // and founder-approved weekday/time restriction on commercial messages.
   const ok = await isWithinSendWindow(opts.channel, opts.at);
   if (ok) return { ok: true };
   const next = await nextAllowedSendAt(opts.channel, opts.at);
