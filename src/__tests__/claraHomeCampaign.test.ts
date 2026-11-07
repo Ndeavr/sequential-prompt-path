@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { HEAT_PUMP_CAMPAIGN, readHomeCampaign, homeCampaignContext, homeCampaignAttribution, hasHeatPumpCampaign } from "@/services/clara/claraHomeCampaign";
+import { SAVINGS_CAMPAIGN, resolveHomeCampaign, HEAT_PUMP_CAMPAIGN, readHomeCampaign, homeCampaignContext, homeCampaignAttribution, hasHeatPumpCampaign } from "@/services/clara/claraHomeCampaign";
 import { buildClaraHistory } from "@/services/clara/claraConversationHistory";
 import { rememberHomeCursor, readHomeCursor, pauseActiveContractorFlow, rememberActiveContractorFlow, hasActiveContractorFlow, hasExplicitHomeownerFlow } from "@/services/clara/claraContractorResume";
 
@@ -49,5 +49,23 @@ describe("heat-pump public campaign", () => {
     expect(history.messages.map(m => m.content)).toEqual(["Ma maison est à Laval", HEAT_PUMP_CAMPAIGN.greeting, "Une thermopompe centrale"]);
     expect(homeCampaignContext(true, "Accueil")).toContain("thermopompe (chauffage/climatisation)");
     expect(homeCampaignContext(false, "Accueil")).toBe("Accueil");
+  });
+});
+ describe("100 million campaign context", () => {
+  it("prioritizes the incoming savings campaign over a saved heat pump project", () => {
+    const entry = readHomeCampaign("?intent=economies-100m", "/");
+    expect(entry).toBe(SAVINGS_CAMPAIGN);
+    expect(resolveHomeCampaign(entry, "thermopompe", "thermopompe")).toBe(SAVINGS_CAMPAIGN);
+    expect(homeCampaignContext(entry, "Accueil")).toContain("100 millions");
+    expect(entry?.greeting).toContain("Quel projet");
+    expect(entry?.choices).not.toContain("Une thermopompe centrale");
+  });
+  it("keeps the new campaign on reload and subsequent answers", () => {
+    rememberHomeCursor({ text: HEAT_PUMP_CAMPAIGN.greeting, options: [...HEAT_PUMP_CAMPAIGN.choices], campaign: "thermopompe" });
+    rememberHomeCursor({ text: SAVINGS_CAMPAIGN.greeting, options: [...SAVINGS_CAMPAIGN.choices], campaign: SAVINGS_CAMPAIGN.intent });
+    rememberHomeCursor({ text: "Quel projet?", options: [] });
+    expect(readHomeCursor()?.campaign).toBe("economies-100m");
+    expect(resolveHomeCampaign(null, "economies-100m", readHomeCursor()?.campaign)).toBe(SAVINGS_CAMPAIGN);
+    expect(resolveHomeCampaign(HEAT_PUMP_CAMPAIGN, "economies-100m", "economies-100m")).toBe(HEAT_PUMP_CAMPAIGN);
   });
 });

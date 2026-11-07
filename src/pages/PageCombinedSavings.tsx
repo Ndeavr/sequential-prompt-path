@@ -66,7 +66,7 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
       {frCreative ? <div className="mx-auto grid max-w-5xl gap-6 px-5 md:grid-cols-2">
         {[
           { path: '/campaigns/unpro-100m-entrepreneurs.webp', destination: '/entrepreneurs', action: 'Entrepreneurs : découvrir les mandats faits pour moi', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Moins de soumissions pour rien. Plus de mandats faits pour toi.' },
-          { path: creativePath, destination: '/', action: 'Propriétaires : parler de mon projet à Clara', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Ton projet. Le bon pro. Sans courir après trois soumissions.' },
+          { path: creativePath, destination: '/?intent=economies-100m', action: 'Propriétaires : parler de mon projet à Clara', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Ton projet. Le bon pro. Sans courir après trois soumissions.' },
         ].map(({ path, destination, action, alt }) => <figure key={path}>
           <Link to={destination} onClick={() => setLang(lang)} aria-label={action} className="block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
             <img src={path} width={1122} height={1402} alt={alt} className="h-auto w-full rounded-xl" />
@@ -77,7 +77,7 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
       <div className="mx-auto max-w-6xl px-5">
         <section className={`${sectionClass} mt-10 grid gap-10 md:grid-cols-2`} aria-label={lang === 'fr' ? 'Deux bénéficiaires' : 'Two beneficiaries'}>
           <div className="space-y-4"><p className="text-5xl font-semibold text-primary">60 M$</p><h2 className="text-2xl font-semibold">{copy.entrepreneurTitle}</h2><p className="leading-relaxed">{copy.entrepreneurBody}</p><Button asChild><Link to="/entrepreneur/plan-personnalise?from=vision" onClick={() => setLang(lang)}>{copy.entrepreneurCta}<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
-          <div className="space-y-4"><p className="text-5xl font-semibold text-success">40 M$</p><h2 className="text-2xl font-semibold">{copy.homeownerTitle}</h2><p className="leading-relaxed">{copy.homeownerBody}</p><Button variant="outline" asChild><Link to="/" onClick={() => setLang(lang)}>{copy.homeownerCta}<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
+          <div className="space-y-4"><p className="text-5xl font-semibold text-success">40 M$</p><h2 className="text-2xl font-semibold">{copy.homeownerTitle}</h2><p className="leading-relaxed">{copy.homeownerBody}</p><Button variant="outline" asChild><Link to="/?intent=economies-100m" onClick={() => setLang(lang)}>{copy.homeownerCta}<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
         </section>
         <section id="modele" className={`${sectionClass} scroll-mt-5`}>
           <h2 className="text-3xl font-semibold">{copy.methodTitle}</h2>
