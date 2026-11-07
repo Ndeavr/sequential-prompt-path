@@ -181,7 +181,9 @@ export default function PageMatchingProfileWizard() {
             const { data: owned, error: ownedError } = await supabase.from("contractors")
               .select("business_name, description").eq("user_id", session.session.user.id)
               .order("updated_at", { ascending: false }).limit(1).maybeSingle();
-            if (ownedError) throw ownedError;
+            // Identity lookup is required only for a fresh draft; the optional
+            // description prefill never blocks resuming a saved draft.
+            if (ownedError && !profile) throw ownedError;
             if (cancelled) return;
             if (!profile) setDeclaredName(current => contractorDraftName(current, null, owned?.business_name));
             const fromAccount = dossierValue(null, owned?.description);
@@ -273,7 +275,7 @@ export default function PageMatchingProfileWizard() {
         setSaving(false);
       }
     },
-    [context, simpleEntry, declaredName, fr],
+    [context, simpleEntry, declaredName, fr, trade],
   );
 
   const q = questions[index];
@@ -600,6 +602,24 @@ export default function PageMatchingProfileWizard() {
       </main>
     </div>
   );
+}
+
+function resolvedTrade(value: string | null | undefined): string | null {
+  return value ?? null;
+}
+
+/** Server row → panel evidence. Unknown shapes stay unknown (null), never zero. */
+function draftEvidenceOf(profile: Record<string, unknown>, trade: string | null): DraftEvidence {
+  const answers = (profile.answers ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" && v ? v : null);
+  return {
+    savedAt: str(profile.updated_at) ?? str(profile.created_at),
+    status: str(profile.status),
+    completedAt: str(profile.completed_at),
+    missingKeys: Array.isArray(profile.missing_matching_fields) ? (profile.missing_matching_fields as unknown[]).filter((k): k is string => typeof k === "string") : null,
+    website: str(answers.company_website),
+    trade,
+  };
 }
 
 function isFilled(v: unknown): boolean {
