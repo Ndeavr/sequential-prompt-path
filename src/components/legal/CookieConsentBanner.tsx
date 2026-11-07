@@ -120,7 +120,7 @@ export default function CookieConsentBanner() {
           </fieldset>
         )}
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="sticky bottom-0 -mx-4 -mb-4 mt-1 px-4 pb-4 pt-3 md:-mx-5 md:-mb-5 md:px-5 md:pb-5 bg-background grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button type="button" className={`${btn} bg-background`} onClick={() => decide(false, false)}>{t.refuse}</button>
           {custom ? (
             <button type="button" className={`${btn} bg-background`} onClick={() => decide(analytics, marketing)}>{t.save}</button>
