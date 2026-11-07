@@ -1,0 +1,120 @@
+--- a/supabase/functions/_shared/insulationProject.ts
++++ b/supabase/functions/_shared/insulationProject.ts
+@@ -1,12 +1,19 @@
+ /** Exact declared intervention signals, shared by Clara, lead persistence and match-lead. */
+ export type InsulationContext = {
+-  insulation_zone?: "attic";
++  insulation_zone?: "attic" | "walls" | "floors" | "multiple" | "unknown";
++  // Homeowner declarations, never technical verification or permission to send.
++  insulation_post_fire?: "declared";
++  post_fire_access?: "authorized_declared" | "prohibited" | "unknown";
++  post_fire_preparation?: "completed_declared" | "pending" | "unknown";
+   insulation_condition?: "sound_dry" | "damaged" | "contaminated" | "unknown";
+   insulation_scope?: "top_up_only" | "removal_before_install" | "targeted_remediation" | "assessment" | "unknown";
+   contamination_suspected?: "none" | "mold" | "animal" | "vermiculite" | "asbestos" | "unknown";
+ };
+ const VALUES = {
+-  insulation_zone: ["attic"],
++  insulation_zone: ["attic", "walls", "floors", "multiple", "unknown"],
++  insulation_post_fire: ["declared"],
++  post_fire_access: ["authorized_declared", "prohibited", "unknown"],
++  post_fire_preparation: ["completed_declared", "pending", "unknown"],
+   insulation_condition: ["sound_dry", "damaged", "contaminated", "unknown"],
+   insulation_scope: ["top_up_only", "removal_before_install", "targeted_remediation", "assessment", "unknown"],
+   contamination_suspected: ["none", "mold", "animal", "vermiculite", "asbestos", "unknown"],
+@@ -23,8 +30,21 @@
+ const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[’']/g, " ");
+ /** No symptom-to-removal inference; short answers require the preceding neutral question. */
+ export function captureInsulationTurn(previous: InsulationContext, answer: string, question = ""): InsulationContext {
+-  const out = { ...previous }; const t = norm(answer); const q = norm(question);
+-  if (/\b(entretoit|grenier|attic|comble)\b/.test(t)) out.insulation_zone = "attic";
++  const out = sanitizeInsulationContext(previous); const t = norm(answer); const q = norm(question);
++  // A post-fire mention prompts qualification; it never certifies readiness.
++  // Negated/hypothetical mentions are left to conversational clarification.
++  if (/\b(apres (un |l )?incendie|suite a (un |l )?(feu|incendie)|after (a |the )?fire|post[ -]fire)\b/.test(t)
++      && !/\b(pas|aucun|sans|jamais|not|no|if|si|hypothetique|hypothetical)\b/.test(t)) out.insulation_post_fire = "declared";
++  if (out.insulation_post_fire === "declared") {
++    // Only exact choices paired to the preceding question may fill readiness.
++    // Free text remains in canonical history for clarification, not certification.
++    for (const item of POST_FIRE_QUESTIONS) {
++      if (q === norm(item.q) && item.options.some(option => option.value === answer)) {
++        Object.assign(out, { [item.key]: answer });
++      }
++    }
++  }
++  if (!out.insulation_post_fire && /\b(entretoit|grenier|attic|comble)\b/.test(t)) out.insulation_zone = "attic";
+   const relevant = out.insulation_zone === "attic" || /isolant actuel|ajouter de l isolant|tout retirer et recommencer/.test(q);
+   if (!relevant) return out;
+   if (/\b(vermiculite|amiante|asbestos)\b/.test(t) && !/\b(pas de|sans|aucun|no)\s+(vermiculite|amiante|asbestos)/.test(t)) {
+@@ -48,8 +68,38 @@
+   if (/souhaitez-vous surtout/.test(q) && VALUES.insulation_scope.includes(answer)) out.insulation_scope = answer as InsulationContext["insulation_scope"];
+   return out;
+ }
++const POST_FIRE_QUESTIONS = [
++  { key: "post_fire_access", q: "Selon les responsables du chantier, l’accès à l’immeuble est-il autorisé?", options: [
++    { value: "authorized_declared", label_fr: "Oui, selon les responsables" }, { value: "prohibited", label_fr: "Non, accès interdit" }, { value: "unknown", label_fr: "Je ne sais pas" },
++  ] },
++  { key: "insulation_zone", q: "Quelles parties de l’immeuble doivent être isolées après l’incendie?", options: [
++    { value: "attic", label_fr: "Entretoit" }, { value: "walls", label_fr: "Murs" }, { value: "floors", label_fr: "Planchers" }, { value: "multiple", label_fr: "Plusieurs zones" }, { value: "unknown", label_fr: "À déterminer" },
++  ] },
++  { key: "post_fire_preparation", q: "Selon les responsables du chantier, les travaux préalables à l’isolation sont-ils terminés?", options: [
++    { value: "completed_declared", label_fr: "Oui, selon les responsables" }, { value: "pending", label_fr: "Il reste des étapes à réaliser" }, { value: "unknown", label_fr: "Je ne sais pas" },
++  ] },
++] as const;
++export function postFireGuidance(raw: unknown): string {
++  const c = sanitizeInsulationContext(raw);
++  if (!c.insulation_post_fire) return "";
++  const blocked = c.post_fire_access === "prohibited" || c.post_fire_access === "unknown";
++  return (blocked
++    ? "Accès interdit ou inconnu : suspendre la qualification du chantier; orienter vers les responsables. Ne demander ni entrée sur place ni nouvelles photos. "
++    : "Ne jamais demander d’entrer sur place ou de prendre de nouvelles photos sans autorisation des responsables. ") +
++    "Après incendie : les réponses sont DÉCLARÉES, jamais des certifications de sécurité, de décontamination ou d’assèchement. Un incendie en cours suspend la qualification. " +
++    "Réutiliser les renseignements déjà donnés; clarifier les réponses libres sans inventer de choix. Une question à la fois. " +
++    "Recueillir ville, bâtiment, rôle, surfaces, étapes préalables, délai et canal de retour dans le parcours existant. Faire confirmer un résumé corrigeable et le consentement avant la soumission par la cliente. " +
++    "Aucune entreprise recommandée sans compétence après sinistre, surfaces, territoire, licence et assurance vérifiés côté serveur. Un spécialiste d’entretoit ne couvre pas implicitement les murs ou planchers. " +
++    "Premier contact anonymisé; aucune adresse exacte, coordonnées ou pièce privée transmise sans consentement. Ne jamais annoncer enregistrement, contact, disponibilité ou rendez-vous sans preuve serveur. " +
++    "Ne promettre un retour ultérieur que si un suivi persistant est effectivement enregistré dans le parcours existant.";
++}
+ export function nextInsulationQuestion(raw: unknown, category?: string | null, subType?: string | null) {
+   const c = sanitizeInsulationContext(raw);
++  if (c.insulation_post_fire) {
++    if (c.post_fire_access === "prohibited" || c.post_fire_access === "unknown") return null;
++    const next = POST_FIRE_QUESTIONS.find(item => !c[item.key]);
++    return next ? { field: "project_context." + next.key, q: next.q, ui: "choice", why: "Déclaration à clarifier, sans certification technique.", options: [...next.options] } : null;
++  }
+   if (!(c.insulation_zone === "attic" || (category === "insulation" && subType === "attic"))) return null;
+   if (!c.insulation_condition) return { field: "project_context.insulation_condition", q: "Savez-vous dans quel état se trouve l’isolant actuel?", ui: "choice", why: "Pour distinguer l’état connu des travaux souhaités.", options: [
+     { value: "sound_dry", label_fr: "Sec et en bon état" }, { value: "damaged", label_fr: "Endommagé ou mouillé" }, { value: "contaminated", label_fr: "Contamination soupçonnée" }, { value: "unknown", label_fr: "Je ne sais pas" },
+@@ -62,6 +112,10 @@
+ export type ProjectRule = { rule_type: string; payload?: Record<string, unknown>; source?: string; confirmed_by_contractor?: boolean };
+ export function evaluateInsulationRules(raw: unknown, rules: ProjectRule[]) {
+   const c = sanitizeInsulationContext(raw);
++  // There is no verified post-fire capability contract in this matcher yet.
++  // Even completed preparation and a paid/verified generic profile cannot release it.
++  if (c.insulation_post_fire) return { eligible: false, boost: 0, reasons: ["Compétence après incendie et préparation du chantier à vérifier"] };
++  if (c.insulation_zone && c.insulation_zone !== "attic") return { eligible: false, boost: 0, reasons: ["Compatibilité des surfaces à vérifier hors du parcours entretoit"] };
+   // No authoritative special-material qualification contract exists in this matcher.
+   // A declared service or a generic verified RBQ licence is NOT that proof.
+   if (c.contamination_suspected === "vermiculite" || c.contamination_suspected === "asbestos") return { eligible: false, boost: 0, reasons: ["Évaluation spécialisée requise; expertise spécifique non vérifiée"] };
+--- a/supabase/functions/alex-chat/index.ts
++++ b/supabase/functions/alex-chat/index.ts
+@@ -601,7 +601,7 @@
+ - Exemple : "Compris. Une photo de la zone m'aiderait à aller plus vite."`;
+ }
+
+-import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext } from "../_shared/insulationProject.ts";
++import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContext, postFireGuidance } from "../_shared/insulationProject.ts";
+
+ serve(async (req) => {
+   if (req.method === "OPTIONS") {
+@@ -718,8 +718,9 @@
+       systemPrompt += "\nPARCOURS ACTIF ENTREPRENEUR : rester sur métier, territoires déclarés, objectifs, capacité et plan; ne pas lancer un diagnostic propriétaire. Les données de propriété de l'historique ne sont pas les territoires de l'entreprise. Données entrepreneur déclarées : " + JSON.stringify(context.contractorQualification || {});
+     }
+     else systemPrompt += "\nPARCOURS ACTIF PROPRIÉTAIRE : interprète les réponses courtes à partir des tours précédents (ex. durée d'une fuite). Ne relance pas une inscription entrepreneur et ne repose pas une question déjà répondue. Le parcours PRO est suspendu, pas effacé.";
+-    if (audience === "homeowner" && insulationContext.insulation_zone === "attic") {
++    if (audience === "homeowner" && (insulationContext.insulation_zone === "attic" || insulationContext.insulation_post_fire === "declared")) {
+       const next = nextInsulationQuestion(insulationContext);
++      systemPrompt += "\n" + postFireGuidance(insulationContext);
+       systemPrompt += "\nISOLATION : état connu et souhait déclaré sont distincts. Humidité, glace et moisissure ne prouvent jamais la nécessité de tout retirer. Un isolant sec et sain peut rester. Vermiculite/amiante soupçonné : évaluation spécialisée, aucune recommandation de retrait sans expertise vérifiée. Contexte déclaré : " + JSON.stringify(insulationContext);
+       if (next) systemPrompt += "\nPose UNE seule question neutre, sans autre question : " + next.q + " Choix naturels et Je ne sais pas. Ne repose pas les faits déjà connus.";
+     }
