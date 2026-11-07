@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SeoHead from "@/seo/components/SeoHead";
+import atticInsulationPhoto from "@/assets/seo/isolation-grenier-hero.jpg";
+import iceDamPhoto from "@/assets/ice-dam-roof.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { saveReturnPath } from "@/lib/authReturn";
 import { trackEvent } from "@/services/eventTrackingService";
@@ -38,6 +40,23 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
   const fr = lang === "fr";
   const t = (f: string, e: string) => (fr ? f : e);
   const copy = ISR_COPY[campaign][lang];
+  const campaignPhoto = {
+    entretoit: {
+      src: "https://isroyal.ca/images/hero-attic.webp",
+      fr: "Inspection de l’isolation dans un entretoit",
+      en: "Inspecting insulation inside an attic",
+    },
+    "maison-froide": {
+      src: atticInsulationPhoto,
+      fr: "Isolation en fibre de verre dans le plancher d’un entretoit",
+      en: "Fiberglass insulation across an attic floor",
+    },
+    ventilation: {
+      src: iceDamPhoto,
+      fr: "Accumulation de glace et glaçons au bord d’une toiture enneigée",
+      en: "Ice buildup and icicles along a snow-covered roof edge",
+    },
+  }[campaign];
   const [params] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -195,6 +214,19 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
           {t("Prenez rendez-vous maintenant", "Book your appointment now")}<ArrowRight className="h-4 w-4" aria-hidden />
         </Button>
         <p className="mt-2 text-sm font-medium text-primary">{t("Inspection gratuite · Prévoyez 60 minutes", "Free inspection · Allow 60 minutes")}</p>
+        <figure className="mt-6 overflow-hidden rounded-2xl border border-border bg-muted" data-testid="isr-campaign-photo">
+          <img
+            key={campaign}
+            src={campaignPhoto.src}
+            alt={campaignPhoto[lang]}
+            width={1280}
+            height={720}
+            loading="eager"
+            decoding="async"
+            className="aspect-video w-full object-cover"
+            onError={event => { if (!event.currentTarget.src.endsWith(atticInsulationPhoto)) { event.currentTarget.src = atticInsulationPhoto; event.currentTarget.alt = t("Isolation d’un entretoit", "Attic insulation"); } }}
+          />
+        </figure>
       </section>
 
       {!ISR_BOOKING_READY && open && (
