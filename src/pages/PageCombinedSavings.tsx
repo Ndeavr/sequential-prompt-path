@@ -65,9 +65,14 @@ export default function PageCombinedSavings({ kind = 'vision' }: Props) {
       </div>
       {frCreative ? <div className="mx-auto grid max-w-5xl gap-6 px-5 md:grid-cols-2">
         {[
-          { path: '/campaigns/unpro-100m-entrepreneurs.webp', audience: 'Entrepreneurs', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Moins de soumissions pour rien. Plus de mandats faits pour toi.' },
-          { path: creativePath, audience: 'Propriétaires', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Ton projet. Le bon pro. Sans courir après trois soumissions.' },
-        ].map(({ path, audience, alt }) => <figure key={path}><img src={path} width={1122} height={1402} alt={alt} className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm"><a href={path} download className="font-semibold text-primary underline">{audience} : télécharger le visuel</a></figcaption></figure>)}
+          { path: '/campaigns/unpro-100m-entrepreneurs.webp', destination: '/entrepreneurs', action: 'Entrepreneurs : découvrir les mandats faits pour moi', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Moins de soumissions pour rien. Plus de mandats faits pour toi.' },
+          { path: creativePath, destination: '/', action: 'Propriétaires : parler de mon projet à Clara', alt: 'UNPRO — Objectif 100 millions $ d’économies partagées. Ton projet. Le bon pro. Sans courir après trois soumissions.' },
+        ].map(({ path, destination, action, alt }) => <figure key={path}>
+          <Link to={destination} onClick={() => setLang(lang)} aria-label={action} className="block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+            <img src={path} width={1122} height={1402} alt={alt} className="h-auto w-full rounded-xl" />
+          </Link>
+          <figcaption className="mt-3"><Button asChild className="h-auto min-h-11 w-full whitespace-normal text-center"><Link to={destination} onClick={() => setLang(lang)}>{action}<ArrowRight className="ml-2 h-4 w-4 shrink-0" /></Link></Button></figcaption>
+        </figure>)}
       </div> : <figure className="mx-auto max-w-6xl px-5"><img src={campaignPhoto} alt={lang === 'fr' ? 'Travaux de rénovation résidentielle' : 'Residential renovation work'} className="aspect-[3/1] min-h-44 w-full object-cover" /></figure>}
       <div className="mx-auto max-w-6xl px-5">
         <section className={`${sectionClass} mt-10 grid gap-10 md:grid-cols-2`} aria-label={lang === 'fr' ? 'Deux bénéficiaires' : 'Two beneficiaries'}>
