@@ -7,7 +7,11 @@ import { isContractorAgreementActive } from '@/lib/billing/contractorActivationS
 
 // Reconstruct only the proposed handler in memory. Active Edge files stay untouched.
 function proposedClaimSource() {
-  const lines = readFileSync('supabase/functions/activation-claim/index.ts', 'utf8').split('\n');
+  const activeSource = readFileSync('supabase/functions/activation-claim/index.ts', 'utf8');
+  // The patch fixture was prepared before the source fix. Once applied in this PR,
+  // exercise the actual handler rather than attempting to apply it twice.
+  if (activeSource.includes('activation_status: "not_ready"')) return activeSource;
+  const lines = activeSource.split('\n');
   const patch = readFileSync('docs/audits/activation-claim-account-only.patch', 'utf8').split('--- a/src/')[0];
   const output: string[] = [];
   let cursor = 0;
@@ -172,10 +176,10 @@ describe('actual activation claim — exact token guards, synthetic only', () =>
 });
 
 describe('staged account claim is not paid activation — no remote execution', () => {
-  it('reproduces the active handler setting activation without any payment evidence', async () => {
+  it('the corrected active handler does not grant activation without payment evidence', async () => {
     const h = harness({ newContractor: true });
     expect((await h.run()).status).toBe(200);
-    expect(h.writes.find(w => w.table === 'contractors' && w.method === 'insert')?.value.activation_status).toBe('activated');
+    expect(h.writes.find(w => w.table === 'contractors' && w.method === 'insert')?.value.activation_status).toBe('not_ready');
     expect(h.writes.some(w => w.table === 'contractor_activation_ledger')).toBe(false);
   });
   it('a valid unpaid new claim creates only a not_ready contractor and claimed account', async () => {

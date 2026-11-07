@@ -92,12 +92,6 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         metadata: { already_claimed: Boolean(data.already_claimed) },
         ...attribution,
       });
-      void logFunnelEvent({
-        event_type: "profile_activated",
-        step: "claim",
-        contractor_id: data.contractor_id ?? null,
-        ...attribution,
-      });
     } catch {
       setError(CLAIM_ERRORS.network_error);
       setPhase("failed");
@@ -161,7 +155,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         <div className="rounded-3xl border border-emerald-300/25 bg-emerald-400/[0.08] p-6 text-center backdrop-blur">
           <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-300" />
           <h2 className="text-xl font-semibold text-white">
-            {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
+            {alreadyClaimed ? `Le profil de ${company} est déjà rattaché` : `Le profil de ${company} est rattaché à votre compte`}
           </h2>
           {grantedYear && (
             <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
@@ -176,7 +170,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
           <p className="mt-2 text-[14px] leading-relaxed text-white/75">
             {alreadyClaimed
               ? "Votre espace entrepreneur vous attend."
-              : "Dernière étape : confirmez votre métier et vos villes pour recevoir des demandes."}
+              : "Confirmez votre métier et vos villes pour compléter votre fiche."}
           </p>
         </div>
 
@@ -232,9 +226,9 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
             className="h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
           >
             {phase === "claiming" ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Activation en cours…</>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rattachement en cours…</>
             ) : (
-              <>{freeYear?.eligible ? "Réclamer gratuitement ma fiche" : "Activer mon profil gratuitement"} <ArrowRight className="ml-1 h-4 w-4" /></>
+              <>{freeYear?.eligible ? "Réclamer gratuitement ma fiche" : "Réclamer ma fiche"} <ArrowRight className="ml-1 h-4 w-4" /></>
             )}
           </Button>
           <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
