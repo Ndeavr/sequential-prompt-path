@@ -7,7 +7,7 @@
 //  - le jeton n'est jamais journalisé en clair (empreinte SHA-256 seulement) ;
 //  - un prospect ne peut être réclamé qu'une seule fois (contrainte unique) ;
 //  - un utilisateur qui rouvre son propre lien retrouve son profil, sans doublon ;
-//  - l'activation est enregistrée immédiatement, l'enrichissement vient après.
+//  - le rattachement ne confirme aucun paiement et n'accorde aucun plan payant.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 import { logInviteEvent } from "../_shared/inviteAudit.ts";
@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
           service_areas: prospect.service_areas ?? null,
           slug: `${slugBase}-${user.id.slice(0, 6)}`,
           onboarding_status: "in_progress",
-          activation_status: "activated",
+          activation_status: "not_ready",
         })
         .select("id")
         .maybeSingle();
@@ -264,12 +264,11 @@ Deno.serve(async (req) => {
       }
       contractorId = inserted.id;
       created = true;
-    } else {
-      await admin.from("contractors").update({ activation_status: "activated" }).eq("id", contractorId);
     }
+    // Reprendre un compte existant ne doit jamais modifier ses droits (payés ou gratuits).
 
     // ------------------------------------------------------------- registre claim
-    const { error: claimErr } = await admin
+    const { error: claimErr } = existingClaim ? { error: null } : await admin
       .from("contractor_prospect_claims")
       .upsert(
         {
@@ -278,7 +277,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           token_hash: tokenHash,
           channel: "web",
-          status: "activated",
+          status: "claimed",
         },
         { onConflict: "prospect_id" },
       );
@@ -292,8 +291,9 @@ Deno.serve(async (req) => {
     try {
       await admin
         .from("verified_contractor_prospects")
-        .update({ outreach_status: "activated", last_action_at: new Date().toISOString() })
-        .eq("id", prospect.id);
+        .update({ outreach_status: "registered", last_action_at: new Date().toISOString() })
+        .eq("id", prospect.id)
+        .or("outreach_status.is.null,outreach_status.not.in.(paid,activated)");
     } catch (_e) { /* non bloquant */ }
 
     // ───────────── Offre « 1 an gratuit » — services résidentiels locaux ─────
@@ -360,7 +360,6 @@ Deno.serve(async (req) => {
 
     if (created) await logEvent("contractor_profile_created", { source: "activation_link" }, ids);
     await logEvent("profile_claimed", { already: Boolean(existingClaim) }, ids);
-    await logEvent("profile_activated", { already: Boolean(existingClaim) }, ids);
 
     return json({
       ok: true,
