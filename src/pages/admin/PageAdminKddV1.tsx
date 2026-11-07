@@ -55,8 +55,18 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 export default function PageAdminKddV1() {
-  const q = useQuery({ queryKey: ["kdd-v1"], queryFn: () => loadKddV1(), retry: false, staleTime: 60_000 });
-  const d = q.data;
+  // Errors are returned as values so a failed load never leaves an unhandled rejection or a silent zero.
+  const q = useQuery({
+    queryKey: ["kdd-v1"],
+    queryFn: async () => {
+      try { return { data: await loadKddV1(), error: null as unknown }; }
+      catch (error) { return { data: null, error }; }
+    },
+    retry: false,
+    staleTime: 60_000,
+  });
+  const d = q.data?.data ?? null;
+  const loadError = q.data?.error ?? (q.isError ? q.error : null);
 
   return (
     <>
@@ -83,14 +93,14 @@ export default function PageAdminKddV1() {
           </div>
         )}
 
-        {q.isError && (
+        {loadError && (
           <div className="rounded-[28px] border border-destructive/50 bg-destructive/10 p-6 space-y-3" role="alert">
             <p className="text-sm text-foreground">
-              {q.error instanceof KddAccessDeniedError
+              {loadError instanceof KddAccessDeniedError
                 ? "Accès réservé aux administrateurs."
                 : "Les données n'ont pas pu être chargées. Aucun chiffre n'est affiché pour éviter un faux zéro."}
             </p>
-            {!(q.error instanceof KddAccessDeniedError) && (
+            {!(loadError instanceof KddAccessDeniedError) && (
               <Button size="sm" onClick={() => q.refetch()}>Réessayer</Button>
             )}
           </div>
