@@ -82,6 +82,10 @@ export function entry350PaymentBlockReason(s: {
   if (s.metadata?.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT) {
     return entry350PromoAmountsOk(s) ? null : "ignored_amount_mismatch";
   }
+  // Full-price activation never accepts a discount, even when an unusual
+  // total still covers 350 $ plus taxes. The explicitly verified $1 PROMO
+  // contract is handled separately above and is not a $350 paid sale.
+  if ((s.total_details?.amount_discount ?? 0) !== 0) return "ignored_amount_mismatch";
   if (s.metadata?.entry_tax_contract) {
     if (s.metadata.entry_tax_contract !== ENTRY350_TAX_CONTRACT || s.mode !== "payment" ||
         s.currency !== "cad" || s.amount_subtotal !== ENTRY350_AMOUNTS.subtotal || s.amount_total !== ENTRY350_AMOUNTS.total ||
