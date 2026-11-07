@@ -89,6 +89,7 @@ export interface Entry350Result {
   verifiedBusinesses: number;
   verifiedPretaxCents: number;
   verifiedDates: string[]; // Toronto date of first verified payment per business
+  verifiedBusinessIds: string[];
   duplicateEvents: number;
   duplicatePaidSessionsSameBusiness: number;
   sessionsSharedAcrossBusinesses: number;
@@ -219,6 +220,7 @@ export function computeEntry350(webhooks: WebhookRow[], ledger: LedgerRow[]): En
     verifiedBusinesses: firsts.length,
     verifiedPretaxCents: firsts.reduce((s, f) => s + f.cents, 0),
     verifiedDates: firsts.map((f) => f.date).sort(),
+    verifiedBusinessIds: [...firstByBusiness.keys()],
     duplicateEvents,
     duplicatePaidSessionsSameBusiness,
     sessionsSharedAcrossBusinesses,

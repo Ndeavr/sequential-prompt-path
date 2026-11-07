@@ -79,10 +79,7 @@ export async function loadKddV1(now = new Date()) {
   ]);
 
   const entry = computeEntry350(webhooks, ledger);
-  const verifiedIds = new Set<string>();
-  // contractor ids are re-derived inside computeEntry350; recompute set for the cohort join
-  for (const l of ledger) if (l.contractor_id && l.action === "entry_activation_350_paid") verifiedIds.add(l.contractor_id);
-  const verifiedSet = entry.verifiedBusinesses > 0 ? verifiedIds : new Set<string>();
+  const verifiedSet = new Set(entry.verifiedBusinessIds);
 
   const flow: FlowEventRow[] = flowRaw.map((r) => ({
     step: r.step, status: r.status, prospect_id: r.prospect_id,
@@ -108,7 +105,7 @@ export async function loadKddV1(now = new Date()) {
   const flowSteps = computeFlowEvents(flow);
   return {
     generatedAt: now.toISOString(),
-    entry, pace, cohorts, demand, flowSteps, truncated,
+    entry: { ...entry, verifiedBusinessIds: undefined }, pace, cohorts, demand, flowSteps, truncated,
     insights: buildInsights({ entry, pace, cohorts, demand, truncated }),
     unreadable: ["pricing_payment_events (RLS service-only)"],
   };
