@@ -2,17 +2,22 @@
 
 Public-safe. No customer records.
 
-## Release mode — contact handoff
+## Release mode — free inspection, address first
 
-The current landing CTA goes directly to the official `https://isroyal.ca/`
-with non-personal campaign labels. It explicitly says to continue on that site
-to request an inspection. `ISR_CONTACT_ONLY` disables the inline intake and its
-submit handler, including resumed drafts. These pages do not book appointments
-or send UNPRO request notifications in this mode.
+Owner confirmed on 2026-11-07: inspection is free and lasts 60 minutes.
+FR CTA: « Prenez rendez-vous maintenant »; EN: “Book your appointment now”.
+Supporting copy: « Inspection gratuite · Prévoyez 60 minutes ».
+The external isroyal.ca handoff has been removed. The CTA opens the property
+address step on UNPRO; address and campaign are retained in session storage.
 
-Re-enable intake only after the existing backend enforces eligibility and
-provides authorized, audited pending-request notifications. The implementation
-notes below describe the retained intake, not the released contact journey.
+Booking remains unavailable: read-only configuration check found no connected
+calendar, no active availability rules, and no active free 60-minute appointment
+type on the canonical ISR record. The existing slot engine accepts coordinates
+but does not use them for travel filtering. Complete address-based scheduling
+requires the actual calendar, working hours and server-side travel validation.
+The UI reports unavailable slots without creating or confirming appointments.
+`ISR_BOOKING_READY` remains false pending those dependencies and the authorized
+notification/eligibility path. The retained intake below is not enabled.
 
 ## Routes (existing `/c/:contractorSlug/:intentSlug`, code-defined for ISR)
 

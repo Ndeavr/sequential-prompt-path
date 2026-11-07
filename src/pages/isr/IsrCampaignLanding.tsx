@@ -1,7 +1,7 @@
 /**
  * Isolation Solution Royal — advertising landing (FR/EN) with a Clara intake
  * bound to this company only. Route: /c/isolation-solution-royal/:intentSlug
- * Requests are saved as "requested" through existing RLS; nothing is confirmed here.
+ * Free 60-minute inspection, address first. Calendar setup remains required.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -25,7 +25,7 @@ type SavedAddress = { id: string; full_address: string; city: string };
 const LOGO = "/brands/isr/isr-logo-square.svg";
 // Keep intake off until server eligibility and audited pending-request notifications
 // are connected. Public profile booking flags alone do not prove that readiness.
-const ISR_CONTACT_ONLY = true;
+const ISR_BOOKING_READY = false;
 
 function readDraft(): IsrDraft | null {
   try { return parseIsrDraft(sessionStorage.getItem(ISR_DRAFT_KEY)); } catch { return null; }
@@ -57,6 +57,7 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [editingAddress, setEditingAddress] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [calendarRequested, setCalendarRequested] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
@@ -124,8 +125,7 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
     commit({ ...draft, answers: { ...draft.answers, ...clear[target] }, step: target, savedAt: Date.now() });
   };
 
-  const requestsOpen = !ISR_CONTACT_ONLY && isrRequestsOpen(profile);
-  const contactUrl = `https://isroyal.ca/?utm_source=unpro&utm_medium=referral&utm_campaign=isr_${campaign}`;
+  const requestsOpen = ISR_BOOKING_READY && isrRequestsOpen(profile);
   const territory = cityInTerritory(draft.answers.addressId ? (addresses.find(a => a.id === draft.answers.addressId)?.city ?? "") : draft.answers.city, profile?.areas);
   const otherLangPath = `${isrCampaignPath(campaign, fr ? "en" : "fr")}${location.search}`;
 
@@ -191,22 +191,28 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
         {profile && profile.areas.length > 0 && (
           <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{t("Territoire desservi : ", "Service area: ")}{profile.areas.join(", ")}</p>
         )}
-        {ISR_CONTACT_ONLY && (
-          <Button asChild size="lg" className="mt-7 h-auto min-h-14 w-full gap-2 whitespace-normal text-base font-semibold sm:w-auto">
-            <a href={contactUrl} data-testid="isr-contact-cta">
-              {t("Contacter Isolation Solution Royal", "Contact Isolation Solution Royal")}<ArrowRight className="h-4 w-4" aria-hidden />
-            </a>
-          </Button>
-        )}
-        {ISR_CONTACT_ONLY && <p className="mt-2 text-sm text-muted-foreground">{t("Poursuivez sur isroyal.ca pour demander votre inspection.", "Continue on isroyal.ca to request your inspection.")}</p>}
-        {!ISR_CONTACT_ONLY && !open && !draft.requestId && (
-          <Button size="lg" className="mt-7 h-auto min-h-14 w-full gap-2 whitespace-normal text-base font-semibold sm:w-auto" onClick={startIntake} data-testid="isr-cta">
-            {t("Demander mon inspection", "Request my inspection")}<ArrowRight className="h-4 w-4" aria-hidden />
-          </Button>
-        )}
+        <Button size="lg" className="mt-7 h-auto min-h-14 w-full gap-2 whitespace-normal text-base font-semibold sm:w-auto" onClick={startIntake} data-testid="isr-cta">
+          {t("Prenez rendez-vous maintenant", "Book your appointment now")}<ArrowRight className="h-4 w-4" aria-hidden />
+        </Button>
+        <p className="mt-2 text-sm font-medium text-primary">{t("Inspection gratuite · Prévoyez 60 minutes", "Free inspection · Allow 60 minutes")}</p>
       </section>
 
-      {!ISR_CONTACT_ONLY && <section ref={intakeRef} className="mx-auto max-w-3xl scroll-mt-4 px-5 pb-8" aria-live="polite">
+      {!ISR_BOOKING_READY && open && (
+        <section ref={intakeRef} className="mx-auto max-w-3xl scroll-mt-4 px-5 pb-8" aria-live="polite">
+          <div className="rounded-[24px] border border-border bg-card p-5" data-testid="isr-address-first">
+            <p className="text-xs font-semibold text-primary">Clara · {name}</p>
+            <h2 className="mt-3 text-lg font-semibold">{t("À quelle adresse aura lieu l’inspection?", "Where will the inspection take place?")}</h2>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">{t("L’adresse permet de choisir les disponibilités dans votre secteur.", "Your address helps determine availability in your area.")}</p>
+            <AddressForm fr={fr} initial={draft.answers} onSubmit={(address, city) => { update({ address, city, addressId: null }); setCalendarRequested(true); }} />
+            {calendarRequested && (
+              <p className="mt-4 rounded-xl bg-muted p-4 text-sm" role="status" data-testid="isr-calendar-unavailable">
+                {t("Les disponibilités ne sont pas accessibles pour le moment. Votre adresse est conservée dans cette session. Aucun rendez-vous n’a encore été réservé.", "Availability is not accessible right now. Your address is kept in this session. No appointment has been booked yet.")}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+      {ISR_BOOKING_READY && <section ref={intakeRef} className="mx-auto max-w-3xl scroll-mt-4 px-5 pb-8" aria-live="polite">
         {open && profileState === "loading" && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Chargement…", "Loading…")}</div>}
         {open && profileState === "error" && (
           <div className="rounded-2xl border border-border bg-card p-5" role="alert" data-testid="isr-profile-error">
