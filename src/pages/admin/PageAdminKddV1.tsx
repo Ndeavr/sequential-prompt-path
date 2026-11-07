@@ -5,7 +5,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { loadKddV1, KddAccessDeniedError } from "@/services/kddV1Service";
@@ -60,7 +59,7 @@ export default function PageAdminKddV1() {
   const d = q.data;
 
   return (
-    <DashboardLayout>
+    <>
       <Helmet>
         <title>KDD v1 — UNPRO Admin</title>
         <meta name="robots" content="noindex,nofollow" />
@@ -277,6 +276,6 @@ export default function PageAdminKddV1() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }
