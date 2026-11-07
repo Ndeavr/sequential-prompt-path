@@ -5,6 +5,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { readAttribution } from "@/config/contractorFunnel";
+import { sanitizeFunnelPath, sanitizeFunnelMetadata } from "./funnelEventRedaction";
 
 export type FunnelEventType =
   | "call_cta_clicked"
@@ -139,8 +140,8 @@ export interface LogFunnelEventInput {
   step?: string | null;
   metadata?: Record<string, unknown>;
   /**
-   * Attribution explicite : indispensable quand le jeton vit dans le CHEMIN
-   * (`/unpro/activate/:token`) et non dans les paramètres d'URL.
+   * Token d'invitation utilisable pour le parcours, mais JAMAIS persisté
+   * dans les événements du navigateur (corrélation par prospect/session).
    */
   prospect_id?: string | null;
   token?: string | null;
@@ -298,9 +299,10 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
   try {
     const { data: { user } } = await supabase.auth.getUser();
     const internalReason = await resolveInternalReason(user?.id ?? null);
-    const currentPath =
+    const currentPath = sanitizeFunnelPath(
       input.current_path ??
-      (typeof window !== "undefined" ? window.location.pathname + window.location.search : null);
+      (typeof window !== "undefined" ? window.location.pathname + window.location.search : null),
+    );
 
     const attribution = getFunnelAttribution();
 
@@ -315,7 +317,8 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
     const { error } = await supabase.from("contractor_funnel_events").insert({
       dedupe_key: input.dedupe_key ?? null,
       prospect_id: prospectId,
-      token: input.token ?? attribution.token ?? attribution.t ?? null,
+      // P0 privacy: bearer tokens have no place in append-only funnel events.
+      token: null,
 
       affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
       utm_source: attribution.utm_source ?? null,
@@ -332,9 +335,10 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       event_source: input.event_source ?? "app",
       step: input.step ?? input.event_type,
       current_path: currentPath,
-      metadata: prospectRef
-        ? { ...(input.metadata ?? {}), prospect_ref: prospectRef }
-        : (input.metadata ?? {}),
+      metadata: sanitizeFunnelMetadata(
+        prospectRef ? { ...(input.metadata ?? {}), prospect_ref: prospectRef } : (input.metadata ?? {}),
+        [input.token, attribution.token, attribution.t],
+      ),
       source: input.event_source ?? "app",
       device: getDevice(),
     } as never);
