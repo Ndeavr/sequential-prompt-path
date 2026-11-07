@@ -6,9 +6,9 @@ import { HelmetProvider } from "react-helmet-async";
 
 const { loadMock, KddAccessDeniedError } = vi.hoisted(() => {
   class KddAccessDeniedError extends Error {}
-  return { loadMock: vi.fn(), KddAccessDeniedError };
+  return { loadMock: { impl: (async () => null) as () => Promise<unknown> }, KddAccessDeniedError };
 });
-vi.mock("@/services/kddV1Service", () => ({ loadKddV1: (...a: unknown[]) => loadMock(...a), KddAccessDeniedError }));
+vi.mock("@/services/kddV1Service", () => ({ loadKddV1: () => loadMock.impl(), KddAccessDeniedError }));
 
 import PageAdminKddV1 from "@/pages/admin/PageAdminKddV1";
 import { buildInsights, computeCohorts, computeDemand, computeEntry350, computePace } from "@/lib/kdd/kddV1";
@@ -37,24 +37,24 @@ function emptyData() {
 }
 
 describe("PageAdminKddV1 states", () => {
-  beforeEach(() => loadMock.mockReset());
+  beforeEach(() => { loadMock.impl = async () => null; });
 
   it("shows access denied without any figures for non-admins", async () => {
-    loadMock.mockImplementation(async () => { throw new KddAccessDeniedError("x"); });
+    loadMock.impl = async () => { throw new KddAccessDeniedError("x"); };
     renderPage();
     expect(await screen.findByText("Accès réservé aux administrateurs.")).toBeTruthy();
     expect(screen.queryByText(/Entreprises vérifiées/)).toBeNull();
   });
 
   it("shows an error with retry and no false zero", async () => {
-    loadMock.mockImplementation(async () => { throw new Error("network"); });
+    loadMock.impl = async () => { throw new Error("network"); };
     renderPage();
     expect(await screen.findByText(/Aucun chiffre n'est affiché/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Réessayer" })).toBeTruthy();
   });
 
   it("renders empty states with goal, gap and recommended actions", async () => {
-    loadMock.mockResolvedValue(emptyData());
+    loadMock.impl = async () => emptyData();
     renderPage();
     await waitFor(() => expect(screen.getByText("Entreprises vérifiées")).toBeTruthy());
     expect(screen.getByText("Aucune cohorte disponible.")).toBeTruthy();
