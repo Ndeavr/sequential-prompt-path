@@ -5,6 +5,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getUserQrStats } from "@/services/qrSharing";
+import CampaignLinksCard from "@/components/pro/CampaignLinksCard";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { PageHeader, LoadingState } from "@/components/shared";
 import { QrCode, Eye, MousePointerClick, CalendarCheck, Award, TrendingUp } from "lucide-react";
@@ -43,6 +44,7 @@ const MyQRPerformancePage = () => {
       />
 
       <div className="space-y-6 pb-8">
+        <CampaignLinksCard />
         {/* Stats grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard icon={<QrCode className="h-5 w-5 text-primary" />} value={stats?.totalScans ?? 0} label="Scans totaux" />
