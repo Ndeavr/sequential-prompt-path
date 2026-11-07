@@ -38,10 +38,8 @@ export function detectContractorEntry(value: string): { name: string; website: s
   const raw = value.trim();
   if (!raw) return null;
   const looksLikeUrl = !/\s/.test(raw) && (/^https?:\/\//i.test(raw) || /\.[a-z]{2,}(\/|$)/i.test(raw));
-  if (looksLikeUrl) {
-    const site = normalizeContractorEntry(raw, "website");
-    if (site) return site;
-  }
+  // A rejected address (private host, credentials…) is never reused as a name.
+  if (looksLikeUrl) return normalizeContractorEntry(raw, "website");
   return normalizeContractorEntry(raw, "name");
 }
 
