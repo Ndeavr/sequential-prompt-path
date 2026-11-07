@@ -169,6 +169,7 @@ export function computeEntry350(webhooks: WebhookRow[], ledger: LedgerRow[]): En
     .filter((l) => l.action === "entry_activation_350_paid" && l.source === "stripe_webhook")
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   for (const l of entitlementRows) {
+    if (l.meta_session_id) entitledSessions.add(l.meta_session_id); // every ledger-referenced session is classified once here
     const ev = l.meta_event_id ? events.get(l.meta_event_id) : undefined;
     if (l.meta_livemode === "false" || (ev && isTestMarked(ev))) { excluded.test++; continue; }
     if (!ev || ev.session_id !== l.meta_session_id || !l.meta_session_id) { excluded.ledgerProofMissing++; continue; }
@@ -176,9 +177,8 @@ export function computeEntry350(webhooks: WebhookRow[], ledger: LedgerRow[]): En
     if (!ev.event_type || !PAID_EVENT_TYPES.has(ev.event_type) || ev.payment_status !== "paid" || !is350(ev)) {
       excluded.ledgerProofMissing++; continue;
     }
-    if (isReversed(ev)) { excluded.reversed++; entitledSessions.add(l.meta_session_id); continue; }
+    if (isReversed(ev)) { excluded.reversed++; continue; }
     if (!l.contractor_id) { excluded.ledgerIdentityMissing++; continue; }
-    entitledSessions.add(l.meta_session_id);
     const owner = sessionOwner.get(l.meta_session_id);
     if (owner && owner !== l.contractor_id) { sessionsSharedAcrossBusinesses++; continue; }
     if (owner === l.contractor_id) continue; // same session replayed in ledger
@@ -194,11 +194,12 @@ export function computeEntry350(webhooks: WebhookRow[], ledger: LedgerRow[]): En
   // 5. paid sessions not counted: test, unknown livemode, paid 350 without entitlement, other offers
   const other = new Map<string, OtherPaidOffer>();
   for (const [skey, e] of paidSessions) {
-    if (isTestMarked(e)) { if (!entitledSessions.has(skey)) excluded.test++; continue; }
+    if (entitledSessions.has(skey)) continue; // already classified through the ledger
+    if (isTestMarked(e)) { excluded.test++; continue; }
     if (e.livemode !== true) { excluded.unknownLivemode++; continue; }
     if (is350(e)) {
-      if (isReversed(e)) { if (!entitledSessions.has(skey)) excluded.reversed++; continue; }
-      if (!entitledSessions.has(skey)) excluded.livePaidWithoutActivation++;
+      if (isReversed(e)) excluded.reversed++;
+      else excluded.livePaidWithoutActivation++;
       continue;
     }
     const offer = e.offer || "sans_offre";
