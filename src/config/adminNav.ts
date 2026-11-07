@@ -155,13 +155,14 @@ export const adminSections: AdminSection[] = [
     match: [
       "/admin/revenue-intelligence", "/admin/unpro-stripe-health", "/admin/stripe-verification",
       "/admin/conversion-lab", "/admin/conversion-truth", "/admin/plans-matrix",
-      "/admin/coupons", "/admin/plan-distribution", "/admin/revenue-reality",
+      "/admin/coupons", "/admin/plan-distribution", "/admin/revenue-reality", "/admin/kdd",
       "/admin/pricing-intelligence",
     ],
     tabs: [
       { to: "/admin/pricing", label: "Tarification", icon: DollarSign },
       { to: "/admin/revenue-intelligence", label: "Intelligence revenus", icon: BarChart3 },
       { to: "/admin/revenue-reality", label: "Revenu réel", icon: Gauge },
+      { to: "/admin/kdd", label: "KDD v1", icon: SearchCheck },
       { to: "/admin/unpro-stripe-health", label: "Santé Stripe", icon: CreditCard },
       { to: "/admin/stripe-verification", label: "Vérification Stripe", icon: ShieldCheck },
       { to: "/admin/recruitment/payments", label: "Paiements", icon: HandCoins },

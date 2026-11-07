@@ -41,6 +41,7 @@ const AdminConversionTruth = lazyWithRetry(() => import("@/pages/admin/AdminConv
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
+const PageAdminKddV1 = lazyWithRetry(() => import("@/pages/admin/PageAdminKddV1"));
 const PageContactedContractors = lazyWithRetry(() => import("@/pages/admin/PageContactedContractors"));
 const PageContractorForensics = lazyWithRetry(() => import("@/pages/admin/PageContractorForensics"));
 const PageRevenueDebug = lazyWithRetry(() => import("@/pages/admin/PageRevenueDebug"));
@@ -1752,6 +1753,7 @@ export const AppRouter = () => (
         <Route path="/activer/:slug/succes" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
         <Route path="/admin/content-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/kdd" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminKddV1 /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-path-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/tunnel-reality" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageTunnelReality /></Suspense></AdminProtectedRoute>} />
