@@ -311,6 +311,28 @@ export default function PageMatchingProfileWizard() {
     }
   }
 
+  const draftValid = Boolean(normalizeContractorEntry(declaredName, "name")) && !(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"));
+
+  /** Saves the confirmed dossier, then continues one question at a time. */
+  async function confirmDraft(targetIndex?: number) {
+    if (!draftValid) return;
+    const description = declaredDescription.trim().slice(0, 600);
+    const next = {
+      ...answers,
+      company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '',
+      company_description: description,
+      company_identity_provenance: 'declared',
+    };
+    const saved = await save(next, false, index);
+    if (!saved) return;
+    setAnswers(next);
+    if (description) setDescriptionSource("saved");
+    try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName.trim()); } catch { /* server draft remains */ }
+    if (typeof targetIndex === "number") { setIndex(targetIndex); setDone(false); }
+    setReviewed(true);
+    void logFunnelEvent({ event_type: 'registration_step_company', token: '', suppress_prospect_ref: true, metadata: { surface: 'simple_profile', has_website: Boolean(declaredWebsite) } });
+  }
+
   async function goToNextActivation() {
     if (activationRouting) return;
     setActivationRouting(true);
@@ -508,16 +530,18 @@ export default function PageMatchingProfileWizard() {
             <p className="text-sm text-muted-foreground">{fr ? "Confirmez le nom de votre entreprise, puis précisez les projets qui vous intéressent." : "Confirm your business name, then tell us which projects interest you."}</p>
             <div><label htmlFor="draft-company" className="mb-2 block text-sm">{fr ? "Entreprise" : "Business"}</label><Input id="draft-company" value={declaredName} maxLength={160} onChange={event => setDeclaredName(event.target.value)} /></div>
             <div><label htmlFor="draft-website" className="mb-2 block text-sm">{fr ? "Site Web" : "Website"}</label><Input id="draft-website" inputMode="url" value={declaredWebsite} onChange={event => setDeclaredWebsite(event.target.value)} /></div>
-            <dl className="space-y-2 text-sm">{['services_wanted', 'services_refused', 'territories'].map(key => <div key={key} className="border-b border-border py-2"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{Array.isArray(answers[key]) && (answers[key] as string[]).length ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>)}</dl>
-            <Button disabled={saving || !normalizeContractorEntry(declaredName, "name") || Boolean(declaredWebsite && !normalizeContractorEntry(declaredWebsite, "website"))} className="h-auto min-h-12 w-full whitespace-normal" onClick={async () => {
-              const next = { ...answers, company_website: declaredWebsite ? normalizeContractorEntry(declaredWebsite, "website")?.website : '', company_identity_provenance: 'declared' };
-              const saved = await save(next, false, index);
-              if (!saved) return;
-              setAnswers(next);
-              try { sessionStorage.setItem("unpro_entry350_declared_name", declaredName.trim()); } catch { /* server draft remains */ }
-              setReviewed(true);
-              void logFunnelEvent({ event_type: 'registration_step_company', token: '', suppress_prospect_ref: true, metadata: { surface: 'simple_profile', has_website: Boolean(declaredWebsite) } });
-            }}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
+            <div>
+              <label htmlFor="draft-description" className="mb-2 block text-sm">{fr ? "Description de l'entreprise" : "Business description"}</label>
+              <Textarea id="draft-description" rows={3} maxLength={600} value={declaredDescription} onChange={event => { setDeclaredDescription(event.target.value); setDescriptionSource("saved"); }} placeholder={fr ? "Ce que vous faites, pour qui, et ce qui vous distingue." : "What you do, for whom, and what sets you apart."} />
+              {descriptionSource === "account" && <p className="mt-1 text-xs text-muted-foreground">{fr ? "Reprise de votre compte UNPRO · à confirmer" : "From your UNPRO account · to confirm"}</p>}
+            </div>
+            <dl className="space-y-2 text-sm">{DOSSIER_KEYS.map(key => {
+              const filled = Array.isArray(answers[key]) && (answers[key] as string[]).length > 0;
+              const qIndex = questions.findIndex(item => item.key === key);
+              return <div key={key} className="flex items-start justify-between gap-3 border-b border-border py-2"><div className="min-w-0"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{filled ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>{qIndex >= 0 && <Button type="button" variant="outline" size="sm" className="min-h-11 shrink-0" disabled={saving || !draftValid} onClick={() => void confirmDraft(qIndex)}>{filled ? (fr ? 'Modifier' : 'Edit') : (fr ? 'Compléter' : 'Complete')}</Button>}</div>;
+            })}</dl>
+            <Button disabled={saving || !draftValid} className="h-auto min-h-12 w-full whitespace-normal" onClick={() => void confirmDraft()}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
+            <ClaraWorkPanel fr={fr} draft={draftMeta} />
           </section>
         ) : done ? (
           <div className="space-y-4">
