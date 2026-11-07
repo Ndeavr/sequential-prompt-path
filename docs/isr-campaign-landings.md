@@ -2,6 +2,18 @@
 
 Public-safe. No customer records.
 
+## Release mode — contact handoff
+
+The current landing CTA goes directly to the official `https://isroyal.ca/`
+with non-personal campaign labels. It explicitly says to continue on that site
+to request an inspection. `ISR_CONTACT_ONLY` disables the inline intake and its
+submit handler, including resumed drafts. These pages do not book appointments
+or send UNPRO request notifications in this mode.
+
+Re-enable intake only after the existing backend enforces eligibility and
+provides authorized, audited pending-request notifications. The implementation
+notes below describe the retained intake, not the released contact journey.
+
 ## Routes (existing `/c/:contractorSlug/:intentSlug`, code-defined for ISR)
 
 | Campaign | FR | EN |

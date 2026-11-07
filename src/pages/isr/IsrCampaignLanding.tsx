@@ -23,6 +23,9 @@ type Profile = IsrProfileGate & { name: string; website: string | null; logo: st
 type SavedAddress = { id: string; full_address: string; city: string };
 
 const LOGO = "/brands/isr/isr-logo-square.svg";
+// Keep intake off until server eligibility and audited pending-request notifications
+// are connected. Public profile booking flags alone do not prove that readiness.
+const ISR_CONTACT_ONLY = true;
 
 function readDraft(): IsrDraft | null {
   try { return parseIsrDraft(sessionStorage.getItem(ISR_DRAFT_KEY)); } catch { return null; }
@@ -121,7 +124,8 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
     commit({ ...draft, answers: { ...draft.answers, ...clear[target] }, step: target, savedAt: Date.now() });
   };
 
-  const requestsOpen = isrRequestsOpen(profile);
+  const requestsOpen = !ISR_CONTACT_ONLY && isrRequestsOpen(profile);
+  const contactUrl = `https://isroyal.ca/?utm_source=unpro&utm_medium=referral&utm_campaign=isr_${campaign}`;
   const territory = cityInTerritory(draft.answers.addressId ? (addresses.find(a => a.id === draft.answers.addressId)?.city ?? "") : draft.answers.city, profile?.areas);
   const otherLangPath = `${isrCampaignPath(campaign, fr ? "en" : "fr")}${location.search}`;
 
@@ -187,14 +191,22 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
         {profile && profile.areas.length > 0 && (
           <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{t("Territoire desservi : ", "Service area: ")}{profile.areas.join(", ")}</p>
         )}
-        {!open && !draft.requestId && (
+        {ISR_CONTACT_ONLY && (
+          <Button asChild size="lg" className="mt-7 h-auto min-h-14 w-full gap-2 whitespace-normal text-base font-semibold sm:w-auto">
+            <a href={contactUrl} data-testid="isr-contact-cta">
+              {t("Contacter Isolation Solution Royal", "Contact Isolation Solution Royal")}<ArrowRight className="h-4 w-4" aria-hidden />
+            </a>
+          </Button>
+        )}
+        {ISR_CONTACT_ONLY && <p className="mt-2 text-sm text-muted-foreground">{t("Poursuivez sur isroyal.ca pour demander votre inspection.", "Continue on isroyal.ca to request your inspection.")}</p>}
+        {!ISR_CONTACT_ONLY && !open && !draft.requestId && (
           <Button size="lg" className="mt-7 h-auto min-h-14 w-full gap-2 whitespace-normal text-base font-semibold sm:w-auto" onClick={startIntake} data-testid="isr-cta">
             {t("Demander mon inspection", "Request my inspection")}<ArrowRight className="h-4 w-4" aria-hidden />
           </Button>
         )}
       </section>
 
-      <section ref={intakeRef} className="mx-auto max-w-3xl scroll-mt-4 px-5 pb-8" aria-live="polite">
+      {!ISR_CONTACT_ONLY && <section ref={intakeRef} className="mx-auto max-w-3xl scroll-mt-4 px-5 pb-8" aria-live="polite">
         {open && profileState === "loading" && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Chargement…", "Loading…")}</div>}
         {open && profileState === "error" && (
           <div className="rounded-2xl border border-border bg-card p-5" role="alert" data-testid="isr-profile-error">
@@ -257,7 +269,7 @@ export default function IsrCampaignLanding({ campaign, lang }: { campaign: IsrCa
             {step > 0 && <Button type="button" variant="ghost" size="sm" className="mt-3 min-h-11 gap-1" onClick={goBack}><ArrowLeft className="h-4 w-4" aria-hidden />{t("Retour", "Back")}</Button>}
           </div>
         )}
-      </section>
+      </section>}
 
       <section className="mx-auto max-w-3xl px-5 pb-10">
         <h2 className="text-lg font-semibold">{t("Travaux offerts", "Services offered")}</h2>
