@@ -377,7 +377,7 @@ export default function PageMatchingProfileWizard() {
         <meta name="robots" content="noindex" />
       </Helmet>
 
-      {simpleEntry ? <header className="mx-auto flex w-full max-w-xl items-center px-4 pt-5 sm:px-6"><UnproLogo size={92} variant="primary" animated={false} /></header> : <AuditProHeader onAuditClick={() => navigate("/entrepreneurs/audit-ia")} />}
+      {simpleEntry ? <header className="mx-auto flex w-full max-w-xl items-center px-4 pt-5 sm:px-6"><UnproLogo size={92} variant="primary" tone="dark" animated={false} /></header> : <AuditProHeader onAuditClick={() => navigate("/entrepreneurs/audit-ia")} />}
 
       <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-8 sm:px-6">
         {/* Progression — préparation du profil IA UNPRO (jamais un score OpenAI) */}
