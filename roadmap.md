@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [x] Nov-7 KDD v1 admin panel /admin/kdd: read-only verified-350 goal/pace, cohorts with unknown tracking, unmet demand; 15 focused tests, anon RLS denial and signed-out redirect checked. Signed-in hosted render unverified. See docs/kdd-v1.md.
 - [ ] Nov-7 TEST QA blocked: existing 100-cent CAD QA session is paid/complete/test with real Stripe event, but TEST webhook points to an unconfirmed other environment; zero receipt on current Cloud. Confirm TEST webhook destination/signing secret before signed redelivery; runner includes sends/purge and was not invoked.
 - [x] Nov-7 Gmail preparation staged only: canonical service-authenticated adapter reuses record_email_event + record_engagement_event; nine synthetic replay/timestamp/auth/unknown/adapter tests pass, zero duplicate message groups, automatic build OK. No migration, deployment or hosted persistence. 23 review dossiers remain: 16 source/anchor mismatches + 7 missing proofs; exact admin screen/steps documented in the existing reconciliation.
 - [x] Finish existing website-first journey only: positive draft copy, retained edits on retry, explicit saved/account identity review and compact logo header; 36 focused tests and three styled synthetic FR/EN 360px complete journeys pass, automatic build OK. Documentation: docs/contractor-profile.md. Hosted auth/payment/promotion eligibility unverified; no publication or hosted writes.
@@ -121,3 +122,5 @@
 ## Editorial tone pass (2026-11-05)
 - [x] Rule docs/EDITORIAL_RULES.md + AGENTS link; campaign, /impact copy lightened; audit in docs/campaigns/editorial-tone-audit-2026-11-05.md.
 - [ ] DB-stored articles/templates not reviewed row by row (needs separate authorized pass).
+
+- [x] Clara contractor workspace v1 (entry → dossier → private preview → canonical checkout → factual panel), local only, not published. Open: safe owner-auth website analysis wrapper (backend review).

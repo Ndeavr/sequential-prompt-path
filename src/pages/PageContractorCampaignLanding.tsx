@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import SeoHead from "@/seo/components/SeoHead";
 import { ShieldCheck, Clock, MapPin, CheckCircle2 } from "lucide-react";
+import { resolveIsrCampaign } from "@/lib/isrCampaign";
+import IsrCampaignLanding from "@/pages/isr/IsrCampaignLanding";
 
 interface Campaign {
   id: string;
@@ -25,6 +27,12 @@ interface Campaign {
 
 export default function PageContractorCampaignLanding() {
   const { contractorSlug = "", intentSlug = "" } = useParams();
+  const isr = resolveIsrCampaign(contractorSlug, intentSlug);
+  if (isr) return <IsrCampaignLanding key={intentSlug} campaign={isr.key} lang={isr.lang} />;
+  return <DbCampaignLanding contractorSlug={contractorSlug} intentSlug={intentSlug} />;
+}
+
+function DbCampaignLanding({ contractorSlug, intentSlug }: { contractorSlug: string; intentSlug: string }) {
   const [params] = useSearchParams();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);

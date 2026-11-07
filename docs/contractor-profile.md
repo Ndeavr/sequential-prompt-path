@@ -37,3 +37,4 @@ Source baseline: `ee9654076f30ab7691fb6fbf13a9a3e75e55193d`, including original 
 - Automatic compilation reported `build OK`; no manual build/typecheck was run. Hosted auth, actual promotion eligibility, Checkout/payment/webhook and physical devices were deliberately not exercised and remain unverified. Nothing published.
 
 Reproduction script and outputs: `/tmp/browser/contractor-entry/check_entry.py`, `results.txt`, `unit-results.txt` (temporary sandbox evidence, not durable deployment evidence).
+- Clara workspace v1 extension: see `docs/clara-contractor-workspace.md`.

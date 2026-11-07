@@ -4,6 +4,7 @@
  * unchecked by default. Reopened from the footer via openCookiePreferences().
  */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { OPEN_PREFS_EVENT, readConsent, saveConsent } from "@/lib/cookieConsent";
@@ -83,15 +84,18 @@ export default function CookieConsentBanner() {
   const btn =
     "min-h-[44px] px-4 rounded-full text-sm font-semibold border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-  return (
+  // Portaled to <body>: the legal footer (relative z-0) creates a stacking
+  // context that trapped this fixed banner beneath the mobile bottom dock.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="false"
       aria-labelledby="cookie-consent-title"
       lang={lang}
-      className="fixed inset-x-0 bottom-0 z-[90] p-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]"
+      data-cookie-consent
+      className="fixed inset-x-0 bottom-0 z-[90] p-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pointer-events-none"
     >
-      <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-background text-foreground shadow-2xl p-4 md:p-5">
+      <div className="pointer-events-auto mx-auto max-w-2xl max-h-[calc(100vh-24px-env(safe-area-inset-bottom,0px))] supports-[height:100dvh]:max-h-[calc(100dvh-24px-env(safe-area-inset-bottom,0px))] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-background text-foreground shadow-2xl p-4 md:p-5">
         <h2 id="cookie-consent-title" className="text-base font-semibold mb-1">{t.title}</h2>
         <p className="text-sm text-foreground/80 leading-relaxed">
           {t.body}{" "}
@@ -116,7 +120,7 @@ export default function CookieConsentBanner() {
           </fieldset>
         )}
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="sticky bottom-0 -mx-4 -mb-4 mt-1 px-4 pb-4 pt-3 md:-mx-5 md:-mb-5 md:px-5 md:pb-5 bg-background grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button type="button" className={`${btn} bg-background`} onClick={() => decide(false, false)}>{t.refuse}</button>
           {custom ? (
             <button type="button" className={`${btn} bg-background`} onClick={() => decide(analytics, marketing)}>{t.save}</button>
@@ -126,6 +130,7 @@ export default function CookieConsentBanner() {
           <button type="button" className={`${btn} bg-primary text-primary-foreground border-primary`} onClick={() => decide(true, true)}>{t.accept}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
