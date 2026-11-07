@@ -64,6 +64,7 @@ import {
 
 
 type Answers = Record<string, unknown>;
+const DOSSIER_KEYS = ["services_wanted", "services_refused", "territories"] as const;
 /** Company identity resolved server-side from the validated audit. */
 type AuditContext = {
   audit_id: string;
@@ -323,7 +324,8 @@ export default function PageMatchingProfileWizard() {
       company_description: description,
       company_identity_provenance: 'declared',
     };
-    const saved = await save(next, false, index);
+    // A completed profile stays completed when only the dossier is re-confirmed.
+    const saved = await save(next, done && targetIndex === undefined, index);
     if (!saved) return;
     setAnswers(next);
     if (description) setDescriptionSource("saved");
@@ -565,7 +567,10 @@ export default function PageMatchingProfileWizard() {
               </p>}
             </section>
 
-            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2 text-muted-foreground">{fr ? "Cette offre de base comprend le profil et la présence IA. Vos promotions, vos droits existants et les rendez-vous inclus dans votre offre, s’il y a lieu, sont confirmés avant le paiement. Les options de rendez-vous restent distinctes." : "The base offer includes your profile and AI presence. Your promotions, existing entitlements and any appointments included in your offer are confirmed before payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && <PresencePreview fr={fr} name={declaredName.trim() || businessName || ""} website={declaredWebsite} city={city} trade={trade} answers={answers} />}
+            {simpleEntry && <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => setReviewed(false)}>{fr ? "Modifier mon dossier" : "Edit my dossier"}</Button>}
+            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2" data-testid="profile-activation-appointments">{fr ? "Rendez-vous inclus dans l'activation de base : aucun." : "Appointments included in the base activation: none."}</p><p className="mt-2 text-muted-foreground">{fr ? "Une promotion ou un droit déjà accordé à votre compte est confirmé et affiché avant le paiement. Les options de rendez-vous restent distinctes." : "Any promotion or entitlement already granted to your account is confirmed and shown before payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && <ClaraWorkPanel fr={fr} draft={draftMeta} />}
             {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 
             <Button
