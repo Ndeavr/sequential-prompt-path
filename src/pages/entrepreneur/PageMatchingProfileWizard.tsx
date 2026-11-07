@@ -543,7 +543,7 @@ export default function PageMatchingProfileWizard() {
               return <div key={key} className="flex items-start justify-between gap-3 border-b border-border py-2"><div className="min-w-0"><dt className="font-medium">{key === 'services_wanted' ? (fr ? 'Travaux souhaités' : 'Preferred work') : key === 'services_refused' ? (fr ? 'Travaux à éviter' : 'Work to avoid') : (fr ? 'Territoires' : 'Service areas')}</dt><dd className="mt-1 break-words text-muted-foreground">{filled ? `${(answers[key] as string[]).join(', ')} · ${fr ? 'Déclaré' : 'Declared'}` : (fr ? 'À compléter' : 'Pending')}</dd></div>{qIndex >= 0 && <Button type="button" variant="outline" size="sm" className="min-h-11 shrink-0" disabled={saving || !draftValid} onClick={() => void confirmDraft(qIndex)}>{filled ? (fr ? 'Modifier' : 'Edit') : (fr ? 'Compléter' : 'Complete')}</Button>}</div>;
             })}</dl>
             <Button disabled={saving || !draftValid} className="h-auto min-h-12 w-full whitespace-normal" onClick={() => void confirmDraft()}>{saving ? (fr ? 'Sauvegarde…' : 'Saving…') : (fr ? 'Confirmer et compléter mon profil' : 'Confirm and complete my profile')}</Button>
-            <ClaraWorkPanel fr={fr} draft={draftMeta} />
+            <ClaraWorkPanel fr={fr} draft={draftMeta ?? { savedAt: null, status: null, completedAt: null, missingKeys: null, website: normalizeContractorEntry(declaredWebsite, "website")?.website || null, trade }} />
           </section>
         ) : done ? (
           <div className="space-y-4">
@@ -570,7 +570,7 @@ export default function PageMatchingProfileWizard() {
             {simpleEntry && <PresencePreview fr={fr} name={declaredName.trim() || businessName || ""} website={declaredWebsite} city={city} trade={trade} answers={answers} />}
             {simpleEntry && <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => setReviewed(false)}>{fr ? "Modifier mon dossier" : "Edit my dossier"}</Button>}
             {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2" data-testid="profile-activation-appointments">{fr ? "Rendez-vous inclus dans l'activation de base : aucun." : "Appointments included in the base activation: none."}</p><p className="mt-2 text-muted-foreground">{fr ? "Une promotion ou un droit déjà accordé à votre compte est confirmé et affiché avant le paiement. Les options de rendez-vous restent distinctes." : "Any promotion or entitlement already granted to your account is confirmed and shown before payment. Appointment options remain separate."}</p></section>}
-            {simpleEntry && <ClaraWorkPanel fr={fr} draft={draftMeta} />}
+            {simpleEntry && <ClaraWorkPanel fr={fr} draft={draftMeta ?? { savedAt: null, status: null, completedAt: null, missingKeys: null, website: normalizeContractorEntry(declaredWebsite, "website")?.website || null, trade }} />}
             {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 
             <Button
