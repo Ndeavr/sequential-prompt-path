@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { CONTRACTOR_PLAN_ENTRY_ROUTE } from "@/lib/routing/contractorPlanRoute";
+import { contractorProfileEntryPath } from "@/lib/contractorProfileEntry";
 import { campaignLink } from "@/lib/contractorCampaignLinks";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -10,7 +10,7 @@ import HeroV2 from "@/components/entrepreneur-landing/v2/HeroV2";
 import SectionPainV2 from "@/components/entrepreneur-landing/v2/SectionPainV2";
 import SectionSolutionV2 from "@/components/entrepreneur-landing/v2/SectionSolutionV2";
 import SectionHowItWorksV2 from "@/components/entrepreneur-landing/v2/SectionHowItWorksV2";
-import StickyMobileCTAV2 from "@/components/entrepreneur-landing/v2/StickyMobileCTAV2";
+
 
 const PageEntrepreneursLanding = () => {
   const { search } = useLocation();
@@ -38,7 +38,7 @@ const PageEntrepreneursLanding = () => {
         <link rel="canonical" href="https://unpro.ca/entrepreneurs" />
       </Helmet>
 
-      <div className="min-h-screen bg-background pb-24 lg:pb-0">
+      <div className="alex-immersive min-h-screen bg-background text-foreground">
         <HeroV2 onTrackCta={trackCta} />
         <SectionHowItWorksV2 />
         <SectionSolutionV2 />
@@ -49,8 +49,8 @@ const PageEntrepreneursLanding = () => {
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous choisissez ensuite le plan adapté à vos objectifs. Son prix complet et les rendez-vous inclus, s’il y a lieu, sont présentés avant le paiement." : "Choose the plan that fits your goals. You see the full price and any included appointments before payment."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink(CONTRACTOR_PLAN_ENTRY_ROUTE, search, { from: "entrepreneurs_landing" })}>{fr ? "Définir les projets que je veux" : "Define my ideal projects"}</Link></Button>
-            <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={campaignLink("/entrepreneurs/audit-ia", search)}>{fr ? "Faire mon audit IA gratuit" : "Get my free AI audit"}</Link></Button>
+            <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={contractorProfileEntryPath(search, lang)}>{fr ? "Préparer mon profil UNPRO" : "Prepare my UNPRO profile"}</Link></Button>
+            
           </div>
         </section>
         <section className="mx-auto max-w-4xl px-5 pb-10">
@@ -67,7 +67,7 @@ const PageEntrepreneursLanding = () => {
             <span aria-hidden="true" className="text-primary transition-transform group-hover:translate-x-1">→</span>
           </Link>
         </div>
-        <StickyMobileCTAV2 onTrackCta={trackCta} />
+
       </div>
     </>
   );
