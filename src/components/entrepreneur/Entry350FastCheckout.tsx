@@ -7,7 +7,7 @@
  */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getClaraQualification } from "@/services/clara/claraContractorQualification";
@@ -16,8 +16,22 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
+import { ENTRY_350 } from "@/lib/copy/offer350";
+
+const COPY = ENTRY_350.checkout;
 
 const DECLARED_NAME_KEY = "unpro_entry350_declared_name";
+
+/** Stockage navigateur best-effort : un refus (mode privé, quota) ne bloque jamais l'authentification ni le paiement. */
+function readDeclaredName(): string {
+  let saved = "";
+  try { saved = sessionStorage.getItem(DECLARED_NAME_KEY) || ""; } catch { /* stockage refusé */ }
+  if (saved) return saved;
+  try { return getClaraQualification().business_name || ""; } catch { return ""; }
+}
+function rememberDeclaredName(name: string) {
+  try { sessionStorage.setItem(DECLARED_NAME_KEY, name); } catch { /* stockage refusé : on continue */ }
+}
 
 /**
  * Diagnostic première partie, avant toute création de session Stripe.
@@ -46,15 +60,13 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   const navigate = useNavigate();
   const proposalToken = query.get("proposal");
   const proposalContext = useProposalContext(proposalToken);
-  const [company, setCompany] = useState(() => {
-    try { return sessionStorage.getItem(DECLARED_NAME_KEY) || getClaraQualification().business_name || ""; }
-    catch { return getClaraQualification().business_name || ""; }
-  });
+  const [company, setCompany] = useState(readDeclaredName);
   const [busy, setBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   // Code promo facultatif : jamais pré-rempli depuis l'URL; seul le serveur le valide.
   const [promoInput, setPromoInput] = useState("");
+  const [promoOpen, setPromoOpen] = useState(false);
   const [promo, setPromo] = useState<{ state: "idle" | "checking" | "valid" | "refused"; code?: string; message?: string }>({ state: "idle" });
   const outcome = query.get("checkout");
   const ref = normalizeRef(query.get("ref"));
@@ -99,8 +111,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     if (name.length < 2) { recordPreCheckoutBlock("company_missing"); setErrorText("Confirmez le nom de votre entreprise."); return; }
     setBusy(true);
     setErrorText(null);
+    rememberDeclaredName(name);
     try {
-      sessionStorage.setItem(DECLARED_NAME_KEY, name);
       const { data: auth, error: authError } = await supabase.auth.getSession();
       if (authError) throw authError;
       if (!auth.session) {
@@ -193,9 +205,12 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   return (
     <section id="activation-350-review" aria-label="Confirmer mon activation" data-testid="entry-350-direct-review"
       className="mt-5 rounded-[24px] border border-primary/30 bg-card p-5 shadow-lg">
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary">Votre activation UNPRO</p>
-      <h2 className="mt-2 text-2xl font-semibold">350 $ + taxes · par année</h2>
-      <p className="mt-2 text-sm text-muted-foreground">Profil professionnel et 12 mois de Présence IA UNPRO. Aucun rendez-vous inclus, aucune apparition garantie dans ChatGPT. Licence valide requise pour être recommandé lorsque applicable.</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary">{COPY.eyebrow}</p>
+      <h2 className="mt-2 text-xl font-semibold">{COPY.title}</h2>
+      <ul className="mt-3 space-y-1.5 text-sm" data-testid="entry-350-benefits">
+        {COPY.benefits.map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
+      </ul>
+      <p className="mt-3 text-2xl font-semibold">{COPY.price}</p>
       {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
       <input id="activation350-business-name" data-testid="entry-350-business-name" autoComplete="organization"
@@ -205,8 +220,16 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       {promo.state === "valid"
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
         : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
-      <div className="mt-4">
-        <label htmlFor="activation350-promo" className="block text-sm font-semibold">Code promo (facultatif)</label>
+      <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>
+      {!(promoOpen || promo.state !== "idle") ? (
+        <button type="button" data-testid="entry-350-promo-toggle" aria-expanded={false} aria-controls="activation350-promo-box"
+          onClick={() => setPromoOpen(true)}
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-2">
+          {COPY.promoToggle}
+        </button>
+      ) : (
+      <div className="mt-4" id="activation350-promo-box">
+        <label htmlFor="activation350-promo" className="block text-sm font-semibold">Code promo</label>
         <div className="mt-2 flex gap-2">
           <input id="activation350-promo" data-testid="entry-350-promo-input" value={promoInput} maxLength={40} autoComplete="off"
             onChange={e => { setPromoInput(e.target.value); if (promo.state !== "idle") setPromo({ state: "idle" }); }}
@@ -223,7 +246,16 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
           {promo.state === "valid" ? "Code accepté : rabais unique de 349,00 $." : promo.state === "refused" ? promo.message : ""}
         </p>
       </div>
-      {outcome === "success" && <p role="status" className="mt-3 text-sm text-primary">Retour de Stripe détecté. Ce retour ne prouve pas le paiement; seul le serveur peut confirmer votre activation. Vérifiez votre espace entrepreneur.</p>}
+      )}
+      {/* Le retour de Stripe ne prouve pas le paiement : seul le webhook signé active le profil.
+          Le bouton reste désactivé pour éviter un deuxième paiement. */}
+      {outcome === "success" && (
+        <div role="status" className="mt-3 rounded-xl border border-primary/30 p-3 text-sm" data-testid="entry-350-return-pending">
+          <p className="font-semibold">{COPY.returnPending}</p>
+          <p className="mt-1 text-muted-foreground">{COPY.returnPendingHelp}</p>
+          <Link to="/pro" className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2">{COPY.returnLink}</Link>
+        </div>
+      )}
       {outcome === "canceled" && <p role="status" className="mt-3 text-sm">Paiement annulé : vos réponses sont conservées.</p>}
       {errorText && (
         <div role="alert" className="mt-3 space-y-2 text-sm text-destructive">
