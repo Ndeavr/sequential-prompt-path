@@ -395,6 +395,16 @@ Deno.serve(async (req) => {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         let session = event.data.object as Stripe.Checkout.Session;
+        // Réservation d'achat : le paiement signé ferme la seule session payable.
+        // La caisse relit toujours Stripe; un échec ici ne crée aucune deuxième session.
+        if (session.payment_status === "paid") {
+          const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
+            ? session.metadata.checkout_reservation_id : null;
+          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
+            _reservation_id: rid, _status: "paid", _stripe_session_id: session.id, _reason: "stripe_paid",
+          });
+          if (resErr) console.error("[stripe-webhook] checkout reservation paid mark failed", resErr.message);
+        }
         // Before paid telemetry, provisioning, roles, subscriptions or flags.
         // Keep legacy/free offers unchanged; only the two paid entry circuits.
         if (session.metadata?.offer === "entry_activation_350" ||
@@ -2047,6 +2057,13 @@ Deno.serve(async (req) => {
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
         const redemptionId = session.metadata?.redemption_id;
+
+        if (session.status === "expired" && session.payment_status !== "paid") {
+          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
+            _reservation_id: null, _status: "expired", _stripe_session_id: session.id, _reason: "stripe_session_expired",
+          });
+          if (resErr) console.error("[stripe-webhook] checkout reservation expiry mark failed", resErr.message);
+        }
 
         // Mark checkout as expired
         await supabase
