@@ -51,7 +51,7 @@ export default function GoogleCalendarSelector({ lang = 'fr' }: { lang?: 'fr' | 
     <p role="status" className="text-sm">{message}</p>
     {!loading && <div className="flex flex-wrap gap-2">
       <Button variant="outline" disabled={saving} onClick={()=>setReload(n=>n+1)}>{en?'Refresh list':'Actualiser la liste'}</Button>
-      <Button variant="ghost" disabled={saving} onClick={()=>void startGoogle('/calendar/connect/success?role=contractor').catch(()=>setMessage(en?'Google connection unavailable.':'Connexion Google indisponible.'))}>{en?'Reconnect Google':'Reconnecter Google'}</Button>
+      <Button variant="ghost" disabled={saving} onClick={()=>void startGoogle(`${window.location.pathname}${window.location.search}`).catch(()=>setMessage(en?'Google connection unavailable.':'Connexion Google indisponible.'))}>{en?'Reconnect Google':'Reconnecter Google'}</Button>
     </div>}
   </section>;
 }
