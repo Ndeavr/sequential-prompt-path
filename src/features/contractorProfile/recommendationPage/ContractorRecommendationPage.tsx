@@ -15,6 +15,7 @@ import { buildFaqSchema } from "./sections/SmartFAQ";
 import AIReferenceBlock from "./sections/AIReferenceBlock";
 import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
 import type { ContractorPageInput } from "@/features/contractorProfile/generator/pageTypes";
+import { registeredLabel } from "@/lib/contractor/accountIndicators";
 
 export default function ContractorRecommendationPage() {
   const { slug, city } = useParams<{ slug: string; city?: string }>();
@@ -130,6 +131,11 @@ export default function ContractorRecommendationPage() {
       <AIReferenceBlock reference={aiReference} />
 
       <div className="mx-auto max-w-3xl overflow-hidden border-x border-border/60 shadow-2xl">
+        {registeredLabel(data.registeredAt) && (
+          <p className="px-5 pt-4 text-xs text-muted-foreground" data-testid="contractor-registered-since">
+            {registeredLabel(data.registeredAt)}
+          </p>
+        )}
         <ContractorPublicExperience
           profileData={{
             contractor: c,

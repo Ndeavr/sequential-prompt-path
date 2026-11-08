@@ -12,6 +12,10 @@ describe("indicateurs distincts profil / RBQ / calendrier", () => {
     expect(rbqIndicator({ rbq_compliance_status: "verified", rbq_verified_at: "2025-01-01T00:00:00Z", rbq_expiry_date: "2026-11-01" }, today)).toBe("expired"));
   it("date d'inscription inconnue : rien d'affiché", () => {
     expect(registeredLabel(null)).toBeNull();
-    expect(registeredLabel("2026-11-08T15:00:00Z")).toBe("Inscrit à UNPRO le 8 novembre 2026");
+    expect(registeredLabel("2026-11-08T15:00:00Z")).toBe("Inscrit sur UNPRO depuis le 8 novembre 2026");
+    // 02:30 UTC le 9 = 21:30 le 8 à Toronto
+    expect(registeredLabel("2026-11-09T02:30:00Z")).toBe("Inscrit sur UNPRO depuis le 8 novembre 2026");
+    expect(registeredLabel("2026-11-09T02:30:00Z", "en")).toBe("On UNPRO since November 8, 2026");
+    expect(registeredLabel("pas une date")).toBeNull();
   });
 });

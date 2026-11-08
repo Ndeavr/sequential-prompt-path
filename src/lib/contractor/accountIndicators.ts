@@ -30,7 +30,11 @@ export const RBQ_LABEL: Record<RbqIndicator, string> = {
   not_provided: "Licence RBQ non fournie",
 };
 
-export function registeredLabel(registeredAt: string | null | undefined): string | null {
+/** « Inscrit sur UNPRO depuis le [date] » / “On UNPRO since [date]”, fuseau America/Toronto. Date inconnue = rien. */
+export function registeredLabel(registeredAt: string | null | undefined, lang: "fr" | "en" = "fr"): string | null {
   if (!registeredAt || Number.isNaN(Date.parse(registeredAt))) return null;
-  return `Inscrit à UNPRO le ${new Intl.DateTimeFormat("fr-CA", { timeZone: "America/Toronto", day: "numeric", month: "long", year: "numeric" }).format(new Date(registeredAt))}`;
+  const d = new Date(registeredAt);
+  return lang === "en"
+    ? `On UNPRO since ${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", month: "long", day: "numeric", year: "numeric" }).format(d)}`
+    : `Inscrit sur UNPRO depuis le ${new Intl.DateTimeFormat("fr-CA", { timeZone: "America/Toronto", day: "numeric", month: "long", year: "numeric" }).format(d)}`;
 }
