@@ -694,7 +694,7 @@ export default function PageContractorPersonalizedPlan() {
                   data-testid="activate-offer"
                   className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : checkoutBlocked ? "Proposition en mise à jour…" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : "Voir l'offre et continuer") : "Activer mon offre gratuite"}
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : checkoutBlocked ? "Proposition en mise à jour…" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
                 </button>
                 {entryTier && entryTiers && !waitlisted && (
                   <div className="mt-3 text-center">
