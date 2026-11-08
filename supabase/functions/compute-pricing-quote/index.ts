@@ -22,6 +22,7 @@ import {
   type ModeOutcome,
   type PricingMode,
 } from "../_shared/pricingModes.ts";
+import { readDeclaredSizes } from "../_shared/projectSizeFit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1449,6 +1450,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         quote_id: saved.id,
+        size_mix_persisted: sizeMixPersisted,
         pricing_version: pricingVersion,
         calculation_version: CALCULATION_VERSION,
         data_status: dataStatus,
