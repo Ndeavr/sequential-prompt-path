@@ -104,7 +104,13 @@ describe("Clara — retour au projet maison sans perte d’état", () => {
     expect(box2).toContain("pauseActiveContractorFlow()");
     expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" })');
   });
-  it("évite les tours identiques consécutifs de Clara", () => {
-    expect(box2).toContain("lastAssistant.text.trim() === text.trim()");
+  it("déduplique les questions pendant un tour sans réponse, mais pas après une réponse utilisateur", () => {
+    // La reprise peut produire un accueil suivi de la même question : la recherche
+    // se limite au tour d’assistant courant et respecte le public de la conversation.
+    expect(box2).toContain('if (message.role !== "assistant") break;');
+    expect(box2).toContain("message.text.trim() === text.trim()");
+    expect(box2).toContain("(!message.audience || message.audience === speechAudience)");
+    expect(box2).toContain("if (existing) {");
+    expect(box2).toContain("messageId: existing.id");
   });
 });
