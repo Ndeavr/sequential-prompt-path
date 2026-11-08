@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPricingQuote, type PricingQuote } from "@/services/contractorPricingQuoteService";
 import { formatQuebecNumber, parseQuebecNumber } from "@/lib/formatting";
 import {
-  SIZE_LABELS, appointmentOutcome, goalNeeds, goalQuotePatch, goalSignature, initialAppointments, validateGoal, weightedEconomics,
+  SIZE_LABELS, activeMix, appointmentOutcome, goalNeeds, goalQuotePatch, goalSignature, initialAppointments, normalizeSizeMix, sizeMixTotal, validateGoal, weightedEconomics,
   type GoalError, type GoalInputs, type ProjectSizeCode, type ProjectSizeEntry, type SizeStance,
 } from "@/lib/pricing/planGoalModel";
 
@@ -29,6 +29,11 @@ const ERR: Record<GoalError, string> = {
   invalid_capacity: "Indiquez une capacité entière d'au moins 1 rendez-vous par mois.",
   invalid_appointments: "Choisissez au moins 1 rendez-vous par mois.",
   invalid_size_mix: "Chaque part doit être entre 0 % et 100 %.",
+  invalid_size_share: "Chaque taille retenue doit avoir une part de rendez-vous entre 0 % et 100 %.",
+  invalid_size_basket: "Chaque taille retenue doit avoir une valeur de contrat supérieure à 0 $.",
+  invalid_size_conversion: "Chaque taille retenue doit avoir une conversion entre 1 % et 100 %.",
+  invalid_size_range: "Une fourchette doit avoir un minimum inférieur au maximum.",
+  size_mix_total: "Les parts des rendez-vous doivent totaliser 100 %.",
 };
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -159,8 +164,8 @@ export function PlanGoalAdjuster({ quote, onQuote, onState }: {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <NumField id="goal-amount" testId="goal-amount" label={inputs.kind === "sales" ? "Objectif de chiffre d'affaires (CAD HT)" : "Objectif de profit (CAD HT)"} value={inputs.amount} unit="$" onChange={(v) => set({ amount: v })} />
         <NumField id="goal-horizon" testId="goal-horizon" label="Horizon" value={inputs.horizonMonths} unit="mois" onChange={(v) => set({ horizonMonths: v === null ? 0 : Math.round(v) })} />
-        <NumField id="goal-basket" testId="goal-basket" label="Panier moyen (hypothèse)" value={inputs.basket} unit="$" onChange={(v) => set({ basket: v })} hint={eco.source === "declared_mix" ? `Pondéré par votre répartition : ${eco.basket ? money(eco.basket) : "—"}` : undefined} />
-        <NumField id="goal-conversion" testId="goal-conversion" label="Conversion rendez-vous → contrat (hypothèse)" value={inputs.conversionPct} unit="%" onChange={(v) => set({ conversionPct: v })} />
+        <NumField id="goal-basket" testId="goal-basket" label="Panier moyen (hypothèse)" value={inputs.basket} unit="$" onChange={(v) => set({ basket: v })} hint={eco.source === "declared_mix" ? `Remplacé par votre répartition : ${eco.basket ? `${money(eco.basket)} par contrat gagné` : "répartition à corriger"}` : undefined} />
+        <NumField id="goal-conversion" testId="goal-conversion" label="Conversion rendez-vous → contrat (hypothèse)" value={inputs.conversionPct} unit="%" onChange={(v) => set({ conversionPct: v })} hint={eco.source === "declared_mix" ? `Remplacée par votre répartition : ${eco.conversionPct !== null ? `${new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 }).format(eco.conversionPct)} %` : "répartition à corriger"}` : undefined} />
         <NumField id="goal-margin" testId="goal-margin" label={inputs.kind === "profit" ? "Marge bénéficiaire (requise)" : "Marge bénéficiaire (facultative)"} value={inputs.marginPct} unit="%" onChange={(v) => set({ marginPct: v })} />
         <NumField id="goal-capacity" testId="goal-capacity" label="Capacité déclarée (rendez-vous par mois)" value={inputs.capacityPerMonth} unit="RDV/mois" onChange={(v) => set({ capacityPerMonth: v === null ? null : Math.round(v), appointmentsPerMonth: v && appts && appts > v ? Math.max(1, Math.round(v)) : appts })} hint="Des rencontres avec des clients, pas des contrats ni des chantiers." />
       </div>
@@ -207,7 +212,7 @@ export function PlanGoalAdjuster({ quote, onQuote, onState }: {
           <p className="mt-1 text-[12px] text-white/60">Plafonné à votre capacité déclarée ({cap} RDV/mois).</p>
           {outcome && (
             <p className="mt-2 text-sm text-white/85" data-testid="goal-outcome">
-              Avec {outcome.appointmentsPerMonth} RDV/mois : environ <strong data-testid="outcome-contracts">{new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 }).format(outcome.contractsPerMonth)} contrats/mois</strong> et <strong data-testid="outcome-revenue">{money(outcome.estimatedRevenuePerMonth)}</strong> de chiffre d'affaires estimé par mois{outcome.estimatedProfitPerMonth !== null ? <>, profit estimé {money(outcome.estimatedProfitPerMonth)}/mois</> : null}.
+              Avec {outcome.appointmentsPerMonth} RDV/mois : environ <strong data-testid="outcome-contracts">{new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1 }).format(outcome.contractsPerMonth)} contrats/mois</strong> et <strong data-testid="outcome-revenue">{money(outcome.estimatedRevenuePerMonth)}</strong> de chiffre d'affaires estimé par mois{outcome.estimatedProfitPerMonth !== null ? <>, profit estimé {money(outcome.estimatedProfitPerMonth)}/mois</> : null}.
             </p>
           )}
         </div>
@@ -219,29 +224,45 @@ export function PlanGoalAdjuster({ quote, onQuote, onState }: {
         </button>
         {sizesOpen && (
           <div className="mt-2 space-y-3" data-testid="size-mix">
-            <p className="text-[12px] text-white/65">Aucune fourchette n'est imposée : indiquez vos propres valeurs. Sans répartition, votre panier moyen reste une seule hypothèse.</p>
+            <p className="text-[12px] text-white/65">Vos propres valeurs : aucune fourchette n'est imposée. Les parts sont des parts de vos <strong>rendez-vous</strong>. Sans répartition, votre panier et votre conversion restent une seule hypothèse.</p>
             {SIZE_CODES.map((code) => {
               const e = (inputs.sizes ?? []).find((s) => s.code === code) ?? { code };
               return (
-                <fieldset key={code} className="rounded-2xl border border-white/10 p-3">
+                <fieldset key={code} className="rounded-2xl border border-white/10 p-3" data-testid={`size-${code}`}>
                   <legend className="px-1 text-sm font-medium">{SIZE_LABELS.fr[code]}</legend>
                   <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={`Intérêt pour ${SIZE_LABELS.fr[code].toLowerCase()}`}>
                     {(["sought", "accepted", "refused"] as SizeStance[]).map((st) => (
-                      <button key={st} type="button" role="radio" aria-checked={e.stance === st} onClick={() => setSize(code, { stance: st })}
+                      <button key={st} type="button" role="radio" aria-checked={e.stance === st} onClick={() => setSize(code, { stance: st })} data-testid={`size-${code}-${st}`}
                         className={`min-h-11 rounded-full border px-3 text-sm ${e.stance === st ? "border-amber-400 bg-amber-500/15" : "border-white/15"}`}>
                         {st === "sought" ? "Recherché" : st === "accepted" ? "Accepté" : "Refusé"}
                       </button>
                     ))}
                   </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <NumField id={`size-min-${code}`} testId={`size-min-${code}`} label="Valeur min. d'un projet" unit="$" value={e.minValue ?? null} onChange={(v) => setSize(code, { minValue: v })} />
+                    <NumField id={`size-max-${code}`} testId={`size-max-${code}`} label="Valeur max. d'un projet" unit="$" value={e.maxValue ?? null} onChange={(v) => setSize(code, { maxValue: v })} />
+                  </div>
                   {e.stance !== "refused" && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <NumField id={`size-share-${code}`} label="Part des mandats" unit="%" value={e.sharePct ?? null} onChange={(v) => setSize(code, { sharePct: v })} />
-                      <NumField id={`size-basket-${code}`} label="Panier" unit="$" value={e.basket ?? null} onChange={(v) => setSize(code, { basket: v })} />
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      <NumField id={`size-share-${code}`} testId={`size-share-${code}`} label="Part des RDV" unit="%" value={e.sharePct ?? null} onChange={(v) => setSize(code, { sharePct: v })} />
+                      <NumField id={`size-basket-${code}`} testId={`size-basket-${code}`} label="Contrat gagné" unit="$" value={e.basket ?? null} onChange={(v) => setSize(code, { basket: v })} />
+                      <NumField id={`size-conv-${code}`} testId={`size-conv-${code}`} label="Conversion" unit="%" value={e.conversionPct ?? null} onChange={(v) => setSize(code, { conversionPct: v })} />
                     </div>
                   )}
                 </fieldset>
               );
             })}
+            {activeMix(inputs.sizes).length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-white/85" data-testid="size-mix-total">
+                <span>Total des parts : {new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 }).format(sizeMixTotal(inputs.sizes))} %</span>
+                {errors.includes("size_mix_total") && sizeMixTotal(inputs.sizes) > 0 && (
+                  <button type="button" className="min-h-11 rounded-full border border-white/20 px-4 text-sm" data-testid="normalize-sizes"
+                    onClick={() => set({ sizes: normalizeSizeMix(inputs.sizes ?? []) })}>
+                    Ramener à 100 % (mêmes proportions)
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
