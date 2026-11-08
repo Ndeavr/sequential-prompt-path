@@ -18,6 +18,8 @@ export interface ContractorRecommendationData {
   publicSources: PublicSource[];
   aiReference: AIReferencePayload;
   compatibility: { fits: string[]; not_fits: string[] };
+  /** Événement canonique d'inscription (jamais date d'import, de profil ou de paiement). */
+  registeredAt: string | null;
 }
 
 const asRecord = (value: Json | null): Record<string, Json> | null =>
@@ -138,7 +140,12 @@ export function useContractorRecommendation(slug: string | undefined) {
         compatibility,
       });
 
+      // Date d'inscription : RPC publique limitée aux profils publiés; absente = non affichée.
+      const { data: regAt, error: regErr } = await supabase.rpc("get_contractor_public_registration", { _slug: slug! });
+      const registeredAt = !regErr && typeof regAt === "string" ? regAt : null;
+
       return {
+        registeredAt,
         contractor: { ...c, service_areas, services_structured },
         projects: projects ?? [],
         services: svcRows ?? [],

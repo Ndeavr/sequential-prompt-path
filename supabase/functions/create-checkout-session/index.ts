@@ -14,7 +14,11 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
-import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal, sessionMatchesPresence } from "../_shared/annualPresence.ts";
+import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
+import {
+  acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
+  presencePaymentAwaitingConfirmation, purchaseFingerprint, stepKey, type ReservationDeps,
+} from "../_shared/checkoutReservation.ts";
 
 
 const corsHeaders = {
@@ -428,6 +432,11 @@ Deno.serve(async (req) => {
             status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        if (entryPresence.blocked) {
+          return new Response(JSON.stringify({ error: HISTORICAL_REVIEW_MESSAGE, code: "historical_right_review_required" }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         if (!entryPresence.include) {
           return new Response(
             JSON.stringify({ error: "Votre profil est déjà activé.", code: "already_active", annual_presence_reason: entryPresence.reason, valid_until: entryPresence.validUntil }),
@@ -437,30 +446,14 @@ Deno.serve(async (req) => {
         // Un paiement 350 $ déjà reçu par Stripe pour cette fiche, mais pas encore
         // confirmé chez UNPRO : jamais de deuxième facturation.
         {
-          const { data: paidEvt } = await serviceClient
-            .from("stripe_webhook_events")
-            .select("stripe_event_id")
-            .eq("contractor_id", fbContractor.id)
-            .eq("event_type", "checkout.session.completed")
-            .eq("livemode", !useTestMode)
-            .eq("payload->data->object->metadata->>offer", "entry_activation_350")
-            .eq("payload->data->object->>payment_status", "paid")
-            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
-            .limit(1)
-            .maybeSingle();
-          // Même règle pour un forfait payé avec la Présence incluse, pas encore confirmé.
-          const { data: paidCombined } = await serviceClient
-            .from("stripe_webhook_events")
-            .select("stripe_event_id")
-            .eq("contractor_id", fbContractor.id)
-            .eq("event_type", "checkout.session.completed")
-            .eq("livemode", !useTestMode)
-            .eq("payload->data->object->metadata->>annual_presence", "included")
-            .eq("payload->data->object->>payment_status", "paid")
-            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
-            .limit(1)
-            .maybeSingle();
-          if (paidEvt || paidCombined) {
+          // Seul ou avec un forfait : lecture illisible = refus (aucun paiement créé).
+          const awaiting = await presencePaymentAwaitingConfirmation(serviceClient, fbContractor.id, !useTestMode);
+          if (awaiting === null) {
+            return new Response(JSON.stringify({ error: "Impossible de vérifier vos paiements précédents. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }), {
+              status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (awaiting) {
             return new Response(
               JSON.stringify({ error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }),
               { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -565,8 +558,8 @@ Deno.serve(async (req) => {
         : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
       if (entryPromo) {
         fallbackConfig.discounts = [{ promotion_code: entryPromo.promotionCodeId }];
-        // Une session non payée expire vite : le code n'est jamais consommé par un abandon.
-        fallbackConfig.expires_at = Math.floor(Date.now() / 1800_000) * 1800 + 3720; // ≥ 31 min, stable within a 30-min bucket for idempotency
+        // Une session non payée expire vite (échéance fixée par la réservation) :
+        // le code n'est jamais consommé par un abandon.
       }
 
       if (isEmbeddedFallback) {
@@ -583,11 +576,33 @@ Deno.serve(async (req) => {
       // must resolve to the same Stripe session before any paid webhook exists.
       // Hash the complete server-built contract: never trust a client key, and
       // never reuse a key with different redirect, quote or attribution params.
+      // A different request (other quote, embedded ↔ hosted, combined plan) first
+      // expires the previous open session: one payable 350 session per contractor.
       let entryRequestOptions: { idempotencyKey: string } | undefined;
+      let entryReservation: { id: string; deps: ReservationDeps } | null = null;
       if (isEntryActivation) {
-        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(fallbackConfig)));
-        const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-        entryRequestOptions = { idempotencyKey: `${entryPromo ? `entry350-promo349-v1-${entryPromo.promotionCodeId}` : "entry350-v1"}-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
+        const fingerprint = await purchaseFingerprint({ v: 1, kind: "entry_350", mode: useTestMode ? "test" : "live", config: fallbackConfig });
+        const deps = liveReservationDeps(serviceClient, stripeFallback, {
+          contractorId: fbContractor.id, stripeMode: useTestMode ? "test" : "live", kind: "entry_350",
+          includesPresence: true, quoteId: quoteId ? String(quoteId) : null, fingerprint,
+        });
+        const acquired = await acquireCheckoutReservation(deps, { embedded: isEmbeddedFallback });
+        if (acquired.kind === "refuse") {
+          return new Response(JSON.stringify({ error: acquired.message, code: acquired.code }), {
+            status: acquired.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (acquired.kind === "reuse") {
+          return new Response(JSON.stringify(isEmbeddedFallback
+            ? { clientSecret: acquired.session.client_secret, reused: true }
+            : { url: acquired.session.url, sessionId: acquired.session.id, reused: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        fallbackConfig.expires_at = acquired.expiresAt;
+        (fallbackConfig.metadata as Record<string, string>).checkout_reservation_id = acquired.reservationId;
+        entryRequestOptions = { idempotencyKey: stepKey(acquired.idempotencyKey, "session") };
+        entryReservation = { id: acquired.reservationId, deps };
       }
       // Preserve a real, authenticated buyer's company/contact association BEFORE
       // calling Stripe. A provider outage must not erase the attempt or prevent
@@ -618,6 +633,12 @@ Deno.serve(async (req) => {
         fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
       } catch (stripeError) {
         if (!isEntryActivation) throw stripeError;
+        // Refus définitif de Stripe (4xx) : réservation fermée. Panne réseau : la
+        // même demande réessaie avec la même clé d'idempotence.
+        const sc = (stripeError as { statusCode?: number })?.statusCode;
+        if (entryReservation && typeof sc === "number" && sc >= 400 && sc < 500) {
+          await entryReservation.deps.settle(entryReservation.id, "failed", null, "stripe_rejected").catch(() => null);
+        }
         const { error: recoveryError } = await serviceClient.from("contractor_funnel_events").insert({
           contractor_id: fbContractor.id,
           user_id: userId,
@@ -650,6 +671,14 @@ Deno.serve(async (req) => {
       // the OPEN session lets admin recover abandoned checkouts and reconnect
       // to the original buyer. INSERT only; an idempotent retry must never
       // downgrade a completed/paid snapshot.
+      if (entryReservation) {
+        const attached = await attachCheckoutSession(entryReservation.deps, entryReservation.id, fbSession);
+        if (!attached.ok) {
+          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
       if (isEntryActivation) {
         const { error: snapshotError } = await serviceClient.from("billing_checkout_sessions").insert({
           contractor_id: fbContractor.id,
@@ -668,6 +697,11 @@ Deno.serve(async (req) => {
         });
         if (snapshotError && snapshotError.code !== "23505") {
           console.error("[checkout:entry350] open-session record failed", snapshotError.code);
+          // Never hand out a payable session UNPRO cannot trace.
+          if (entryReservation) await expireUndeliverable(entryReservation.deps, entryReservation.id, fbSession.id, "snapshot_failed");
+          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
       }
 
@@ -1166,6 +1200,11 @@ Deno.serve(async (req) => {
           status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (presence.blocked) {
+        return new Response(JSON.stringify({ error: HISTORICAL_REVIEW_MESSAGE, code: "historical_right_review_required" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       // Un forfait gratuit (code 100 %) ne rend jamais la Présence gratuite.
       if (presence.include && isZeroTotal) {
         return new Response(JSON.stringify({
@@ -1269,24 +1308,22 @@ Deno.serve(async (req) => {
 
     // ── STRIPE CHECKOUT (paid flow) ──
     const stripe = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripeMode: "live" | "test" = useTestMode ? "test" : "live";
 
-    // Get or create Stripe customer
-    const { data: existingSub } = await serviceClient
+    // Get existing Stripe customer (a new one is created only after the reservation).
+    const { data: existingSub, error: existingSubErr } = await serviceClient
       .from("contractor_subscriptions")
       .select("stripe_customer_id")
       .eq("contractor_id", contractor.id)
       .maybeSingle();
+    if (existingSubErr) {
+      return new Response(JSON.stringify({ error: "Impossible de préparer le paiement pour le moment. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Un client Stripe live n'existe pas en mode test : ne jamais le réutiliser.
-    let customerId = useTestMode ? null : existingSub?.stripe_customer_id;
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: { contractor_id: contractor.id, user_id: userId },
-      });
-      customerId = customer.id;
-    }
+    const existingCustomerId: string | null = useTestMode ? null : (existingSub?.stripe_customer_id ?? null);
 
     // Build line items — personalized quote overrides catalog price via price_data
     const planLineItem: any = personalizedPriceCents
@@ -1351,7 +1388,6 @@ Deno.serve(async (req) => {
     // Build checkout config
     const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
-      customer: customerId,
       mode: "subscription",
       locale: "fr",
       line_items: lineItems,
@@ -1420,26 +1456,86 @@ Deno.serve(async (req) => {
       checkoutConfig.cancel_url = cancelUrl || `${checkoutOrigin}/pro/billing?canceled=true`;
     }
 
-    // Add Stripe coupon for promo (if partial discount, not zero-total)
-    if (promoResult?.ok && !isZeroTotal) {
-      // Create a one-time Stripe coupon for this promo
-      try {
-        const couponParams: any = {
+    // Promo (partial discount): the coupon is created only after the reservation,
+    // with an idempotency key, so a retry never mints a second discount.
+    const couponIntent: Record<string, unknown> | null = promoResult?.ok && !isZeroTotal
+      ? {
           duration: "once",
           metadata: { promo_code: promoCode, redemption_id: redemptionId, affiliate_first_month_only: "true" },
-        };
-        if (promoResult.discount_type === "percentage") {
-          couponParams.percent_off = 50;
-        } else {
-          couponParams.amount_off = promoResult.discount_value;
-          couponParams.currency = "cad";
+          ...(promoResult.discount_type === "percentage"
+            ? { percent_off: 50 }
+            : { amount_off: promoResult.discount_value, currency: "cad" }),
         }
+      : null;
+
+    // A Presence payment already signed by Stripe but not yet confirmed: never a second 350.
+    if (presenceIncluded) {
+      const awaiting = await presencePaymentAwaitingConfirmation(serviceClient, contractor.id, !useTestMode);
+      if (awaiting !== false) {
+        return new Response(JSON.stringify(awaiting === null
+          ? { error: "Impossible de vérifier vos paiements précédents. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }
+          : { error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }), {
+          status: awaiting === null ? 503 : 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // ── Atomic reservation: one payable session per contractor and Stripe mode ──
+    const fingerprint = await purchaseFingerprint({
+      v: 1, kind: presenceIncluded ? "combined_presence_plan" : "plan", mode: stripeMode,
+      quote: quoteRow ? { id: String(quoteId), price: quoteRow.recommended_monthly_price ?? null, expires_at: quoteRow.expires_at ?? null } : null,
+      customer: existingCustomerId, coupon: couponIntent, config: checkoutConfig,
+    });
+    const reservationDeps = liveReservationDeps(serviceClient, stripe, {
+      contractorId: contractor.id, stripeMode, kind: presenceIncluded ? "combined_presence_plan" : "plan",
+      includesPresence: presenceIncluded, quoteId: quoteId ? String(quoteId) : null, fingerprint,
+    });
+    const acquired = await acquireCheckoutReservation(reservationDeps, { embedded: isEmbedded });
+    if (acquired.kind === "refuse") {
+      return new Response(JSON.stringify({ error: acquired.message, code: acquired.code }), {
+        status: acquired.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (acquired.kind === "reuse") {
+      return new Response(JSON.stringify(isEmbedded
+        ? { clientSecret: acquired.session.client_secret, reused: true }
+        : { url: acquired.session.url, sessionId: acquired.session.id, reused: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const reservationId = acquired.reservationId;
+    const idemKey = acquired.idempotencyKey;
+    const failReservation = async (reason: string) => {
+      await reservationDeps.settle(reservationId, "failed", null, reason).catch(() => null);
+    };
+
+    let customerId = existingCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: { contractor_id: contractor.id, user_id: userId },
+      }, { idempotencyKey: stepKey(idemKey, "customer") });
+      customerId = customer.id;
+    }
+    checkoutConfig.customer = customerId;
+    checkoutConfig.expires_at = acquired.expiresAt;
+    checkoutConfig.metadata.checkout_reservation_id = reservationId;
+    checkoutConfig.subscription_data.metadata.checkout_reservation_id = reservationId;
+
+    if (couponIntent) {
+      try {
+        const couponParams: any = { ...couponIntent };
         // Avec la Présence IA dans le même paiement, la réduction vise le forfait
         // seulement : la ligne 350 $ n'est jamais réduite par un code de forfait.
         if (presenceIncluded) {
           let planProduct: string | null = null;
-          if (planLineItem.price_data) {
-            const prod = await stripe.products.create({ name: `UNPRO Plan ${planName}`, metadata: { type: "appointment_plan", contractor_id: contractor.id } });
+          if (planLineItem.price_data?.product) {
+            planProduct = String(planLineItem.price_data.product);
+          } else if (planLineItem.price_data) {
+            const prod = await stripe.products.create(
+              { name: `UNPRO Plan ${planName}`, metadata: { type: "appointment_plan", contractor_id: contractor.id } },
+              { idempotencyKey: stepKey(idemKey, "plan_product") },
+            );
             planProduct = prod.id;
             planLineItem.price_data = { ...planLineItem.price_data, product: prod.id };
             delete (planLineItem.price_data as Record<string, unknown>).product_data;
@@ -1450,10 +1546,11 @@ Deno.serve(async (req) => {
           if (!planProduct) throw new Error("plan_product_unresolved");
           couponParams.applies_to = { products: [planProduct] };
         }
-        const coupon = await stripe.coupons.create(couponParams);
+        const coupon = await stripe.coupons.create(couponParams, { idempotencyKey: stepKey(idemKey, "coupon") });
         checkoutConfig.discounts = [{ coupon: coupon.id }];
       } catch (couponErr) {
         console.error("Coupon creation failed; checkout aborted:", couponErr);
+        await failReservation("promo_application_failed");
         if (redemptionId) {
           await serviceClient.from("promo_code_redemptions").update({ status: "rejected" }).eq("id", redemptionId);
         }
@@ -1464,35 +1561,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Nouvelle tentative : réutiliser la session ouverte du même devis plutôt
-    // que d'en créer une seconde (évite deux abonnements payés).
-    if (quoteId && !isEmbedded) {
-      const { data: prev } = await serviceClient.from("checkout_sessions")
-        .select("external_checkout_id").eq("quote_id", String(quoteId))
-        .eq("contractor_profile_id", contractor.id)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (prev?.external_checkout_id) {
-        try {
-          const old = await stripe.checkout.sessions.retrieve(prev.external_checkout_id);
-          if (isSessionPaid(old)) {
-            return new Response(JSON.stringify({ error: "Paiement déjà reçu.", code: "already_paid" }), {
-              status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          // Une session ouverte créée avec une autre décision Présence est expirée :
-          // jamais de 350 $ en double ni de forfait sans la Présence due.
-          if (old.status === "open" && !sessionMatchesPresence(old.metadata as Record<string, unknown> | null, presenceIncluded)) {
-            await stripe.checkout.sessions.expire(old.id);
-          } else if (old.status === "open" && old.url && old.amount_total != null) {
-            return new Response(JSON.stringify({ url: old.url, sessionId: old.id, reused: true }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        } catch { /* autre mode Stripe ou session purgée : on en crée une neuve */ }
-      }
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create(checkoutConfig, { idempotencyKey: stepKey(idemKey, "session") });
+    } catch (stripeError) {
+      const sc = (stripeError as { statusCode?: number })?.statusCode;
+      if (typeof sc === "number" && sc >= 400 && sc < 500) await failReservation("stripe_rejected");
+      throw stripeError;
     }
 
-    const session = await stripe.checkout.sessions.create(checkoutConfig);
+    // Attach BEFORE handing the session out; failure = session expired, never payable.
+    const attached = await attachCheckoutSession(reservationDeps, reservationId, session);
+    if (!attached.ok) {
+      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Sanitized checkout observability — never logs payment data or secrets.
     console.info("[checkout:created]", {
@@ -1505,13 +1589,12 @@ Deno.serve(async (req) => {
       expected_amount_cents: personalizedPriceCents ?? null,
       quote_id: quoteId ?? null,
       checkout_session_id: session.id,
+      checkout_reservation_id: reservationId,
       status: "pending",
     });
 
-
-
-    // Create checkout_sessions record
-    await serviceClient.from("checkout_sessions").insert({
+    // Create checkout_sessions record (an idempotent replay may already have it).
+    const { error: recordErr } = await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
       selected_plan_code: resolvedPlanCode,
       selected_plan_name: planName,
@@ -1526,10 +1609,18 @@ Deno.serve(async (req) => {
       quote_id: quoteId || null,
       personalized_monthly_price_cents: personalizedPriceCents,
     });
+    if (recordErr && recordErr.code !== "23505") {
+      console.error("[create-checkout-session] checkout record failed", recordErr.code);
+      await expireUndeliverable(reservationDeps, reservationId, session.id, "checkout_record_failed");
+      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (isEmbedded) {
       if (!session.client_secret) {
         console.error("Stripe returned no client_secret for embedded session", session.id);
+        await expireUndeliverable(reservationDeps, reservationId, session.id, "missing_client_secret");
         return new Response(
           JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }

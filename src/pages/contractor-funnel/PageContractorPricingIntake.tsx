@@ -1,3 +1,4 @@
+import { canonicalProfileRows, contactFirstName } from "@/lib/contractor/profileCarryover";
 import { getMatchingSessionKey as getSessionKey } from "@/lib/matching/sessionKey";
 import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 import { CLARA_QUALIFICATION_UPDATED_EVENT, getClaraQualification, hydrateClaraQualification } from "@/services/clara/claraContractorQualification";
@@ -276,6 +277,7 @@ export default function PageContractorPricingIntake() {
         /* profil indisponible : le parcours reste utilisable */
       }
       if (cancelled) return;
+      setProfileRows(canonicalProfileRows(answers));
       const listOf = (v: unknown): string[] =>
         Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0).map((x) => x.trim()) : [];
       // Ce que l'entrepreneur a déjà déclaré ailleurs (Clara, brouillon, tunnel).
@@ -334,6 +336,7 @@ export default function PageContractorPricingIntake() {
   }, [confirmedFields]);
 
   /* Déclaré à Clara : affiché tel quel, jamais redemandé ni chiffré. */
+  const [profileRows, setProfileRows] = useState<Array<[string, string]>>([]);
   const [claraDeclared, setClaraDeclared] = useState<{ serviceAreas: string[]; goals: string[]; preferences?: ReturnType<typeof getKnownContractorContext>["preferences"] }>({ serviceAreas: [], goals: [] });
   // Réponses déjà connues : préremplies et modifiables, jamais réécrites sur une saisie.
   useEffect(() => {
@@ -606,6 +609,8 @@ export default function PageContractorPricingIntake() {
             ...(claraDeclared.preferences?.excludedWork.length ? [["Mandats à éviter (déclarés)", claraDeclared.preferences.excludedWork.join(", ")]] : []),
             ...(claraDeclared.preferences?.excludedAreas.length ? [["Territoires exclus (déclarés)", claraDeclared.preferences.excludedAreas.join(", ")]] : []),
             ...(claraDeclared.preferences?.projectSizes.length ? [["Taille des contrats (déclarée)", claraDeclared.preferences.projectSizes.join(", ")]] : []),
+            // Profil de jumelage enregistré : langues, disponibilité, services déclarés.
+            ...profileRows.filter(([k]) => !(claraDeclared.preferences?.work.length && k.startsWith("Services offerts"))),
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3 border-b border-white/5 pb-2">
               <span className="text-white/55">{k}</span>
@@ -1091,9 +1096,9 @@ export default function PageContractorPricingIntake() {
   const [firstName, setFirstName] = useState<string | null>(null);
   useEffect(() => {
     void supabase.auth.getUser().then(({ data: auth }) => {
-      const m = (auth.user?.user_metadata ?? {}) as Record<string, unknown>;
-      const n = [m.first_name, m.given_name].find((v) => typeof v === "string" && v.trim().length > 1) as string | undefined;
-      if (n) setFirstName(n.trim());
+      // Prénom de la personne seulement — jamais le nom de l'entreprise.
+      const n = contactFirstName((auth.user?.user_metadata ?? {}) as Record<string, unknown>, dataRef.current.company_name as string | undefined);
+      if (n) setFirstName(n);
     }).catch(() => undefined);
   }, []);
   const toIntakeDraft = (d: Partial<PricingIntakeInput>): IntakeDraft => ({

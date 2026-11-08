@@ -309,6 +309,13 @@
       "when": 1794170879972,
       "tag": "0043_annual_presence_renewal_combined_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794172697537,
+      "tag": "0044_checkout_reservation_and_historical_right_provenance",
+      "breakpoints": true
     }
   ]
 }

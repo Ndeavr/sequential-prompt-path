@@ -13,6 +13,8 @@ import {
 } from "../_shared/googleCalendar.ts";
 
 import { selectedGoogleCalendar, canWriteCalendar } from "../_shared/googleCalendarSelection.ts";
+import { bookingTerritoryDecision, effectiveTerritoryRules, needsAddressPoint, pickAddressPoint, type HomeownerLocation } from "../_shared/territoryRules.ts";
+import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,6 +62,40 @@ Deno.serve(async (req) => {
 
     const clientName = clean(body.client_name, 120);
     if (!clientName) return json({ error: "client_name_required" }, 400);
+
+    // Territoire : mêmes règles que le jumelage (exclusions d'abord, rayon
+    // seulement depuis une adresse géocodée sans ambiguïté). Lecture illisible = refus.
+    {
+      const [profRes, areasRes] = await Promise.all([
+        admin.from("contractor_matching_profiles").select("answers").eq("contractor_id", contractorId)
+          .order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+        admin.from("contractor_service_areas").select("city_name").eq("contractor_id", contractorId),
+      ]);
+      if (profRes.error || areasRes.error) {
+        return json({ error: "territory_unverified", message: "Impossible de vérifier le territoire de cet entrepreneur. Aucun rendez-vous n'a été créé." }, 503);
+      }
+      const rules = effectiveTerritoryRules(profRes.data?.answers);
+      const location: HomeownerLocation = { city: clean(body.city, 120) };
+      const line = clean(body.address_line1);
+      if (needsAddressPoint(rules) && line && location.city) {
+        try {
+          const q = [line, location.city, clean(body.province, 8) ?? "QC", clean(body.postal_code, 12), "Canada"].filter(Boolean).join(", ");
+          const res = await placesSearchTextRaw(q, { maxResults: 3 }, "places.id,places.location,places.types");
+          location.point = pickAddressPoint((res.places ?? []).filter((x: any) => x?.location).map((x: any) => ({
+            lat: Number(x.location.latitude), lng: Number(x.location.longitude), types: x.types ?? [],
+          })));
+        } catch { location.point = null; }
+      }
+      const gate = bookingTerritoryDecision(rules, (areasRes.data ?? []).map((a: { city_name: string | null }) => a.city_name ?? ""), location);
+      if (!gate.allowed) {
+        return json({
+          error: gate.code,
+          message: gate.code === "territory_excluded"
+            ? "Cet entrepreneur ne dessert pas cette adresse. Aucun rendez-vous n'a été créé."
+            : "Nous ne pouvons pas confirmer que cet entrepreneur dessert cette adresse. Aucun rendez-vous n'a été créé.",
+        }, 409);
+      }
+    }
 
     const { data: bookingId, error: rpcError } = await admin.rpc("confirm_smart_booking_slot", {
       p_contractor_id: contractorId,

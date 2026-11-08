@@ -39,7 +39,7 @@ Legend: **Implemented** = in source · **Tested** = focused automated/browser ch
 
 ## 6. Presence fallback and registration date
 - [x] Implemented: fallback card with approved title, body, CTA « Commencer ma Présence IA — 350 $/an », benefits; no ranking/Google/ChatGPT promise.
-- [x] Implemented: `contractors.unpro_registered_at` set by trigger at the real registration event going forward; 0 existing rows backfilled (no import/profile/payment date inferred). Shown only when present (« Inscrit à UNPRO le … »).
+- [x] Implemented: `contractors.unpro_registered_at` set by trigger at the real registration event going forward; 0 existing rows backfilled (no import/profile/payment date inferred). Shown only when present: dashboard and public profile `/entrepreneur/:slug` (« Inscrit sur UNPRO depuis le [date] » / “On UNPRO since [date]”, America/Toronto) via `get_contractor_public_registration` (published profiles only). Read-only count 2026-11-08: 0/45 contractors have a date, so nothing is displayed yet.
 
 ## 7. Website-to-dossier / ISR
 - [x] Preserved; existing workspace test (9) passes; type check clean. No further change.
@@ -49,3 +49,32 @@ Legend: **Implemented** = in source · **Tested** = focused automated/browser ch
 - Vitest: 6 new/updated focused files (40 tests) + 28 related existing files (255 tests, 1 obsolete assertion updated).
 - Type check (`tsgo -p tsconfig.app.json`): 0 errors. ESLint on changed files: 0 errors (warnings only).
 - Browser (Playwright, 390 px, intercepted network): intake natural answer, failure/retry, reload; plan page goal controls, taxes, Presence line, fallback.
+
+## Corrective batch 2026-11-08 (after 1ef7a8c1f)
+Legend: Source = in repository · Tested = synthetic/mock or local DB · Deployed = official receipt checked.
+
+### Duplicate charges (before payment, not after)
+- [x] Source: migration 0044 (APPLIED to the backend during this batch — production schema change, no data rows written): `contractor_checkout_reservations` + `reserve_contractor_checkout` / `settle_contractor_checkout` (service only; anon/authenticated refused, checked). Advisory lock per contractor + Stripe mode, one active `reserved|open` row (unique index), Presence purchases refused while a paid Presence < 12 months awaits confirmation or a valid Presence exists, `paid` never reopened, stale session-less row superseded after 2 min.
+- [x] Source: `_shared/checkoutReservation.ts` used by `create-checkout-session` for entry 350, combined Presence + plan and plan-only, hosted and embedded: same request → same session (or same Stripe idempotency key on retry); different quote / decision / hosted↔embedded / standalone↔combined → old session expired at Stripe BEFORE a new one; already paid → refused; unreadable state → refused; session created but not recorded → expired immediately, never returned. Customer, coupon and session creation all carry reservation-derived idempotency keys. `stripe-webhook` marks the reservation paid (signed `checkout.session.completed` / `async_payment_succeeded`, paid only) or expired.
+- [x] Tested: 15 orchestrator tests (double click, embedded reuse, quote/mode/kind switch, paid old session, attach failure, DB down, 10 parallel tabs → 1 payable session, retry key, unreadable Stripe state, source order checks).
+- [x] Tested (real Postgres 16, throwaway local DB, migration section loaded verbatim): 20 concurrent calls with two different quotes → 10 `create` (same row) + 10 `busy`, exactly 1 active row; attach/verify same vs different; TEST lane separate; webhook paid on a superseded session wins and cannot be closed; Presence paid < 12 months refused, renewal after 13 months allowed; valid Presence refuses Presence but not plan-only; stale reservation superseded.
+- [ ] Not covered: `create-activation-checkout` (invited/prospect flow without contractor id) is outside the reservation; the existing standalone duplicate check remains its guard.
+
+### Historical rights
+- [x] Source (0044, applied): active subscriptions count as historical only if created before the rule, with a Stripe subscription id and a matching processed webhook; frozen snapshot rights count only when `review_status = confirmed` for the same Stripe mode. Unproven rows are not revoked and not charged: checkout is blocked (`historical_right_review_required`) until an admin review (`review_historical_presence_right`, ≥ 20-char reason). Read-only state: 6 LIVE rows `unproven_activation_status` pending review, 4 QA rows TEST-only.
+- [x] Tested: decision parsing (blocked → no line, no grant, display unknown) and SQL text assertions.
+- [ ] Owner action: review the 6 pending historical rows (confirm or reject) — no right was removed automatically.
+
+### Territory (address, not city centre)
+- [x] Source: `territoryVerdict` uses only property coordinates or a single address-level geocode result; city centroid never establishes radius coverage. Exclusions first (city, neighbourhood, excluded radius); an excluded radius that cannot be verified makes the contractor not served. Same rules in `match-lead` and in `booking-confirm-slot` before the booking RPC (`bookingTerritoryDecision`); no travel time converted to distance.
+- [x] Tested: boundary fixtures 29.8 km covered / 30.3 km not, centroid refused, neighbourhood exclusion, excluded radius, ambiguous geocode, booking parity (8 new tests).
+
+### Sizes and profile carry-over
+- [x] Source: no per-domain size configuration exists (`appointment_values` and `project_sizes` are global), so sizes stay the contractor's editable hypotheses. Declared mix copied by `compute-pricing-quote` to the canonical matching profile (`answers.project_size_mix`, owner only, response `size_mix_persisted`); `match-lead` reads the profile first, latest quote only as fallback. Σ(w·b·c) unchanged.
+- [x] Source: intake summary shows saved languages, availability, declared services/refusals from the matching profile (nothing inferred from the trade, no ISR/CVAC/asphalt additions); first name never taken from the company name.
+- [x] Tested: 4 carry-over tests + 1 size persistence test; 36 existing intake/plan tests pass.
+
+### Deployment
+- [ ] Deployed: NOT verified. Edited active functions (`create-checkout-session`, `stripe-webhook`, `booking-confirm-slot`, `match-lead`, `compute-pricing-quote`) may be auto-deployed by Lovable; no edge log/boot receipt exists in the last 24 h, so no version can be confirmed. Calendar reconnect remains user-dependent and untested.
+- [ ] Signed Stripe TEST end-to-end: not run (no TEST or LIVE payment authorized); remains unverified.
+- Checks: Vitest 57 focused + 36 existing intake/plan tests pass; `deno check` clean on create-checkout-session, stripe-webhook, match-lead, compute-pricing-quote; booking-confirm-slot has one pre-existing type error (`getGoogleAccessToken` client type, identical at 1ef7a8c1f). Preview build OK. Frontend not published.

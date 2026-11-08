@@ -4,7 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 import { evaluateInsulationRules } from "../_shared/insulationProject.ts";
-import { readTerritoryRules, territoryVerdict, type StoredTerritoryRule } from "../_shared/territoryRules.ts";
+import { effectiveTerritoryRules, needsAddressPoint, pickAddressPoint, propertyPoint, territoryVerdict, type HomeownerLocation, type StoredTerritoryRule } from "../_shared/territoryRules.ts";
 import { projectSizeFit, readDeclaredSizes, type DeclaredSize } from "../_shared/projectSizeFit.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
@@ -387,26 +387,45 @@ Deno.serve(async (req) => {
     for (const p of profiles ?? []) {
       const id = String(p.contractor_id);
       if (territoryByContractor.has(id)) continue; // plus récent d'abord
-      const confirmed = (p.answers as Record<string, unknown> | null)?.preferences_confirmed === true;
       // Inclusions : seulement si l'entrepreneur a confirmé ses préférences.
       // Exclusions : toujours appliquées (restreindre ne crée aucune couverture).
-      territoryByContractor.set(id, readTerritoryRules(p.answers).filter((r) => !r.include || confirmed || (r as { confirmed?: boolean }).confirmed === true));
+      territoryByContractor.set(id, effectiveTerritoryRules(p.answers));
     }
+    // Tailles : profil de jumelage canonique d'abord (survit au devis), puis
+    // dernier devis seulement pour les dossiers antérieurs à cette copie.
     const sizesByContractor = new Map<string, DeclaredSize[]>();
+    for (const p of profiles ?? []) {
+      const id = String(p.contractor_id);
+      if (sizesByContractor.has(id)) continue;
+      const fromProfile = readDeclaredSizes(p.answers);
+      if (fromProfile.length) sizesByContractor.set(id, fromProfile);
+    }
     for (const q of sizeQuotes ?? []) {
       const id = String(q.contractor_id);
       if (!sizesByContractor.has(id)) sizesByContractor.set(id, readDeclaredSizes(q.input_payload));
     }
-    // Coordonnées de la ville du propriétaire : géocodées une seule fois, et
-    // seulement si un rayon géocodé peut changer le résultat. Ambigu = aucune.
-    let leadPoint: { lat: number; lng: number } | null = null;
-    const needsPoint = [...territoryByContractor.values()].some((rs) => rs.some((r) => r.kind === "radius" && r.geocode_status === "geocoded"));
-    if (needsPoint && typedLead.city) {
-      try {
-        const res = await placesSearchTextRaw(`${typedLead.city}, Québec, Canada`, { maxResults: 3 }, "places.id,places.location,places.types");
-        const hits = (res.places ?? []).filter((p: any) => p?.location && (p.types ?? []).some((t: string) => t === "locality" || t === "sublocality" || t === "administrative_area_level_3"));
-        if (hits.length === 1) leadPoint = { lat: Number(hits[0].location.latitude), lng: Number(hits[0].location.longitude) };
-      } catch { leadPoint = null; }
+    // Adresse du propriétaire : coordonnées de la fiche propriété, sinon adresse
+    // géocodée sans ambiguïté (un seul résultat de niveau adresse). Le centre de
+    // la ville n'établit JAMAIS un rayon. Lecture seule : rien n'est réécrit.
+    let leadLocation: HomeownerLocation = { city: typedLead.city ?? null };
+    if ((lead as { property_id?: string | null }).property_id) {
+      const { data: prop, error: propErr } = await supabase.from("properties")
+        .select("latitude, longitude, neighborhood, full_address, normalized_address, postal_code, city")
+        .eq("id", (lead as { property_id: string }).property_id).maybeSingle();
+      if (propErr) throw new Error(`property_read: ${propErr.message}`);
+      if (prop) {
+        leadLocation = { city: typedLead.city ?? prop.city ?? null, neighborhood: prop.neighborhood ?? null, point: propertyPoint(prop) };
+        const addr = prop.normalized_address || prop.full_address;
+        const needsPoint = [...territoryByContractor.values()].some(needsAddressPoint);
+        if (!leadLocation.point && needsPoint && addr) {
+          try {
+            const res = await placesSearchTextRaw(`${addr}${prop.postal_code ? `, ${prop.postal_code}` : ""}, Canada`, { maxResults: 3 }, "places.id,places.location,places.types");
+            leadLocation.point = pickAddressPoint((res.places ?? []).filter((x: any) => x?.location).map((x: any) => ({
+              lat: Number(x.location.latitude), lng: Number(x.location.longitude), types: x.types ?? [],
+            })));
+          } catch { leadLocation.point = null; }
+        }
+      }
     }
 
 
@@ -484,11 +503,12 @@ Deno.serve(async (req) => {
         // Territoire : une rangée `contractor_service_areas` explicite est
         // obligatoire. La ville inscrite au profil ne qualifie jamais seule.
         // Exclusion déclarée prioritaire, puis zone explicite ou rayon prouvé.
-        const territory = territoryVerdict(territoryByContractor.get(String(c.id)) ?? [], { city: typedLead.city, lat: leadPoint?.lat, lng: leadPoint?.lng });
+        const territory = territoryVerdict(territoryByContractor.get(String(c.id)) ?? [], leadLocation);
         if (territory.verdict === "excluded") {
           return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [territory.reason] };
         }
-        const servesCity = servesCityGate(areaSet, typedLead.city) || territory.verdict === "covered";
+        // Zone exclue non vérifiable (adresse imprécise) : jamais desservi.
+        const servesCity = !territory.exclusionUncertain && (servesCityGate(areaSet, typedLead.city) || territory.verdict === "covered");
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
         // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
