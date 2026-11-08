@@ -81,6 +81,12 @@ describe("territoires déclarés : exclusion prioritaire, rien d'inventé", () =
     expect(src).toContain("territoryVerdict(");
     expect(src).toContain('territory.verdict === "excluded"');
     expect(src).toContain("projectSizeFit(");
+    expect(src).toContain("territoryVerdict(territoryByContractor.get(String(c.id)) ?? [], leadLocation)");
+    expect(src).toContain("!territory.exclusionUncertain &&");
+    expect(src).not.toMatch(/lat: leadPoint/);
+    const booking = readFileSync("supabase/functions/booking-confirm-slot/index.ts", "utf8");
+    expect(booking.indexOf("bookingTerritoryDecision(")).toBeGreaterThan(0);
+    expect(booking.indexOf("bookingTerritoryDecision(")).toBeLessThan(booking.indexOf('rpc("confirm_smart_booking_slot"'));
   });
 });
 
