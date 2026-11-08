@@ -134,6 +134,12 @@ export function formatCAD(cents: number): string {
   }).format(dollars);
 }
 
+/** Montant au cent près (2 décimales), pour taxes et totaux dus. */
+export function formatCADCents(cents: number): string {
+  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .format(Math.round(cents ?? 0) / 100);
+}
+
 export function formatCADFromDollars(dollars: number): string {
   return new Intl.NumberFormat("fr-CA", {
     style: "currency",

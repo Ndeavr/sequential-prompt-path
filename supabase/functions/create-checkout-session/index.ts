@@ -14,6 +14,7 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
+import { ANNUAL_PRESENCE_CENTS, decideAnnualPresence } from "../_shared/annualPresence.ts";
 
 
 const corsHeaders = {
@@ -1280,6 +1281,36 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
         profileFeeCents = Math.round(Number(growthCfg?.profile_fee_cents ?? 0));
+      }
+    }
+
+    // ── PRÉSENCE IA ANNUELLE (350 $ + taxes par année) ──
+    // Un forfait de rendez-vous issu d'un devis exige une Présence IA annuelle
+    // valide, décidée ici depuis les droits canoniques — jamais par un indicateur
+    // du navigateur. Droits historiques et promotions validées préservés; aucune
+    // deuxième facturation 350 $ avant l'expiration d'une Présence valide.
+    if (quoteRow && !includeProfileFee) {
+      const [{ data: planCodeNow, error: planErr }, { data: actRow, error: actErr }] = await Promise.all([
+        serviceClient.rpc("contractor_plan_code", { _user_id: userId }),
+        serviceClient.from("contractors").select("activation_status").eq("id", contractor.id).maybeSingle(),
+      ]);
+      if (planErr || actErr) {
+        console.error("[create-checkout-session] annual presence check failed", planErr?.message ?? actErr?.message);
+        return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const presence = decideAnnualPresence({
+        planCode: typeof planCodeNow === "string" ? planCodeNow : null,
+        activationStatus: (actRow as { activation_status?: string | null } | null)?.activation_status ?? null,
+        hasValidatedPromotion: Boolean(proposalContext || verifiedActivationToken || promoResult?.ok),
+      });
+      if (presence.required) {
+        return new Response(JSON.stringify({
+          error: "Commencez par votre Présence IA (350 $ + taxes par année). Le forfait de rendez-vous s'ajoute ensuite, sans deuxième activation.",
+          code: "annual_presence_required",
+          annual_presence_cents: ANNUAL_PRESENCE_CENTS,
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 

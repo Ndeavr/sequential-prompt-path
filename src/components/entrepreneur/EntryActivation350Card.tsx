@@ -1,5 +1,5 @@
 /**
- * UNPRO — Activation d'entrée 350 $ (paiement unique) pour un nouvel entrepreneur.
+ * UNPRO — Présence IA 350 $ + taxes par année (profil + 12 mois) pour un nouvel entrepreneur.
  * Le montant et la garantie sont fixés côté serveur ; la page n'envoie aucun prix.
  * L'activation n'a lieu qu'après confirmation du paiement par le webhook Stripe.
  */
@@ -21,7 +21,9 @@ interface Props {
   successUrl: string;
   cancelUrl: string;
   onLogin: () => void;
-  onMore: () => void;
+  onMore?: () => void;
+  /** « fallback » : carte de repli sans forfait de rendez-vous. */
+  variant?: "entry" | "fallback";
 }
 
 export function EntryActivation350Card(p: Props) {
@@ -92,11 +94,18 @@ export function EntryActivation350Card(p: Props) {
   };
 
   const g = p.guaranteedAppointments && p.guaranteedAppointments > 0 ? p.guaranteedAppointments : null;
+  const fallback = p.variant === "fallback";
 
   return (
-    <div data-testid="entry-350-card" className="w-full rounded-[28px] border border-amber-400/30 bg-white/[0.05] backdrop-blur-xl p-5 sm:p-6 mb-5">
+    <div data-testid={fallback ? "presence-fallback-card" : "entry-350-card"} className="w-full rounded-[28px] border border-amber-400/30 bg-white/[0.05] backdrop-blur-xl p-5 sm:p-6 mb-5">
       <p className="text-xs uppercase tracking-wider text-amber-300">{ENTRY_350.eyebrow}</p>
-      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{ENTRY_350.title.replace("350 $", "350\u00a0$")}</h2>
+      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{fallback ? ENTRY_350.fallback.title : ENTRY_350.title.replace("350 $", "350\u00a0$")}</h2>
+      {fallback && <p className="mt-2 text-sm text-white/80" data-testid="presence-fallback-body">{ENTRY_350.fallback.body}</p>}
+      {fallback ? (
+      <ul className="mt-4 space-y-2 text-sm text-white/85">
+        {ENTRY_350.fallback.benefits.map((b) => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />{b}</li>)}
+      </ul>
+      ) : (
       <ul className="mt-4 space-y-2 text-sm text-white/85">
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />{ENTRY_350.profile}</li>
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />{ENTRY_350.presence}</li>
@@ -105,6 +114,7 @@ export function EntryActivation350Card(p: Props) {
           {g ? ENTRY_350.appointments(g) : ENTRY_350.appointmentsPending}
         </li>
       </ul>
+      )}
       <p className="mt-3 text-xs text-white/60">{ENTRY_350.paymentNote}</p>
       {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       <button
@@ -113,11 +123,11 @@ export function EntryActivation350Card(p: Props) {
         disabled={loading}
         className="mt-5 w-full min-h-12 rounded-[18px] bg-amber-500 px-5 py-3 font-semibold text-black transition-transform hover:-translate-y-0.5 disabled:opacity-60"
       >
-        {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Ouverture du paiement…</span> : error ? "Réessayer" : ENTRY_350.cta}
+        {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Ouverture du paiement…</span> : error ? "Réessayer" : fallback ? ENTRY_350.fallback.cta : ENTRY_350.cta}
       </button>
-      <button type="button" onClick={p.onMore} className="mt-3 w-full min-h-11 rounded-[18px] border border-white/15 px-5 py-3 text-sm text-white/85 hover:bg-white/5">
+      {p.onMore && !fallback && <button type="button" onClick={p.onMore} className="mt-3 w-full min-h-11 rounded-[18px] border border-white/15 px-5 py-3 text-sm text-white/85 hover:bg-white/5">
         {ENTRY_350.ctaMore}
-      </button>
+      </button>}
       <div className="mt-2 flex justify-center">
         <CallUnproLink
           context={error ? "entry_350_checkout_error" : "entry_350_card"}

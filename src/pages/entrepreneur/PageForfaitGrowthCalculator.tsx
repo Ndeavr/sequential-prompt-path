@@ -497,7 +497,7 @@ export default function PageForfaitGrowthCalculator() {
             {/* Entry pack */}
             <div className="rounded-3xl border border-border/50 bg-card p-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Autre option — paiement unique
+                Autre option — 350 $ par année
               </p>
               <h3 className="mt-1 text-lg font-bold text-foreground">
                 Pack d'entrée {formatPriceCents(growth.entry_pack.total_price_cents)}

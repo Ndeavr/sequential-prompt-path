@@ -7,7 +7,7 @@
  * paiement peut garantir des rendez-vous, dans la limite de `max_appointments`.
  *
  * INTERDIT dans tout message sortant : « 1 $ », « activation 1 $ »,
- * « 7 jours pour 1 $ ». L'offre d'entrée est le pack 350 $, paiement unique.
+ * « 7 jours pour 1 $ ». L'offre d'entrée est la Présence IA 350 $ + taxes par année.
  */
 
 export const OFFER = {
@@ -17,7 +17,7 @@ export const OFFER = {
    *  promesse de base : l'offre d'entrée inclut 0 rendez-vous par défaut. */
   max_appointments: 5,
   headline: "Profil UNPRO + 12 mois de Présence IA sur UNPRO — 350 $ + taxes",
-  payment_note: "350 $ CA avant taxes. Si les taxes du Québec s’appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Paiement unique. Aucun abonnement. Aucun rendez-vous inclus par défaut.",
+  payment_note: "350 $ CA avant taxes. Si les taxes du Québec s’appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA, par année. Couvre 12 mois; renouvellement non automatique. Aucun rendez-vous inclus par défaut.",
   disclaimer:
     "Aucun rendez-vous ni résultat n'est promis. Des rendez-vous ne sont offerts que via un devis séparé confirmé avant paiement.",
   cta: "Activer mon profil — 350 $ + taxes",

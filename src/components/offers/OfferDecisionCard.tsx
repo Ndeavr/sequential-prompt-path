@@ -115,7 +115,7 @@ export default function OfferDecisionCard({
           <div>
             <h2 className="text-lg font-semibold text-foreground">Activation Express — 350 $</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Paiement unique, sans renouvellement automatique.
+              350 $ + taxes par année, sans renouvellement automatique.
               {decision.reason === "city_full" && city
                 ? ` Les 10 places de lancement à ${city} sont comblées.`
                 : ""}

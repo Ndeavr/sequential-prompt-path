@@ -41,12 +41,12 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
           Activez votre profil complet
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Profil + 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut. 350 $ + taxes, paiement unique.
+          Profil + 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut. 350 $ + taxes par année.
         </p>
 
         <div className="mt-4 flex items-end gap-3">
           <div className="text-4xl font-bold tracking-tight text-foreground">350 $</div>
-          <div className="pb-1 text-sm text-muted-foreground">paiement unique · aucun abonnement</div>
+          <div className="pb-1 text-sm text-muted-foreground">par année · renouvellement non automatique</div>
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -60,7 +60,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
           <div>✓ Profil UNPRO complet, indexé dans l'écosystème IA</div>
           <div>✓ Jusqu'à 5 rendez-vous exclusifs garantis (nombre calculé avant le paiement)</div>
           <div>✓ Priorité de matching dans votre territoire</div>
-          <div>✓ Paiement unique — aucun engagement récurrent</div>
+          <div>✓ Couvre 12 mois — aucun prélèvement automatique</div>
         </div>
 
         <Button
@@ -73,7 +73,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
         </Button>
 
         <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-          <Lock className="h-3 w-3" /> Paiement sécurisé Stripe · Paiement unique
+          <Lock className="h-3 w-3" /> Paiement sécurisé Stripe · 350 $/an
         </div>
       </div>
     </motion.div>

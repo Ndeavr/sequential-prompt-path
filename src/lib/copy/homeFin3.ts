@@ -195,7 +195,7 @@ export const homeFin3 = {
       body: "See how UNPRO currently understands your business, complete your profile and improve the information used to match you with the right projects.",
       ctaPrimary: "See my AI profile",
       ctaSecondary: "See what $350 can guarantee me",
-      note: "The entry offer is $350, one-time payment. No subscription.",
+      note: "AI Presence is $350 + tax per year: your profile and 12 months on UNPRO. No automatic renewal.",
     },
     final: {
       title: "Stop chasing three contractors.",

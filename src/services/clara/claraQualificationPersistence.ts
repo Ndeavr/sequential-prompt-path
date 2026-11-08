@@ -9,6 +9,9 @@ export function qualificationMatchingAnswers(value: ClaraContractorQualification
   if (value.excluded_work !== undefined) answers.services_refused = value.excluded_work;
   if (value.service_areas !== undefined) answers.territories = value.service_areas.filter(area => !value.excluded_areas?.some(excluded => excluded.toLocaleLowerCase("fr-CA") === area.toLocaleLowerCase("fr-CA")));
   if (value.excluded_areas !== undefined) answers.excluded_territories = value.excluded_areas;
+  if (value.territory_rules !== undefined) answers.territory_rules = value.territory_rules;
+  if (value.excluded_work_status !== undefined) answers.services_refused_status = value.excluded_work_status;
+  if (value.excluded_areas_status !== undefined) answers.excluded_territories_status = value.excluded_areas_status;
   const clientType = value.customer_type?.toLocaleLowerCase("fr-CA");
   if (clientType && /les deux|both|résidentiel.*commercial|commercial.*résidentiel/.test(clientType)) answers.client_type = "both";
   else if (clientType === "résidentiel" || clientType === "residential") answers.client_type = "residential";

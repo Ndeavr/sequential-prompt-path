@@ -30,6 +30,8 @@ Treat every Supabase project as live infrastructure.
 
 ## Contractor publication, funnel and entitlements
 
+- Quote-based appointment-plan checkout first resolves annual AI Presence server-side (`_shared/annualPresence.ts`: `contractor_plan_code()`, historical `activation_status`, validated promotion) and refuses with `annual_presence_required` instead of adding a second 350; never a client flag. Why: no duplicate activation and historical rights stay untouched until a renewal contract exists.
+
 - Both paid 350 entry circuits reject free, unpaid, non-payment and underpaid sessions before paid telemetry or provisioning, using each existing creation contract's taxes. Why: a discounted Checkout can complete without collecting money.
 - Invited one-time entry passes no subscription plan to activate_contractor_unified; personalized entry tokens never enter invited provisioning. Why: perpetual subscriptions bypass 12-month expiry/refund and token fallthrough attempts duplicate accounts.
 

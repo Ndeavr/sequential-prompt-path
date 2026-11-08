@@ -76,7 +76,7 @@ export default function PageClaimWizard() {
           </Link>
 
           <p className="text-xs text-white/60">
-            Offre de base : 350 $ CA + taxes applicables, paiement unique,
+            Offre de base : 350 $ CA + taxes applicables par année,
             profil UNPRO et 12 mois de présence. Aucun rendez-vous inclus
             sans droit contractuel distinct. Aucun paiement sur cette page.
           </p>

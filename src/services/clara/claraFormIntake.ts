@@ -6,8 +6,9 @@
  * Le formulaire fournit son brouillon courant à chaque tour (même sans « Continuer »).
  */
 import {
-  INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, splitList, declaredCapacity, toClaraPatch,
+  INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, splitList, declaredCapacity, toClaraPatch, applyTerritoryRules,
 } from "@/lib/contractorIntakeQualification";
+import { interpretContractorPreferences, samePreference } from "@/lib/contractorPreferenceInterpreter";
 import { saveClaraQualification } from "./claraContractorQualification";
 
 export type IntakeField = "preferred_work" | "excluded_work" | "service_areas" | "excluded_areas" | "priorities" | "capacity";
@@ -74,6 +75,7 @@ const cleanList = (s: string) => s.replace(/\s+(et|and)\s+/gi, ", ").replace(/[.
  */
 export function applyIntakeAnswer(d: IntakeDraft, pending: IntakeField | null, raw: string): { draft: IntakeDraft; changed: IntakeField[] } {
   let text = raw.trim();
+  const isCorrection = CORRECTION.test(text);
   const q: IntakeQualification = { ...(d.qualification ?? {}) };
   const out: IntakeDraft = { ...d, qualification: q };
   const changed = new Set<IntakeField>();
@@ -114,19 +116,37 @@ export function applyIntakeAnswer(d: IntakeDraft, pending: IntakeField | null, r
     else setExcl(cleanList(text.replace(/^(pas de|pas|sauf|except|no)\s+/i, "")));
     return { draft: out, changed: [...changed] };
   }
-  // Champ positif : une partie « pas de … / sauf … » devient une exclusion.
-  const split = text.split(/[,;.]?\s*\b(?:mais\s+)?(?:pas de|pas d['’]|sauf|jamais de|except|but not|no)\s+/i);
-  const positive = cleanList(split[0] ?? "");
-  if (positive) { q[positiveField] = positive; changed.add(positiveField); }
-  if (split.length > 1) {
-    const rest = split.slice(1).join(", ");
-    if (/aucune?\s+exclusion|rien d['’]exclu/i.test(rest)) setExcl(null); else setExcl(cleanList(rest));
-  } else if (/aucune?\s+exclusion|rien d['’]exclu|no exclusions?/i.test(raw)) {
-    q[positiveField] = cleanList(positive.replace(/aucune?\s+exclusion|no exclusions?/gi, ""));
-    setExcl(null);
+  // Champ positif : interprétation canonique de la phrase (offerts / refusés /
+  // territoires). Les exclusions priment; rien de non dit n'est ajouté.
+  const it = interpretContractorPreferences(text);
+  const territoryRules = it.rules;
+  if (positiveField === "preferred_work") {
+    if (it.offered.length) { q.preferred_work = it.offered.join(", "); changed.add("preferred_work"); }
+    if (it.refused.length) setExcl(it.refused.join(", "));
+    else if (it.noRefused) setExcl(null);
+    if (q.preferred_work && it.refused.length) {
+      q.preferred_work = splitList(q.preferred_work).filter((o) => !it.refused.some((r) => samePreference(o, r))).join(", ");
+    }
+  } else {
+    const fallback = !territoryRules.length && !it.clarifications.length
+      ? cleanList(text.split(/\b(?:sauf|except|pas (?:à|a|dans))\b/i)[0] ?? "")
+      : "";
+    if (fallback) {
+      for (const place of splitList(fallback)) territoryRules.push({ kind: "locality", include: true, place, raw: place, status: "declared", source: "contractor_intake", confirmed: false, geocode_status: "pending" });
+    }
+    if (it.noRefused && !territoryRules.some((r) => !r.include)) setExcl(null);
+  }
+  if (territoryRules.length) {
+    const prev = isCorrection ? [] : (q.territory_rules ?? []).filter((r) => !territoryRules.some((n) => n.place && r.place && samePreference(n.place, r.place) && n.kind === r.kind));
+    q.territory_rules = [...prev, ...territoryRules];
+    applyTerritoryRules(q);
+    changed.add("service_areas");
+    if (q.territory_rules.some((r) => !r.include)) changed.add("excluded_areas");
   }
   return { draft: out, changed: [...changed] };
 }
+
+export { interpretContractorPreferences };
 
 const QUESTIONS: Record<IntakeLang, Record<IntakeField, IntakeReply>> = {
   fr: {

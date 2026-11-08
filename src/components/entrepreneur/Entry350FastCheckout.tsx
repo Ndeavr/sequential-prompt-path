@@ -194,7 +194,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     <section id="activation-350-review" aria-label="Confirmer mon activation" data-testid="entry-350-direct-review"
       className="mt-5 rounded-[24px] border border-primary/30 bg-card p-5 shadow-lg">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">Votre activation UNPRO</p>
-      <h2 className="mt-2 text-2xl font-semibold">350 $ + taxes · une seule fois</h2>
+      <h2 className="mt-2 text-2xl font-semibold">350 $ + taxes · par année</h2>
       <p className="mt-2 text-sm text-muted-foreground">Profil professionnel et 12 mois de Présence IA UNPRO. Aucun rendez-vous inclus, aucune apparition garantie dans ChatGPT. Licence valide requise pour être recommandé lorsque applicable.</p>
       {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
@@ -204,7 +204,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-foreground" />
       {promo.state === "valid"
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
-        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>. Aucun abonnement.</p>}
+        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
       <div className="mt-4">
         <label htmlFor="activation350-promo" className="block text-sm font-semibold">Code promo (facultatif)</label>
         <div className="mt-2 flex gap-2">
