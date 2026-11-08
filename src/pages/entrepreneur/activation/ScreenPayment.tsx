@@ -108,7 +108,7 @@ export default function ScreenPayment() {
             </h3>
             <div className="text-right">
               <span className="text-2xl font-bold text-foreground">{price}$</span>
-              <span className="text-xs text-muted-foreground">{isFounder ? " une seule fois" : periodLabel}</span>
+              <span className="text-xs text-muted-foreground">{isFounder ? " par année" : periodLabel}</span>
             </div>
           </div>
           {isFounder ? (
@@ -144,7 +144,7 @@ export default function ScreenPayment() {
           </div>
           {isFounder && (
             <p className="pt-1 text-[11px] text-muted-foreground">
-              Paiement unique. Aucun abonnement, aucun prélèvement récurrent.
+              350 $ + taxes par année, pour 12 mois. Aucun prélèvement automatique.
             </p>
           )}
         </div>
@@ -179,7 +179,7 @@ export default function ScreenPayment() {
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
               {isFounder
-                ? "Paiement unique — aucun abonnement ni renouvellement automatique"
+                ? "350 $ par année — aucun renouvellement automatique"
                 : "Annulation libre avant le prochain renouvellement"}
             </li>
           </ul>
@@ -194,7 +194,7 @@ export default function ScreenPayment() {
             <Shield className="w-3 h-3" /> Paiement Stripe
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CreditCard className="w-3 h-3" /> {isFounder ? "Paiement unique" : "Annulez en tout temps"}
+            <CreditCard className="w-3 h-3" /> {isFounder ? "350 $/an" : "Annulez en tout temps"}
           </div>
         </div>
 

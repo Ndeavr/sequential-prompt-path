@@ -92,7 +92,7 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft,
             </label>
           ))}
           <label className="utp-sim-check"><input type="checkbox" checked={input.alreadyActivated} onChange={e => setInput(i => ({ ...i, alreadyActivated: e.target.checked }))} />
-            {t('Profil déjà activé (retirer l’activation unique de 350 $)', 'Profile already activated (remove the one-time $350 activation)')}</label>
+            {t('Présence IA déjà active (retirer les 350 $/an de l’année 1)', 'AI Presence already active (remove the $350/year for year 1)')}</label>
         </div>
         <div className="utp-results" aria-live="polite">
           <div className="utp-small-title">{t('Synthèse', 'Summary')}<span>{t('SIMULATION', 'SIMULATION')}</span></div>
@@ -113,7 +113,7 @@ export default function HeatPumpRevenueSimulator({ lang, planHref, onClaraDraft,
             <div className="utp-sim-costs">
               <p><span>{t('RDV', 'Appointments')} ({num(res.plannedAppointments)} × {money(input.costPerAppointment!)})</span><b className="utp-amount">{money(res.appointmentCost)}</b></p>
               <p><span>{t('Abonnement', 'Subscription')} ({money(input.monthlySubscription!)} × 12)</span><b className="utp-amount">{money(res.subscriptionCost)}</b></p>
-              <p><span>{t('Activation unique (année 1)', 'One-time activation (year 1)')}</span><b className="utp-amount">{money(res.activationCost)}</b></p>
+              <p><span>{t('Présence IA 350 $/an (année 1)', 'AI Presence $350/year (year 1)')}</span><b className="utp-amount">{money(res.activationCost)}</b></p>
               <p className="is-total"><span>{t('Coût UNPRO estimé, année 1 (HT)', 'Estimated UNPRO cost, year 1 (before tax)')}</span><b className="utp-amount" data-testid="sim-total">{money(res.totalCost)}</b></p>
               <p><span>{t('Moyenne mensuelle, année 1', 'Monthly average, year 1')}</span><b className="utp-amount" data-testid="sim-month-cost">{money(res.monthlyAverageCost, 2)}</b></p>
               <p><span>{t('Coût d’acquisition par vente', 'Acquisition cost per sale')}</span><b className="utp-amount" data-testid="sim-per-sale">{money(res.costPerSale, 2)}</b></p>

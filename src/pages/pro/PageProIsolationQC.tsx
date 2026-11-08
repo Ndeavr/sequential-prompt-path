@@ -180,7 +180,7 @@ export default function PageProIsolationQC() {
             <span className="text-[12px] text-white/60">Ce que ça inclut</span>
             <span className="text-[12.5px] text-right text-white/85 leading-tight max-w-[62%]">
               Jusqu'à 5 rendez-vous exclusifs garantis.<br/>
-              <span className="text-white/60">Paiement unique. Aucun abonnement. Nombre exact calculé avant paiement.</span>
+              <span className="text-white/60">350 $ + taxes par année, renouvellement non automatique. Nombre exact calculé avant paiement.</span>
             </span>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function PageProIsolationQC() {
         </button>
 
         <p className="mt-2.5 text-[11.5px] text-center text-white/50">
-          Paiement unique de 350 $ · Aucun renouvellement automatique · Stripe
+          350 $ par année · Aucun renouvellement automatique · Stripe
         </p>
 
 
