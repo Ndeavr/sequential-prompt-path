@@ -153,6 +153,28 @@ export function weightedEconomics(input: Pick<GoalInputs, "basket" | "conversion
   return { basket: expected / conv, conversionPct: conv * 100, expectedValuePerAppointment: expected, source: "declared_mix" };
 }
 
+export function validateGoal(i: GoalInputs): GoalError[] {
+  const errors: GoalError[] = [];
+  const eco = weightedEconomics(i);
+  if (i.amount !== null && !(Number.isFinite(i.amount) && i.amount > 0)) errors.push("invalid_amount");
+  if (!(Number.isInteger(i.horizonMonths) && i.horizonMonths >= 1 && i.horizonMonths <= 36)) errors.push("invalid_horizon");
+  if (!pos(eco.basket)) errors.push("invalid_basket");
+  if (!(pos(eco.conversionPct) && (eco.conversionPct as number) <= 100)) errors.push("invalid_conversion");
+  if (i.kind === "profit") {
+    if (i.marginPct === null || i.marginPct === undefined) errors.push("missing_margin");
+    else if (!(i.marginPct > 0 && i.marginPct <= 100)) errors.push("invalid_margin");
+  } else if (i.marginPct !== null && i.marginPct !== undefined && !(i.marginPct >= 0 && i.marginPct <= 100)) {
+    errors.push("invalid_margin");
+  }
+  if (!(pos(i.capacityPerMonth) && Number.isInteger(i.capacityPerMonth))) errors.push("invalid_capacity");
+  if (i.appointmentsPerMonth !== null && !(Number.isInteger(i.appointmentsPerMonth) && i.appointmentsPerMonth >= 1)) errors.push("invalid_appointments");
+  const mixErrors = validateSizeMix(i.sizes);
+  errors.push(...mixErrors);
+  // La répartition, quand elle existe, remplace l'hypothèse unique : ses erreurs suffisent.
+  if (activeMix(i.sizes).length && mixErrors.length) return errors.filter((e) => e !== "invalid_basket" && e !== "invalid_conversion");
+  return errors;
+}
+
 export interface GoalNeeds {
   basket: number;
   conversion: number;
