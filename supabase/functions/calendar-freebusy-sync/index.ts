@@ -14,6 +14,8 @@ import {
   type BusyWindow,
 } from "../_shared/googleCalendar.ts";
 
+import { selectedGoogleCalendar } from "../_shared/googleCalendarSelection.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -58,7 +60,7 @@ Deno.serve(async (req) => {
 
     const { data: connections, error: connectionsError } = await admin
       .from("calendar_connections")
-      .select("id, user_id, provider, access_token_encrypted, refresh_token_encrypted, expires_at, external_ics_url, connection_status")
+      .select("id, user_id, provider, access_token_encrypted, refresh_token_encrypted, expires_at, external_ics_url, connection_status, metadata")
       .eq("user_id", user.id)
       .in("connection_status", ["connected", "subscribed_external"]);
 
@@ -76,7 +78,7 @@ Deno.serve(async (req) => {
       try {
         if (connection.provider === "google") {
           const accessToken = await getGoogleAccessToken(admin, connection, secret);
-          windows = await fetchGoogleBusy(accessToken, from.toISOString(), to.toISOString());
+          windows = await fetchGoogleBusy(accessToken, from.toISOString(), to.toISOString(), selectedGoogleCalendar(connection.metadata));
         } else if (connection.external_ics_url) {
           const res = await fetch(connection.external_ics_url, { redirect: "follow" });
           if (!res.ok) throw new Error(`ics_fetch_failed:${res.status}`);
@@ -123,6 +125,19 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      if (connection.provider === "google") {
+        const { error: snapshotError } = await admin.rpc("commit_google_calendar_snapshot", {
+          p_connection_id: connection.id, p_user_id: user.id,
+          p_calendar_id: selectedGoogleCalendar(connection.metadata),
+          p_calendar_name: connection.metadata?.selected_calendar_name ?? "",
+          p_access_role: connection.metadata?.selected_calendar_access_role ?? "",
+          p_expected_metadata: connection.metadata ?? {}, p_windows: windows, p_is_selection: false,
+        });
+        if (snapshotError) {
+          results.push({ provider: "google", status: "failed", imported: 0, reason: "calendar_changed_retry" });
+          continue;
+        }
+      } else {
       // Replace the cached window for this connection in one pass.
       await admin.from("calendar_busy_periods")
         .delete()
@@ -145,6 +160,7 @@ Deno.serve(async (req) => {
         }
       }
 
+      }
       await admin.from("calendar_connections").update({
         last_synced_at: new Date().toISOString(),
         last_error_message: null,

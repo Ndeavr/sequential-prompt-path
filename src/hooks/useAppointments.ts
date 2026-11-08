@@ -39,6 +39,8 @@ export const useCreateAppointment = () => {
       timeline?: string;
       project_category?: string;
     }) => {
+      if (!user?.id) throw new Error("Connectez-vous pour transmettre votre demande.");
+
       // 0. Get contractor city (used for lead + scoring)
       const { data: contractor } = await supabase
         .from("contractors")
@@ -88,6 +90,9 @@ export const useCreateAppointment = () => {
         .single();
       if (error) throw error;
 
+      // The database write above is the acknowledgement boundary. Optional
+      // follow-up must not turn a saved request into an endless spinner or retry.
+      void (async () => {
       // 3. Fire notifications (non-blocking).
       try {
         await supabase.functions.invoke("notify-appointment-created", {
@@ -150,6 +155,8 @@ export const useCreateAppointment = () => {
           score_factors: scoreResult.factors as any,
         } as any);
       if (leadError) console.error("Lead qualification creation failed:", leadError);
+
+      })().catch(error => console.warn("Appointment follow-up failed:", error));
 
       return appt;
     },

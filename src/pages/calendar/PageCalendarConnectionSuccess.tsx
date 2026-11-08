@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { useCalendarConnections, useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
-import WidgetCalendarAvailabilityPreview from "@/components/calendar/WidgetCalendarAvailabilityPreview";
-import { supabase } from "@/integrations/supabase/client";
+import GoogleCalendarSelector from "@/components/calendar/GoogleCalendarSelector";
+
 
 export default function PageCalendarConnectionSuccess() {
   const [params] = useSearchParams();
@@ -28,16 +28,6 @@ export default function PageCalendarConnectionSuccess() {
     refresh();
     track({ surface, role_context: role, event_type: "contractor_calendar_connected", provider });
 
-    // Import the real busy periods immediately so availability is accurate
-    // from the very first booking attempt. A failure here never blocks.
-    void supabase.functions
-      .invoke("calendar-freebusy-sync", { body: { days: 45 } })
-      .catch(() => undefined);
-
-    const t = setTimeout(() => {
-      navigate(returnTo || "/dashboard");
-    }, 3000);
-    return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -58,10 +48,10 @@ export default function PageCalendarConnectionSuccess() {
             </p>
           </div>
 
-          <WidgetCalendarAvailabilityPreview role={role} />
+          {provider === "google" && <GoogleCalendarSelector />}
 
           <div className="flex gap-2">
-            <Button onClick={() => navigate(returnTo || (role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard"))} className="flex-1 rounded-full">Mon tableau de bord</Button>
+            <Button onClick={() => navigate((returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : null) || (role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard"))} className="flex-1 rounded-full">Mon tableau de bord</Button>
             <Button variant="outline" onClick={() => navigate("/account")} className="flex-1 rounded-full">Mon compte</Button>
           </div>
         </div>

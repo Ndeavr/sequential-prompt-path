@@ -7,9 +7,9 @@ import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar } from "lucide-react";
 import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
-import WidgetCalendarAvailabilityPreview from "@/components/calendar/WidgetCalendarAvailabilityPreview";
+
 import { useAuth } from "@/hooks/useAuth";
-import { useCalendarConnections } from "@/hooks/useCalendarConnection";
+
 
 export default function PageCalendarConnectionHub() {
   const [params] = useSearchParams();
@@ -30,7 +30,7 @@ export default function PageCalendarConnectionHub() {
     return_to: role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard",
   });
   const oauthReturnTo = `/calendar/connect/success?${successParams.toString()}`;
-  const { isConnected } = useCalendarConnections();
+
 
   return (
     <MainLayout>
@@ -66,7 +66,7 @@ export default function PageCalendarConnectionHub() {
           ) : (
             <div className="space-y-6">
               <CardCalendarConnectionRole role={role} surface={surface} returnTo={oauthReturnTo} />
-              {isConnected && <WidgetCalendarAvailabilityPreview role={role} />}
+
             </div>
           )}
         </div>
