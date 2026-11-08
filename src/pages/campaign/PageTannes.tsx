@@ -8,6 +8,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Hammer, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UnproLogo from "@/components/brand/UnproLogo";
+import SiteFooterPremium from "@/components/layout/SiteFooterPremium";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,6 +172,7 @@ export default function PageTannes() {
         <p className="font-semibold">{copy.signature}</p>
         <p className="mt-1 text-muted-foreground">{copy.tagline}</p>
       </footer>
+      <SiteFooterPremium />
     </div>
   );
 }
