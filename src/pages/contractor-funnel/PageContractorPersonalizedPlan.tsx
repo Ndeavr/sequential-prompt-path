@@ -28,6 +28,7 @@ import {
   fetchPricingQuote,
   formatCAD,
   formatCADFromDollars,
+  formatCADCents,
   type PricingQuote,
 } from "@/services/contractorPricingQuoteService";
 import { supabase } from "@/integrations/supabase/client";
@@ -662,24 +663,24 @@ export default function PageContractorPersonalizedPlan() {
 
                 <div className="mt-6 border-t border-white/10 pt-5" data-testid="price-block">
                   <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-semibold tracking-[-0.04em]" data-testid="plan-price">{formatCAD(quote.recommended_monthly_price)}</div>
+                    <div className="text-4xl font-semibold tracking-[-0.04em]" data-testid="plan-price">{formatCADCents(quote.recommended_monthly_price)}</div>
                     <div className="text-white/60">/ mois, avant taxes</div>
                   </div>
                   <div className="mt-3 space-y-1 text-sm text-white/75" data-testid="tax-breakdown">
-                    <div className="flex justify-between"><span>Forfait de rendez-vous (mensuel)</span><span>{formatCAD(quote.recommended_monthly_price)}</span></div>
-                    <div className="flex justify-between"><span>TPS (5 %)</span><span>{formatCAD(gstCents)}</span></div>
-                    <div className="flex justify-between"><span>TVQ (9,975 %)</span><span>{formatCAD(qstCents)}</span></div>
+                    <div className="flex justify-between"><span>Forfait de rendez-vous (mensuel)</span><span>{formatCADCents(quote.recommended_monthly_price)}</span></div>
+                    <div className="flex justify-between"><span>TPS (5 %)</span><span>{formatCADCents(gstCents)}</span></div>
+                    <div className="flex justify-between"><span>TVQ (9,975 %)</span><span>{formatCADCents(qstCents)}</span></div>
                     <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
-                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCAD(totalWithTaxCents)}</span>
+                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCADCents(totalWithTaxCents)}</span>
                     </div>
                   </div>
                   <p className="text-[11px] text-white/60 mt-2">Le même montant, taxes incluses, est facturé chaque mois. Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
                   {presenceLikelyRequired && (
                     <div className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-3 text-xs text-white/85" data-testid="presence-line">
                       <p className="font-semibold text-amber-100">Présence IA annuelle — payée d'abord, séparément</p>
-                      <div className="mt-1 flex justify-between"><span>Profil + 12 mois de Présence IA</span><span>{formatCAD(35000)}</span></div>
-                      <div className="flex justify-between"><span>TPS (5 %) · TVQ (9,975 %)</span><span>{formatCAD(presenceTax.gst)} · {formatCAD(presenceTax.qst)}</span></div>
-                      <div className="flex justify-between font-semibold"><span>Total Présence IA</span><span>{formatCAD(presenceTax.total)}</span></div>
+                      <div className="mt-1 flex justify-between"><span>Profil + 12 mois de Présence IA</span><span>{formatCADCents(35000)}</span></div>
+                      <div className="flex justify-between"><span>TPS (5 %) · TVQ (9,975 %)</span><span>{formatCADCents(presenceTax.gst)} · {formatCADCents(presenceTax.qst)}</span></div>
+                      <div className="flex justify-between font-semibold"><span>Total Présence IA</span><span>{formatCADCents(presenceTax.total)}</span></div>
                       <p className="mt-1 text-white/70">350 $ + taxes par année; renouvellement non automatique. Une Présence IA déjà valide n'est jamais facturée deux fois : UNPRO le vérifie avant le paiement.</p>
                     </div>
                   )}
