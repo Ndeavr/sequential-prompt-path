@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { bookingAvailabilityQuery } from '@/lib/bookingAvailability';
 import { Link, useParams } from 'react-router-dom';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,9 @@ const formatSlot = (iso:string) => new Date(iso).toLocaleString('fr-CA',{timeZon
 export default function BookingPage() {
   const { id = '' } = useParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  // Start before address selection; fetchQuery below shares this in-flight request.
+  useQuery({ ...bookingAvailabilityQuery(id), enabled: !!id });
   const { data: contractor, isLoading } = usePublicContractorProfile(id);
   const { data: properties = [] } = useProperties();
   const create = useCreateAppointment();
@@ -70,7 +75,7 @@ export default function BookingPage() {
     supabase.from('homeowner_addresses').select('id, full_address, city').eq('homeowner_id',user.id).then(({data})=>{if(live)setSavedAddresses(data??[]);});
     return ()=>{live=false;};
   },[user?.id]);
-  useEffect(()=>{generation.current++;setChecked(false);setChecking(false);setSlots([]);setSelected(null);setMessage('');},[address,city,typeId,period,time]);
+  useEffect(()=>{generation.current++;setChecked(false);setChecking(false);setSlots([]);setSelected(null);setMessage('');},[id,address,city,typeId,period,time]);
   useEffect(()=>()=>{generation.current++;},[]);
   async function check() {
     if(!address.trim()||!city.trim())return;
@@ -78,15 +83,11 @@ export default function BookingPage() {
     setChecking(true);setChecked(false);setMessage('');setSlots([]);setSelected(null);
     try {
       if(!duration)throw new Error('Les types et durées de rendez-vous doivent être renseignés par cet entrepreneur.');
-      const {data:connections,error:connectionError}=await supabase.from('contractor_calendar_connections').select('access_status,last_synced_at').eq('contractor_id',id).eq('provider','google');
-      if(connectionError)throw new Error('La vérification de l’agenda est momentanément indisponible.');
-      if(!connections?.some(c=>c.access_status==='connected' && c.last_synced_at && Date.now()-Date.parse(c.last_synced_at)<5*60_000))throw new Error('Les disponibilités de cet entrepreneur ne sont pas encore synchronisées. Vous pouvez lui transmettre votre adresse et vos préférences pour convenir d’une heure.');
-      const {data,error}=await supabase.from('appointment_slots').select('id,starts_at,ends_at').eq('contractor_id',id).eq('status','available').gte('starts_at',new Date().toISOString()).lt('starts_at',new Date(Date.now()+21*86400000).toISOString()).order('starts_at');
-      if(error)throw new Error('Impossible de consulter les plages horaires. Veuillez réessayer.');
+      const data = await queryClient.fetchQuery(bookingAvailabilityQuery(id));
       if(request!==generation.current)return;
       const proposals=selectSuggestions(data??[],period,time,duration);
       setSlots(proposals);
-      setMessage(proposals.length ? 'Plages publiées par l’entrepreneur. L’heure et le déplacement à votre adresse restent à confirmer.' : 'Aucune plage publiée ne correspond à cette période. Essayez la semaine prochaine ou une autre plage horaire.');
+      setMessage(proposals.length ? 'Plages publiées par l’entrepreneur. L’heure et le déplacement à votre adresse restent à confirmer.' : 'Aucune plage publiée ne correspond à vos préférences dans les 10 prochains jours. Essayez un autre moment de la journée ou transmettez vos disponibilités.');
     }catch(e){if(request===generation.current)setMessage(e instanceof Error?e.message:'Impossible de vérifier les disponibilités.');}
     finally{if(request===generation.current){setChecking(false);setChecked(true);}}
   }

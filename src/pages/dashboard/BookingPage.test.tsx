@@ -1,20 +1,23 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import BookingPage from './BookingPage';
-const mocks=vi.hoisted(()=>({create:vi.fn(),types:vi.fn()}));
+const mocks=vi.hoisted(()=>({create:vi.fn(),types:vi.fn(),from:vi.fn()}));
 vi.mock('@/layouts/DashboardLayout',()=>({default:({children}:any)=><main>{children}</main>}));
 vi.mock('@/hooks/useAuth',()=>({useAuth:()=>({user:null})}));
 vi.mock('@/hooks/useProperties',()=>({useProperties:()=>({data:[{id:'synthetic-property',address:'100 rue Exemple',city:'Laval'}]})}));
 vi.mock('@/hooks/usePublicContractors',()=>({usePublicContractorProfile:()=>({data:{business_name:'Entreprise exemple',slug:'example'},isLoading:false})}));
 vi.mock('@/hooks/useAppointments',()=>({useCreateAppointment:()=>({mutateAsync:mocks.create,isPending:false})}));
 vi.mock('@/services/bookingSlotEngine',()=>({fetchAppointmentTypes:mocks.types}));
-vi.mock('@/integrations/supabase/client',()=>({supabase:{from:()=>({select:()=>({eq:()=>({eq:()=>Promise.resolve({data:[],error:null})})})})}}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{from:mocks.from}}));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 it('uses contractor appointment types, requires an address, and does not fabricate slots when disconnected',async()=>{
+ mocks.from.mockImplementation(()=>({select:()=>({eq:()=>({eq:()=>({abortSignal:()=>Promise.resolve({data:[],error:null})})})})}));
  mocks.types.mockResolvedValue([{id:'inspection',title:'Inspection gratuite',duration_minutes:60,is_free:true,category:'inspection'}]);
- render(<MemoryRouter><BookingPage/></MemoryRouter>);
+ render(<QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={["/book/synthetic-contractor"]}><Routes><Route path="/book/:id" element={<BookingPage/>}/></Routes></MemoryRouter></QueryClientProvider>);
  await screen.findByRole('option',{name:/Inspection gratuite/});
+ await waitFor(()=>expect(mocks.from).toHaveBeenCalledWith('contractor_calendar_connections'));
  expect(screen.queryByText('Budget estimé')).toBeNull();
  expect(screen.queryByText('Plomberie')).toBeNull();
  const check=screen.getByRole('button',{name:'Vérifier les disponibilités'});
