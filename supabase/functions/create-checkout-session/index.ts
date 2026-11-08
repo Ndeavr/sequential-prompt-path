@@ -14,7 +14,7 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
-import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
+import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
 import {
   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
   presencePaymentAwaitingConfirmation, purchaseFingerprint, stepKey, type ReservationDeps,
@@ -430,6 +430,11 @@ Deno.serve(async (req) => {
         if (!entryPresence) {
           return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
             status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (entryPresence.blocked) {
+          return new Response(JSON.stringify({ error: HISTORICAL_REVIEW_MESSAGE, code: "historical_right_review_required" }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         if (!entryPresence.include) {
@@ -1193,6 +1198,11 @@ Deno.serve(async (req) => {
         console.error("[create-checkout-session] annual presence decision failed", decisionErr?.message ?? "unreadable");
         return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
           status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (presence.blocked) {
+        return new Response(JSON.stringify({ error: HISTORICAL_REVIEW_MESSAGE, code: "historical_right_review_required" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       // Un forfait gratuit (code 100 %) ne rend jamais la Présence gratuite.
