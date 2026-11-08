@@ -30208,6 +30208,57 @@ export type Database = {
           },
         ]
       }
+      contractor_checkout_reservations: {
+        Row: {
+          closed_reason: string | null
+          contractor_id: string
+          created_at: string
+          fingerprint: string
+          id: string
+          idempotency_key: string
+          includes_presence: boolean
+          kind: string
+          quote_id: string | null
+          session_expires_at: string
+          status: string
+          stripe_mode: string
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          closed_reason?: string | null
+          contractor_id: string
+          created_at?: string
+          fingerprint: string
+          id?: string
+          idempotency_key: string
+          includes_presence: boolean
+          kind: string
+          quote_id?: string | null
+          session_expires_at: string
+          status?: string
+          stripe_mode: string
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closed_reason?: string | null
+          contractor_id?: string
+          created_at?: string
+          fingerprint?: string
+          id?: string
+          idempotency_key?: string
+          includes_presence?: boolean
+          kind?: string
+          quote_id?: string | null
+          session_expires_at?: string
+          status?: string
+          stripe_mode?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_checkout_sessions: {
         Row: {
           amount_subtotal: number | null
@@ -34374,20 +34425,38 @@ export type Database = {
         Row: {
           activation_status_at_rule: string
           contractor_id: string
+          provenance: string | null
           recorded_at: string
+          review_reason: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           source: string
+          stripe_mode: string | null
         }
         Insert: {
           activation_status_at_rule: string
           contractor_id: string
+          provenance?: string | null
           recorded_at?: string
+          review_reason?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source: string
+          stripe_mode?: string | null
         }
         Update: {
           activation_status_at_rule?: string
           contractor_id?: string
+          provenance?: string | null
           recorded_at?: string
+          review_reason?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source?: string
+          stripe_mode?: string | null
         }
         Relationships: []
       }
@@ -101617,6 +101686,10 @@ export type Database = {
         Returns: Json
       }
       get_contractor_public_profile: { Args: { _slug: string }; Returns: Json }
+      get_contractor_public_registration: {
+        Args: { _slug: string }
+        Returns: string
+      }
       get_launch_lead_status_counts: {
         Args: never
         Returns: {
@@ -102184,6 +102257,18 @@ export type Database = {
         }
         Returns: Json
       }
+      reserve_contractor_checkout: {
+        Args: {
+          _contractor_id: string
+          _fingerprint: string
+          _includes_presence: boolean
+          _kind: string
+          _quote_id: string
+          _stripe_mode: string
+          _ttl_seconds?: number
+        }
+        Returns: Json
+      }
       reserve_external_enrichment_call: {
         Args: { p_est_cost_usd?: number; p_items?: number; p_provider?: string }
         Returns: Json
@@ -102221,6 +102306,10 @@ export type Database = {
       }
       resolve_proposal_link: { Args: { _token: string }; Returns: Json }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
+      review_historical_presence_right: {
+        Args: { _contractor_id: string; _decision: string; _reason: string }
+        Returns: Json
+      }
       route_crm_recovery_assignment: {
         Args: {
           p_affiliate_id: string
@@ -102311,6 +102400,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      settle_contractor_checkout: {
+        Args: {
+          _reason?: string
+          _reservation_id: string
+          _status: string
+          _stripe_session_id: string
+        }
+        Returns: Json
       }
       settle_outreach_email: {
         Args: {
