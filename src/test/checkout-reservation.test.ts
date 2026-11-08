@@ -296,10 +296,7 @@ describe("nettoyage incertain : la réservation reste bloquante tant que Stripe 
 
   it("plantage avant rattachement : même demande 40 min plus tard = même clé (Stripe rejoue la session); autre demande bloquée jusqu'à l'échéance", async () => {
     const w = world();
-    w.set({ failReserve: false });
-    // Simuler : réservation créée + session créée chez Stripe, puis plantage (aucun rattachement).
-    const deps = { reserve: () => Promise.resolve({ data: null, error: null }) };
-    void deps;
+    // Réservation + session créées chez Stripe, puis plantage : aucun rattachement.
     w.set({ failAttach: true, expireMode: "throw_unreadable" });
     await w.checkout("fp-A"); // session créée, rattachement + nettoyage impossibles
     w.unreadable.clear();
