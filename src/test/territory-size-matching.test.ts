@@ -33,7 +33,7 @@ describe("territoires déclarés : exclusion prioritaire, rien d'inventé", () =
     const out = carryGeocodedCenters([radius({ geocode_status: "pending", center: undefined })], [radius()]);
     expect(out[0].center?.lat).toBe(LAVAL.lat);
   });
-  it("distance réelle Laval–Montréal ≈ 9 km", () => expect(Math.round(haversineKm(LAVAL, { lat: 45.5019, lng: -73.5674 }))).toBe(12));
+  it("distance Laval–Montréal (centres) ≈ 12 km", () => expect(Math.round(haversineKm(LAVAL, { lat: 45.5019, lng: -73.5674 }))).toBe(12));
   it("le jumelage consomme ces règles et les tailles déclarées", () => {
     const src = readFileSync("supabase/functions/match-lead/index.ts", "utf8");
     expect(src).toContain("territoryVerdict(");
