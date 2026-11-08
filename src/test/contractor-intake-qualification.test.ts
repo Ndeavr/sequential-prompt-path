@@ -17,8 +17,12 @@ describe("qualification avant plan", () => {
     expect(p.monthly_capacity).toBe(9);
     expect(objectiveToPayload({ trade_primary: "Thermopompes", city: "Laval" } as never)).toBeNull();
   });
-  it("préférences incomplètes : bloqué", () => {
-    expect(isQualificationReady({ ...full, qualification: { ...full.qualification, no_excluded_work: false } })).toBe(false);
+  it("préférences incomplètes : bloqué; exclusion sans réponse n'oblige pas « aucune »", () => {
+    const unanswered = { ...full, qualification: { ...full.qualification, no_excluded_work: false } };
+    expect(isQualificationReady(unanswered)).toBe(true);
+    expect(toQuoteContext(unanswered.qualification, declaredCapacity(full)).excluded_work_status).toBe("unanswered");
+    expect(toQuoteContext(full.qualification, declaredCapacity(full)).excluded_work_status).toBe("none");
+    expect(isQualificationReady({ ...full, qualification: { ...full.qualification, preferred_work: "" } })).toBe(false);
     expect(isQualificationReady({ ...full, qualification: { ...full.qualification, service_areas: "" } })).toBe(false);
     expect(isQualificationReady({ qualification: full.qualification })).toBe(false);
   });
