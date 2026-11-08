@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildClaraWorkItems, detectContractorEntry, dossierValue, type AccountEvidence, type DraftEvidence } from "@/lib/claraContractorWorkspace";
+import { buildClaraWorkItems, detectContractorEntry, dossierValue, type AccountEvidence, type DraftEvidence, tallyAppointments } from "@/lib/claraContractorWorkspace";
 
 const draft: DraftEvidence = { savedAt: "2026-11-07T12:00:00Z", status: "in_progress", completedAt: null, missingKeys: ["territories", "availability"], website: "https://exemple.ca/", trade: null };
-const signedIn = (patch: Partial<AccountEvidence> = {}): AccountEvidence => ({ signedIn: true, activation: "none", publication: "unpublished", appointments: 0, ...patch });
+const signedIn = (patch: Partial<AccountEvidence> = {}): AccountEvidence => ({ signedIn: true, activation: "none", publication: "unpublished", appointments: tallyAppointments([]), ...patch });
 const byKey = (items: ReturnType<typeof buildClaraWorkItems>, key: string) => items.find(item => item.key === key);
 
 describe("single business entry field", () => {
@@ -43,7 +43,7 @@ describe("Clara work panel evidence", () => {
 
   it("shows a Stripe return as pending until the server confirms", () => {
     expect(byKey(buildClaraWorkItems({ account: signedIn(), returnedFromCheckout: true }, true), "activation")?.state).toBe("pending");
-    expect(byKey(buildClaraWorkItems({ account: signedIn({ activation: "confirmed" }), returnedFromCheckout: true }, true), "activation")?.state).toBe("done");
+    expect(byKey(buildClaraWorkItems({ account: signedIn({ activation: "entry_paid" }), returnedFromCheckout: true }, true), "activation")?.state).toBe("done");
     expect(byKey(buildClaraWorkItems({ account: { signedIn: false, activation: "unknown", publication: "unknown", appointments: null }, returnedFromCheckout: true }, true), "activation")?.state).toBe("pending");
   });
 
@@ -59,6 +59,6 @@ describe("Clara work panel evidence", () => {
   });
 
   it("counts only recorded appointments", () => {
-    expect(byKey(buildClaraWorkItems({ account: signedIn({ appointments: 3 }) }, true), "appointments")?.title).toContain("3");
+    expect(byKey(buildClaraWorkItems({ account: signedIn({ appointments: tallyAppointments(["confirmed", "requested", "cancelled"]) }) }, true), "appointments")?.title).toContain("3");
   });
 });
