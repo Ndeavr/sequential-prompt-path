@@ -196,9 +196,9 @@ const SERVICE_PATH = /(?:^|\/)(?:services?|nos-services|our-services|expertises?
 const AREA_PATH = /(?:^|\/)(?:territoires?|zones?|secteurs?|service-areas?|regions?)(?:\/|$|-|\.)/i;
 const ABOUT_PATH = /(?:^|\/)(?:a-propos|about|about-us|qui-sommes-nous|entreprise)(?:\/|$|-|\.)/i;
 
-type Partial = { name: Suggestion[]; description: Suggestion[]; services: Suggestion[]; territories: Suggestion[] };
-export function extractSuggestions(html: string, page: string, isServicePage: boolean): Partial {
-  const out: Partial = { name: [], description: [], services: [], territories: [] };
+type Parts = { name: Suggestion[]; description: Suggestion[]; services: Suggestion[]; territories: Suggestion[] };
+export function extractSuggestions(html: string, page: string, isServicePage: boolean): Parts {
+  const out: Parts = { name: [], description: [], services: [], territories: [] };
   const push = (list: Suggestion[], raw: unknown, method: SuggestionMethod, max: number) => {
     const value = cleanText(raw, max);
     if (value && !/https?:\/\//i.test(value)) list.push({ value, method, page });
@@ -281,7 +281,7 @@ export async function analyzeWebsite(rawUrl: unknown, io: AnalysisIO): Promise<W
   const siteHost = naked(start.hostname);
   const deadline = new AbortController();
   const timer = setTimeout(() => deadline.abort(), ANALYSIS_POLICY.deadlineMs);
-  const collected: Partial = { name: [], description: [], services: [], territories: [] };
+  const collected: Parts = { name: [], description: [], services: [], territories: [] };
   try {
     let rules: RobotsRules = { disallow: [], allow: [] };
     try {
@@ -298,7 +298,7 @@ export async function analyzeWebsite(rawUrl: unknown, io: AnalysisIO): Promise<W
     result.pages.push({ url: home.url, fetched_at: now() });
     const homeUrl = new URL(home.url);
     const homeParts = extractSuggestions(home.body, home.url, SERVICE_PATH.test(homeUrl.pathname));
-    for (const k of Object.keys(collected) as (keyof Partial)[]) collected[k].push(...homeParts[k]);
+    for (const k of Object.keys(collected) as (keyof Parts)[]) collected[k].push(...homeParts[k]);
     for (const link of sameSiteLinks(home.body, homeUrl, siteHost, rules)) {
       if (deadline.signal.aborted || result.pages.length >= ANALYSIS_POLICY.maxPages) break;
       try {
@@ -306,7 +306,7 @@ export async function analyzeWebsite(rawUrl: unknown, io: AnalysisIO): Promise<W
         if (!page) continue;
         result.pages.push({ url: page.url, fetched_at: now() });
         const parts = extractSuggestions(page.body, page.url, SERVICE_PATH.test(new URL(page.url).pathname));
-        for (const k of Object.keys(collected) as (keyof Partial)[]) collected[k].push(...parts[k]);
+        for (const k of Object.keys(collected) as (keyof Parts)[]) collected[k].push(...parts[k]);
       } catch (error) {
         if (["unsafe_dns", "unpinned_transport"].includes(reasonOf(error))) throw error;
         // A secondary page failure keeps the successful home page reading.
