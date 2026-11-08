@@ -50,6 +50,11 @@ export interface HomeownerLocation {
   city?: string | null;
   neighborhood?: string | null;
   point?: { lat: number; lng: number; accuracy: PointAccuracy } | null;
+  /**
+   * Noms de la hiérarchie de l'ADRESSE (municipalité, arrondissement, quartier)
+   * tirés d'un géocodage exact. Présents = l'appartenance à un quartier est connue.
+   */
+  areas?: string[] | null;
 }
 export interface TerritoryResult { verdict: TerritoryVerdict; reason: string; exclusionUncertain?: true; distanceKm?: number }
 
@@ -63,15 +68,19 @@ export function effectiveTerritoryRules(answers: unknown): StoredTerritoryRule[]
 
 /** Verdict pour une adresse de propriétaire (jumelage ET réservation). */
 export function territoryVerdict(rules: StoredTerritoryRule[], loc: HomeownerLocation): TerritoryResult {
-  const places = [norm(loc.city), norm(loc.neighborhood)].filter(Boolean);
+  const places = [norm(loc.city), norm(loc.neighborhood), ...(loc.areas ?? []).map(norm)].filter(Boolean);
   const p = loc.point && Number.isFinite(loc.point.lat) && Number.isFinite(loc.point.lng)
     && (loc.point.accuracy === "property_coordinates" || loc.point.accuracy === "geocoded_address") ? loc.point : null;
   const inPlace = (r: StoredTerritoryRule) => !!r.place && places.includes(norm(r.place));
+  const subAreaKnown = subAreaResolved(loc);
   let uncertain = false;
   // 1) Exclusions d'abord (ville ou quartier, puis rayon exclu).
   for (const r of rules) {
     if (r.include) continue;
     if ((r.kind === "locality" || r.kind === "radius" || r.kind === "travel_time") && inPlace(r)) return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
+    // Localité exclue qui ne correspond pas à la ville : ce peut être un quartier
+    // de cette ville. Sans quartier connu de l'adresse, on ne peut pas l'écarter.
+    if (r.kind === "locality" && r.place && !subAreaKnown) uncertain = true;
     if (r.kind === "radius") {
       if (r.geocode_status === "geocoded" && r.center && typeof r.radius_km === "number" && p) {
         if (haversineKm(r.center, p) <= r.radius_km) return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
@@ -94,11 +103,53 @@ export function territoryVerdict(rules: StoredTerritoryRule[], loc: HomeownerLoc
   return { verdict: "unknown", reason: "Couverture non établie" };
 }
 
-/** Un seul résultat de niveau adresse = coordonnées utilisables; sinon aucune. */
+/** Quartier de l'adresse connu : champ de la fiche propriété ou hiérarchie d'un géocodage exact. */
+export function subAreaResolved(loc: HomeownerLocation): boolean {
+  return !!norm(loc.neighborhood) || (Array.isArray(loc.areas) && loc.areas.some((a) => !!norm(a)));
+}
+
+const ADDRESS_TYPES = new Set(["street_address", "premise", "subpremise"]);
+const AREA_TYPES = new Set(["locality", "sublocality", "sublocality_level_1", "sublocality_level_2", "neighborhood", "administrative_area_level_3", "postal_town", "colloquial_area"]);
+
+/** Masque Places (New) pour une adresse : position, types ET hiérarchie (quartier). */
+export const ADDRESS_FIELD_MASK = "places.id,places.location,places.types,places.addressComponents";
+
+/** Réponse Places (New) → résultats normalisés (aucun champ inventé). */
+// deno-lint-ignore no-explicit-any
+export function placesToHits(places: any[] | null | undefined): GeocodeHit[] {
+  return (places ?? []).filter((x) => x?.location).map((x) => ({
+    lat: Number(x.location.latitude), lng: Number(x.location.longitude), types: x.types ?? [],
+    // deno-lint-ignore no-explicit-any
+    components: Array.isArray(x.addressComponents) ? x.addressComponents.map((c: any) => ({
+      long: typeof c?.longText === "string" ? c.longText : null,
+      short: typeof c?.shortText === "string" ? c.shortText : null,
+      types: Array.isArray(c?.types) ? c.types : [],
+    })) : undefined,
+  }));
+}
+
+/**
+ * Un seul résultat de niveau adresse = coordonnées + hiérarchie utilisables;
+ * zéro ou plusieurs = rien (aucune précision supposée).
+ */
+export function pickAddressHit(hits: GeocodeHit[] | null | undefined): { point: { lat: number; lng: number; accuracy: "geocoded_address" }; areas: string[] | null } | null {
+  const addr = (hits ?? []).filter((h) => (h.types ?? []).some((t) => ADDRESS_TYPES.has(t)) && Number.isFinite(h.lat) && Number.isFinite(h.lng));
+  if (addr.length !== 1) return null;
+  const h = addr[0];
+  const names = (h.components ?? []).filter((c) => (c.types ?? []).some((t) => AREA_TYPES.has(t)))
+    .flatMap((c) => [c.long, c.short]).filter((s): s is string => typeof s === "string" && !!s.trim());
+  return { point: { lat: h.lat, lng: h.lng, accuracy: "geocoded_address" }, areas: names.length ? [...new Set(names)] : null };
+}
+
+/** Compatibilité : coordonnées seules. */
 export function pickAddressPoint(hits: GeocodeHit[] | null | undefined): { lat: number; lng: number; accuracy: "geocoded_address" } | null {
-  const addr = (hits ?? []).filter((h) => (h.types ?? []).some((t) => t === "street_address" || t === "premise" || t === "subpremise")
-    && Number.isFinite(h.lat) && Number.isFinite(h.lng));
-  return addr.length === 1 ? { lat: addr[0].lat, lng: addr[0].lng, accuracy: "geocoded_address" } : null;
+  return pickAddressHit(hits)?.point ?? null;
+}
+
+/** Faut-il géocoder l'adresse (rayon à mesurer OU quartier exclu à vérifier)? */
+export function needsAddressDetail(rules: StoredTerritoryRule[], loc: HomeownerLocation): boolean {
+  return (needsAddressPoint(rules) && !loc.point)
+    || (!subAreaResolved(loc) && rules.some((r) => !r.include && r.kind === "locality" && !!r.place));
 }
 
 /** Coordonnées de la fiche propriété, si réelles. */
@@ -140,7 +191,10 @@ export function carryGeocodedCenters(next: StoredTerritoryRule[], previous: Stor
   });
 }
 
-export interface GeocodeHit { lat: number; lng: number; place_id?: string; formatted?: string; types?: string[]; province?: string | null }
+export interface GeocodeHit {
+  lat: number; lng: number; place_id?: string; formatted?: string; types?: string[]; province?: string | null;
+  components?: { long: string | null; short: string | null; types: string[] }[];
+}
 
 /**
  * Géocode les centres en attente (au plus `max`). Un seul résultat de type

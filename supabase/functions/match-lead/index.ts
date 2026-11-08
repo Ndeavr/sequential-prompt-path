@@ -4,7 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 import { evaluateInsulationRules } from "../_shared/insulationProject.ts";
-import { effectiveTerritoryRules, needsAddressPoint, pickAddressPoint, propertyPoint, territoryVerdict, type HomeownerLocation, type StoredTerritoryRule } from "../_shared/territoryRules.ts";
+import { ADDRESS_FIELD_MASK, effectiveTerritoryRules, needsAddressDetail, pickAddressHit, placesToHits, propertyPoint, territoryVerdict, type HomeownerLocation, type StoredTerritoryRule } from "../_shared/territoryRules.ts";
 import { projectSizeFit, readDeclaredSizes, type DeclaredSize } from "../_shared/projectSizeFit.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
@@ -416,14 +416,14 @@ Deno.serve(async (req) => {
       if (prop) {
         leadLocation = { city: typedLead.city ?? prop.city ?? null, neighborhood: prop.neighborhood ?? null, point: propertyPoint(prop) };
         const addr = prop.normalized_address || prop.full_address;
-        const needsPoint = [...territoryByContractor.values()].some(needsAddressPoint);
-        if (!leadLocation.point && needsPoint && addr) {
+        const needsDetail = [...territoryByContractor.values()].some((rules) => needsAddressDetail(rules, leadLocation));
+        if (needsDetail && addr) {
           try {
-            const res = await placesSearchTextRaw(`${addr}${prop.postal_code ? `, ${prop.postal_code}` : ""}, Canada`, { maxResults: 3 }, "places.id,places.location,places.types");
-            leadLocation.point = pickAddressPoint((res.places ?? []).filter((x: any) => x?.location).map((x: any) => ({
-              lat: Number(x.location.latitude), lng: Number(x.location.longitude), types: x.types ?? [],
-            })));
-          } catch { leadLocation.point = null; }
+            const res = await placesSearchTextRaw(`${addr}${prop.postal_code ? `, ${prop.postal_code}` : ""}, Canada`, { maxResults: 3 }, ADDRESS_FIELD_MASK);
+            const hit = pickAddressHit(placesToHits(res.places));
+            if (!leadLocation.point) leadLocation.point = hit?.point ?? null;
+            leadLocation.areas = hit?.areas ?? null;
+          } catch { /* précision manquante : les exclusions non vérifiables restent bloquantes */ }
         }
       }
     }

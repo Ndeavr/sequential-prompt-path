@@ -17,6 +17,7 @@ import {
 import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
 import {
   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
+  releaseBeforeSessionCreate, releaseIfNotCreated,
   presencePaymentAwaitingConfirmation, purchaseFingerprint, stepKey, type ReservationDeps,
 } from "../_shared/checkoutReservation.ts";
 
@@ -32,6 +33,13 @@ const corsHeaders = {
 // ── Taxes du Québec : TPS 5 % + TVQ 9,975 % ──
 // Source de vérité serveur. Les taux Stripe sont créés une seule fois par clé
 // (test ou live) puis retrouvés par leur metadata unpro_tax.
+
+/** Session non remise : n'affirme « aucun paiement ouvert » que si Stripe a confirmé l'expiration. */
+function undeliveredBody(outcome: "released" | "blocked") {
+  return outcome === "released"
+    ? { error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }
+    : { error: "Le paiement n'a pas pu être confirmé chez UNPRO. Ne payez pas deux fois : réessayez dans quelques minutes, la même demande reprend le même paiement.", code: "checkout_reconciliation_pending" };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -579,7 +587,7 @@ Deno.serve(async (req) => {
       // A different request (other quote, embedded ↔ hosted, combined plan) first
       // expires the previous open session: one payable 350 session per contractor.
       let entryRequestOptions: { idempotencyKey: string } | undefined;
-      let entryReservation: { id: string; deps: ReservationDeps } | null = null;
+      let entryReservation: { id: string; deps: ReservationDeps; fresh: boolean } | null = null;
       if (isEntryActivation) {
         const fingerprint = await purchaseFingerprint({ v: 1, kind: "entry_350", mode: useTestMode ? "test" : "live", config: fallbackConfig });
         const deps = liveReservationDeps(serviceClient, stripeFallback, {
@@ -602,7 +610,7 @@ Deno.serve(async (req) => {
         fallbackConfig.expires_at = acquired.expiresAt;
         (fallbackConfig.metadata as Record<string, string>).checkout_reservation_id = acquired.reservationId;
         entryRequestOptions = { idempotencyKey: stepKey(acquired.idempotencyKey, "session") };
-        entryReservation = { id: acquired.reservationId, deps };
+        entryReservation = { id: acquired.reservationId, deps, fresh: acquired.fresh };
       }
       // Preserve a real, authenticated buyer's company/contact association BEFORE
       // calling Stripe. A provider outage must not erase the attempt or prevent
@@ -633,11 +641,11 @@ Deno.serve(async (req) => {
         fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
       } catch (stripeError) {
         if (!isEntryActivation) throw stripeError;
-        // Refus définitif de Stripe (4xx) : réservation fermée. Panne réseau : la
-        // même demande réessaie avec la même clé d'idempotence.
-        const sc = (stripeError as { statusCode?: number })?.statusCode;
-        if (entryReservation && typeof sc === "number" && sc >= 400 && sc < 500) {
-          await entryReservation.deps.settle(entryReservation.id, "failed", null, "stripe_rejected").catch(() => null);
+        // Non-création prouvée (validation 400, clé 401/403) sur une réservation
+        // neuve : libérée. Tout autre échec (réseau, 5xx, 409/429, idempotence) :
+        // conservée; la même demande reprend la même clé d'idempotence.
+        if (entryReservation) {
+          await releaseIfNotCreated(entryReservation.deps, entryReservation.id, entryReservation.fresh, stripeError, "stripe_rejected");
         }
         const { error: recoveryError } = await serviceClient.from("contractor_funnel_events").insert({
           contractor_id: fbContractor.id,
@@ -674,7 +682,7 @@ Deno.serve(async (req) => {
       if (entryReservation) {
         const attached = await attachCheckoutSession(entryReservation.deps, entryReservation.id, fbSession);
         if (!attached.ok) {
-          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+          return new Response(JSON.stringify(undeliveredBody(attached.expired ? "released" : "blocked")), {
             status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -698,8 +706,8 @@ Deno.serve(async (req) => {
         if (snapshotError && snapshotError.code !== "23505") {
           console.error("[checkout:entry350] open-session record failed", snapshotError.code);
           // Never hand out a payable session UNPRO cannot trace.
-          if (entryReservation) await expireUndeliverable(entryReservation.deps, entryReservation.id, fbSession.id, "snapshot_failed");
-          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+          const outcome = entryReservation ? await expireUndeliverable(entryReservation.deps, entryReservation.id, fbSession.id, "snapshot_failed") : "blocked";
+          return new Response(JSON.stringify(undeliveredBody(outcome)), {
             status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -1505,8 +1513,9 @@ Deno.serve(async (req) => {
     }
     const reservationId = acquired.reservationId;
     const idemKey = acquired.idempotencyKey;
+    // Avant tout appel de création de session : libérée seulement si la réservation est neuve.
     const failReservation = async (reason: string) => {
-      await reservationDeps.settle(reservationId, "failed", null, reason).catch(() => null);
+      await releaseBeforeSessionCreate(reservationDeps, reservationId, acquired.fresh, reason);
     };
 
     let customerId = existingCustomerId;
@@ -1565,15 +1574,15 @@ Deno.serve(async (req) => {
     try {
       session = await stripe.checkout.sessions.create(checkoutConfig, { idempotencyKey: stepKey(idemKey, "session") });
     } catch (stripeError) {
-      const sc = (stripeError as { statusCode?: number })?.statusCode;
-      if (typeof sc === "number" && sc >= 400 && sc < 500) await failReservation("stripe_rejected");
+      // Libérée seulement sur non-création prouvée; sinon la même demande reprend la même clé.
+      await releaseIfNotCreated(reservationDeps, reservationId, acquired.fresh, stripeError, "stripe_rejected");
       throw stripeError;
     }
 
     // Attach BEFORE handing the session out; failure = session expired, never payable.
     const attached = await attachCheckoutSession(reservationDeps, reservationId, session);
     if (!attached.ok) {
-      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+      return new Response(JSON.stringify(undeliveredBody(attached.expired ? "released" : "blocked")), {
         status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -1611,8 +1620,8 @@ Deno.serve(async (req) => {
     });
     if (recordErr && recordErr.code !== "23505") {
       console.error("[create-checkout-session] checkout record failed", recordErr.code);
-      await expireUndeliverable(reservationDeps, reservationId, session.id, "checkout_record_failed");
-      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+      const outcome = await expireUndeliverable(reservationDeps, reservationId, session.id, "checkout_record_failed");
+      return new Response(JSON.stringify(undeliveredBody(outcome)), {
         status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -1621,6 +1630,7 @@ Deno.serve(async (req) => {
       if (!session.client_secret) {
         console.error("Stripe returned no client_secret for embedded session", session.id);
         await expireUndeliverable(reservationDeps, reservationId, session.id, "missing_client_secret");
+        // Si l'expiration n'est pas confirmée, la réservation reste bloquante (réconciliation).
         return new Response(
           JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }

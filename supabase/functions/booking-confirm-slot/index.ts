@@ -13,7 +13,7 @@ import {
 } from "../_shared/googleCalendar.ts";
 
 import { selectedGoogleCalendar, canWriteCalendar } from "../_shared/googleCalendarSelection.ts";
-import { bookingTerritoryDecision, effectiveTerritoryRules, needsAddressPoint, pickAddressPoint, type HomeownerLocation } from "../_shared/territoryRules.ts";
+import { ADDRESS_FIELD_MASK, bookingTerritoryDecision, effectiveTerritoryRules, needsAddressDetail, pickAddressHit, placesToHits, type HomeownerLocation } from "../_shared/territoryRules.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
@@ -75,16 +75,17 @@ Deno.serve(async (req) => {
         return json({ error: "territory_unverified", message: "Impossible de vérifier le territoire de cet entrepreneur. Aucun rendez-vous n'a été créé." }, 503);
       }
       const rules = effectiveTerritoryRules(profRes.data?.answers);
+      // Quartier : jamais déclaré par le client; seulement la hiérarchie d'un géocodage exact.
       const location: HomeownerLocation = { city: clean(body.city, 120) };
       const line = clean(body.address_line1);
-      if (needsAddressPoint(rules) && line && location.city) {
+      if (needsAddressDetail(rules, location) && line && location.city) {
         try {
           const q = [line, location.city, clean(body.province, 8) ?? "QC", clean(body.postal_code, 12), "Canada"].filter(Boolean).join(", ");
-          const res = await placesSearchTextRaw(q, { maxResults: 3 }, "places.id,places.location,places.types");
-          location.point = pickAddressPoint((res.places ?? []).filter((x: any) => x?.location).map((x: any) => ({
-            lat: Number(x.location.latitude), lng: Number(x.location.longitude), types: x.types ?? [],
-          })));
-        } catch { location.point = null; }
+          const res = await placesSearchTextRaw(q, { maxResults: 3 }, ADDRESS_FIELD_MASK);
+          const hit = pickAddressHit(placesToHits(res.places));
+          location.point = hit?.point ?? null;
+          location.areas = hit?.areas ?? null;
+        } catch { location.point = null; location.areas = null; }
       }
       const gate = bookingTerritoryDecision(rules, (areasRes.data ?? []).map((a: { city_name: string | null }) => a.city_name ?? ""), location);
       if (!gate.allowed) {
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
           if (!canWriteCalendar(connection.metadata?.selected_calendar_access_role ?? "")) throw new Error("calendar_write_permission_required");
           const secret = Deno.env.get("CALENDAR_TOKEN_ENCRYPTION_KEY") ||
             Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") || "";
-          const accessToken = await getGoogleAccessToken(admin, connection, secret);
+          const accessToken = await getGoogleAccessToken(admin as unknown as Parameters<typeof getGoogleAccessToken>[0], connection, secret);
           const eventId = await pushGoogleEvent(accessToken, {
             summary: `Rendez-vous UNPRO — ${clientName}`,
             description: "Rendez-vous confirmé via UNPRO.",

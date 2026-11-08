@@ -16,7 +16,7 @@ Legend: **Implemented** = in source · **Tested** = focused automated/browser ch
 - [x] Implemented (2026-11-08 continuation): `_shared/territoryRules.ts` — radius centres geocoded at matching-profile save through the existing Google Places connector (max 5/save, single locality hit in the province only; ambiguous / not found / unavailable keep the declared text and give no coverage; previously geocoded centres reused). `match-lead` applies declared exclusions first (always), then explicit service areas or a geocoded radius vs the homeowner city centre (inclusions only once preferences are confirmed). Travel time is never converted to distance; no coordinates → no coverage.
 - [x] Implemented: three distinct indicators on the contractor setup card — profile completed, RBQ (verified only with status + verification date, declared ≠ verified, expired), calendar connected.
 - [x] Tested: 12 territory/size tests + 4 indicator tests (synthetic). Not tested: a real geocoding call or a real lead match.
-- [ ] Remaining: trade-specific declared subservice display; languages/availability/first-name vs company carry-over.
+- [x] Superseded: declared subservices, languages, availability and first-name vs company carry-over are covered in the corrective batch below (Sizes and profile carry-over).
 
 ## 3. Commercial rule — 350 $ + taxes per year
 - [x] Implemented: FR/EN copy (offer350, contractorOffer, homeFin3, Clara locale, fast checkout, heat-pump simulator, activation/claim/AIPP/founder cards, server `offerCopy.ts`) says « 350 $ + taxes par année », 12 months, renouvellement non automatique.
@@ -24,8 +24,8 @@ Legend: **Implemented** = in source · **Tested** = focused automated/browser ch
 - [x] Implemented: `stripe-webhook` verifies the combined line via Stripe line items (one-time, 35000 CAD, qty 1, no discount, tagged) before recording a 12-month `entry_activation_350_paid` ledger row (idempotent per session); TEST payments only for QA accounts; a mismatch or a second valid Presence notifies admins and grants nothing. Standalone 350 duplicate check now ignores expired/voided rows (manual renewal allowed).
 - [x] Implemented (SQL, applied to the backend): historical-rights snapshot, `annual_presence_status` (latest valid paid period, not earliest), `contractor_plan_code()` uses it with its owner/admin guard, atomic overlap trigger refusing a second valid Presence (`annual_presence_still_valid`).
 - [x] Tested: 14 synthetic tests (decision parsing, no bypass, pre-rule proposals, line item, session reuse, webhook line verification incl. discount/amount/quantity/unpaid/untagged, order of server decision before Stripe, renewal window) + plan page lines (500 $ + 350 $ → TPS 42,50 $, TVQ 84,79 $, total 977,29 $). No checkout, charge or webhook delivery was run (TEST or LIVE).
-- [ ] Deployed: NOT verified. Edited active functions (`create-checkout-session`, `stripe-webhook`, `match-lead`, `matching-profile`) may be auto-deployed by Lovable; no deployment receipt was checked.
-- [ ] Blocker: signed Stripe TEST end-to-end of the combined session (TEST webhook destination/secret still unconfirmed).
+- [x] Deployed: see « Corrective batch 2 » below (official deploy receipt + boot + signed-out checks for checkout, webhook, booking, matching, invited checkout).
+- Limitation (not a blocker for code): signed Stripe TEST end-to-end not run — TEST and LIVE payments are forbidden for this work; webhook behavior is proven by mocks only.
 
 ## 4. Personalized plan route
 - [x] Implemented: `PlanGoalAdjuster` (revenue or profit goal, horizon, basket, conversion, margin required for profit, capacity in RDV/month, slider + numeric input capped at capacity, capacity gap with explicit adjust actions, versioned server recompute, stale responses ignored, checkout disabled while the quote differs). Intake `objectiveToPayload`/`qualitativePayload` no longer use `Math.max(capacity, next)`; project capacity kept separately. Exact included appointments from the server contract only; taxes to the cent; unconditional claims removed; affiliate/promotional quotes are not recomputed.
@@ -54,16 +54,17 @@ Legend: **Implemented** = in source · **Tested** = focused automated/browser ch
 Legend: Source = in repository · Tested = synthetic/mock or local DB · Deployed = official receipt checked.
 
 ### Duplicate charges (before payment, not after)
-- [x] Source: migration 0044 (APPLIED to the backend during this batch — production schema change, no data rows written): `contractor_checkout_reservations` + `reserve_contractor_checkout` / `settle_contractor_checkout` (service only; anon/authenticated refused, checked). Advisory lock per contractor + Stripe mode, one active `reserved|open` row (unique index), Presence purchases refused while a paid Presence < 12 months awaits confirmation or a valid Presence exists, `paid` never reopened, stale session-less row superseded after 2 min.
+- [x] Source: migration 0044 (APPLIED to the backend during this batch — production schema change; its section A `UPDATE contractor_historical_presence_rights` DID rewrite historical-right metadata rows (provenance / review status). No payment, Stripe object, customer or contractor was created): `contractor_checkout_reservations` + `reserve_contractor_checkout` / `settle_contractor_checkout` (service only; anon/authenticated refused, checked). Advisory lock per contractor + Stripe mode, one active `reserved|open` row (unique index), Presence purchases refused while a paid Presence < 12 months awaits confirmation or a valid Presence exists, `paid` never reopened, stale session-less row superseded after 2 min.
 - [x] Source: `_shared/checkoutReservation.ts` used by `create-checkout-session` for entry 350, combined Presence + plan and plan-only, hosted and embedded: same request → same session (or same Stripe idempotency key on retry); different quote / decision / hosted↔embedded / standalone↔combined → old session expired at Stripe BEFORE a new one; already paid → refused; unreadable state → refused; session created but not recorded → expired immediately, never returned. Customer, coupon and session creation all carry reservation-derived idempotency keys. `stripe-webhook` marks the reservation paid (signed `checkout.session.completed` / `async_payment_succeeded`, paid only) or expired.
 - [x] Tested: 15 orchestrator tests (double click, embedded reuse, quote/mode/kind switch, paid old session, attach failure, DB down, 10 parallel tabs → 1 payable session, retry key, unreadable Stripe state, source order checks).
 - [x] Tested (real Postgres 16, throwaway local DB, migration section loaded verbatim): 20 concurrent calls with two different quotes → 10 `create` (same row) + 10 `busy`, exactly 1 active row; attach/verify same vs different; TEST lane separate; webhook paid on a superseded session wins and cannot be closed; Presence paid < 12 months refused, renewal after 13 months allowed; valid Presence refuses Presence but not plan-only; stale reservation superseded.
-- [ ] Not covered: `create-activation-checkout` (invited/prospect flow without contractor id) is outside the reservation; the existing standalone duplicate check remains its guard.
+- [x] Superseded by 0045: session-less rows are no longer replaced after 2 min (see below).
+- [ ] Scope: `create-activation-checkout` (invited/prospect flow) stays outside the reservation — it receives no contractor id (prospect/landing/activation tokens only), so binding it would require inventing an identity. No caller in `src`; the endpoint is public and LIVE-gated by `ENTRY350_LIVE_CHECKOUT_RELEASED` (value not read). Its existing standalone duplicate check remains its guard; an unrecorded session is now expired (batch 2).
 
 ### Historical rights
 - [x] Source (0044, applied): active subscriptions count as historical only if created before the rule, with a Stripe subscription id and a matching processed webhook; frozen snapshot rights count only when `review_status = confirmed` for the same Stripe mode. Unproven rows are not revoked and not charged: checkout is blocked (`historical_right_review_required`) until an admin review (`review_historical_presence_right`, ≥ 20-char reason). Read-only state: 6 LIVE rows `unproven_activation_status` pending review, 4 QA rows TEST-only.
 - [x] Tested: decision parsing (blocked → no line, no grant, display unknown) and SQL text assertions.
-- [ ] Owner action: review the 6 pending historical rows (confirm or reject) — no right was removed automatically.
+- [x] Superseded: see batch 2 evidence classes — only 2 rows need a human decision; nothing confirmed or rejected automatically.
 
 ### Territory (address, not city centre)
 - [x] Source: `territoryVerdict` uses only property coordinates or a single address-level geocode result; city centroid never establishes radius coverage. Exclusions first (city, neighbourhood, excluded radius); an excluded radius that cannot be verified makes the contractor not served. Same rules in `match-lead` and in `booking-confirm-slot` before the booking RPC (`bookingTerritoryDecision`); no travel time converted to distance.
@@ -75,6 +76,31 @@ Legend: Source = in repository · Tested = synthetic/mock or local DB · Deploye
 - [x] Tested: 4 carry-over tests + 1 size persistence test; 36 existing intake/plan tests pass.
 
 ### Deployment
-- [ ] Deployed: NOT verified. Edited active functions (`create-checkout-session`, `stripe-webhook`, `booking-confirm-slot`, `match-lead`, `compute-pricing-quote`) may be auto-deployed by Lovable; no edge log/boot receipt exists in the last 24 h, so no version can be confirmed. Calendar reconnect remains user-dependent and untested.
-- [ ] Signed Stripe TEST end-to-end: not run (no TEST or LIVE payment authorized); remains unverified.
+- [x] Deployed: superseded by batch 2 below (`compute-pricing-quote` not redeployed in batch 2; its deployed version was not re-verified).
+- Limitation: signed Stripe TEST end-to-end not run (TEST and LIVE payments forbidden); mocks only.
 - Checks: Vitest 57 focused + 36 existing intake/plan tests pass; `deno check` clean on create-checkout-session, stripe-webhook, match-lead, compute-pricing-quote; booking-confirm-slot has one pre-existing type error (`getGoogleAccessToken` client type, identical at 1ef7a8c1f). Preview build OK. Frontend not published.
+
+## Corrective batch 2 2026-11-08 (after eb40417fa)
+
+### Reservation never released on uncertainty
+- [x] Source: `expireUndeliverable` releases only when Stripe CONFIRMS `expired` without payment; expire error → re-read; open / complete / paid / unreadable → reservation kept blocking with the session id recorded for reconciliation. Unknown Stripe status → refused (never treated as expired).
+- [x] Source: create-checkout-session no longer releases on any 4xx: `releaseIfNotCreated` releases only a never-used reservation AND proven non-creation (400 invalid request / 401 / 403); 409, 429, idempotency errors, 5xx, network → kept, same request retries the same key. Unrecorded session message distinguishes « aucun paiement ouvert » (expiry confirmed) from « ne payez pas deux fois » (pending reconciliation).
+- [x] Source + APPLIED: migration 0045 (production schema change: function definitions only, no row written). `reserve_contractor_checkout`: a session-less reservation is never replaced on a short timeout; same request → same idempotency key at any time; other request → busy (`reconciliation_pending`) until `session_expires_at + 10 min`, then superseded. Live definition read back.
+- [x] Tested: 24 orchestrator tests (9 new: expiry network failure, unreadable session, paid during cleanup, concurrent retry with transient attach failure, crash before attach + 40 min retry, unknown status, Stripe error classes / release rules, SQL + source assertions). Throwaway Postgres harness on the exact 0045 text: create/retry=true with the same key at 40 min, other request busy `reconciliation_pending`, replaced only after expiry + 10 min; previous concurrency/paid/Presence cases still pass.
+
+### Invited checkout (`create-activation-checkout`)
+- [x] Source: a session whose UNPRO record fails is now expired at Stripe (result logged, never presumed). Not bound to the contractor reservation (no contractor identity — see scope above).
+
+### Neighbourhood exclusions on the address
+- [x] Source: booking and matching request `addressComponents` from the address geocode (`ADDRESS_FIELD_MASK`) and keep the address hierarchy (`areas`); the client cannot declare a neighbourhood. Without a known hierarchy, any locality exclusion makes the result uncertain → booking refused (`territory_unverified`), matcher excludes. Booking type error fixed.
+- [x] Tested: 5 new tests with Places-shaped synthetic payloads (excluded neighbourhood refused in booking and matching, other neighbourhood admitted, city only / no components / non-address result never admitted, property neighbourhood applied without geocode).
+
+### Historical rights — evidence, no decision
+- [x] Source + APPLIED: `admin_historical_presence_review_evidence()` (admin only, no name / email / phone): payment, signed webhook, amount, ledger, admin logs, publication, account existence, synthetic-name flag, evidence class. Body run read-only on live data.
+- Evidence (6 pending LIVE rows): 1 `paid_other_amount_policy_decision` (one signed paid webhook of CA$1.00 under the retired offer, no billing session, no account) and 1 `no_payment_published_needs_review` (published, no payment/admin evidence) need a human decision; 4 `no_payment_synthetic_name` (QA-looking names, no payment) — name pattern is a hint, not proof, so they stay pending until an admin confirms. Nothing confirmed, rejected or revoked; no charge.
+
+### Deployment (official receipt)
+- [x] Deployed 2026-11-08 ~22:07 UTC via the official deploy tool: create-checkout-session `16bb7698…`, stripe-webhook `fc03b54c…`, booking-confirm-slot `23674de6…`, match-lead `4c154b7e…`, create-activation-checkout `a3d67e32…` (submitted source SHA-256). Boot logged after deploy.
+- [x] Signed-out checks (no session, no booking): checkout 401, match-lead 401, booking 400 `invalid_contractor_id`, invited checkout 409 `quote_requires_separate_checkout` (pre-Stripe guard), webhook 400 `Missing signature`.
+- Not verified: any real/TEST payment, webhook delivery, Google reconnect/selection (user-dependent), frontend publication (not done).
+- Checks: Vitest 17 related files / 197 tests pass (1 stale source-window assertion widened, webhook unchanged); `deno check` clean on the 5 deployed functions.
