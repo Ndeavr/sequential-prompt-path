@@ -207,7 +207,7 @@ export function PlanGoalAdjuster({ quote, onQuote, onState }: {
           <p className="mt-1 text-[12px] text-white/60">Plafonné à votre capacité déclarée ({cap} RDV/mois).</p>
           {outcome && (
             <p className="mt-2 text-sm text-white/85" data-testid="goal-outcome">
-              Avec {outcome.appointmentsPerMonth} RDV/mois : environ <strong>{formatQuebecNumber(outcome.contractsPerMonth, "%").replace("\u00A0%", "")} contrats/mois</strong> et <strong data-testid="outcome-revenue">{money(outcome.estimatedRevenuePerMonth)}</strong> de chiffre d'affaires estimé par mois{outcome.estimatedProfitPerMonth !== null ? <>, profit estimé {money(outcome.estimatedProfitPerMonth)}/mois</> : null}.
+              Avec {outcome.appointmentsPerMonth} RDV/mois : environ <strong data-testid="outcome-contracts">{new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 }).format(outcome.contractsPerMonth)} contrats/mois</strong> et <strong data-testid="outcome-revenue">{money(outcome.estimatedRevenuePerMonth)}</strong> de chiffre d'affaires estimé par mois{outcome.estimatedProfitPerMonth !== null ? <>, profit estimé {money(outcome.estimatedProfitPerMonth)}/mois</> : null}.
             </p>
           )}
         </div>
