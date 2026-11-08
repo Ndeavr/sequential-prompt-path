@@ -53,6 +53,7 @@ function world() {
       if (!r) return { data: { ok: false }, error: null };
       if (status === "open") {
         if (failAttach) return { data: null, error: { message: "write failed" } };
+        if (r.status === "open" && r.session === sid) return { data: { ok: true }, error: null }; // idempotent, as in SQL
         if (r.status !== "reserved") return { data: { ok: false }, error: null };
         r.session = sid; r.status = "open"; return { data: { ok: true }, error: null };
       }
