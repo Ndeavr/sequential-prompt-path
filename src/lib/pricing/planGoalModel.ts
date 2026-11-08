@@ -174,9 +174,11 @@ export function goalNeeds(i: GoalInputs): GoalNeeds | null {
   const conversion = (eco.conversionPct as number) / 100;
   const margin = typeof i.marginPct === "number" ? i.marginPct / 100 : null;
   const perContract = i.kind === "profit" ? basket * (margin as number) : basket;
-  const contractsTotal = Math.ceil(i.amount / perContract);
-  const appointmentsTotal = Math.ceil(contractsTotal / conversion);
-  const appointmentsPerMonthNeeded = Math.ceil(appointmentsTotal / i.horizonMonths);
+  // Arrondi au compte entier SEULEMENT ici (contrats, rendez-vous), tolérant au bruit flottant.
+  const ceil = (x: number) => Math.ceil(x - 1e-9);
+  const contractsTotal = ceil(i.amount / perContract);
+  const appointmentsTotal = ceil(contractsTotal / conversion);
+  const appointmentsPerMonthNeeded = ceil(appointmentsTotal / i.horizonMonths);
   const capacity = i.capacityPerMonth as number;
   return {
     basket,
