@@ -14,7 +14,7 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
-import { ANNUAL_PRESENCE_CENTS, decideAnnualPresence } from "../_shared/annualPresence.ts";
+import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_LINE_TYPE, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal, sessionMatchesPresence } from "../_shared/annualPresence.ts";
 
 
 const corsHeaders = {
@@ -1124,6 +1124,40 @@ Deno.serve(async (req) => {
     }
 
 
+    // ── PRÉSENCE IA ANNUELLE (350 $ + taxes par année) ──
+    // Décidée ici depuis public.annual_presence_decision (droits canoniques) —
+    // jamais par un indicateur du navigateur (includeProfileFee compris).
+    // Absente ou expirée → UNE ligne 350 $ ajoutée au même paiement que le
+    // forfait; valide ou droit historique → forfait seulement.
+    let presence: ReturnType<typeof decideAnnualPresence> = null;
+    if (quoteRow) {
+      let preRuleProposal = false;
+      if (proposalContext?.id) {
+        const { data: prop, error: propErr } = await serviceClient.from("affiliate_proposals")
+          .select("created_at").eq("id", String(proposalContext.id)).maybeSingle();
+        if (propErr) presence = null; else preRuleProposal = isPreRuleProposal(prop?.created_at);
+      }
+      const { data: decisionRpc, error: decisionErr } = await serviceClient.rpc("annual_presence_decision", {
+        _contractor_id: contractor.id, _include_test: useTestMode,
+      });
+      presence = decisionErr ? null : decideAnnualPresence({ rpc: decisionRpc, preRuleProposal });
+      if (!presence) {
+        console.error("[create-checkout-session] annual presence decision failed", decisionErr?.message ?? "unreadable");
+        return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Un forfait gratuit (code 100 %) ne rend jamais la Présence gratuite.
+      if (presence.include && isZeroTotal) {
+        return new Response(JSON.stringify({
+          error: "Votre code rend le forfait gratuit, mais la Présence IA (350 $ + taxes par année) reste due. Activez d'abord votre Présence IA, puis revenez appliquer ce code.",
+          code: "annual_presence_due_with_free_plan",
+          annual_presence_cents: ANNUAL_PRESENCE_CENTS,
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+    const presenceIncluded = presence?.include === true;
+
     // ── ZERO-TOTAL ACTIVATION (no Stripe needed) ──
     if (isZeroTotal) {
       // Create checkout session record
@@ -1284,35 +1318,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── PRÉSENCE IA ANNUELLE (350 $ + taxes par année) ──
-    // Un forfait de rendez-vous issu d'un devis exige une Présence IA annuelle
-    // valide, décidée ici depuis les droits canoniques — jamais par un indicateur
-    // du navigateur. Droits historiques et promotions validées préservés; aucune
-    // deuxième facturation 350 $ avant l'expiration d'une Présence valide.
-    if (quoteRow && !includeProfileFee) {
-      const [{ data: planCodeNow, error: planErr }, { data: actRow, error: actErr }] = await Promise.all([
-        serviceClient.rpc("contractor_plan_code", { _user_id: userId }),
-        serviceClient.from("contractors").select("activation_status").eq("id", contractor.id).maybeSingle(),
-      ]);
-      if (planErr || actErr) {
-        console.error("[create-checkout-session] annual presence check failed", planErr?.message ?? actErr?.message);
-        return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
-          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const presence = decideAnnualPresence({
-        planCode: typeof planCodeNow === "string" ? planCodeNow : null,
-        activationStatus: (actRow as { activation_status?: string | null } | null)?.activation_status ?? null,
-        hasValidatedPromotion: Boolean(proposalContext || verifiedActivationToken || promoResult?.ok),
-      });
-      if (presence.required) {
-        return new Response(JSON.stringify({
-          error: "Commencez par votre Présence IA (350 $ + taxes par année). Le forfait de rendez-vous s'ajoute ensuite, sans deuxième activation.",
-          code: "annual_presence_required",
-          annual_presence_cents: ANNUAL_PRESENCE_CENTS,
-        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
+    // La Présence IA comprend le profil : aucun frais de profil en plus.
+    if (presenceIncluded) profileFeeCents = 0;
+    if (presenceIncluded) lineItems.push(annualPresenceLineItem());
 
     // ── Taxes du Québec (TPS 5 % + TVQ 9,975 %) ──
     // Les taux sont créés une seule fois puis réutilisés (repérés par metadata).
@@ -1340,6 +1348,8 @@ Deno.serve(async (req) => {
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
         ...(profileFeeCents > 0 && { profile_fee_cents: String(profileFeeCents) }),
+        ...(presenceIncluded && ANNUAL_PRESENCE_SESSION_METADATA),
+        ...(presence && { annual_presence_reason: presence.reason }),
         ...(appointmentPack && {
           appointment_pack_size: String(appointmentPack.size),
           appointment_pack_total_cents: String(appointmentPack.totalPriceCents),
@@ -1405,6 +1415,22 @@ Deno.serve(async (req) => {
           couponParams.amount_off = promoResult.discount_value;
           couponParams.currency = "cad";
         }
+        // Avec la Présence IA dans le même paiement, la réduction vise le forfait
+        // seulement : la ligne 350 $ n'est jamais réduite par un code de forfait.
+        if (presenceIncluded) {
+          let planProduct: string | null = null;
+          if (planLineItem.price_data) {
+            const prod = await stripe.products.create({ name: `UNPRO Plan ${planName}`, metadata: { type: "appointment_plan", contractor_id: contractor.id } });
+            planProduct = prod.id;
+            planLineItem.price_data = { ...planLineItem.price_data, product: prod.id };
+            delete (planLineItem.price_data as Record<string, unknown>).product_data;
+          } else if (resolvedPriceId) {
+            const price = await stripe.prices.retrieve(resolvedPriceId);
+            planProduct = typeof price.product === "string" ? price.product : price.product?.id ?? null;
+          }
+          if (!planProduct) throw new Error("plan_product_unresolved");
+          couponParams.applies_to = { products: [planProduct] };
+        }
         const coupon = await stripe.coupons.create(couponParams);
         checkoutConfig.discounts = [{ coupon: coupon.id }];
       } catch (couponErr) {
@@ -1434,7 +1460,11 @@ Deno.serve(async (req) => {
               status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
-          if (old.status === "open" && old.url && old.amount_total != null) {
+          // Une session ouverte créée avec une autre décision Présence est expirée :
+          // jamais de 350 $ en double ni de forfait sans la Présence due.
+          if (old.status === "open" && !sessionMatchesPresence(old.metadata as Record<string, unknown> | null, presenceIncluded)) {
+            await stripe.checkout.sessions.expire(old.id);
+          } else if (old.status === "open" && old.url && old.amount_total != null) {
             return new Response(JSON.stringify({ url: old.url, sessionId: old.id, reused: true }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
