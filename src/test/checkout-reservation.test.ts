@@ -92,7 +92,7 @@ function world() {
       const outcome = await expireUndeliverable(deps, a.reservationId, s.id, "checkout_record_failed");
       return { kind: "undeliverable" as const, session: sessions.get(s.id)!, outcome };
     }
-    return att.ok ? { kind: "created" as const, session: s } : { kind: "undeliverable" as const, session: sessions.get(s.id)!, outcome: att.expired ? "released" : "blocked" };
+    return att.ok ? { kind: "created" as const, session: s } : { kind: "undeliverable" as const, session: sessions.get(s.id)!, outcome: !att.ok && att.expired ? "released" : "blocked" };
   }
 
   const payable = () => [...sessions.entries()].filter(([k, s]) => k === s.id && s.status === "open").length;
