@@ -44,7 +44,7 @@ import { Button } from "@/components/ui/button";
 import { saveClaraQualification, flushClaraQualification } from "@/services/clara/claraContractorQualification";
 import {
   INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, hasWork, hasTerritories, declaredCapacity,
-  isQualificationReady, prefillQualification, toClaraPatch, toQuoteContext, qualitativePayload, splitList,
+  isQualificationReady, prefillQualification, toClaraPatch, toQuoteContext, qualitativePayload, splitList, applyTerritoryRules,
 } from "@/lib/contractorIntakeQualification";
 
 type Step = {
