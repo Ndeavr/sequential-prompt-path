@@ -15,7 +15,11 @@ import { claraFieldKeyForLabel } from "@/services/clara/claraPageContext";
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
-import { registerClaraFormIntake, shareIntakeDraftWithClara, mergeIntakeDraft, INTAKE_FIELD_LABELS, type IntakeDraft, type IntakeField } from "@/services/clara/claraFormIntake";
+import { registerClaraFormIntake, shareIntakeDraftWithClara, mergeIntakeDraft, applyIntakeAnswer, INTAKE_FIELD_LABELS, type IntakeDraft, type IntakeField } from "@/services/clara/claraFormIntake";
+import { interpretContractorPreferences, territoryRuleLabel, clarificationQuestion, type PreferenceClarification, type TerritoryRule } from "@/lib/contractorPreferenceInterpreter";
+
+/** Consigne unique pour les réponses libres (aucune virgule ni puce imposée). */
+export const PREFERENCES_COPY = "Décrivez vos préférences dans vos mots. Clara s’occupe de les organiser.";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseHandoffParams, loadHandoff, goalConflicts, handoffToGoalFields, type SimHandoff } from "@/lib/heatPumpSimHandoff";
 import { Helmet } from "react-helmet-async";
@@ -196,6 +200,7 @@ export default function PageContractorPricingIntake() {
    * recalculées. Ne remplacent jamais des valeurs déjà saisies sans confirmation,
    * ni un prix serveur, ni un droit d'activation.
    */
+  const [naturalText, setNaturalText] = useState<Partial<Record<"work" | "territories", string>>>({});
   const [organize, setOrganize] = useState<{ target: "work" | "territories" | null; state: "idle" | "saving" | "saved" | "error"; clarification?: PreferenceClarification | null }>({ target: null, state: "idle" });
   const [simHandoff, setSimHandoff] = useState<SimHandoff | null>(null);
   const [simConflict, setSimConflict] = useState(false);
@@ -845,7 +850,7 @@ export default function PageContractorPricingIntake() {
     hint: PREFERENCES_COPY,
     isValid: (d) => hasWork(q(d)),
     render: (d) => (
-      <NaturalPreferences target="work" d={d} />
+      renderNatural("work", d)
     ),
   };
 
@@ -855,7 +860,7 @@ export default function PageContractorPricingIntake() {
     hint: "Les territoires desservis peuvent être différents de l'adresse de votre entreprise.",
     isValid: (d) => hasTerritories(q(d)),
     render: (d) => (
-      <NaturalPreferences target="territories" d={d} />
+      renderNatural("territories", d)
     ),
   };
 
@@ -891,10 +896,11 @@ export default function PageContractorPricingIntake() {
     setQ(d, nq);
   };
 
-  function NaturalPreferences({ target, d }: { target: "work" | "territories"; d: Partial<PricingIntakeInput> }) {
+  function renderNatural(target: "work" | "territories", d: Partial<PricingIntakeInput>) {
     const Q = q(d);
     const rawKey = target === "work" ? "work_raw" : "territory_raw";
-    const [text, setText] = useState<string>((Q[rawKey] as string | undefined) ?? "");
+    const text = naturalText[target] ?? (Q[rawKey] as string | undefined) ?? "";
+    const setText = (v: string) => setNaturalText((m) => ({ ...m, [target]: v }));
     const st = organize.target === target ? organize : { state: "idle" as const };
     const chips = (items: string[], key: "preferred_work" | "excluded_work" | "excluded_areas") => (
       <ul className="flex flex-wrap gap-2">
