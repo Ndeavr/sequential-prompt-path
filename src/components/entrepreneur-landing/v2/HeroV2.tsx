@@ -42,8 +42,9 @@ export default function HeroV2({ onTrackCta }: Props) {
           onTrackCta("hero_prepare_profile", "hero");
           navigate(contractorProfileEntryPath(search, lang, entry));
         }}>
+          <p id="contractor-entry-start" className="mb-1 text-sm font-semibold text-accent">{fr ? "Commencez ici — entrez le site Web de votre entreprise" : "Start here — enter your business website"}</p>
           <label htmlFor="contractor-entry" className="mb-2 block text-sm font-medium">{fr ? "Entrez le nom ou le site de votre entreprise. Clara prépare votre présence UNPRO." : "Enter your business name or website. Clara prepares your UNPRO presence."}</label>
-          <Input id="contractor-entry" value={value} onChange={(event) => { setValue(event.target.value); setError(false); }} autoComplete="organization" placeholder={fr ? "votre-entreprise.ca ou Nom de l’entreprise" : "your-business.ca or Business name"} className="h-12" maxLength={500} aria-invalid={error} aria-describedby={error ? "contractor-entry-error" : "contractor-entry-hint"} />
+          <Input id="contractor-entry" value={value} onChange={(event) => { setValue(event.target.value); setError(false); }} autoComplete="organization" placeholder={fr ? "votre-entreprise.ca ou Nom de l’entreprise" : "your-business.ca or Business name"} data-empty={value.trim() === "" ? "true" : "false"} className="contractor-entry-field h-12 text-base" maxLength={500} aria-invalid={error} aria-describedby={`contractor-entry-start ${error ? "contractor-entry-error" : "contractor-entry-hint"}`} />
           {error
             ? <p id="contractor-entry-error" role="alert" className="mt-2 text-sm text-destructive">{fr ? "Entrez le nom de votre entreprise ou l’adresse de son site Web public." : "Enter your business name or its public website address."}</p>
             : <p id="contractor-entry-hint" className="mt-2 text-sm text-muted-foreground">{fr ? "Pas de site Web? Commencez avec le nom de votre entreprise." : "No website? Start with your business name."}</p>}

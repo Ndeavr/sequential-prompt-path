@@ -101235,6 +101235,19 @@ export type Database = {
         Returns: Json
       }
       claim_scoped_free_activation: { Args: { p_code: string }; Returns: Json }
+      commit_google_calendar_snapshot: {
+        Args: {
+          p_access_role: string
+          p_calendar_id: string
+          p_calendar_name: string
+          p_connection_id: string
+          p_expected_metadata: Json
+          p_is_selection: boolean
+          p_user_id: string
+          p_windows: Json
+        }
+        Returns: undefined
+      }
       compute_email_system_status: { Args: never; Returns: Json }
       compute_extra_appointment_value: {
         Args: {
