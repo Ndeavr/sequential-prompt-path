@@ -49,6 +49,9 @@ describe("Clara entry350 quote-free handoff", () => {
     expect(edge).not.toContain("entry350_live_not_released");
     expect(edge).toContain("idempotencyKey:");
     expect(fast).toContain('reply?.code === "payment_received_pending"');
-    expect(fast).toContain("Ce retour ne prouve pas le paiement");
+    // Retour Stripe : message humain « en cours », jamais « payé », second paiement bloqué.
+    expect(fast).toContain("COPY.returnPending");
+    expect(fast).toContain('outcome === "success" || Boolean(proposalToken');
+    expect(fast).not.toContain("Retour de Stripe détecté");
   });
 });

@@ -145,7 +145,7 @@ export function buildClaraWorkItems(
 
   if (!account || !account.signedIn) {
     items.push({ key: "activation", state: input.returnedFromCheckout ? "pending" : "unknown", title: t("Activation", "Activation"), detail: input.returnedFromCheckout
-      ? t("Retour de Stripe reçu. Connectez-vous pour voir la confirmation du serveur.", "Back from Stripe. Sign in to see the server confirmation.")
+      ? t("Confirmation de votre activation en cours. Connectez-vous à votre espace entrepreneur pour la suivre.", "Your activation is being confirmed. Sign in to your contractor space to follow it.")
       : t("Connectez-vous pour voir l'état confirmé par le serveur.", "Sign in to see the server-confirmed status.") });
     return items;
   }
@@ -158,7 +158,7 @@ export function buildClaraWorkItems(
     plan_active: { key: "activation", state: "done", title: t("Accès actif", "Access active"), detail: t("Accès accordé par le serveur. Le détail du paiement n'est pas lisible ici.", "Access granted by the server. Payment details are not readable here.") },
     free: { key: "activation", state: "done", title: t("Adhésion gratuite active", "Free membership active"), detail: t("Confirmée par le serveur.", "Confirmed by the server.") },
     none: input.returnedFromCheckout
-      ? { key: "activation", state: "pending", title: t("Paiement en attente de confirmation", "Payment awaiting confirmation"), detail: t("Le retour de Stripe ne confirme pas le paiement. Actualisez dans un instant.", "Returning from Stripe does not confirm payment. Refresh in a moment.") }
+      ? { key: "activation", state: "pending", title: t("Confirmation de votre activation en cours", "Your activation is being confirmed"), detail: t("Votre profil s'active dès que le paiement nous est confirmé. Inutile de payer à nouveau.", "Your profile activates as soon as payment is confirmed. No need to pay again.") }
       : { key: "activation", state: "not_done", title: t("Aucune activation confirmée", "No confirmed activation"), detail: t("Aucun paiement ni adhésion confirmé par le serveur.", "No payment or membership confirmed by the server.") },
     unknown: { key: "activation", state: "unknown", title: t("Activation", "Activation"), detail: t("État non vérifiable pour l'instant.", "Status cannot be checked right now.") },
   };

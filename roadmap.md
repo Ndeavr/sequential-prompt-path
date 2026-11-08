@@ -1,5 +1,6 @@
 # Roadmap — P0 contractor acquisition golden path
 - [x] Nov-8 batch: natural preferences (interpreter + canonical save), plan goal controls/stale-quote lock, 350 $/an copy + server no-double-350 gate, Presence fallback, calendar functions deployed. See docs/contractor-plan-annual-presence-checklist.md.
+- [ ] Nov-9 prep open: Stripe page note in create-checkout-session still says « Paiement unique, aucun abonnement » (true, but not « par année ») — backend edit needs approval; LIVE entry-350 webhook path never exercised by a real paid session.
 - [ ] Nov-8 open: annual auto-renewal/combined checkout decision (+ Stripe TEST E2E), canonical business registration date, territory geocoding + matcher use, size mix → matching, real Google reconnect QA, frontend publication.
 - [x] Nov-7 KDD v1 admin panel /admin/kdd: read-only verified-350 goal/pace, cohorts with unknown tracking, unmet demand; 15 focused tests, anon RLS denial and signed-out redirect checked. Signed-in hosted render unverified. See docs/kdd-v1.md.
 - [ ] Nov-7 TEST QA blocked: existing 100-cent CAD QA session is paid/complete/test with real Stripe event, but TEST webhook points to an unconfirmed other environment; zero receipt on current Cloud. Confirm TEST webhook destination/signing secret before signed redelivery; runner includes sends/purge and was not invoked.

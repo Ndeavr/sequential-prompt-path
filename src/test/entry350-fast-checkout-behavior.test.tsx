@@ -121,4 +121,28 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     expect(JSON.stringify(failures)).not.toContain("Atelier de test");
     expect(mock.redirect).not.toHaveBeenCalled();
   });
+
+  it("never lets refused browser storage block authentication or checkout", async () => {
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("denied"); });
+    try {
+      start();
+      await waitFor(() => expect(mock.redirect).toHaveBeenCalledExactlyOnceWith("https://checkout.stripe.com/c/pay/cs_test_synthetic"));
+    } finally { spy.mockRestore(); }
+  });
+
+  it("keeps the promo code folded behind its toggle and the server-validated discount logic", () => {
+    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams()} /></MemoryRouter>);
+    expect(screen.queryByTestId("entry-350-promo-input")).toBeNull();
+    fireEvent.click(screen.getByTestId("entry-350-promo-toggle"));
+    expect(screen.getByTestId("entry-350-promo-input")).toBeTruthy();
+  });
+
+  it("shows a human pending message with a dashboard link on return, never paid, and blocks a second payment", () => {
+    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams("?checkout=success")} /></MemoryRouter>);
+    const box = screen.getByTestId("entry-350-return-pending");
+    expect(box).toHaveTextContent("Confirmation de votre activation en cours");
+    expect(screen.getByRole("link", { name: "Voir mon espace entrepreneur" }).getAttribute("href")).toBe("/pro");
+    expect(box.textContent).not.toMatch(/payé|confirmé le paiement|Stripe/i);
+    expect((screen.getByTestId("entry-350-checkout") as HTMLButtonElement).disabled).toBe(true);
+  });
 });

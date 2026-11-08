@@ -72,6 +72,22 @@ export const ENTRY_350 = {
     "Aucun rendez-vous inclus, sauf droit contractuel calculé et confirmé avant le paiement.",
   paymentNote: "350 $ CA avant taxes, par année. Si les taxes du Québec s'appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Couvre 12 mois; renouvellement non automatique.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
+  /** Récapitulatif court avant paiement : bénéfices d'abord, prix et RDV ensuite, sans avalanche de réserves. */
+  checkout: {
+    eyebrow: "Votre activation UNPRO",
+    title: "Votre profil entreprise + 12 mois de Présence IA UNPRO",
+    benefits: [
+      "Un profil entreprise UNPRO complet, tenu à jour",
+      "Vos services, spécialités et territoire présentés aux propriétaires dont le projet correspond (licence vérifiée lorsque requise)",
+      "12 mois de Présence IA sur UNPRO",
+    ],
+    price: "350 $ + taxes · par année",
+    appointments: "Rendez-vous : offerts selon un devis distinct, avec prix et volume affichés avant paiement. Aucun n'est inclus dans l'activation.",
+    promoToggle: "J'ai un code promo",
+    returnPending: "Confirmation de votre activation en cours",
+    returnPendingHelp: "Votre profil s'active dès que le paiement nous est confirmé. Inutile de payer à nouveau.",
+    returnLink: "Voir mon espace entrepreneur",
+  },
   fallback: {
     title: "Pas encore prêt pour un forfait de rendez-vous? Commencez par votre Présence IA.",
     body: "Commencez à bâtir votre présence dès aujourd’hui. Un profil complet, tenu à jour, aide UNPRO à comprendre votre entreprise et à vous présenter pour les projets adaptés. Ajoutez des rendez-vous lorsque vous êtes prêt.",
