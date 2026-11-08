@@ -14,7 +14,7 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
-import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_LINE_TYPE, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal, sessionMatchesPresence } from "../_shared/annualPresence.ts";
+import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal, sessionMatchesPresence } from "../_shared/annualPresence.ts";
 
 
 const corsHeaders = {
@@ -417,14 +417,20 @@ Deno.serve(async (req) => {
       // uniquement depuis le devis serveur du même propriétaire.
       let entryGuaranteed: number | null = null;
       if (isEntryActivation) {
-        const { data: actRow } = await serviceClient
-          .from("contractors")
-          .select("activation_status")
-          .eq("id", fbContractor.id)
-          .maybeSingle();
-        if (actRow?.activation_status === "activated" || actRow?.activation_status === "active") {
+        // Présence encore valide (ou droit historique) = refus; expirée = renouvellement
+        // manuel permis. Décision canonique, jamais le seul activation_status.
+        const { data: entryDecision, error: entryDecisionErr } = await serviceClient.rpc("annual_presence_decision", {
+          _contractor_id: fbContractor.id, _include_test: useTestMode,
+        });
+        const entryPresence = entryDecisionErr ? null : decideAnnualPresence({ rpc: entryDecision, preRuleProposal: false });
+        if (!entryPresence) {
+          return new Response(JSON.stringify({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!entryPresence.include) {
           return new Response(
-            JSON.stringify({ error: "Votre profil est déjà activé.", code: "already_active" }),
+            JSON.stringify({ error: "Votre profil est déjà activé.", code: "already_active", annual_presence_reason: entryPresence.reason, valid_until: entryPresence.validUntil }),
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
@@ -439,9 +445,22 @@ Deno.serve(async (req) => {
             .eq("livemode", !useTestMode)
             .eq("payload->data->object->metadata->>offer", "entry_activation_350")
             .eq("payload->data->object->>payment_status", "paid")
+            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
             .limit(1)
             .maybeSingle();
-          if (paidEvt) {
+          // Même règle pour un forfait payé avec la Présence incluse, pas encore confirmé.
+          const { data: paidCombined } = await serviceClient
+            .from("stripe_webhook_events")
+            .select("stripe_event_id")
+            .eq("contractor_id", fbContractor.id)
+            .eq("event_type", "checkout.session.completed")
+            .eq("livemode", !useTestMode)
+            .eq("payload->data->object->metadata->>annual_presence", "included")
+            .eq("payload->data->object->>payment_status", "paid")
+            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
+            .limit(1)
+            .maybeSingle();
+          if (paidEvt || paidCombined) {
             return new Response(
               JSON.stringify({ error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }),
               { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -1270,7 +1289,7 @@ Deno.serve(async (req) => {
     }
 
     // Build line items — personalized quote overrides catalog price via price_data
-    const planLineItem = personalizedPriceCents
+    const planLineItem: any = personalizedPriceCents
       ? {
           price_data: {
             currency: "cad",
