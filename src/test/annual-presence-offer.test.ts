@@ -22,6 +22,21 @@ describe("Présence IA annuelle : décision serveur, achat combiné, aucune doub
     expect(decideAnnualPresence({ rpc: "presence", preRuleProposal: false })).toBeNull();
     expect(decideAnnualPresence({ rpc: null, preRuleProposal: false })).toBeNull();
   });
+  it("droit antérieur non prouvé : ni accordé ni facturé, caisse bloquée jusqu'à la revue", () => {
+    const d = decideAnnualPresence({ rpc: { required: true, blocked: true, reason: "historical_right_review_required" }, preRuleProposal: true });
+    expect(d).toEqual({ include: false, reason: "historical_right_review_required", validUntil: null, blocked: true });
+    expect(decideAnnualPresence({ rpc: { required: true, blocked: true, reason: "croissance_v2" }, preRuleProposal: false })).toBeNull();
+    expect(readPresenceDecision({ required: true, blocked: true, reason: "historical_right_review_required" })).toEqual({ state: "unknown" });
+  });
+  it("SQL : abonnement historique seulement antérieur à la règle ET prouvé par Stripe; droit figé seulement confirmé", () => {
+    const sql = readFileSync("drizzle/migrations/0044_checkout_reservation_and_historical_right_provenance.sql", "utf8");
+    const fn = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION public.annual_presence_decision"), sql.indexOf("REVOKE ALL ON FUNCTION public.annual_presence_decision"));
+    expect(fn).toMatch(/cs\.created_at < rule_at\s+AND cs\.stripe_subscription_id IS NOT NULL\s+AND EXISTS \(\s+SELECT 1 FROM public\.stripe_webhook_events e/);
+    expect(fn).toMatch(/h\.review_status = 'confirmed' AND h\.stripe_mode = mode/);
+    expect(fn).toMatch(/'blocked', true, 'reason', 'historical_right_review_required'/);
+    expect(sql).toMatch(/WHEN q\.qa THEN 'qa_test_only' ELSE 'unproven_activation_status'/);
+    expect(sql).toMatch(/length\(coalesce\(trim\(_reason\), ''\)\) < 20/);
+  });
   it("proposition affiliée émise avant la règle : conditions d'origine; après : Présence incluse", () => {
     expect(isPreRuleProposal("2026-10-01T00:00:00Z")).toBe(true);
     expect(isPreRuleProposal("2026-11-10T00:00:00Z")).toBe(false);
@@ -55,7 +70,7 @@ describe("Présence IA annuelle : décision serveur, achat combiné, aucune doub
   it("checkout : décision serveur avant Stripe, ligne ajoutée, aucun refus « payer séparément », indicateur client ignoré", () => {
     const src = readFileSync("supabase/functions/create-checkout-session/index.ts", "utf8");
     const decision = src.indexOf('rpc("annual_presence_decision"');
-    const create = src.indexOf("const session = await stripe.checkout.sessions.create(checkoutConfig)");
+    const create = src.indexOf("session = await stripe.checkout.sessions.create(checkoutConfig, { idempotencyKey");
     expect(decision).toBeGreaterThan(0);
     expect(decision).toBeLessThan(create);
     expect(src).toContain("if (presenceIncluded) lineItems.push(annualPresenceLineItem());");

@@ -15,6 +15,8 @@ export type PresenceDecisionView =
 export function readPresenceDecision(rpc: unknown): PresenceDecisionView {
   const r = rpc as { required?: unknown; reason?: unknown; valid_until?: unknown } | null | undefined;
   if (!r || typeof r.required !== "boolean" || typeof r.reason !== "string") return { state: "unknown" };
+  // Droit antérieur en revue : rien n'est présumé dû ni payé à l'affichage.
+  if ((r as { blocked?: unknown }).blocked === true) return { state: "unknown" };
   if (r.required) return { state: "required", expired: r.reason === "annual_presence_expired" };
   if (r.reason === "valid_annual_presence" || r.reason === "historical_subscription" || r.reason === "historical_activation") {
     return { state: "covered", reason: r.reason, validUntil: typeof r.valid_until === "string" ? r.valid_until : null };
