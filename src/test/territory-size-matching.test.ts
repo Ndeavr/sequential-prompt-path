@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { bookingTerritoryDecision, carryGeocodedCenters, effectiveTerritoryRules, geocodePendingRules, haversineKm, pickAddressPoint, propertyPoint, territoryVerdict, type StoredTerritoryRule } from "../../supabase/functions/_shared/territoryRules";
+import { ADDRESS_FIELD_MASK, bookingTerritoryDecision, carryGeocodedCenters, effectiveTerritoryRules, geocodePendingRules, haversineKm, needsAddressDetail, pickAddressHit, pickAddressPoint, placesToHits, propertyPoint, territoryVerdict, type StoredTerritoryRule } from "../../supabase/functions/_shared/territoryRules";
 import { projectSizeFit, readDeclaredSizes } from "../../supabase/functions/_shared/projectSizeFit";
 
 const LAVAL = { lat: 45.5697, lng: -73.692 };
@@ -47,8 +47,12 @@ describe("territoires déclarés : exclusion prioritaire, rien d'inventé", () =
   it("réservation : mêmes règles que le jumelage", () => {
     const rules = [radius(), { kind: "locality", include: false, place: "Montréal" } as StoredTerritoryRule];
     expect(bookingTerritoryDecision(rules, [], { city: "Montréal", point: at(0.01) })).toMatchObject({ allowed: false, code: "territory_excluded" });
-    expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne", point: inside })).toMatchObject({ allowed: true });
-    expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne", point: outside })).toMatchObject({ allowed: false, code: "outside_declared_territory" });
+    // Adresse géocodée exacte : hiérarchie connue (municipalité + quartier).
+    const areas = ["Terrebonne", "Lachenaie"];
+    expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne", point: inside, areas })).toMatchObject({ allowed: true });
+    expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne", point: outside, areas })).toMatchObject({ allowed: false, code: "outside_declared_territory" });
+    // Même adresse sans hiérarchie : « Montréal » exclu pourrait être… inconnu → jamais admis en silence.
+    expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne", point: inside })).toMatchObject({ allowed: false, code: "territory_unverified" });
     expect(bookingTerritoryDecision(rules, [], { city: "Terrebonne" })).toMatchObject({ allowed: false });
     expect(bookingTerritoryDecision([], ["Laval"], { city: "Laval" })).toMatchObject({ allowed: true });
     expect(bookingTerritoryDecision([], [], { city: "Gatineau" })).toMatchObject({ allowed: true, reason: "Aucun territoire déclaré" });
@@ -118,5 +122,63 @@ describe("tailles de projet déclarées dans le jumelage", () => {
     expect(match.indexOf("readDeclaredSizes(p.answers)")).toBeLessThan(match.indexOf("readDeclaredSizes(q.input_payload)"));
     expect(readDeclaredSizes({ project_size_mix: { provenance: "declared", sizes: [{ key: "small", minValue: 1000, maxValue: 5000 }] } })).toHaveLength(1);
     expect(readDeclaredSizes({ project_size_mix: { provenance: "hypothesis", sizes: [{ key: "small" }] } })).toHaveLength(0);
+  });
+});
+
+describe("quartiers exclus appliqués à l'ADRESSE (réservation et jumelage)", () => {
+  // Réponse Places (New) synthétique, forme réelle : addressComponents longText/shortText/types.
+  const placesResponse = (components: { longText: string; shortText?: string; types: string[] }[] | undefined, types = ["street_address"]) => [{
+    id: "synthetic-place", location: { latitude: 45.5432, longitude: -73.5921 }, types,
+    ...(components ? { addressComponents: components } : {}),
+  }];
+  const rosemont = [
+    { longText: "1234", types: ["street_number"] },
+    { longText: "Rue Synthétique", types: ["route"] },
+    { longText: "Rosemont–La Petite-Patrie", types: ["sublocality_level_1", "sublocality", "political"] },
+    { longText: "Montréal", shortText: "Montréal", types: ["locality", "political"] },
+    { longText: "Québec", shortText: "QC", types: ["administrative_area_level_1", "political"] },
+  ];
+  const excludeRosemont: StoredTerritoryRule[] = [
+    { kind: "locality", include: true, place: "Montréal" },
+    { kind: "locality", include: false, place: "Rosemont–La Petite-Patrie" },
+  ];
+
+  it("le masque demande la hiérarchie de l'adresse", () => {
+    expect(ADDRESS_FIELD_MASK).toContain("places.addressComponents");
+    for (const f of ["booking-confirm-slot", "match-lead"]) {
+      const src = readFileSync(`supabase/functions/${f}/index.ts`, "utf8");
+      expect(src).toContain("ADDRESS_FIELD_MASK");
+      expect(src).toContain("needsAddressDetail(");
+      expect(src).toContain("pickAddressHit(placesToHits(res.places))");
+    }
+  });
+
+  it("adresse géocodée dans le quartier exclu : refusée (réservation) et exclue (jumelage)", () => {
+    const hit = pickAddressHit(placesToHits(placesResponse(rosemont)));
+    expect(hit?.areas).toEqual(expect.arrayContaining(["Rosemont–La Petite-Patrie", "Montréal"]));
+    const loc = { city: "Montréal", point: hit!.point, areas: hit!.areas };
+    expect(territoryVerdict(excludeRosemont, loc).verdict).toBe("excluded");
+    expect(bookingTerritoryDecision(excludeRosemont, [], loc)).toMatchObject({ allowed: false, code: "territory_excluded" });
+  });
+
+  it("adresse géocodée dans un autre quartier : admise par la localité déclarée", () => {
+    const other = rosemont.map((c) => c.types.includes("sublocality") ? { ...c, longText: "Verdun" } : c);
+    const hit = pickAddressHit(placesToHits(placesResponse(other)))!;
+    expect(bookingTerritoryDecision(excludeRosemont, [], { city: "Montréal", point: hit.point, areas: hit.areas })).toMatchObject({ allowed: true });
+  });
+
+  it("précision manquante (ville seule, aucun composant, résultat non-adresse) : jamais admise en silence", () => {
+    expect(bookingTerritoryDecision(excludeRosemont, [], { city: "Montréal" })).toMatchObject({ allowed: false, code: "territory_unverified" });
+    const noComponents = pickAddressHit(placesToHits(placesResponse(undefined)))!;
+    expect(noComponents.areas).toBeNull();
+    expect(bookingTerritoryDecision(excludeRosemont, [], { city: "Montréal", point: noComponents.point, areas: noComponents.areas })).toMatchObject({ allowed: false, code: "territory_unverified" });
+    expect(pickAddressHit(placesToHits(placesResponse(rosemont, ["locality", "political"])))).toBeNull();
+  });
+
+  it("fiche propriété avec quartier : exclusion appliquée sans géocodage", () => {
+    const loc = { city: "Montréal", neighborhood: "Rosemont–La Petite-Patrie", point: { lat: 45.54, lng: -73.59, accuracy: "property_coordinates" as const } };
+    expect(needsAddressDetail(excludeRosemont, loc)).toBe(false);
+    expect(territoryVerdict(excludeRosemont, loc).verdict).toBe("excluded");
+    expect(needsAddressDetail(excludeRosemont, { city: "Montréal" })).toBe(true);
   });
 });
