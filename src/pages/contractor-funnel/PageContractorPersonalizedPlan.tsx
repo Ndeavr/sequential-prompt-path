@@ -596,7 +596,8 @@ export default function PageContractorPersonalizedPlan() {
           />
         )}
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
-        {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && (
+        {/* Une proposition affiliée ou promotionnelle reste liée à son devis : pas de recalcul ici. */}
+        {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && !promotionGranted && !offerId && !(quote.input_payload as Record<string, unknown> | undefined)?.affiliate_proposal_id && (
           <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
         )}
         {quote.pricing_status !== "paid" && !entryEligible && (() => {
