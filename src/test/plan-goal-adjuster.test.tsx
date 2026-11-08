@@ -55,4 +55,33 @@ describe("plan personnalisé : curseur, saisie, devis périmé", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Profit ajouté" }));
     expect(screen.getByTestId("goal-errors").textContent).toContain("marge");
   });
+
+  it("répartition inégale : 750 $/RDV dans le composant, total invalide bloque, normalisation explicite, taille seule = devis périmé", async () => {
+    const states: GoalAdjusterState[] = [];
+    invoke.mockImplementation(() => new Promise(() => {})); // aucun devis ne revient : le paiement reste bloqué
+    render(<PlanGoalAdjuster quote={quote("q0", 14)} onQuote={vi.fn()} onState={(s) => states.push(s)} />);
+    fireEvent.click(screen.getByTestId("toggle-sizes"));
+    const type = (id: string, v: string) => fireEvent.change(screen.getByTestId(id), { target: { value: v } });
+    type("size-share-small", "50"); type("size-basket-small", "1000"); type("size-conv-small", "50");
+    type("size-share-large", "30"); type("size-basket-large", "10000"); type("size-conv-large", "10");
+    expect(screen.getByTestId("goal-errors").textContent).toContain("totaliser 100 %");
+    expect(states.at(-1)?.dirty).toBe(true);
+    fireEvent.click(screen.getByTestId("normalize-sizes"));
+    expect(screen.queryByTestId("goal-errors")).toBeNull();
+    // 50/30 → 62,5/37,5 : Σ w·b·c = 0,625·500 + 0,375·1000 = 687,50 $
+    expect(screen.getByTestId("goal-needs").textContent).toContain("688");
+    type("size-share-small", "50"); type("size-share-large", "50");
+    expect(screen.getByTestId("goal-needs").textContent).toContain("750");
+    expect(screen.getByTestId("goal-needs").textContent).not.toContain("1 650");
+    type("size-conv-large", "0");
+    expect(screen.getByTestId("goal-errors").textContent).toContain("conversion entre 1 % et 100 %");
+    type("size-conv-large", "10");
+    fireEvent.click(screen.getByTestId("size-medium-refused"));
+    await waitFor(() => expect(invoke).toHaveBeenCalled(), { timeout: 2000 });
+    const body = invoke.mock.calls.at(-1)?.[1]?.body as Record<string, any>;
+    expect(body.project_size_mix.share_unit).toBe("appointments");
+    expect(body.project_size_mix.sizes.find((x: any) => x.code === "medium").stance).toBe("refused");
+    expect(body.close_rate_estimate).toBeCloseTo(0.3, 9);
+    expect(states.at(-1)?.dirty).toBe(true);
+  });
 });

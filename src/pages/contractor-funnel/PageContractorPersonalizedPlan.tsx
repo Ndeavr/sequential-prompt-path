@@ -42,6 +42,7 @@ import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contracto
 import { quebecTaxes } from "@/lib/pricing/planGoalModel";
 import { ENTRY_350 } from "@/lib/copy/offer350";
 import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
+import { annualPresenceLines, readPresenceDecision, type PresenceDecisionView } from "@/lib/pricing/annualPresenceView";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
   isContractorObjective,
@@ -180,15 +181,28 @@ export default function PageContractorPersonalizedPlan() {
   // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
   const baseCents = quote?.recommended_monthly_price ?? 0;
   const { gst: gstCents, qst: qstCents, total: totalWithTaxCents } = quebecTaxes(baseCents);
-  const presenceTax = quebecTaxes(35000);
 
   // Offre d'entrée 350 $ : jamais affichée si une promotion (affilié, gratuité)
   // est déjà validée côté serveur, si le devis est payé ou en liste d'attente.
   const personalizedView = activationConfirmed || searchParams.get("view") === "personalized" || objective === "upgrade";
   const promotionGranted = !!offerState && (offerState.promo_valid || (offerState.offer_exists && ["granted", "accepted", "offered"].includes(offerState.status ?? "")));
   const entryEligible = !!quote && !activationConfirmed && !personalizedView && quote.pricing_status !== "paid" && !waitlisted && !promotionGranted && totalWithTaxCents > 0;
-  /** Affichage seulement : le serveur décide (code annual_presence_required). */
-  const presenceLikelyRequired = !!quote && !activationConfirmed && !promotionGranted && quote.pricing_status !== "paid";
+  // Présence IA annuelle : lue depuis la décision serveur du propriétaire connecté
+  // (affichage seulement — le paiement redécide côté serveur au cent près).
+  const [presenceDecision, setPresenceDecision] = useState<PresenceDecisionView>({ state: "unknown" });
+  const [presenceRefresh, setPresenceRefresh] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess?.session) { if (alive) setPresenceDecision({ state: "unknown" }); return; }
+      const { data, error } = await supabase.rpc("my_annual_presence_decision" as never);
+      if (!alive) return;
+      setPresenceDecision(readPresenceDecision(error ? undefined : data));
+    })();
+    return () => { alive = false; };
+  }, [quote?.id, presenceRefresh]);
+  const presenceLines = annualPresenceLines(quote && quote.pricing_status !== "paid" ? baseCents : 0, presenceDecision);
   const checkoutBlocked = goalState.dirty || goalState.recomputing || !goalState.valid;
   const adoptQuote = (q: PricingQuote) => {
     adoptedQuoteRef.current = q.id;
@@ -323,10 +337,11 @@ export default function PageContractorPersonalizedPlan() {
         const ctx = (error as { context?: Response }).context;
         try { if (ctx && typeof ctx.json === "function") payload = await ctx.clone().json(); } catch { /* corps illisible */ }
       }
-      if (payload?.code === "annual_presence_required") {
-        setCheckoutError("Commencez par votre Présence IA (350 $ + taxes par année). Le forfait de rendez-vous s'ajoute ensuite, sans deuxième activation.");
+      if (payload?.code === "annual_presence_due_with_free_plan" || payload?.code === "annual_presence_unverified") {
+        setCheckoutError(payload.error ?? "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.");
         setCheckoutLoading(false);
-        openPresence();
+        setPresenceRefresh((n) => n + 1);
+        if (payload.code === "annual_presence_due_with_free_plan") openPresence();
         return;
       }
       if (payload?.error) throw new Error(payload.error);
@@ -667,23 +682,18 @@ export default function PageContractorPersonalizedPlan() {
                     <div className="text-white/60">/ mois, avant taxes</div>
                   </div>
                   <div className="mt-3 space-y-1 text-sm text-white/75" data-testid="tax-breakdown">
+                    {presenceLines.includePresence && (
+                      <div className="flex justify-between" data-testid="presence-line"><span>Présence IA — profil + 12 mois (par année)</span><span>{formatCADCents(35000)}</span></div>
+                    )}
                     <div className="flex justify-between"><span>Forfait de rendez-vous (mensuel)</span><span>{formatCADCents(quote.recommended_monthly_price)}</span></div>
-                    <div className="flex justify-between"><span>TPS (5 %)</span><span>{formatCADCents(gstCents)}</span></div>
-                    <div className="flex justify-between"><span>TVQ (9,975 %)</span><span>{formatCADCents(qstCents)}</span></div>
+                    <div className="flex justify-between"><span>TPS (5 %)</span><span data-testid="gst-today">{formatCADCents(presenceLines.today.gst)}</span></div>
+                    <div className="flex justify-between"><span>TVQ (9,975 %)</span><span data-testid="qst-today">{formatCADCents(presenceLines.today.qst)}</span></div>
                     <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
-                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCADCents(totalWithTaxCents)}</span>
+                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCADCents(presenceLines.today.total)}</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-white/60 mt-2">Le même montant, taxes incluses, est facturé chaque mois. Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
-                  {presenceLikelyRequired && (
-                    <div className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-3 text-xs text-white/85" data-testid="presence-line">
-                      <p className="font-semibold text-amber-100">Présence IA annuelle — payée d'abord, séparément</p>
-                      <div className="mt-1 flex justify-between"><span>Profil + 12 mois de Présence IA</span><span>{formatCADCents(35000)}</span></div>
-                      <div className="flex justify-between"><span>TPS (5 %) · TVQ (9,975 %)</span><span>{formatCADCents(presenceTax.gst)} · {formatCADCents(presenceTax.qst)}</span></div>
-                      <div className="flex justify-between font-semibold"><span>Total Présence IA</span><span>{formatCADCents(presenceTax.total)}</span></div>
-                      <p className="mt-1 text-white/70">350 $ + taxes par année; renouvellement non automatique. Une Présence IA déjà valide n'est jamais facturée deux fois : UNPRO le vérifie avant le paiement.</p>
-                    </div>
-                  )}
+                  <p className="text-[11px] text-white/60 mt-2">Ensuite, le forfait seul : {formatCADCents(totalWithTaxCents)} taxes incluses chaque mois. Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
+                  <p className="text-[11px] text-white/70 mt-1" data-testid="presence-note">{presenceLines.note}</p>
                 </div>
 
                 {checkoutError && (

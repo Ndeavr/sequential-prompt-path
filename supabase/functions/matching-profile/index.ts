@@ -11,6 +11,8 @@
  * Attribution (audit id/token, outreach activation token, affiliate ref, utm)
  * is persisted on the row so it survives wizard → plans → Stripe.
  */
+import { carryGeocodedCenters, geocodePendingRules, readTerritoryRules } from "../_shared/territoryRules.ts";
+import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { pinnedPublicFetch } from "../enrich-official-website/pinnedPublicFetch.ts";
 import { ANALYSIS_KEY, ANALYSIS_OPERATION, ANALYSIS_POLICY, runOwnerWebsiteAnalysis } from "./websiteAnalysis.ts";
@@ -304,6 +306,22 @@ Deno.serve(async (req) => {
     // The website analysis is server-owned: a client save can never forge it.
     const incoming = { ...((body.answers as Record<string, unknown>) ?? {}) };
     delete incoming[ANALYSIS_KEY];
+    // Centres de rayon déclarés : géocodés côté serveur par l'intégration Google
+    // existante (au plus 5 par sauvegarde). Ambigu ou introuvable = aucune
+    // couverture présumée; le texte et le statut déclarés restent intacts.
+    if (Array.isArray(incoming.territory_rules)) {
+      incoming.territory_rules = await geocodePendingRules(carryGeocodedCenters(readTerritoryRules(incoming), readTerritoryRules(existing?.answers)), async (query) => {
+        try {
+          const res = await placesSearchTextRaw(query, { maxResults: 3 }, "places.id,places.formattedAddress,places.location,places.types,places.addressComponents");
+          if (res.source === "missing_connector" || res.google_status === "FETCH_ERROR") return null;
+          return res.places.filter((p: any) => p?.location).map((p: any) => ({
+            lat: Number(p.location.latitude), lng: Number(p.location.longitude), place_id: p.id, formatted: p.formattedAddress,
+            types: Array.isArray(p.types) ? p.types : [],
+            province: (Array.isArray(p.addressComponents) ? p.addressComponents : []).find((c: any) => (c.types ?? []).includes("administrative_area_level_1"))?.shortText ?? null,
+          }));
+        } catch { return null; }
+      });
+    }
     const answers = {
       ...((existing?.answers as Record<string, unknown>) ?? {}),
       ...incoming,

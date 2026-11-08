@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { hasRequiredCalendarScopes } from "@/lib/calendarReturn";
+import { rbqIndicator, type RbqIndicator } from "@/lib/contractor/accountIndicators";
 
 export type SetupStepKey = "profile" | "services" | "territory" | "calendar" | "availability";
 
@@ -26,6 +27,10 @@ export interface ContractorSetupProgress {
   calendarLastSyncedAt: string | null;
   calendarProvider: string | null;
   contractorId: string | null;
+  /** Indicateurs distincts : profil ≠ RBQ vérifiée ≠ calendrier connecté. */
+  profileComplete: boolean;
+  rbq: RbqIndicator;
+  registeredAt: string | null;
 }
 
 export function useContractorSetupProgress() {
@@ -37,7 +42,7 @@ export function useContractorSetupProgress() {
     queryFn: async () => {
       const { data: contractor, error: contractorError } = await supabase
         .from("contractors")
-        .select("id, business_name, phone, city")
+        .select("id, business_name, phone, city, rbq_compliance_status, rbq_verified_at, rbq_expiry_date, rbq_number, rbq_declaration, unpro_registered_at")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (contractorError) throw contractorError;
@@ -94,6 +99,9 @@ export function useContractorSetupProgress() {
         calendarLastSyncedAt: activeConnection?.last_synced_at ?? null,
         calendarProvider: activeConnection?.provider ?? null,
         contractorId,
+        profileComplete: steps.find((s) => s.key === "profile")?.done ?? false,
+        rbq: rbqIndicator(contractor),
+        registeredAt: contractor?.unpro_registered_at ?? null,
       };
     },
   });

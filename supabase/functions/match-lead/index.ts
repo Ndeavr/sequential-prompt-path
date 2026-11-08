@@ -4,6 +4,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 import { evaluateInsulationRules } from "../_shared/insulationProject.ts";
+import { readTerritoryRules, territoryVerdict, type StoredTerritoryRule } from "../_shared/territoryRules.ts";
+import { projectSizeFit, readDeclaredSizes, type DeclaredSize } from "../_shared/projectSizeFit.ts";
+import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -369,6 +372,43 @@ Deno.serve(async (req) => {
     const catRow = assertQueryOk<any>("service_category_read", catRowRes);
     const compatRules = assertQueryOk<any[]>("contractor_matching_rules_read", compatRulesRes);
 
+    // Territoires et tailles DÉCLARÉS par l'entrepreneur (profil de jumelage,
+    // plan personnalisé). Erreur de lecture = échec explicite, jamais un repli.
+    const [profilesRes, quotesRes] = await Promise.all([
+      supabase.from("contractor_matching_profiles").select("contractor_id, answers, updated_at")
+        .in("contractor_id", contractorIds).order("updated_at", { ascending: false }),
+      supabase.from("contractor_pricing_quotes").select("contractor_id, input_payload, created_at")
+        .in("contractor_id", contractorIds).not("input_payload->project_size_mix", "is", null)
+        .order("created_at", { ascending: false }).limit(500),
+    ]);
+    const profiles = assertQueryOk<any[]>("contractor_matching_profiles_read", profilesRes);
+    const sizeQuotes = assertQueryOk<any[]>("contractor_size_quotes_read", quotesRes);
+    const territoryByContractor = new Map<string, StoredTerritoryRule[]>();
+    for (const p of profiles ?? []) {
+      const id = String(p.contractor_id);
+      if (territoryByContractor.has(id)) continue; // plus récent d'abord
+      const confirmed = (p.answers as Record<string, unknown> | null)?.preferences_confirmed === true;
+      // Inclusions : seulement si l'entrepreneur a confirmé ses préférences.
+      // Exclusions : toujours appliquées (restreindre ne crée aucune couverture).
+      territoryByContractor.set(id, readTerritoryRules(p.answers).filter((r) => !r.include || confirmed || (r as { confirmed?: boolean }).confirmed === true));
+    }
+    const sizesByContractor = new Map<string, DeclaredSize[]>();
+    for (const q of sizeQuotes ?? []) {
+      const id = String(q.contractor_id);
+      if (!sizesByContractor.has(id)) sizesByContractor.set(id, readDeclaredSizes(q.input_payload));
+    }
+    // Coordonnées de la ville du propriétaire : géocodées une seule fois, et
+    // seulement si un rayon géocodé peut changer le résultat. Ambigu = aucune.
+    let leadPoint: { lat: number; lng: number } | null = null;
+    const needsPoint = [...territoryByContractor.values()].some((rs) => rs.some((r) => r.kind === "radius" && r.geocode_status === "geocoded"));
+    if (needsPoint && typedLead.city) {
+      try {
+        const res = await placesSearchTextRaw(`${typedLead.city}, Québec, Canada`, { maxResults: 3 }, "places.id,places.location,places.types");
+        const hits = (res.places ?? []).filter((p: any) => p?.location && (p.types ?? []).some((t: string) => t === "locality" || t === "sublocality" || t === "administrative_area_level_3"));
+        if (hits.length === 1) leadPoint = { lat: Number(hits[0].location.latitude), lng: Number(hits[0].location.longitude) };
+      } catch { leadPoint = null; }
+    }
+
 
     // Profil de compatibilité → règles appliquées au classement.
     // Les règles `inferred` n'excluent JAMAIS : elles modulent seulement le score.
@@ -443,7 +483,12 @@ Deno.serve(async (req) => {
         const areaSet = areasByContractor.get(c.id) ?? new Set<string>();
         // Territoire : une rangée `contractor_service_areas` explicite est
         // obligatoire. La ville inscrite au profil ne qualifie jamais seule.
-        const servesCity = servesCityGate(areaSet, typedLead.city);
+        // Exclusion déclarée prioritaire, puis zone explicite ou rayon prouvé.
+        const territory = territoryVerdict(territoryByContractor.get(String(c.id)) ?? [], { city: typedLead.city, lat: leadPoint?.lat, lng: leadPoint?.lng });
+        if (territory.verdict === "excluded") {
+          return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [territory.reason] };
+        }
+        const servesCity = servesCityGate(areaSet, typedLead.city) || territory.verdict === "covered";
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
         // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
@@ -451,6 +496,10 @@ Deno.serve(async (req) => {
           return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [] };
         }
         const base = scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+        if (territory.verdict === "covered" && !servesCityGate(areaSet, typedLead.city)) base.reasons.push(territory.reason);
+        const size = projectSizeFit(sizesByContractor.get(String(c.id)) ?? [], { min: typedLead.budget_min, max: typedLead.budget_max });
+        if (size.fit === "refused") return { ...base, score: 0, reasons: [...base.reasons, size.reason as string] };
+        if (size.fit === "preferred") { base.score = Math.min(100, base.score + 5); base.reasons.push(size.reason as string); }
         const projectFit = evaluateInsulationRules(typedLead.payload?.project_context, (compatRules ?? []).filter((r: any) => r.contractor_id === c.id));
         if (!projectFit.eligible) return { ...base, score: 0, reasons: projectFit.reasons };
         base.score = Math.min(100, base.score + projectFit.boost);

@@ -302,6 +302,13 @@
       "when": 1793647632626,
       "tag": "0042_casl_machine_decisions",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794170879972,
+      "tag": "0043_annual_presence_renewal_combined_registration",
+      "breakpoints": true
     }
   ]
 }

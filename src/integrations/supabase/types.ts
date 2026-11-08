@@ -34370,6 +34370,27 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_historical_presence_rights: {
+        Row: {
+          activation_status_at_rule: string
+          contractor_id: string
+          recorded_at: string
+          source: string
+        }
+        Insert: {
+          activation_status_at_rule: string
+          contractor_id: string
+          recorded_at?: string
+          source: string
+        }
+        Update: {
+          activation_status_at_rule?: string
+          contractor_id?: string
+          recorded_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
       contractor_import_assets: {
         Row: {
           address: string | null
@@ -45523,6 +45544,7 @@ export type Database = {
           slug: string | null
           specialty: string | null
           travel_radius_km: number | null
+          unpro_registered_at: string | null
           updated_at: string
           user_id: string
           values_text: string | null
@@ -45605,6 +45627,7 @@ export type Database = {
           slug?: string | null
           specialty?: string | null
           travel_radius_km?: number | null
+          unpro_registered_at?: string | null
           updated_at?: string
           user_id: string
           values_text?: string | null
@@ -45687,6 +45710,7 @@ export type Database = {
           slug?: string | null
           specialty?: string | null
           travel_radius_km?: number | null
+          unpro_registered_at?: string | null
           updated_at?: string
           user_id?: string
           values_text?: string | null
@@ -101088,6 +101112,14 @@ export type Database = {
         }[]
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
+      annual_presence_decision: {
+        Args: { _contractor_id: string; _include_test?: boolean }
+        Returns: Json
+      }
+      annual_presence_status: {
+        Args: { _contractor_id: string; _include_test?: boolean }
+        Returns: Json
+      }
       apply_lead_normalization: { Args: { payload: Json }; Returns: number }
       approve_company: {
         Args: { _actor_id: string; _company_id: string }
@@ -101977,6 +102009,7 @@ export type Database = {
         }
         Returns: number
       }
+      my_annual_presence_decision: { Args: never; Returns: Json }
       next_send_window_open: {
         Args: { _channel: string; _from?: string }
         Returns: string

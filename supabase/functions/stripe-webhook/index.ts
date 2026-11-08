@@ -1,4 +1,5 @@
 import { handleCondoBillingEvent } from "../_shared/condoBilling.ts";
+import { isPresenceOverlapError, verifyCombinedPresenceLine } from "../_shared/annualPresence.ts";
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches, entryActivationReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
@@ -484,14 +485,26 @@ Deno.serve(async (req) => {
               .maybeSingle();
             const { data: ownerRow, error: ownerError } = await supabase
               .from("contractors").select("user_id, activation_status").eq("id", entryContractorId).maybeSingle();
-            const { data: otherSession, error: otherError } = await supabase
+            // Doublon = une AUTRE Présence encore valide (< 12 mois, même mode, non
+            // annulée). Une Présence expirée n'empêche jamais un renouvellement manuel.
+            const { data: otherRows, error: otherError } = await supabase
               .from("contractor_activation_ledger")
-              .select("id")
+              .select("metadata")
               .eq("action", "entry_activation_350_paid")
               .eq("contractor_id", entryContractorId)
               .neq("metadata->>stripe_session_id", session.id)
-              .limit(1)
-              .maybeSingle();
+              .eq("metadata->>livemode", String(event.livemode === true))
+              .gte("created_at", addCalendarMonths(new Date(), -12).toISOString())
+              .limit(20);
+            let otherSession = false;
+            if (!otherError && (otherRows ?? []).length) {
+              const sids = (otherRows ?? []).map((r: { metadata?: Record<string, unknown> | null }) => String(r.metadata?.stripe_session_id ?? "")).filter(Boolean);
+              const { data: voided, error: voidErr } = await supabase.from("contractor_activation_ledger").select("metadata")
+                .eq("action", "deactivated").eq("source", "stripe_webhook").in("metadata->>stripe_session_id", sids);
+              if (voidErr) throw new Error("entry_activation_350 void lookup failed");
+              const voidedSet = new Set((voided ?? []).map((r: { metadata?: Record<string, unknown> | null }) => String(r.metadata?.stripe_session_id ?? "")));
+              otherSession = sids.some((sid) => !voidedSet.has(sid));
+            }
             if (alreadyError || ownerError || otherError || !ownerRow?.user_id) {
               throw new Error("entry_activation_350 ownership or ledger lookup failed");
             }
@@ -609,6 +622,19 @@ Deno.serve(async (req) => {
               }
               // Livraison concurrente de la MÊME session déjà inscrite (index unique) = idempotent.
               const concurrentDup = ledgerErr && (entry350LedgerConflict(ledgerErr.message) === "same_session" || promoOriginalSession === session.id);
+              // Garde SQL atomique : une autre Présence valide a été inscrite en parallèle.
+              if (ledgerErr && isPresenceOverlapError(ledgerErr.message)) {
+                await supabase.from("admin_notifications").insert({
+                  type: "entry_activation_350_duplicate_payment", severity: "critical", contractor_id: entryContractorId,
+                  title: event.livemode ? "Double paiement 350 $ (réel) — à rembourser" : "Double paiement 350 $ (TEST) — à rembourser",
+                  body: "Présence IA déjà valide pour cette période. Aucune activation supplémentaire.",
+                  payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null },
+                });
+                await supabase.from("stripe_webhook_events").update({ processing_status: "duplicate_annual_presence" }).eq("stripe_event_id", event.id);
+                return new Response(JSON.stringify({ received: true, activated: false, ignored: "duplicate_annual_presence" }), {
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
               if (ledgerErr && !concurrentDup) {
                 console.error("[stripe-webhook][entry_activation_350] ledger insert failed:", ledgerErr.message);
                 throw new Error(`entry_activation_350 ledger: ${ledgerErr.message}`);
@@ -691,6 +717,85 @@ Deno.serve(async (req) => {
                       payload_json: { stripe_session_id: session.id, affiliate_id: commissionArgs.p_affiliate_id, error: String(e) },
                     });
                   }
+                }
+              }
+            }
+          }
+        }
+
+        // ── PRÉSENCE IA INCLUSE DANS UN FORFAIT (paiement combiné) ──────────
+        // La ligne 350 $ est vérifiée chez Stripe (ponctuelle, 35000 CAD, qté 1,
+        // sans remise) avant toute inscription. Idempotent par session (index
+        // unique); deuxième Présence valide refusée par le garde SQL atomique.
+        // Le forfait lui-même suit le traitement d'abonnement existant ci-dessous.
+        if (session.metadata?.annual_presence === "included" && session.metadata?.offer !== "entry_activation_350") {
+          const cid = session.metadata?.contractor_id ?? null;
+          const linesRes = cid && session.payment_status === "paid"
+            ? await stripe.checkout.sessions.listLineItems(session.id, { limit: 100, expand: ["data.price.product"] })
+            : null;
+          const check = verifyCombinedPresenceLine(session as never, (linesRes?.data ?? []) as never);
+          if (cid && session.payment_status === "paid" && !check.ok) {
+            await supabase.from("admin_notifications").insert({
+              type: "annual_presence_combined_mismatch", severity: "critical", contractor_id: cid,
+              title: "Présence IA incluse : ligne 350 $ non conforme — aucun droit",
+              body: "Vérifier la session Stripe avant toute action manuelle.",
+              payload_json: { stripe_session_id: session.id, reason: check.reason, livemode: event.livemode ?? null },
+            });
+          }
+          if (cid && check.ok) {
+            const { data: owner, error: ownerErr } = await supabase.from("contractors").select("user_id, activation_status").eq("id", cid).maybeSingle();
+            if (ownerErr || !owner?.user_id) throw new Error("annual_presence_combined owner lookup failed");
+            let qa = false;
+            if (event.livemode !== true) {
+              const { data: u } = await supabase.auth.admin.getUserById(owner.user_id);
+              const md = (u?.user?.user_metadata ?? {}) as Record<string, unknown>;
+              qa = /^e2e\+[^@]+@unpro\.ca$/i.test(u?.user?.email ?? "") || md.e2e_test === true || md.e2e_test === "true";
+            }
+            if (event.livemode !== true && !qa) {
+              await supabase.from("admin_notifications").insert({
+                type: "entry_activation_350_test_blocked", severity: "warning", contractor_id: cid,
+                title: "Paiement TEST sur un compte non QA — aucune Présence", body: "Aucune activation.",
+                payload_json: { stripe_session_id: session.id, stripe_event_id: event.id },
+              });
+            } else {
+              const presenceUntil = addCalendarMonths(new Date(), 12).toISOString();
+              const { error: insErr } = await supabase.from("contractor_activation_ledger").insert({
+                contractor_id: cid, action: "entry_activation_350_paid", source: "stripe_webhook",
+                before_state: { activation_status: owner.activation_status ?? null },
+                after_state: { activation_status: "activated", presence_ia_until: presenceUntil, guaranteed_appointments: 0 },
+                metadata: {
+                  stripe_session_id: session.id, stripe_event_id: event.id,
+                  stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null,
+                  stripe_subscription: session.subscription ? String(session.subscription) : null,
+                  amount_cents: 35000, amount_subtotal_cents: session.amount_subtotal ?? null,
+                  annual_presence_combined: true, annual_presence_line_verified: "true",
+                  livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null,
+                },
+              });
+              const sameSession = insErr && entry350LedgerConflict(insErr.message) === "same_session";
+              if (insErr && isPresenceOverlapError(insErr.message)) {
+                await supabase.from("admin_notifications").insert({
+                  type: "entry_activation_350_duplicate_payment", severity: "critical", contractor_id: cid,
+                  title: event.livemode ? "Présence IA payée deux fois (réel) — rembourser la ligne 350 $" : "Présence IA payée deux fois (TEST)",
+                  body: "Présence déjà valide pour cette période. Le forfait suit son traitement; la ligne 350 $ est à rembourser.",
+                  payload_json: { stripe_session_id: session.id, stripe_event_id: event.id, livemode: event.livemode ?? null },
+                });
+              } else if (insErr && !sameSession) {
+                throw new Error(`annual_presence_combined ledger: ${insErr.message}`);
+              } else {
+                const must = (label: string, r: { error: { message: string } | null }) => {
+                  if (r.error) throw new Error(`annual_presence_combined ${label}: ${r.error.message}`);
+                };
+                must("role", await supabase.from("user_roles").upsert({ user_id: owner.user_id, role: "contractor" }, { onConflict: "user_id,role" }));
+                must("contractor", await supabase.from("contractors").update({ account_status: "active", activation_status: "activated" })
+                  .eq("id", cid).neq("activation_status", "activated"));
+                if (!sameSession) {
+                  await supabase.from("admin_notifications").insert({
+                    type: "annual_presence_combined_paid", severity: "info", contractor_id: cid,
+                    title: event.livemode ? "Présence IA + forfait payés (réel)" : "Présence IA + forfait payés (TEST)",
+                    body: "Présence IA 12 mois inscrite (renouvellement manuel).",
+                    payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, quote_id: session.metadata?.quote_id ?? null },
+                  });
                 }
               }
             }

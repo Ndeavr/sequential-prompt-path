@@ -2,6 +2,7 @@
  * CardContractorCalendarSetup — calendar connection step for a production
  * contractor account. Shown right after plan activation and on the dashboard.
  */
+import { RBQ_LABEL, registeredLabel } from "@/lib/contractor/accountIndicators";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -125,6 +126,15 @@ export default function CardContractorCalendarSetup({
           </div>
         </div>
       </div>
+
+      {!compact && (
+        <ul className="mt-4 flex flex-wrap gap-2" data-testid="account-indicators">
+          <li className="rounded-full border border-border/50 px-3 py-1 text-xs text-foreground">{data.profileComplete ? "Profil complété" : "Profil à compléter"}</li>
+          <li className="rounded-full border border-border/50 px-3 py-1 text-xs text-foreground">{RBQ_LABEL[data.rbq]}</li>
+          <li className="rounded-full border border-border/50 px-3 py-1 text-xs text-foreground">{connected ? "Calendrier connecté" : "Calendrier non connecté"}</li>
+          {registeredLabel(data.registeredAt) && <li className="px-1 py-1 text-xs text-muted-foreground">{registeredLabel(data.registeredAt)}</li>}
+        </ul>
+      )}
 
       {!compact && (
         <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/40 pt-4">
