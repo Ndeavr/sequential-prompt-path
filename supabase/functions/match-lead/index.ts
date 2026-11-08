@@ -378,7 +378,7 @@ Deno.serve(async (req) => {
       supabase.from("contractor_matching_profiles").select("contractor_id, answers, updated_at")
         .in("contractor_id", contractorIds).order("updated_at", { ascending: false }),
       supabase.from("contractor_pricing_quotes").select("contractor_id, input_payload, created_at")
-        .in("contractor_id", contractorIds).not("input_payload->sizes", "is", null)
+        .in("contractor_id", contractorIds).not("input_payload->project_size_mix", "is", null)
         .order("created_at", { ascending: false }).limit(500),
     ]);
     const profiles = assertQueryOk<any[]>("contractor_matching_profiles_read", profilesRes);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { carryGeocodedCenters, geocodePendingRules, haversineKm, territoryVerdict, type StoredTerritoryRule } from "../../supabase/functions/_shared/territoryRules";
-import { projectSizeFit } from "../../supabase/functions/_shared/projectSizeFit";
+import { projectSizeFit, readDeclaredSizes } from "../../supabase/functions/_shared/projectSizeFit";
 
 const LAVAL = { lat: 45.5697, lng: -73.692 };
 const radius = (o: Partial<StoredTerritoryRule> = {}): StoredTerritoryRule => ({ kind: "radius", include: true, place: "Laval", radius_km: 30, geocode_status: "geocoded", center: { ...LAVAL, source: "google_places" }, ...o });
@@ -51,6 +51,11 @@ describe("tailles de projet déclarées dans le jumelage", () => {
   it("budget entièrement dans une taille refusée : exclu", () => expect(projectSizeFit(sizes, { min: 1000, max: 3000 }).fit).toBe("refused"));
   it("budget qui recoupe une taille acceptée : jamais exclu", () => expect(projectSizeFit(sizes, { min: 3000, max: 8000 }).fit).toBe("neutral"));
   it("taille recherchée : bonus", () => expect(projectSizeFit(sizes, { max: 40000 }).fit).toBe("preferred"));
+  it("lit seulement la répartition déclarée du devis", () => {
+    expect(readDeclaredSizes({ project_size_mix: { provenance: "declared", sizes } })).toHaveLength(3);
+    expect(readDeclaredSizes({ project_size_mix: { provenance: "inferred", sizes } })).toHaveLength(0);
+    expect(readDeclaredSizes({ sizes })).toHaveLength(0);
+  });
   it("aucune fourchette déclarée ou budget inconnu : neutre (aucune fourchette universelle)", () => {
     expect(projectSizeFit([{ code: "small", stance: "refused" }], { max: 1000 }).fit).toBe("neutral");
     expect(projectSizeFit(sizes, {}).fit).toBe("neutral");

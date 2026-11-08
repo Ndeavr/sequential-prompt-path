@@ -1,6 +1,6 @@
 /**
  * Taille de projet : seulement les fourchettes DÉCLARÉES par l'entrepreneur
- * (plan personnalisé → input_payload.sizes). Aucune fourchette universelle.
+ * (plan personnalisé → input_payload.project_size_mix, provenance « declared »). Aucune fourchette universelle.
  * Exclusion seulement si tout le budget du propriétaire tombe dans une taille
  * refusée et qu'aucune taille acceptée ne le recoupe; sinon neutre ou bonus.
  */
@@ -15,7 +15,9 @@ export type SizeFit = { fit: "refused" | "preferred" | "neutral"; reason: string
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 export function readDeclaredSizes(inputPayload: unknown): DeclaredSize[] {
-  const sizes = (inputPayload as { sizes?: unknown } | null | undefined)?.sizes;
+  const mix = (inputPayload as { project_size_mix?: { provenance?: unknown; sizes?: unknown } } | null | undefined)?.project_size_mix;
+  if (!mix || mix.provenance !== "declared") return [];
+  const sizes = mix.sizes;
   return Array.isArray(sizes) ? (sizes.filter((s) => s && typeof s === "object") as DeclaredSize[]) : [];
 }
 
