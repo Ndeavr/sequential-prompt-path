@@ -14,7 +14,11 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
-import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal, sessionMatchesPresence } from "../_shared/annualPresence.ts";
+import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
+import {
+  acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
+  presencePaymentAwaitingConfirmation, purchaseFingerprint, stepKey, type ReservationDeps,
+} from "../_shared/checkoutReservation.ts";
 
 
 const corsHeaders = {
@@ -624,6 +628,12 @@ Deno.serve(async (req) => {
         fbSession = await stripeFallback.checkout.sessions.create(fallbackConfig as never, entryRequestOptions);
       } catch (stripeError) {
         if (!isEntryActivation) throw stripeError;
+        // Refus définitif de Stripe (4xx) : réservation fermée. Panne réseau : la
+        // même demande réessaie avec la même clé d'idempotence.
+        const sc = (stripeError as { statusCode?: number })?.statusCode;
+        if (entryReservation && typeof sc === "number" && sc >= 400 && sc < 500) {
+          await entryReservation.deps.settle(entryReservation.id, "failed", null, "stripe_rejected").catch(() => null);
+        }
         const { error: recoveryError } = await serviceClient.from("contractor_funnel_events").insert({
           contractor_id: fbContractor.id,
           user_id: userId,
@@ -656,6 +666,14 @@ Deno.serve(async (req) => {
       // the OPEN session lets admin recover abandoned checkouts and reconnect
       // to the original buyer. INSERT only; an idempotent retry must never
       // downgrade a completed/paid snapshot.
+      if (entryReservation) {
+        const attached = await attachCheckoutSession(entryReservation.deps, entryReservation.id, fbSession);
+        if (!attached.ok) {
+          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
       if (isEntryActivation) {
         const { error: snapshotError } = await serviceClient.from("billing_checkout_sessions").insert({
           contractor_id: fbContractor.id,
@@ -674,6 +692,11 @@ Deno.serve(async (req) => {
         });
         if (snapshotError && snapshotError.code !== "23505") {
           console.error("[checkout:entry350] open-session record failed", snapshotError.code);
+          // Never hand out a payable session UNPRO cannot trace.
+          if (entryReservation) await expireUndeliverable(entryReservation.deps, entryReservation.id, fbSession.id, "snapshot_failed");
+          return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
       }
 
