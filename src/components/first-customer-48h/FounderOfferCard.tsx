@@ -79,7 +79,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
             350 $
           </span>
           <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
-            paiement unique
+            par année
           </span>
         </div>
         <p className="text-[12px] mt-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
