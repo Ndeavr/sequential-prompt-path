@@ -196,6 +196,7 @@ export default function PageContractorPricingIntake() {
    * recalculées. Ne remplacent jamais des valeurs déjà saisies sans confirmation,
    * ni un prix serveur, ni un droit d'activation.
    */
+  const [organize, setOrganize] = useState<{ target: "work" | "territories" | null; state: "idle" | "saving" | "saved" | "error"; clarification?: PreferenceClarification | null }>({ target: null, state: "idle" });
   const [simHandoff, setSimHandoff] = useState<SimHandoff | null>(null);
   const [simConflict, setSimConflict] = useState(false);
   useEffect(() => {
@@ -270,13 +271,33 @@ export default function PageContractorPricingIntake() {
         /* profil indisponible : le parcours reste utilisable */
       }
       if (cancelled) return;
-      const firstOf = (v: unknown): string | null =>
-        Array.isArray(v) && typeof v[0] === "string" && v[0].trim() ? String(v[0]).trim() : null;
+      const listOf = (v: unknown): string[] =>
+        Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0).map((x) => x.trim()) : [];
       // Ce que l'entrepreneur a déjà déclaré ailleurs (Clara, brouillon, tunnel).
       const known = getKnownContractorContext();
       const declaredName = qsName || known.businessName;
-      const declaredTrade = qsTrade || firstOf(answers.services_wanted) || known.trade;
-      const declaredCity = qsCity || firstOf(answers.territories) || known.city;
+      // Un service voulu n'est pas un métier, un territoire n'est pas la ville
+      // de l'entreprise : chacun retourne dans son champ canonique.
+      const declaredTrade = qsTrade || known.trade;
+      const declaredCity = qsCity || known.city;
+      const wanted = listOf(answers.services_wanted);
+      const refused = listOf(answers.services_refused);
+      const territories = listOf(answers.territories);
+      const savedRules = Array.isArray(answers.territory_rules) ? (answers.territory_rules as TerritoryRule[]) : [];
+      if (wanted.length || refused.length || territories.length || savedRules.length || answers.services_refused_status === "none") {
+        setData((d) => {
+          const cur = ((d as QD).qualification ?? {}) as IntakeQualification;
+          const next: IntakeQualification = { ...cur };
+          if (!next.preferred_work && wanted.length) next.preferred_work = wanted.join(", ");
+          if (!next.excluded_work && !next.no_excluded_work) {
+            if (refused.length) next.excluded_work = refused.join(", ");
+            else if (answers.services_refused_status === "none") next.no_excluded_work = true;
+          }
+          if (!next.territory_rules?.length && savedRules.length) next.territory_rules = savedRules;
+          if (!next.service_areas && territories.length) next.service_areas = territories.join(", ");
+          return { ...d, qualification: next } as Partial<PricingIntakeInput>;
+        });
+      }
       setData((d) => ({
         ...d,
         company_name: confirmedFields.includes("company_name") ? d.company_name : d.company_name || declaredName || undefined,
@@ -821,24 +842,10 @@ export default function PageContractorPricingIntake() {
   const workStep: Step = {
     key: "work",
     question: "Quels mandats voulez-vous faire?",
-    hint: "Ex. « J’installe des thermopompes, mais je veux surtout des installations centrales complètes, à Laval et sur la Rive-Nord. »",
+    hint: PREFERENCES_COPY,
     isValid: (d) => hasWork(q(d)),
     render: (d) => (
-      <div className="space-y-4" data-testid="intake-work">
-        <div>
-          <label htmlFor="intake-preferred-work" className={labelCls}>Spécialités et travaux recherchés</label>
-          <textarea id="intake-preferred-work" rows={2} className={field} value={q(d).preferred_work ?? ""}
-            onChange={(e) => setQ(d, { preferred_work: e.target.value })} placeholder="Ex. installations centrales complètes" />
-        </div>
-        <div>
-          <label htmlFor="intake-excluded-work" className={labelCls}>Travaux que vous ne voulez pas</label>
-          <textarea id="intake-excluded-work" rows={2} className={field} disabled={q(d).no_excluded_work}
-            value={q(d).no_excluded_work ? "" : q(d).excluded_work ?? ""}
-            onChange={(e) => setQ(d, { excluded_work: e.target.value })} placeholder="Ex. petites réparations" />
-          <NoneToggle on={Boolean(q(d).no_excluded_work)} onChange={(v) => setQ(d, { no_excluded_work: v })}>Aucune exclusion</NoneToggle>
-        </div>
-        <p className="text-[12px] text-white/65">Séparez par des virgules. Informations déclarées, non vérifiées.</p>
-      </div>
+      <NaturalPreferences target="work" d={d} />
     ),
   };
 
@@ -848,22 +855,119 @@ export default function PageContractorPricingIntake() {
     hint: "Les territoires desservis peuvent être différents de l'adresse de votre entreprise.",
     isValid: (d) => hasTerritories(q(d)),
     render: (d) => (
-      <div className="space-y-4" data-testid="intake-territories">
-        <div>
-          <label htmlFor="intake-areas" className={labelCls}>Territoires desservis</label>
-          <textarea id="intake-areas" rows={2} className={field} value={q(d).service_areas ?? ""}
-            onChange={(e) => setQ(d, { service_areas: e.target.value })} placeholder="Ex. Laval, Rive-Nord" />
-        </div>
-        <div>
-          <label htmlFor="intake-excluded-areas" className={labelCls}>Secteurs à éviter</label>
-          <textarea id="intake-excluded-areas" rows={2} className={field} disabled={q(d).no_excluded_areas}
-            value={q(d).no_excluded_areas ? "" : q(d).excluded_areas ?? ""}
-            onChange={(e) => setQ(d, { excluded_areas: e.target.value })} placeholder="Ex. Centre-ville de Montréal" />
-          <NoneToggle on={Boolean(q(d).no_excluded_areas)} onChange={(v) => setQ(d, { no_excluded_areas: v })}>Aucun secteur exclu</NoneToggle>
-        </div>
-      </div>
+      <NaturalPreferences target="territories" d={d} />
     ),
   };
+
+  /** Réponse libre → Clara organise → résumé modifiable. Succès seulement après sauvegarde. */
+  const organizeAnswer = async (target: "work" | "territories", raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    const rawKey = target === "work" ? "work_raw" : "territory_raw";
+    setOrganize({ target, state: "saving" });
+    const cur = q(data);
+    const { draft } = applyIntakeAnswer({ qualification: { ...cur }, capacity_range: (data as GoalFields).capacity_range as IntakeDraft["capacity_range"], next_month_appointments: (data as GoalFields).next_month_appointments }, target === "work" ? "preferred_work" : "service_areas", text);
+    const nq: IntakeQualification = { ...draft.qualification, [rawKey]: text };
+    const clar = interpretContractorPreferences(text).clarifications[0] ?? null;
+    try {
+      saveClaraQualification(toClaraPatch(nq, declaredCapacity(data as GoalFields)), "declared", { replaceLists: true });
+      await flushClaraQualification();
+      setData((d) => ({ ...d, qualification: nq } as Partial<PricingIntakeInput>));
+      setOrganize({ target, state: "saved", clarification: clar });
+    } catch {
+      setData((d) => ({ ...d, qualification: { ...q(d), [rawKey]: text } } as Partial<PricingIntakeInput>));
+      setOrganize({ target, state: "error" });
+    }
+  };
+
+  const removeItem = (d: Partial<PricingIntakeInput>, key: "preferred_work" | "excluded_work" | "excluded_areas", item: string) => {
+    const left = splitList(q(d)[key]).filter((x) => x !== item).join(", ");
+    setQ(d, { [key]: left } as Partial<IntakeQualification>);
+  };
+  const removeRule = (d: Partial<PricingIntakeInput>, index: number) => {
+    const rules = [...(q(d).territory_rules ?? [])];
+    rules.splice(index, 1);
+    const nq = applyTerritoryRules({ ...q(d), territory_rules: rules, service_areas: rules.some((r) => r.include) ? q(d).service_areas : "" });
+    setQ(d, nq);
+  };
+
+  function NaturalPreferences({ target, d }: { target: "work" | "territories"; d: Partial<PricingIntakeInput> }) {
+    const Q = q(d);
+    const rawKey = target === "work" ? "work_raw" : "territory_raw";
+    const [text, setText] = useState<string>((Q[rawKey] as string | undefined) ?? "");
+    const st = organize.target === target ? organize : { state: "idle" as const };
+    const chips = (items: string[], key: "preferred_work" | "excluded_work" | "excluded_areas") => (
+      <ul className="flex flex-wrap gap-2">
+        {items.map((it) => (
+          <li key={it} className="inline-flex min-h-11 items-center gap-1 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-1 text-sm text-white">
+            {it}
+            <button type="button" aria-label={`Retirer ${it}`} className="min-h-11 min-w-11 text-white/70 hover:text-white" onClick={() => removeItem(d, key, it)}>×</button>
+          </li>
+        ))}
+      </ul>
+    );
+    const offered = splitList(Q.preferred_work);
+    const refused = splitList(Q.excluded_work);
+    const rules = Q.territory_rules ?? [];
+    const excludedAreas = splitList(Q.excluded_areas);
+    return (
+      <div className="space-y-4" data-testid={target === "work" ? "intake-work" : "intake-territories"}>
+        <div>
+          <label htmlFor={`intake-natural-${target}`} className={labelCls}>{target === "work" ? "Vos mandats, dans vos mots" : "Votre territoire, dans vos mots"}</label>
+          <textarea id={`intake-natural-${target}`} rows={3} className={field} value={text} data-testid={`natural-${target}`}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={target === "work" ? "Ex. « Je fais surtout … , pas de … , dans un rayon de 30 km autour de … »" : "Ex. « Dans un rayon de 30 km autour de … , sauf … »"} />
+          <p className="mt-1 text-[12px] text-white/70">{PREFERENCES_COPY}</p>
+          <button type="button" data-testid={`organize-${target}`} disabled={!text.trim() || st.state === "saving"}
+            onClick={() => void organizeAnswer(target, text)}
+            className="mt-2 min-h-11 rounded-full border border-amber-400/60 bg-amber-500/15 px-4 text-sm font-medium text-amber-100 disabled:opacity-50">
+            {st.state === "saving" ? "Clara organise…" : st.state === "error" ? "Réessayer" : "Organiser avec Clara"}
+          </button>
+          {st.state === "error" && <p role="alert" className="mt-2 text-sm text-red-200" data-testid={`organize-error-${target}`}>Vos préférences n'ont pas pu être enregistrées. Votre texte est conservé; réessayez.</p>}
+          {st.state === "saved" && <p role="status" className="mt-2 text-sm text-emerald-200" data-testid={`organize-ok-${target}`}>Préférences organisées et enregistrées. Modifiez au besoin.</p>}
+          {st.state === "saved" && st.clarification && <p className="mt-1 text-sm text-amber-200" data-testid={`organize-clarify-${target}`}>{clarificationQuestion(st.clarification)}</p>}
+        </div>
+        {target === "work" ? (
+          <div className="space-y-3 text-sm" data-testid="work-summary">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-white/60">Travaux recherchés · déclaré</p>
+              {offered.length ? chips(offered, "preferred_work") : <p className="text-white/70">À préciser</p>}
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-white/60">Travaux refusés · déclaré</p>
+              {refused.length ? chips(refused, "excluded_work") : <p className="text-white/70" data-testid="excluded-work-status">{Q.no_excluded_work ? "Aucune exclusion (choisi)" : "Non précisé — facultatif"}</p>}
+              <NoneToggle on={Boolean(Q.no_excluded_work)} onChange={(v) => setQ(d, { no_excluded_work: v, ...(v ? { excluded_work: "" } : {}) })}>Aucune exclusion</NoneToggle>
+            </div>
+            {!offered.length && <p className="text-[12px] text-amber-200" data-testid="work-validation">Indiquez au moins un type de mandat recherché pour continuer.</p>}
+          </div>
+        ) : null}
+        {(target === "territories" || rules.length > 0) && (
+          <div className="space-y-2 text-sm" data-testid="territory-summary">
+            <p className="text-xs uppercase tracking-wider text-white/60">Territoire · déclaré, à confirmer</p>
+            {rules.length ? (
+              <ul className="space-y-1">
+                {rules.map((r, i) => (
+                  <li key={`${r.kind}-${r.place}-${i}`} className="flex items-center justify-between gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-3" data-testid="territory-rule">
+                    <span className="py-2 text-white">{territoryRuleLabel(r)}</span>
+                    <button type="button" aria-label="Retirer cette règle" className="min-h-11 min-w-11 text-white/70" onClick={() => removeRule(d, i)}>×</button>
+                  </li>
+                ))}
+              </ul>
+            ) : Q.service_areas ? <p className="text-white">{splitList(Q.service_areas).join(" · ")}</p> : <p className="text-white/70">À préciser</p>}
+            {target === "territories" && (
+              <>
+                <p className="text-xs uppercase tracking-wider text-white/60">Secteurs exclus</p>
+                {excludedAreas.length ? chips(excludedAreas, "excluded_areas") : <p className="text-white/70">{Q.no_excluded_areas ? "Aucun secteur exclu (choisi)" : "Non précisé — facultatif"}</p>}
+                <NoneToggle on={Boolean(Q.no_excluded_areas)} onChange={(v) => setQ(d, { no_excluded_areas: v, ...(v ? { excluded_areas: "" } : {}) })}>Aucun secteur exclu</NoneToggle>
+                {!hasTerritories(Q) && <p className="text-[12px] text-amber-200" data-testid="territory-validation">Indiquez au moins une ville, un secteur ou un rayon pour continuer.</p>}
+                <p className="text-[11px] text-white/60">Un rayon est mesuré à vol d'oiseau; un temps de route reste distinct. Aucune ville n'est ajoutée sans votre déclaration.</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const capacityStep: Step = {
     key: "capacity",
