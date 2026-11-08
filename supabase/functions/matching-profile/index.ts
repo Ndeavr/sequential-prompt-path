@@ -11,7 +11,7 @@
  * Attribution (audit id/token, outreach activation token, affiliate ref, utm)
  * is persisted on the row so it survives wizard → plans → Stripe.
  */
-import { geocodePendingRules, readTerritoryRules } from "../_shared/territoryRules.ts";
+import { carryGeocodedCenters, geocodePendingRules, readTerritoryRules } from "../_shared/territoryRules.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { pinnedPublicFetch } from "../enrich-official-website/pinnedPublicFetch.ts";
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
     // existante (au plus 5 par sauvegarde). Ambigu ou introuvable = aucune
     // couverture présumée; le texte et le statut déclarés restent intacts.
     if (Array.isArray(incoming.territory_rules)) {
-      incoming.territory_rules = await geocodePendingRules(readTerritoryRules(incoming), async (query) => {
+      incoming.territory_rules = await geocodePendingRules(carryGeocodedCenters(readTerritoryRules(incoming), readTerritoryRules(existing?.answers)), async (query) => {
         try {
           const res = await placesSearchTextRaw(query, { maxResults: 3 }, "places.id,places.formattedAddress,places.location,places.types,places.addressComponents");
           if (res.source === "missing_connector" || res.google_status === "FETCH_ERROR") return null;

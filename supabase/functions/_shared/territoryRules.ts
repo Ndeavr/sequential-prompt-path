@@ -58,10 +58,20 @@ export function territoryVerdict(rules: StoredTerritoryRule[], lead: { city?: st
     if (r.kind === "locality" && city && norm(r.place) === city) return { verdict: "covered", reason: "Localité déclarée par l'entrepreneur" };
     if (r.kind === "radius" && r.geocode_status === "geocoded" && r.center && hasPoint && typeof r.radius_km === "number" && r.radius_km > 0) {
       const d = haversineKm(r.center, { lat: lead.lat as number, lng: lead.lng as number });
-      if (d <= r.radius_km) return { verdict: "covered", reason: `Dans le rayon déclaré de ${Math.round(r.radius_km)} km` };
+      if (d <= r.radius_km) return { verdict: "covered", reason: `Centre de la ville dans le rayon déclaré de ${Math.round(r.radius_km)} km` };
     }
   }
   return { verdict: "unknown", reason: "Couverture non établie" };
+}
+
+/** Réutilise un centre déjà géocodé pour la même règle (aucun appel inutile). */
+export function carryGeocodedCenters(next: StoredTerritoryRule[], previous: StoredTerritoryRule[]): StoredTerritoryRule[] {
+  const key = (r: StoredTerritoryRule) => [r.kind, r.include, norm(r.place), r.province ?? "QC"].join("|");
+  const known = new Map(previous.filter((r) => r.center && r.geocode_status && r.geocode_status !== "pending").map((r) => [key(r), r]));
+  return next.map((r) => {
+    const k = known.get(key(r));
+    return k && (!r.geocode_status || r.geocode_status === "pending") ? { ...r, geocode_status: k.geocode_status, center: k.center } : r;
+  });
 }
 
 export interface GeocodeHit { lat: number; lng: number; place_id?: string; formatted?: string; types?: string[]; province?: string | null }
