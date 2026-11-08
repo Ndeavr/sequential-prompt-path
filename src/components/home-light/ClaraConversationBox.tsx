@@ -1015,12 +1015,20 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     const speechEpoch = audienceEpochRef.current;
     const text = localizeClaraScript(rawText, lang);
     const quick = rawQuick?.map((item) => localizeClaraScript(item, lang));
-    // Anti-doublon : si Clara vient déjà de poser exactement cette question,
-    // on réaffiche seulement ses choix, sans second tour identique.
-    const lastAssistant = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
-    const lastMessage = messagesRef.current[messagesRef.current.length - 1];
-    if (lastMessage && lastMessage === lastAssistant && lastAssistant.text.trim() === text.trim()) {
-      setQuickReplies(quick && quick.length >= 2 ? { messageId: lastAssistant.id, options: quick } : null);
+    // A resumed flow can replay a welcome + question pair. Check the whole
+    // unanswered assistant turn, but allow the same question after a user reply.
+    const unanswered = [];
+    for (let i = messagesRef.current.length - 1; i >= 0; i--) {
+      const message = messagesRef.current[i];
+      if (message.role !== "assistant") break;
+      unanswered.push(message);
+    }
+    const existing = unanswered.find((message) =>
+      (!message.audience || message.audience === speechAudience)
+      && message.text.trim() === text.trim(),
+    );
+    if (existing) {
+      setQuickReplies(quick && quick.length >= 2 ? { messageId: existing.id, options: quick } : null);
       return;
     }
     const messageId = uid();
