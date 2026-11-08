@@ -437,30 +437,14 @@ Deno.serve(async (req) => {
         // Un paiement 350 $ déjà reçu par Stripe pour cette fiche, mais pas encore
         // confirmé chez UNPRO : jamais de deuxième facturation.
         {
-          const { data: paidEvt } = await serviceClient
-            .from("stripe_webhook_events")
-            .select("stripe_event_id")
-            .eq("contractor_id", fbContractor.id)
-            .eq("event_type", "checkout.session.completed")
-            .eq("livemode", !useTestMode)
-            .eq("payload->data->object->metadata->>offer", "entry_activation_350")
-            .eq("payload->data->object->>payment_status", "paid")
-            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
-            .limit(1)
-            .maybeSingle();
-          // Même règle pour un forfait payé avec la Présence incluse, pas encore confirmé.
-          const { data: paidCombined } = await serviceClient
-            .from("stripe_webhook_events")
-            .select("stripe_event_id")
-            .eq("contractor_id", fbContractor.id)
-            .eq("event_type", "checkout.session.completed")
-            .eq("livemode", !useTestMode)
-            .eq("payload->data->object->metadata->>annual_presence", "included")
-            .eq("payload->data->object->>payment_status", "paid")
-            .gte("received_at", new Date(Date.now() - 365 * 86400000).toISOString())
-            .limit(1)
-            .maybeSingle();
-          if (paidEvt || paidCombined) {
+          // Seul ou avec un forfait : lecture illisible = refus (aucun paiement créé).
+          const awaiting = await presencePaymentAwaitingConfirmation(serviceClient, fbContractor.id, !useTestMode);
+          if (awaiting === null) {
+            return new Response(JSON.stringify({ error: "Impossible de vérifier vos paiements précédents. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }), {
+              status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (awaiting) {
             return new Response(
               JSON.stringify({ error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }),
               { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -565,8 +549,8 @@ Deno.serve(async (req) => {
         : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
       if (entryPromo) {
         fallbackConfig.discounts = [{ promotion_code: entryPromo.promotionCodeId }];
-        // Une session non payée expire vite : le code n'est jamais consommé par un abandon.
-        fallbackConfig.expires_at = Math.floor(Date.now() / 1800_000) * 1800 + 3720; // ≥ 31 min, stable within a 30-min bucket for idempotency
+        // Une session non payée expire vite (échéance fixée par la réservation) :
+        // le code n'est jamais consommé par un abandon.
       }
 
       if (isEmbeddedFallback) {
@@ -583,11 +567,33 @@ Deno.serve(async (req) => {
       // must resolve to the same Stripe session before any paid webhook exists.
       // Hash the complete server-built contract: never trust a client key, and
       // never reuse a key with different redirect, quote or attribution params.
+      // A different request (other quote, embedded ↔ hosted, combined plan) first
+      // expires the previous open session: one payable 350 session per contractor.
       let entryRequestOptions: { idempotencyKey: string } | undefined;
+      let entryReservation: { id: string; deps: ReservationDeps } | null = null;
       if (isEntryActivation) {
-        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(fallbackConfig)));
-        const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-        entryRequestOptions = { idempotencyKey: `${entryPromo ? `entry350-promo349-v1-${entryPromo.promotionCodeId}` : "entry350-v1"}-${useTestMode ? "test" : "live"}-${fbContractor.id}-${hash}` };
+        const fingerprint = await purchaseFingerprint({ v: 1, kind: "entry_350", mode: useTestMode ? "test" : "live", config: fallbackConfig });
+        const deps = liveReservationDeps(serviceClient, stripeFallback, {
+          contractorId: fbContractor.id, stripeMode: useTestMode ? "test" : "live", kind: "entry_350",
+          includesPresence: true, quoteId: quoteId ? String(quoteId) : null, fingerprint,
+        });
+        const acquired = await acquireCheckoutReservation(deps, { embedded: isEmbeddedFallback });
+        if (acquired.kind === "refuse") {
+          return new Response(JSON.stringify({ error: acquired.message, code: acquired.code }), {
+            status: acquired.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (acquired.kind === "reuse") {
+          return new Response(JSON.stringify(isEmbeddedFallback
+            ? { clientSecret: acquired.session.client_secret, reused: true }
+            : { url: acquired.session.url, sessionId: acquired.session.id, reused: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        fallbackConfig.expires_at = acquired.expiresAt;
+        (fallbackConfig.metadata as Record<string, string>).checkout_reservation_id = acquired.reservationId;
+        entryRequestOptions = { idempotencyKey: stepKey(acquired.idempotencyKey, "session") };
+        entryReservation = { id: acquired.reservationId, deps };
       }
       // Preserve a real, authenticated buyer's company/contact association BEFORE
       // calling Stripe. A provider outage must not erase the attempt or prevent
