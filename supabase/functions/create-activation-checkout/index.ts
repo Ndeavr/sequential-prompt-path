@@ -22,6 +22,17 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+/** Session non tracée chez UNPRO : jamais remise; expiration demandée (résultat journalisé, jamais présumé). */
+// deno-lint-ignore no-explicit-any
+async function expireUntraceable(stripe: any, sessionId: string): Promise<void> {
+  try {
+    const s = await stripe.checkout.sessions.expire(sessionId);
+    if (s?.status !== "expired") console.error("[create-activation-checkout] untraceable_session_not_expired");
+  } catch {
+    console.error("[create-activation-checkout] untraceable_session_expire_failed");
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -326,10 +337,12 @@ Deno.serve(async (req) => {
       });
       if (persistError) {
         console.error("[create-activation-checkout] session_persist_failed");
+        await expireUntraceable(stripe, session.id);
         return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
       }
     } catch (e) {
       console.error("[create-activation-checkout] session_persist_failed");
+      await expireUntraceable(stripe, session.id);
       return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
     }
 
