@@ -2933,3 +2933,27 @@ html[data-theme-ready="true"] .glass-btn {
 .unpro-article th + th, .unpro-article td + td { border-left: 1px solid hsl(var(--border)); }
 .unpro-article thead th, .unpro-article tr:first-child th { background: hsl(var(--muted)); font-weight: 700; }
 .unpro-article tbody tr:last-child td { border-bottom: 0; }
+
+/* Contractor website entry: clear highlighted field on the dark contractor page. */
+.contractor-entry-field {
+  background-color: hsl(var(--foreground) / 0.12);
+  border: 2px solid hsl(var(--accent));
+  color: hsl(var(--foreground));
+  box-shadow: 0 0 0 0 hsl(var(--accent) / 0);
+}
+.contractor-entry-field::placeholder { color: hsl(var(--foreground) / 0.72); }
+.contractor-entry-field[data-empty="true"]:not(:focus) { animation: contractor-entry-glow 2.8s ease-in-out infinite; }
+.contractor-entry-field:focus,
+.contractor-entry-field:focus-visible {
+  outline: none;
+  background-color: hsl(var(--foreground) / 0.16);
+  border-color: hsl(var(--primary-tint));
+  box-shadow: 0 0 0 4px hsl(var(--accent) / 0.45);
+}
+@keyframes contractor-entry-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.15); }
+  50% { box-shadow: 0 0 0 6px hsl(var(--accent) / 0.4), 0 0 22px hsl(var(--accent) / 0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contractor-entry-field[data-empty="true"]:not(:focus) { animation: none; box-shadow: 0 0 0 4px hsl(var(--accent) / 0.35); }
+}
