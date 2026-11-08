@@ -68,7 +68,7 @@ const AREA_EXCLUSION = new RegExp(
   "gu",
 );
 
-const NEGATION = /\b(?:mais\s+)?(?:pas\s+de|pas\s+d['’]|pas\s+les|pas\s+la|pas\s+le|pas\s+des|jamais\s+de|jamais\s+d['’]|aucun(?:e)?|sans|sauf|ni\s+de|ni\s+d['’]|but\s+not|except|without|no|not)\b\s*/giu;
+const NEGATION = /\b(?:mais\s+)?(?:don['’]t\s+do|don['’]t|won['’]t\s+do|won['’]t|never|jamais|pas\s+de|pas\s+d['’]|pas\s+les|pas\s+la|pas\s+le|pas\s+des|jamais\s+de|jamais\s+d['’]|aucun(?:e)?|sans|sauf|ni\s+de|ni\s+d['’]|ni|but\s+not|except|without|no|not)\b\s*/giu;
 const POSITIVE_AGAIN = /\b(?:mais\s+(?:je\s+fais|on\s+fait|oui)|par\s+contre\s+je\s+fais|but\s+i\s+do|but\s+we\s+do)\b\s*/giu;
 const NONE = /\b(aucune?\s+exclusion|pas\s+d['’]exclusion|rien\s+d['’]exclu|je\s+fais\s+tout|no\s+exclusions?|nothing\s+excluded)\b/iu;
 
@@ -76,9 +76,9 @@ const LEAD = new Set([
   "je", "j'", "j’", "on", "nous", "i", "we", "fais", "fait", "faisons", "faire", "do", "does", "offre", "offrons", "offer",
   "m'occupe", "m’occupe", "occupe", "surtout", "principalement", "seulement", "uniquement", "aussi", "également", "mostly",
   "mainly", "only", "also", "les", "le", "la", "l'", "l’", "des", "du", "de", "d'", "d’", "the", "a", "an", "et", "and",
-  "ni", "or", "ou", "plutôt", "rather", "specialize", "spécialisé", "spécialisée", "en", "in", "dans", "travaux", "work",
+  "ni", "or", "ou", "ne", "n'", "n’", "plutôt", "rather", "specialize", "spécialisé", "spécialisée", "en", "in", "dans", "travaux", "work",
 ]);
-const TRAIL = new Set(["aussi", "also", "seulement", "only", "svp", "merci", "thanks", "too"]);
+const TRAIL = new Set(["aussi", "also", "seulement", "only", "svp", "merci", "thanks", "too", "je", "j'", "j’", "ne", "n'", "n’", "fais", "fait", "on", "nous", "i", "we", "do", "mais", "but", "par", "contre"]);
 
 function cleanItem(s: string): string {
   const words = s.replace(/[.!?;:]+/g, " ").replace(/\s+/g, " ").trim().split(" ");
