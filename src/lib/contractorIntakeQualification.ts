@@ -106,7 +106,10 @@ export function qualitativePayload<T extends Record<string, unknown>>(d: T, capa
   return {
     ...rest,
     target_monthly_appointments: capacity.min,
-    monthly_capacity: Math.max(Number(rest.monthly_capacity ?? 0) || 0, capacity.max),
+    // Rendez-vous par mois déclarés; la capacité de chantiers reste à part.
+    monthly_capacity: capacity.max,
+    capacity_unit: "appointments_per_month" as const,
+    monthly_project_capacity: Number(rest.monthly_capacity ?? 0) || undefined,
     average_project_value: 0,
     close_rate_estimate: 0,
     pricing_mode: "goal" as const,

@@ -1572,7 +1572,12 @@ export function objectiveToPayload(d: Partial<PricingIntakeInput>, now = new Dat
       average_project_value: avgSale,
       close_rate_estimate: conversion,
       target_monthly_appointments: startAppointments,
-      monthly_capacity: Math.max(d.monthly_capacity ?? 0, next),
+      // Capacité en RENDEZ-VOUS par mois (borne haute déclarée), jamais gonflée
+      // par la demande ni mélangée avec la capacité de chantiers.
+      monthly_capacity: declaredCapacity(g)?.max ?? next,
+      capacity_unit: "appointments_per_month",
+      monthly_project_capacity: d.monthly_capacity ?? undefined,
+      capacity_gap: sim.cadence > (declaredCapacity(g)?.max ?? next) ? { needed_per_month: sim.cadence, capacity_per_month: declaredCapacity(g)?.max ?? next } : undefined,
       pricing_mode: "goal",
       monthly_budget_cents: undefined,
     } as Partial<PricingIntakeInput>,
