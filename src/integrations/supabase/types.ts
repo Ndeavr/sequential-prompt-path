@@ -101084,6 +101084,23 @@ export type Database = {
         Args: { _contractor_id: string }
         Returns: Json
       }
+      admin_historical_presence_review_evidence: {
+        Args: never
+        Returns: {
+          activation_status_at_rule: string
+          admin_activation_logs: number
+          auth_user_exists: boolean
+          contractor_id: string
+          evidence_class: string
+          is_published: boolean
+          ledger_actions: string
+          max_paid_amount_cents: number
+          paid_checkout_sessions: number
+          signed_paid_webhook_events: number
+          stripe_mode: string
+          synthetic_name_pattern: boolean
+        }[]
+      }
       admin_reassign_affiliate_parent: {
         Args: {
           p_affiliate_id: string
