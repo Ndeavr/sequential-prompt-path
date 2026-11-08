@@ -9,6 +9,8 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
+import { calendarContextFallback, calendarSuccessPath, safeCalendarReturn } from "@/lib/calendarReturn";
 
 
 export default function PageCalendarConnectionHub() {
@@ -24,12 +26,10 @@ export default function PageCalendarConnectionHub() {
         : "homeowner";
   const rawSurface = params.get("surface") ?? "hub";
   const surface = /^[a-z0-9_-]{1,64}$/i.test(rawSurface) ? rawSurface : "hub";
-  const successParams = new URLSearchParams({
-    role,
-    surface,
-    return_to: role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard",
-  });
-  const oauthReturnTo = `/calendar/connect/success?${successParams.toString()}`;
+  const { activeRole } = useActiveRole();
+  // Keep the starting route; fall back to the active context only when none was passed.
+  const returnTo = safeCalendarReturn(params.get("return_to")) ?? calendarContextFallback(activeRole);
+  const oauthReturnTo = calendarSuccessPath({ role, surface, returnTo });
 
 
   return (

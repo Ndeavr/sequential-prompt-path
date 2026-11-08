@@ -3,7 +3,7 @@
  */
 import { AlertCircle, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCalendarConnections } from "@/hooks/useCalendarConnection";
 
 interface Props {
@@ -14,6 +14,8 @@ interface Props {
 export default function BannerCalendarMissingWarning({ role, message }: Props) {
   const { isConnected, loading } = useCalendarConnections();
   const [dismissed, setDismissed] = useState(false);
+  const location = useLocation();
+  const connectParams = new URLSearchParams({ role, return_to: `${location.pathname}${location.search}` });
 
   if (loading || isConnected || dismissed) return null;
 
@@ -25,7 +27,7 @@ export default function BannerCalendarMissingWarning({ role, message }: Props) {
           {message ?? "Connectez votre calendrier pour des rendez-vous sans conflit."}
         </p>
         <Link
-          to={`/calendar/connect?role=${role}`}
+          to={`/calendar/connect?${connectParams.toString()}`}
           className="text-xs font-semibold text-amber-100 underline mt-1 inline-block"
         >
           Connecter maintenant →

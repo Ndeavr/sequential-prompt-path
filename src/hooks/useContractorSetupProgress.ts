@@ -7,6 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { hasRequiredCalendarScopes } from "@/lib/calendarReturn";
 
 export type SetupStepKey = "profile" | "services" | "territory" | "calendar" | "availability";
 
@@ -60,13 +61,15 @@ export function useContractorSetupProgress() {
           : Promise.resolve({ data: [], error: null }),
         supabase
           .from("calendar_connections")
-          .select("provider, connection_status, last_synced_at")
+          .select("provider, connection_status, last_synced_at, scopes_json")
           .eq("user_id", user!.id)
           .order("connected_at", { ascending: false }),
       ]);
 
       const activeConnection = (connections.data ?? []).find(
-        (c) => c.connection_status === "connected" || c.connection_status === "subscribed_external",
+        // Google counts only with its saved calendar permissions (same rule as the calendar card).
+        (c) => (c.connection_status === "connected" && (c.provider !== "google" || hasRequiredCalendarScopes(c.scopes_json)))
+          || c.connection_status === "subscribed_external",
       ) ?? null;
       const revoked = (connections.data ?? []).some((c) => c.connection_status === "revoked");
 

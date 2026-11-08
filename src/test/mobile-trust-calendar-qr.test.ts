@@ -23,6 +23,9 @@ const connection = (
   connected_at: null,
   last_synced_at: null,
   last_error_message: null,
+  scopes_json: provider === "google"
+    ? ["https://www.googleapis.com/auth/calendar.readonly", "https://www.googleapis.com/auth/calendar.events"]
+    : null,
 });
 
 describe("UNPRO mobile trust fixes", () => {

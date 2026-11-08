@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { CALENDAR_CHANGED_EVENT, hasRequiredCalendarScopes } from "@/lib/calendarReturn";
 
 export type CalendarProvider = "google" | "apple" | "outlook";
 export type CalendarStatus =
@@ -21,6 +22,8 @@ export interface CalendarConnection {
   connected_at: string | null;
   last_synced_at: string | null;
   last_error_message: string | null;
+  /** Permissions granted by Google, as saved by the OAuth callback. */
+  scopes_json?: unknown;
 }
 
 /**
@@ -29,13 +32,14 @@ export interface CalendarConnection {
  * Keep this pure so it can be tested with synthetic connections.
  */
 export function deriveCalendarCapabilities(connections: CalendarConnection[]) {
-  const isConnected = connections.some(
-    (c) => c.provider === "google" && c.connection_status === "connected"
-  );
+  // Connected = saved server-side AND every required Google permission granted.
+  const usable = (c: CalendarConnection) =>
+    c.provider === "google" && c.connection_status === "connected" && hasRequiredCalendarScopes(c.scopes_json);
+  const isConnected = connections.some(usable);
   const hasExternalAppleFeed = connections.some(
     (c) => c.provider === "apple" && c.connection_status === "subscribed_external"
   );
-  const primary = connections.find((c) => c.provider === "google" && c.connection_status === "connected")
+  const primary = connections.find(usable)
     ?? connections.find((c) => c.is_primary)
     ?? connections[0] ?? null;
   return { isConnected, hasExternalAppleFeed, primary };
@@ -45,6 +49,7 @@ export function useCalendarConnections() {
   const { user } = useAuth();
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -53,20 +58,33 @@ export function useCalendarConnections() {
       return;
     }
     setLoading(true);
-    const { data } = await supabase
+    const { data, error: readError } = await supabase
       .from("calendar_connections")
-      .select("id, user_id, provider, provider_account_email, connection_status, ics_token, is_primary, connected_at, last_synced_at, last_error_message")
+      .select("id, user_id, provider, provider_account_email, connection_status, ics_token, is_primary, connected_at, last_synced_at, last_error_message, scopes_json")
       .eq("user_id", user.id)
       .order("connected_at", { ascending: false });
+    setError(Boolean(readError));
     setConnections((data ?? []) as CalendarConnection[]);
     setLoading(false);
   }, [user]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Every calendar view rereads the saved state after a connection change or tab return.
+  useEffect(() => {
+    const onChange = () => { void refresh(); };
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener(CALENDAR_CHANGED_EVENT, onChange);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(CALENDAR_CHANGED_EVENT, onChange);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refresh]);
+
   const { isConnected, hasExternalAppleFeed, primary } = deriveCalendarCapabilities(connections);
 
-  return { connections, primary, isConnected, hasExternalAppleFeed, loading, refresh };
+  return { connections, primary, isConnected, hasExternalAppleFeed, loading, error, refresh };
 }
 
 export function useCalendarConversionTracking() {
