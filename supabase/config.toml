@@ -267,3 +267,6 @@ project_id = "clmaqdnphbndvmmqvpff"
 
   [functions.free-service-activate]
     verify_jwt = true
+
+[functions.calendar-google-selection]
+verify_jwt = false

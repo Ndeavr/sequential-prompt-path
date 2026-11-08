@@ -116,6 +116,7 @@ export async function fetchGoogleBusy(
   if (!res.ok) throw new Error(`google_freebusy_failed:${res.status}:${body.error?.message ?? ""}`);
 
   const calendar = body.calendars?.[calendarId];
+  if (!calendar) throw new Error("google_freebusy_calendar_missing");
   if (calendar?.errors?.length) {
     throw new Error(`google_freebusy_calendar_error:${calendar.errors[0]?.reason ?? "unknown"}`);
   }

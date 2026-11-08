@@ -1,6 +1,7 @@
 /**
  * CardCalendarConnectionRole — generic role-aware connection card with prompt + CTAs.
  */
+import GoogleCalendarSelector from "./GoogleCalendarSelector";
 import { motion } from "framer-motion";
 import { Calendar, Sparkles } from "lucide-react";
 import ButtonConnectGoogleCalendar from "./ButtonConnectGoogleCalendar";
@@ -119,6 +120,7 @@ export default function CardCalendarConnectionRole({
 
       {isConnected ? (
         <div className="space-y-4">
+          <GoogleCalendarSelector lang={lang} />
           <PanelCalendarConnectionBenefits role={role} />
           <PanelCalendarPermissionsExplainer />
         </div>

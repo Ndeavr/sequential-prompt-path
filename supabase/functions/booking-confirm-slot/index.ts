@@ -12,6 +12,8 @@ import {
   pushGoogleEvent,
 } from "../_shared/googleCalendar.ts";
 
+import { selectedGoogleCalendar, canWriteCalendar } from "../_shared/googleCalendarSelection.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -104,13 +106,15 @@ Deno.serve(async (req) => {
       if (contractor?.user_id) {
         const { data: connection } = await admin
           .from("calendar_connections")
-          .select("id, user_id, access_token_encrypted, refresh_token_encrypted, expires_at")
+          .select("id, user_id, access_token_encrypted, refresh_token_encrypted, expires_at, metadata")
           .eq("user_id", contractor.user_id)
           .eq("provider", "google")
           .eq("connection_status", "connected")
           .maybeSingle();
 
         if (connection) {
+          const calendarId = selectedGoogleCalendar(connection.metadata);
+          if (!canWriteCalendar(connection.metadata?.selected_calendar_access_role ?? "")) throw new Error("calendar_write_permission_required");
           const secret = Deno.env.get("CALENDAR_TOKEN_ENCRYPTION_KEY") ||
             Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") || "";
           const accessToken = await getGoogleAccessToken(admin, connection, secret);
@@ -120,7 +124,7 @@ Deno.serve(async (req) => {
             location: [clean(body.address_line1), clean(body.city, 120)].filter(Boolean).join(", ") || undefined,
             start,
             end,
-          });
+          }, calendarId);
           if (eventId) {
             await admin.from("smart_bookings")
               .update({ google_calendar_event_id: eventId })
