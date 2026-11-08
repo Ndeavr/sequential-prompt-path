@@ -13,8 +13,13 @@
  *   hébergée) → l'ancienne session ouverte est EXPIRÉE chez Stripe avant d'en
  *   créer une autre; si Stripe indique qu'elle est déjà payée/complétée → refus;
  * - session créée mais non enregistrée chez UNPRO → expirée aussitôt, jamais
- *   remise au client (aucune session payable orpheline);
- * - toute lecture illisible → refus, aucun paiement créé.
+ *   remise au client; la réservation n'est libérée QUE si Stripe confirme
+ *   l'expiration. Sinon elle reste bloquante, avec l'identifiant de session
+ *   enregistré pour la réconciliation (aucune session payable orpheline);
+ * - échec Stripe ambigu (réseau, 5xx, 409/429, idempotence) → réservation
+ *   conservée : la même demande reprend la même clé; libération seulement sur
+ *   preuve de non-création et pour une réservation jamais utilisée auparavant;
+ * - statut Stripe inconnu ou lecture illisible → refus, aucun paiement créé.
  */
 
 export interface SessionLike {
@@ -35,7 +40,7 @@ export interface ReservationDeps {
 }
 
 export type AcquireResult =
-  | { kind: "create"; reservationId: string; idempotencyKey: string; expiresAt: number }
+  | { kind: "create"; reservationId: string; idempotencyKey: string; expiresAt: number; fresh: boolean }
   | { kind: "reuse"; reservationId: string; session: SessionLike }
   | { kind: "refuse"; status: number; code: string; message: string };
 
@@ -44,6 +49,7 @@ const REFUSALS: Record<string, { status: number; message: string }> = {
   presence_payment_already_received: { status: 409, message: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO." },
   payment_received_pending: { status: 409, message: "Un paiement est déjà en cours pour votre entreprise. La confirmation est en cours chez UNPRO." },
   checkout_in_progress: { status: 409, message: "Un paiement est en préparation dans un autre onglet. Réessayez dans un instant." },
+  checkout_reconciliation_pending: { status: 409, message: "Un paiement précédent est en cours de vérification. Réessayez plus tard; aucun nouveau paiement n'a été créé." },
   checkout_reservation_unavailable: { status: 503, message: "Impossible de préparer le paiement pour le moment. Aucun paiement n'a été créé." },
   checkout_state_unverified: { status: 503, message: "Impossible de vérifier votre paiement précédent. Aucun nouveau paiement n'a été créé." },
 };
@@ -90,15 +96,15 @@ export async function acquireCheckoutReservation(deps: ReservationDeps, opts: { 
     if (error) return refusal("checkout_reservation_unavailable");
     const r = data as {
       action?: string; reason?: string; reservation_id?: string; idempotency_key?: string;
-      session_expires_at?: number; stripe_session_id?: string; same_fingerprint?: boolean;
+      session_expires_at?: number; stripe_session_id?: string; same_fingerprint?: boolean; retry?: boolean;
     } | null;
     if (!r || typeof r.action !== "string") return refusal("checkout_reservation_unavailable");
 
     if (r.action === "refuse") return refusal(r.reason ?? "checkout_reservation_unavailable");
-    if (r.action === "busy") return refusal("checkout_in_progress");
+    if (r.action === "busy") return refusal(r.reason === "reconciliation_pending" ? "checkout_reconciliation_pending" : "checkout_in_progress");
     if (r.action === "create") {
       if (!r.reservation_id || !r.idempotency_key || typeof r.session_expires_at !== "number") return refusal("checkout_reservation_unavailable");
-      return { kind: "create", reservationId: r.reservation_id, idempotencyKey: r.idempotency_key, expiresAt: r.session_expires_at };
+      return { kind: "create", reservationId: r.reservation_id, idempotencyKey: r.idempotency_key, expiresAt: r.session_expires_at, fresh: r.retry === false };
     }
     if (r.action !== "verify_existing" || !r.reservation_id || !r.stripe_session_id) return refusal("checkout_reservation_unavailable");
 
@@ -124,12 +130,15 @@ export async function acquireCheckoutReservation(deps: ReservationDeps, opts: { 
         try { existing = await deps.retrieve(existing.id); } catch { return refusal("checkout_state_unverified"); }
         if (existing.status !== "expired") return refusal(existing.status === "complete" ? "payment_received_pending" : "checkout_state_unverified");
       }
-      if (existing.status !== "expired") return refusal("checkout_state_unverified");
+      if (existing.status !== "expired" || existing.payment_status === "paid") {
+        return refusal(existing.status === "complete" || existing.payment_status === "paid" ? "payment_received_pending" : "checkout_state_unverified");
+      }
       const s = await deps.settle(r.reservation_id, "superseded", existing.id, r.same_fingerprint ? "session_not_reusable" : "superseded_by_new_request");
       if (s.error) return refusal("checkout_reservation_unavailable");
       continue;
     }
-    // expired chez Stripe : libérer la réservation puis recommencer.
+    // Seule une expiration CONFIRMÉE par Stripe libère la réservation; tout autre statut = refus.
+    if (existing.status !== "expired") return refusal("checkout_state_unverified");
     const s = await deps.settle(r.reservation_id, "expired", existing.id, "stripe_session_expired");
     if (s.error) return refusal("checkout_reservation_unavailable");
   }
@@ -141,10 +150,46 @@ export async function acquireCheckoutReservation(deps: ReservationDeps, opts: { 
  * Échec → la session est expirée chez Stripe et la réservation fermée.
  */
 export async function attachCheckoutSession(deps: ReservationDeps, reservationId: string, session: SessionLike): Promise<{ ok: true } | { ok: false; expired: boolean }> {
-  const res = await deps.settle(reservationId, "open", session.id, "attached");
-  const ok = !res.error && (res.data as { ok?: boolean } | null)?.ok === true;
-  if (ok) return { ok: true };
-  return { ok: false, expired: await expireUndeliverable(deps, reservationId, session.id, "attach_failed") };
+  for (let i = 0; i < 2; i++) {
+    const res = await deps.settle(reservationId, "open", session.id, "attached").catch(() => ({ data: null, error: { message: "settle_threw" } }));
+    if (!res.error && (res.data as { ok?: boolean } | null)?.ok === true) return { ok: true };
+    // Refus explicite (réservation fermée, autre session) : inutile de réessayer.
+    if (!res.error) break;
+  }
+  return { ok: false, expired: (await expireUndeliverable(deps, reservationId, session.id, "attach_failed")) === "released" };
+}
+
+/**
+ * Preuve que Stripe n'a créé AUCUN objet : requête refusée à la validation
+ * (400 invalid_request_error, jamais enregistrée pour l'idempotence) ou clé
+ * refusée (401/403). 409/429/5xx/réseau/idempotence = ambigu.
+ */
+export function provenNotCreated(err: unknown): boolean {
+  const e = err as { statusCode?: number; type?: string; rawType?: string; code?: string } | null;
+  if (!e || typeof e.statusCode !== "number") return false;
+  if (e.type === "StripeIdempotencyError" || e.rawType === "idempotency_error" || e.code === "idempotency_key_in_use") return false;
+  if (e.statusCode === 400) return e.type === "StripeInvalidRequestError" || e.rawType === "invalid_request_error";
+  if (e.statusCode === 401) return e.type === "StripeAuthenticationError" || e.rawType === "authentication_error" || !e.type;
+  if (e.statusCode === 403) return e.type === "StripePermissionError" || e.rawType === "permission_error" || !e.type;
+  return false;
+}
+
+/**
+ * Échec AVANT ou PENDANT la création de session. Libère la réservation
+ * seulement si elle n'a jamais servi (`fresh`) ET que la non-création est
+ * prouvée. Sinon elle reste bloquante : la même demande réessaie la même clé.
+ */
+export async function releaseIfNotCreated(deps: ReservationDeps, reservationId: string, fresh: boolean, err: unknown, reason: string): Promise<"released" | "kept"> {
+  if (!fresh || !provenNotCreated(err)) return "kept";
+  const s = await deps.settle(reservationId, "failed", null, reason).catch(() => ({ data: null, error: { message: "settle_threw" } }));
+  return s.error ? "kept" : "released";
+}
+
+/** Échec local avant tout appel de création de session (rien chez Stripe pour cette réservation neuve). */
+export async function releaseBeforeSessionCreate(deps: ReservationDeps, reservationId: string, fresh: boolean, reason: string): Promise<"released" | "kept"> {
+  if (!fresh) return "kept";
+  const s = await deps.settle(reservationId, "failed", null, reason).catch(() => ({ data: null, error: { message: "settle_threw" } }));
+  return s.error ? "kept" : "released";
 }
 
 /** Dépendances réelles : RPC SQL (service) + API Stripe de la clé du même mode. */
@@ -192,10 +237,22 @@ export async function presencePaymentAwaitingConfirmation(db: any, contractorId:
   return !(led ?? []).length;
 }
 
-/** Session créée mais non remise (écriture UNPRO échouée) : expirée, jamais payable. */
-export async function expireUndeliverable(deps: ReservationDeps, reservationId: string, sessionId: string, reason: string): Promise<boolean> {
-  let expired = false;
-  try { expired = (await deps.expire(sessionId)).status === "expired"; } catch { expired = false; }
-  await deps.settle(reservationId, "failed", sessionId, reason).catch(() => null);
-  return expired;
+/**
+ * Session créée mais non remise : on demande son expiration. Libération
+ * seulement si Stripe CONFIRME `expired` sans paiement. Ouverte, complétée,
+ * payée ou illisible → réservation conservée (bloquante), identifiant de
+ * session enregistré pour la réconciliation; le webhook signé tranche ensuite.
+ */
+export async function expireUndeliverable(deps: ReservationDeps, reservationId: string, sessionId: string, reason: string): Promise<"released" | "blocked"> {
+  let s: SessionLike | null = null;
+  try { s = await deps.expire(sessionId); } catch {
+    try { s = await deps.retrieve(sessionId); } catch { s = null; }
+  }
+  if (s && s.id === sessionId && s.status === "expired" && s.payment_status !== "paid") {
+    const r = await deps.settle(reservationId, "expired", sessionId, reason).catch(() => ({ data: null, error: { message: "settle_threw" } }));
+    if (!r.error && (r.data as { ok?: boolean } | null)?.ok === true) return "released";
+  }
+  // Conserver le blocage : rattacher la session (si la réservation est encore libre de session).
+  await deps.settle(reservationId, "open", sessionId, `unconfirmed:${reason}`).catch(() => null);
+  return "blocked";
 }
