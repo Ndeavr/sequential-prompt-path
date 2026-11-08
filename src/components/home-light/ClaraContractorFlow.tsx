@@ -647,7 +647,7 @@ function ProposalCard({ known, opening, onActivate, onMore }: {
       </ul>
       <p className="home-clara-card-title">{lang === "en" ? "Business profile + 12 months of UNPRO AI presence" : OFFER_350.card.title}</p>
       <p className="home-clara-card-meta">{tx("Vos services, vos spécialités et votre territoire, présentés clairement sur UNPRO pendant 12 mois. Pas un achat de clics ni de leads partagés.")}</p>
-      <p className="home-clara-card-price">{OFFER_350.price_label} <small>{tx("+ taxes · une seule fois")}</small></p>
+      <p className="home-clara-card-price">{OFFER_350.price_label} <small>{tx("+ taxes · par année")}</small></p>
       <p className="home-clara-card-meta">{tx("Aucun rendez-vous inclus. Aucune apparition garantie dans ChatGPT. Le paiement ne remplace pas la vérification des licences requises.")}</p>
       <Button type="button" size="lg" className="home-clara-card-primary h-auto min-h-11 w-full whitespace-normal py-3" disabled={opening} onClick={onActivate}>{opening ? tx("Préparation de votre activation…") : (lang === "en" ? "Activate my profile — $350 + tax" : OFFER_350.ctaActivate)}</Button>
       <Button type="button" variant="link" className="h-auto min-h-11 w-full whitespace-normal" disabled={opening} onClick={onMore}>{tx("Je veux aussi des rendez-vous exclusifs")}</Button>

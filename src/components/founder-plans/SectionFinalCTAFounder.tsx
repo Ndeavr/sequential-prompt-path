@@ -44,7 +44,7 @@ export default function SectionFinalCTAFounder(_props: Props) {
           </h2>
           <p className="text-sm text-muted-foreground">
             Identifiez votre entreprise et découvrez son analyse. Offre de base :
-            350 $ CA + taxes applicables, paiement unique pour 12 mois.
+            350 $ CA + taxes applicables par année, pour 12 mois.
             Aucun rendez-vous inclus ou garanti dans l'offre de base.
           </p>
         </motion.div>

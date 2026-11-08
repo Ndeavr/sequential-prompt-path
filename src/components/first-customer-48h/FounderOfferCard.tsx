@@ -19,7 +19,7 @@ const FEATURES = [
   "Accès Clara (Conseiller Croissance IA)",
   "Jusqu'à 5 rendez-vous exclusifs garantis",
   "Aucun lead partagé",
-  "Paiement unique · aucun abonnement",
+  "350 $ par année · renouvellement non automatique",
 ];
 
 export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma garantie — 350 $", loading, checkoutUrl }: Props) {
@@ -93,7 +93,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
             border: "1px solid rgba(245,200,90,0.28)",
           }}
         >
-          Offre d'entrée · 350 $ une seule fois
+          Présence IA · 350 $ par année
         </div>
 
         <ul className="mt-4 space-y-2">
@@ -151,7 +151,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
           className="text-[10.5px] text-center mt-2"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Paiement sécurisé via Stripe · 350 $ une seule fois. Aucun abonnement.
+          Paiement sécurisé via Stripe · 350 $ par année. Aucun renouvellement automatique.
         </p>
       </div>
     </div>
