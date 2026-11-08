@@ -108,4 +108,15 @@ describe("tailles de projet déclarées dans le jumelage", () => {
     expect(projectSizeFit([{ code: "small", stance: "refused" }], { max: 1000 }).fit).toBe("neutral");
     expect(projectSizeFit(sizes, {}).fit).toBe("neutral");
   });
+  it("tailles déclarées copiées au profil canonique et lues avant le devis", () => {
+    const quote = readFileSync("supabase/functions/compute-pricing-quote/index.ts", "utf8");
+    expect(quote).toMatch(/from\("contractor_matching_profiles"\)[\s\S]{0,200}eq\("contractor_id", resolvedContractorId\)/);
+    expect(quote).toContain("source_quote_id: saved.id");
+    expect(quote).toContain("size_mix_persisted: sizeMixPersisted");
+    const match = readFileSync("supabase/functions/match-lead/index.ts", "utf8");
+    expect(match.indexOf("readDeclaredSizes(p.answers)")).toBeGreaterThan(0);
+    expect(match.indexOf("readDeclaredSizes(p.answers)")).toBeLessThan(match.indexOf("readDeclaredSizes(q.input_payload)"));
+    expect(readDeclaredSizes({ project_size_mix: { provenance: "declared", sizes: [{ key: "small", minValue: 1000, maxValue: 5000 }] } })).toHaveLength(1);
+    expect(readDeclaredSizes({ project_size_mix: { provenance: "hypothesis", sizes: [{ key: "small" }] } })).toHaveLength(0);
+  });
 });
