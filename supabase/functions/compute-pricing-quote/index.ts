@@ -1393,6 +1393,29 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Répartition des tailles DÉCLARÉE : copiée au profil de jumelage canonique
+    // pour survivre à l'expiration/suppression du devis. Propriétaire seulement;
+    // aucun profil créé, aucune autre clé touchée. Échec = signalé, jamais masqué.
+    let sizeMixPersisted: boolean | null = null;
+    const declaredSizes = readDeclaredSizes({ project_size_mix: (body as Record<string, unknown>).project_size_mix }).slice(0, 6);
+    if (resolvedContractorId && declaredSizes.length) {
+      sizeMixPersisted = false;
+      const { data: prof, error: profErr } = await svc.from("contractor_matching_profiles")
+        .select("id, answers").eq("contractor_id", resolvedContractorId)
+        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
+      if (!profErr && prof) {
+        const mix = (body as Record<string, unknown>).project_size_mix as Record<string, unknown>;
+        const { data: upd, error: updErr } = await svc.from("contractor_matching_profiles")
+          .update({ answers: { ...((prof.answers as Record<string, unknown>) ?? {}), project_size_mix: {
+            provenance: "declared", share_unit: mix.share_unit ?? null, sizes: declaredSizes,
+            saved_at: new Date().toISOString(), source_quote_id: saved.id,
+          } } })
+          .eq("id", prof.id).select("id").maybeSingle();
+        sizeMixPersisted = !updErr && Boolean(upd);
+      }
+      if (!sizeMixPersisted) console.error("[compute-pricing-quote] size mix not persisted to matching profile", { quote: saved.id, code: profErr?.code ?? null });
+    }
+
     await svc.from("pricing_audit_log").insert({
       event_type:
         pricingMode === "pack"

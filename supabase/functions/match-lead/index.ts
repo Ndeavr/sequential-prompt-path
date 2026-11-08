@@ -391,7 +391,15 @@ Deno.serve(async (req) => {
       // Exclusions : toujours appliquées (restreindre ne crée aucune couverture).
       territoryByContractor.set(id, effectiveTerritoryRules(p.answers));
     }
+    // Tailles : profil de jumelage canonique d'abord (survit au devis), puis
+    // dernier devis seulement pour les dossiers antérieurs à cette copie.
     const sizesByContractor = new Map<string, DeclaredSize[]>();
+    for (const p of profiles ?? []) {
+      const id = String(p.contractor_id);
+      if (sizesByContractor.has(id)) continue;
+      const fromProfile = readDeclaredSizes(p.answers);
+      if (fromProfile.length) sizesByContractor.set(id, fromProfile);
+    }
     for (const q of sizeQuotes ?? []) {
       const id = String(q.contractor_id);
       if (!sizesByContractor.has(id)) sizesByContractor.set(id, readDeclaredSizes(q.input_payload));
