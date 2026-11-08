@@ -40,28 +40,94 @@ export function readTerritoryRules(answers: unknown): StoredTerritoryRule[] {
   return Array.isArray(list) ? (list.filter((r) => r && typeof r === "object" && typeof (r as StoredTerritoryRule).kind === "string") as StoredTerritoryRule[]) : [];
 }
 
-/** Verdict pour une adresse de propriétaire (ville + coordonnées facultatives). */
-export function territoryVerdict(rules: StoredTerritoryRule[], lead: { city?: string | null; lat?: number | null; lng?: number | null }): { verdict: TerritoryVerdict; reason: string } {
-  const city = norm(lead.city);
-  const hasPoint = typeof lead.lat === "number" && typeof lead.lng === "number" && Number.isFinite(lead.lat) && Number.isFinite(lead.lng);
-  // 1) Exclusions d'abord.
+/**
+ * Position du propriétaire. Seules des coordonnées d'ADRESSE (fiche propriété
+ * ou adresse géocodée sans ambiguïté) peuvent établir un rayon : le centre
+ * d'une ville ne prouve jamais qu'une adresse est à moins de X km.
+ */
+export type PointAccuracy = "property_coordinates" | "geocoded_address";
+export interface HomeownerLocation {
+  city?: string | null;
+  neighborhood?: string | null;
+  point?: { lat: number; lng: number; accuracy: PointAccuracy } | null;
+}
+export interface TerritoryResult { verdict: TerritoryVerdict; reason: string; exclusionUncertain?: true; distanceKm?: number }
+
+const km = (n: number) => new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1 }).format(n);
+
+/** Règles effectives : exclusions toujours; inclusions seulement une fois les préférences confirmées. */
+export function effectiveTerritoryRules(answers: unknown): StoredTerritoryRule[] {
+  const confirmed = (answers as Record<string, unknown> | null | undefined)?.preferences_confirmed === true;
+  return readTerritoryRules(answers).filter((r) => !r.include || confirmed || (r as { confirmed?: boolean }).confirmed === true);
+}
+
+/** Verdict pour une adresse de propriétaire (jumelage ET réservation). */
+export function territoryVerdict(rules: StoredTerritoryRule[], loc: HomeownerLocation): TerritoryResult {
+  const places = [norm(loc.city), norm(loc.neighborhood)].filter(Boolean);
+  const p = loc.point && Number.isFinite(loc.point.lat) && Number.isFinite(loc.point.lng)
+    && (loc.point.accuracy === "property_coordinates" || loc.point.accuracy === "geocoded_address") ? loc.point : null;
+  const inPlace = (r: StoredTerritoryRule) => !!r.place && places.includes(norm(r.place));
+  let uncertain = false;
+  // 1) Exclusions d'abord (ville ou quartier, puis rayon exclu).
   for (const r of rules) {
     if (r.include) continue;
-    if (r.kind === "locality" && city && norm(r.place) === city) return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
-    if (r.kind === "radius" && r.center && hasPoint && typeof r.radius_km === "number" && haversineKm(r.center, { lat: lead.lat as number, lng: lead.lng as number }) <= r.radius_km) {
-      return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
+    if ((r.kind === "locality" || r.kind === "radius" || r.kind === "travel_time") && inPlace(r)) return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
+    if (r.kind === "radius") {
+      if (r.geocode_status === "geocoded" && r.center && typeof r.radius_km === "number" && p) {
+        if (haversineKm(r.center, p) <= r.radius_km) return { verdict: "excluded", reason: "Territoire exclu par l'entrepreneur" };
+      } else {
+        uncertain = true; // zone exclue impossible à vérifier sans adresse précise ou centre géocodé
+      }
     }
+    if (r.kind === "travel_time") uncertain = true; // jamais convertie en distance
   }
+  if (uncertain) return { verdict: "unknown", exclusionUncertain: true, reason: "Adresse précise requise : une zone exclue pourrait la couvrir" };
   // 2) Inclusions prouvables.
   for (const r of rules) {
     if (!r.include) continue;
-    if (r.kind === "locality" && city && norm(r.place) === city) return { verdict: "covered", reason: "Localité déclarée par l'entrepreneur" };
-    if (r.kind === "radius" && r.geocode_status === "geocoded" && r.center && hasPoint && typeof r.radius_km === "number" && r.radius_km > 0) {
-      const d = haversineKm(r.center, { lat: lead.lat as number, lng: lead.lng as number });
-      if (d <= r.radius_km) return { verdict: "covered", reason: `Centre de la ville dans le rayon déclaré de ${Math.round(r.radius_km)} km` };
+    if (r.kind === "locality" && inPlace(r)) return { verdict: "covered", reason: "Localité déclarée par l'entrepreneur" };
+    if (r.kind === "radius" && r.geocode_status === "geocoded" && r.center && p && typeof r.radius_km === "number" && r.radius_km > 0) {
+      const d = haversineKm(r.center, p);
+      if (d <= r.radius_km) return { verdict: "covered", distanceKm: d, reason: `Adresse à ${km(d)} km du centre déclaré (rayon de ${km(r.radius_km)} km, à vol d'oiseau)` };
     }
   }
   return { verdict: "unknown", reason: "Couverture non établie" };
+}
+
+/** Un seul résultat de niveau adresse = coordonnées utilisables; sinon aucune. */
+export function pickAddressPoint(hits: GeocodeHit[] | null | undefined): { lat: number; lng: number; accuracy: "geocoded_address" } | null {
+  const addr = (hits ?? []).filter((h) => (h.types ?? []).some((t) => t === "street_address" || t === "premise" || t === "subpremise")
+    && Number.isFinite(h.lat) && Number.isFinite(h.lng));
+  return addr.length === 1 ? { lat: addr[0].lat, lng: addr[0].lng, accuracy: "geocoded_address" } : null;
+}
+
+/** Coordonnées de la fiche propriété, si réelles. */
+export function propertyPoint(prop: { latitude?: unknown; longitude?: unknown } | null | undefined): HomeownerLocation["point"] {
+  const lat = Number(prop?.latitude), lng = Number(prop?.longitude);
+  return prop && prop.latitude != null && prop.longitude != null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+    ? { lat, lng, accuracy: "property_coordinates" } : null;
+}
+
+/** Les règles exigent-elles une adresse précise pour conclure? */
+export function needsAddressPoint(rules: StoredTerritoryRule[]): boolean {
+  return rules.some((r) => r.kind === "radius" && r.geocode_status === "geocoded");
+}
+
+/**
+ * Réservation : mêmes règles que le jumelage. Exclusion (ou exclusion non
+ * vérifiable) = refus. Territoire déclaré → couverture prouvée exigée.
+ * Aucun territoire déclaré → comportement existant inchangé (aucune couverture inventée).
+ */
+export function bookingTerritoryDecision(rules: StoredTerritoryRule[], serviceAreaCities: Iterable<string>, loc: HomeownerLocation):
+  { allowed: true; reason: string } | { allowed: false; code: "territory_excluded" | "territory_unverified" | "outside_declared_territory"; reason: string } {
+  const t = territoryVerdict(rules, loc);
+  if (t.verdict === "excluded") return { allowed: false, code: "territory_excluded", reason: t.reason };
+  if (t.exclusionUncertain) return { allowed: false, code: "territory_unverified", reason: t.reason };
+  const areas = [...serviceAreaCities].map(norm).filter(Boolean);
+  if (t.verdict === "covered") return { allowed: true, reason: t.reason };
+  if (areas.length && loc.city && areas.includes(norm(loc.city))) return { allowed: true, reason: "Zone de service explicite" };
+  if (!rules.some((r) => r.include) && !areas.length) return { allowed: true, reason: "Aucun territoire déclaré" };
+  return { allowed: false, code: "outside_declared_territory", reason: "Adresse hors du territoire déclaré ou non vérifiable" };
 }
 
 /** Réutilise un centre déjà géocodé pour la même règle (aucun appel inutile). */
