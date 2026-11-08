@@ -6,8 +6,9 @@
  * Le formulaire fournit son brouillon courant à chaque tour (même sans « Continuer »).
  */
 import {
-  INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, splitList, declaredCapacity, toClaraPatch,
+  INTAKE_PRIORITIES, type IntakeQualification, hasPriorities, splitList, declaredCapacity, toClaraPatch, applyTerritoryRules,
 } from "@/lib/contractorIntakeQualification";
+import { interpretContractorPreferences, samePreference } from "@/lib/contractorPreferenceInterpreter";
 import { saveClaraQualification } from "./claraContractorQualification";
 
 export type IntakeField = "preferred_work" | "excluded_work" | "service_areas" | "excluded_areas" | "priorities" | "capacity";
@@ -74,6 +75,7 @@ const cleanList = (s: string) => s.replace(/\s+(et|and)\s+/gi, ", ").replace(/[.
  */
 export function applyIntakeAnswer(d: IntakeDraft, pending: IntakeField | null, raw: string): { draft: IntakeDraft; changed: IntakeField[] } {
   let text = raw.trim();
+  const isCorrection = CORRECTION.test(text);
   const q: IntakeQualification = { ...(d.qualification ?? {}) };
   const out: IntakeDraft = { ...d, qualification: q };
   const changed = new Set<IntakeField>();
@@ -135,7 +137,7 @@ export function applyIntakeAnswer(d: IntakeDraft, pending: IntakeField | null, r
     if (it.noRefused && !territoryRules.some((r) => !r.include)) setExcl(null);
   }
   if (territoryRules.length) {
-    const prev = (q.territory_rules ?? []).filter((r) => !territoryRules.some((n) => n.place && r.place && samePreference(n.place, r.place) && n.kind === r.kind));
+    const prev = isCorrection ? [] : (q.territory_rules ?? []).filter((r) => !territoryRules.some((n) => n.place && r.place && samePreference(n.place, r.place) && n.kind === r.kind));
     q.territory_rules = [...prev, ...territoryRules];
     applyTerritoryRules(q);
     changed.add("service_areas");

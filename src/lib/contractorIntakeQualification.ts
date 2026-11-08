@@ -12,6 +12,8 @@ export const INTAKE_PRIORITIES = [
   "Stabiliser mes revenus",
 ] as const;
 
+import { territoryRuleLabel, type TerritoryRule } from "@/lib/contractorPreferenceInterpreter";
+
 export type IntakeQualification = {
   priorities?: string[];
   other_goal?: string;
@@ -22,6 +24,11 @@ export type IntakeQualification = {
   service_areas?: string;
   excluded_areas?: string;
   no_excluded_areas?: boolean;
+  /** Règles de territoire structurées (rayon, localité, temps de route), déclarées. */
+  territory_rules?: TerritoryRule[];
+  /** Phrases originales, conservées telles quelles (reprise et correction). */
+  work_raw?: string;
+  territory_raw?: string;
 };
 
 export const splitList = (v?: string | null): string[] =>
@@ -29,10 +36,30 @@ export const splitList = (v?: string | null): string[] =>
 
 export const hasPriorities = (q: IntakeQualification = {}) =>
   (q.priorities?.length ?? 0) > 0 || Boolean(q.other_goal?.trim());
-export const hasWork = (q: IntakeQualification = {}) =>
-  splitList(q.preferred_work).length > 0 && (q.no_excluded_work || splitList(q.excluded_work).length > 0);
+/**
+ * Les exclusions ne bloquent jamais l'avancement : « aucune exclusion » est un
+ * choix explicite, distinct d'une question laissée sans réponse.
+ */
+export const hasWork = (q: IntakeQualification = {}) => splitList(q.preferred_work).length > 0;
 export const hasTerritories = (q: IntakeQualification = {}) =>
-  splitList(q.service_areas).length > 0 && (q.no_excluded_areas || splitList(q.excluded_areas).length > 0);
+  splitList(q.service_areas).length > 0 || (q.territory_rules ?? []).some((r) => r.include);
+export type ExclusionStatus = "declared" | "none" | "unanswered";
+export const exclusionStatus = (list?: string, none?: boolean): ExclusionStatus =>
+  none ? "none" : splitList(list).length ? "declared" : "unanswered";
+
+/** Recalcule les libellés lisibles depuis les règles (exclusions prioritaires). */
+export function applyTerritoryRules(q: IntakeQualification): IntakeQualification {
+  const rules = q.territory_rules ?? [];
+  const excluded = rules.filter((r) => !r.include && r.place).map((r) => r.place as string);
+  const included = rules.filter((r) => r.include && !(r.kind === "locality" && excluded.some((x) => x.toLowerCase() === (r.place ?? "").toLowerCase())));
+  if (included.length) q.service_areas = included.map((r) => territoryRuleLabel(r).replace(/,/g, ".")).join(", ");
+  if (excluded.length) {
+    const all = [...splitList(q.excluded_areas), ...excluded];
+    q.excluded_areas = all.filter((x, i) => all.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i).join(", ");
+    q.no_excluded_areas = false;
+  }
+  return q;
+}
 
 /** Capacité réaliste déclarée (borne basse prudente si plage). */
 export function declaredCapacity(g: { capacity_range?: string; next_month_appointments?: number }): { min: number; max: number } | null {
@@ -92,6 +119,9 @@ export function toQuoteContext(q: IntakeQualification, capacity: { min: number; 
     service_areas: p.service_areas,
     excluded_areas: p.excluded_areas,
     no_excluded_areas: Boolean(q.no_excluded_areas),
+    excluded_work_status: exclusionStatus(q.excluded_work, q.no_excluded_work),
+    excluded_areas_status: exclusionStatus(q.excluded_areas, q.no_excluded_areas),
+    territory_rules: q.territory_rules ?? [],
     capacity_min: capacity?.min ?? null,
     capacity_max: capacity?.max ?? null,
   };
