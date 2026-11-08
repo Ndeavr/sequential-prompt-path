@@ -86,8 +86,6 @@ See `supabase/AGENTS.md` and `src/pages/contractor-funnel/AGENTS.md`, `src/servi
 - Verified-prospect phone enrichment must refuse other-owner collisions and identity replacement, preserve the unique index and report failed writes explicitly; no-release corrections stay staged. Why: official publication does not authorize reassignment or make failed enrichment successful.
 - First-party phone capture uses the existing canonical prospect anchor and capture helper, never signs consent; batch previews keep candidate counts separate from unverified provider readiness. Why: domain publication and tier C do not establish lawful or technically deliverable SMS.
 
-- Calendar OAuth keeps the validated starting route through `return_to` (`src/lib/calendarReturn.ts`, contextual fallback only when absent) and shows Google as connected only from the saved row with both calendar scopes. Why: admins/contractors were sent to the Home Passport and saw contradictory states.
-
 ## Source-of-truth discipline
 - Affiliate offer drafts reuse affiliate_proposals through assignment-checked RPCs; proposal affiliate_id is the affiliate user UUID, unlike assignment affiliate_id. New drafts keep reloadable bearers outside public payload, reject direct client mutations via a version-scoped trigger, and bind checkout attribution to the saved quote. Why: protect drafts without changing legacy policies or server payment truth.
 
