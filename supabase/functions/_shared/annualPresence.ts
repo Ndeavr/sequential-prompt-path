@@ -23,14 +23,20 @@ export type AnnualPresenceReason =
   | "historical_activation"
   | "existing_promotion"
   | "annual_presence_required"
-  | "annual_presence_expired";
+  | "annual_presence_expired"
+  | "historical_right_review_required";
 
 export interface AnnualPresenceDecision {
   /** true = la ligne 350 $ est ajoutée au paiement du forfait. */
   include: boolean;
   reason: AnnualPresenceReason;
   validUntil: string | null;
+  /** Droit antérieur non prouvé : ni accordé ni facturé, aucun paiement avant la revue UNPRO. */
+  blocked?: true;
 }
+
+export const HISTORICAL_REVIEW_MESSAGE =
+  "Votre activation antérieure doit être confirmée par l'équipe UNPRO avant ce paiement. Aucun paiement n'a été créé; vos droits actuels restent inchangés.";
 
 /** Interprète la décision SQL; une réponse illisible échoue fermé (aucun paiement). */
 export function decideAnnualPresence(input: {
@@ -38,8 +44,14 @@ export function decideAnnualPresence(input: {
   /** Proposition affiliée validée par le serveur et émise AVANT la règle annuelle. */
   preRuleProposal: boolean;
 }): AnnualPresenceDecision | null {
-  const r = input.rpc as { required?: unknown; reason?: unknown; valid_until?: unknown } | null;
+  const r = input.rpc as { required?: unknown; reason?: unknown; valid_until?: unknown; blocked?: unknown } | null;
   if (!r || typeof r.required !== "boolean" || typeof r.reason !== "string") return null;
+  if (r.blocked === true) {
+    // Seule raison de blocage reconnue; une proposition antérieure ne lève pas une revue.
+    return r.reason === "historical_right_review_required"
+      ? { include: false, reason: "historical_right_review_required", validUntil: null, blocked: true }
+      : null;
+  }
   const validUntil = typeof r.valid_until === "string" ? r.valid_until : null;
   if (!r.required) {
     const ok = ["valid_annual_presence", "historical_subscription", "historical_activation"];
