@@ -1483,7 +1483,7 @@ Deno.serve(async (req) => {
     // ── Atomic reservation: one payable session per contractor and Stripe mode ──
     const fingerprint = await purchaseFingerprint({
       v: 1, kind: presenceIncluded ? "combined_presence_plan" : "plan", mode: stripeMode,
-      quote: quoteRow ? { id: String(quoteId), updated_at: (quoteRow as { updated_at?: string | null }).updated_at ?? null } : null,
+      quote: quoteRow ? { id: String(quoteId), price: quoteRow.recommended_monthly_price ?? null, expires_at: quoteRow.expires_at ?? null } : null,
       customer: existingCustomerId, coupon: couponIntent, config: checkoutConfig,
     });
     const reservationDeps = liveReservationDeps(serviceClient, stripe, {
