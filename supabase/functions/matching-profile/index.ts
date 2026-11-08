@@ -12,6 +12,8 @@
  * is persisted on the row so it survives wizard → plans → Stripe.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { pinnedPublicFetch } from "../enrich-official-website/pinnedPublicFetch.ts";
+import { ANALYSIS_KEY, ANALYSIS_OPERATION, ANALYSIS_POLICY, runOwnerWebsiteAnalysis } from "./websiteAnalysis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -225,6 +227,55 @@ Deno.serve(async (req) => {
       existing = existingByAudit;
     }
 
+    // Owner-authenticated public website reading. Auth, draft ownership, URL
+    // policy and the persistent attempt ledger all pass before any request.
+    if (action === "analyze_website") {
+      const result = await runOwnerWebsiteAnalysis({
+        userId: authenticatedUserId,
+        ownedContractorId: ownedContractor?.id ?? null,
+        draft: existing ? { id: String(existing.id), contractor_id: existing.contractor_id ?? null, answers: (existing.answers as Record<string, unknown>) ?? {} } : null,
+        ledger: {
+          async start(host) {
+            const affected = `user:${authenticatedUserId}`;
+            const { data, error } = await supabase.from("platform_operation_outcomes").insert({
+              operation: ANALYSIS_OPERATION, intent: "owner_website_analysis", business_outcome: "pending",
+              affected_record: affected, service: "matching-profile", payload: { host, policy: ANALYSIS_POLICY.version },
+            }).select("id").single();
+            if (error || !data) throw new Error("ledger_insert_failed");
+            const count = async (ms: number) => {
+              const { count: n, error: e } = await supabase.from("platform_operation_outcomes")
+                .select("id", { count: "exact", head: true })
+                .eq("operation", ANALYSIS_OPERATION).eq("affected_record", affected)
+                .gte("created_at", new Date(Date.now() - ms).toISOString());
+              if (e || n === null) throw new Error("ledger_count_failed");
+              return n;
+            };
+            const [hour, day] = await Promise.all([count(3_600_000), count(86_400_000)]);
+            return { id: String(data.id), hour, day };
+          },
+          async finish(id, outcome, payload) {
+            const { error } = await supabase.from("platform_operation_outcomes")
+              .update({ business_outcome: outcome, failure_code: outcome === "achieved" ? null : String(payload.reason ?? "failed"), payload })
+              .eq("id", id);
+            if (error) console.error("[matching-profile] analysis ledger finish failed", { code: error.code ?? null });
+          },
+        },
+        async persist(draftId, analysis) {
+          // Re-read so a save made during the reading is never overwritten;
+          // only the server-owned analysis key changes.
+          const { data: current, error: readError } = await supabase.from("contractor_matching_profiles")
+            .select("answers").eq("id", draftId).maybeSingle();
+          if (readError || !current) return false;
+          const { data: updated, error: writeError } = await supabase.from("contractor_matching_profiles")
+            .update({ answers: { ...((current.answers as Record<string, unknown>) ?? {}), [ANALYSIS_KEY]: analysis } })
+            .eq("id", draftId).select("id").maybeSingle();
+          return !writeError && Boolean(updated);
+        },
+        io: { fetch: pinnedPublicFetch as unknown as typeof fetch, resolve: (host) => Deno.resolveDns(host, "A") },
+      });
+      return json(result.body, result.status);
+    }
+
     if (action === "get") {
       if (existing?.contractor_id) {
         if (!authenticatedUserId) return json({ ok: false, error: "authentication_required" }, 401);
@@ -250,9 +301,12 @@ Deno.serve(async (req) => {
       if (!owned) return json({ ok: false, error: "profile_access_denied" }, 403);
     }
 
+    // The website analysis is server-owned: a client save can never forge it.
+    const incoming = { ...((body.answers as Record<string, unknown>) ?? {}) };
+    delete incoming[ANALYSIS_KEY];
     const answers = {
       ...((existing?.answers as Record<string, unknown>) ?? {}),
-      ...((body.answers as Record<string, unknown>) ?? {}),
+      ...incoming,
     };
     const state = computeState(answers);
 
