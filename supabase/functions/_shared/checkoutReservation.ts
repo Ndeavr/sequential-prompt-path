@@ -147,6 +147,51 @@ export async function attachCheckoutSession(deps: ReservationDeps, reservationId
   return { ok: false, expired: await expireUndeliverable(deps, reservationId, session.id, "attach_failed") };
 }
 
+/** Dépendances réelles : RPC SQL (service) + API Stripe de la clé du même mode. */
+// deno-lint-ignore no-explicit-any
+export function liveReservationDeps(db: any, stripe: any, req: {
+  contractorId: string; stripeMode: "live" | "test"; kind: "entry_350" | "combined_presence_plan" | "plan";
+  includesPresence: boolean; quoteId: string | null; fingerprint: string; ttlSeconds?: number;
+}): ReservationDeps {
+  return {
+    reserve: () => db.rpc("reserve_contractor_checkout", {
+      _contractor_id: req.contractorId, _stripe_mode: req.stripeMode, _kind: req.kind,
+      _includes_presence: req.includesPresence, _quote_id: req.quoteId, _fingerprint: req.fingerprint,
+      _ttl_seconds: req.ttlSeconds ?? 3600,
+    }),
+    settle: (id, status, sessionId, reason) => db.rpc("settle_contractor_checkout", {
+      _reservation_id: id, _status: status, _stripe_session_id: sessionId, _reason: reason,
+    }),
+    retrieve: (id) => stripe.checkout.sessions.retrieve(id),
+    expire: (id) => stripe.checkout.sessions.expire(id),
+  };
+}
+
+/** Paiement Présence déjà signé chez Stripe mais pas encore confirmé : true/false; null = illisible (refus). */
+// deno-lint-ignore no-explicit-any
+export async function presencePaymentAwaitingConfirmation(db: any, contractorId: string, live: boolean): Promise<boolean | null> {
+  const since = new Date(Date.now() - 365 * 86400000).toISOString();
+  const base = () => db.from("stripe_webhook_events").select("stripe_event_id")
+    .eq("contractor_id", contractorId)
+    .in("event_type", ["checkout.session.completed", "checkout.session.async_payment_succeeded"])
+    .eq("livemode", live)
+    .eq("payload->data->object->>payment_status", "paid")
+    .gte("received_at", since);
+  const [entry, combined] = await Promise.all([
+    base().in("payload->data->object->metadata->>offer", ["entry_activation_350", "entry_pack_350"]).limit(1),
+    base().eq("payload->data->object->metadata->>annual_presence", "included").limit(1),
+  ]);
+  if (entry.error || combined.error) return null;
+  const evIds = [...(entry.data ?? []), ...(combined.data ?? [])].map((e: { stripe_event_id: string }) => e.stripe_event_id);
+  if (!evIds.length) return false;
+  // Déjà confirmé dans le registre = la Présence valide est décidée ailleurs; ici seulement l'écart.
+  const { data: led, error: ledErr } = await db.from("contractor_activation_ledger").select("id")
+    .eq("contractor_id", contractorId).eq("action", "entry_activation_350_paid")
+    .in("metadata->>stripe_event_id", evIds).limit(1);
+  if (ledErr) return null;
+  return !(led ?? []).length;
+}
+
 /** Session créée mais non remise (écriture UNPRO échouée) : expirée, jamais payable. */
 export async function expireUndeliverable(deps: ReservationDeps, reservationId: string, sessionId: string, reason: string): Promise<boolean> {
   let expired = false;
