@@ -1308,24 +1308,22 @@ Deno.serve(async (req) => {
 
     // ── STRIPE CHECKOUT (paid flow) ──
     const stripe = new Stripe(activeStripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripeMode: "live" | "test" = useTestMode ? "test" : "live";
 
-    // Get or create Stripe customer
-    const { data: existingSub } = await serviceClient
+    // Get existing Stripe customer (a new one is created only after the reservation).
+    const { data: existingSub, error: existingSubErr } = await serviceClient
       .from("contractor_subscriptions")
       .select("stripe_customer_id")
       .eq("contractor_id", contractor.id)
       .maybeSingle();
+    if (existingSubErr) {
+      return new Response(JSON.stringify({ error: "Impossible de préparer le paiement pour le moment. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Un client Stripe live n'existe pas en mode test : ne jamais le réutiliser.
-    let customerId = useTestMode ? null : existingSub?.stripe_customer_id;
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: { contractor_id: contractor.id, user_id: userId },
-      });
-      customerId = customer.id;
-    }
+    const existingCustomerId: string | null = useTestMode ? null : (existingSub?.stripe_customer_id ?? null);
 
     // Build line items — personalized quote overrides catalog price via price_data
     const planLineItem: any = personalizedPriceCents
@@ -1390,7 +1388,6 @@ Deno.serve(async (req) => {
     // Build checkout config
     const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
-      customer: customerId,
       mode: "subscription",
       locale: "fr",
       line_items: lineItems,
@@ -1459,26 +1456,86 @@ Deno.serve(async (req) => {
       checkoutConfig.cancel_url = cancelUrl || `${checkoutOrigin}/pro/billing?canceled=true`;
     }
 
-    // Add Stripe coupon for promo (if partial discount, not zero-total)
-    if (promoResult?.ok && !isZeroTotal) {
-      // Create a one-time Stripe coupon for this promo
-      try {
-        const couponParams: any = {
+    // Promo (partial discount): the coupon is created only after the reservation,
+    // with an idempotency key, so a retry never mints a second discount.
+    const couponIntent: Record<string, unknown> | null = promoResult?.ok && !isZeroTotal
+      ? {
           duration: "once",
           metadata: { promo_code: promoCode, redemption_id: redemptionId, affiliate_first_month_only: "true" },
-        };
-        if (promoResult.discount_type === "percentage") {
-          couponParams.percent_off = 50;
-        } else {
-          couponParams.amount_off = promoResult.discount_value;
-          couponParams.currency = "cad";
+          ...(promoResult.discount_type === "percentage"
+            ? { percent_off: 50 }
+            : { amount_off: promoResult.discount_value, currency: "cad" }),
         }
+      : null;
+
+    // A Presence payment already signed by Stripe but not yet confirmed: never a second 350.
+    if (presenceIncluded) {
+      const awaiting = await presencePaymentAwaitingConfirmation(serviceClient, contractor.id, !useTestMode);
+      if (awaiting !== false) {
+        return new Response(JSON.stringify(awaiting === null
+          ? { error: "Impossible de vérifier vos paiements précédents. Aucun paiement n'a été créé.", code: "checkout_state_unverified" }
+          : { error: "Votre paiement a déjà été reçu. La confirmation est en cours chez UNPRO.", code: "payment_received_pending" }), {
+          status: awaiting === null ? 503 : 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // ── Atomic reservation: one payable session per contractor and Stripe mode ──
+    const fingerprint = await purchaseFingerprint({
+      v: 1, kind: presenceIncluded ? "combined_presence_plan" : "plan", mode: stripeMode,
+      quote: quoteRow ? { id: String(quoteId), updated_at: (quoteRow as { updated_at?: string | null }).updated_at ?? null } : null,
+      customer: existingCustomerId, coupon: couponIntent, config: checkoutConfig,
+    });
+    const reservationDeps = liveReservationDeps(serviceClient, stripe, {
+      contractorId: contractor.id, stripeMode, kind: presenceIncluded ? "combined_presence_plan" : "plan",
+      includesPresence: presenceIncluded, quoteId: quoteId ? String(quoteId) : null, fingerprint,
+    });
+    const acquired = await acquireCheckoutReservation(reservationDeps, { embedded: isEmbedded });
+    if (acquired.kind === "refuse") {
+      return new Response(JSON.stringify({ error: acquired.message, code: acquired.code }), {
+        status: acquired.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (acquired.kind === "reuse") {
+      return new Response(JSON.stringify(isEmbedded
+        ? { clientSecret: acquired.session.client_secret, reused: true }
+        : { url: acquired.session.url, sessionId: acquired.session.id, reused: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const reservationId = acquired.reservationId;
+    const idemKey = acquired.idempotencyKey;
+    const failReservation = async (reason: string) => {
+      await reservationDeps.settle(reservationId, "failed", null, reason).catch(() => null);
+    };
+
+    let customerId = existingCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: { contractor_id: contractor.id, user_id: userId },
+      }, { idempotencyKey: stepKey(idemKey, "customer") });
+      customerId = customer.id;
+    }
+    checkoutConfig.customer = customerId;
+    checkoutConfig.expires_at = acquired.expiresAt;
+    checkoutConfig.metadata.checkout_reservation_id = reservationId;
+    checkoutConfig.subscription_data.metadata.checkout_reservation_id = reservationId;
+
+    if (couponIntent) {
+      try {
+        const couponParams: any = { ...couponIntent };
         // Avec la Présence IA dans le même paiement, la réduction vise le forfait
         // seulement : la ligne 350 $ n'est jamais réduite par un code de forfait.
         if (presenceIncluded) {
           let planProduct: string | null = null;
-          if (planLineItem.price_data) {
-            const prod = await stripe.products.create({ name: `UNPRO Plan ${planName}`, metadata: { type: "appointment_plan", contractor_id: contractor.id } });
+          if (planLineItem.price_data?.product) {
+            planProduct = String(planLineItem.price_data.product);
+          } else if (planLineItem.price_data) {
+            const prod = await stripe.products.create(
+              { name: `UNPRO Plan ${planName}`, metadata: { type: "appointment_plan", contractor_id: contractor.id } },
+              { idempotencyKey: stepKey(idemKey, "plan_product") },
+            );
             planProduct = prod.id;
             planLineItem.price_data = { ...planLineItem.price_data, product: prod.id };
             delete (planLineItem.price_data as Record<string, unknown>).product_data;
@@ -1489,10 +1546,11 @@ Deno.serve(async (req) => {
           if (!planProduct) throw new Error("plan_product_unresolved");
           couponParams.applies_to = { products: [planProduct] };
         }
-        const coupon = await stripe.coupons.create(couponParams);
+        const coupon = await stripe.coupons.create(couponParams, { idempotencyKey: stepKey(idemKey, "coupon") });
         checkoutConfig.discounts = [{ coupon: coupon.id }];
       } catch (couponErr) {
         console.error("Coupon creation failed; checkout aborted:", couponErr);
+        await failReservation("promo_application_failed");
         if (redemptionId) {
           await serviceClient.from("promo_code_redemptions").update({ status: "rejected" }).eq("id", redemptionId);
         }
@@ -1503,35 +1561,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Nouvelle tentative : réutiliser la session ouverte du même devis plutôt
-    // que d'en créer une seconde (évite deux abonnements payés).
-    if (quoteId && !isEmbedded) {
-      const { data: prev } = await serviceClient.from("checkout_sessions")
-        .select("external_checkout_id").eq("quote_id", String(quoteId))
-        .eq("contractor_profile_id", contractor.id)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (prev?.external_checkout_id) {
-        try {
-          const old = await stripe.checkout.sessions.retrieve(prev.external_checkout_id);
-          if (isSessionPaid(old)) {
-            return new Response(JSON.stringify({ error: "Paiement déjà reçu.", code: "already_paid" }), {
-              status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          // Une session ouverte créée avec une autre décision Présence est expirée :
-          // jamais de 350 $ en double ni de forfait sans la Présence due.
-          if (old.status === "open" && !sessionMatchesPresence(old.metadata as Record<string, unknown> | null, presenceIncluded)) {
-            await stripe.checkout.sessions.expire(old.id);
-          } else if (old.status === "open" && old.url && old.amount_total != null) {
-            return new Response(JSON.stringify({ url: old.url, sessionId: old.id, reused: true }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        } catch { /* autre mode Stripe ou session purgée : on en crée une neuve */ }
-      }
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create(checkoutConfig, { idempotencyKey: stepKey(idemKey, "session") });
+    } catch (stripeError) {
+      const sc = (stripeError as { statusCode?: number })?.statusCode;
+      if (typeof sc === "number" && sc >= 400 && sc < 500) await failReservation("stripe_rejected");
+      throw stripeError;
     }
 
-    const session = await stripe.checkout.sessions.create(checkoutConfig);
+    // Attach BEFORE handing the session out; failure = session expired, never payable.
+    const attached = await attachCheckoutSession(reservationDeps, reservationId, session);
+    if (!attached.ok) {
+      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Sanitized checkout observability — never logs payment data or secrets.
     console.info("[checkout:created]", {
@@ -1544,13 +1589,12 @@ Deno.serve(async (req) => {
       expected_amount_cents: personalizedPriceCents ?? null,
       quote_id: quoteId ?? null,
       checkout_session_id: session.id,
+      checkout_reservation_id: reservationId,
       status: "pending",
     });
 
-
-
-    // Create checkout_sessions record
-    await serviceClient.from("checkout_sessions").insert({
+    // Create checkout_sessions record (an idempotent replay may already have it).
+    const { error: recordErr } = await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
       selected_plan_code: resolvedPlanCode,
       selected_plan_name: planName,
@@ -1565,10 +1609,18 @@ Deno.serve(async (req) => {
       quote_id: quoteId || null,
       personalized_monthly_price_cents: personalizedPriceCents,
     });
+    if (recordErr && recordErr.code !== "23505") {
+      console.error("[create-checkout-session] checkout record failed", recordErr.code);
+      await expireUndeliverable(reservationDeps, reservationId, session.id, "checkout_record_failed");
+      return new Response(JSON.stringify({ error: "Impossible d'enregistrer le paiement chez UNPRO. Aucun paiement n'a été ouvert; réessayez.", code: "checkout_reservation_unavailable" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (isEmbedded) {
       if (!session.client_secret) {
         console.error("Stripe returned no client_secret for embedded session", session.id);
+        await expireUndeliverable(reservationDeps, reservationId, session.id, "missing_client_secret");
         return new Response(
           JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
