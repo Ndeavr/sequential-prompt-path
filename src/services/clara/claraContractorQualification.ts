@@ -87,6 +87,11 @@ export interface ClaraContractorQualification {
   excluded_areas?: string[];
   excluded_work?: string[];
   preferred_project_sizes?: string[];
+  /** Règles de territoire structurées et déclarées (rayon, localité, temps de route). */
+  territory_rules?: Array<Record<string, unknown>>;
+  /** « none » = aucune exclusion choisie explicitement; « unanswered » ≠ « none ». */
+  excluded_work_status?: "declared" | "none" | "unanswered";
+  excluded_areas_status?: "declared" | "none" | "unanswered";
   preferred_duration?: string | null;
   availability?: string | null;
   preferences_captured?: boolean;
@@ -149,6 +154,9 @@ export function saveClaraQualification(
   for (const key of ["preferred_duration", "availability"] as const) {
     if (patch[key] !== undefined) next[key] = patch[key];
   }
+  if (patch.territory_rules !== undefined) next.territory_rules = patch.territory_rules;
+  if (patch.excluded_work_status !== undefined) next.excluded_work_status = patch.excluded_work_status;
+  if (patch.excluded_areas_status !== undefined) next.excluded_areas_status = patch.excluded_areas_status;
   if (patch.preferences_captured !== undefined) next.preferences_captured = patch.preferences_captured;
   if (patch.preferences_confirmed !== undefined) next.preferences_confirmed = patch.preferences_confirmed;
   if (options.replaceLists && patch.service_areas !== undefined) next.service_areas = [...new Set(patch.service_areas)];
@@ -162,7 +170,7 @@ export function saveClaraQualification(
   next.provenance = {
     ...(current.provenance ?? {}),
     ...Object.fromEntries(
-      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id", "rbq_declaration", "preferred_work", "excluded_work", "excluded_areas", "preferred_project_sizes", "preferred_duration", "availability"]
+      ["primary_trade", "customer_type", "business_city", "service_areas", "goals", "business_name", "website", "phone", "google_place_id", "rbq_declaration", "preferred_work", "excluded_work", "excluded_areas", "preferred_project_sizes", "preferred_duration", "availability", "territory_rules"]
         .filter((k) => (patch as Record<string, unknown>)[k] !== undefined)
         .map((k) => [k, typeof source === "string" ? source : source[k] ?? "declared"]),
     ),
