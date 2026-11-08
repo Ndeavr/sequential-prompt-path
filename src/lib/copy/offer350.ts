@@ -72,4 +72,15 @@ export const ENTRY_350 = {
     "Aucun rendez-vous inclus, sauf droit contractuel calculé et confirmé avant le paiement.",
   paymentNote: "350 $ CA avant taxes, par année. Si les taxes du Québec s'appliquent : TPS 17,50 $ + TVQ 34,91 $ = 402,41 $ CA. Couvre 12 mois; renouvellement non automatique.",
   errorRetry: "Le paiement n'a pas pu démarrer. Rien n'a été facturé. Vous pouvez réessayer.",
+  fallback: {
+    title: "Pas encore prêt pour un forfait de rendez-vous? Commencez par votre Présence IA.",
+    body: "Commencez à bâtir votre présence dès aujourd’hui. Un profil complet, tenu à jour, aide UNPRO à comprendre votre entreprise et à vous présenter pour les projets adaptés. Ajoutez des rendez-vous lorsque vous êtes prêt.",
+    cta: "Commencer ma Présence IA — 350 $/an",
+    benefits: [
+      "Profil entrepreneur UNPRO + 12 mois de Présence IA",
+      "Vos services, territoires, spécialités et préférences structurés, utilisés par Clara lorsque votre admissibilité est confirmée",
+      "Enrichissement de votre profil au fil de vos réponses",
+      "Un forfait de rendez-vous peut s'ajouter plus tard, sans deuxième activation pendant la période valide",
+    ],
+  },
 } as const;

@@ -9,7 +9,7 @@ import { contractorLoginPath } from "@/lib/routing/contractorAuthHandoff";
 import { resumeContractorActivation } from "@/services/contractorActivationResume";
 import { reconcileQuoteDetail, planReturnUrl } from "@/lib/billing/reconcileQuotePayment";
 import { returnConfirmationMode } from "../../../supabase/functions/_shared/checkoutGuards";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
@@ -37,7 +37,9 @@ import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
 import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
-import { FallbackCredit350Card } from "@/components/entrepreneur/FallbackCredit350Card";
+import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contractor-plan/PlanGoalAdjuster";
+import { quebecTaxes } from "@/lib/pricing/planGoalModel";
+import { ENTRY_350 } from "@/lib/copy/offer350";
 import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
 import {
   CONTRACTOR_OBJECTIVE_CTA,
@@ -101,6 +103,10 @@ export default function PageContractorPersonalizedPlan() {
   const [breakdownOpen, setBreakdownOpen] = useState(true);
   const [fallbackVisible, setFallbackVisible] = useState(false);
   const [fallbackDeclined, setFallbackDeclined] = useState(false);
+  const [goalState, setGoalState] = useState<GoalAdjusterState>({ dirty: false, recomputing: false, valid: true, error: null });
+  const onGoalState = useCallback((s: GoalAdjusterState) => setGoalState(s), []);
+  // Devis recalculé sur place : adopté sans recharger la page.
+  const adoptedQuoteRef = useRef<string | null>(null);
 
   // Aucune offre n'est affichée sans preuve serveur : un entrepreneur organique
   // non attribué ne voit jamais l'offre affilié.
@@ -123,6 +129,7 @@ export default function PageContractorPersonalizedPlan() {
 
   useEffect(() => {
     if (!quoteId) return;
+    if (adoptedQuoteRef.current === quoteId) return;
     let cancelled = false;
     setLoading(true);
     setLoadError(false);
@@ -171,15 +178,26 @@ export default function PageContractorPersonalizedPlan() {
   // Taxes du Québec affichées avant paiement : TPS 5 % + TVQ 9,975 %.
   // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
   const baseCents = quote?.recommended_monthly_price ?? 0;
-  const gstCents = Math.round(baseCents * 0.05);
-  const qstCents = Math.round(baseCents * 0.09975);
-  const totalWithTaxCents = baseCents + gstCents + qstCents;
+  const { gst: gstCents, qst: qstCents, total: totalWithTaxCents } = quebecTaxes(baseCents);
+  const presenceTax = quebecTaxes(35000);
 
   // Offre d'entrée 350 $ : jamais affichée si une promotion (affilié, gratuité)
   // est déjà validée côté serveur, si le devis est payé ou en liste d'attente.
   const personalizedView = activationConfirmed || searchParams.get("view") === "personalized" || objective === "upgrade";
   const promotionGranted = !!offerState && (offerState.promo_valid || (offerState.offer_exists && ["granted", "accepted", "offered"].includes(offerState.status ?? "")));
   const entryEligible = !!quote && !activationConfirmed && !personalizedView && quote.pricing_status !== "paid" && !waitlisted && !promotionGranted && totalWithTaxCents > 0;
+  /** Affichage seulement : le serveur décide (code annual_presence_required). */
+  const presenceLikelyRequired = !!quote && !activationConfirmed && !promotionGranted && quote.pricing_status !== "paid";
+  const checkoutBlocked = goalState.dirty || goalState.recomputing || !goalState.valid;
+  const adoptQuote = (q: PricingQuote) => {
+    adoptedQuoteRef.current = q.id;
+    setQuote(q);
+    navigate(`/entrepreneur/plan-personnalise/${q.id}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`, { replace: true });
+  };
+  const openPresence = () => {
+    setFallbackVisible(true);
+    setTimeout(() => document.getElementById("presence-fallback")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
 
   // Étape « plan présenté » : écrite une seule fois par session et par devis.
   useEffect(() => {
@@ -299,9 +317,19 @@ export default function PageContractorPersonalizedPlan() {
           },
         },
       );
-      if (error) throw error;
-      const payload = data as { url?: string; sessionId?: string; error?: string } | null;
+      let payload = data as { url?: string; sessionId?: string; error?: string; code?: string } | null;
+      if (!payload && error) {
+        const ctx = (error as { context?: Response }).context;
+        try { if (ctx && typeof ctx.json === "function") payload = await ctx.clone().json(); } catch { /* corps illisible */ }
+      }
+      if (payload?.code === "annual_presence_required") {
+        setCheckoutError("Commencez par votre Présence IA (350 $ + taxes par année). Le forfait de rendez-vous s'ajoute ensuite, sans deuxième activation.");
+        setCheckoutLoading(false);
+        openPresence();
+        return;
+      }
       if (payload?.error) throw new Error(payload.error);
+      if (error) throw error;
       const url = payload?.url;
       if (!url) throw new Error("url_manquante");
 
@@ -568,9 +596,13 @@ export default function PageContractorPersonalizedPlan() {
           />
         )}
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
+        {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && (
+          <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
+        )}
         {quote.pricing_status !== "paid" && !entryEligible && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
-          const included = quote.guaranteed_appointments ?? quote.target_monthly_appointments;
+          // Nombre EXACT du contrat serveur : jamais la cible ni la capacité.
+          const included = typeof quote.guaranteed_appointments === "number" ? quote.guaranteed_appointments : null;
           return (
             <GlassCard className="p-6 mb-4">
               <div id="plan-volume" data-testid="starter-offer-card">
@@ -580,20 +612,18 @@ export default function PageContractorPersonalizedPlan() {
                 </div>
                 <p className="text-2xl font-semibold tracking-[-0.03em]" data-testid="plan-name">{entryTier ? planLabel : `Forfait ${planLabel}`}</p>
                 {typeof quote.input_payload?.monthly_capacity === "number" && (
-                  <p className="mt-2 text-sm text-white/80" data-testid="plan-capacity">Votre capacité déclarée pour le mois prochain : {quote.input_payload.monthly_capacity} rendez-vous.</p>
+                  <p className="mt-2 text-sm text-white/80" data-testid="plan-capacity">Votre capacité déclarée : {quote.input_payload.monthly_capacity} rendez-vous par mois.</p>
                 )}
                 {(() => {
-                  const qc = quote.input_payload?.qualification as { priorities?: string[]; preferred_work?: string[]; excluded_work?: string[]; no_excluded_work?: boolean; service_areas?: string[]; excluded_areas?: string[]; no_excluded_areas?: boolean } | undefined;
+                  const qc = quote.input_payload?.qualification as { preferred_work?: string[]; excluded_work?: string[]; no_excluded_work?: boolean; service_areas?: string[]; excluded_areas?: string[]; no_excluded_areas?: boolean } | undefined;
                   if (!qc) return null;
-                  const j = (v?: string[]) => (v ?? []).join(", ");
+                  const j = (v?: string[]) => { const l = v ?? []; return l.length > 4 ? `${l.slice(0, 4).join(", ")} +${l.length - 4}` : l.join(", "); };
                   return (
                     <dl className="mt-3 space-y-1 text-sm text-white/80" data-testid="plan-declared-preferences">
-                      <dt className="text-xs uppercase tracking-wider text-white/60">Vos préférences (déclarées)</dt>
-                      {qc.priorities?.length ? <dd>Priorités : {j(qc.priorities)}</dd> : null}
-                      {qc.preferred_work?.length ? <dd>Travaux recherchés : {j(qc.preferred_work)}</dd> : null}
-                      <dd>Travaux exclus : {qc.no_excluded_work ? "aucune exclusion" : j(qc.excluded_work) || "—"}</dd>
-                      {qc.service_areas?.length ? <dd>Territoires : {j(qc.service_areas)}</dd> : null}
-                      <dd>Secteurs exclus : {qc.no_excluded_areas ? "aucun" : j(qc.excluded_areas) || "—"}</dd>
+                      <dt className="text-xs uppercase tracking-wider text-white/60">{quote.company_name ? `${quote.company_name} · ` : ""}{quote.trade_primary} · déclaré</dt>
+                      {qc.preferred_work?.length ? <dd>Recherché : {j(qc.preferred_work)}</dd> : null}
+                      <dd>Refusé : {qc.no_excluded_work ? "aucune exclusion" : j(qc.excluded_work) || "non précisé"}</dd>
+                      {qc.service_areas?.length ? <dd>Territoire : {j(qc.service_areas)}{qc.excluded_areas?.length ? ` · sauf ${j(qc.excluded_areas)}` : ""}</dd> : null}
                     </dl>
                   );
                 })()}
@@ -610,9 +640,9 @@ export default function PageContractorPersonalizedPlan() {
 
                 <div className="mt-5 space-y-2 text-sm text-white/85">
                   <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
-                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{entryTier ? "Rendez-vous exclusifs selon votre entente et votre capacité" : guarantee.checkoutPrimaryLabel}</p>
-                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Rendez-vous exclusifs, jamais partagés avec d'autres entrepreneurs</p>
-                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil public UNPRO pour {quote.trade_primary}</p>
+                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{included && included > 0 ? (entryTier ? `${included} rendez-vous inclus par mois selon votre entente` : guarantee.checkoutPrimaryLabel) : `Rendez-vous inclus garantis : 0. Le volume visé (${quote.target_monthly_appointments} RDV/mois) n'est pas un nombre inclus.`}</p>
+                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Chaque rendez-vous est exclusif, jamais partagé avec d'autres entrepreneurs</p>
+                  <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil UNPRO pour {quote.trade_primary}, publié après vérification</p>
                 </div>
 
                 <div className="mt-5 space-y-1 text-xs text-white/60 leading-relaxed">
@@ -635,14 +665,23 @@ export default function PageContractorPersonalizedPlan() {
                     <div className="text-white/60">/ mois, avant taxes</div>
                   </div>
                   <div className="mt-3 space-y-1 text-sm text-white/75" data-testid="tax-breakdown">
-                    <div className="flex justify-between"><span>Abonnement mensuel</span><span>{formatCAD(quote.recommended_monthly_price)}</span></div>
+                    <div className="flex justify-between"><span>Forfait de rendez-vous (mensuel)</span><span>{formatCAD(quote.recommended_monthly_price)}</span></div>
                     <div className="flex justify-between"><span>TPS (5 %)</span><span>{formatCAD(gstCents)}</span></div>
                     <div className="flex justify-between"><span>TVQ (9,975 %)</span><span>{formatCAD(qstCents)}</span></div>
                     <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
                       <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCAD(totalWithTaxCents)}</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-white/50 mt-2">Aucuns frais d'ouverture. Le même montant, taxes incluses, est facturé chaque mois.</p>
+                  <p className="text-[11px] text-white/60 mt-2">Le même montant, taxes incluses, est facturé chaque mois. Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
+                  {presenceLikelyRequired && (
+                    <div className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-3 text-xs text-white/85" data-testid="presence-line">
+                      <p className="font-semibold text-amber-100">Présence IA annuelle — payée d'abord, séparément</p>
+                      <div className="mt-1 flex justify-between"><span>Profil + 12 mois de Présence IA</span><span>{formatCAD(35000)}</span></div>
+                      <div className="flex justify-between"><span>TPS (5 %) · TVQ (9,975 %)</span><span>{formatCAD(presenceTax.gst)} · {formatCAD(presenceTax.qst)}</span></div>
+                      <div className="flex justify-between font-semibold"><span>Total Présence IA</span><span>{formatCAD(presenceTax.total)}</span></div>
+                      <p className="mt-1 text-white/70">350 $ + taxes par année; renouvellement non automatique. Une Présence IA déjà valide n'est jamais facturée deux fois : UNPRO le vérifie avant le paiement.</p>
+                    </div>
+                  )}
                 </div>
 
                 {checkoutError && (
@@ -650,11 +689,12 @@ export default function PageContractorPersonalizedPlan() {
                 )}
                 <button
                   onClick={() => (waitlisted ? navigate("/entrepreneur/devis-personnalise?status=waitlisted") : handleActivate())}
-                  disabled={checkoutLoading}
+                  disabled={checkoutLoading || (!waitlisted && checkoutBlocked)}
+                  aria-describedby="quote-sync"
                   data-testid="activate-offer"
                   className="mt-5 w-full h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : entryTier ? "Commencer avec cette entente" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
+                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : checkoutBlocked ? "Proposition en mise à jour…" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : "Voir l'offre et continuer") : "Activer mon offre gratuite"}
                 </button>
                 {entryTier && entryTiers && !waitlisted && (
                   <div className="mt-3 text-center">
@@ -701,34 +741,43 @@ export default function PageContractorPersonalizedPlan() {
         })()}
 
 
-        {/* Offre de repli — proposée seulement après le forfait, une seule fois. */}
-        {!activationConfirmed && !waitlisted && !fallbackDeclined && !entryEligible && quote.pricing_status !== "paid" && (
-          <div className="mt-8">
+        {/* Repli : Présence IA annuelle, sans forfait de rendez-vous. */}
+        {!activationConfirmed && !waitlisted && !fallbackDeclined && !entryEligible && !promotionGranted && quote.pricing_status !== "paid" && (
+          <div className="mt-8" id="presence-fallback">
             {fallbackVisible ? (
-              <FallbackCredit350Card
-                quoteId={quote.id}
-                contractorId={quote.contractor_id ?? null}
-                affiliateRef={affiliateRef ?? null}
-                onDecline={() => {
+              <>
+                <EntryActivation350Card
+                  variant="fallback"
+                  quoteId={quote.id}
+                  contractorId={quote.contractor_id ?? null}
+                  guaranteedAppointments={null}
+                  affiliateRef={affiliateRef}
+                  activationToken={activationToken}
+                  successUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "success")}
+                  cancelUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "canceled")}
+                  onLogin={() => {
+                    setActiveQuoteId(quote.id);
+                    navigate(contractorLoginPath(`${window.location.pathname}${window.location.search}`));
+                  }}
+                />
+                <button type="button" className="mx-auto block min-h-11 text-sm text-white/60 underline" onClick={() => {
                   setFallbackDeclined(true);
-                  void supabase.functions.invoke("contractor-relance-abandon", {
-                    body: { action: "fallback_status", quote_id: quote.id, status: "fallback_350_declined" },
-                  });
-                }}
-                returnPath={`/entrepreneur/plan-personnalise/${quote.id}`}
-              />
+                  void supabase.functions.invoke("contractor-relance-abandon", { body: { action: "fallback_status", quote_id: quote.id, status: "fallback_350_declined" } });
+                }}>Pas maintenant</button>
+              </>
             ) : (
               <button
                 type="button"
+                data-testid="presence-fallback-open"
                 onClick={() => {
                   setFallbackVisible(true);
                   void supabase.functions.invoke("contractor-relance-abandon", {
                     body: { action: "fallback_status", quote_id: quote.id, status: "fallback_350_offered" },
                   });
                 }}
-                className="w-full text-center text-sm text-white/50 underline-offset-4 hover:underline"
+                className="w-full min-h-11 text-center text-sm text-white/75 underline-offset-4 hover:underline"
               >
-                Je ne suis pas prêt à choisir un forfait aujourd'hui
+                {ENTRY_350.fallback.title}
               </button>
             )}
           </div>
