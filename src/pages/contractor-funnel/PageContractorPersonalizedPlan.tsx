@@ -181,7 +181,6 @@ export default function PageContractorPersonalizedPlan() {
   // Les mêmes taux sont appliqués par le serveur sur la page de paiement.
   const baseCents = quote?.recommended_monthly_price ?? 0;
   const { gst: gstCents, qst: qstCents, total: totalWithTaxCents } = quebecTaxes(baseCents);
-  const presenceTax = quebecTaxes(35000);
 
   // Offre d'entrée 350 $ : jamais affichée si une promotion (affilié, gratuité)
   // est déjà validée côté serveur, si le devis est payé ou en liste d'attente.
