@@ -9,7 +9,9 @@ describe("Invited 350 $ checkout — provider error privacy", () => {
   it("preserves machine-readable failure stages without returning provider messages", () => {
     expect(edge).toContain('return json({ error: "stripe_error", stage: "stripe_create" }, 502);');
     expect(edge).toContain('return json({ error: "internal_error", stage: "fatal" }, 500);');
-    expect(edge).toContain('return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);');
+    // Persist failure: fixed stage + reservation code only (released vs reconciliation pending).
+    expect(edge).toContain('{ error: "checkout_record_unavailable", stage: "persist", code: "checkout_reservation_unavailable" }');
+    expect(edge).toContain('{ error: "checkout_record_unavailable", stage: "persist", code: "checkout_reconciliation_pending" }');
 
     // Provider messages can contain customer-supplied text or internal details.
     expect(edge).not.toMatch(/detail:\s*(?:stripeErr|e)\b/);
