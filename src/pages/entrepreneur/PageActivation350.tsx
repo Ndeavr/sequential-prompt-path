@@ -49,6 +49,7 @@ export default function PageActivation350() {
   const links = useMemo(() => buildActivation350Links(sp), [sp]);
   const [chatOpen, setChatOpen] = useState(false);
   const reviewOpen = sp.get("activate") === "1";
+  const guarantee = isGuaranteeOfferParam(sp.get("offre"));
 
   useEffect(() => {
     if (reviewOpen) requestAnimationFrame(() => document.getElementById("inscription")?.scrollIntoView({ block: "start" }));
@@ -173,7 +174,9 @@ export default function PageActivation350() {
               <li>Prochaine étape : confirmer votre entreprise, votre métier et votre territoire, puis paiement sécurisé par Stripe. Le profil est activé seulement après confirmation du paiement.</li>
               <li>Le paiement ne vérifie pas votre licence : la vérification RBQ (si requise) se fait séparément. Sans licence valide, le profil reste privé et n'est pas jumelé.</li>
               <li>ChatGPT, Google et les autres assistants sont des outils indépendants. UNPRO ne les contrôle pas et ne garantit ni classement, ni réponse, ni indexation de leur part.</li>
-              <li>Aucun rendez-vous, recommandation ou résultat n'est garanti par l'activation.</li>
+              {guarantee
+                ? <li>Offre 10 contrats garantis : {GUARANTEE_COPY.conditions} Aucun rendez-vous ni recommandation n'est garanti séparément.</li>
+                : <li>Aucun rendez-vous, recommandation ou résultat n'est garanti par l'activation.</li>}
             </ul>
           </details>
         </section>
