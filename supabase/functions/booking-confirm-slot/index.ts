@@ -10,9 +10,11 @@ import {
   CalendarAuthRevoked,
   getGoogleAccessToken,
   pushGoogleEvent,
+  bookingEventId,
 } from "../_shared/googleCalendar.ts";
 
-import { selectedGoogleCalendar, canWriteCalendar } from "../_shared/googleCalendarSelection.ts";
+import { resolveBookingCalendar } from "../_shared/calendarDelegation.ts";
+import { canWriteCalendar } from "../_shared/googleCalendarSelection.ts";
 import { ADDRESS_FIELD_MASK, bookingTerritoryDecision, effectiveTerritoryRules, needsAddressDetail, pickAddressHit, placesToHits, type HomeownerLocation } from "../_shared/territoryRules.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 
@@ -140,45 +142,56 @@ Deno.serve(async (req) => {
         .eq("id", contractorId)
         .maybeSingle();
 
-      if (contractor?.user_id) {
-        const { data: connection } = await admin
-          .from("calendar_connections")
-          .select("id, user_id, access_token_encrypted, refresh_token_encrypted, expires_at, metadata")
-          .eq("user_id", contractor.user_id)
-          .eq("provider", "google")
-          .eq("connection_status", "connected")
-          .maybeSingle();
+      const { data: delegation } = await admin
+        .from("contractor_calendar_delegations")
+        .select("calendar_connection_id, selected_calendar_id, status")
+        .eq("contractor_id", contractorId)
+        .eq("status", "active")
+        .maybeSingle();
+      const cols = "id, user_id, connection_status, access_token_encrypted, refresh_token_encrypted, expires_at, metadata";
+      const delegatedConnection = delegation
+        ? (await admin.from("calendar_connections").select(cols).eq("id", delegation.calendar_connection_id).maybeSingle()).data
+        : null;
+      const ownConnection = !delegation && contractor?.user_id
+        ? (await admin.from("calendar_connections").select(cols).eq("user_id", contractor.user_id)
+            .eq("provider", "google").eq("connection_status", "connected").maybeSingle()).data
+        : null;
+      const target = resolveBookingCalendar(delegation, delegatedConnection, ownConnection);
+      if (target.kind === "delegated" || (target.kind === "none" && target.reason === "delegation_invalid")) {
+        await admin.from("calendar_conversion_events").insert({
+          user_id: null, role_context: "contractor", surface: "booking_confirm", provider: "google",
+          event_type: target.kind === "delegated" ? "delegated_calendar_target" : "delegated_calendar_invalid",
+          metadata: { contractor_id: contractorId, booking_id: bookingId },
+        });
+      }
 
-        if (connection) {
-          const calendarId = selectedGoogleCalendar(connection.metadata);
-          if (!canWriteCalendar(connection.metadata?.selected_calendar_access_role ?? "")) throw new Error("calendar_write_permission_required");
-          const secret = Deno.env.get("CALENDAR_TOKEN_ENCRYPTION_KEY") ||
-            Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") || "";
-          const accessToken = await getGoogleAccessToken(admin as unknown as Parameters<typeof getGoogleAccessToken>[0], connection, secret);
-          const eventId = await pushGoogleEvent(accessToken, {
-            summary: `Rendez-vous UNPRO — ${clientName}`,
-            description: "Rendez-vous confirmé via UNPRO.",
-            location: [clean(body.address_line1), clean(body.city, 120)].filter(Boolean).join(", ") || undefined,
-            start,
-            end,
-          }, calendarId);
-          if (eventId) {
-            await admin.from("smart_bookings")
-              .update({ google_calendar_event_id: eventId })
-              .eq("id", bookingId);
-          }
-          calendarPush = "written";
-
-          // A freshly booked slot must block the next availability computation.
-          await admin.from("calendar_busy_periods").insert({
-            calendar_connection_id: connection.id,
-            user_id: contractor.user_id,
-            provider: "google",
-            external_event_id: eventId,
-            starts_at: start,
-            ends_at: end,
-          });
+      if (target.kind !== "none") {
+        const connection = target.connection as typeof target.connection & Record<string, unknown>;
+        const meta = (connection.metadata ?? {}) as Record<string, unknown>;
+        if (!canWriteCalendar(String(meta.selected_calendar_access_role ?? ""))) throw new Error("calendar_write_permission_required");
+        const secret = Deno.env.get("CALENDAR_TOKEN_ENCRYPTION_KEY") ||
+          Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") || "";
+        const accessToken = await getGoogleAccessToken(admin as unknown as Parameters<typeof getGoogleAccessToken>[0], connection as never, secret);
+        const eventId = await pushGoogleEvent(accessToken, {
+          summary: `Rendez-vous UNPRO — ${clientName}`,
+          description: "Rendez-vous confirmé via UNPRO.",
+          location: [clean(body.address_line1), clean(body.city, 120)].filter(Boolean).join(", ") || undefined,
+          start,
+          end,
+          eventId: bookingEventId(String(bookingId)),
+        }, target.calendarId);
+        if (eventId) {
+          await admin.from("smart_bookings").update({ google_calendar_event_id: eventId }).eq("id", bookingId);
         }
+        calendarPush = "written";
+        await admin.from("calendar_busy_periods").insert({
+          calendar_connection_id: connection.id,
+          user_id: connection.user_id,
+          provider: "google",
+          external_event_id: eventId,
+          starts_at: start,
+          ends_at: end,
+        });
       }
     } catch (error) {
       calendarPush = error instanceof CalendarAuthRevoked ? "reconnect_required" : "failed";
