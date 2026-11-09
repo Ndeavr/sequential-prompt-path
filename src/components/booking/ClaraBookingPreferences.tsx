@@ -85,10 +85,11 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
     const { error } = await supabase.from("contractor_booking_rules").upsert(
       {
         contractor_id: contractorId,
-        max_evenings_per_week: parsed.maxEveningsPerWeek,
-        prefer_compact_schedule: parsed.preferCompactSchedule,
-        declared_representatives: finalReps,
-        representatives_note: note,
+        // Only what was explicitly said this time replaces an earlier declaration.
+        ...(parsed.maxEveningsPerWeek !== null ? { max_evenings_per_week: parsed.maxEveningsPerWeek } : {}),
+        ...(parsed.preferCompactSchedule ? { prefer_compact_schedule: true } : {}),
+        ...(finalReps !== null ? { declared_representatives: finalReps } : {}),
+        ...(note ? { representatives_note: note } : {}),
         visit_capacity: 1,
         preference_text: text.slice(0, 2000),
         preference_summary: summary.slice(0, 2000),
