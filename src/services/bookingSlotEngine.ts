@@ -249,24 +249,88 @@ function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
 
 // ─── Core Slot Engine ───
 
-/** Every real source the engine reads. Busy windows carry times only. */
+/** Contractor-declared rules (contractor_booking_rules); server trigger enforces the evening cap. */
+export interface BookingRules {
+  eveningAfter: string; // "HH:MM" local; a visit ending after this makes the date an evening
+  maxEveningsPerWeek: number | null; // per local week Mon–Sun; null = no cap
+  visitCapacity: 1; // one visit at a time until per-representative calendars exist
+  preferCompactSchedule: boolean;
+}
+
+export const DEFAULT_BOOKING_RULES: BookingRules = {
+  eveningAfter: "19:00",
+  maxEveningsPerWeek: null,
+  visitCapacity: 1,
+  preferCompactSchedule: false,
+};
+
+/** Every real source the engine reads. Busy windows and bookings carry times only. */
 export interface SlotEngineData {
   availability: AvailabilitySlot[];
   blackouts: Blackout[];
   existingBookings: ExistingBooking[];
   allTypes: AppointmentType[];
   externalBusy: ExternalBusyWindow[];
+  rules?: BookingRules;
+}
+
+/** Rules + held bookings (times only) through the SECURITY DEFINER RPC; readable by visitors. */
+export async function fetchBookingConstraints(
+  contractorId: string,
+  from: Date,
+  to: Date,
+): Promise<{ rules: BookingRules; bookings: ExistingBooking[] }> {
+  const { data, error } = await supabase.rpc("contractor_booking_constraints" as never, {
+    p_contractor_id: contractorId,
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  } as never);
+  if (error) throw error;
+  const raw = (data ?? {}) as {
+    evening_after?: string; max_evenings_per_week?: number | null;
+    prefer_compact_schedule?: boolean; bookings?: ExistingBooking[];
+  };
+  return {
+    rules: {
+      eveningAfter: raw.evening_after ?? DEFAULT_BOOKING_RULES.eveningAfter,
+      maxEveningsPerWeek: raw.max_evenings_per_week ?? null,
+      visitCapacity: 1,
+      preferCompactSchedule: raw.prefer_compact_schedule === true,
+    },
+    bookings: raw.bookings ?? [],
+  };
+}
+
+const hhmm = (v: string) => { const [h, m] = v.split(":").map(Number); return h * 60 + (m || 0); };
+
+/** Monday (YYYY-MM-DD) of the local America/Toronto week containing dayKey. */
+export function localWeekKey(dayKey: string): string {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  const anchor = new Date(Date.UTC(y, m - 1, d, 12));
+  const back = (anchor.getUTCDay() + 6) % 7;
+  anchor.setUTCDate(anchor.getUTCDate() - back);
+  return anchor.toISOString().slice(0, 10);
+}
+
+/** True when a visit ending at `end` makes its local date an evening. */
+export function isEveningVisit(start: Date, end: Date, eveningAfter: string): boolean {
+  if (zonedDayKey(end) !== zonedDayKey(start)) return true;
+  const p = zonedParts(end);
+  return p.hour * 60 + p.minute > hhmm(eveningAfter);
 }
 
 export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEngineOutput> {
-  const [availability, blackouts, existingBookings, allTypes, externalBusy] = await Promise.all([
+  const [availability, blackouts, constraints, allTypes, externalBusy] = await Promise.all([
     fetchAvailability(input.contractorId),
     fetchBlackouts(input.contractorId, input.dateFrom, input.dateTo),
-    fetchExistingBookings(input.contractorId, input.dateFrom, input.dateTo),
+    fetchBookingConstraints(input.contractorId, input.dateFrom, input.dateTo),
     fetchAppointmentTypes(input.contractorId),
     fetchExternalBusy(input.contractorId, input.dateFrom, input.dateTo),
   ]);
-  return computeSlotsFromData({ availability, blackouts, existingBookings, allTypes, externalBusy }, input);
+  return computeSlotsFromData(
+    { availability, blackouts, existingBookings: constraints.bookings, allTypes, externalBusy, rules: constraints.rules },
+    input,
+  );
 }
 
 /**
@@ -279,6 +343,18 @@ export function computeSlotsFromData(
   now: Date = new Date(),
 ): SlotEngineOutput {
   const { availability, blackouts, existingBookings, allTypes, externalBusy } = data;
+  const rules = data.rules ?? DEFAULT_BOOKING_RULES;
+  // Local dates already holding an evening visit, grouped by local week (Mon–Sun).
+  const eveningDays = new Set<string>();
+  const eveningsByWeek: Record<string, number> = {};
+  for (const eb of existingBookings) {
+    const st = new Date(eb.scheduled_start);
+    if (!isEveningVisit(st, new Date(eb.scheduled_end), rules.eveningAfter)) continue;
+    const k = zonedDayKey(st);
+    if (eveningDays.has(k)) continue;
+    eveningDays.add(k);
+    eveningsByWeek[localWeekKey(k)] = (eveningsByWeek[localWeekKey(k)] ?? 0) + 1;
+  }
   const appointmentType = allTypes.find((t) => t.id === input.appointmentTypeId && t.contractor_id === input.contractorId);
   if (!appointmentType) {
     return { slots: [], recommendedSlot: null, alternativeTypes: allTypes.slice(0, 3) };
@@ -350,7 +426,18 @@ export function computeSlotsFromData(
       const externallyBusy = externalBusy.some((w) => blockStart < new Date(w.ends_at) && blockEnd > new Date(w.starts_at));
       if (externallyBusy) continue;
 
-      const score = scoreSlot(slotStart, appointmentType, input, existingBookings, now);
+      // Evening cap: a new evening date is offered only while the local week has room.
+      if (
+        rules.maxEveningsPerWeek !== null &&
+        isEveningVisit(slotStart, slotEnd, rules.eveningAfter) &&
+        !eveningDays.has(slotDay) &&
+        (eveningsByWeek[localWeekKey(slotDay)] ?? 0) >= rules.maxEveningsPerWeek
+      ) continue;
+
+      let score = scoreSlot(slotStart, appointmentType, input, existingBookings, now);
+      if (rules.preferCompactSchedule) {
+        score = Math.min(100, score + compactBonus(blockStart, blockEnd, slotDay, existingBookings));
+      }
       const badges = computeBadges(slotStart, score, input, existingBookings, now);
 
       rawSlots.push({
@@ -393,6 +480,27 @@ export function computeSlotsFromData(
     recommendedSlot: rawSlots[0] ?? null,
     alternativeTypes: allTypes.filter((t) => t.id !== input.appointmentTypeId).slice(0, 3),
   };
+}
+
+/**
+ * Declared "least idle time" preference: favour slots whose buffered block
+ * touches a held booking's buffered block on the same day. Uses only the
+ * declared buffers/travel padding — never an invented travel time — and never
+ * removes a slot.
+ */
+export function compactBonus(blockStart: Date, blockEnd: Date, dayKey: string, existing: ExistingBooking[]): number {
+  let best = Infinity;
+  for (const eb of existing) {
+    if (zonedDayKey(new Date(eb.scheduled_start)) !== dayKey) continue;
+    const ebStart = new Date(eb.scheduled_start).getTime() - (eb.buffer_before_minutes + eb.travel_minutes_before) * 60000;
+    const ebEnd = new Date(eb.scheduled_end).getTime() + eb.buffer_after_minutes * 60000;
+    const gap = blockStart.getTime() >= ebEnd ? blockStart.getTime() - ebEnd : ebStart - blockEnd.getTime();
+    if (gap >= 0) best = Math.min(best, gap / 60000);
+  }
+  if (best <= 0) return 15;
+  if (best <= 30) return 10;
+  if (best <= 60) return 5;
+  return 0;
 }
 
 // ─── Conversion-First Scoring ───

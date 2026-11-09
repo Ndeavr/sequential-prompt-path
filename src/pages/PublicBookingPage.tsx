@@ -246,7 +246,14 @@ export default function PublicBookingPage() {
       toast.success("Rendez-vous confirmé!");
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de la réservation");
+      const msg = String((err as { message?: string })?.message ?? "");
+      if (msg.includes("evening_cap_reached")) {
+        toast.error("Cette soirée n'est plus disponible cette semaine. Choisissez une autre plage.");
+        setSelectedSlot(null);
+        setStep("slots");
+      } else {
+        toast.error("Erreur lors de la réservation");
+      }
     } finally {
       setIsSubmitting(false);
     }
