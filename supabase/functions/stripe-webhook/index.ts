@@ -440,7 +440,9 @@ Deno.serve(async (req) => {
         const promoCode = session.metadata?.promo_code;
 
         // Founder / activation flow observability.
-        if (session.payment_status === "paid" || session.status === "complete") {
+        // A completed Checkout can still be unpaid (asynchronous payment methods).
+        // Never label it payment_succeeded until Stripe reports a paid session.
+        if (session.payment_status === "paid") {
           await logActivationStep(supabase, "stripe_payment_succeeded", {
             stripe_event_id: event.id,
             stripe_session_id: session.id,
@@ -817,7 +819,8 @@ Deno.serve(async (req) => {
         // metadata->>'stripe_session_id' empêche tout double crédit.
         if (session.metadata?.offer === "fallback_credit_350") {
           const creditContractorId = session.metadata?.contractor_id ?? null;
-          const paid = session.payment_status === "paid" || session.status === "complete";
+          // Checkout status "complete" is not proof of settled funds.
+          const paid = session.payment_status === "paid";
 
           if (creditContractorId && paid) {
             // Paiement confirmé → accès à l'espace entrepreneur (idempotent, même
