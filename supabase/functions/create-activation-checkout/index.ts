@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
           unit_amount: packPriceCents,
           product_data: {
             name: INVITED_STRIPE_COPY.productName,
-            description: OFFER.payment_note,
+            description: `Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti. ${OFFER.payment_note}`,
           },
         },
       }],
