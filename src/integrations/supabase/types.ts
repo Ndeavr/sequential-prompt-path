@@ -29283,6 +29283,121 @@ export type Database = {
           },
         ]
       }
+      contractor_booking_rules: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          declared_at: string | null
+          declared_by: string | null
+          declared_representatives: number | null
+          evening_after: string
+          max_evenings_per_week: number | null
+          prefer_compact_schedule: boolean
+          preference_status: string
+          preference_summary: string | null
+          preference_text: string | null
+          representatives_note: string | null
+          updated_at: string
+          visit_capacity: number
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          declared_at?: string | null
+          declared_by?: string | null
+          declared_representatives?: number | null
+          evening_after?: string
+          max_evenings_per_week?: number | null
+          prefer_compact_schedule?: boolean
+          preference_status?: string
+          preference_summary?: string | null
+          preference_text?: string | null
+          representatives_note?: string | null
+          updated_at?: string
+          visit_capacity?: number
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          declared_at?: string | null
+          declared_by?: string | null
+          declared_representatives?: number | null
+          evening_after?: string
+          max_evenings_per_week?: number | null
+          prefer_compact_schedule?: boolean
+          preference_status?: string
+          preference_summary?: string | null
+          preference_text?: string | null
+          representatives_note?: string | null
+          updated_at?: string
+          visit_capacity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_brand_profiles: {
         Row: {
           brand_id: string
@@ -101972,6 +102087,10 @@ export type Database = {
           p_per_missing: number
         }
         Returns: number
+      }
+      contractor_booking_constraints: {
+        Args: { p_contractor_id: string; p_from: string; p_to: string }
+        Returns: Json
       }
       contractor_busy_windows: {
         Args: { p_contractor_id: string; p_from: string; p_to: string }

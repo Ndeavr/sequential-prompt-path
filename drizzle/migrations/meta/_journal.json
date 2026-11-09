@@ -351,6 +351,13 @@
       "when": 1794262462589,
       "tag": "0049_contractor_calendar_delegations",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1794267774997,
+      "tag": "0050_contractor_booking_rules_evening_cap",
+      "breakpoints": true
     }
   ]
 }
