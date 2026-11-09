@@ -6,6 +6,7 @@ import {
 } from "../../supabase/functions/_shared/contractGuarantee";
 
 const WINDOW = { paidAt: "2026-11-10T00:00:00Z", endsAt: "2027-11-10T00:00:00Z" };
+const NOW = Date.parse("2027-01-01T00:00:00Z");
 const base: GuaranteeRecordCandidate = {
   kind: "contract", contractorAcceptedAt: "2026-12-01T00:00:00Z", clientAcceptedAt: "2026-12-02T00:00:00Z",
   clientAcceptanceEvidence: "Contrat signé par le client", scopeMatches: true,

@@ -62,13 +62,15 @@ export interface GuaranteeRecordCandidate {
 }
 
 /** Miroir du déclencheur SQL : seul un contrat accepté et prouvé des deux côtés, dans la période, compte. */
-export function isCountedContract(c: GuaranteeRecordCandidate, window: { paidAt: string; endsAt: string }): boolean {
+export function isCountedContract(c: GuaranteeRecordCandidate, window: { paidAt: string; endsAt: string }, now = Date.now()): boolean {
   if (c.kind !== "contract") return false;
   if (!c.contractorAcceptedAt || !c.clientAcceptedAt) return false;
   if ((c.clientAcceptanceEvidence ?? "").trim().length < 10) return false;
   if (c.scopeMatches !== true) return false;
   const start = Date.parse(window.paidAt);
   const end = Date.parse(window.endsAt);
+  const clientT = Date.parse(c.clientAcceptedAt);
+  if (!(clientT <= Math.min(end, now))) return false;
   return [c.contractorAcceptedAt, c.clientAcceptedAt].every((d) => {
     const t = Date.parse(d);
     return Number.isFinite(t) && t >= start && t <= end;
