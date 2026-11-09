@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { captureAttribution, trackReferralEvent } from "@/hooks/useReferralAttribution";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
+import { GUARANTEE_COPY, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
 import { ClaraWorkPanel } from "@/components/entrepreneur/ClaraContractorWorkspace";
 import UnproLogo from "@/components/brand/UnproLogo";
