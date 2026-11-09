@@ -2,6 +2,7 @@ import { handleCondoBillingEvent } from "../_shared/condoBilling.ts";
 import { isPresenceOverlapError, verifyCombinedPresenceLine } from "../_shared/annualPresence.ts";
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches, entryActivationReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
+import { guaranteeRecordArgs } from "../_shared/contractGuarantee.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
