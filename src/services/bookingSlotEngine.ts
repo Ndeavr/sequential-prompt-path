@@ -193,22 +193,70 @@ export async function fetchExternalBusy(
   return (data ?? []) as unknown as ExternalBusyWindow[];
 }
 
+// ─── Time zone (all contractor hours are America/Toronto wall-clock) ───
+
+export const BOOKING_TIME_ZONE = "America/Toronto";
+
+interface ZonedParts { year: number; month: number; day: number; hour: number; minute: number; weekday: number }
+
+const zonedFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: BOOKING_TIME_ZONE,
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23", weekday: "short",
+});
+const WEEKDAYS: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/** Wall-clock parts of an instant in America/Toronto (independent of the browser zone). */
+export function zonedParts(date: Date): ZonedParts {
+  const p: Record<string, string> = {};
+  for (const part of zonedFormatter.formatToParts(date)) p[part.type] = part.value;
+  return {
+    year: Number(p.year), month: Number(p.month), day: Number(p.day),
+    hour: Number(p.hour) % 24, minute: Number(p.minute), weekday: WEEKDAYS[p.weekday] ?? 0,
+  };
+}
+
+/** YYYY-MM-DD of an instant in America/Toronto. */
+export function zonedDayKey(date: Date): string {
+  const p = zonedParts(date);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+/** UTC instant for a America/Toronto wall-clock time (DST-safe). */
+export function zonedWallTime(year: number, month: number, day: number, hour: number, minute: number): Date {
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  let guess = target;
+  for (let i = 0; i < 3; i++) {
+    const p = zonedParts(new Date(guess));
+    const seen = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+    if (seen === target) break;
+    guess += target - seen;
+  }
+  return new Date(guess);
+}
+
 // ─── Lunch Block Helper ───
 
 function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
   if (!SLOT_DEFAULTS.lunchBlockEnabled) return false;
   const [lsH, lsM] = SLOT_DEFAULTS.lunchStart.split(":").map(Number);
   const [leH, leM] = SLOT_DEFAULTS.lunchEnd.split(":").map(Number);
-
-  const lunchStart = new Date(slotStart);
-  lunchStart.setHours(lsH, lsM, 0, 0);
-  const lunchEnd = new Date(slotStart);
-  lunchEnd.setHours(leH, leM, 0, 0);
-
+  const p = zonedParts(slotStart);
+  const lunchStart = zonedWallTime(p.year, p.month, p.day, lsH, lsM);
+  const lunchEnd = zonedWallTime(p.year, p.month, p.day, leH, leM);
   return slotStart < lunchEnd && slotEnd > lunchStart;
 }
 
 // ─── Core Slot Engine ───
+
+/** Every real source the engine reads. Busy windows carry times only. */
+export interface SlotEngineData {
+  availability: AvailabilitySlot[];
+  blackouts: Blackout[];
+  existingBookings: ExistingBooking[];
+  allTypes: AppointmentType[];
+  externalBusy: ExternalBusyWindow[];
+}
 
 export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEngineOutput> {
   const [availability, blackouts, existingBookings, allTypes, externalBusy] = await Promise.all([
@@ -218,8 +266,20 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
     fetchAppointmentTypes(input.contractorId),
     fetchExternalBusy(input.contractorId, input.dateFrom, input.dateTo),
   ]);
+  return computeSlotsFromData({ availability, blackouts, existingBookings, allTypes, externalBusy }, input);
+}
 
-  const appointmentType = allTypes.find((t) => t.id === input.appointmentTypeId);
+/**
+ * Pure slot computation shared by every surface (public booking page, Clara).
+ * Never invents a time: no availability row → no slot.
+ */
+export function computeSlotsFromData(
+  data: SlotEngineData,
+  input: SlotEngineInput,
+  now: Date = new Date(),
+): SlotEngineOutput {
+  const { availability, blackouts, existingBookings, allTypes, externalBusy } = data;
+  const appointmentType = allTypes.find((t) => t.id === input.appointmentTypeId && t.contractor_id === input.contractorId);
   if (!appointmentType) {
     return { slots: [], recommendedSlot: null, alternativeTypes: allTypes.slice(0, 3) };
   }
@@ -230,109 +290,68 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
   const travelPadding = appointmentType.travel_padding_minutes;
   const minNoticeMs = appointmentType.min_notice_hours * 3600000;
   const roundingMin = SLOT_DEFAULTS.roundingMinutes;
-  const now = new Date();
+  const todayKey = zonedDayKey(now);
 
   const rawSlots: SlotCandidate[] = [];
 
-  const currentDate = new Date(input.dateFrom);
-  while (currentDate <= input.dateTo) {
-    const dayOfWeek = currentDate.getDay();
-    const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek);
+  const fromP = zonedParts(input.dateFrom);
+  const lastKey = zonedDayKey(input.dateTo);
+  // Iterate Toronto calendar days (noon UTC anchor avoids DST edge effects).
+  const day = new Date(Date.UTC(fromP.year, fromP.month - 1, fromP.day, 12));
+  for (let guard = 0; guard < 400; guard++) {
+    const y = day.getUTCFullYear();
+    const m = day.getUTCMonth() + 1;
+    const d = day.getUTCDate();
+    const slotDay = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (slotDay > lastKey) break;
+    const dayOfWeek = day.getUTCDay();
+    day.setUTCDate(day.getUTCDate() + 1);
 
-    if (!dayAvail) {
-      currentDate.setDate(currentDate.getDate() + 1);
-      continue;
-    }
+    const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_active !== false);
+    if (!dayAvail) continue;
 
     const [startH, startM] = dayAvail.start_time.split(":").map(Number);
     const [endH, endM] = dayAvail.end_time.split(":").map(Number);
-
-    const dayStart = new Date(currentDate);
-    dayStart.setHours(startH, startM, 0, 0);
-    const dayEnd = new Date(currentDate);
-    dayEnd.setHours(endH, endM, 0, 0);
+    const dayStart = zonedWallTime(y, m, d, startH, startM);
+    const dayEnd = zonedWallTime(y, m, d, endH, endM);
 
     // Count heavy bookings already on this day
-    const slotDay = currentDate.toISOString().split("T")[0];
-    const heavyOnDay = existingBookings.filter((eb) => {
-      const ebDay = new Date(eb.scheduled_start).toISOString().split("T")[0];
-      return ebDay === slotDay;
-    }).length;
+    const heavyOnDay = existingBookings.filter((eb) => zonedDayKey(new Date(eb.scheduled_start)) === slotDay).length;
 
-    const cursor = new Date(dayStart);
-    while (cursor.getTime() + duration * 60000 <= dayEnd.getTime()) {
-      const slotStart = new Date(cursor);
-      const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+    for (let t = dayStart.getTime(); t + duration * 60000 <= dayEnd.getTime(); t += roundingMin * 60000) {
+      const slotStart = new Date(t);
+      const slotEnd = new Date(t + duration * 60000);
 
+      if (slotStart < input.dateFrom || slotStart > input.dateTo) continue;
       // Min notice check
-      if (slotStart.getTime() - now.getTime() < minNoticeMs) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
-
+      if (slotStart.getTime() - now.getTime() < minNoticeMs) continue;
       // Same-day check
-      if (!appointmentType.allows_same_day) {
-        const todayStr = now.toISOString().split("T")[0];
-        if (todayStr === slotDay) {
-          cursor.setMinutes(cursor.getMinutes() + roundingMin);
-          continue;
-        }
-      }
-
+      if (!appointmentType.allows_same_day && todayKey === slotDay) continue;
       // Lunch block check
-      if (isInLunchBlock(slotStart, slotEnd)) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
-
+      if (isInLunchBlock(slotStart, slotEnd)) continue;
       // Max daily heavy appointments
-      if (duration >= 90 && heavyOnDay >= SLOT_DEFAULTS.maxHeavyPerDay) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
+      if (duration >= 90 && heavyOnDay >= SLOT_DEFAULTS.maxHeavyPerDay) continue;
 
-      // Expanded block with buffers
+      // Expanded block with buffers and travel time
       const blockStart = new Date(slotStart.getTime() - (bufferBefore + travelPadding) * 60000);
       const blockEnd = new Date(slotEnd.getTime() + bufferAfter * 60000);
 
-      // Check blackouts
-      const inBlackout = blackouts.some((b) => {
-        const bStart = new Date(b.start_at);
-        const bEnd = new Date(b.end_at);
-        return blockStart < bEnd && blockEnd > bStart;
-      });
+      const inBlackout = blackouts.some((b) => blockStart < new Date(b.end_at) && blockEnd > new Date(b.start_at));
+      if (inBlackout) continue;
 
-      if (inBlackout) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
-
-      // Check existing bookings
       const conflicts = existingBookings.some((eb) => {
         const ebStart = new Date(new Date(eb.scheduled_start).getTime() - (eb.buffer_before_minutes + eb.travel_minutes_before) * 60000);
         const ebEnd = new Date(new Date(eb.scheduled_end).getTime() + eb.buffer_after_minutes * 60000);
         return blockStart < ebEnd && blockEnd > ebStart;
       });
+      if (conflicts) continue;
 
-      if (conflicts) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
+      // Real busy periods from the connected (or delegated) calendar
+      const externallyBusy = externalBusy.some((w) => blockStart < new Date(w.ends_at) && blockEnd > new Date(w.starts_at));
+      if (externallyBusy) continue;
 
-      // Real busy periods from the connected calendar
-      const externallyBusy = externalBusy.some((w) => {
-        const wStart = new Date(w.starts_at);
-        const wEnd = new Date(w.ends_at);
-        return blockStart < wEnd && blockEnd > wStart;
-      });
-
-      if (externallyBusy) {
-        cursor.setMinutes(cursor.getMinutes() + roundingMin);
-        continue;
-      }
-
-      const score = scoreSlot(slotStart, appointmentType, input, existingBookings);
-      const badges = computeBadges(slotStart, score, input, existingBookings);
+      const score = scoreSlot(slotStart, appointmentType, input, existingBookings, now);
+      const badges = computeBadges(slotStart, score, input, existingBookings, now);
 
       rawSlots.push({
         start: slotStart,
@@ -343,11 +362,7 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
         travelMinutes: travelPadding,
         isRecommended: false,
       });
-
-      cursor.setMinutes(cursor.getMinutes() + roundingMin);
     }
-
-    currentDate.setDate(currentDate.getDate() + 1);
   }
 
   // Sort by score descending
@@ -365,7 +380,7 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
   const maxPerDay = appointmentType.max_daily_count;
   const dayCount: Record<string, number> = {};
   const filteredSlots = rawSlots.filter((s) => {
-    const dayKey = s.start.toISOString().split("T")[0];
+    const dayKey = zonedDayKey(s.start);
     dayCount[dayKey] = (dayCount[dayKey] || 0) + 1;
     return dayCount[dayKey] <= maxPerDay * 2;
   });
@@ -386,10 +401,12 @@ function scoreSlot(
   slotStart: Date,
   type: AppointmentType,
   input: SlotEngineInput,
-  existing: ExistingBooking[]
+  existing: ExistingBooking[],
+  now: Date = new Date(),
 ): number {
   let score = 50;
-  const hour = slotStart.getHours();
+  const zp = zonedParts(slotStart);
+  const hour = zp.hour;
 
   // Morning prime time — highest closing probability
   if (hour >= 8 && hour <= 10) score += 12;
@@ -399,7 +416,7 @@ function scoreSlot(
 
   // Urgency boost
   if (input.urgencyLevel === "urgent" || input.urgencyLevel === "emergency") {
-    const hoursFromNow = (slotStart.getTime() - Date.now()) / 3600000;
+    const hoursFromNow = (slotStart.getTime() - now.getTime()) / 3600000;
     if (hoursFromNow < 6) score += 25;
     else if (hoursFromNow < 24) score += 18;
     else if (hoursFromNow < 48) score += 10;
@@ -407,9 +424,9 @@ function scoreSlot(
   }
 
   // Day clustering — operational efficiency
-  const slotDay = slotStart.toISOString().split("T")[0];
+  const slotDay = zonedDayKey(slotStart);
   const sameDayBookings = existing.filter(
-    (eb) => new Date(eb.scheduled_start).toISOString().split("T")[0] === slotDay
+    (eb) => zonedDayKey(new Date(eb.scheduled_start)) === slotDay
   ).length;
   if (sameDayBookings > 0 && sameDayBookings < 4) score += 4 * sameDayBookings;
 
@@ -428,14 +445,14 @@ function scoreSlot(
   }
 
   // Day-of-week preferences
-  const dayOfWeek = slotStart.getDay();
+  const dayOfWeek = zp.weekday;
   if (dayOfWeek >= 1 && dayOfWeek <= 4) score += 3; // Mon-Thu slightly preferred
   if (dayOfWeek === 5 && hour >= 15) score -= 5; // Late Friday penalty
   if (dayOfWeek === 6) score -= 4; // Saturday slight penalty
   if (dayOfWeek === 0) score -= 8; // Sunday penalty
 
   // Sooner is better for non-urgent (reduces no-show)
-  const daysFromNow = (slotStart.getTime() - Date.now()) / 86400000;
+  const daysFromNow = (slotStart.getTime() - now.getTime()) / 86400000;
   if (daysFromNow <= 3) score += 5;
   else if (daysFromNow <= 7) score += 2;
   else if (daysFromNow > 14) score -= 3;
@@ -447,10 +464,11 @@ function computeBadges(
   slotStart: Date,
   score: number,
   input: SlotEngineInput,
-  existing: ExistingBooking[]
+  existing: ExistingBooking[],
+  now: Date = new Date(),
 ): SlotBadge[] {
   const badges: SlotBadge[] = [];
-  const hoursFromNow = (slotStart.getTime() - Date.now()) / 3600000;
+  const hoursFromNow = (slotStart.getTime() - now.getTime()) / 3600000;
 
   if (hoursFromNow < 24) badges.push("fastest");
 
@@ -459,9 +477,9 @@ function computeBadges(
   }
 
   // Reduced travel — adjacent to existing booking
-  const slotDay = slotStart.toISOString().split("T")[0];
+  const slotDay = zonedDayKey(slotStart);
   const hasAdjacent = existing.some((eb) => {
-    const ebDay = new Date(eb.scheduled_start).toISOString().split("T")[0];
+    const ebDay = zonedDayKey(new Date(eb.scheduled_start));
     if (ebDay !== slotDay) return false;
     const ebEnd = new Date(eb.scheduled_end);
     const gap = Math.abs(slotStart.getTime() - ebEnd.getTime()) / 60000;
@@ -476,9 +494,9 @@ function computeBadges(
 
 function formatSlotLabel(start: Date, end: Date): string {
   const fmt = (d: Date) =>
-    d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit", hour12: false });
-  const dayLabel = DAY_LABELS_FR[start.getDay()];
-  const dateStr = start.toLocaleDateString("fr-CA", { day: "numeric", month: "long" });
+    d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: BOOKING_TIME_ZONE });
+  const dayLabel = DAY_LABELS_FR[zonedParts(start).weekday];
+  const dateStr = start.toLocaleDateString("fr-CA", { day: "numeric", month: "long", timeZone: BOOKING_TIME_ZONE });
   return `${dayLabel} ${dateStr}, ${fmt(start)} – ${fmt(end)}`;
 }
 
