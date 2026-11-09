@@ -14,7 +14,7 @@
 import { carryGeocodedCenters, geocodePendingRules, readTerritoryRules } from "../_shared/territoryRules.ts";
 import { placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { pinnedPublicFetch } from "../enrich-official-website/pinnedPublicFetch.ts";
+import { pinnedPublicFetch } from "../_shared/pinnedPublicFetch.ts";
 import { ANALYSIS_KEY, ANALYSIS_OPERATION, ANALYSIS_POLICY, runOwnerWebsiteAnalysis } from "./websiteAnalysis.ts";
 
 const corsHeaders = {

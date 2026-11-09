@@ -11,7 +11,7 @@
  *   a verification or consent; suggestions stay separate until the owner
  *   explicitly applies them in the wizard. No paid provider, no AI model.
  */
-import { safeUrl, publicAddress, PINNED_TRANSPORT } from "../enrich-official-website/caslFirstParty.ts";
+import { safeUrl, publicAddress, PINNED_TRANSPORT } from "../_shared/caslFirstParty.ts";
 import { extractFieldsFromHtml, parseRobots, isAllowedByRobots, type RobotsRules } from "../_shared/officialSiteCrawler.ts";
 
 export const ANALYSIS_POLICY = {
