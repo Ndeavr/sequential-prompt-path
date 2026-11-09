@@ -18,7 +18,7 @@ describe("350 Quebec tax contract", () => {
     expect(entry350TaxCollectionApproved('test',()=>undefined)).toBe(true);
     const qa=await createQa(false);
     try {
-      expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(503);
+      expect((await qa.checkout('invited',{activation_token:qa.invite().token})).status).toBe(503);
       expect((await qa.checkout('personal',{entryActivation:true},qa.ownerToken)).status).not.toBe(503);
       expect(qa.sessions).toHaveLength(0);
       expect((await qa.db.query('select * from contractors')).rows).toHaveLength(0);
@@ -42,7 +42,7 @@ describe("350 Quebec tax contract", () => {
     const qa=await createQa();
     try {
       expect((await qa.checkout('personal',{entryActivation:true,declaredCompanyName:'Atelier QA'},qa.ownerToken)).status).toBe(200);
-      expect((await qa.checkout('invited',{slug:'isolated-tax'})).status).toBe(200);
+      expect((await qa.checkout('invited',{activation_token:qa.invite().token})).status).toBe(200);
       for(const config of qa.configs) {
         expect(config.mode).toBe('payment'); expect(config.line_items).toHaveLength(1);
         expect(config.line_items[0].price_data.unit_amount).toBe(35000);

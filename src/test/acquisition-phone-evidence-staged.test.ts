@@ -39,7 +39,7 @@ const company = { id, business_name: "Synthetic Cleaning", website_url: "https:/
 const document = '<h1>Synthetic Cleaning</h1><p>Lavage de vitres 450-234-5678</p><a href="/contact">Contact</a><a href="/privacy">Politique</a>';
 function moduleHarness(options: Record<string, any> = {}) {
   const writes: any[] = []; const capture = vi.fn(async (_sb, input) => { writes.push(input); return { ok: true, evidence_id: id }; });
-  const m = load(proposed("supabase/functions/enrich-official-website/caslFirstParty.ts"), { normalizePhone, normalizeCaslDestination, sha256Hex, captureCaslEvidence: capture, resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT, normalizeServiceCategory }).exports;
+  const m = load(proposed("supabase/functions/_shared/caslFirstParty.ts"), { normalizePhone, normalizeCaslDestination, sha256Hex, captureCaslEvidence: capture, resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT, normalizeServiceCategory }).exports;
   const fetch = vi.fn(async (u: string) => new Response(u.endsWith("robots.txt") ? "User-agent: *\nDisallow:" : options.html ?? document, { headers: { "content-type": u.endsWith("robots.txt") ? "text/plain" : "text/html" } }));
   (fetch as any)[m.PINNED_TRANSPORT] = true;
   const io = { fetch, resolve: async () => ["93.184.216.34"] };

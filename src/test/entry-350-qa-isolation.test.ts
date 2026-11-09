@@ -7,7 +7,7 @@ beforeEach(async()=>{qa=await createQa();await qa.db.query(`insert into contract
 afterEach(async()=>{await qa.close();});
 async function plan(token=qa.ownerToken,target=OWNER){const r=await qa.queryAs(token,'select contractor_plan_code($1) plan',[target]);return r.rows[0].plan;}
 async function create(kind:'personal'|'invited'){
-  const result=kind==='personal'?await qa.checkout(kind,{entryActivation:true,quoteId:Q,ref:'LOCAL-QA',successUrl:'http://localhost:8080/entrepreneur/plan-personnalise/'+Q+'?ref=LOCAL-QA&session_id={CHECKOUT_SESSION_ID}',cancelUrl:'http://localhost:8080/entrepreneur/plan-personnalise/'+Q+'?ref=LOCAL-QA&checkout=canceled'},qa.ownerToken):await qa.checkout(kind,{slug:'local-qa',email:'owner-two@qa.invalid',test_mode:true});
+  const result=kind==='personal'?await qa.checkout(kind,{entryActivation:true,quoteId:Q,ref:'LOCAL-QA',successUrl:'http://localhost:8080/entrepreneur/plan-personnalise/'+Q+'?ref=LOCAL-QA&session_id={CHECKOUT_SESSION_ID}',cancelUrl:'http://localhost:8080/entrepreneur/plan-personnalise/'+Q+'?ref=LOCAL-QA&checkout=canceled'},qa.ownerToken):await qa.checkout(kind,{activation_token:qa.invite({email:'owner-two@qa.invalid'}).token,email:'owner-two@qa.invalid',test_mode:true});
   expect(result.status).toBe(200);return qa.sessions[qa.sessions.length-1];
 }
 describe('isolated SQL/session safety',()=>{
@@ -31,9 +31,11 @@ describe('isolated SQL/session safety',()=>{
   });
   it('does not release an invited payment URL when the checkout receipt write fails',async()=>{
     qa.failNext('billing_checkout_sessions');
-    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    const r=await qa.checkout('invited',{activation_token:qa.invite({email:'qa-owner@qa.invalid'}).token,email:'qa-owner@qa.invalid',test_mode:true});
     expect(r.status).toBe(503);
-    expect(r.body).toEqual({error:'checkout_record_unavailable',stage:'persist'});
+    // Stripe confirmed the expiry: reservation released, the message may say no payment is open.
+    expect(r.body).toEqual({error:'checkout_record_unavailable',stage:'persist',code:'checkout_reservation_unavailable'});
+    expect(qa.sessions[0].status).toBe('expired');
     expect(r.body.url).toBeUndefined();
     // Stripe creates a synthetic OPEN session, but no payable URL is returned
     // and no falsely completed funnel receipt is recorded.
@@ -43,7 +45,7 @@ describe('isolated SQL/session safety',()=>{
     expect((await qa.db.query('select * from contractor_activation_ledger')).rows).toHaveLength(0);
   });
   it('returns the invited URL only after a linked checkout receipt persists',async()=>{
-    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    const r=await qa.checkout('invited',{activation_token:qa.invite({email:'qa-owner@qa.invalid'}).token,email:'qa-owner@qa.invalid',test_mode:true});
     expect(r.status).toBe(200);
     expect(r.body.url).toBe(qa.sessions[0].url);
     const receipts=qa.peripheral.get('billing_checkout_sessions') ?? [];
@@ -178,14 +180,14 @@ describe.each(['personal','invited'] as const)('%s — fenêtre exacte des 12 mo
 });
 describe('invited CAD350 base never promises unverified exclusive appointments',()=>{
   it('blocks a quote-linked checkout before creating any Stripe session',async()=>{
-    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true,quote_id:Q});
+    const r=await qa.checkout('invited',{activation_token:qa.invite({email:'qa-owner@qa.invalid'}).token,email:'qa-owner@qa.invalid',test_mode:true,quote_id:Q});
     expect(r.status).toBe(409);
     expect(r.body.error).toBe('quote_requires_separate_checkout');
     expect(qa.sessions).toHaveLength(0);
     expect(qa.configs).toHaveLength(0);
   });
   it('creates an ordinary base entry without an appointment-package entitlement',async()=>{
-    const r=await qa.checkout('invited',{slug:'local-qa',email:'qa-owner@qa.invalid',test_mode:true});
+    const r=await qa.checkout('invited',{activation_token:qa.invite({email:'qa-owner@qa.invalid'}).token,email:'qa-owner@qa.invalid',test_mode:true});
     expect(r.status).toBe(200);
     expect(qa.configs).toHaveLength(1);
     const c=qa.configs[0];

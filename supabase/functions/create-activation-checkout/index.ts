@@ -1,20 +1,28 @@
-// Create a Stripe one-time checkout for the UNPRO 350 $ entry pack.
+// Stripe checkout for the invited UNPRO entry: 350 $ CA + taxes per year
+// (profile + 12 months of AI Presence, manual renewal, never automatic).
 // The legacy 1 $ activation offer is obsolete and MUST NOT be reintroduced.
-// Public: prospects can pay before having an account (email collected by Stripe).
-// Never block a payment because of an internal lookup — proceed with metadata only.
+// Public endpoint, but never a metadata-only payment: the payer is the canonical
+// prospect resolved server-side from an exact, valid token. Without that identity
+// the request is refused BEFORE Stripe and sent to the canonical sign-in/entry path.
+// One payable session per prospect (or proven existing contractor) and Stripe mode,
+// through the shared reservation (same rules as create-checkout-session).
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { OFFER } from "../_shared/offerCopy.ts";
 import { resolveStripeEnv, stripeKeyFor } from "../_shared/stripeEnv.ts";
 import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT, ENTRY350_AMOUNTS } from "../_shared/entry350Tax.ts";
 import { resolveInvitedCheckoutOrigin } from "../_shared/checkoutGuards.ts";
+import { resolveInvitedIdentity } from "../_shared/invitedIdentity.ts";
+import { decideAnnualPresence, HISTORICAL_REVIEW_MESSAGE } from "../_shared/annualPresence.ts";
+import {
+  acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveProspectReservationDeps,
+  liveReservationDeps, purchaseFingerprint, releaseIfNotCreated, stepKey,
+} from "../_shared/checkoutReservation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const ACTIVATION_PRICE_ID = "price_1TZD1rCvZwK1QnPVPZEGhJrs";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -22,16 +30,12 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-/** Session non tracée chez UNPRO : jamais remise; expiration demandée (résultat journalisé, jamais présumé). */
-// deno-lint-ignore no-explicit-any
-async function expireUntraceable(stripe: any, sessionId: string): Promise<void> {
-  try {
-    const s = await stripe.checkout.sessions.expire(sessionId);
-    if (s?.status !== "expired") console.error("[create-activation-checkout] untraceable_session_not_expired");
-  } catch {
-    console.error("[create-activation-checkout] untraceable_session_expire_failed");
-  }
-}
+/** Libellés Stripe : 350 $ par année + taxes, 12 mois, renouvellement manuel (jamais automatique). */
+const INVITED_STRIPE_COPY = {
+  productName: "UNPRO — Présence IA 12 mois (350 $ CA par année + taxes)",
+  intentDescription: "UNPRO — Présence IA 12 mois, 350 $ CA par année + taxes. Renouvellement manuel, jamais automatique.",
+  submitMessage: "350 $ CA par année, avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Couvre 12 mois; renouvellement manuel, jamais automatique. Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti.",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -52,6 +56,31 @@ Deno.serve(async (req) => {
       return json({ error: "quote_requires_separate_checkout", next_path: "/entrepreneur/devis-personnalise" }, 409);
     }
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // ── CANONICAL IDENTITY (before any Stripe object) ───────────────────────
+    const identity = await resolveInvitedIdentity(supabase, { activation_token, landing_token });
+    if (!identity.ok) return json({ error: identity.message, code: identity.code, next_path: identity.next_path }, identity.status);
+    const prospectId = identity.prospectId;
+    const stripeMode: "live" | "test" = stripeEnv === "test" ? "test" : "live";
+
+    // Existing contractor proven: same annual Presence decision and same lock as
+    // every other contractor checkout — never a second Presence between circuits.
+    if (identity.contractorId) {
+      const { data: decision, error: decisionErr } = await supabase.rpc("annual_presence_decision", {
+        _contractor_id: identity.contractorId, _include_test: stripeMode === "test",
+      });
+      const presence = decisionErr ? null : decideAnnualPresence({ rpc: decision, preRuleProposal: false });
+      if (!presence) return json({ error: "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.", code: "annual_presence_unverified" }, 503);
+      if (presence.blocked) return json({ error: HISTORICAL_REVIEW_MESSAGE, code: "historical_right_review_required", next_path: "/login" }, 409);
+      if (!presence.include) {
+        return json({ error: "Votre Présence IA est encore valide. Connectez-vous à votre espace. Aucun paiement n'a été créé.", code: "annual_presence_still_valid", valid_until: presence.validUntil, next_path: "/login" }, 409);
+      }
+    }
+
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side
     // against an ACTIVE affiliate; only a real match reaches Stripe metadata,
@@ -59,11 +88,7 @@ Deno.serve(async (req) => {
     let affiliateRefCode = "";
     let affiliateRefId = "";
     if (typeof ref === "string" && ref.trim()) {
-      const svcRef = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const { data: aff } = await svcRef
+      const { data: aff } = await supabase
         .from("affiliates")
         .select("id, referral_code")
         .eq("referral_code", ref.trim().toUpperCase())
@@ -75,40 +100,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // NEW: sms_outreach flow — resolve prospect via landing_token
-    let outreachProspectId = "";
-    let outreachCampaignId = "";
-    let outreachSlug = slug;
-
-    // /unpro/activate/:token flow — resolve the verified prospect from the SMS token.
-    // ATTRIBUTION IS READ FROM THE DATABASE ROW, NEVER FROM THE REQUEST BODY.
-    let activationProspectId = "";
+    // Attribution is read from the DATABASE ROW, never from the request body.
     let attr: {
-      acquisition_origin: string | null;
-      agent_run_id: string | null;
-      agent_name: string | null;
-      agent_version: string | null;
-      attribution_key: string | null;
-      outreach_variant: string | null;
-      human_unpro_touches: number;
+      acquisition_origin: string | null; agent_run_id: string | null; agent_name: string | null;
+      agent_version: string | null; attribution_key: string | null; outreach_variant: string | null; human_unpro_touches: number;
     } = {
       acquisition_origin: null, agent_run_id: null, agent_name: null,
       agent_version: null, attribution_key: null, outreach_variant: null, human_unpro_touches: 0,
     };
-    if (activation_token) {
-      const svc = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const { data: tk } = await svc
+    let outreachCampaignId = "";
+    if (identity.prospectTable === "verified_contractor_prospects") {
+      const { data: tk } = await supabase
         .from("verified_prospect_tokens")
-        .select("prospect_id, acquisition_origin, agent_run_id, agent_name, agent_version, attribution_key, outreach_variant, human_unpro_touches")
+        .select("acquisition_origin, agent_run_id, agent_name, agent_version, attribution_key, outreach_variant, human_unpro_touches")
         .eq("token", activation_token)
         .maybeSingle();
-      if (tk?.prospect_id) {
-        activationProspectId = tk.prospect_id as string;
-        outreachSlug = outreachSlug || `activation-${activationProspectId}`;
-      }
       if (tk) {
         attr = {
           acquisition_origin: (tk as any).acquisition_origin ?? null,
@@ -120,62 +126,20 @@ Deno.serve(async (req) => {
           human_unpro_touches: Number((tk as any).human_unpro_touches ?? 0),
         };
       }
+    } else {
+      const { data: p } = await supabase.from("prospects").select("campaign_id").eq("id", prospectId).maybeSingle();
+      outreachCampaignId = ((p as any)?.campaign_id as string) ?? "";
+      await supabase.from("prospects").update({ funnel_status: "checkout_started" }).eq("id", prospectId);
     }
 
-
-    if (landing_token) {
-      const supabaseEarly = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const { data: p } = await supabaseEarly
-        .from("prospects")
-        .select("id, campaign_id, business_name, email")
-        .eq("landing_token", landing_token)
-        .maybeSingle();
-      if (p) {
-        outreachProspectId = p.id as string;
-        outreachCampaignId = (p.campaign_id as string) ?? "";
-        outreachSlug = outreachSlug || `outreach-${p.id}`;
-        // Mark checkout_started
-        await supabaseEarly.from("prospects").update({ funnel_status: "checkout_started" }).eq("id", p.id);
-      }
-    }
-
-    if (!outreachSlug) return json({ error: "missing_slug", stage: "validate" }, 400);
-    const effectiveSlug = outreachSlug;
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const isSprint =
-      source === "isolation-qc" ||
-      String(effectiveSlug).startsWith("sprint-") ||
-      String(effectiveSlug).startsWith("isolation-");
-    const isOutreach = source === "sms_outreach" || !!landing_token;
-
-    // Best-effort prospect lookup — never block checkout if not found.
-    let prospectId = outreachProspectId || activationProspectId;
-    if (!isSprint && !prospectId) {
-      try {
-        const wp = await supabase
-          .from("war_prospects").select("id").eq("slug", effectiveSlug).maybeSingle();
-        if (wp.data?.id) prospectId = wp.data.id as string;
-        if (!prospectId) {
-          const legacy = await supabase
-            .from("prospect_pages").select("id").eq("slug", effectiveSlug).maybeSingle();
-          if (legacy.data?.id) prospectId = legacy.data.id as string;
-        }
-      } catch (_) { /* soft-fail — proceed to Stripe anyway */ }
-    }
+    const isActivation = identity.prospectTable === "verified_contractor_prospects";
+    const isOutreach = !isActivation;
+    const effectiveSlug = (typeof slug === "string" && slug.trim()) ? slug.trim().slice(0, 120)
+      : isActivation ? `activation-${prospectId}` : `outreach-${prospectId}`;
 
     // Canonical instrumentation — the CTA click is recorded SERVER-SIDE so the
     // funnel can never show more checkouts than CTA clicks (client beacons drop).
-    // Covers BOTH invited paths: /unpro/activate/:token (activation_token) and
-    // /invitation/:token/activate (landing_token).
-    const ctaTrackingId = activation_token || landing_token || null;
+    const ctaTrackingId = (isActivation ? activation_token : landing_token) || null;
     if (ctaTrackingId) {
       try {
         await supabase.rpc("record_engagement_event", {
@@ -184,11 +148,11 @@ Deno.serve(async (req) => {
           _status: "activation_cta_clicked",
           _provider: "app",
           _tracking_id: ctaTrackingId,
-          _prospect_id: prospectId || null,
-          _source_table: activation_token ? "verified_prospect_tokens" : "prospects",
+          _prospect_id: prospectId,
+          _source_table: isActivation ? "verified_prospect_tokens" : "prospects",
           _source_row_id: ctaTrackingId,
           _metadata: {
-            surface: activation_token ? "unpro_activate" : "invitation_activate",
+            surface: isActivation ? "unpro_activate" : "invitation_activate",
             source: source ?? null,
           },
           _idempotency_key: `activation_cta_clicked:${ctaTrackingId}`,
@@ -196,38 +160,22 @@ Deno.serve(async (req) => {
       } catch (_) { /* never block the payment */ }
     }
 
-
     const stripeKey = stripeKeyFor(stripeEnv);
     if (!stripeKey) {
       return json({ error: stripeEnv === "test" ? "stripe_test_not_configured" : "stripe_not_configured", stage: "stripe_init" }, 500);
     }
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-
     // Never trust a caller-supplied Origin for LIVE Stripe success/cancel URLs.
     const origin = resolveInvitedCheckoutOrigin(req.headers.get("origin"), stripeEnv);
-    const successPath = activation_token
+    const successPath = isActivation
       ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`
-      : isOutreach
-        ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
-        : isSprint
-          ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
-          : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
-    const cancelPath = activation_token
-      ? `/unpro/activate/${encodeURIComponent(activation_token)}?canceled=1`
-      : isOutreach
-        ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
-        : isSprint
-          ? `/isolation-qc?canceled=1`
-          : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
+      : `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`;
+    const cancelPath = isActivation
+      ? `/unpro/activate/${encodeURIComponent(activation_token || "")}?canceled=1`
+      : `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`;
 
-    // ── Offre d'entrée 350 $ (paiement unique) ─────────────────────────────
-    // L'offre 1 $ est OBSOLÈTE et interdite en recrutement. Toute activation
-    // passe désormais par le pack d'entrée 350 $ : profil + 12 mois de Présence IA, 0 rendez-vous
-    // inclus, aucun abonnement, aucun renouvellement automatique.
     const packPriceCents = OFFER.price_cents;
-    const priceLabel = `${Math.round(packPriceCents / 100)} $`;
-    const guaranteeLine = "Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti";
 
     const baseMetadata: Record<string, string> = {
       // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
@@ -241,9 +189,10 @@ Deno.serve(async (req) => {
       guaranteed_appointments: "",
       prospect_slug: effectiveSlug,
       prospect_id: prospectId,
+      prospect_table: identity.prospectTable,
       campaign_id: outreachCampaignId,
-      landing_token: landing_token ?? "",
-      activation_token: activation_token ?? "",
+      landing_token: isOutreach ? (landing_token ?? "") : "",
+      activation_token: isActivation ? (activation_token ?? "") : "",
       offer: "entry_pack_350",
       entry_tax_contract: ENTRY350_TAX_CONTRACT,
       // No appointment package is sold through this base-entry path.
@@ -267,50 +216,77 @@ Deno.serve(async (req) => {
       stripe_env: stripeEnv,
     };
 
+    // deno-lint-ignore no-explicit-any
+    const checkoutConfig: Record<string, any> = {
+      customer_email: email || undefined,
+      success_url: `${origin}${successPath}`,
+      cancel_url: `${origin}${cancelPath}`,
+      metadata: baseMetadata,
+      // REVENUE-CRITICAL: Stripe Adaptive Pricing showed a currency selector
+      // with USD preselected to Québec contractors. CAD only, always.
+      adaptive_pricing: { enabled: false },
+      locale: "fr-CA" as const,
+      mode: "payment",
+      line_items: [{
+        quantity: 1,
+        tax_rates: await ensureQuebecTaxRates(stripe),
+        price_data: {
+          currency: "cad",
+          unit_amount: packPriceCents,
+          product_data: {
+            name: INVITED_STRIPE_COPY.productName,
+            description: `Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti. ${OFFER.payment_note}`,
+          },
+        },
+      }],
+      payment_intent_data: { description: INVITED_STRIPE_COPY.intentDescription },
+      custom_text: { submit: { message: INVITED_STRIPE_COPY.submitMessage } },
+    };
+
+    // ── ONE PAYABLE SESSION (reservation before any Stripe object) ──────────
+    // Same request (same params) → same session or same Stripe idempotency key.
+    const fingerprint = await purchaseFingerprint({ circuit: "invited_entry_350", stripeMode, config: checkoutConfig });
+    const deps = identity.contractorId
+      ? liveReservationDeps(supabase, stripe, {
+        contractorId: identity.contractorId, stripeMode, kind: "entry_350", includesPresence: true, quoteId: null, fingerprint,
+      })
+      : liveProspectReservationDeps(supabase, stripe, {
+        prospectTable: identity.prospectTable, prospectId, stripeMode, fingerprint,
+      });
+    const acquired = await acquireCheckoutReservation(deps, { embedded: false });
+    if (acquired.kind === "refuse") return json({ error: acquired.message, code: acquired.code }, acquired.status);
+    if (acquired.kind === "reuse") return json({ url: acquired.session.url, session_id: acquired.session.id, reused: true });
+
+    checkoutConfig.metadata = { ...baseMetadata, checkout_reservation_id: acquired.reservationId };
+    // The session can never outlive its reservation.
+    checkoutConfig.expires_at = acquired.expiresAt;
+
     let session;
     try {
-      session = await stripe.checkout.sessions.create({
-        customer_email: email || undefined,
-        success_url: `${origin}${successPath}`,
-        cancel_url: `${origin}${cancelPath}`,
-        metadata: baseMetadata,
-        // REVENUE-CRITICAL: Stripe Adaptive Pricing showed a currency selector
-        // with USD preselected to Québec contractors. CAD only, always.
-        adaptive_pricing: { enabled: false },
-        locale: "fr-CA" as const,
-        mode: "payment",
-        line_items: [{
-          quantity: 1,
-          tax_rates: await ensureQuebecTaxRates(stripe),
-          price_data: {
-            currency: "cad",
-            unit_amount: packPriceCents,
-            product_data: {
-              name: `UNPRO — Pack d'entrée ${priceLabel} (paiement unique)`,
-              description: `${guaranteeLine}. ${OFFER.payment_note}`,
-            },
-          },
-        }],
-        payment_intent_data: {
-          description: `UNPRO — Pack d'entrée ${priceLabel} CA, paiement unique. ${guaranteeLine}.`,
-        },
-        custom_text: {
-          submit: {
-            message: `350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement. ${guaranteeLine}.`,
-          },
-        },
-      });
-    } catch (stripeErr: any) {
+      session = await stripe.checkout.sessions.create(checkoutConfig, { idempotencyKey: stepKey(acquired.idempotencyKey, "session") });
+    } catch (stripeErr: unknown) {
       console.error("[create-activation-checkout] stripe_create_failed");
+      // Released only on proven non-creation of a never-used reservation.
+      await releaseIfNotCreated(deps, acquired.reservationId, acquired.fresh, stripeErr, "stripe_rejected");
       return json({ error: "stripe_error", stage: "stripe_create" }, 502);
     }
 
+    const undelivered = (outcome: "released" | "blocked") => json(outcome === "released"
+      ? { error: "checkout_record_unavailable", stage: "persist", code: "checkout_reservation_unavailable" }
+      : { error: "checkout_record_unavailable", stage: "persist", code: "checkout_reconciliation_pending" }, 503);
+
+    const attached = await attachCheckoutSession(deps, acquired.reservationId, session);
+    if (!attached.ok) {
+      console.error("[create-activation-checkout] session_persist_failed");
+      return undelivered(attached.expired ? "released" : "blocked");
+    }
 
     // REVENUE-CRITICAL: persist the session so click -> checkout -> paid is
     // reconcilable without calling Stripe. Do not release the payable URL or
     // record a created-checkout event when this durable write fails.
+    // Upsert: a safe retry returns the same Stripe session.
     try {
-      const { error: persistError } = await supabase.from("billing_checkout_sessions").insert({
+      const { error: persistError } = await supabase.from("billing_checkout_sessions").upsert({
         stripe_checkout_session_id: session.id,
         amount_total: session.amount_total,
         currency: "cad",
@@ -319,31 +295,33 @@ Deno.serve(async (req) => {
         plan_code: plan_code ?? "entry_pack_350",
         acquisition_origin: attr.acquisition_origin,
         agent_run_id: attr.agent_run_id,
-        activation_token: activation_token ?? null,
+        activation_token: isActivation ? (activation_token ?? null) : null,
         attribution_key: attr.attribution_key,
-        prospect_id: prospectId || null,
+        prospect_id: prospectId,
+        contractor_id: identity.contractorId,
         metadata_json: {
           entry_tax_contract: ENTRY350_TAX_CONTRACT,
           amount_subtotal: ENTRY350_AMOUNTS.subtotal,
           amount_tax: ENTRY350_AMOUNTS.tax,
-          prospect_id: prospectId || null,
-          activation_token: activation_token ?? null,
-          landing_token: landing_token ?? null,
+          prospect_id: prospectId,
+          prospect_table: identity.prospectTable,
+          stripe_mode: stripeMode,
+          checkout_reservation_id: acquired.reservationId,
+          activation_token: isActivation ? (activation_token ?? null) : null,
+          landing_token: isOutreach ? (landing_token ?? null) : null,
           slug: effectiveSlug,
           campaign_id: outreachCampaignId || null,
           source: source ?? null,
           checkout_url: session.url ?? null,
         },
-      });
+      }, { onConflict: "stripe_checkout_session_id" });
       if (persistError) {
         console.error("[create-activation-checkout] session_persist_failed");
-        await expireUntraceable(stripe, session.id);
-        return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
+        return undelivered(await expireUndeliverable(deps, acquired.reservationId, session.id, "billing_record_failed"));
       }
-    } catch (e) {
+    } catch (_e) {
       console.error("[create-activation-checkout] session_persist_failed");
-      await expireUntraceable(stripe, session.id);
-      return json({ error: "checkout_record_unavailable", stage: "persist" }, 503);
+      return undelivered(await expireUndeliverable(deps, acquired.reservationId, session.id, "billing_record_failed"));
     }
 
     // Canonical funnel event — checkout durably recorded (step 3/5).
@@ -353,12 +331,12 @@ Deno.serve(async (req) => {
         _channel: "web",
         _provider: "stripe",
         _tracking_id: ctaTrackingId,
-        _prospect_id: prospectId || null,
+        _prospect_id: prospectId,
         _destination_url: session.url ?? null,
         _source_table: "stripe_checkout_sessions",
         _source_row_id: session.id,
         _metadata: {
-          campaign_id: outreachCampaignId ?? null,
+          campaign_id: outreachCampaignId || null,
           slug: effectiveSlug,
           amount_cents: packPriceCents,
           offer_code: "contractor_entry_pack_350",
@@ -381,14 +359,12 @@ Deno.serve(async (req) => {
     // Best-effort event log (table may not exist in all envs).
     try {
       await supabase.from("prospect_page_events").insert({
-        slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: landing_token ?? null },
+        slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: isOutreach ? (landing_token ?? null) : null },
       });
     } catch (_) { /* ignore */ }
 
-
-
     return json({ url: session.url, session_id: session.id });
-  } catch (e: any) {
+  } catch (_e: unknown) {
     console.error("[create-activation-checkout] fatal");
     return json({ error: "internal_error", stage: "fatal" }, 500);
   }

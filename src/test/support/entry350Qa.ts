@@ -14,6 +14,10 @@ import * as entryPromo from "../../../supabase/functions/_shared/entry350Promo";
 import * as webhookAuth from "../../../supabase/functions/_shared/webhookAuth";
 import * as webhookAudit from "../../../supabase/functions/_shared/webhookAuditPersistence";
 import { handleCondoBillingEvent } from "../../../supabase/functions/_shared/condoBilling";
+import * as reservation from "../../../supabase/functions/_shared/checkoutReservation";
+import * as annualPresence from "../../../supabase/functions/_shared/annualPresence";
+import * as invitedIdentity from "../../../supabase/functions/_shared/invitedIdentity";
+import { createReservationMemory } from "./reservationMemory";
 
 export const OWNER = "00000000-0000-4000-8000-000000000001";
 export const OTHER = "00000000-0000-4000-8000-000000000002";
@@ -37,6 +41,14 @@ export async function createQa(taxApproved = true) {
   let deliveryLive = true;
   let failTable: string | null = null;
   let failTerminalWebhookAudit = false;
+  let failRpc: string | null = null;
+  const reservations = createReservationMemory();
+  // Mirror of annual_presence_status: a non-revoked paid 350 receipt < 12 months = valid Presence.
+  async function presenceValid(contractorId: string): Promise<boolean> {
+    const r = await db.query<Row>(`select exists(select 1 from contractor_activation_ledger l where l.contractor_id=$1 and l.action='entry_activation_350_paid'
+      and l.created_at > now()-interval '12 months' and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[contractorId]);
+    return !!r.rows[0].v;
+  }
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
@@ -180,6 +192,22 @@ export async function createQa(taxApproved = true) {
           return {data:r.rows[0].data,error:null};
         }
         if (name === 'has_role') return {data:false,error:null};
+        if (name === 'annual_presence_decision') {
+          return {data:(await presenceValid(args._contractor_id)) ? {required:false,reason:'valid_annual_presence',valid_until:null} : {required:true,reason:'annual_presence_required',valid_until:null},error:null};
+        }
+        if (name === 'reserve_contractor_checkout' || name === 'reserve_prospect_checkout') {
+          if (failRpc===name) {failRpc=null;return {data:null,error:{message:'Injected reservation failure'}};}
+          const contractor = name === 'reserve_contractor_checkout';
+          let valid = false;
+          if (contractor && args._includes_presence) valid = await presenceValid(args._contractor_id);
+          if (!contractor) {
+            const known=(peripheral.get(args._prospect_table) ?? []).some((p:Row)=>p.id===args._prospect_id);
+            if (!known) return {data:{action:'refuse',reason:'prospect_identity_unverified'},error:null};
+          }
+          const subject = contractor ? `c:${args._contractor_id}` : `p:${args._prospect_table}:${args._prospect_id}`;
+          return {data:reservations.reserve(subject,args._stripe_mode,contractor ? !!args._includes_presence : true,args._fingerprint,args._ttl_seconds ?? 3600,valid),error:null};
+        }
+        if (name === 'settle_contractor_checkout') return {data:reservations.settle(args._reservation_id,args._status,args._stripe_session_id,args._reason),error:null};
         return {data:null,error:null}; // Explicit peripheral analytics/affiliate mocks.
       },
       from(table: string) {
@@ -189,6 +217,7 @@ export async function createQa(taxApproved = true) {
         const q: any = {
           select: (v='*') => {columns=v;return q;}, eq:(k:string,v:unknown)=>{filters.push([k,'=',v]);return q;},
           neq:(k:string,v:unknown)=>{filters.push([k,'<>',v]);return q;}, is:(k:string,v:unknown)=>{filters.push([k,'is',v]);return q;},
+          in:(k:string,v:unknown[])=>{filters.push([k,'in',v]);return q;}, gte:(k:string,v:unknown)=>{filters.push([k,'>=',v]);return q;},
           limit:(v:number)=>{limit=v;return q;}, order:()=>q,
           insert:(v:Row|Row[])=>{operation='insert';payload=v;return q;},
           update:(v:Row)=>{operation='update';payload=v;return q;},
@@ -209,7 +238,7 @@ export async function createQa(taxApproved = true) {
           if (!CORE.has(table)) {
             const rows=peripheral.get(table) ?? [];
             const val=(r:Row,k:string)=>k.split('->>').reduce((a:any,b:string)=>a?.[b],r);
-            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : val(r,k)!==v);
+            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : op==='in' ? (v as unknown[]).includes(val(r,k)) : op==='>=' ? val(r,k)>=(v as any) : val(r,k)!==v);
             if (operation==='insert'||operation==='upsert') rows.push(...(Array.isArray(payload)?payload:[payload ?? {}]));
             if (operation==='update') rows.filter(matches).forEach(r=>Object.assign(r,payload));
             peripheral.set(table,rows);
@@ -221,7 +250,7 @@ export async function createQa(taxApproved = true) {
               const args: unknown[]=[];
               const bind=(v:unknown)=>{args.push(v!==null && typeof v==='object'?JSON.stringify(v):v);return `$${args.length}`;};
               const col=(k:string)=>{if(!/^[a-z_]+(->>?[a-z_]+)*$/.test(k))throw new Error('Unsafe identifier');return k.replace(/(->>?)([a-z_]+)/g,"$1'$2'");};
-              const where=()=>filters.length ? ' WHERE '+filters.map(([k,op,v])=>op==='is'?`${col(k)} IS NULL`:`${col(k)} ${op} ${bind(v)}`).join(' AND ') : '';
+              const where=()=>filters.length ? ' WHERE '+filters.map(([k,op,v])=>op==='is'?`${col(k)} IS NULL`:op==='in'?(args.push((v as unknown[]).map(String)),`${col(k)}::text = ANY($${args.length}::text[])`):`${col(k)} ${op} ${bind(v)}`).join(' AND ') : '';
               let result: any;
               if(operation==='insert'||operation==='upsert') {
                 const values=Array.isArray(payload)?payload:[payload ?? {}]; const all:Row[]=[];
@@ -268,7 +297,12 @@ export async function createQa(taxApproved = true) {
       sessions.push(s);
       if (typeof key === 'string') checkoutRequests.set(key, { config: JSON.stringify(config), session: s });
       return s;
-    },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:deliveryLive}),
+    },
+    // Before any signed delivery a session is still open/unpaid (checkout reuse path);
+    // once delivered, Stripe reports it paid/complete (webhook verification path).
+    retrieve:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s){const e:any=new Error('No such checkout.session');e.code='resource_missing';e.statusCode=404;throw e;}
+      return s.delivered ? {...s,payment_status:'paid',status:'complete',livemode:deliveryLive} : {...s};},
+    expire:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s)throw new Error('missing');if(s.delivered){const e:any=new Error('already complete');e.statusCode=400;throw e;}s.status='expired';return {...s};},
     listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
   }
   async function load(name:string) {
@@ -276,7 +310,7 @@ export async function createQa(taxApproved = true) {
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
+    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,...reservation,...annualPresence,...invitedIdentity,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
@@ -298,6 +332,7 @@ export async function createQa(taxApproved = true) {
   }
   async function deliver(s:Row,opts:{live?:boolean;type?:string;eventId?:string;signature?:'bad'|'missing'|'test';object?:Row}={}) {
     deliveryLive = opts.live !== false;
+    s.delivered = true;
     const event={id:opts.eventId ?? `evt_local_${sessions.indexOf(s)}`,type:opts.type ?? 'checkout.session.completed',livemode:opts.live!==false,api_version:'2018-02-28',data:{object:opts.object ?? {...s,status:'complete',payment_status:'paid'}}};
     const payload=JSON.stringify(event);
     const signature=Stripe.webhooks.generateTestHeaderString({payload,secret:opts.signature==='test'?testSecret:secret});
@@ -310,7 +345,18 @@ export async function createQa(taxApproved = true) {
     const u=await user(token ?? undefined);
     return asRole(u?.id ?? null,u?'authenticated':'anon',()=>db.query<Row>(query,params));
   }
-  return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,
+  // Synthetic verified invitation (exact token row + canonical prospect row), never real data.
+  function invite(opts:{email?:string;phone?:string;token?:string;expired?:boolean;revoked?:boolean}={}) {
+    const n=(peripheral.get('verified_contractor_prospects') ?? []).length+1;
+    const id=`00000000-0000-4000-8000-${String(900+n).padStart(12,'0')}`;
+    const token=opts.token ?? `vpt_local_fixture_${n}_${'x'.repeat(12)}`;
+    peripheral.set('verified_contractor_prospects',[...(peripheral.get('verified_contractor_prospects') ?? []),{id,business_name:`QA Synthétique ${n}`,email:opts.email ?? null,phone_e164:opts.phone ?? null}]);
+    peripheral.set('verified_prospect_tokens',[...(peripheral.get('verified_prospect_tokens') ?? []),{token,prospect_id:id,
+      expires_at:opts.expired ? new Date(Date.now()-1000).toISOString() : new Date(Date.now()+86400000).toISOString(),revoked_at:opts.revoked ? new Date().toISOString() : null}]);
+    return {token,prospectId:id};
+  }
+  return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,invite,reservations,
+    failRpcNext:(name:string)=>{failRpc=name;},
     failNext:(table:string)=>{failTable=table;},
     failTerminalAuditOnce:()=>{failTerminalWebhookAudit=true;},
     close:()=>db.close()};
