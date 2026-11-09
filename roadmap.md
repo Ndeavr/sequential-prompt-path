@@ -134,4 +134,4 @@
 
 - [x] Clara contractor workspace v1 (entry → dossier → private preview → canonical checkout → factual panel), local only, not published. Open: safe owner-auth website analysis wrapper (backend review).
 
-- [ ] ISR → agenda Google « Danny » (admin) pour disponibilités + RDV Clara. Bloqué : connexion Google admin encore « revoked », sans agenda choisi ni synchro en base.
+- [ ] ISR → agenda Google « Danny » (admin) pour disponibilités + RDV Clara. En cours : connexion admin confirmée connectée + Danny choisi + synchro 22:09 UTC.
