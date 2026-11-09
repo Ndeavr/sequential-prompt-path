@@ -338,3 +338,70 @@ export function solvePack(
     unused_budget_cents: Math.max(0, total - (priced?.monthly_price_cents ?? 0)),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Monthly appointment plan commitment (P0 2026-11-09).
+// A paid monthly appointment plan must carry a POSITIVE number of exclusive
+// qualified appointments included per month, resolved by the canonical
+// budget solver (real price chain + market ceiling + contractor capacity +
+// margin). The declared target is a goal, never an included number.
+// ---------------------------------------------------------------------------
+export interface TierCommitmentInput {
+  tier_cents: number;
+  /** Declared monthly target (goal only). Caps the included volume when > 0. */
+  target_monthly_appointments: number;
+  market_ceiling: number | null;
+  contractor_capacity: number;
+  market_unavailable: boolean;
+  margin: MarginConfig;
+}
+
+export interface TierCommitment {
+  status: "resolved" | "unresolved";
+  /** Exclusive qualified appointments included per month (0 when unresolved). */
+  monthly_appointments: number;
+  period: "month";
+  outcome: ModeOutcome;
+  source: "solveBudget";
+}
+
+export function resolveTierCommitment(
+  input: TierCommitmentInput,
+  priceForTarget: (target: number) => PricedTarget,
+): TierCommitment {
+  const solved = solveBudget(
+    {
+      monthly_budget_cents: input.tier_cents,
+      market_ceiling: input.market_ceiling,
+      contractor_capacity: input.contractor_capacity,
+      market_unavailable: input.market_unavailable,
+      margin: input.margin,
+    },
+    priceForTarget,
+  );
+  const target = Math.max(0, Math.round(input.target_monthly_appointments || 0));
+  let n = Math.max(0, Math.round(solved.guaranteed_appointments));
+  if (target > 0) n = Math.min(n, target);
+  return {
+    status: n > 0 ? "resolved" : "unresolved",
+    monthly_appointments: n,
+    period: "month",
+    outcome: solved.outcome,
+    source: "solveBudget",
+  };
+}
+
+/**
+ * Server checkout gate: a paid personalized monthly appointment plan is
+ * payable only with a positive included volume stored on the quote.
+ */
+export function appointmentPlanPayable(
+  priceCents: number | null | undefined,
+  guaranteedAppointments: number | null | undefined,
+): { payable: boolean; monthly_appointments: number } {
+  const price = Math.round(Number(priceCents ?? 0));
+  const g = Math.round(Number(guaranteedAppointments ?? 0));
+  const included = Number.isFinite(g) && g > 0 ? g : 0;
+  if (!(price > 0)) return { payable: true, monthly_appointments: included };
+  return { payable: included > 0, monthly_appointments: included };
+}
