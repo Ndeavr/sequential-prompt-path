@@ -18,7 +18,7 @@ describe("garantie 10 contrats — règles pures", () => {
   });
 
   it("seul un contrat accepté et prouvé des deux côtés compte", () => {
-    expect(isCountedContract(base, WINDOW)).toBe(true);
+    expect(isCountedContract(base, WINDOW, NOW)).toBe(true);
     expect(isCountedContract({ ...base, clientAcceptedAt: null }, WINDOW)).toBe(false); // unilatéral
     expect(isCountedContract({ ...base, clientAcceptanceEvidence: null }, WINDOW)).toBe(false); // non signé / sans preuve
     expect(isCountedContract({ ...base, kind: "appointment" }, WINDOW)).toBe(false);
