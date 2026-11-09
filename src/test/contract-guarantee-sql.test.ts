@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Garantie « 350 $ : 10 contrats » — règles SQL réelles (PGlite, rôles et RLS
  * Postgres). Données synthétiques seulement; aucune connexion distante.
