@@ -17,6 +17,7 @@ import {
   solveBudget,
   solvePack,
   resolveTierCommitment,
+  budgetEntryTier,
   PACK_350_TOTAL_CENTS,
   PACK_350_MAX_APPOINTMENTS,
   PACK_350_DURATION_MONTHS,
@@ -1003,7 +1004,18 @@ Deno.serve(async (req) => {
     // (future upgrade). The tier's included volume is resolved just below.
     const internalTargetCents = finalPrice;
     let entryTier: { cents: number; label: string } | null = null;
-    if (pricingMode !== "pack" && status === "offered") {
+    if (pricingMode === "budget" && status === "offered") {
+      // Budget de repli (Clara) : jamais au-dessus du budget déclaré. Aucun
+      // palier ne tient dans le budget → aucun forfait RDV payable.
+      entryTier = budgetEntryTier(monthlyBudgetCents ?? 0, ENTRY_TIERS, body.entry_tier_cents);
+      if (entryTier) {
+        finalPrice = entryTier.cents;
+        const eligible = plans.filter((p) => p.monthly_price <= entryTier!.cents);
+        finalPlanCode = (eligible[eligible.length - 1] ?? plans[0]).code;
+      } else {
+        modeOutcome = "budget_below_floor";
+      }
+    } else if (pricingMode !== "pack" && status === "offered") {
       const requested = ENTRY_TIERS.find((t) => t.cents === Number(body.entry_tier_cents));
       entryTier = requested ?? snapToEntryTier(finalPrice);
       finalPrice = entryTier.cents;
