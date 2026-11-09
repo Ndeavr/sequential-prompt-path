@@ -24,6 +24,57 @@ export interface CalendarConnection {
   last_error_message: string | null;
   /** Permissions granted by Google, as saved by the OAuth callback. */
   scopes_json?: unknown;
+  /** Server-written selection (selected_calendar_id) — owner-readable via RLS. */
+  metadata?: unknown;
+}
+
+/**
+ * Server truth for calendar views, strongest first:
+ * reconnect_required (revoked/failed/missing permission) → not_connected →
+ * no_selection (connected, no calendar chosen) → not_synced → ready.
+ */
+export type CalendarReadiness = "not_connected" | "reconnect_required" | "no_selection" | "not_synced" | "ready";
+
+const isUsableGoogle = (c: CalendarConnection) =>
+  c.provider === "google" && c.connection_status === "connected" && hasRequiredCalendarScopes(c.scopes_json);
+
+export function selectedCalendarId(connection: CalendarConnection | null | undefined): string | null {
+  const meta = connection?.metadata;
+  if (!meta || typeof meta !== "object") return null;
+  const id = (meta as Record<string, unknown>).selected_calendar_id;
+  return typeof id === "string" && id.trim() ? id : null;
+}
+
+export function deriveCalendarReadiness(connections: CalendarConnection[]): {
+  readiness: CalendarReadiness;
+  google: CalendarConnection | null;
+} {
+  const usable = connections.find(isUsableGoogle) ?? null;
+  if (!usable) {
+    const google = connections.find((c) => c.provider === "google") ?? null;
+    return { readiness: google ? "reconnect_required" : "not_connected", google };
+  }
+  if (!selectedCalendarId(usable)) return { readiness: "no_selection", google: usable };
+  if (!usable.last_synced_at) return { readiness: "not_synced", google: usable };
+  return { readiness: "ready", google: usable };
+}
+
+/**
+ * Count a connection success only for a connection the callback just saved
+ * (connected_at is rewritten on every OAuth success) and only once per connection.
+ * Opening the success URL later never re-counts an old connection.
+ */
+export const CALENDAR_SUCCESS_WINDOW_MS = 15 * 60 * 1000;
+export function shouldTrackCalendarSuccess(
+  connectedAt: string | null | undefined,
+  nowMs: number,
+  alreadyTrackedKey: string | null,
+): boolean {
+  if (!connectedAt) return false;
+  const at = Date.parse(connectedAt);
+  if (!Number.isFinite(at)) return false;
+  if (nowMs - at > CALENDAR_SUCCESS_WINDOW_MS || at - nowMs > 60_000) return false;
+  return alreadyTrackedKey !== connectedAt;
 }
 
 /**
@@ -33,8 +84,7 @@ export interface CalendarConnection {
  */
 export function deriveCalendarCapabilities(connections: CalendarConnection[]) {
   // Connected = saved server-side AND every required Google permission granted.
-  const usable = (c: CalendarConnection) =>
-    c.provider === "google" && c.connection_status === "connected" && hasRequiredCalendarScopes(c.scopes_json);
+  const usable = isUsableGoogle;
   const isConnected = connections.some(usable);
   const hasExternalAppleFeed = connections.some(
     (c) => c.provider === "apple" && c.connection_status === "subscribed_external"
@@ -60,7 +110,7 @@ export function useCalendarConnections() {
     setLoading(true);
     const { data, error: readError } = await supabase
       .from("calendar_connections")
-      .select("id, user_id, provider, provider_account_email, connection_status, ics_token, is_primary, connected_at, last_synced_at, last_error_message, scopes_json")
+      .select("id, user_id, provider, provider_account_email, connection_status, ics_token, is_primary, connected_at, last_synced_at, last_error_message, scopes_json, metadata")
       .eq("user_id", user.id)
       .order("connected_at", { ascending: false });
     setError(Boolean(readError));
@@ -83,8 +133,9 @@ export function useCalendarConnections() {
   }, [refresh]);
 
   const { isConnected, hasExternalAppleFeed, primary } = deriveCalendarCapabilities(connections);
+  const { readiness, google } = deriveCalendarReadiness(connections);
 
-  return { connections, primary, isConnected, hasExternalAppleFeed, loading, error, refresh };
+  return { connections, primary, google, readiness, isConnected, hasExternalAppleFeed, loading, error, refresh };
 }
 
 export function useCalendarConversionTracking() {

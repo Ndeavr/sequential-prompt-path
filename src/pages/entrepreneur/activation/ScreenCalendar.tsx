@@ -1,33 +1,49 @@
 /**
  * Screen 6 — Calendar Connection
- * Google Calendar OAuth + simple availability + sticky CTA.
+ * Real Google Calendar OAuth (canonical module) + simple availability + sticky CTA.
+ * "Connecté" is shown only from the saved calendar_connections row read back from
+ * the server; a click never marks the calendar connected.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Calendar, Check, SkipForward } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Loader2, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
+import { useCalendarConnections } from "@/hooks/useCalendarConnection";
+import { calendarSuccessPath } from "@/lib/calendarReturn";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
+import ButtonConnectGoogleCalendar from "@/components/calendar/ButtonConnectGoogleCalendar";
+import GoogleCalendarSelector from "@/components/calendar/GoogleCalendarSelector";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 const TIME_SLOTS = ["8h-12h", "12h-17h", "17h-20h"];
 
+export const ACTIVATION_CALENDAR_ROUTE = "/entrepreneur/activer/calendrier";
+/** Google returns to the success check, which then brings the user back here. */
+export const ACTIVATION_CALENDAR_OAUTH_RETURN = calendarSuccessPath({
+  role: "contractor",
+  surface: "activation",
+  returnTo: ACTIVATION_CALENDAR_ROUTE,
+});
+
 export default function ScreenCalendar() {
   const navigate = useNavigate();
-  const { state, updateFunnel } = useActivationFunnel();
+  const { state, loading: funnelLoading, updateFunnel } = useActivationFunnel();
+  const { google, readiness, loading, error, refresh } = useCalendarConnections();
   const [selectedDays, setSelectedDays] = useState<string[]>(["Lun", "Mar", "Mer", "Jeu", "Ven"]);
   const [selectedSlots, setSelectedSlots] = useState<string[]>(["8h-12h", "12h-17h"]);
-  const [connected, setConnected] = useState(state.calendar_connected);
   useHesitationRescue({ screenKey: "calendar" });
 
-  const handleConnect = () => {
-    setConnected(true);
-    updateFunnel({ calendar_connected: true });
-  };
+  // Mirror the funnel flag from server truth only (both directions), never from a click.
+  const serverReady = readiness === "ready";
+  useEffect(() => {
+    if (funnelLoading || loading || error || !state.id) return;
+    if (state.calendar_connected !== serverReady) void updateFunnel({ calendar_connected: serverReady });
+  }, [funnelLoading, loading, error, state.id, state.calendar_connected, serverReady, updateFunnel]);
 
   const toggleDay = (day: string) => {
     setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
@@ -38,6 +54,17 @@ export default function ScreenCalendar() {
   };
 
   const handleContinue = () => navigate("/entrepreneur/activer/plan");
+  const email = google?.provider_account_email ?? null;
+
+  const connectButton = (label?: string) => (
+    <ButtonConnectGoogleCalendar
+      surface="activation"
+      role="contractor"
+      returnTo={ACTIVATION_CALENDAR_OAUTH_RETURN}
+      className="w-full h-12"
+      label={label}
+    />
+  );
 
   return (
     <FunnelLayout currentStep="assets_studio" showProgress={false}>
@@ -49,23 +76,53 @@ export default function ScreenCalendar() {
         <h1 className="text-2xl font-bold text-foreground mb-1">Connectez votre calendrier</h1>
         <p className="text-sm text-muted-foreground mb-6">Recevez des rendez-vous directement dans votre agenda.</p>
 
-        {/* Google Calendar connect */}
-        <div className="rounded-xl border border-border/50 bg-card/50 p-4 mb-6">
-          {connected ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <Check className="w-5 h-5 text-emerald-500" />
+        {/* Google Calendar connect — state read from the saved connection */}
+        <div className="rounded-xl border border-border/50 bg-card/50 p-4 mb-6 space-y-3" data-calendar-readiness={loading ? "loading" : error ? "error" : readiness}>
+          {loading ? (
+            <div role="status" className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" aria-hidden />
+              <p className="text-sm text-foreground">Vérification de votre agenda…</p>
+            </div>
+          ) : error ? (
+            <div role="alert" className="space-y-3">
+              <p className="text-sm text-foreground">Nous n'avons pas pu vérifier votre agenda.</p>
+              <Button variant="outline" className="w-full h-12 rounded-xl" onClick={() => void refresh()}>
+                Vérifier à nouveau
+              </Button>
+            </div>
+          ) : readiness === "not_connected" ? (
+            connectButton()
+          ) : readiness === "reconnect_required" ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 mt-0.5 text-amber-500" aria-hidden />
+                <p className="text-sm text-foreground">
+                  L'accès à Google Agenda a été retiré ou est incomplet. Reconnectez-le pour recevoir des rendez-vous.
+                </p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Google Calendar connecté</p>
-                <p className="text-xs text-muted-foreground">Vos rendez-vous seront synchronisés</p>
-              </div>
+              {connectButton("Reconnecter Google Agenda")}
             </div>
           ) : (
-            <Button variant="outline" className="w-full h-12 rounded-xl" onClick={handleConnect}>
-              <Calendar className="w-5 h-5 mr-2" />
-              Connecter Google Calendar
-            </Button>
+            <>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {readiness === "ready" ? "Prêt à recevoir des rendez-vous" : "Google Agenda connecté"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {readiness === "no_selection"
+                      ? "Choisissez votre calendrier"
+                      : readiness === "not_synced"
+                        ? "Disponibilités non encore synchronisées"
+                        : email ?? "Google Agenda"}
+                  </p>
+                </div>
+              </div>
+              {readiness === "no_selection" && <GoogleCalendarSelector />}
+            </>
           )}
         </div>
 

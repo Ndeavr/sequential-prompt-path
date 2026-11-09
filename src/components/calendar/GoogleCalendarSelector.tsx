@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useStartGoogleOAuth } from '@/hooks/useCalendarConnection';
+import { CALENDAR_CHANGED_EVENT } from '@/lib/calendarReturn';
 import { canWriteCalendar, type CalendarChoice } from '../../../supabase/functions/_shared/googleCalendarSelection';
 
 export default function GoogleCalendarSelector({ lang = 'fr' }: { lang?: 'fr' | 'en' }) {
@@ -32,6 +33,8 @@ export default function GoogleCalendarSelector({ lang = 'fr' }: { lang?: 'fr' | 
       const {data,error} = await supabase.functions.invoke('calendar-google-selection', {body:{action:'select',calendar_id:selected}});
       if(error || data?.error || !data?.synced) throw new Error('save');
       setSaved(data.selected_calendar_id);
+      // Other calendar views reread the saved server state (selection + sync time).
+      window.dispatchEvent(new Event(CALENDAR_CHANGED_EVENT));
       setMessage(en ? 'Calendar saved and busy times synchronized.' : 'Agenda enregistré et plages occupées synchronisées.');
     } catch {
       setMessage(en ? 'Calendar not changed. Check permissions and retry.' : 'Agenda non modifié. Vérifiez vos autorisations et réessayez.');
