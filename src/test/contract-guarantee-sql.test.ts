@@ -28,7 +28,7 @@ async function as<T>(uid: string | null, fn: () => Promise<T>): Promise<T> {
   try { return await fn(); } finally { await db.exec("RESET ROLE"); }
 }
 
-async function recordPayment(session: string, contractor = C1, paidAt = "2026-11-10T12:00:00Z", extra: Partial<{ subtotal: number; discount: number; mode: string }> = {}) {
+async function recordPayment(session: string, contractor = C1, paidAt = "2026-11-01T12:00:00Z", extra: Partial<{ subtotal: number; discount: number; mode: string }> = {}) {
   return as(null, async () => (await db.query<{ r: Record<string, string> }>(
     "select public.record_contract_guarantee_payment($1,'allume_350_10_contrats_v1',$2,$3,'pi_'||$3,'evt_'||$3,$4,5241,40241,$5,$6::timestamptz) r",
     [contractor, extra.mode ?? "test", session, extra.subtotal ?? 35000, extra.discount ?? 0, paidAt])).rows[0].r);
@@ -39,7 +39,7 @@ async function declare(uid: string, guarantee: string) {
     "select public.declare_guarantee_contract($1,'Installation de lumières de Noël','Laval','Client synthétique A','C-001','Contrat signé') id", [guarantee])).rows[0].id);
 }
 
-async function count(contractId: string, acceptedAt = "2026-12-01T12:00:00Z") {
+async function count(contractId: string, acceptedAt = "2026-11-05T12:00:00Z") {
   await as(ADMIN, () => db.query(
     "select public.admin_review_guarantee_contract($1,'counted','signed_contract',$2::timestamptz,'Contrat signé par le client (synthétique)',true,'Preuve synthétique vérifiée pour le test')",
     [contractId, acceptedAt]));
@@ -73,7 +73,7 @@ describe("garantie 10 contrats — paiement", () => {
     expect(replay.status).toBe("already_recorded");
     const rows = (await db.query<{ n: number; ends: string }>("select count(*)::int n, max(ends_at)::text ends from contractor_contract_guarantees")).rows[0];
     expect(rows.n).toBe(1);
-    expect(rows.ends.startsWith("2027-11-10")).toBe(true);
+    expect(rows.ends.startsWith("2027-11-01")).toBe(true);
   });
 
   it("refuse un deuxième paiement pendant une garantie en cours, un rabais ou un mauvais montant", async () => {
