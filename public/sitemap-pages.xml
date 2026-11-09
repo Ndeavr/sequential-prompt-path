@@ -36,11 +36,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://unpro.ca/entrepreneur/isolation-solution-royal</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://unpro.ca/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -174,6 +169,11 @@
   <url>
     <loc>https://unpro.ca/articles/verifier-grenier-avant-fenetres-thermopompe</loc>
     <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://unpro.ca/entrepreneur/isolation-solution-royal</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 </urlset>
