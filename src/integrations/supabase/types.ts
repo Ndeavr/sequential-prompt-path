@@ -29635,6 +29635,116 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_calendar_delegations: {
+        Row: {
+          calendar_connection_id: string
+          contractor_id: string
+          created_at: string
+          delegated_by: string
+          id: string
+          reason: string
+          revoked_at: string | null
+          revoked_by: string | null
+          selected_calendar_id: string
+          status: string
+        }
+        Insert: {
+          calendar_connection_id: string
+          contractor_id: string
+          created_at?: string
+          delegated_by: string
+          id?: string
+          reason: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          selected_calendar_id: string
+          status?: string
+        }
+        Update: {
+          calendar_connection_id?: string
+          contractor_id?: string
+          created_at?: string
+          delegated_by?: string
+          id?: string
+          reason?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          selected_calendar_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_calendar_delegations_calendar_connection_id_fkey"
+            columns: ["calendar_connection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_campaigns: {
         Row: {
           active: boolean
@@ -101873,6 +101983,10 @@ export type Database = {
       contractor_calendar_connected: {
         Args: { _contractor_id: string }
         Returns: boolean
+      }
+      contractor_delegated_calendar_connection: {
+        Args: { p_contractor_id: string }
+        Returns: string
       }
       contractor_feature_access: {
         Args: { _feature_key: string; _user_id: string }
