@@ -64,7 +64,13 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
             return q;
           },
           eq(key: string, value: string) { if (key === "id") contractor = value; return q; },
-          neq() { return q; }, limit() { return q; },
+          neq() { return q; },
+          // Mirror the production receipt-age filter without weakening the promo SQL race assertion.
+          gte(column: string, timestamp: string) {
+            if (column !== "created_at" || !Number.isFinite(Date.parse(timestamp))) throw new Error("Unexpected receipt date filter");
+            return q;
+          },
+          limit() { return q; },
           insert(value: any) { payload = value; operation = "insert"; return q; },
           upsert(value: any) { payload = value; operation = "upsert"; return q; },
           update(value: any) { payload = value; operation = "update"; return q; },
