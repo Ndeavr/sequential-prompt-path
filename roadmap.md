@@ -134,4 +134,4 @@
 
 - [x] Clara contractor workspace v1 (entry → dossier → private preview → canonical checkout → factual panel), local only, not published. Open: safe owner-auth website analysis wrapper (backend review).
 
-- [x] ISR (fiche isroyal.ca publiée-en-attente) → agenda Google « Danny » délégué (révocable). Reste : aucun type de RDV ISR configuré, donc aucun créneau réservable.
+- [x] ISR (fiche isroyal.ca publiée-en-attente) → agenda Google « Danny » délégué (révocable). Type « Inspection gratuite » 60 min actif; doublons /ai et /ai-indexed-profiles masqués + renvoi. Reste : horaires hebdomadaires ISR non déclarés (aucun créneau), sitemap/llms à régénérer, publication du renvoi.
