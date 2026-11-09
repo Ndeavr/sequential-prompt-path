@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
 
+const { ISR, TYPE, HOURS, BUSY } = vi.hoisted(() => {
 const ISR = "isr-synthetic";
 const TYPE = {
   id: "type-insp", contractor_id: ISR, title: "Inspection gratuite", slug: "inspection-gratuite",
@@ -16,7 +17,10 @@ const BUSY = [
   ["2026-11-13T16:00:00Z", "2026-11-13T17:00:00Z"],
   ["2026-11-13T18:00:00Z", "2026-11-13T19:00:00Z"],
   ["2026-11-21T15:00:00Z", "2026-11-21T16:00:00Z"],
-].map(([s, e]) => ({ starts_at: s, ends_at: e }));
+].map(([s, e]: string[]) => ({ starts_at: s, ends_at: e }));
+
+  return { ISR, TYPE, HOURS, BUSY };
+});
 
 vi.mock("@/integrations/supabase/client", () => {
   const rows: Record<string, unknown[]> = {
