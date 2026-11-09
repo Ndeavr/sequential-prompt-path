@@ -29,3 +29,4 @@ Treat every Supabase project as live infrastructure.
 - Supplier/manufacturer B2B requests (/partenariats-fournisseurs) are written only by edge `submit-supplier-partnership` into `supplier_partnership_requests` (admin-read RLS, no client grants for insert, honeypot + IP-hash rate limit, no outbound email). Why: public form must not expose a writable table or trigger unapproved outreach.
 
 Contractor publication, funnel and entitlement rules live in `supabase/functions/AGENTS.md`.
+- Security-scan fixes tighten only: an open `true` policy is replaced by admin-read only when the table is proven empty and unused by client code, edge functions, views and SQL functions (row guard inside the migration); catalog/public or in-use tables wait for an explicit owner decision. Why: never break live flows or hide findings to unblock publication.
