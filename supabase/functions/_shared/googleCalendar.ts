@@ -30,6 +30,28 @@ export interface GoogleConnectionRow {
   expires_at: string | null;
 }
 
+/**
+ * True only when Google says the token itself is unusable (401) or lacks the
+ * granted permission (403 insufficient scope). Other 403s — Calendar API not
+ * enabled, quota/rate limits, calendar-level refusals — are not a revocation
+ * and must never mark the contractor's connection as revoked.
+ */
+export function isGoogleAuthFailure(status: number, body: unknown): boolean {
+  if (status === 401) return true;
+  if (status !== 403) return false;
+  const err = (body as { error?: { status?: string; errors?: { reason?: string }[]; details?: { reason?: string }[] } })?.error;
+  const reasons = [
+    ...(err?.errors ?? []).map((e) => e?.reason),
+    ...(err?.details ?? []).map((d) => d?.reason),
+  ];
+  return reasons.some((r) => r === "insufficientPermissions" || r === "ACCESS_TOKEN_SCOPE_INSUFFICIENT");
+}
+
+function googleErrorReason(body: unknown): string {
+  const err = (body as { error?: { errors?: { reason?: string }[]; status?: string } })?.error;
+  return err?.errors?.[0]?.reason ?? err?.status ?? "";
+}
+
 interface SupabaseLike {
   from: (table: string) => {
     update: (values: Record<string, unknown>) => {
