@@ -63,13 +63,11 @@ describe("ISR weekly hours (synthetic)", () => {
     const wk = slots.filter((s) => s.start.getDay() >= 1 && s.start.getDay() <= 5);
     expect(wk.length).toBeGreaterThan(0);
     for (const s of wk) { expect(hm(s.start)).toBeGreaterThanOrEqual(660); expect(hm(s.end)).toBeLessThanOrEqual(1140); }
-    expect(Math.max(...wk.map((s) => hm(s.end)))).toBe(1140);
   });
   it("Saturday slots stay within 09:30–14:00", () => {
     const sat = slots.filter((s) => s.start.getDay() === 6);
     expect(sat.length).toBeGreaterThan(0);
     for (const s of sat) { expect(hm(s.start)).toBeGreaterThanOrEqual(570); expect(hm(s.end)).toBeLessThanOrEqual(840); }
-    expect(Math.max(...sat.map((s) => hm(s.end)))).toBe(840);
   });
   it("no slot (with 15 min travel before, 15 min buffer after) touches a Danny busy window", () => {
     for (const s of slots) {
@@ -81,6 +79,22 @@ describe("ISR weekly hours (synthetic)", () => {
   });
   it("every slot lasts 60 minutes", () => {
     for (const s of slots) expect(s.end.getTime() - s.start.getTime()).toBe(3600000);
+  });
+  it("uncapped single days: last weekday slot 18:00–19:00, last Saturday slot 13:00–14:00, Sunday empty", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T23:30:00Z"));
+    (TYPE as any).max_daily_count = 100;
+    const day = async (d: number) => (await computeSmartSlots({ contractorId: ISR, appointmentTypeId: TYPE.id,
+      dateFrom: new Date(2026, 10, d, 0, 0), dateTo: new Date(2026, 10, d, 23, 59) })).slots;
+    const thu = await day(12), sat = await day(14), sun = await day(15);
+    (TYPE as any).max_daily_count = 5;
+    vi.useRealTimers();
+    expect(Math.max(...thu.map((s) => hm(s.end)))).toBe(1140);
+    expect(Math.min(...thu.map((s) => hm(s.start)))).toBe(660);
+    expect(Math.max(...sat.map((s) => hm(s.end)))).toBe(840);
+    expect(Math.min(...sat.map((s) => hm(s.start)))).toBe(570);
+    expect(sun).toHaveLength(0);
+    console.log("THU", thu.map((s) => `${s.start.getHours()}:${String(s.start.getMinutes()).padStart(2, "0")}`).join(" "));
   });
   it("prints day summary", () => {
     const by: Record<string, string[]> = {};
