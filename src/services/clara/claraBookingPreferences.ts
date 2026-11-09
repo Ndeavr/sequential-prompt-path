@@ -62,7 +62,7 @@ function daysIn(clause: string): number[] {
 }
 
 function hoursIn(clause: string, defaultKind: "end" | "start" | null): DayHoursChange | null {
-  if (/\bferm[ée]e?s?\b|\bcongé\b|\bpas de (?:visite|rendez-vous)\b/.test(clause)) return { closed: true };
+  if (/\bferm[ée]e?s?(?![a-zà-ÿ])|\bcongé(?![a-zà-ÿ])|\bpas de (?:visite|rendez-vous)\b/.test(clause)) return { closed: true };
   const range = clause.match(new RegExp(`${TIME}\\s*(?:à|a|-|–|au)\\s*${TIME}`));
   if (range) {
     const start = time(range[1], range[2]);

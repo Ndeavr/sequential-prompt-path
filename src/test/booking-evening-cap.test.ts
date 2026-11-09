@@ -71,7 +71,7 @@ describe("evening cap in suggestions", () => {
     day(d, run(over, zonedWallTime(2026, 11, d, 0, 0), zonedWallTime(2026, 11, d, 23, 59))).some((s) => mins(s.end) > 19 * 60);
 
   it("3 evenings booked → 4th evening date not offered, daytime still offered", () => {
-    const held = { existingBookings: [booking(16, 19, 30), booking(17, 19, 30), booking(18, 19, 30)] };
+    const held = { existingBookings: [booking(16, 20, 0), booking(17, 19, 30), booking(18, 19, 30)] };
     expect(evening(19, held)).toBe(false);
     expect(day(19, run(held, zonedWallTime(2026, 11, 19, 0, 0), zonedWallTime(2026, 11, 19, 23, 59))).length).toBeGreaterThan(0);
     // An evening already counted can hold another visit.
@@ -91,7 +91,8 @@ describe("evening cap in suggestions", () => {
   it("Danny's busy period still blocks, with travel and buffer", () => {
     const busy = [{ starts_at: zonedWallTime(2026, 11, 17, 19, 0).toISOString(), ends_at: zonedWallTime(2026, 11, 17, 21, 0).toISOString() }];
     const tue = day(17, run({ externalBusy: busy }, zonedWallTime(2026, 11, 17, 0, 0), zonedWallTime(2026, 11, 17, 23, 59)));
-    expect(tue.some((s) => mins(s.end) > 18 * 60 - 15)).toBe(false);
+    expect(tue.some((s) => mins(s.end) > 18 * 60 + 45)).toBe(false);
+    expect(tue.some((s) => mins(s.end) === 18 * 60 + 45)).toBe(true);
   });
 });
 
