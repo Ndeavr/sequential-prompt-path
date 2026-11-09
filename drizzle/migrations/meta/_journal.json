@@ -330,6 +330,13 @@
       "when": 1794184129571,
       "tag": "0046_invited_checkout_reservation_and_mode_separated_presence_evidence",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794243190110,
+      "tag": "0047_contract_guarantee_offer",
+      "breakpoints": true
     }
   ]
 }

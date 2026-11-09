@@ -14,6 +14,7 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
+import { GUARANTEE_COPY, GUARANTEE_OFFER, GUARANTEE_OFFER_CODE } from "../_shared/contractGuarantee.ts";
 import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
 import {
   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
       declaredCompanyName,
       entryPromoCode,
       entryPromoPreview,
+      offerVersion,
       auditId,
       campaign,
       source,
@@ -344,6 +346,28 @@ Deno.serve(async (req) => {
         if (usedRow) return promoRefuse("promo_used");
         entryPromo = r;
       }
+      // ── OFFRE « 10 contrats garantis » (campagne /allume) ───────────────
+      // Version immuable lue en base; prix complet seulement (aucun code promo,
+      // aucun devis combiné). Le webhook signé crée la garantie après paiement.
+      let guaranteeOffer = false;
+      if (offerVersion !== undefined && offerVersion !== null && offerVersion !== "") {
+        const refuseOffer = (code: string, error: string, status = 409) => new Response(JSON.stringify({ code, error }),
+          { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (!isEntryActivation || offerVersion !== GUARANTEE_OFFER_CODE) return refuseOffer("offer_version_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.", 400);
+        if (promoInput) return refuseOffer("guarantee_promo_incompatible", "L'offre 10 contrats garantis se paie au prix complet de 350 $ + taxes; retirez le code promo. Rien n'a été facturé.");
+        if (quoteId) return refuseOffer("guarantee_quote_incompatible", "L'offre 10 contrats garantis ne se combine pas avec un devis de rendez-vous. Rien n'a été facturé.");
+        const { data: ov, error: ovErr } = await serviceClient.from("contractor_offer_versions")
+          .select("code,is_active,base_amount_cents,guaranteed_contracts,refund_per_missing_cents,refund_cap_cents,term_months,auto_renew")
+          .eq("code", GUARANTEE_OFFER_CODE).maybeSingle();
+        if (ovErr) return refuseOffer("offer_version_unverified", "Impossible de vérifier l'offre. Rien n'a été facturé.", 503);
+        if (!ov?.is_active || ov.base_amount_cents !== GUARANTEE_OFFER.baseAmountCents || ov.guaranteed_contracts !== GUARANTEE_OFFER.guaranteedContracts
+          || ov.refund_per_missing_cents !== GUARANTEE_OFFER.refundPerMissingCents || ov.refund_cap_cents !== GUARANTEE_OFFER.refundCapCents
+          || ov.term_months !== GUARANTEE_OFFER.termMonths || ov.auto_renew !== false) {
+          return refuseOffer("offer_version_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.");
+        }
+        guaranteeOffer = true;
+      }
+
       if (isEntryActivation && entryPromoPreview === true) {
         if (!entryPromo) return new Response(JSON.stringify({ code: "promo_invalid", error: "Ce code n'est pas valide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         return new Response(JSON.stringify({ code: "promo_valid", amounts: ENTRY350_PROMO_AMOUNTS }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -518,7 +542,9 @@ Deno.serve(async (req) => {
               unit_amount: amountCents,
               // Promo : la ligne utilise le seul produit Stripe autorisé par le coupon.
               ...(entryPromo ? { product: entryPromo.productId } : {}),
-              ...(entryPromo ? {} : { product_data: isEntryActivation
+              ...(entryPromo ? {} : { product_data: guaranteeOffer
+                ? { name: GUARANTEE_COPY.stripeName, description: GUARANTEE_COPY.stripeDescription }
+                : isEntryActivation
                 ? {
                     name: "Activation du profil UNPRO",
                     description: entryGuaranteed
@@ -546,6 +572,7 @@ Deno.serve(async (req) => {
                 ...(entryPromo ? { promo_code: "PROMO", promo_code_id: entryPromo.promotionCodeId, promo_coupon_id: entryPromo.couponId, promo_discount_cents: String(ENTRY350_PROMO_AMOUNTS.discount) } : {}),
                 presence_ia_months: "12",
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
+                ...(guaranteeOffer ? { offer_version: GUARANTEE_OFFER_CODE, guaranteed_contracts: String(GUARANTEE_OFFER.guaranteedContracts) } : {}),
               }
             : { credit_amount_cents: String(amountCents) }),
           ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
@@ -561,7 +588,9 @@ Deno.serve(async (req) => {
         },
       };
 
-      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: entryPromo
+      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: guaranteeOffer
+        ? GUARANTEE_COPY.stripeSubmit
+        : entryPromo
         ? "350 $ CA − code PROMO 349 $ = 1,00 $ avant taxes. TPS : 0,05 $; TVQ : 0,10 $; total : 1,15 $ CA. Paiement unique."
         : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
       if (entryPromo) {
