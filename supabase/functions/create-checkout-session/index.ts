@@ -508,8 +508,9 @@ Deno.serve(async (req) => {
               status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
-          const g = Number((eq?.pricing_explanation as Record<string, unknown> | null)?.guaranteed_appointments ?? 0);
-          entryGuaranteed = Number.isFinite(g) && g > 0 ? Math.round(g) : null;
+          // L'activation 350 $ n'inclut aucun RDV par défaut : le volume d'un
+          // forfait mensuel du devis n'est jamais transféré à ce paiement unique.
+          entryGuaranteed = null;
         }
       }
 
@@ -898,11 +899,12 @@ Deno.serve(async (req) => {
     // ── PERSONALIZED QUOTE OVERRIDE ──
     // When quoteId is present, the AI-recommended price becomes the single source of truth.
     let personalizedPriceCents: number | null = null;
+    let quoteIncludedAppointments = 0;
     let quoteRow: any = null;
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, user_id, contractor_id, company_name, city, trade_primary, input_payload, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
+        .select("id, user_id, contractor_id, company_name, city, trade_primary, input_payload, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at, guaranteed_appointments")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -945,6 +947,17 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // P0 2026-11-09 : jamais de forfait mensuel de rendez-vous payant sans
+      // volume POSITIF inclus sur le devis (y compris les anciens devis non payés).
+      const commitment = appointmentPlanPayable(q.recommended_monthly_price, q.guaranteed_appointments);
+      if (!commitment.payable) {
+        console.warn("[checkout:appointment_commitment_missing]", { quote_id: quoteId });
+        return new Response(JSON.stringify({
+          error: "Le nombre de rendez-vous inclus dans ce forfait n'est pas encore confirmé. Aucun paiement n'a été créé.",
+          code: "appointment_commitment_missing",
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      quoteIncludedAppointments = commitment.monthly_appointments;
       if ((await serviceClient.rpc("canonical_plan_code", { _code: q.recommended_plan })).data !== resolvedPlanCode) {
         return new Response(
           JSON.stringify({
