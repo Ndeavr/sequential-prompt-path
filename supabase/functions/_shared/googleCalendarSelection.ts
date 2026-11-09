@@ -5,6 +5,36 @@ export function selectedGoogleCalendar(metadata: unknown): string {
   return id;
 }
 export const canWriteCalendar = (role: string) => ['owner', 'writer', 'writerWithoutPrivateAccess'].includes(role);
+
+export const REQUIRED_GOOGLE_CALENDAR_SCOPES = [
+  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
+] as const;
+
+/** Google may grant a subset of scopes (granular consent). Both calendar scopes are required. */
+export function grantedRequiredCalendarScopes(scope: string | null | undefined): boolean {
+  const granted = new Set((scope ?? '').split(/\s+/).filter(Boolean));
+  return REQUIRED_GOOGLE_CALENDAR_SCOPES.every((s) => granted.has(s));
+}
+
+const SELECTION_KEYS = ['selected_calendar_id', 'selected_calendar_name', 'selected_calendar_access_role', 'calendar_snapshot_version'];
+
+/**
+ * Metadata saved on (re)connection. The contractor's calendar choice survives a
+ * reconnection of the SAME Google account; a different account drops it so
+ * free/busy and event writes never target a calendar the new account was not chosen for.
+ */
+export function reconnectMetadata(
+  existing: unknown,
+  googleUserId: string | null | undefined,
+  name: string | null | undefined,
+): Record<string, unknown> {
+  const previous = (existing && typeof existing === 'object' ? existing : {}) as Record<string, unknown>;
+  const next: Record<string, unknown> = { google_user_id: googleUserId ?? null, name: name ?? null };
+  const sameAccount = !!googleUserId && previous.google_user_id === googleUserId;
+  if (sameAccount) for (const key of SELECTION_KEYS) if (key in previous) next[key] = previous[key];
+  return next;
+}
 export async function listGoogleCalendars(token: string): Promise<CalendarChoice[]> {
   const calendars: CalendarChoice[] = [];
   let pageToken: string | undefined;

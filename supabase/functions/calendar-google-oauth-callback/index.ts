@@ -6,6 +6,7 @@ import {
   encryptCalendarToken,
   verifyCalendarOAuthState,
 } from "../_shared/calendarOAuthState.ts";
+import { grantedRequiredCalendarScopes, reconnectMetadata } from "../_shared/googleCalendarSelection.ts";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -67,6 +68,9 @@ Deno.serve(async (req) => {
       return failure("token_exchange");
     }
     if (!tokenJson.access_token) return failure("token_exchange");
+    // Granular consent: the user may untick calendar permissions. Never save a
+    // "connected" calendar that cannot read availability or write appointments.
+    if (!grantedRequiredCalendarScopes(tokenJson.scope)) return failure("scope_denied");
 
     // Userinfo
     const uiRes = await fetch(USERINFO_URL, {
@@ -83,7 +87,7 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + (tokenJson.expires_in ?? 3600) * 1000).toISOString();
     const { data: existingConnection } = await supabaseAdmin
       .from("calendar_connections")
-      .select("refresh_token_encrypted")
+      .select("refresh_token_encrypted, metadata")
       .eq("user_id", verifiedState.user_id)
       .eq("provider", "google")
       .maybeSingle();
@@ -111,7 +115,8 @@ Deno.serve(async (req) => {
           connected_at: new Date().toISOString(),
           last_synced_at: null,
           last_error_message: null,
-          metadata: { google_user_id: userinfo.id, name: userinfo.name },
+          // Keep the contractor's chosen calendar when the same Google account reconnects.
+          metadata: reconnectMetadata(existingConnection?.metadata, userinfo.id, userinfo.name),
         },
         { onConflict: "user_id,provider" },
       );
