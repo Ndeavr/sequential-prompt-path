@@ -188,7 +188,7 @@ export async function createQa(taxApproved = true) {
         const filters: [string,string,unknown][]=[];
         const q: any = {
           select: (v='*') => {columns=v;return q;}, eq:(k:string,v:unknown)=>{filters.push([k,'=',v]);return q;},
-          neq:(k:string,v:unknown)=>{filters.push([k,'<>',v]);return q;}, is:(k:string,v:unknown)=>{filters.push([k,'is',v]);return q;},
+          neq:(k:string,v:unknown)=>{filters.push([k,'<>',v]);return q;}, gte:(k:string,v:unknown)=>{filters.push([k,'>=',v]);return q;}, is:(k:string,v:unknown)=>{filters.push([k,'is',v]);return q;},
           limit:(v:number)=>{limit=v;return q;}, order:()=>q,
           insert:(v:Row|Row[])=>{operation='insert';payload=v;return q;},
           update:(v:Row)=>{operation='update';payload=v;return q;},
@@ -209,7 +209,7 @@ export async function createQa(taxApproved = true) {
           if (!CORE.has(table)) {
             const rows=peripheral.get(table) ?? [];
             const val=(r:Row,k:string)=>k.split('->>').reduce((a:any,b:string)=>a?.[b],r);
-            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : val(r,k)!==v);
+            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : op==='>=' ? val(r,k)!=null && String(val(r,k)) >= String(v) : val(r,k)!==v);
             if (operation==='insert'||operation==='upsert') rows.push(...(Array.isArray(payload)?payload:[payload ?? {}]));
             if (operation==='update') rows.filter(matches).forEach(r=>Object.assign(r,payload));
             peripheral.set(table,rows);

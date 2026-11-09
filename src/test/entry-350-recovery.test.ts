@@ -12,6 +12,11 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
       let operation = "read", payload: any, other = false;
       const query: any = {
         select: () => query, eq: () => query, limit: () => query,
+        // All fixture receipts are synthetic and recent; validate the production filter shape.
+        gte: (column: string, timestamp: string) => {
+          if (column !== "created_at" || !Number.isFinite(Date.parse(timestamp))) throw new Error("Unexpected receipt date filter");
+          return query;
+        },
         neq: (key: string) => { other = key === "metadata->>stripe_session_id"; return query; },
         insert: (value: any) => { operation = "insert"; payload = value; return query; },
         update: (value: any) => { operation = "update"; payload = value; return query; },
