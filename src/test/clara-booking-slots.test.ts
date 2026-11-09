@@ -110,13 +110,13 @@ describe("Clara booking gate", () => {
   it("pending-verification business is never proposed publicly", () => {
     const gate = resolveClaraBookingGate({ ...base, publicStatus: "published_pending_verification" });
     expect(gate.ok).toBe(false);
-    if (!gate.ok) expect(gate.reason).toBe("not_verified");
+    if ("reason" in gate) expect(gate.reason).toBe("not_verified");
   });
 
   it("verified business hands off to the same booking route", () => {
     const gate = resolveClaraBookingGate({ ...base, publicStatus: "verified_active", appointmentTypeId: "type-inspection" });
     expect(gate.ok).toBe(true);
-    if (gate.ok) expect(gate.bookingPath).toBe("/book/isolation-solution-royal/inspection-gratuite");
+    if ("bookingPath" in gate) expect(gate.bookingPath).toBe("/book/isolation-solution-royal/inspection-gratuite");
   });
 
   it("rejects a type that is inactive, not Clara-bookable or foreign", () => {

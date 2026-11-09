@@ -66,7 +66,7 @@ export default function PanelAppointmentSchedulerInline({
           types,
           appointmentTypeId,
         });
-        if (!gate.ok) {
+        if ("reason" in gate) {
           if (live) setState({ kind: "blocked", message: gate.message });
           return;
         }
