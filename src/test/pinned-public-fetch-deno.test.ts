@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 import { Buffer } from "node:buffer";
 import ts from "typescript";
 
-const target = "supabase/functions/enrich-official-website/pinnedPublicFetch.ts";
+const target = "supabase/functions/_shared/pinnedPublicFetch.ts";
 const published = "https://cleanvents.ca/robots.txt";
 function harness(opts: {
   addresses?: string[]; status?: number; tlsAuthorized?: boolean;
