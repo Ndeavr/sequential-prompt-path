@@ -18,6 +18,7 @@ import {
   solvePack,
   resolveTierCommitment,
   budgetEntryTier,
+  sanitizeBudgetFallback,
   PACK_350_TOTAL_CENTS,
   PACK_350_MAX_APPOINTMENTS,
   PACK_350_DURATION_MONTHS,
@@ -1417,7 +1418,7 @@ Deno.serve(async (req) => {
       annual_savings_cents: annualSavingsCents,
       competition_level: competitionLevel,
       source: body.source ?? null,
-      input_payload: { ...body, affiliate_proposal_token: undefined, ...(proposalContext ? { affiliate_proposal_id: proposalContext.id, affiliate_ref: proposalContext.ref, affiliate_prospect_id: proposalContext.prospect_id } : {}) },
+      input_payload: { ...body, affiliate_proposal_token: undefined, budget_fallback: pricingMode === "budget" ? sanitizeBudgetFallback((body as Record<string, unknown>).budget_fallback, monthlyBudgetCents) : undefined, ...(proposalContext ? { affiliate_proposal_id: proposalContext.id, affiliate_ref: proposalContext.ref, affiliate_prospect_id: proposalContext.prospect_id } : {}) },
 
       breakdown,
     };

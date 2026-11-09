@@ -423,3 +423,32 @@ export function budgetEntryTier<T extends { cents: number }>(
   const requested = fitting.find((t) => t.cents === Number(requestedCents));
   return requested ?? fitting[fitting.length - 1];
 }
+
+export interface BudgetFallbackRecord {
+  /** Quote holding the contractor's initial objective (unchanged). */
+  from_quote_id: string | null;
+  /** Initial objective kept for the record — never an included number. */
+  initial_target_monthly_appointments: number | null;
+  initial_goal_amount: number | null;
+  /** Budget the contractor said they are comfortable starting with (CAD cents). */
+  monthly_budget_cents: number;
+  reason: "hesitation" | "budget_change";
+  surface: "plan_clara_budget";
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Whitelist the client-sent fallback context; the budget always comes from the solved request. */
+export function sanitizeBudgetFallback(raw: unknown, monthlyBudgetCents: number | null): BudgetFallbackRecord | null {
+  if (!raw || typeof raw !== "object" || !(monthlyBudgetCents && monthlyBudgetCents > 0)) return null;
+  const r = raw as Record<string, unknown>;
+  const pos = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
+  return {
+    from_quote_id: typeof r.from_quote_id === "string" && UUID_RE.test(r.from_quote_id) ? r.from_quote_id : null,
+    initial_target_monthly_appointments: pos(r.initial_target_monthly_appointments),
+    initial_goal_amount: pos(r.initial_goal_amount),
+    monthly_budget_cents: Math.round(monthlyBudgetCents),
+    reason: r.reason === "budget_change" ? "budget_change" : "hesitation",
+    surface: "plan_clara_budget",
+  };
+}
