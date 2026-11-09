@@ -217,6 +217,7 @@ export async function createQa(taxApproved = true) {
         const q: any = {
           select: (v='*') => {columns=v;return q;}, eq:(k:string,v:unknown)=>{filters.push([k,'=',v]);return q;},
           neq:(k:string,v:unknown)=>{filters.push([k,'<>',v]);return q;}, is:(k:string,v:unknown)=>{filters.push([k,'is',v]);return q;},
+          in:(k:string,v:unknown[])=>{filters.push([k,'in',v]);return q;}, gte:(k:string,v:unknown)=>{filters.push([k,'>=',v]);return q;},
           limit:(v:number)=>{limit=v;return q;}, order:()=>q,
           insert:(v:Row|Row[])=>{operation='insert';payload=v;return q;},
           update:(v:Row)=>{operation='update';payload=v;return q;},
@@ -237,7 +238,7 @@ export async function createQa(taxApproved = true) {
           if (!CORE.has(table)) {
             const rows=peripheral.get(table) ?? [];
             const val=(r:Row,k:string)=>k.split('->>').reduce((a:any,b:string)=>a?.[b],r);
-            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : val(r,k)!==v);
+            const matches=(r:Row)=>filters.every(([k,op,v])=>op==='=' ? val(r,k)===v : op==='is' ? val(r,k)==null : op==='in' ? (v as unknown[]).includes(val(r,k)) : op==='>=' ? val(r,k)>=(v as any) : val(r,k)!==v);
             if (operation==='insert'||operation==='upsert') rows.push(...(Array.isArray(payload)?payload:[payload ?? {}]));
             if (operation==='update') rows.filter(matches).forEach(r=>Object.assign(r,payload));
             peripheral.set(table,rows);
@@ -249,7 +250,7 @@ export async function createQa(taxApproved = true) {
               const args: unknown[]=[];
               const bind=(v:unknown)=>{args.push(v!==null && typeof v==='object'?JSON.stringify(v):v);return `$${args.length}`;};
               const col=(k:string)=>{if(!/^[a-z_]+(->>?[a-z_]+)*$/.test(k))throw new Error('Unsafe identifier');return k.replace(/(->>?)([a-z_]+)/g,"$1'$2'");};
-              const where=()=>filters.length ? ' WHERE '+filters.map(([k,op,v])=>op==='is'?`${col(k)} IS NULL`:`${col(k)} ${op} ${bind(v)}`).join(' AND ') : '';
+              const where=()=>filters.length ? ' WHERE '+filters.map(([k,op,v])=>op==='is'?`${col(k)} IS NULL`:op==='in'?(args.push((v as unknown[]).map(String)),`${col(k)}::text = ANY($${args.length}::text[])`):`${col(k)} ${op} ${bind(v)}`).join(' AND ') : '';
               let result: any;
               if(operation==='insert'||operation==='upsert') {
                 const values=Array.isArray(payload)?payload:[payload ?? {}]; const all:Row[]=[];
@@ -296,7 +297,12 @@ export async function createQa(taxApproved = true) {
       sessions.push(s);
       if (typeof key === 'string') checkoutRequests.set(key, { config: JSON.stringify(config), session: s });
       return s;
-    },retrieve:async(id:string)=>({...sessions.find(s=>s.id===id),payment_status:'paid',status:'complete',livemode:deliveryLive}),
+    },
+    // Before any signed delivery a session is still open/unpaid (checkout reuse path);
+    // once delivered, Stripe reports it paid/complete (webhook verification path).
+    retrieve:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s){const e:any=new Error('No such checkout.session');e.code='resource_missing';e.statusCode=404;throw e;}
+      return s.delivered ? {...s,payment_status:'paid',status:'complete',livemode:deliveryLive} : {...s};},
+    expire:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s)throw new Error('missing');if(s.delivered){const e:any=new Error('already complete');e.statusCode=400;throw e;}s.status='expired';return {...s};},
     listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
   }
   async function load(name:string) {
@@ -304,7 +310,7 @@ export async function createQa(taxApproved = true) {
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
+    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,...reservation,...annualPresence,...invitedIdentity,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
@@ -326,6 +332,7 @@ export async function createQa(taxApproved = true) {
   }
   async function deliver(s:Row,opts:{live?:boolean;type?:string;eventId?:string;signature?:'bad'|'missing'|'test';object?:Row}={}) {
     deliveryLive = opts.live !== false;
+    s.delivered = true;
     const event={id:opts.eventId ?? `evt_local_${sessions.indexOf(s)}`,type:opts.type ?? 'checkout.session.completed',livemode:opts.live!==false,api_version:'2018-02-28',data:{object:opts.object ?? {...s,status:'complete',payment_status:'paid'}}};
     const payload=JSON.stringify(event);
     const signature=Stripe.webhooks.generateTestHeaderString({payload,secret:opts.signature==='test'?testSecret:secret});
