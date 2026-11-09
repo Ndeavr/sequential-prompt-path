@@ -9,7 +9,8 @@ describe("entry ladder", () => {
   });
   it("agreement screen shows only the EXACT server-included count, never the target or capacity", () => {
     const ui = readFileSync("src/pages/contractor-funnel/PageContractorPersonalizedPlan.tsx", "utf8");
-    expect(ui).toContain("Rendez-vous inclus garantis : 0. Le volume visé");
+    expect(ui).toContain("Forfait de rendez-vous à confirmer");
+    expect(ui).toContain("C'est un objectif, pas un nombre inclus.");
     expect(ui).not.toContain("quote.guaranteed_appointments ?? quote.target_monthly_appointments");
     expect(ui).toContain("Voir les autres options");
   });

@@ -36,6 +36,7 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { setActiveQuoteId } from "@/lib/checkoutUrl";
 import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
 import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+import { appointmentPlanPayable } from "../../../supabase/functions/_shared/pricingModes";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contractor-plan/PlanGoalAdjuster";
