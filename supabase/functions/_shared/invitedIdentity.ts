@@ -29,7 +29,7 @@ const LOOKUP_FAILED = refuse(503, "identity_unverified", "Impossible de vérifie
 const AMBIGUOUS = refuse(
   409, "identity_ambiguous",
   "Votre entreprise doit être confirmée dans votre espace avant ce paiement. Connectez-vous pour continuer. Aucun paiement n'a été créé.",
-  "/connexion",
+  "/login",
 );
 
 const clean = (v: unknown) => (typeof v === "string" && v.trim().length >= 8 && v.trim().length <= 200 ? v.trim() : null);

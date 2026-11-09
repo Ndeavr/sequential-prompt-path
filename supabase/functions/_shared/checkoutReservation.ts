@@ -52,6 +52,7 @@ const REFUSALS: Record<string, { status: number; message: string }> = {
   checkout_reconciliation_pending: { status: 409, message: "Un paiement précédent est en cours de vérification. Réessayez plus tard; aucun nouveau paiement n'a été créé." },
   checkout_reservation_unavailable: { status: 503, message: "Impossible de préparer le paiement pour le moment. Aucun paiement n'a été créé." },
   checkout_state_unverified: { status: 503, message: "Impossible de vérifier votre paiement précédent. Aucun nouveau paiement n'a été créé." },
+  prospect_identity_unverified: { status: 401, message: "Ce lien d'activation n'est pas reconnu. Aucun paiement n'a été créé." },
 };
 
 export function refusal(code: keyof typeof REFUSALS | string): AcquireResult {
@@ -203,6 +204,28 @@ export function liveReservationDeps(db: any, stripe: any, req: {
       _contractor_id: req.contractorId, _stripe_mode: req.stripeMode, _kind: req.kind,
       _includes_presence: req.includesPresence, _quote_id: req.quoteId, _fingerprint: req.fingerprint,
       _ttl_seconds: req.ttlSeconds ?? 3600,
+    }),
+    settle: (id, status, sessionId, reason) => db.rpc("settle_contractor_checkout", {
+      _reservation_id: id, _status: status, _stripe_session_id: sessionId, _reason: reason,
+    }),
+    retrieve: (id) => stripe.checkout.sessions.retrieve(id),
+    expire: (id) => stripe.checkout.sessions.expire(id),
+  };
+}
+
+/**
+ * Voie invitée sans entrepreneur prouvé : même table, mêmes règles, clé = prospect
+ * canonique (table + id résolus côté serveur). Le règlement (`settle`) est commun.
+ */
+// deno-lint-ignore no-explicit-any
+export function liveProspectReservationDeps(db: any, stripe: any, req: {
+  prospectTable: "verified_contractor_prospects" | "prospects"; prospectId: string;
+  stripeMode: "live" | "test"; fingerprint: string; ttlSeconds?: number;
+}): ReservationDeps {
+  return {
+    reserve: () => db.rpc("reserve_prospect_checkout", {
+      _prospect_table: req.prospectTable, _prospect_id: req.prospectId, _stripe_mode: req.stripeMode,
+      _fingerprint: req.fingerprint, _ttl_seconds: req.ttlSeconds ?? 3600,
     }),
     settle: (id, status, sessionId, reason) => db.rpc("settle_contractor_checkout", {
       _reservation_id: id, _status: status, _stripe_session_id: sessionId, _reason: reason,
