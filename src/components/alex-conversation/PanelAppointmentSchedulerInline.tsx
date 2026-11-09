@@ -155,8 +155,8 @@ export default function PanelAppointmentSchedulerInline({
               </button>
             ))}
           </div>
-          {state.bookingPath && (
-            <Button asChild className="w-full h-10 text-sm" size="sm" disabled={selected === null}>
+          {state.bookingPath && selected !== null && (
+            <Button asChild className="w-full h-10 text-sm" size="sm">
               <Link to={state.bookingPath}>Continuer la réservation</Link>
             </Button>
           )}
