@@ -40,6 +40,7 @@ import { appointmentPlanPayable } from "../../../supabase/functions/_shared/pric
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contractor-plan/PlanGoalAdjuster";
+import { ClaraBudgetFallback } from "@/components/contractor-plan/ClaraBudgetFallback";
 import { quebecTaxes } from "@/lib/pricing/planGoalModel";
 import { ENTRY_350 } from "@/lib/copy/offer350";
 import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
@@ -634,7 +635,23 @@ export default function PageContractorPersonalizedPlan() {
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
         {/* Une proposition affiliée ou promotionnelle reste liée à son devis : pas de recalcul ici. */}
         {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && !promotionGranted && !offerId && !(quote.input_payload as Record<string, unknown> | undefined)?.affiliate_proposal_id && (
-          <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
+          isBudgetQuote ? (
+            <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 mb-4" data-testid="budget-start-summary">
+              <h2 className="text-base font-semibold">Votre budget de départ : {formatCADCents(budgetFallback?.monthly_budget_cents ?? quote.monthly_budget ?? 0)} / mois</h2>
+              <p className="mt-1 text-sm text-white/75">
+                {initialTarget ? `Votre objectif initial (${initialTarget} RDV/mois) est conservé.` : "Votre objectif initial est conservé."} Le volume ci-dessous est ce que ce budget inclut réellement.
+              </p>
+              {budgetFallback?.from_quote_id && (
+                <button type="button" data-testid="back-to-initial-objective"
+                  onClick={() => navigate(`/entrepreneur/plan-personnalise/${budgetFallback.from_quote_id}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}
+                  className="mt-3 min-h-11 rounded-[18px] border border-white/20 bg-white/5 px-4 text-sm text-white">
+                  Revenir à mon offre selon mes objectifs
+                </button>
+              )}
+            </section>
+          ) : (
+            <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
+          )
         )}
         {quote.pricing_status !== "paid" && !entryEligible && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
@@ -680,8 +697,8 @@ export default function PageContractorPersonalizedPlan() {
                 <div className="mt-5 space-y-2 text-sm text-white/85">
                   <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
                   <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{commitmentReady && included ? (entryTier ? `${included} rendez-vous qualifiés exclusifs inclus par mois` : guarantee.checkoutPrimaryLabel) : "Forfait de rendez-vous à confirmer : le nombre de rendez-vous inclus n'est pas encore établi."}</p>
-                  {(quote.target_monthly_appointments ?? 0) > 0 && (
-                    <p className="pl-6 text-xs text-white/65" data-testid="target-appointments">Votre objectif : {quote.target_monthly_appointments} RDV/mois. C'est un objectif, pas un nombre inclus.</p>
+                  {(initialTarget ?? 0) > 0 && (
+                    <p className="pl-6 text-xs text-white/65" data-testid="target-appointments">Votre objectif : {initialTarget} RDV/mois. C'est un objectif, pas un nombre inclus.</p>
                   )}
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Chaque rendez-vous est exclusif, jamais partagé avec d'autres entrepreneurs</p>
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil UNPRO pour {quote.trade_primary}, publié après vérification</p>
@@ -759,7 +776,7 @@ export default function PageContractorPersonalizedPlan() {
                     </button>
                     {optionsOpen && (
                       <div className="mt-3 grid grid-cols-2 gap-2" data-testid="tier-options">
-                        {entryTiers.map((t) => (
+                        {entryTiers.filter((t) => !isBudgetQuote || t.cents <= (budgetFallback?.monthly_budget_cents ?? quote.monthly_budget ?? 0)).map((t) => (
                           <button
                             key={t.cents}
                             type="button"
@@ -795,6 +812,11 @@ export default function PageContractorPersonalizedPlan() {
             </GlassCard>
           );
         })()}
+
+        {/* Temps 2 : si l'entrepreneur hésite, Clara demande son budget (une seule question). */}
+        {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && !promotionGranted && !offerId && !(quote.input_payload as Record<string, unknown> | undefined)?.affiliate_proposal_id && (
+          <ClaraBudgetFallback quote={quote} initialTarget={initialTarget} onQuote={adoptBudgetQuote} onPresence={openPresence} />
+        )}
 
 
         {/* Repli : Présence IA annuelle, sans forfait de rendez-vous. */}
