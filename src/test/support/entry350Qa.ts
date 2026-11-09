@@ -43,6 +43,12 @@ export async function createQa(taxApproved = true) {
   let failTerminalWebhookAudit = false;
   let failRpc: string | null = null;
   const reservations = createReservationMemory();
+  // Mirror of annual_presence_status: a non-revoked paid 350 receipt < 12 months = valid Presence.
+  async function presenceValid(contractorId: string): Promise<boolean> {
+    const r = await db.query<Row>(`select exists(select 1 from contractor_activation_ledger l where l.contractor_id=$1 and l.action='entry_activation_350_paid'
+      and l.created_at > now()-interval '12 months' and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[contractorId]);
+    return !!r.rows[0].v;
+  }
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
@@ -187,16 +193,13 @@ export async function createQa(taxApproved = true) {
         }
         if (name === 'has_role') return {data:false,error:null};
         if (name === 'annual_presence_decision') {
-          // Mirror: a non-revoked paid 350 receipt < 12 months = valid Presence.
-          const r = await db.query<Row>(`select exists(select 1 from contractor_activation_ledger l where l.contractor_id=$1 and l.action='entry_activation_350_paid'
-            and l.created_at > now()-interval '12 months' and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[args._contractor_id]);
-          return {data:r.rows[0].v ? {required:false,reason:'valid_annual_presence',valid_until:null} : {required:true,reason:'annual_presence_required',valid_until:null},error:null};
+          return {data:(await presenceValid(args._contractor_id)) ? {required:false,reason:'valid_annual_presence',valid_until:null} : {required:true,reason:'annual_presence_required',valid_until:null},error:null};
         }
         if (name === 'reserve_contractor_checkout' || name === 'reserve_prospect_checkout') {
           if (failRpc===name) {failRpc=null;return {data:null,error:{message:'Injected reservation failure'}};}
           const contractor = name === 'reserve_contractor_checkout';
           let valid = false;
-          if (contractor && args._includes_presence) valid = !(await this.rpc('annual_presence_decision',{_contractor_id:args._contractor_id})).data.required;
+          if (contractor && args._includes_presence) valid = await presenceValid(args._contractor_id);
           if (!contractor) {
             const known=(peripheral.get(args._prospect_table) ?? []).some((p:Row)=>p.id===args._prospect_id);
             if (!known) return {data:{action:'refuse',reason:'prospect_identity_unverified'},error:null};
