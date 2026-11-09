@@ -1,4 +1,5 @@
 # Roadmap — P0 contractor acquisition golden path
+- [ ] Nov-9 « Qu'est-ce qui vous allume? » : page /allume + brouillons prêts (aperçu, 3 tests, mobile 390px → Clara entrepreneur OK). Envoi bloqué : aucune offre serveur à 5/ville (réelle : 10/ville free_year_local_service), 0 preuve CASL signée pour entreprises saisonnières ciblées, global_enabled=false. Voir docs/campaigns/allume-2026-11-09.md.
 - [x] Nov-8 batch: natural preferences (interpreter + canonical save), plan goal controls/stale-quote lock, 350 $/an copy + server no-double-350 gate, Presence fallback, calendar functions deployed. See docs/contractor-plan-annual-presence-checklist.md.
 - [ ] Nov-9 prep open: Stripe page note in create-checkout-session still says « Paiement unique, aucun abonnement » (true, but not « par année ») — backend edit needs approval; LIVE entry-350 webhook path never exercised by a real paid session.
 - [x] Nov-8 continuation: combined Presence + plan checkout/webhook, manual renewal, registration date going forward, territory geocoding + matcher, size mix → matching, distinct profile/RBQ/calendar indicators (source + synthetic tests).
