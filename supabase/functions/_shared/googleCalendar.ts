@@ -134,8 +134,8 @@ export async function fetchGoogleBusy(
     calendars?: Record<string, { busy?: BusyWindow[]; errors?: { reason?: string }[] }>;
     error?: { message?: string };
   };
-  if (res.status === 401 || res.status === 403) throw new CalendarAuthRevoked();
-  if (!res.ok) throw new Error(`google_freebusy_failed:${res.status}:${body.error?.message ?? ""}`);
+  if (isGoogleAuthFailure(res.status, body)) throw new CalendarAuthRevoked();
+  if (!res.ok) throw new Error(`google_freebusy_failed:${res.status}:${googleErrorReason(body)}`);
 
   const calendar = body.calendars?.[calendarId];
   if (!calendar) throw new Error("google_freebusy_calendar_missing");
@@ -177,9 +177,9 @@ export async function pushGoogleEvent(
       }),
     },
   );
-  if (res.status === 401 || res.status === 403) throw new CalendarAuthRevoked();
   const body = await res.json().catch(() => ({})) as { id?: string; error?: { message?: string } };
-  if (!res.ok) throw new Error(`google_event_insert_failed:${res.status}:${body.error?.message ?? ""}`);
+  if (isGoogleAuthFailure(res.status, body)) throw new CalendarAuthRevoked();
+  if (!res.ok) throw new Error(`google_event_insert_failed:${res.status}:${googleErrorReason(body)}`);
   return body.id ?? null;
 }
 
