@@ -17,6 +17,7 @@ import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 import { ENTRY_350 } from "@/lib/copy/offer350";
+import { GUARANTEE_COPY, GUARANTEE_OFFER_CODE, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 
 const COPY = ENTRY_350.checkout;
 
@@ -69,6 +70,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   const [promoOpen, setPromoOpen] = useState(false);
   const [promo, setPromo] = useState<{ state: "idle" | "checking" | "valid" | "refused"; code?: string; message?: string }>({ state: "idle" });
   const outcome = query.get("checkout");
+  // Offre campagne « 10 contrats garantis » : prix complet, aucun code promo.
+  const guarantee = isGuaranteeOfferParam(query.get("offre"));
   const ref = normalizeRef(query.get("ref"));
 
   const readReply = async (data: unknown, error: unknown) => {
@@ -135,7 +138,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
           entryActivation: true,
           declaredCompanyName: name,
           ...(proposalToken ? { affiliateProposalToken: proposalToken } : {}),
-          ...(promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
+          ...(!guarantee && promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
+          ...(guarantee ? { offerVersion: GUARANTEE_OFFER_CODE } : {}),
           ...(ref ? { ref } : {}),
           ...(query.get("t") ? { activationToken: query.get("t") } : {}),
           ...(query.get("utm_source") ? { source: query.get("utm_source") } : {}),
@@ -168,6 +172,11 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         // The authenticated company/contact are kept server-side for support.
         // A failed Checkout creation is never presented as a paid transaction.
         setErrorText("Le paiement n'a pas pu s'ouvrir. Vos informations d'inscription sont conservées. Vous pouvez réessayer ou demander de l'aide.");
+        return;
+      }
+      if (reply?.code === "guarantee_promo_incompatible" || reply?.code === "guarantee_quote_incompatible" || reply?.code === "offer_version_invalid" || reply?.code === "offer_version_unverified") {
+        recordPreCheckoutBlock("checkout_unavailable");
+        setErrorText(reply.error ?? "Cette offre n'est pas disponible pour le moment. Rien n'a été facturé.");
         return;
       }
       if (reply?.code === "business_name_required") {
@@ -206,11 +215,12 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     <section id="activation-350-review" aria-label="Confirmer mon activation" data-testid="entry-350-direct-review"
       className="mt-5 rounded-[24px] border border-primary/30 bg-card p-5 shadow-lg">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{COPY.eyebrow}</p>
-      <h2 className="mt-2 text-xl font-semibold">{COPY.title}</h2>
+      <h2 className="mt-2 text-xl font-semibold">{guarantee ? GUARANTEE_COPY.headline : COPY.title}</h2>
+      {guarantee && <p className="mt-2 text-sm font-semibold" data-testid="entry-350-guarantee-conditions">{GUARANTEE_COPY.conditions}</p>}
       <ul className="mt-3 space-y-1.5 text-sm" data-testid="entry-350-benefits">
-        {COPY.benefits.map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
+        {(guarantee ? GUARANTEE_COPY.details : COPY.benefits).map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
       </ul>
-      <p className="mt-3 text-2xl font-semibold">{COPY.price}</p>
+      <p className="mt-3 text-2xl font-semibold">{guarantee ? "350 $ + taxes · 12 mois" : COPY.price}</p>
       {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
       <input id="activation350-business-name" data-testid="entry-350-business-name" autoComplete="organization"
@@ -219,9 +229,11 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-foreground" />
       {promo.state === "valid"
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
+        : guarantee
+        ? <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>, payés une fois. Aucun renouvellement automatique.</p>
         : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
-      <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>
-      {!(promoOpen || promo.state !== "idle") ? (
+      {!guarantee && <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>}
+      {guarantee ? null : !(promoOpen || promo.state !== "idle") ? (
         <button type="button" data-testid="entry-350-promo-toggle" aria-expanded={false} aria-controls="activation350-promo-box"
           onClick={() => setPromoOpen(true)}
           className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-2">
@@ -253,7 +265,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         <div role="status" className="mt-3 rounded-xl border border-primary/30 p-3 text-sm" data-testid="entry-350-return-pending">
           <p className="font-semibold">{COPY.returnPending}</p>
           <p className="mt-1 text-muted-foreground">{COPY.returnPendingHelp}</p>
-          <Link to="/pro" className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2">{COPY.returnLink}</Link>
+          {guarantee && <p className="mt-1 text-muted-foreground">La période de 12 mois de votre garantie commence à la confirmation du paiement.</p>}
+          <Link to={guarantee ? "/pro/garantie-contrats" : "/pro"} className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2">{guarantee ? "Voir ma garantie 10 contrats" : COPY.returnLink}</Link>
         </div>
       )}
       {outcome === "canceled" && <p role="status" className="mt-3 text-sm">Paiement annulé : vos réponses sont conservées.</p>}

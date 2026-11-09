@@ -31496,6 +31496,200 @@ export type Database = {
           },
         ]
       }
+      contractor_contract_guarantee_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_kind: string
+          contract_id: string | null
+          created_at: string
+          details: Json
+          guarantee_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_kind: string
+          contract_id?: string | null
+          created_at?: string
+          details?: Json
+          guarantee_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_kind?: string
+          contract_id?: string | null
+          created_at?: string
+          details?: Json
+          guarantee_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_contract_guarantee_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_guarantee_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantee_events_guarantee_id_fkey"
+            columns: ["guarantee_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_contract_guarantees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_contract_guarantees: {
+        Row: {
+          amount_subtotal_cents: number
+          amount_tax_cents: number
+          amount_total_cents: number
+          contractor_id: string
+          created_at: string
+          ends_at: string
+          guaranteed_contracts: number
+          id: string
+          offer_version_code: string
+          paid_at: string
+          refund_cap_cents: number
+          refund_per_missing_cents: number
+          refund_recorded_cents: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          status_reason: string | null
+          stripe_event_id: string | null
+          stripe_mode: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_subtotal_cents: number
+          amount_tax_cents?: number
+          amount_total_cents: number
+          contractor_id: string
+          created_at?: string
+          ends_at: string
+          guaranteed_contracts: number
+          id?: string
+          offer_version_code: string
+          paid_at: string
+          refund_cap_cents: number
+          refund_per_missing_cents: number
+          refund_recorded_cents?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          status_reason?: string | null
+          stripe_event_id?: string | null
+          stripe_mode: string
+          stripe_payment_intent?: string | null
+          stripe_session_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_subtotal_cents?: number
+          amount_tax_cents?: number
+          amount_total_cents?: number
+          contractor_id?: string
+          created_at?: string
+          ends_at?: string
+          guaranteed_contracts?: number
+          id?: string
+          offer_version_code?: string
+          paid_at?: string
+          refund_cap_cents?: number
+          refund_per_missing_cents?: number
+          refund_recorded_cents?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          status_reason?: string | null
+          stripe_event_id?: string | null
+          stripe_mode?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contract_guarantees_offer_version_code_fkey"
+            columns: ["offer_version_code"]
+            isOneToOne: false
+            referencedRelation: "contractor_offer_versions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       contractor_contributions: {
         Row: {
           contractor_id: string | null
@@ -34426,6 +34620,149 @@ export type Database = {
           wants_exclusivity?: boolean
         }
         Relationships: []
+      }
+      contractor_guarantee_contracts: {
+        Row: {
+          cancellation_review_open: boolean
+          city: string
+          client_acceptance_evidence: string | null
+          client_acceptance_method: string | null
+          client_accepted_at: string | null
+          client_reference: string
+          contract_reference: string | null
+          contractor_accepted_at: string
+          contractor_accepted_by: string
+          contractor_evidence_note: string | null
+          contractor_id: string
+          created_at: string
+          guarantee_id: string
+          id: string
+          review_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_matches: boolean | null
+          service_label: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancellation_review_open?: boolean
+          city: string
+          client_acceptance_evidence?: string | null
+          client_acceptance_method?: string | null
+          client_accepted_at?: string | null
+          client_reference: string
+          contract_reference?: string | null
+          contractor_accepted_at: string
+          contractor_accepted_by: string
+          contractor_evidence_note?: string | null
+          contractor_id: string
+          created_at?: string
+          guarantee_id: string
+          id?: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope_matches?: boolean | null
+          service_label: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancellation_review_open?: boolean
+          city?: string
+          client_acceptance_evidence?: string | null
+          client_acceptance_method?: string | null
+          client_accepted_at?: string | null
+          client_reference?: string
+          contract_reference?: string | null
+          contractor_accepted_at?: string
+          contractor_accepted_by?: string
+          contractor_evidence_note?: string | null
+          contractor_id?: string
+          created_at?: string
+          guarantee_id?: string
+          id?: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope_matches?: boolean | null
+          service_label?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_guarantee_contracts_guarantee_id_fkey"
+            columns: ["guarantee_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_contract_guarantees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_historical_presence_rights: {
         Row: {
@@ -37582,6 +37919,54 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_offer_versions: {
+        Row: {
+          auto_renew: boolean
+          base_amount_cents: number
+          code: string
+          created_at: string
+          currency: string
+          guaranteed_contracts: number
+          is_active: boolean
+          label_fr: string
+          refund_cap_cents: number
+          refund_per_missing_cents: number
+          retired_at: string | null
+          term_months: number
+          terms_fr: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          base_amount_cents: number
+          code: string
+          created_at?: string
+          currency?: string
+          guaranteed_contracts: number
+          is_active?: boolean
+          label_fr: string
+          refund_cap_cents: number
+          refund_per_missing_cents: number
+          retired_at?: string | null
+          term_months: number
+          terms_fr: string
+        }
+        Update: {
+          auto_renew?: boolean
+          base_amount_cents?: number
+          code?: string
+          created_at?: string
+          currency?: string
+          guaranteed_contracts?: number
+          is_active?: boolean
+          label_fr?: string
+          refund_cap_cents?: number
+          refund_per_missing_cents?: number
+          retired_at?: string | null
+          term_months?: number
+          terms_fr?: string
+        }
+        Relationships: []
       }
       contractor_onboarding_events: {
         Row: {
@@ -101086,6 +101471,28 @@ export type Database = {
         Args: { p_affiliate_id: string }
         Returns: Json
       }
+      admin_contract_guarantee_queue: {
+        Args: never
+        Returns: {
+          amount_subtotal_cents: number
+          amount_total_cents: number
+          business_name: string
+          contractor_id: string
+          counted_contracts: number
+          ends_at: string
+          guarantee_id: string
+          guaranteed_contracts: number
+          is_due: boolean
+          paid_at: string
+          pending_contracts: number
+          refund_base_cents: number
+          refund_recorded_cents: number
+          refund_total_estimate_cents: number
+          status: string
+          status_reason: string
+          stripe_mode: string
+        }[]
+      }
       admin_get_contractor_account_origin: {
         Args: { _contractor_id: string }
         Returns: Json
@@ -101118,6 +101525,27 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      admin_review_guarantee_contract: {
+        Args: {
+          p_client_accepted_at?: string
+          p_client_evidence?: string
+          p_client_method?: string
+          p_contract_id: string
+          p_decision: string
+          p_reason?: string
+          p_scope_matches?: boolean
+        }
+        Returns: undefined
+      }
+      admin_set_contract_guarantee_status: {
+        Args: {
+          p_guarantee_id: string
+          p_reason?: string
+          p_refund_recorded_cents?: number
+          p_status: string
+        }
+        Returns: undefined
       }
       adopt_orphan_contractor_for_claim: {
         Args: {
@@ -101419,6 +101847,22 @@ export type Database = {
         Args: { _generation_type?: string; _user_id: string }
         Returns: Json
       }
+      contract_guarantee_counts: {
+        Args: { p_guarantee_id: string }
+        Returns: {
+          counted: number
+          pending: number
+        }[]
+      }
+      contract_guarantee_refund_base_cents: {
+        Args: {
+          p_cap: number
+          p_counted: number
+          p_guaranteed: number
+          p_per_missing: number
+        }
+        Returns: number
+      }
       contractor_busy_windows: {
         Args: { p_contractor_id: string; p_from: string; p_to: string }
         Returns: {
@@ -101507,6 +101951,17 @@ export type Database = {
       current_contractor_id: { Args: never; Returns: string }
       current_partner_id: { Args: { _user_id: string }; Returns: string }
       current_profile_id: { Args: never; Returns: string }
+      declare_guarantee_contract: {
+        Args: {
+          p_city: string
+          p_client_reference: string
+          p_contract_reference?: string
+          p_evidence_note?: string
+          p_guarantee_id: string
+          p_service_label: string
+        }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -101545,6 +102000,15 @@ export type Database = {
           _compensation_type?: string
           _context?: Json
           _profession_code: string
+        }
+        Returns: Json
+      }
+      flag_contract_guarantee_payment_event: {
+        Args: {
+          p_amount_refunded_cents: number
+          p_event_id: string
+          p_kind: string
+          p_payment_intent: string
         }
         Returns: Json
       }
@@ -102110,6 +102574,24 @@ export type Database = {
         Returns: number
       }
       my_annual_presence_decision: { Args: never; Returns: Json }
+      my_contract_guarantees: {
+        Args: never
+        Returns: {
+          counted_contracts: number
+          ends_at: string
+          guarantee_id: string
+          guaranteed_contracts: number
+          label_fr: string
+          missing_contracts: number
+          offer_version_code: string
+          paid_at: string
+          pending_contracts: number
+          refund_base_cents: number
+          status: string
+          stripe_mode: string
+          terms_fr: string
+        }[]
+      }
       next_send_window_open: {
         Args: { _channel: string; _from?: string }
         Returns: string
@@ -102198,6 +102680,22 @@ export type Database = {
           p_referral_code?: string
           p_stripe_session_id?: string
           p_user_id?: string
+        }
+        Returns: Json
+      }
+      record_contract_guarantee_payment: {
+        Args: {
+          p_contractor_id: string
+          p_discount_cents: number
+          p_event_id: string
+          p_offer_version: string
+          p_paid_at: string
+          p_payment_intent: string
+          p_session_id: string
+          p_stripe_mode: string
+          p_subtotal_cents: number
+          p_tax_cents: number
+          p_total_cents: number
         }
         Returns: Json
       }

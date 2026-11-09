@@ -4,6 +4,7 @@ import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 import { dossierValue, type DraftEvidence } from "@/lib/claraContractorWorkspace";
 import { ClaraWorkPanel, PresencePreview } from "@/components/entrepreneur/ClaraContractorWorkspace";
 import { Textarea } from "@/components/ui/textarea";
+import { GUARANTEE_COPY, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -91,6 +92,8 @@ export default function PageMatchingProfileWizard() {
   })();
   const fr = sp.get("lang") ? sp.get("lang") !== "en" : !(explicitEn && lang === "en");
   const simpleEntry = sp.get("entry") === "profile";
+  // Offre campagne « 10 contrats garantis » (FR seulement) : conditions affichées avant le paiement.
+  const guaranteeOffer = fr && isGuaranteeOfferParam(sp.get("offre"));
   const [reviewed, setReviewed] = useState(false);
   const [declaredName, setDeclaredName] = useState(sp.get("entreprise") ?? "");
   const [declaredWebsite, setDeclaredWebsite] = useState(normalizeContractorEntry(sp.get("website") ?? "", "website")?.website ?? "");
@@ -569,7 +572,8 @@ export default function PageMatchingProfileWizard() {
 
             {simpleEntry && <PresencePreview fr={fr} name={declaredName.trim() || businessName || ""} website={declaredWebsite} city={city} trade={trade} answers={answers} />}
             {simpleEntry && <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => setReviewed(false)}>{fr ? "Modifier mon dossier" : "Edit my dossier"}</Button>}
-            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2" data-testid="profile-activation-appointments">{fr ? "Rendez-vous inclus dans l'activation de base : aucun." : "Appointments included in the base activation: none."}</p><p className="mt-2 text-muted-foreground">{fr ? "Une promotion ou un droit déjà accordé à votre compte est confirmé et affiché avant le paiement. Les options de rendez-vous restent distinctes." : "Any promotion or entitlement already granted to your account is confirmed and shown before payment. Appointment options remain separate."}</p></section>}
+            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && guaranteeOffer && <section className="border-y border-border py-5 text-sm" data-testid="profile-guarantee-offer"><h2 className="text-lg font-semibold">{GUARANTEE_COPY.headline}</h2><p className="mt-2 font-semibold">{GUARANTEE_COPY.conditions}</p><ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">{GUARANTEE_COPY.details.map((d) => <li key={d}>{d}</li>)}</ul></section>}
+            {simpleEntry && !hasFreeYear && !cameFromFounderSignup && !guaranteeOffer && <section className="border-y border-border py-5 text-sm" data-testid="profile-activation-offer"><h2 className="text-lg font-semibold">{fr ? "Profil + 12 mois de présence IA sur UNPRO" : "Profile + 12 months of UNPRO AI presence"}</h2><p className="mt-2 font-semibold">{fr ? "Activation de base : 350 $ CA + taxes, payable en un versement." : "Base activation: CAD350 + taxes, paid in one instalment."}</p><p className="mt-2" data-testid="profile-activation-appointments">{fr ? "Rendez-vous inclus dans l'activation de base : aucun." : "Appointments included in the base activation: none."}</p><p className="mt-2 text-muted-foreground">{fr ? "Une promotion ou un droit déjà accordé à votre compte est confirmé et affiché avant le paiement. Les options de rendez-vous restent distinctes." : "Any promotion or entitlement already granted to your account is confirmed and shown before payment. Appointment options remain separate."}</p></section>}
             {simpleEntry && <ClaraWorkPanel fr={fr} draft={draftMeta ?? { savedAt: null, status: null, completedAt: null, missingKeys: null, website: normalizeContractorEntry(declaredWebsite, "website")?.website || null, trade }} />}
             {!simpleEntry && <HowItWorksBlock lang={fr ? "fr" : "en"} />}
 

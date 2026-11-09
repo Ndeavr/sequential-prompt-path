@@ -14,6 +14,8 @@ import {
   FALLBACK_CREDIT_PRODUCT_NAME,
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
+import { GUARANTEE_COPY, GUARANTEE_OFFER, GUARANTEE_OFFER_CODE } from "../_shared/contractGuarantee.ts";
+import { appointmentPlanPayable } from "../_shared/pricingModes.ts";
 import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
 import {
   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
@@ -101,6 +103,7 @@ Deno.serve(async (req) => {
       declaredCompanyName,
       entryPromoCode,
       entryPromoPreview,
+      offerVersion,
       auditId,
       campaign,
       source,
@@ -344,6 +347,28 @@ Deno.serve(async (req) => {
         if (usedRow) return promoRefuse("promo_used");
         entryPromo = r;
       }
+      // ── OFFRE « 10 contrats garantis » (campagne /allume) ───────────────
+      // Version immuable lue en base; prix complet seulement (aucun code promo,
+      // aucun devis combiné). Le webhook signé crée la garantie après paiement.
+      let guaranteeOffer = false;
+      if (offerVersion !== undefined && offerVersion !== null && offerVersion !== "") {
+        const refuseOffer = (code: string, error: string, status = 409) => new Response(JSON.stringify({ code, error }),
+          { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (!isEntryActivation || offerVersion !== GUARANTEE_OFFER_CODE) return refuseOffer("offer_version_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.", 400);
+        if (promoInput) return refuseOffer("guarantee_promo_incompatible", "L'offre 10 contrats garantis se paie au prix complet de 350 $ + taxes; retirez le code promo. Rien n'a été facturé.");
+        if (quoteId) return refuseOffer("guarantee_quote_incompatible", "L'offre 10 contrats garantis ne se combine pas avec un devis de rendez-vous. Rien n'a été facturé.");
+        const { data: ov, error: ovErr } = await serviceClient.from("contractor_offer_versions")
+          .select("code,is_active,base_amount_cents,guaranteed_contracts,refund_per_missing_cents,refund_cap_cents,term_months,auto_renew")
+          .eq("code", GUARANTEE_OFFER_CODE).maybeSingle();
+        if (ovErr) return refuseOffer("offer_version_unverified", "Impossible de vérifier l'offre. Rien n'a été facturé.", 503);
+        if (!ov?.is_active || ov.base_amount_cents !== GUARANTEE_OFFER.baseAmountCents || ov.guaranteed_contracts !== GUARANTEE_OFFER.guaranteedContracts
+          || ov.refund_per_missing_cents !== GUARANTEE_OFFER.refundPerMissingCents || ov.refund_cap_cents !== GUARANTEE_OFFER.refundCapCents
+          || ov.term_months !== GUARANTEE_OFFER.termMonths || ov.auto_renew !== false) {
+          return refuseOffer("offer_version_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.");
+        }
+        guaranteeOffer = true;
+      }
+
       if (isEntryActivation && entryPromoPreview === true) {
         if (!entryPromo) return new Response(JSON.stringify({ code: "promo_invalid", error: "Ce code n'est pas valide." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         return new Response(JSON.stringify({ code: "promo_valid", amounts: ENTRY350_PROMO_AMOUNTS }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -484,8 +509,9 @@ Deno.serve(async (req) => {
               status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
-          const g = Number((eq?.pricing_explanation as Record<string, unknown> | null)?.guaranteed_appointments ?? 0);
-          entryGuaranteed = Number.isFinite(g) && g > 0 ? Math.round(g) : null;
+          // L'activation 350 $ n'inclut aucun RDV par défaut : le volume d'un
+          // forfait mensuel du devis n'est jamais transféré à ce paiement unique.
+          entryGuaranteed = null;
         }
       }
 
@@ -518,7 +544,9 @@ Deno.serve(async (req) => {
               unit_amount: amountCents,
               // Promo : la ligne utilise le seul produit Stripe autorisé par le coupon.
               ...(entryPromo ? { product: entryPromo.productId } : {}),
-              ...(entryPromo ? {} : { product_data: isEntryActivation
+              ...(entryPromo ? {} : { product_data: guaranteeOffer
+                ? { name: GUARANTEE_COPY.stripeName, description: GUARANTEE_COPY.stripeDescription }
+                : isEntryActivation
                 ? {
                     name: "Activation du profil UNPRO",
                     description: entryGuaranteed
@@ -546,6 +574,7 @@ Deno.serve(async (req) => {
                 ...(entryPromo ? { promo_code: "PROMO", promo_code_id: entryPromo.promotionCodeId, promo_coupon_id: entryPromo.couponId, promo_discount_cents: String(ENTRY350_PROMO_AMOUNTS.discount) } : {}),
                 presence_ia_months: "12",
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
+                ...(guaranteeOffer ? { offer_version: GUARANTEE_OFFER_CODE, guaranteed_contracts: String(GUARANTEE_OFFER.guaranteedContracts) } : {}),
               }
             : { credit_amount_cents: String(amountCents) }),
           ...(proposalContext && { affiliate_proposal_id: String(proposalContext.id), affiliate_prospect_id: String(proposalContext.prospect_id) }),
@@ -561,7 +590,9 @@ Deno.serve(async (req) => {
         },
       };
 
-      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: entryPromo
+      if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: guaranteeOffer
+        ? GUARANTEE_COPY.stripeSubmit
+        : entryPromo
         ? "350 $ CA − code PROMO 349 $ = 1,00 $ avant taxes. TPS : 0,05 $; TVQ : 0,10 $; total : 1,15 $ CA. Paiement unique."
         : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
       if (entryPromo) {
@@ -869,11 +900,12 @@ Deno.serve(async (req) => {
     // ── PERSONALIZED QUOTE OVERRIDE ──
     // When quoteId is present, the AI-recommended price becomes the single source of truth.
     let personalizedPriceCents: number | null = null;
+    let quoteIncludedAppointments = 0;
     let quoteRow: any = null;
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, user_id, contractor_id, company_name, city, trade_primary, input_payload, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
+        .select("id, user_id, contractor_id, company_name, city, trade_primary, input_payload, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at, guaranteed_appointments")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -916,6 +948,17 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // P0 2026-11-09 : jamais de forfait mensuel de rendez-vous payant sans
+      // volume POSITIF inclus sur le devis (y compris les anciens devis non payés).
+      const commitment = appointmentPlanPayable(q.recommended_monthly_price, q.guaranteed_appointments);
+      if (!commitment.payable) {
+        console.warn("[checkout:appointment_commitment_missing]", { quote_id: quoteId });
+        return new Response(JSON.stringify({
+          error: "Le nombre de rendez-vous inclus dans ce forfait n'est pas encore confirmé. Aucun paiement n'a été créé.",
+          code: "appointment_commitment_missing",
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      quoteIncludedAppointments = commitment.monthly_appointments;
       if ((await serviceClient.rpc("canonical_plan_code", { _code: q.recommended_plan })).data !== resolvedPlanCode) {
         return new Response(
           JSON.stringify({
@@ -1454,6 +1497,15 @@ Deno.serve(async (req) => {
       },
 
     };
+
+    // Même volume et même période que le devis, affichés sur Stripe et
+    // transmis à la confirmation de paiement (abonnement lié au quote_id).
+    if (quoteRow && quoteIncludedAppointments > 0) {
+      const commitmentMeta = { guaranteed_appointments: String(quoteIncludedAppointments), appointment_period: "month" };
+      Object.assign(checkoutConfig.metadata, commitmentMeta);
+      Object.assign(checkoutConfig.subscription_data.metadata, commitmentMeta);
+      checkoutConfig.custom_text = { submit: { message: `Forfait de rendez-vous mensuel : ${quoteIncludedAppointments} rendez-vous qualifiés exclusifs inclus par mois.${presenceIncluded ? " Présence IA 350 $ : paiement unique, profil + 12 mois, renouvellement manuel." : ""} Taxes du Québec (TPS 5 %, TVQ 9,975 %) appliquées.` } };
+    }
 
     const checkoutOrigin = req.headers.get("origin") ?? "https://unpro.ca";
     if (isEmbedded) {

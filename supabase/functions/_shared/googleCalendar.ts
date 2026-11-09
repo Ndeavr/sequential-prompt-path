@@ -7,6 +7,9 @@
  */
 import { decryptCalendarToken, encryptCalendarToken } from "./calendarOAuthState.ts";
 
+// deno-lint-ignore no-explicit-any
+declare const Deno: any; // lets the browser-side test typecheck import this module
+
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 
@@ -30,10 +33,32 @@ export interface GoogleConnectionRow {
   expires_at: string | null;
 }
 
+/**
+ * True only when Google says the token itself is unusable (401) or lacks the
+ * granted permission (403 insufficient scope). Other 403s — Calendar API not
+ * enabled, quota/rate limits, calendar-level refusals — are not a revocation
+ * and must never mark the contractor's connection as revoked.
+ */
+export function isGoogleAuthFailure(status: number, body: unknown): boolean {
+  if (status === 401) return true;
+  if (status !== 403) return false;
+  const err = (body as { error?: { status?: string; errors?: { reason?: string }[]; details?: { reason?: string }[] } })?.error;
+  const reasons = [
+    ...(err?.errors ?? []).map((e) => e?.reason),
+    ...(err?.details ?? []).map((d) => d?.reason),
+  ];
+  return reasons.some((r) => r === "insufficientPermissions" || r === "ACCESS_TOKEN_SCOPE_INSUFFICIENT");
+}
+
+function googleErrorReason(body: unknown): string {
+  const err = (body as { error?: { errors?: { reason?: string }[]; status?: string } })?.error;
+  return err?.errors?.[0]?.reason ?? err?.status ?? "";
+}
+
 interface SupabaseLike {
   from: (table: string) => {
     update: (values: Record<string, unknown>) => {
-      eq: (column: string, value: string) => Promise<{ error: unknown }>;
+      eq: (column: string, value: string) => PromiseLike<{ error: unknown }>;
     };
   };
 }
@@ -112,8 +137,8 @@ export async function fetchGoogleBusy(
     calendars?: Record<string, { busy?: BusyWindow[]; errors?: { reason?: string }[] }>;
     error?: { message?: string };
   };
-  if (res.status === 401 || res.status === 403) throw new CalendarAuthRevoked();
-  if (!res.ok) throw new Error(`google_freebusy_failed:${res.status}:${body.error?.message ?? ""}`);
+  if (isGoogleAuthFailure(res.status, body)) throw new CalendarAuthRevoked();
+  if (!res.ok) throw new Error(`google_freebusy_failed:${res.status}:${googleErrorReason(body)}`);
 
   const calendar = body.calendars?.[calendarId];
   if (!calendar) throw new Error("google_freebusy_calendar_missing");
@@ -155,9 +180,9 @@ export async function pushGoogleEvent(
       }),
     },
   );
-  if (res.status === 401 || res.status === 403) throw new CalendarAuthRevoked();
   const body = await res.json().catch(() => ({})) as { id?: string; error?: { message?: string } };
-  if (!res.ok) throw new Error(`google_event_insert_failed:${res.status}:${body.error?.message ?? ""}`);
+  if (isGoogleAuthFailure(res.status, body)) throw new CalendarAuthRevoked();
+  if (!res.ok) throw new Error(`google_event_insert_failed:${res.status}:${googleErrorReason(body)}`);
   return body.id ?? null;
 }
 

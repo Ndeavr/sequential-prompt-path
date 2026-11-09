@@ -338,3 +338,117 @@ export function solvePack(
     unused_budget_cents: Math.max(0, total - (priced?.monthly_price_cents ?? 0)),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Monthly appointment plan commitment (P0 2026-11-09).
+// A paid monthly appointment plan must carry a POSITIVE number of exclusive
+// qualified appointments included per month, resolved by the canonical
+// budget solver (real price chain + market ceiling + contractor capacity +
+// margin). The declared target is a goal, never an included number.
+// ---------------------------------------------------------------------------
+export interface TierCommitmentInput {
+  tier_cents: number;
+  /** Declared monthly target (goal only). Caps the included volume when > 0. */
+  target_monthly_appointments: number;
+  market_ceiling: number | null;
+  contractor_capacity: number;
+  market_unavailable: boolean;
+  margin: MarginConfig;
+}
+
+export interface TierCommitment {
+  status: "resolved" | "unresolved";
+  /** Exclusive qualified appointments included per month (0 when unresolved). */
+  monthly_appointments: number;
+  period: "month";
+  outcome: ModeOutcome;
+  source: "solveBudget";
+}
+
+export function resolveTierCommitment(
+  input: TierCommitmentInput,
+  priceForTarget: (target: number) => PricedTarget,
+): TierCommitment {
+  const solved = solveBudget(
+    {
+      monthly_budget_cents: input.tier_cents,
+      market_ceiling: input.market_ceiling,
+      contractor_capacity: input.contractor_capacity,
+      market_unavailable: input.market_unavailable,
+      margin: input.margin,
+    },
+    priceForTarget,
+  );
+  const target = Math.max(0, Math.round(input.target_monthly_appointments || 0));
+  let n = Math.max(0, Math.round(solved.guaranteed_appointments));
+  if (target > 0) n = Math.min(n, target);
+  return {
+    status: n > 0 ? "resolved" : "unresolved",
+    monthly_appointments: n,
+    period: "month",
+    outcome: solved.outcome,
+    source: "solveBudget",
+  };
+}
+
+/**
+ * Server checkout gate: a paid personalized monthly appointment plan is
+ * payable only with a positive included volume stored on the quote.
+ */
+export function appointmentPlanPayable(
+  priceCents: number | null | undefined,
+  guaranteedAppointments: number | null | undefined,
+): { payable: boolean; monthly_appointments: number } {
+  const price = Math.round(Number(priceCents ?? 0));
+  const g = Math.round(Number(guaranteedAppointments ?? 0));
+  const included = Number.isFinite(g) && g > 0 ? g : 0;
+  if (!(price > 0)) return { payable: true, monthly_appointments: included };
+  return { payable: included > 0, monthly_appointments: included };
+}
+
+/**
+ * Budget fallback (Clara « Avec quel budget mensuel… ») : the entry agreement
+ * must NEVER exceed the budget the contractor stated. Returns the largest
+ * approved entry tier <= budget, or null when no tier fits (no monthly plan
+ * is then payable; Présence IA alone remains the honest option).
+ */
+export function budgetEntryTier<T extends { cents: number }>(
+  budgetCents: number,
+  tiers: readonly T[],
+  requestedCents?: number | null,
+): T | null {
+  const b = Number.isFinite(budgetCents) ? Math.max(0, Math.round(budgetCents)) : 0;
+  const fitting = tiers.filter((t) => t.cents <= b);
+  if (!fitting.length) return null;
+  const requested = fitting.find((t) => t.cents === Number(requestedCents));
+  return requested ?? fitting[fitting.length - 1];
+}
+
+export interface BudgetFallbackRecord {
+  /** Quote holding the contractor's initial objective (unchanged). */
+  from_quote_id: string | null;
+  /** Initial objective kept for the record — never an included number. */
+  initial_target_monthly_appointments: number | null;
+  initial_goal_amount: number | null;
+  /** Budget the contractor said they are comfortable starting with (CAD cents). */
+  monthly_budget_cents: number;
+  reason: "hesitation" | "budget_change";
+  surface: "plan_clara_budget";
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Whitelist the client-sent fallback context; the budget always comes from the solved request. */
+export function sanitizeBudgetFallback(raw: unknown, monthlyBudgetCents: number | null): BudgetFallbackRecord | null {
+  if (!raw || typeof raw !== "object" || !(monthlyBudgetCents && monthlyBudgetCents > 0)) return null;
+  const r = raw as Record<string, unknown>;
+  const pos = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
+  return {
+    from_quote_id: typeof r.from_quote_id === "string" && UUID_RE.test(r.from_quote_id) ? r.from_quote_id : null,
+    initial_target_monthly_appointments: pos(r.initial_target_monthly_appointments),
+    initial_goal_amount: pos(r.initial_goal_amount),
+    monthly_budget_cents: Math.round(monthlyBudgetCents),
+    reason: r.reason === "budget_change" ? "budget_change" : "hesitation",
+    surface: "plan_clara_budget",
+  };
+}

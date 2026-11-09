@@ -25,11 +25,15 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ## Google Calendar
 
 ```
-GOOGLE_CALENDAR_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CALENDAR_SECRET=your-client-secret
+GOOGLE_OAUTH_CLIENT_ID=<project-number>-<id>.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+# Recommended (fall back to GOOGLE_OAUTH_CLIENT_SECRET when absent):
+CALENDAR_OAUTH_STATE_SECRET=random-64-chars
+CALENDAR_TOKEN_ENCRYPTION_KEY=random-64-chars   # changing it makes saved tokens unreadable → reconnect
+PUBLIC_SITE_URL=https://unpro.ca
 ```
 
-> Used for contractor scheduling integration. Set up in Google Cloud Console → APIs & Services → Credentials.
+> Read by the `calendar-*` edge functions (the old `GOOGLE_CALENDAR_*` names are not read). Redirect URI to register on the OAuth client: `https://<project-ref>.supabase.co/functions/v1/calendar-google-oauth-callback`. Scopes: `calendar.readonly`, `calendar.events`, `openid`, `email`, `profile`.
 
 ---
 

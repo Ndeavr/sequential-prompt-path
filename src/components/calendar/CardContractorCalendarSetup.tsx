@@ -56,8 +56,13 @@ export default function CardContractorCalendarSetup({
       const revoked = (result?.results ?? []).some(
         (r: { status?: string }) => r.status === "revoked",
       );
+      const needsSelection = (result?.results ?? []).some(
+        (r: { reason?: string }) => r.reason === "calendar_selection_required",
+      );
       if (revoked) {
         toast.error("L'accès à votre calendrier a été retiré. Reconnectez-le pour continuer.");
+      } else if (needsSelection) {
+        toast.message("Choisissez d'abord le calendrier Google où UNPRO lit vos disponibilités et inscrit vos rendez-vous.");
       } else if (result?.synced) {
         toast.success("Vos disponibilités sont à jour.");
       } else {

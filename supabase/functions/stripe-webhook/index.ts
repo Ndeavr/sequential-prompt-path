@@ -2,6 +2,7 @@ import { handleCondoBillingEvent } from "../_shared/condoBilling.ts";
 import { isPresenceOverlapError, verifyCombinedPresenceLine } from "../_shared/annualPresence.ts";
 import { shouldSkipRedelivery, entryActivationDecision, entryPackBlockReason, entry350PaymentBlockReason, entry350CommissionArgs, addCalendarMonths, entry350LedgerConflict, entryPackReplayReceiptMatches, entryActivationReplayReceiptMatches } from "../_shared/checkoutGuards.ts";
 import { revokeEntry350 } from "../_shared/entry350Revocation.ts";
+import { guaranteeRecordArgs } from "../_shared/contractGuarantee.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
@@ -387,6 +388,17 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error("[stripe-webhook][entry_350] commission reversal failed", piId, String(e));
         }
+        // Garantie 10 contrats : mise en revue (jamais supprimée), auditée.
+        try {
+          const gFlag = await supabase.rpc("flag_contract_guarantee_payment_event", {
+            p_payment_intent: piId, p_event_id: event.id,
+            p_kind: event.type === "charge.refunded" ? "refunded" : "disputed",
+            p_amount_refunded_cents: typeof obj?.amount_refunded === "number" ? obj.amount_refunded : null,
+          });
+          if (gFlag.error) throw new Error(gFlag.error.message);
+        } catch (e) {
+          console.error("[stripe-webhook][contract_guarantee] flag failed", piId, String(e));
+        }
       }
     }
 
@@ -422,10 +434,10 @@ Deno.serve(async (req) => {
             });
           }
         }
-        // Only mark the reservation as paid after the $350 amount/currency/tax
-        // contract has passed its guard. Invalid/discounted payments must not
-        // occupy the checkout reservation or block a subsequent legitimate checkout.
-        // Other offers retain their existing settlement behavior.
+        // Close the reservation only after validating the entry-$350 payment contract.
+        // Unrelated offers keep their existing paid settlement path.
+        // Réservation d'achat : le paiement signé ferme la seule session payable.
+        // La caisse relit toujours Stripe; un échec ici ne crée aucune deuxième session.
         if (session.payment_status === "paid") {
           const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
             ? session.metadata.checkout_reservation_id : null;
@@ -442,8 +454,7 @@ Deno.serve(async (req) => {
         const promoCode = session.metadata?.promo_code;
 
         // Founder / activation flow observability.
-        // A completed Checkout can still be unpaid (asynchronous payment methods).
-        // Never label it payment_succeeded until Stripe reports a paid session.
+        // Completion without funds is not a successful payment.
         if (session.payment_status === "paid") {
           await logActivationStep(supabase, "stripe_payment_succeeded", {
             stripe_event_id: event.id,
@@ -732,6 +743,32 @@ Deno.serve(async (req) => {
                     });
                   }
                 }
+                // Offre « 10 contrats garantis » : garantie créée uniquement ici, après
+                // paiement signé vérifié au prix complet. Idempotente par session;
+                // un échec relance la livraison Stripe (rejouée via already_processed).
+                if (session.metadata?.offer_version) {
+                  const gArgs = guaranteeRecordArgs(session as never, event as never, entryContractorId);
+                  if (!gArgs) {
+                    await supabase.from("admin_notifications").insert({
+                      type: "contract_guarantee_not_recorded", severity: "critical", contractor_id: entryContractorId,
+                      title: "Garantie 10 contrats non créée — paiement à vérifier",
+                      body: "La session porte l'offre 10 contrats mais pas le prix complet sans rabais. Aucune garantie créée.",
+                      payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null },
+                    });
+                  } else {
+                    const gRes = await supabase.rpc("record_contract_guarantee_payment", gArgs);
+                    if (gRes.error) throw new Error(`contract_guarantee: ${gRes.error.message}`);
+                    const gStatus = (gRes.data as { status?: string } | null)?.status;
+                    if (gStatus !== "recorded" && gStatus !== "already_recorded") {
+                      await supabase.from("admin_notifications").insert({
+                        type: "contract_guarantee_not_recorded", severity: "critical", contractor_id: entryContractorId,
+                        title: "Garantie 10 contrats non créée — revue requise",
+                        body: "Paiement reçu, garantie refusée par le registre (chevauchement ou montant). Aucun remboursement automatique.",
+                        payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, result: gRes.data ?? null },
+                      });
+                    }
+                  }
+                }
               }
             }
           }
@@ -821,7 +858,7 @@ Deno.serve(async (req) => {
         // metadata->>'stripe_session_id' empêche tout double crédit.
         if (session.metadata?.offer === "fallback_credit_350") {
           const creditContractorId = session.metadata?.contractor_id ?? null;
-          // Checkout status "complete" is not proof of settled funds.
+          // Completion without funds cannot grant wallet credit.
           const paid = session.payment_status === "paid";
 
           if (creditContractorId && paid) {

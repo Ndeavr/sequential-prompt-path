@@ -11,6 +11,7 @@ const REASON_LABELS: Record<string, string> = {
   token_exchange: "Le serveur Google a rejeté l'échange de jetons.",
   missing_code: "Aucun code d'autorisation reçu.",
   access_denied: "Vous avez refusé la permission.",
+  scope_denied: "Google n'a pas accordé les deux permissions nécessaires (voir vos disponibilités et ajouter vos rendez-vous). Réessayez en les cochant toutes les deux.",
   invalid_state: "La demande de connexion a expiré ou n'est plus valide. Réessayez.",
   userinfo: "Google n'a pas pu confirmer le compte sélectionné.",
   persistence: "La connexion a réussi, mais son enregistrement a échoué.",

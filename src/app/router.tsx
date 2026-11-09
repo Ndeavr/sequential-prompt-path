@@ -43,6 +43,8 @@ const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHea
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
 const PageAdminKddV1 = lazyWithRetry(() => import("@/pages/admin/PageAdminKddV1"));
 const PageAdminHistoricalPresenceReview = lazyWithRetry(() => import("@/pages/admin/PageAdminHistoricalPresenceReview"));
+const PageAdminContractGuarantees = lazyWithRetry(() => import("@/pages/admin/PageAdminContractGuarantees"));
+const PageContractGuarantee = lazyWithRetry(() => import("@/pages/pro/PageContractGuarantee"));
 const PageContactedContractors = lazyWithRetry(() => import("@/pages/admin/PageContactedContractors"));
 const PageContractorForensics = lazyWithRetry(() => import("@/pages/admin/PageContractorForensics"));
 const PageRevenueDebug = lazyWithRetry(() => import("@/pages/admin/PageRevenueDebug"));
@@ -385,6 +387,7 @@ const AlexChat = lazyWithRetry(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazyWithRetry(() => import("@/pages/AuthorityDashboardPage"));
 const PageCombinedSavings = lazyWithRetry(() => import("@/pages/PageCombinedSavings"));
 const PageTannes = lazyWithRetry(() => import("@/pages/campaign/PageTannes"));
+const PageAllume = lazyWithRetry(() => import("@/pages/campaign/PageAllume"));
 const PressRelease = lazyWithRetry(() => import("@/pages/PressRelease"));
 const AlexVoicePage = lazyWithRetry(() => import("@/pages/AlexVoicePage"));
 const AlexVoiceRealtimePage = lazyWithRetry(() => import("@/pages/AlexVoiceRealtimePage"));
@@ -1262,6 +1265,7 @@ export const AppRouter = () => (
         <Route path="/flywheel" element={<FlywheelPage />} />
         <Route path="/communique" element={<PressRelease />} />
         <Route path="/tannes" element={<PageTannes />} />
+        <Route path="/allume" element={<PageAllume />} />
         <Route path="/vision" element={<PageCombinedSavings />} />
         <Route path="/en/vision" element={<PageCombinedSavings />} />
         <Route path="/articles/economiser-ensemble" element={<PageCombinedSavings kind="article" />} />
@@ -1522,6 +1526,7 @@ export const AppRouter = () => (
 
         {/* Contractor Pro */}
         <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
+        <Route path="/pro/garantie-contrats" element={<ProtectedRoute requiredRole="contractor"><Suspense fallback={<LazyFallback />}><PageContractGuarantee /></Suspense></ProtectedRoute>} />
         <Route path="/pro/profile" element={<ProtectedRoute requiredRole="contractor"><ProProfile /></ProtectedRoute>} />
         <Route path="/pro/recycler-un-lead" element={<ProtectedRoute requiredRole="contractor"><Suspense fallback={<LazyFallback />}><PageRecyclerUnLead /></Suspense></ProtectedRoute>} />
         <Route path="/pro/aipp-score" element={<ProtectedRoute requiredRole="contractor"><ProAIPPScore /></ProtectedRoute>} />
@@ -1758,6 +1763,7 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/kdd" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminKddV1 /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/presence-historique" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminHistoricalPresenceReview /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/garanties-contrats" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContractGuarantees /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-path-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/tunnel-reality" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageTunnelReality /></Suspense></AdminProtectedRoute>} />

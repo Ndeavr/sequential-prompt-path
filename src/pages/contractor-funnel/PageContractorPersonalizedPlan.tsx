@@ -36,9 +36,11 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { setActiveQuoteId } from "@/lib/checkoutUrl";
 import { buildCommercialLines } from "@/lib/pricing/priceBreakdown";
 import { buildAppointmentGuarantee } from "@/lib/pricing/appointmentGuarantee";
+import { appointmentPlanPayable } from "../../../supabase/functions/_shared/pricingModes";
 
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contractor-plan/PlanGoalAdjuster";
+import { ClaraBudgetFallback } from "@/components/contractor-plan/ClaraBudgetFallback";
 import { quebecTaxes } from "@/lib/pricing/planGoalModel";
 import { ENTRY_350 } from "@/lib/copy/offer350";
 import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
@@ -204,6 +206,18 @@ export default function PageContractorPersonalizedPlan() {
   }, [quote?.id, presenceRefresh]);
   const presenceLines = annualPresenceLines(quote && quote.pricing_status !== "paid" ? baseCents : 0, presenceDecision);
   const checkoutBlocked = goalState.dirty || goalState.recomputing || !goalState.valid;
+  // Repli budgétaire (Clara) : l'objectif initial reste celui du devis d'origine.
+  const budgetFallback = (quote?.input_payload as Record<string, unknown> | undefined)?.budget_fallback as
+    | { from_quote_id?: string | null; initial_target_monthly_appointments?: number | null; monthly_budget_cents?: number }
+    | undefined;
+  const isBudgetQuote = quote?.pricing_mode === "budget" || (quote?.input_payload as Record<string, unknown> | undefined)?.pricing_mode === "budget";
+  const initialTarget = isBudgetQuote
+    ? (budgetFallback?.initial_target_monthly_appointments ?? null)
+    : (quote?.target_monthly_appointments ?? null);
+  const adoptBudgetQuote = (q: PricingQuote) => {
+    setGoalState({ dirty: false, recomputing: false, valid: true, error: null });
+    adoptQuote(q);
+  };
   const adoptQuote = (q: PricingQuote) => {
     adoptedQuoteRef.current = q.id;
     setQuote(q);
@@ -336,6 +350,13 @@ export default function PageContractorPersonalizedPlan() {
       if (!payload && error) {
         const ctx = (error as { context?: Response }).context;
         try { if (ctx && typeof ctx.json === "function") payload = await ctx.clone().json(); } catch { /* corps illisible */ }
+      }
+      if (payload?.code === "appointment_commitment_missing") {
+        // Ancien devis sans volume inclus : jamais facturé; on montre la reprise.
+        setCheckoutError(payload.error ?? "Le nombre de rendez-vous inclus n'est pas encore confirmé. Aucun paiement n'a été créé.");
+        setCheckoutLoading(false);
+        setQuote((q) => (q ? { ...q, guaranteed_appointments: 0 } : q));
+        return;
       }
       if (payload?.code === "annual_presence_due_with_free_plan" || payload?.code === "annual_presence_unverified") {
         setCheckoutError(payload.error ?? "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.");
@@ -593,7 +614,7 @@ export default function PageContractorPersonalizedPlan() {
           <EntryActivation350Card
             quoteId={quote.id}
             contractorId={quote.contractor_id ?? null}
-            guaranteedAppointments={quote.guaranteed_appointments ?? null}
+            guaranteedAppointments={null}
             affiliateRef={affiliateRef}
             activationToken={activationToken}
             successUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "success")}
@@ -614,12 +635,30 @@ export default function PageContractorPersonalizedPlan() {
         {/* Une seule carte : offre → prestations → conditions → prix → action */}
         {/* Une proposition affiliée ou promotionnelle reste liée à son devis : pas de recalcul ici. */}
         {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && !promotionGranted && !offerId && !(quote.input_payload as Record<string, unknown> | undefined)?.affiliate_proposal_id && (
-          <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
+          isBudgetQuote ? (
+            <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 mb-4" data-testid="budget-start-summary">
+              <h2 className="text-base font-semibold">Votre budget de départ : {formatCADCents(budgetFallback?.monthly_budget_cents ?? quote.monthly_budget ?? 0)} / mois</h2>
+              <p className="mt-1 text-sm text-white/75">
+                {initialTarget ? `Votre objectif initial (${initialTarget} RDV/mois) est conservé.` : "Votre objectif initial est conservé."} Le volume ci-dessous est ce que ce budget inclut réellement.
+              </p>
+              {budgetFallback?.from_quote_id && (
+                <button type="button" data-testid="back-to-initial-objective"
+                  onClick={() => navigate(`/entrepreneur/plan-personnalise/${budgetFallback.from_quote_id}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}
+                  className="mt-3 min-h-11 rounded-[18px] border border-white/20 bg-white/5 px-4 text-sm text-white">
+                  Revenir à mon offre selon mes objectifs
+                </button>
+              )}
+            </section>
+          ) : (
+            <PlanGoalAdjuster quote={quote} onQuote={adoptQuote} onState={onGoalState} />
+          )
         )}
         {quote.pricing_status !== "paid" && !entryEligible && (() => {
           const guarantee = buildAppointmentGuarantee(quote.guaranteed_appointments ?? null);
           // Nombre EXACT du contrat serveur : jamais la cible ni la capacité.
           const included = typeof quote.guaranteed_appointments === "number" ? quote.guaranteed_appointments : null;
+          // Un forfait mensuel payant n'est proposé qu'avec un volume inclus positif (même règle que le serveur).
+          const commitmentReady = appointmentPlanPayable(quote.recommended_monthly_price, included).payable;
           return (
             <GlassCard className="p-6 mb-4">
               <div id="plan-volume" data-testid="starter-offer-card">
@@ -657,7 +696,10 @@ export default function PageContractorPersonalizedPlan() {
 
                 <div className="mt-5 space-y-2 text-sm text-white/85">
                   <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
-                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{included && included > 0 ? (entryTier ? `${included} rendez-vous inclus par mois selon votre entente` : guarantee.checkoutPrimaryLabel) : `Rendez-vous inclus garantis : 0. Le volume visé (${quote.target_monthly_appointments} RDV/mois) n'est pas un nombre inclus.`}</p>
+                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{commitmentReady && included ? (entryTier ? `${included} rendez-vous qualifiés exclusifs inclus par mois` : guarantee.checkoutPrimaryLabel) : "Forfait de rendez-vous à confirmer : le nombre de rendez-vous inclus n'est pas encore établi."}</p>
+                  {(initialTarget ?? 0) > 0 && (
+                    <p className="pl-6 text-xs text-white/65" data-testid="target-appointments">Votre objectif : {initialTarget} RDV/mois. C'est un objectif, pas un nombre inclus.</p>
+                  )}
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Chaque rendez-vous est exclusif, jamais partagé avec d'autres entrepreneurs</p>
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil UNPRO pour {quote.trade_primary}, publié après vérification</p>
                 </div>
@@ -676,6 +718,24 @@ export default function PageContractorPersonalizedPlan() {
                   {waitlisted && <p className="text-amber-200/90">Votre métier est en forte demande dans ce territoire : une place d'attente vous est proposée.</p>}
                 </div>
 
+                {!commitmentReady && !waitlisted ? (
+                  <div className="mt-6 border-t border-white/10 pt-5" data-testid="appointment-plan-pending">
+                    <p className="text-lg font-semibold text-white">Forfait de rendez-vous à confirmer</p>
+                    <p className="mt-2 text-sm text-white/80">Nous ne pouvons pas encore confirmer un nombre de rendez-vous inclus pour votre métier, votre territoire et votre capacité. Aucun forfait mensuel ne vous est facturé.</p>
+                    {checkoutError && (
+                      <div role="alert" className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">{checkoutError}</div>
+                    )}
+                    {!promotionGranted && (
+                      <button type="button" onClick={openPresence} data-testid="pending-presence-only" className="mt-5 w-full min-h-14 rounded-[18px] bg-amber-500 px-4 text-black font-semibold">
+                        Présence IA seule — 350 $ + taxes, paiement unique
+                      </button>
+                    )}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button type="button" data-testid="pending-recompute" onClick={() => { const c = new URLSearchParams(searchParams); c.delete("checkout"); c.set("view", "personalized"); navigate(`/entrepreneur/devis-personnalise?${c.toString()}`); }} className="min-h-11 rounded-[18px] border border-white/20 bg-white/5 px-3 text-sm text-white">Recalculer mon offre</button>
+                      <button type="button" data-testid="pending-clara" onClick={() => openAlex("contractor_plan", "user_tapped_plan_clara", "floating")} className="min-h-11 rounded-[18px] border border-white/20 bg-white/5 px-3 text-sm text-white">En parler à Clara</button>
+                    </div>
+                  </div>
+                ) : (<>
                 <div className="mt-6 border-t border-white/10 pt-5" data-testid="price-block">
                   <div className="flex items-baseline gap-2">
                     <div className="text-4xl font-semibold tracking-[-0.04em]" data-testid="plan-price">{formatCADCents(quote.recommended_monthly_price)}</div>
@@ -683,9 +743,9 @@ export default function PageContractorPersonalizedPlan() {
                   </div>
                   <div className="mt-3 space-y-1 text-sm text-white/75" data-testid="tax-breakdown">
                     {presenceLines.includePresence && (
-                      <div className="flex justify-between" data-testid="presence-line"><span>Présence IA — profil + 12 mois (par année)</span><span>{formatCADCents(35000)}</span></div>
+                      <div className="flex justify-between gap-3" data-testid="presence-line"><span>Présence IA — paiement unique (profil + 12 mois)</span><span>{formatCADCents(35000)}</span></div>
                     )}
-                    <div className="flex justify-between"><span>Forfait de rendez-vous (mensuel)</span><span>{formatCADCents(quote.recommended_monthly_price)}</span></div>
+                    <div className="flex justify-between gap-3" data-testid="plan-line"><span>Forfait de rendez-vous — abonnement mensuel{included && included > 0 ? ` (${included} RDV inclus/mois)` : ""}</span><span>{formatCADCents(quote.recommended_monthly_price)}</span></div>
                     <div className="flex justify-between"><span>TPS (5 %)</span><span data-testid="gst-today">{formatCADCents(presenceLines.today.gst)}</span></div>
                     <div className="flex justify-between"><span>TVQ (9,975 %)</span><span data-testid="qst-today">{formatCADCents(presenceLines.today.qst)}</span></div>
                     <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
@@ -708,6 +768,7 @@ export default function PageContractorPersonalizedPlan() {
                 >
                   {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : checkoutBlocked ? "Proposition en mise à jour…" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
                 </button>
+                </>)}
                 {entryTier && entryTiers && !waitlisted && (
                   <div className="mt-3 text-center">
                     <button type="button" onClick={() => setOptionsOpen((o) => !o)} className="text-sm text-white/70 underline underline-offset-4" data-testid="other-options">
@@ -715,7 +776,7 @@ export default function PageContractorPersonalizedPlan() {
                     </button>
                     {optionsOpen && (
                       <div className="mt-3 grid grid-cols-2 gap-2" data-testid="tier-options">
-                        {entryTiers.map((t) => (
+                        {entryTiers.filter((t) => !isBudgetQuote || t.cents <= (budgetFallback?.monthly_budget_cents ?? quote.monthly_budget ?? 0)).map((t) => (
                           <button
                             key={t.cents}
                             type="button"
@@ -751,6 +812,11 @@ export default function PageContractorPersonalizedPlan() {
             </GlassCard>
           );
         })()}
+
+        {/* Temps 2 : si l'entrepreneur hésite, Clara demande son budget (une seule question). */}
+        {quote.pricing_status !== "paid" && !entryEligible && !waitlisted && !promotionGranted && !offerId && !(quote.input_payload as Record<string, unknown> | undefined)?.affiliate_proposal_id && (
+          <ClaraBudgetFallback quote={quote} initialTarget={initialTarget} onQuote={adoptBudgetQuote} onPresence={openPresence} />
+        )}
 
 
         {/* Repli : Présence IA annuelle, sans forfait de rendez-vous. */}
