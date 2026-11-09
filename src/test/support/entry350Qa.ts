@@ -14,6 +14,10 @@ import * as entryPromo from "../../../supabase/functions/_shared/entry350Promo";
 import * as webhookAuth from "../../../supabase/functions/_shared/webhookAuth";
 import * as webhookAudit from "../../../supabase/functions/_shared/webhookAuditPersistence";
 import { handleCondoBillingEvent } from "../../../supabase/functions/_shared/condoBilling";
+import * as reservation from "../../../supabase/functions/_shared/checkoutReservation";
+import * as annualPresence from "../../../supabase/functions/_shared/annualPresence";
+import * as invitedIdentity from "../../../supabase/functions/_shared/invitedIdentity";
+import { createReservationMemory } from "./reservationMemory";
 
 export const OWNER = "00000000-0000-4000-8000-000000000001";
 export const OTHER = "00000000-0000-4000-8000-000000000002";
@@ -37,6 +41,8 @@ export async function createQa(taxApproved = true) {
   let deliveryLive = true;
   let failTable: string | null = null;
   let failTerminalWebhookAudit = false;
+  let failRpc: string | null = null;
+  const reservations = createReservationMemory();
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
@@ -180,6 +186,25 @@ export async function createQa(taxApproved = true) {
           return {data:r.rows[0].data,error:null};
         }
         if (name === 'has_role') return {data:false,error:null};
+        if (name === 'annual_presence_decision') {
+          // Mirror: a non-revoked paid 350 receipt < 12 months = valid Presence.
+          const r = await db.query<Row>(`select exists(select 1 from contractor_activation_ledger l where l.contractor_id=$1 and l.action='entry_activation_350_paid'
+            and l.created_at > now()-interval '12 months' and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[args._contractor_id]);
+          return {data:r.rows[0].v ? {required:false,reason:'valid_annual_presence',valid_until:null} : {required:true,reason:'annual_presence_required',valid_until:null},error:null};
+        }
+        if (name === 'reserve_contractor_checkout' || name === 'reserve_prospect_checkout') {
+          if (failRpc===name) {failRpc=null;return {data:null,error:{message:'Injected reservation failure'}};}
+          const contractor = name === 'reserve_contractor_checkout';
+          let valid = false;
+          if (contractor && args._includes_presence) valid = !(await this.rpc('annual_presence_decision',{_contractor_id:args._contractor_id})).data.required;
+          if (!contractor) {
+            const known=(peripheral.get(args._prospect_table) ?? []).some((p:Row)=>p.id===args._prospect_id);
+            if (!known) return {data:{action:'refuse',reason:'prospect_identity_unverified'},error:null};
+          }
+          const subject = contractor ? `c:${args._contractor_id}` : `p:${args._prospect_table}:${args._prospect_id}`;
+          return {data:reservations.reserve(subject,args._stripe_mode,contractor ? !!args._includes_presence : true,args._fingerprint,args._ttl_seconds ?? 3600,valid),error:null};
+        }
+        if (name === 'settle_contractor_checkout') return {data:reservations.settle(args._reservation_id,args._status,args._stripe_session_id,args._reason),error:null};
         return {data:null,error:null}; // Explicit peripheral analytics/affiliate mocks.
       },
       from(table: string) {
