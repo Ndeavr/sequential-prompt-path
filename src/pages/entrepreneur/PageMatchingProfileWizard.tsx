@@ -4,6 +4,7 @@ import { invokeMatchingProfile } from "@/lib/matching/invokeMatchingProfile";
 import { dossierValue, type DraftEvidence } from "@/lib/claraContractorWorkspace";
 import { ClaraWorkPanel, PresencePreview } from "@/components/entrepreneur/ClaraContractorWorkspace";
 import { Textarea } from "@/components/ui/textarea";
+import { GUARANTEE_COPY, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 /**
  * UNPRO — /entrepreneurs/profil
  *
@@ -91,6 +92,8 @@ export default function PageMatchingProfileWizard() {
   })();
   const fr = sp.get("lang") ? sp.get("lang") !== "en" : !(explicitEn && lang === "en");
   const simpleEntry = sp.get("entry") === "profile";
+  // Offre campagne « 10 contrats garantis » (FR seulement) : conditions affichées avant le paiement.
+  const guaranteeOffer = fr && isGuaranteeOfferParam(sp.get("offre"));
   const [reviewed, setReviewed] = useState(false);
   const [declaredName, setDeclaredName] = useState(sp.get("entreprise") ?? "");
   const [declaredWebsite, setDeclaredWebsite] = useState(normalizeContractorEntry(sp.get("website") ?? "", "website")?.website ?? "");
