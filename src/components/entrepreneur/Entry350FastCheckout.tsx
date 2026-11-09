@@ -220,7 +220,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       <ul className="mt-3 space-y-1.5 text-sm" data-testid="entry-350-benefits">
         {(guarantee ? GUARANTEE_COPY.details : COPY.benefits).map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
       </ul>
-      <p className="mt-3 text-2xl font-semibold">{COPY.price}</p>
+      <p className="mt-3 text-2xl font-semibold">{guarantee ? "350 $ + taxes · 12 mois" : COPY.price}</p>
       {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
       <input id="activation350-business-name" data-testid="entry-350-business-name" autoComplete="organization"
@@ -229,6 +229,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-foreground" />
       {promo.state === "valid"
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
+        : guarantee
+        ? <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>, payés une fois. Aucun renouvellement automatique.</p>
         : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
       {!guarantee && <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>}
       {guarantee ? null : !(promoOpen || promo.state !== "idle") ? (
