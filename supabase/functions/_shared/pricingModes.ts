@@ -405,3 +405,21 @@ export function appointmentPlanPayable(
   if (!(price > 0)) return { payable: true, monthly_appointments: included };
   return { payable: included > 0, monthly_appointments: included };
 }
+
+/**
+ * Budget fallback (Clara « Avec quel budget mensuel… ») : the entry agreement
+ * must NEVER exceed the budget the contractor stated. Returns the largest
+ * approved entry tier <= budget, or null when no tier fits (no monthly plan
+ * is then payable; Présence IA alone remains the honest option).
+ */
+export function budgetEntryTier<T extends { cents: number }>(
+  budgetCents: number,
+  tiers: readonly T[],
+  requestedCents?: number | null,
+): T | null {
+  const b = Number.isFinite(budgetCents) ? Math.max(0, Math.round(budgetCents)) : 0;
+  const fitting = tiers.filter((t) => t.cents <= b);
+  if (!fitting.length) return null;
+  const requested = fitting.find((t) => t.cents === Number(requestedCents));
+  return requested ?? fitting[fitting.length - 1];
+}
