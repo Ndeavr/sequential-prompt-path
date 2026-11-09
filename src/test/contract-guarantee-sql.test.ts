@@ -13,6 +13,7 @@ const C1 = "10000000-0000-4000-8000-000000000001";
 const C2 = "10000000-0000-4000-8000-000000000002";
 
 function migrationSql(): string {
+  if (process.env.GUARANTEE_SQL_FILE) return readFileSync(process.env.GUARANTEE_SQL_FILE, "utf8");
   const file = readdirSync("drizzle/migrations").find((f) => f.endsWith("_contract_guarantee_offer.sql"));
   if (!file) throw new Error("migration contract_guarantee_offer introuvable");
   return readFileSync(`drizzle/migrations/${file}`, "utf8");
