@@ -19,7 +19,13 @@ async function run(session: Record<string, unknown>, livemode = true, badSignatu
         select: () => q, eq: () => q, limit: () => q,
         insert: (v: Record<string, unknown>) => { value = v; return q; },
         update: (v: Record<string, unknown>) => { value = v; return q; },
-        // The mocked terminal audit update must return its durable event-id receipt.\n        // All other lookups remain empty, so unpaid sessions cannot acquire entitlements.\n        maybeSingle: async () => ({\n          data: table === "stripe_webhook_events" && value?.processing_status === "processed"\n            ? { stripe_event_id: event.id } : null,\n          error: null,\n        }),
+        // The mocked terminal audit update must return its durable event-id receipt.
+        // All other lookups remain empty, so unpaid sessions cannot acquire entitlements.
+        maybeSingle: async () => ({
+          data: table === "stripe_webhook_events" && value?.processing_status === "processed"
+            ? { stripe_event_id: event.id } : null,
+          error: null,
+        }),
         then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
           if (value) writes.push({ table, value });
           return Promise.resolve({ data: null, error: null }).then(res, rej);
