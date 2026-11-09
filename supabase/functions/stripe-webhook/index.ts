@@ -387,6 +387,17 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error("[stripe-webhook][entry_350] commission reversal failed", piId, String(e));
         }
+        // Garantie 10 contrats : mise en revue (jamais supprimée), auditée.
+        try {
+          const gFlag = await supabase.rpc("flag_contract_guarantee_payment_event", {
+            p_payment_intent: piId, p_event_id: event.id,
+            p_kind: event.type === "charge.refunded" ? "refunded" : "disputed",
+            p_amount_refunded_cents: typeof obj?.amount_refunded === "number" ? obj.amount_refunded : null,
+          });
+          if (gFlag.error) throw new Error(gFlag.error.message);
+        } catch (e) {
+          console.error("[stripe-webhook][contract_guarantee] flag failed", piId, String(e));
+        }
       }
     }
 
@@ -726,6 +737,32 @@ Deno.serve(async (req) => {
                       body: "Activation conservée. Commission à réinscrire (idempotente par session).",
                       payload_json: { stripe_session_id: session.id, affiliate_id: commissionArgs.p_affiliate_id, error: String(e) },
                     });
+                  }
+                }
+                // Offre « 10 contrats garantis » : garantie créée uniquement ici, après
+                // paiement signé vérifié au prix complet. Idempotente par session;
+                // un échec relance la livraison Stripe (rejouée via already_processed).
+                if (session.metadata?.offer_version) {
+                  const gArgs = guaranteeRecordArgs(session as never, event as never, entryContractorId);
+                  if (!gArgs) {
+                    await supabase.from("admin_notifications").insert({
+                      type: "contract_guarantee_not_recorded", severity: "critical", contractor_id: entryContractorId,
+                      title: "Garantie 10 contrats non créée — paiement à vérifier",
+                      body: "La session porte l'offre 10 contrats mais pas le prix complet sans rabais. Aucune garantie créée.",
+                      payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null },
+                    });
+                  } else {
+                    const gRes = await supabase.rpc("record_contract_guarantee_payment", gArgs);
+                    if (gRes.error) throw new Error(`contract_guarantee: ${gRes.error.message}`);
+                    const gStatus = (gRes.data as { status?: string } | null)?.status;
+                    if (gStatus !== "recorded" && gStatus !== "already_recorded") {
+                      await supabase.from("admin_notifications").insert({
+                        type: "contract_guarantee_not_recorded", severity: "critical", contractor_id: entryContractorId,
+                        title: "Garantie 10 contrats non créée — revue requise",
+                        body: "Paiement reçu, garantie refusée par le registre (chevauchement ou montant). Aucun remboursement automatique.",
+                        payload_json: { stripe_session_id: session.id, livemode: event.livemode ?? null, result: gRes.data ?? null },
+                      });
+                    }
                   }
                 }
               }
