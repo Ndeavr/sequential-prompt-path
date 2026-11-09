@@ -9,7 +9,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useCalendarConnections, useCalendarConversionTracking, useStartGoogleOAuth } from "@/hooks/useCalendarConnection";
+import { shouldTrackCalendarSuccess, useCalendarConnections, useCalendarConversionTracking, useStartGoogleOAuth } from "@/hooks/useCalendarConnection";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { CALENDAR_CHANGED_EVENT, calendarContextFallback, safeCalendarReturn } from "@/lib/calendarReturn";
 import GoogleCalendarSelector from "@/components/calendar/GoogleCalendarSelector";
@@ -23,7 +23,7 @@ export default function PageCalendarConnectionSuccess() {
     ? params.get("role") as "contractor" | "professional"
     : "homeowner";
   const surface = params.get("surface") ?? "callback_success";
-  const { primary, isConnected, loading, error, refresh } = useCalendarConnections();
+  const { primary, google, readiness, isConnected, loading, error, refresh } = useCalendarConnections();
   const { track } = useCalendarConversionTracking();
   const { startGoogle } = useStartGoogleOAuth();
   const [retrying, setRetrying] = useState(false);
@@ -33,11 +33,17 @@ export default function PageCalendarConnectionSuccess() {
   const backTo = safeCalendarReturn(params.get("return_to")) ?? calendarContextFallback(activeRole);
 
   useEffect(() => {
-    if (loading || !isConnected || tracked.current) return;
+    if (loading || error || !isConnected || tracked.current) return;
     tracked.current = true;
     window.dispatchEvent(new Event(CALENDAR_CHANGED_EVENT));
+    // Count only a connection the callback just saved, once; reopening this URL never re-counts.
+    const key = "unpro_calendar_success_tracked";
+    let previous: string | null = null;
+    try { previous = sessionStorage.getItem(key); } catch { /* storage unavailable */ }
+    if (!shouldTrackCalendarSuccess(google?.connected_at, Date.now(), previous)) return;
+    try { sessionStorage.setItem(key, google?.connected_at ?? ""); } catch { /* storage unavailable */ }
     track({ surface, role_context: role, event_type: "contractor_calendar_connected", provider });
-  }, [loading, isConnected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, error, isConnected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const retry = async () => {
     setRetrying(true);
@@ -61,15 +67,25 @@ export default function PageCalendarConnectionSuccess() {
               <Loader2 className="w-6 h-6 mx-auto mb-3 animate-spin text-primary" aria-hidden />
               <p className="text-sm text-foreground">Vérification de votre connexion Google…</p>
             </div>
-          ) : isConnected ? (
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
+          ) : isConnected && !error ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center" data-calendar-readiness={readiness}>
               <div className="w-14 h-14 rounded-full bg-emerald-500/20 mx-auto flex items-center justify-center mb-3">
                 <CheckCircle2 className="w-7 h-7 text-emerald-400" />
               </div>
-              <h1 className="text-xl font-bold text-foreground">Calendrier connecté</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                {readiness === "ready" ? "Prêt à recevoir des rendez-vous" : "Calendrier connecté"}
+              </h1>
               <p className="text-sm text-muted-foreground mt-2">
                 Google Agenda{primary?.provider_account_email ? ` · ${primary.provider_account_email}` : ""}
               </p>
+              {readiness === "no_selection" && (
+                <p className="text-sm text-foreground mt-2">
+                  Choisissez votre calendrier : aucun rendez-vous ne peut être reçu avant ce choix.
+                </p>
+              )}
+              {readiness === "not_synced" && (
+                <p className="text-sm text-foreground mt-2">Disponibilités non encore synchronisées.</p>
+              )}
             </div>
           ) : (
             <div role="alert" className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center">
