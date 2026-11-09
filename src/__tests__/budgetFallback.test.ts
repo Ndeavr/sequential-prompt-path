@@ -99,6 +99,6 @@ describe("initial objective and fallback budget are both kept", () => {
   it("server wiring: budget mode uses the budget-capped tier and stores the sanitized context", () => {
     const q = readFileSync("supabase/functions/compute-pricing-quote/index.ts", "utf8");
     expect(q).toContain("budgetEntryTier(monthlyBudgetCents ?? 0, ENTRY_TIERS, body.entry_tier_cents)");
-    expect(q).toContain("sanitizeBudgetFallback((body as Record<string, unknown>).budget_fallback, monthlyBudgetCents)");
+    expect(q).toContain("sanitizeBudgetFallback((body as unknown as Record<string, unknown>).budget_fallback, monthlyBudgetCents)");
   });
 });

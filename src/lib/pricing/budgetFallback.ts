@@ -48,7 +48,7 @@ export function budgetFallbackRequest(quote: Pick<PricingQuote, "id" | "input_pa
   const p = (quote.input_payload ?? {}) as Record<string, unknown>;
   const prior = (p.budget_fallback ?? null) as { from_quote_id?: string | null; initial_target_monthly_appointments?: number | null; initial_goal_amount?: number | null } | null;
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
-  return {
+  const body: Record<string, unknown> = {
     ...p,
     quote_id: undefined,
     entry_tier_cents: undefined,
@@ -62,6 +62,7 @@ export function budgetFallbackRequest(quote: Pick<PricingQuote, "id" | "input_pa
       reason: prior ? "budget_change" : "hesitation",
     },
   };
+  return body as Record<string, unknown> & { pricing_mode: "budget"; monthly_budget_cents: number; budget_fallback: Record<string, unknown> };
 }
 
 export type BudgetOffer =
