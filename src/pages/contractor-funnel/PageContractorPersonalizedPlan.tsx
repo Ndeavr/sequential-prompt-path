@@ -205,6 +205,18 @@ export default function PageContractorPersonalizedPlan() {
   }, [quote?.id, presenceRefresh]);
   const presenceLines = annualPresenceLines(quote && quote.pricing_status !== "paid" ? baseCents : 0, presenceDecision);
   const checkoutBlocked = goalState.dirty || goalState.recomputing || !goalState.valid;
+  // Repli budgétaire (Clara) : l'objectif initial reste celui du devis d'origine.
+  const budgetFallback = (quote?.input_payload as Record<string, unknown> | undefined)?.budget_fallback as
+    | { from_quote_id?: string | null; initial_target_monthly_appointments?: number | null; monthly_budget_cents?: number }
+    | undefined;
+  const isBudgetQuote = quote?.pricing_mode === "budget" || (quote?.input_payload as Record<string, unknown> | undefined)?.pricing_mode === "budget";
+  const initialTarget = isBudgetQuote
+    ? (budgetFallback?.initial_target_monthly_appointments ?? null)
+    : (quote?.target_monthly_appointments ?? null);
+  const adoptBudgetQuote = (q: PricingQuote) => {
+    setGoalState({ dirty: false, recomputing: false, valid: true, error: null });
+    adoptQuote(q);
+  };
   const adoptQuote = (q: PricingQuote) => {
     adoptedQuoteRef.current = q.id;
     setQuote(q);
