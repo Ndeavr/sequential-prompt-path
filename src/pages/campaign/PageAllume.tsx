@@ -1,18 +1,19 @@
 /**
  * /allume — « Qu'est-ce qui vous allume? » seasonal service businesses landing.
- * One CTA into the canonical contractor Clara entry. No video, no offer quota.
+ * One CTA into the canonical contractor Clara entry with the « 10 contrats
+ * garantis » offer selected. No video, no quota, no 1 $ promise.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UnproLogo from "@/components/brand/UnproLogo";
 import SiteFooterPremium from "@/components/layout/SiteFooterPremium";
 import { supabase } from "@/integrations/supabase/client";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
-  ALLUME_COPY as copy, ALLUME_UNIVERSES, allumeContractorPath, parseAllumeCity, parseAllumeService,
+  ALLUME_COPY as copy, ALLUME_OFFER as offer, ALLUME_UNIVERSES, allumeContractorPath, parseAllumeCity, parseAllumeService,
 } from "@/data/allumeCampaign";
 
 export default function PageAllume() {
@@ -86,6 +87,16 @@ export default function PageAllume() {
               </div>
             </fieldset>
           ))}
+        </section>
+
+        <section aria-labelledby="allume-offer" data-testid="allume-offer" className="mt-10 rounded-[28px] border border-primary/30 bg-card/70 p-6">
+          <h2 id="allume-offer" className="font-display text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{offer.headline}</h2>
+          <p className="mt-3 text-base font-semibold">{offer.conditions}</p>
+          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+            {offer.details.map((d) => (
+              <li key={d} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{d}</li>
+            ))}
+          </ul>
         </section>
 
         <Button size="lg" onClick={go} className="mt-10 h-auto min-h-14 w-full gap-2 whitespace-normal rounded-[18px] px-5 text-base font-semibold sm:w-auto">

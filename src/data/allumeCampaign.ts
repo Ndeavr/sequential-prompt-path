@@ -4,11 +4,16 @@
  * (matching-profile wizard with Clara); only marketing attribution, a
  * whitelisted city and a whitelisted service leave this page.
  *
- * The « 5 entreprises de services par ville » line is NOT shown: no active
- * server-side offer carries that quota (see docs/campaigns/allume-2026-11-09.md).
+ * Offer shown: « 350 $ : 10 contrats garantis » (immutable server version
+ * allume_350_10_contrats_v1). The 1 $ special and the « 5 par ville » quota
+ * are NOT shown: their duration/inclusions are undefined and no server quota
+ * exists (see docs/campaigns/allume-2026-11-09.md).
  */
 import { CONTRACTOR_MARKETING_FIELDS } from "@/lib/analytics/contractorAdTracking";
 import { contractorProfileEntryPath } from "@/lib/contractorProfileEntry";
+import { GUARANTEE_OFFER_PARAM } from "../../supabase/functions/_shared/contractGuarantee";
+
+export { GUARANTEE_COPY as ALLUME_OFFER } from "../../supabase/functions/_shared/contractGuarantee";
 
 export const ALLUME_PATH = "/allume";
 export const ALLUME_CAMPAIGN = "allume_saisonnier_2026";
@@ -88,5 +93,6 @@ export function allumeContractorPath(search: string, service: AllumeServiceKey |
   if (city) out.set("ville", city);
   const svc = parseAllumeService(service);
   if (svc) out.set("metier", svc);
+  out.set("offre", GUARANTEE_OFFER_PARAM);
   return contractorProfileEntryPath(`?${out.toString()}`, "fr");
 }
