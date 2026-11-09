@@ -154,6 +154,13 @@ export interface PushEventInput {
   location?: string;
   start: string;
   end: string;
+  /** Deterministic Google event id (base32hex) so retries never duplicate. */
+  eventId?: string;
+}
+
+/** Google event ids accept [a-v0-9]{5,1024}; a UUID without dashes qualifies. */
+export function bookingEventId(bookingId: string): string {
+  return `unpro${bookingId.replace(/-/g, "").toLowerCase()}`;
 }
 
 /** Writes a confirmed UNPRO appointment into the contractor's calendar. */
@@ -171,6 +178,7 @@ export async function pushGoogleEvent(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        id: event.eventId ?? undefined,
         summary: event.summary,
         description: event.description ?? undefined,
         location: event.location ?? undefined,
@@ -182,6 +190,7 @@ export async function pushGoogleEvent(
   );
   const body = await res.json().catch(() => ({})) as { id?: string; error?: { message?: string } };
   if (isGoogleAuthFailure(res.status, body)) throw new CalendarAuthRevoked();
+  if (res.status === 409 && event.eventId) return event.eventId; // already written
   if (!res.ok) throw new Error(`google_event_insert_failed:${res.status}:${googleErrorReason(body)}`);
   return body.id ?? null;
 }

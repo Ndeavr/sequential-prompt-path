@@ -133,3 +133,5 @@
 - [ ] DB-stored articles/templates not reviewed row by row (needs separate authorized pass).
 
 - [x] Clara contractor workspace v1 (entry → dossier → private preview → canonical checkout → factual panel), local only, not published. Open: safe owner-auth website analysis wrapper (backend review).
+
+- [x] ISR (fiche isroyal.ca publiée-en-attente) → agenda Google « Danny » délégué (révocable). Reste : aucun type de RDV ISR configuré, donc aucun créneau réservable.
