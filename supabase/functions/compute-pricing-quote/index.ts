@@ -16,6 +16,7 @@ import {
   marginConfigFrom,
   solveBudget,
   solvePack,
+  resolveTierCommitment,
   PACK_350_TOTAL_CENTS,
   PACK_350_MAX_APPOINTMENTS,
   PACK_350_DURATION_MONTHS,
@@ -999,7 +1000,7 @@ Deno.serve(async (req) => {
 
     // ENTRY LADDER (approved 2026-10-07): the first agreement is always one of
     // 100/200/350/500 $/month. The full computed price is kept internally only
-    // (future upgrade); no appointment guarantee is attached to a tier.
+    // (future upgrade). The tier's included volume is resolved just below.
     const internalTargetCents = finalPrice;
     let entryTier: { cents: number; label: string } | null = null;
     if (pricingMode !== "pack" && status === "offered") {
@@ -1010,7 +1011,28 @@ Deno.serve(async (req) => {
       finalPlanCode = (eligible[eligible.length - 1] ?? plans[0]).code;
     }
 
-    const guaranteedAppointments = entryTier ? 0 :
+    // P0 2026-11-09 : un forfait mensuel de rendez-vous payant porte toujours
+    // un volume POSITIF de RDV qualifiés exclusifs inclus par mois, résolu par
+    // le solveur canonique (chaîne de prix + plafond marché + capacité + marge).
+    // Sans engagement positif, le forfait reste « à confirmer » et non payable.
+    const tierCommitment = entryTier
+      ? resolveTierCommitment(
+          {
+            tier_cents: entryTier.cents,
+            target_monthly_appointments: Math.max(0, Math.round(body.target_monthly_appointments ?? 0)),
+            market_ceiling: capacityCeiling,
+            contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+            market_unavailable: saturated || marketClosed,
+            margin: marginCfg,
+          },
+          (t) => {
+            const c = priceChain(t);
+            return { target: c.target, plan_code: c.plan_code, monthly_price_cents: c.monthly_price_cents, capacity_capped: c.capacity_capped };
+          },
+        )
+      : null;
+
+    const guaranteedAppointments = entryTier ? (tierCommitment?.monthly_appointments ?? 0) :
       status === "waitlisted" ||
       status === "analysis_required" ||
       modeOutcome === "analysis_required" ||
@@ -1175,6 +1197,14 @@ Deno.serve(async (req) => {
       mode_outcome: modeOutcome,
       entry_tier: entryTier,
       entry_tiers: entryTier ? ENTRY_TIERS : null,
+      appointment_commitment: tierCommitment
+        ?? (pricingMode === "pack" ? null : {
+          status: guaranteedAppointments > 0 ? "resolved" : "unresolved",
+          monthly_appointments: guaranteedAppointments,
+          period: "month",
+          outcome: modeOutcome,
+          source: "price_chain",
+        }),
       appointment_recommendation: appointmentRecommendation,
       appointment_unit_price_cents: chain.appointment_unit_price_cents,
       appointment_unit_status: extra.status,
@@ -1438,6 +1468,7 @@ Deno.serve(async (req) => {
         plan: finalPlanCode,
         price_cents: finalPrice,
         entry_tier_cents: entryTier?.cents ?? null,
+        appointment_commitment: pricingExplanation.appointment_commitment,
         internal_target_cents: entryTier ? internalTargetCents : null,
         status,
         capacity: capacityAvailability,
