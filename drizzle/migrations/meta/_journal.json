@@ -323,6 +323,13 @@
       "when": 1794175375844,
       "tag": "0045_checkout_reservation_recovery_and_presence_review_evidence",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1794184129571,
+      "tag": "0046_invited_checkout_reservation_and_mode_separated_presence_evidence",
+      "breakpoints": true
     }
   ]
 }

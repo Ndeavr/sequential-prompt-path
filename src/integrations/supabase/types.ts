@@ -30211,13 +30211,15 @@ export type Database = {
       contractor_checkout_reservations: {
         Row: {
           closed_reason: string | null
-          contractor_id: string
+          contractor_id: string | null
           created_at: string
           fingerprint: string
           id: string
           idempotency_key: string
           includes_presence: boolean
           kind: string
+          prospect_id: string | null
+          prospect_table: string | null
           quote_id: string | null
           session_expires_at: string
           status: string
@@ -30227,13 +30229,15 @@ export type Database = {
         }
         Insert: {
           closed_reason?: string | null
-          contractor_id: string
+          contractor_id?: string | null
           created_at?: string
           fingerprint: string
           id?: string
           idempotency_key: string
           includes_presence: boolean
           kind: string
+          prospect_id?: string | null
+          prospect_table?: string | null
           quote_id?: string | null
           session_expires_at: string
           status?: string
@@ -30243,13 +30247,15 @@ export type Database = {
         }
         Update: {
           closed_reason?: string | null
-          contractor_id?: string
+          contractor_id?: string | null
           created_at?: string
           fingerprint?: string
           id?: string
           idempotency_key?: string
           includes_presence?: boolean
           kind?: string
+          prospect_id?: string | null
+          prospect_table?: string | null
           quote_id?: string | null
           session_expires_at?: string
           status?: string
@@ -101090,15 +101096,19 @@ export type Database = {
           activation_status_at_rule: string
           admin_activation_logs: number
           auth_user_exists: boolean
+          checkout_impact: string
           contractor_id: string
           evidence_class: string
           is_published: boolean
           ledger_actions: string
-          max_paid_amount_cents: number
-          paid_checkout_sessions: number
-          signed_paid_webhook_events: number
+          other_mode_paid_sessions: number
+          other_mode_signed_paid_events: number
+          same_mode_max_paid_amount_cents: number
+          same_mode_paid_sessions: number
+          same_mode_signed_paid_events: number
           stripe_mode: string
-          synthetic_name_pattern: boolean
+          synthetic_name_hint: boolean
+          unknown_mode_paid_sessions: number
         }[]
       }
       admin_reassign_affiliate_parent: {
@@ -102308,6 +102318,16 @@ export type Database = {
         }
         Returns: Json
       }
+      reserve_prospect_checkout: {
+        Args: {
+          _fingerprint: string
+          _prospect_id: string
+          _prospect_table: string
+          _stripe_mode: string
+          _ttl_seconds?: number
+        }
+        Returns: Json
+      }
       resolve_activation_link: { Args: { _token: string }; Returns: Json }
       resolve_affiliate_proposal_context: {
         Args: { _token: string }
@@ -102323,10 +102343,20 @@ export type Database = {
       }
       resolve_proposal_link: { Args: { _token: string }; Returns: Json }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
-      review_historical_presence_right: {
-        Args: { _contractor_id: string; _decision: string; _reason: string }
-        Returns: Json
-      }
+      review_historical_presence_right:
+        | {
+            Args: { _contractor_id: string; _decision: string; _reason: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _contractor_id: string
+              _decision: string
+              _reason: string
+              _stripe_mode: string
+            }
+            Returns: Json
+          }
       route_crm_recovery_assignment: {
         Args: {
           p_affiliate_id: string
