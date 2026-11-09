@@ -385,6 +385,7 @@ const AlexChat = lazyWithRetry(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazyWithRetry(() => import("@/pages/AuthorityDashboardPage"));
 const PageCombinedSavings = lazyWithRetry(() => import("@/pages/PageCombinedSavings"));
 const PageTannes = lazyWithRetry(() => import("@/pages/campaign/PageTannes"));
+const PageAllume = lazyWithRetry(() => import("@/pages/campaign/PageAllume"));
 const PressRelease = lazyWithRetry(() => import("@/pages/PressRelease"));
 const AlexVoicePage = lazyWithRetry(() => import("@/pages/AlexVoicePage"));
 const AlexVoiceRealtimePage = lazyWithRetry(() => import("@/pages/AlexVoiceRealtimePage"));
@@ -1262,6 +1263,7 @@ export const AppRouter = () => (
         <Route path="/flywheel" element={<FlywheelPage />} />
         <Route path="/communique" element={<PressRelease />} />
         <Route path="/tannes" element={<PageTannes />} />
+        <Route path="/allume" element={<PageAllume />} />
         <Route path="/vision" element={<PageCombinedSavings />} />
         <Route path="/en/vision" element={<PageCombinedSavings />} />
         <Route path="/articles/economiser-ensemble" element={<PageCombinedSavings kind="article" />} />
