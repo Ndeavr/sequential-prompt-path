@@ -1000,7 +1000,7 @@ Deno.serve(async (req) => {
 
     // ENTRY LADDER (approved 2026-10-07): the first agreement is always one of
     // 100/200/350/500 $/month. The full computed price is kept internally only
-    // (future upgrade); no appointment guarantee is attached to a tier.
+    // (future upgrade). The tier's included volume is resolved just below.
     const internalTargetCents = finalPrice;
     let entryTier: { cents: number; label: string } | null = null;
     if (pricingMode !== "pack" && status === "offered") {
@@ -1468,6 +1468,7 @@ Deno.serve(async (req) => {
         plan: finalPlanCode,
         price_cents: finalPrice,
         entry_tier_cents: entryTier?.cents ?? null,
+        appointment_commitment: pricingExplanation.appointment_commitment,
         internal_target_cents: entryTier ? internalTargetCents : null,
         status,
         capacity: capacityAvailability,
