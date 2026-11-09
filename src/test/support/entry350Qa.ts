@@ -345,7 +345,18 @@ export async function createQa(taxApproved = true) {
     const u=await user(token ?? undefined);
     return asRole(u?.id ?? null,u?'authenticated':'anon',()=>db.query<Row>(query,params));
   }
-  return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,
+  // Synthetic verified invitation (exact token row + canonical prospect row), never real data.
+  function invite(opts:{email?:string;phone?:string;token?:string;expired?:boolean;revoked?:boolean}={}) {
+    const n=(peripheral.get('verified_contractor_prospects') ?? []).length+1;
+    const id=`00000000-0000-4000-8000-${String(900+n).padStart(12,'0')}`;
+    const token=opts.token ?? `vpt_local_fixture_${n}_${'x'.repeat(12)}`;
+    peripheral.set('verified_contractor_prospects',[...(peripheral.get('verified_contractor_prospects') ?? []),{id,business_name:`QA Synthétique ${n}`,email:opts.email ?? null,phone_e164:opts.phone ?? null}]);
+    peripheral.set('verified_prospect_tokens',[...(peripheral.get('verified_prospect_tokens') ?? []),{token,prospect_id:id,
+      expires_at:opts.expired ? new Date(Date.now()-1000).toISOString() : new Date(Date.now()+86400000).toISOString(),revoked_at:opts.revoked ? new Date().toISOString() : null}]);
+    return {token,prospectId:id};
+  }
+  return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,invite,reservations,
+    failRpcNext:(name:string)=>{failRpc=name;},
     failNext:(table:string)=>{failTable=table;},
     failTerminalAuditOnce:()=>{failTerminalWebhookAudit=true;},
     close:()=>db.close()};
