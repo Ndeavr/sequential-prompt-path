@@ -120,7 +120,9 @@ Deno.serve(async (req) => {
           provider: connection.provider,
           status: revoked ? "revoked" : "failed",
           imported: 0,
-          reason: revoked ? "reconnect_required" : "sync_failed",
+          reason: revoked
+            ? "reconnect_required"
+            : message === "calendar_selection_required" ? "calendar_selection_required" : "sync_failed",
         });
         continue;
       }
