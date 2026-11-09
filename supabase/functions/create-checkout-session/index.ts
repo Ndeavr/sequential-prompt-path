@@ -15,6 +15,7 @@ import {
   assertFallbackCreditAmount,
 } from "../_shared/fallbackCredit350.ts";
 import { GUARANTEE_COPY, GUARANTEE_OFFER, GUARANTEE_OFFER_CODE } from "../_shared/contractGuarantee.ts";
+import { appointmentPlanPayable } from "../_shared/pricingModes.ts";
 import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
 import {
   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
@@ -1496,6 +1497,15 @@ Deno.serve(async (req) => {
       },
 
     };
+
+    // Même volume et même période que le devis, affichés sur Stripe et
+    // transmis à la confirmation de paiement (abonnement lié au quote_id).
+    if (quoteRow && quoteIncludedAppointments > 0) {
+      const commitmentMeta = { guaranteed_appointments: String(quoteIncludedAppointments), appointment_period: "month" };
+      Object.assign(checkoutConfig.metadata, commitmentMeta);
+      Object.assign(checkoutConfig.subscription_data.metadata, commitmentMeta);
+      checkoutConfig.custom_text = { submit: { message: `Forfait de rendez-vous mensuel : ${quoteIncludedAppointments} rendez-vous qualifiés exclusifs inclus par mois.${presenceIncluded ? " Présence IA 350 $ : paiement unique, profil + 12 mois, renouvellement manuel." : ""} Taxes du Québec (TPS 5 %, TVQ 9,975 %) appliquées.` } };
+    }
 
     const checkoutOrigin = req.headers.get("origin") ?? "https://unpro.ca";
     if (isEmbedded) {
