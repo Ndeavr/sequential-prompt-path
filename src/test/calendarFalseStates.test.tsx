@@ -40,7 +40,8 @@ vi.mock("@/integrations/supabase/client", () => {
     },
   };
 });
-vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "qa-synthetic" } }) }));
+const AUTH = { user: { id: "qa-synthetic" } };
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => AUTH }));
 vi.mock("@/hooks/useCalendarConnection", async (orig) => ({
   ...(await orig<typeof import("@/hooks/useCalendarConnection")>()),
   useStartGoogleOAuth: () => ({ startGoogle: m.startGoogle }),
