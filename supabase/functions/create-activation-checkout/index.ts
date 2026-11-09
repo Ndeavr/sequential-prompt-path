@@ -31,7 +31,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 /** Libellés Stripe : 350 $ par année + taxes, 12 mois, renouvellement manuel (jamais automatique). */
-export const INVITED_STRIPE_COPY = {
+const INVITED_STRIPE_COPY = {
   productName: "UNPRO — Présence IA 12 mois (350 $ CA par année + taxes)",
   intentDescription: "UNPRO — Présence IA 12 mois, 350 $ CA par année + taxes. Renouvellement manuel, jamais automatique.",
   submitMessage: "350 $ CA par année, avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Couvre 12 mois; renouvellement manuel, jamais automatique. Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti.",
