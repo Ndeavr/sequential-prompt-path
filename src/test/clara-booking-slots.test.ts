@@ -43,8 +43,10 @@ const data = (over: Partial<SlotEngineData> = {}): SlotEngineData => ({
   availability: hours, blackouts: [], existingBookings: [], allTypes: [type()], externalBusy: [], ...over,
 });
 
-const run = (d: SlotEngineData, typeId = "type-inspection") =>
-  computeSlotsFromData(d, { contractorId: CONTRACTOR, appointmentTypeId: typeId, dateFrom: FROM, dateTo: TO }, NOW).slots;
+const run = (d: SlotEngineData, typeId = "type-inspection", dateFrom = FROM) =>
+  computeSlotsFromData(d, { contractorId: CONTRACTOR, appointmentTypeId: typeId, dateFrom, dateTo: TO }, NOW).slots;
+// The engine returns at most 50 slots chronologically; Saturday is checked on its own window.
+const SATURDAY = zonedWallTime(2026, 11, 14, 0, 0);
 
 const minutes = (date: Date) => { const p = zonedParts(date); return p.hour * 60 + p.minute; };
 
@@ -61,7 +63,7 @@ describe("canonical slot engine — real ISR hours (America/Toronto)", () => {
   });
 
   it("Saturday stays within 09:30–14:00", () => {
-    const sat = run(data()).filter((s) => zonedParts(s.start).weekday === 6);
+    const sat = run(data(), "type-inspection", SATURDAY).filter((s) => zonedParts(s.start).weekday === 6);
     expect(sat.length).toBeGreaterThan(0);
     for (const s of sat) {
       expect(minutes(s.start)).toBeGreaterThanOrEqual(9 * 60 + 30);
@@ -71,6 +73,7 @@ describe("canonical slot engine — real ISR hours (America/Toronto)", () => {
 
   it("Sunday is closed and same day is never offered", () => {
     const slots = run(data());
+    expect(run(data(), "type-inspection", SATURDAY).some((s) => zonedParts(s.start).weekday === 0)).toBe(false);
     expect(slots.some((s) => zonedParts(s.start).weekday === 0)).toBe(false);
     expect(slots.some((s) => zonedParts(s.start).day === 9)).toBe(false);
   });
