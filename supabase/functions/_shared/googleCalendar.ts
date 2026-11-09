@@ -7,6 +7,9 @@
  */
 import { decryptCalendarToken, encryptCalendarToken } from "./calendarOAuthState.ts";
 
+// deno-lint-ignore no-explicit-any
+declare const Deno: any; // lets the browser-side test typecheck import this module
+
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 
