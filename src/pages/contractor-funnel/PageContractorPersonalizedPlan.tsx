@@ -337,6 +337,13 @@ export default function PageContractorPersonalizedPlan() {
         const ctx = (error as { context?: Response }).context;
         try { if (ctx && typeof ctx.json === "function") payload = await ctx.clone().json(); } catch { /* corps illisible */ }
       }
+      if (payload?.code === "appointment_commitment_missing") {
+        // Ancien devis sans volume inclus : jamais facturé; on montre la reprise.
+        setCheckoutError(payload.error ?? "Le nombre de rendez-vous inclus n'est pas encore confirmé. Aucun paiement n'a été créé.");
+        setCheckoutLoading(false);
+        setQuote((q) => (q ? { ...q, guaranteed_appointments: 0 } : q));
+        return;
+      }
       if (payload?.code === "annual_presence_due_with_free_plan" || payload?.code === "annual_presence_unverified") {
         setCheckoutError(payload.error ?? "Impossible de vérifier votre Présence IA. Aucun paiement n'a été créé.");
         setCheckoutLoading(false);
@@ -593,7 +600,7 @@ export default function PageContractorPersonalizedPlan() {
           <EntryActivation350Card
             quoteId={quote.id}
             contractorId={quote.contractor_id ?? null}
-            guaranteedAppointments={quote.guaranteed_appointments ?? null}
+            guaranteedAppointments={null}
             affiliateRef={affiliateRef}
             activationToken={activationToken}
             successUrl={planReturnUrl(window.location.origin, quote.id, window.location.search, "success")}
@@ -731,6 +738,7 @@ export default function PageContractorPersonalizedPlan() {
                 >
                   {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : waitlisted ? "Modifier mes objectifs" : checkoutBlocked ? "Proposition en mise à jour…" : totalWithTaxCents > 0 ? (activationConfirmed ? "Choisir ce forfait mensuel" : "Continuer vers le paiement") : "Activer mon offre gratuite"}
                 </button>
+                </>)}
                 {entryTier && entryTiers && !waitlisted && (
                   <div className="mt-3 text-center">
                     <button type="button" onClick={() => setOptionsOpen((o) => !o)} className="text-sm text-white/70 underline underline-offset-4" data-testid="other-options">
