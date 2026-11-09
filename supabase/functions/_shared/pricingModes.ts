@@ -405,3 +405,50 @@ export function appointmentPlanPayable(
   if (!(price > 0)) return { payable: true, monthly_appointments: included };
   return { payable: included > 0, monthly_appointments: included };
 }
+
+/**
+ * Budget fallback (Clara « Avec quel budget mensuel… ») : the entry agreement
+ * must NEVER exceed the budget the contractor stated. Returns the largest
+ * approved entry tier <= budget, or null when no tier fits (no monthly plan
+ * is then payable; Présence IA alone remains the honest option).
+ */
+export function budgetEntryTier<T extends { cents: number }>(
+  budgetCents: number,
+  tiers: readonly T[],
+  requestedCents?: number | null,
+): T | null {
+  const b = Number.isFinite(budgetCents) ? Math.max(0, Math.round(budgetCents)) : 0;
+  const fitting = tiers.filter((t) => t.cents <= b);
+  if (!fitting.length) return null;
+  const requested = fitting.find((t) => t.cents === Number(requestedCents));
+  return requested ?? fitting[fitting.length - 1];
+}
+
+export interface BudgetFallbackRecord {
+  /** Quote holding the contractor's initial objective (unchanged). */
+  from_quote_id: string | null;
+  /** Initial objective kept for the record — never an included number. */
+  initial_target_monthly_appointments: number | null;
+  initial_goal_amount: number | null;
+  /** Budget the contractor said they are comfortable starting with (CAD cents). */
+  monthly_budget_cents: number;
+  reason: "hesitation" | "budget_change";
+  surface: "plan_clara_budget";
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Whitelist the client-sent fallback context; the budget always comes from the solved request. */
+export function sanitizeBudgetFallback(raw: unknown, monthlyBudgetCents: number | null): BudgetFallbackRecord | null {
+  if (!raw || typeof raw !== "object" || !(monthlyBudgetCents && monthlyBudgetCents > 0)) return null;
+  const r = raw as Record<string, unknown>;
+  const pos = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
+  return {
+    from_quote_id: typeof r.from_quote_id === "string" && UUID_RE.test(r.from_quote_id) ? r.from_quote_id : null,
+    initial_target_monthly_appointments: pos(r.initial_target_monthly_appointments),
+    initial_goal_amount: pos(r.initial_goal_amount),
+    monthly_budget_cents: Math.round(monthlyBudgetCents),
+    reason: r.reason === "budget_change" ? "budget_change" : "hesitation",
+    surface: "plan_clara_budget",
+  };
+}
