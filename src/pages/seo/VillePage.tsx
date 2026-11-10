@@ -79,7 +79,7 @@ const VillePage = () => {
     "@context": "https://schema.org",
     "@type": "City",
     name: city.name,
-    description: `Professionnels vérifiés à ${city.name}, ${city.province}. Rénovation, entretien et réparation résidentielle.`,
+    description: `Professionnels vérifiés à ${city.name}, ${city.province}. Rénovation, construction, entretien, services.`,
     containedInPlace: { "@type": "AdministrativeArea", name: city.province },
     geo: { "@type": "GeoCoordinates" },
   };

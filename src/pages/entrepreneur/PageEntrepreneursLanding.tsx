@@ -34,7 +34,7 @@ const PageEntrepreneursLanding = () => {
         <title>{fr ? "Les bons projets pour développer votre entreprise | UNPRO" : "Grow your business with the right projects | UNPRO"}</title>
         <meta
           name="description"
-          content={fr ? "Rénovation–Construction, entretien et immobilier : présentez vos spécialités à UNPRO. Clara recherche une compatibilité entre les projets des propriétaires et votre entreprise." : "Renovation–Construction, property care and real estate: introduce your specialties to UNPRO. Clara looks for a fit between homeowner projects and your business."}
+          content={fr ? "Rénovation, construction, entretien, services : présentez vos spécialités à UNPRO. Clara recherche une compatibilité entre les projets des propriétaires et votre entreprise." : "Renovation, construction, maintenance, services: introduce your specialties to UNPRO. Clara looks for a fit between homeowner projects and your business."}
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs" />
       </Helmet>

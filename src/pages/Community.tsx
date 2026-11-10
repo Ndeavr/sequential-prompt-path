@@ -12,7 +12,7 @@ export default function Community() {
   const t = (fr: string, en: string) => lang === 'fr' ? fr : en;
   const join = t('Rejoindre le groupe privé', 'Join the private group');
   const topics = [
-    { icon: Users, title: t('Des pros qui parlent votre langue.', 'Pros who speak your language.'), text: t('Construction, rénovation, entretien et services immobiliers : échangez avec des entrepreneurs qui comprennent votre réalité.', 'Construction, renovation, maintenance and property services: connect with business owners who understand your day-to-day reality.') },
+    { icon: Users, title: t('Des pros qui parlent votre langue.', 'Pros who speak your language.'), text: t('Rénovation, construction, entretien, services : échangez avec des entrepreneurs qui comprennent votre réalité.', 'Renovation, construction, maintenance, services: connect with business owners who understand your day-to-day reality.') },
     { icon: MessageCircle, title: t('Ce qui fonctionne, sur le terrain.', 'What works in the field.'), text: t('Marketing, qualification des demandes, suivis de soumissions, collaborations : partagez vos méthodes et posez vos questions.', 'Marketing, qualifying inquiries, following up on quotes and collaborating: share your methods and ask your questions.') },
     { icon: Sparkles, title: t('Une voix dans l’avenir d’UNPRO.', 'A voice in UNPRO’s future.'), text: t('Une idée, une friction, un besoin mal compris? Vos commentaires nous aideront à améliorer UNPRO et les réponses de Clara.', 'An idea, a frustrating step or a misunderstood need? Your feedback will help us improve UNPRO and Clara’s responses.') },
   ];

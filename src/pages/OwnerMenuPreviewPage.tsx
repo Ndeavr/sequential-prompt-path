@@ -37,7 +37,7 @@ export default function OwnerMenuPreviewPage() {
               L'univers de votre propriété
             </h1>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Immobilier et services professionnels, entretien et services, rénovation et réparations.
+              Rénovation, construction, entretien, services.
             </p>
           </motion.div>
 

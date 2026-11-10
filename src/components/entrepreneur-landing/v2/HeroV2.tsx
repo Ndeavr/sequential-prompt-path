@@ -52,7 +52,7 @@ export default function HeroV2({ onTrackCta }: Props) {
             {fr ? "Préparer mon profil UNPRO" : "Prepare my UNPRO profile"}<ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
           </Button>
         </form>
-        <p className="mt-6 text-sm text-muted-foreground">{fr ? "Rénovation · Construction · Entretien · Services immobiliers" : "Renovation · Construction · Maintenance · Real estate services"}</p>
+        <p className="mt-6 text-sm text-muted-foreground">{fr ? "Rénovation, construction, entretien, services" : "Renovation, construction, maintenance, services"}</p>
       </div>
     </section>
   );
