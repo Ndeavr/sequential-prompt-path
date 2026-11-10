@@ -127,6 +127,10 @@ export type FunnelEventType =
   | "project_approved"
   | "project_viewed"
   | "owner_interest"
+  // Swipe d'inspiration (accueil) — signaux d'intérêt, jamais RDV ni vente.
+  | "swipe_passed"
+  | "swipe_liked"
+  | "open_clara_from_project"
   | "activation_checkout_started"
   | "appointment_plan_interest"
   | "paid";

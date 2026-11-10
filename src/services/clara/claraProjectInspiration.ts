@@ -13,6 +13,8 @@ export interface ProjectInspiration {
   city: string | null;
   companyName: string | null;
   authorVerified: boolean;
+  /** « similar » (défaut) : Clara propose les deux choix; « contact_author » : demande CET auteur directement. */
+  intent?: "similar" | "contact_author";
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,6 +29,7 @@ export function parseInspirationDetail(raw: unknown): ProjectInspiration | null 
   return {
     projectId: r.projectId, title, serviceName: clean(r.serviceName, 80), city: clean(r.city, 80),
     companyName: clean(r.companyName), authorVerified: r.authorVerified === true,
+    intent: r.intent === "contact_author" ? "contact_author" : "similar",
   };
 }
 

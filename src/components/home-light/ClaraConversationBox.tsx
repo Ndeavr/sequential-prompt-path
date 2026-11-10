@@ -1219,7 +1219,21 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       if (wasContractor) switchToHomeowner();
       else setAudience("homeowner");
       window.setTimeout(() => {
-        if (inspirationRef.current?.projectId === detail.projectId) void sayClara(inspirationGreeting(detail), inspirationChoices());
+        if (inspirationRef.current?.projectId !== detail.projectId) return;
+        if (detail.intent === "contact_author") {
+          // Demande CET auteur : intérêt NOTÉ seulement; vérification avant toute recommandation.
+          inspirationRef.current = null;
+          let sid = "nosession";
+          try { sid = sessionStorage.getItem("unpro_inspiration_sid") ?? sid; } catch { /* noop */ }
+          void logFunnelEvent({
+            event_type: "owner_interest", step: "home_inspiration",
+            metadata: { project_id: detail.projectId, author_verified: detail.authorVerified, contact_made: false },
+            dedupe_key: `owner_interest:${detail.projectId}:${sid}`,
+          });
+          void sayClara(authorInterestReply(detail));
+          return;
+        }
+        void sayClara(inspirationGreeting(detail), inspirationChoices());
       }, wasContractor ? 1600 : 0);
     };
     window.addEventListener(CLARA_PROJECT_INSPIRATION_EVENT, onInspiration);

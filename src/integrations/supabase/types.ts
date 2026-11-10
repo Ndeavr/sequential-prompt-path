@@ -103063,6 +103063,22 @@ export type Database = {
           title: string
         }[]
       }
+      public_portfolio_feed_before: {
+        Args: { p_before_id: string; p_before_published_at: string }
+        Returns: {
+          after_path: string
+          author_verified: boolean
+          before_path: string
+          city: string
+          company_name: string
+          description: string
+          id: string
+          photo_paths: string[]
+          published_at: string
+          service_name: string
+          title: string
+        }[]
+      }
       qc_now: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

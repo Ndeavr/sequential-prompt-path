@@ -196,19 +196,41 @@ export interface FeedProject {
   photo_paths: string[]; before_path: string | null; after_path: string | null;
   company_name: string | null; author_verified: boolean; published_at: string;
   photoUrls: string[];
+  beforeUrl?: string | null;
+  afterUrl?: string | null;
 }
 
-/** Exactement les 10 dernières réalisations approuvées; URLs signées de courte durée. */
-export async function fetchInspirationFeed(): Promise<FeedProject[]> {
-  const { data, error } = await supabase.rpc("public_portfolio_feed" as never);
+export interface FeedCursor { publishedAt: string; id: string }
+
+/** Curseur du lot suivant (tri published_at DESC, id DESC) — lots distincts, jamais répétés. */
+export function nextFeedCursor(batch: Pick<FeedProject, "id" | "published_at">[]): FeedCursor | null {
+  if (batch.length < FEED_BATCH_SIZE) return null;
+  const last = batch[batch.length - 1];
+  return { publishedAt: last.published_at, id: last.id };
+}
+export const FEED_BATCH_SIZE = 10;
+
+/**
+ * Lot initial = exactement les 10 dernières réalisations approuvées; avec un
+ * curseur, le lot DISTINCT suivant. URLs signées de courte durée.
+ */
+export async function fetchInspirationFeed(cursor?: FeedCursor | null): Promise<FeedProject[]> {
+  const { data, error } = cursor
+    ? await supabase.rpc("public_portfolio_feed_before" as never, { p_before_published_at: cursor.publishedAt, p_before_id: cursor.id } as never)
+    : await supabase.rpc("public_portfolio_feed" as never);
   if (error) throw error;
-  const rows = ((data ?? []) as Omit<FeedProject, "photoUrls">[]).slice(0, FREE_PORTFOLIO_LIMIT);
-  const allPaths = rows.flatMap((r) => r.photo_paths ?? []);
+  const rows = ((data ?? []) as Omit<FeedProject, "photoUrls">[]).slice(0, FEED_BATCH_SIZE);
+  const allPaths = [...new Set(rows.flatMap((r) => [...(r.photo_paths ?? []), r.before_path, r.after_path].filter((x): x is string => !!x)))];
   const urlByPath = new Map<string, string>();
   if (allPaths.length) {
     const { data: signed, error: signError } = await supabase.storage.from(PORTFOLIO_BUCKET).createSignedUrls(allPaths, 3600);
     if (signError) throw signError;
     for (const s of signed ?? []) if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
   }
-  return rows.map((r) => ({ ...r, photoUrls: (r.photo_paths ?? []).map((p) => urlByPath.get(p)).filter((u): u is string => !!u) }));
+  return rows.map((r) => ({
+    ...r,
+    photoUrls: (r.photo_paths ?? []).map((p) => urlByPath.get(p)).filter((u): u is string => !!u),
+    beforeUrl: r.before_path ? urlByPath.get(r.before_path) ?? null : null,
+    afterUrl: r.after_path ? urlByPath.get(r.after_path) ?? null : null,
+  }));
 }
