@@ -1213,11 +1213,18 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         workflow: { ...(workflowRef.current ?? {}), inspiration_project_id: detail.projectId, inspiration_service: detail.serviceName },
       });
       trackCopilotEvent("clara_chat_opened", { intent: "project_inspiration", project_id: detail.projectId });
-      void sayClara(inspirationGreeting(detail), inspirationChoices());
+      // Parcours entrepreneur actif : on revient d'abord au propriétaire (même conversation),
+      // puis Clara reprend le projet choisi sans que l'invite générique l'écrase.
+      const wasContractor = audienceRef.current === "contractor";
+      if (wasContractor) switchToHomeowner();
+      else setAudience("homeowner");
+      window.setTimeout(() => {
+        if (inspirationRef.current?.projectId === detail.projectId) void sayClara(inspirationGreeting(detail), inspirationChoices());
+      }, wasContractor ? 1600 : 0);
     };
     window.addEventListener(CLARA_PROJECT_INSPIRATION_EVENT, onInspiration);
     return () => window.removeEventListener(CLARA_PROJECT_INSPIRATION_EVENT, onInspiration);
-  }, [sayClara, forcedContractor]);
+  }, [sayClara, forcedContractor, switchToHomeowner, setAudience]);
 
   const send = useCallback(
     async (raw: string) => {

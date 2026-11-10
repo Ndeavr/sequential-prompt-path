@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { fetchInspirationFeed, FREE_PORTFOLIO_PATH, type FeedProject } from "@/lib/portfolio/freePortfolio";
 import { CLARA_PROJECT_INSPIRATION_EVENT, type ProjectInspiration } from "@/services/clara/claraProjectInspiration";
-import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorResume";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 function sessionKey(): string {
@@ -32,7 +31,6 @@ export function openClaraWithProject(p: FeedProject) {
     metadata: { project_id: p.id, service: p.service_name, author_verified: p.author_verified },
     dedupe_key: `project_viewed:${p.id}:${sessionKey()}`,
   });
-  window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT));
   window.dispatchEvent(new CustomEvent(CLARA_PROJECT_INSPIRATION_EVENT, { detail }));
   const field = document.querySelector<HTMLTextAreaElement>("#clara-home textarea");
   field?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
