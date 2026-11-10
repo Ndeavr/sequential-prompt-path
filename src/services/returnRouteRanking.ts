@@ -31,6 +31,8 @@ export interface MeasuredInsertion {
   previousToBaseMinutes: number | null;
   /** Driving minutes from candidate stop C to the same return base. */
   candidateToBaseMinutes: number | null;
+  /** Whether A is the base rather than another booked appointment. */
+  previousIsBase?: boolean;
   /** Whether B is the base rather than another booked appointment. */
   nextIsBase: boolean;
   /** Existing proven free-time gap, if known, used as a soft tie-breaker. */
@@ -188,8 +190,8 @@ export function rankReturnRouteCandidates(
     const candidateHome = c.candidateToBaseMinutes as number;
 
     // The 60-minute contractor preference is BETWEEN two appointments.
-    // Returning from the final visit to home/base is not an inter-visit leg.
-    if (first > maximum || (!c.nextIsBase && second > maximum)) {
+    // The initial commute from base, and the final commute back, are exempt.
+    if ((!c.previousIsBase && first > maximum) || (!c.nextIsBase && second > maximum)) {
       excluded.push(c.id);
       continue;
     }
