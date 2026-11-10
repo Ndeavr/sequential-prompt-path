@@ -55,6 +55,7 @@ import AlertHallucinationDetected from "@/components/alex-conversation/AlertHall
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 import { useContractorMode } from "@/hooks/useContractorMode";
+import { parseSelectedServiceIntent } from "@/services/clara/selectedServiceIntent";
 import PanelContractorAdvisorAlex from "@/components/PanelContractorAdvisorAlex";
 
 export default function PageHomeAlexConversationalLite() {
@@ -153,8 +154,7 @@ export default function PageHomeAlexConversationalLite() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
-  const intentInjectedRef = useRef(false);
-  const intentTimerRef = useRef<number | null>(null);
+  const lastDeepLinkRef = useRef<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
   const prevAuthRef = useRef(isAuthenticated);
   const [accountPromptDismissed, setAccountPromptDismissed] = useState(false);
@@ -180,6 +180,15 @@ export default function PageHomeAlexConversationalLite() {
       }
     }
     if (urlQuery) {
+      const selected = parseSelectedServiceIntent(urlQuery);
+      if (selected) {
+        return {
+          intentKey: "selected_home_service",
+          intentLabel: selected.serviceLabel,
+          openingPhrase: selected.openingFr,
+          city: null as string | null,
+        };
+      }
       const detection = detectIntentAndLocation(urlQuery);
       return {
         intentKey: detection.intentKey,
@@ -196,47 +205,36 @@ export default function PageHomeAlexConversationalLite() {
   const alexMessageCount = allMessages.filter(m => m.role === "alex").length;
   const shouldShowAccountPrompt = !isAuthenticated
     && !accountPromptDismissed
-    && userMessageCount >= 1
+    && userMessageCount >= (detectedContext?.intentKey === "selected_home_service" ? 3 : 1)
     && alexMessageCount >= 1
     && detectedContext?.intentKey;
 
-  // GUARD: single initialization
+  // Initialize ONCE with the expressed need, before any generic greeting.
+  // Previously initialize() added a message, and the intent effect then
+  // discarded ?q=... because messages.length > 0.
   useEffect(() => {
+    const deepLink = (urlQuery || detectedContext?.intentLabel || "").trim();
     if (!initRef.current) {
       initRef.current = true;
+      lastDeepLinkRef.current = deepLink || null;
       audioEngine.unlock();
-      initialize();
-    }
-  }, [initialize]);
 
-  // ── Inject intent context ──
-  useEffect(() => {
-    if (intentInjectedRef.current) return;
-    if (!detectedContext) return;
-    if (messages.length > 0) return;
-    if (!initRef.current) return;
-
-    intentInjectedRef.current = true;
-    // Le message d'accueil fait changer messages.length juste après : le
-    // minuteur ne doit pas être annulé par ce re-rendu (sinon ?q= est perdu).
-    intentTimerRef.current = window.setTimeout(() => {
-      intentTimerRef.current = null;
-      if (urlQuery) {
-        sendMessage(urlQuery);
-      } else if (detectedContext.intentLabel) {
-        sendMessage(detectedContext.intentLabel);
+      if (parseSelectedServiceIntent(deepLink)) {
+        initialize(deepLink); // Clara acknowledges the selected service and asks the next question.
+      } else if (deepLink) {
+        void sendMessage(deepLink); // Natural-language searches start as a real user turn.
+      } else {
+        initialize();
       }
-    }, 300);
-  }, [detectedContext, messages.length, sendMessage, urlQuery]);
-  useEffect(() => () => {
-    // Démontage (ou double montage en développement) avant l'envoi :
-    // on annule et on permet une nouvelle planification au remontage.
-    if (intentTimerRef.current) {
-      window.clearTimeout(intentTimerRef.current);
-      intentTimerRef.current = null;
-      intentInjectedRef.current = false;
+      return;
     }
-  }, []);
+
+    // A new in-app link to another service should also reach Clara, once.
+    if (deepLink && deepLink !== lastDeepLinkRef.current) {
+      lastDeepLinkRef.current = deepLink;
+      void sendMessage(deepLink);
+    }
+  }, [initialize, detectedContext?.intentLabel, sendMessage, urlQuery]);
 
   // GUARD: detect auth change
   useEffect(() => {
