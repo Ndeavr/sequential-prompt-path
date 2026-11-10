@@ -29,17 +29,37 @@ export interface PortfolioDraft {
   showCompanyName: boolean;
   beforeIndex: number | null;
   afterIndex: number | null;
+  /** « AAAA-MM » déclaré par l'entrepreneur, facultatif ("" = non renseigné). Jamais lu dans l'EXIF. */
+  completedMonth: string;
 }
 
 export function emptyDraft(): PortfolioDraft {
   return {
     clientRequestId: crypto.randomUUID(), title: "", serviceName: "", city: "", description: "",
     businessName: "", contactEmail: "", contactPhone: "", photoRights: false, showCompanyName: true,
-    beforeIndex: null, afterIndex: null,
+    beforeIndex: null, afterIndex: null, completedMonth: "",
   };
 }
 
-export type DraftField = "title" | "serviceName" | "city" | "description" | "photos" | "photoRights" | "business" | "contact";
+/** "" accepté (facultatif); sinon AAAA-MM réel, entre 1950 et le mois courant (heure de Montréal). */
+export function completionMonthValid(v: string, now = new Date()): boolean {
+  if (!v) return true;
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v);
+  if (!m) return false;
+  const current = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", timeZone: "America/Toronto" }).format(now).slice(0, 7);
+  return Number(m[1]) >= 1950 && v <= current;
+}
+
+/** « Réalisé en novembre 2026 » — seulement si le mois a été déclaré. */
+export function completionLabel(month: string | null | undefined, lang: "fr" | "en"): string | null {
+  const m = /^(\d{4})-(\d{2})/.exec(month ?? "");
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 15));
+  const txt = new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+  return lang === "fr" ? `Réalisé en ${txt}` : `Completed in ${txt}`;
+}
+
+export type DraftField = "title" | "serviceName" | "city" | "description" | "photos" | "photoRights" | "business" | "contact" | "completedMonth";
 
 /** Miroir client des contrôles serveur (le serveur reste l'autorité). */
 export function validateDraft(d: PortfolioDraft, photoCount: number, needsBusiness: boolean): DraftField[] {
@@ -50,6 +70,7 @@ export function validateDraft(d: PortfolioDraft, photoCount: number, needsBusine
   if (s.length < 2 || s.length > 80) errors.push("serviceName");
   if (c.length < 2 || c.length > 80 || /\d/.test(c)) errors.push("city");
   if (d.description.trim().length > 600) errors.push("description");
+  if (!completionMonthValid(d.completedMonth ?? "")) errors.push("completedMonth");
   if (!d.photoRights) errors.push("photoRights");
   if (needsBusiness) {
     const n = d.businessName.trim();
@@ -183,6 +204,12 @@ export async function submitPortfolio(d: PortfolioDraft, paths: string[]): Promi
   return data as unknown as SubmitResult;
 }
 
+/** Mois de réalisation déclaré (auteur seulement, projet en attente). "" efface. */
+export async function setProjectCompletion(id: string, month: string): Promise<void> {
+  const { error } = await supabase.rpc("set_portfolio_project_completion" as never, { p_id: id, p_month: month ? `${month}-01` : null } as never);
+  if (error) throw error;
+}
+
 export interface FreeQuota { authenticated: boolean; contractor_id?: string | null; used: number; approved: number; limit: number }
 export async function fetchMyQuota(): Promise<FreeQuota> {
   const { data, error } = await supabase.rpc("my_portfolio_free_quota" as never);
@@ -198,6 +225,9 @@ export interface FeedProject {
   photoUrls: string[];
   beforeUrl?: string | null;
   afterUrl?: string | null;
+  /** Mois déclaré « AAAA-MM-01 » ou null; clé d'auteur opaque (diversité seulement). */
+  completed_month?: string | null;
+  author_key?: string | null;
 }
 
 export interface FeedCursor { publishedAt: string; id: string }
@@ -227,8 +257,16 @@ export async function fetchInspirationFeed(cursor?: FeedCursor | null): Promise<
     if (signError) throw signError;
     for (const s of signed ?? []) if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
   }
+  // Métadonnées facultatives (mois déclaré, clé d'auteur) : en cas d'échec, le fil reste servi sans elles.
+  const meta = new Map<string, { completed_month: string | null; author_key: string | null }>();
+  if (rows.length) {
+    const { data: m } = await supabase.rpc("public_portfolio_feed_meta" as never, { p_ids: rows.map((r) => r.id) } as never);
+    for (const x of ((m ?? []) as { id: string; completed_month: string | null; author_key: string | null }[])) meta.set(x.id, x);
+  }
   return rows.map((r) => ({
     ...r,
+    completed_month: meta.get(r.id)?.completed_month ?? null,
+    author_key: meta.get(r.id)?.author_key ?? null,
     photoUrls: (r.photo_paths ?? []).map((p) => urlByPath.get(p)).filter((u): u is string => !!u),
     beforeUrl: r.before_path ? urlByPath.get(r.before_path) ?? null : null,
     afterUrl: r.after_path ? urlByPath.get(r.after_path) ?? null : null,

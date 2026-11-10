@@ -69,9 +69,30 @@ export function remapIndexAfterRemove(idx: number | null, removed: number): numb
   return idx > removed ? idx - 1 : idx;
 }
 
+// ---- Type de chaque photo (déclaré, jamais inféré) --------------------------
+// Schéma existant : une photo « Avant » (beforeIndex), une « Après » (afterIndex);
+// toutes les autres sont « Projet terminé » et restent dans la galerie.
+export type PhotoKind = "finished" | "before" | "after";
+export function photoKindOf(i: number, d: { beforeIndex: number | null; afterIndex: number | null }): PhotoKind {
+  if (d.beforeIndex === i) return "before";
+  if (d.afterIndex === i) return "after";
+  return "finished";
+}
+export function withPhotoKind<D extends { beforeIndex: number | null; afterIndex: number | null }>(d: D, i: number, kind: PhotoKind): D {
+  const next = { ...d };
+  if (next.beforeIndex === i) next.beforeIndex = null;
+  if (next.afterIndex === i) next.afterIndex = null;
+  if (kind === "before") next.beforeIndex = i;
+  if (kind === "after") next.afterIndex = i;
+  return next;
+}
+
+// Isolation avant Toiture : « isolation de l'entretoit » contient « toit ».
 const SERVICE_HINTS: [RegExp, { fr: string; en: string }][] = [
-  [/toit|toiture|bardeau|roof|shingle/i, { fr: "Toiture", en: "Roofing" }],
+  [/isol|insulat/i, { fr: "Isolation", en: "Insulation" }],
+  [/d[ée]neig|snow remov|snow plow/i, { fr: "Déneigement", en: "Snow removal" }],
   [/goutti[eè]re|gutter/i, { fr: "Gouttières", en: "Gutters" }],
+  [/toit|toiture|bardeau|roof|shingle/i, { fr: "Toiture", en: "Roofing" }],
   [/cuisine|kitchen/i, { fr: "Rénovation de cuisine", en: "Kitchen renovation" }],
   [/salle de bain|salle de bains|douche|bathroom|shower/i, { fr: "Salle de bain", en: "Bathroom" }],
   [/sous-sol|sous sol|basement/i, { fr: "Sous-sol", en: "Basement" }],
@@ -81,7 +102,6 @@ const SERVICE_HINTS: [RegExp, { fr: string; en: string }][] = [
   [/terrasse|patio|balcon|deck/i, { fr: "Terrasse et patio", en: "Deck and patio" }],
   [/cl[ôo]ture|fence/i, { fr: "Clôture", en: "Fence" }],
   [/fen[êe]tre|porte|window|door/i, { fr: "Portes et fenêtres", en: "Doors and windows" }],
-  [/isol|insulat/i, { fr: "Isolation", en: "Insulation" }],
   [/drain/i, { fr: "Drain français", en: "French drain" }],
   [/fondation|foundation/i, { fr: "Fondation", en: "Foundation" }],
   [/plancher|c[ée]ramique|parquet|floor|tile/i, { fr: "Revêtement de sol", en: "Flooring" }],

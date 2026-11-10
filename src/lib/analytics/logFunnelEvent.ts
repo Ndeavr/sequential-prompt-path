@@ -131,6 +131,8 @@ export type FunnelEventType =
   | "swipe_passed"
   | "swipe_liked"
   | "open_clara_from_project"
+  | "inspiration_sort_changed"
+  | "photo_type_set"
   | "activation_checkout_started"
   | "appointment_plan_interest"
   // Landing /entrepreneurs/realisations — points d'abandon (jamais vente).

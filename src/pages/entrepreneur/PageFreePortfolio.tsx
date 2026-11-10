@@ -28,12 +28,12 @@ import { saveRoleIntent } from "@/services/auth/roleIntent";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import {
   emptyDraft, fetchMyQuota, FREE_PORTFOLIO_LIMIT, FREE_PORTFOLIO_PATH, MAX_PHOTOS, portfolioErrorMessage, quotaLabel, sanitizeImage,
-  submitPortfolio, uploadPhotos, validateDraft, type DraftField, type FreeQuota, type PortfolioDraft,
+  setProjectCompletion, submitPortfolio, uploadPhotos, validateDraft, type DraftField, type FreeQuota, type PortfolioDraft,
 } from "@/lib/portfolio/freePortfolio";
 import { clearDraft, loadDraft, persistDraft } from "@/lib/portfolio/draftStore";
 import {
   clearLastSubmission, moveItem, parseStep, PROGRESS_STEPS, progressIndex, readLastSubmission, remapIndexAfterMove, remapIndexAfterRemove,
-  resolveStep, saveLastSubmission, stepAfterPhotos, suggestService, type FlowStep, type LastSubmission,
+  resolveStep, saveLastSubmission, stepAfterPhotos, suggestService, photoKindOf, withPhotoKind, type FlowStep, type LastSubmission, type PhotoKind,
 } from "@/lib/portfolio/portfolioFlow";
 
 interface Photo { blob: Blob; url: string }
@@ -167,6 +167,21 @@ export default function PageFreePortfolio() {
   }, [user]);
 
   const set = <K extends keyof PortfolioDraft>(k: K, v: PortfolioDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
+  const setKind = (i: number, kind: PhotoKind) => {
+    setDraft((d) => withPhotoKind(d, i, kind));
+    void logFunnelEvent({ event_type: "photo_type_set", step: "free_portfolio", metadata: { kind, index: i }, dedupe_key: `photo_type_set:${draft.clientRequestId}:${i}:${kind}` });
+  };
+  const [cmYear, cmMonth] = (draft.completedMonth || "-").split("-");
+  // Mois seul ou année seule → valeur incomplète refusée à l'envoi (jamais complétée à notre place).
+  const setCompletion = (year: string, month: string) => set("completedMonth", year || month ? `${year}-${month}` : "");
+  const yearOptions = useMemo(() => {
+    const y = Number(new Intl.DateTimeFormat("en-CA", { year: "numeric", timeZone: "America/Toronto" }).format(new Date()));
+    return Array.from({ length: 30 }, (_, k) => String(y - k));
+  }, []);
+  const monthNames = useMemo(() => Array.from({ length: 12 }, (_, k) => ({
+    v: String(k + 1).padStart(2, "0"),
+    label: new Intl.DateTimeFormat(fr ? "fr-CA" : "en-CA", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2020, k, 15))),
+  })), [fr]);
   const bumpPhotos = () => {
     setPhotosVersion((v) => v + 1);
     // Jeu de photos modifié après un envoi : nouveaux chemins, jamais un ancien fichier.
@@ -257,6 +272,10 @@ export default function PageFreePortfolio() {
       }
       setBusy("submitting");
       const res = await submitPortfolio(draft, paths);
+      let completionFailed = false;
+      if (draft.completedMonth && res.status === "pending") {
+        try { await setProjectCompletion(res.id, draft.completedMonth); } catch { completionFailed = true; }
+      }
       const sub: LastSubmission = { id: res.id, status: res.status, serviceName: draft.serviceName.trim(), city: draft.city.trim(), at: Date.now() };
       void logFunnelEvent({ event_type: "free_project_submitted", step: "free_portfolio", metadata: { project_id: res.id, result: res.result, is_sale: false }, dedupe_key: `free_project_submitted:${res.id}` });
       if (res.status === "pending") void logFunnelEvent({ event_type: "moderation_pending", step: "free_portfolio", metadata: { project_id: res.id }, dedupe_key: `moderation_pending:${res.id}` });
@@ -268,6 +287,7 @@ export default function PageFreePortfolio() {
       uploadedRef.current = null;
       setDraft((d) => ({ ...emptyDraft(), businessName: d.businessName, contactEmail: d.contactEmail, contactPhone: d.contactPhone }));
       await refresh();
+      if (completionFailed) setServerError(L("Projet reçu, mais le mois de réalisation n’a pas été enregistré. Le projet reste valide sans cette date.", "Project received, but the completion month was not saved. The project remains valid without it."));
       goStep("mandats");
     } catch (e) {
       setServerError(portfolioErrorMessage(e, fr ? "fr" : "en"));
@@ -371,14 +391,21 @@ export default function PageFreePortfolio() {
         ) : step === "photos" ? (
           <section className="mt-6">
             <h1 className="text-2xl font-semibold tracking-tight">{L("Vos photos", "Your photos")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{L("De 1 à 4 photos. Marquez « Avant » et « Après » si vous en avez.", "1 to 4 photos. Mark “Before” and “After” if you have them.")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{L("De 1 à 4 photos. Chaque photo est « Projet terminé » par défaut; marquez une photo « Avant » et une « Après » si vous en avez.", "1 to 4 photos. Each photo is “Finished project” by default; mark one “Before” and one “After” if you have them.")}</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               {photos.map((p, i) => (
                 <div key={p.url} className="overflow-hidden rounded-2xl border border-border bg-card">
                   <img src={p.url} alt={L(`Photo ${i + 1}`, `Photo ${i + 1}`)} className="aspect-square w-full object-cover" />
-                  <div className="grid grid-cols-2 gap-1 p-1.5 text-xs">
-                    <button type="button" aria-pressed={draft.beforeIndex === i} onClick={() => set("beforeIndex", draft.beforeIndex === i ? null : i)} className={`min-h-10 rounded-lg ${draft.beforeIndex === i ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>{L("Avant", "Before")}</button>
-                    <button type="button" aria-pressed={draft.afterIndex === i} onClick={() => set("afterIndex", draft.afterIndex === i ? null : i)} className={`min-h-10 rounded-lg ${draft.afterIndex === i ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>{L("Après", "After")}</button>
+                  <div role="radiogroup" aria-label={L(`Type de la photo ${i + 1}`, `Photo ${i + 1} type`)} className="grid grid-cols-3 gap-1 p-1.5 text-xs">
+                    {(["finished", "before", "after"] as PhotoKind[]).map((k) => {
+                      const on = photoKindOf(i, draft) === k;
+                      return (
+                        <button key={k} type="button" role="radio" aria-checked={on} onClick={() => setKind(i, k)}
+                          className={`min-h-10 rounded-lg px-1 leading-tight ${on ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                          {k === "finished" ? L("Terminé", "Finished") : k === "before" ? L("Avant", "Before") : L("Après", "After")}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="flex justify-between gap-1 px-1.5 pb-1.5">
                     <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={L("Déplacer à gauche", "Move left")} className="min-h-10 min-w-10 rounded-lg bg-muted text-foreground disabled:opacity-40"><ChevronLeft className="mx-auto h-4 w-4" /></button>
@@ -451,6 +478,25 @@ export default function PageFreePortfolio() {
                 <Input className={`mt-1 min-h-12 ${errCls("city")}`} value={draft.city} maxLength={80} autoComplete="address-level2" onChange={(e) => set("city", e.target.value)} placeholder={L("Ex. Laval", "E.g. Laval")} />
                 <span className={`mt-1 block text-xs font-normal ${fieldErr("city") ? "text-destructive" : "text-muted-foreground"}`}>{L("Ville seulement, jamais l’adresse du client.", "City only, never the client’s address.")}</span>
               </label>
+              <fieldset>
+                <legend className="text-sm font-semibold">{L("Mois et année de réalisation (facultatif)", "Month and year completed (optional)")}</legend>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <select aria-label={L("Mois de réalisation", "Month completed")} value={cmMonth ?? ""} onChange={(e) => setCompletion(cmYear ?? "", e.target.value)}
+                    className={`min-h-12 rounded-md border border-input bg-background px-3 text-sm text-foreground ${errCls("completedMonth")}`}>
+                    <option value="">{L("Mois", "Month")}</option>
+                    {monthNames.map((m) => <option key={m.v} value={m.v}>{m.label}</option>)}
+                  </select>
+                  <select aria-label={L("Année de réalisation", "Year completed")} value={cmYear ?? ""} onChange={(e) => setCompletion(e.target.value, cmMonth ?? "")}
+                    className={`min-h-12 rounded-md border border-input bg-background px-3 text-sm text-foreground ${errCls("completedMonth")}`}>
+                    <option value="">{L("Année", "Year")}</option>
+                    {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+                <span className={`mt-1 block text-xs ${fieldErr("completedMonth") ? "text-destructive" : "text-muted-foreground"}`}>
+                  {fieldErr("completedMonth") ? L("Choisissez le mois et l’année (pas dans le futur), ou laissez les deux vides.", "Pick month and year (not in the future), or leave both empty.") : L("Affiché « Réalisé en … » seulement si vous le renseignez.", "Shown as “Completed in …” only if you fill it in.")}
+                </span>
+              </fieldset>
+
               {showDetail || draft.description ? (
                 <label className="block text-sm font-semibold">{L("Bref détail (facultatif)", "Short detail (optional)")}
                   <Textarea className={`mt-1 ${errCls("description")}`} value={draft.description} maxLength={600} rows={3} onChange={(e) => set("description", e.target.value)} />
