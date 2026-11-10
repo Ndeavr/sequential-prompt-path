@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import CalendarIntegrationRequest from "@/components/calendar/CalendarIntegrationRequest";
 import { useAlexVoiceInput } from "@/hooks/useAlexVoiceInput";
 import { request as requestPermission } from "@/lib/permissionManager";
 import {
@@ -27,7 +28,7 @@ interface Props {
   onApplyHours: (rows: AvailabilityRow[]) => void;
 }
 
-type Step = "describe" | "recap" | "reps" | "reps_split" | "saving";
+type Step = "describe" | "recap" | "reps" | "reps_split" | "travel" | "saving";
 
 export default function ClaraBookingPreferences({ contractorId, availability, onApplyHours }: Props) {
   const [text, setText] = useState("");
@@ -37,6 +38,9 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
   const [repsNote, setRepsNote] = useState("");
   const [saved, setSaved] = useState<string | null>(null);
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
+  const [known, setKnown] = useState<{ reps: number | null; travel: number | null }>({ reps: null, travel: null });
+  const [pending, setPending] = useState<{ reps: number | null; note: string | null }>({ reps: null, note: null });
+  const [travel, setTravel] = useState("");
 
   const onTranscript = useCallback((t: string, isFinal: boolean) => {
     if (isFinal && t) setText((prev) => (prev ? `${prev} ${t}` : t));
@@ -47,10 +51,14 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
     let live = true;
     supabase
       .from("contractor_booking_rules")
-      .select("preference_summary")
+      .select("preference_summary, declared_representatives, max_travel_minutes")
       .eq("contractor_id", contractorId)
       .maybeSingle()
-      .then(({ data }) => { if (live && data?.preference_summary) setSaved(data.preference_summary); });
+      .then(({ data }) => {
+        if (!live || !data) return;
+        if (data.preference_summary) setSaved(data.preference_summary);
+        setKnown({ reps: data.declared_representatives ?? null, travel: data.max_travel_minutes ?? null });
+      });
     return () => { live = false; };
   }, [contractorId]);
 
@@ -77,10 +85,10 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
 
   const lines = parsed ? summarizeBookingPreferences({ ...parsed, representatives: reps ? Number(reps) : parsed.representatives }) : [];
 
-  const save = async (finalReps: number | null, note: string | null) => {
+  const save = async (finalReps: number | null, note: string | null, travelMinutes: number | null) => {
     if (!parsed) return;
     setStep("saving");
-    const summary = summarizeBookingPreferences({ ...parsed, representatives: finalReps }).join(" · ");
+    const summary = summarizeBookingPreferences({ ...parsed, representatives: finalReps, maxTravelMinutes: travelMinutes ?? known.travel }).join(" · ");
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase.from("contractor_booking_rules").upsert(
       {
@@ -90,6 +98,8 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
         ...(parsed.preferCompactSchedule ? { prefer_compact_schedule: true } : {}),
         ...(finalReps !== null ? { declared_representatives: finalReps } : {}),
         ...(note ? { representatives_note: note } : {}),
+        // Declared only when stated; never a default travel time.
+        ...(travelMinutes !== null ? { max_travel_minutes: travelMinutes } : {}),
         visit_capacity: 1,
         preference_text: text.slice(0, 2000),
         preference_summary: summary.slice(0, 2000),
@@ -110,15 +120,28 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
       toast.success("Préférences enregistrées.");
     }
     setSaved(summary);
-    setText(""); setParsed(null); setReps(""); setRepsNote("");
+    setKnown((k) => ({ reps: finalReps ?? k.reps, travel: travelMinutes ?? k.travel }));
+    setText(""); setParsed(null); setReps(""); setRepsNote(""); setTravel("");
     setStep("describe");
+  };
+
+  // Representatives settled → ask travel once (only if never declared), else save.
+  const afterReps = (finalReps: number | null, note: string | null) => {
+    if (!parsed) return;
+    if (parsed.maxTravelMinutes === null && known.travel === null) {
+      setPending({ reps: finalReps, note });
+      setStep("travel");
+      return;
+    }
+    void save(finalReps, note, parsed.maxTravelMinutes);
   };
 
   const confirmRecap = () => {
     if (!parsed) return;
-    if (parsed.representatives === null) { setStep("reps"); return; }
-    if (parsed.representatives > 1) { setStep("reps_split"); return; }
-    void save(parsed.representatives, null);
+    const r = parsed.representatives ?? known.reps;
+    if (r === null) { setStep("reps"); return; }
+    if (parsed.representatives !== null && parsed.representatives > 1) { setStep("reps_split"); return; }
+    afterReps(r, null);
   };
 
   return (
@@ -138,7 +161,7 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
             <Textarea
               value={voice.isListening && voice.liveTranscript ? `${text} ${voice.liveTranscript}`.trim() : text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Ex. : visites de 11 h à 21 h en semaine, sauf vendredi 16 h; max 3 soirs par semaine; le moins de temps vide possible."
+              placeholder="Ex. : visites de 11 h à 21 h en semaine, sauf vendredi 16 h; max 3 soirs par semaine; maximum 30 minutes de déplacement entre visites."
               rows={3}
               maxLength={2000}
               className="pr-12 text-base"
@@ -192,7 +215,7 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
           <Button
             className="h-11"
             disabled={!(Number(reps) >= 1 && Number(reps) <= 50)}
-            onClick={() => (Number(reps) > 1 ? setStep("reps_split") : void save(1, null))}
+            onClick={() => (Number(reps) > 1 ? setStep("reps_split") : afterReps(1, null))}
           >
             Continuer
           </Button>
@@ -211,14 +234,40 @@ export default function ClaraBookingPreferences({ contractorId, availability, on
           <Button
             className="h-11"
             disabled={repsNote.trim().length < 3}
-            onClick={() => void save(Number(reps) || parsed?.representatives || null, repsNote.trim())}
+            onClick={() => afterReps(Number(reps) || parsed?.representatives || null, repsNote.trim())}
           >
             Enregistrer
           </Button>
         </div>
       )}
 
+      {step === "travel" && (
+        <div className="space-y-3">
+          <p className="text-body text-foreground">Quel est votre temps de déplacement maximal entre deux rendez-vous?</p>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" inputMode="numeric" min={5} max={240} value={travel}
+              onChange={(e) => setTravel(e.target.value)} className="w-28 h-11 text-base" aria-label="Minutes de déplacement maximal"
+            />
+            <span className="text-body text-foreground">minutes</span>
+          </div>
+          <p className="text-meta text-muted-foreground">
+            Clara compare seulement aux trajets réellement calculés. Sans trajet calculé, le créneau reste proposé et marqué « trajet non vérifié ».
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button className="h-11" disabled={!(Number(travel) >= 5 && Number(travel) <= 240)} onClick={() => void save(pending.reps, pending.note, Number(travel))}>
+              Continuer
+            </Button>
+            <Button variant="outline" className="h-11" onClick={() => void save(pending.reps, pending.note, null)}>
+              Pas de limite précisée
+            </Button>
+          </div>
+        </div>
+      )}
+
       {step === "saving" && <p className="text-meta text-muted-foreground">Enregistrement…</p>}
+
+      {step === "describe" && <CalendarIntegrationRequest surface="booking_settings" />}
     </section>
   );
 }

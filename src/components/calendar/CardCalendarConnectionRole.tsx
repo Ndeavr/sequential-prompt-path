@@ -9,6 +9,7 @@ import ButtonSubscribeAppleCalendar from "./ButtonSubscribeAppleCalendar";
 import PanelCalendarConnectionBenefits from "./PanelCalendarConnectionBenefits";
 import PanelCalendarPermissionsExplainer from "./PanelCalendarPermissionsExplainer";
 import BadgeCalendarConnectionStatus from "./BadgeCalendarConnectionStatus";
+import CalendarIntegrationRequest from "./CalendarIntegrationRequest";
 import { useCalendarConnections, useCalendarPrompt, useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
 import { useEffect } from "react";
 
@@ -128,6 +129,12 @@ export default function CardCalendarConnectionRole({
         <p className="text-sm text-muted-foreground">
           Les suggestions selon vos créneaux occupés seront disponibles après une connexion Google autorisée.
         </p>
+      )}
+
+      {!loading && role !== "homeowner" && (
+        <div className="mt-5">
+          <CalendarIntegrationRequest surface={surface} />
+        </div>
       )}
     </motion.div>
   );

@@ -16,15 +16,22 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   computeSmartSlots,
   fetchAppointmentTypes,
+  fetchBookingConstraints,
   type SlotCandidate,
 } from "@/services/bookingSlotEngine";
-import { resolveClaraBookingGate } from "@/services/clara/claraBookingSlots";
+import {
+  EVENING_SEARCH_DAYS,
+  planEveningSearch,
+  resolveClaraBookingGate,
+} from "@/services/clara/claraBookingSlots";
 
 interface Props {
   contractorId: string;
   contractorName: string;
   appointmentTypeId?: string;
   conversationSessionId?: string;
+  /** Homeowner explicitly asked for an evening (see detectEveningRequirement). */
+  eveningRequired?: boolean;
   onSlotChosen?: (slot: SlotCandidate) => void;
 }
 
@@ -35,12 +42,14 @@ type State =
   | { kind: "loading" }
   | { kind: "blocked"; message: string }
   | { kind: "error" }
-  | { kind: "ready"; slots: SlotCandidate[]; bookingPath: string | null; typeTitle: string };
+  | { kind: "ready"; slots: SlotCandidate[]; bookingPath: string | null; typeTitle: string }
+  | { kind: "evening_next"; message: string; nextSlots: SlotCandidate[]; bookingPath: string | null; typeTitle: string };
 
 export default function PanelAppointmentSchedulerInline({
   contractorId,
   contractorName,
   appointmentTypeId,
+  eveningRequired = false,
   onSlotChosen,
 }: Props) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -71,13 +80,28 @@ export default function PanelAppointmentSchedulerInline({
           return;
         }
         const from = new Date();
-        const to = new Date(from.getTime() + HORIZON_DAYS * 86400000);
+        const days = eveningRequired ? EVENING_SEARCH_DAYS : HORIZON_DAYS;
+        const to = new Date(from.getTime() + days * 86400000);
         const result = await computeSmartSlots({
           contractorId,
           appointmentTypeId: gate.type.id,
           dateFrom: from,
           dateTo: to,
+          eveningOnly: eveningRequired,
         });
+        if (eveningRequired) {
+          const { rules } = await fetchBookingConstraints(contractorId, from, to);
+          const plan = planEveningSearch(result, from, rules.maxEveningsPerWeek);
+          if (!live) return;
+          if (plan.kind === "this_week") {
+            setState({ kind: "ready", slots: plan.slots.slice(0, MAX_SHOWN), bookingPath: gate.bookingPath, typeTitle: gate.type.title });
+          } else if (plan.kind === "none") {
+            setState({ kind: "blocked", message: plan.message });
+          } else {
+            setState({ kind: "evening_next", message: plan.message, nextSlots: plan.nextSlots.slice(0, MAX_SHOWN), bookingPath: gate.bookingPath, typeTitle: gate.type.title });
+          }
+          return;
+        }
         if (live) {
           setState({
             kind: "ready",
@@ -93,7 +117,7 @@ export default function PanelAppointmentSchedulerInline({
     return () => {
       live = false;
     };
-  }, [contractorId, appointmentTypeId]);
+  }, [contractorId, appointmentTypeId, eveningRequired]);
 
   return (
     <motion.div
@@ -125,9 +149,24 @@ export default function PanelAppointmentSchedulerInline({
         </p>
       )}
 
+      {state.kind === "evening_next" && (
+        <div className="space-y-3 py-2">
+          <p className="text-sm text-foreground">{state.message}</p>
+          <Button
+            size="sm"
+            className="w-full h-10 text-sm"
+            onClick={() => setState({ kind: "ready", slots: state.nextSlots, bookingPath: state.bookingPath, typeTitle: state.typeTitle })}
+          >
+            Vérifier la semaine prochaine
+          </Button>
+        </div>
+      )}
+
       {state.kind === "ready" && state.slots.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Aucune disponibilité dans les {HORIZON_DAYS} prochains jours.
+          {eveningRequired
+            ? `Aucune soirée libre dans les ${EVENING_SEARCH_DAYS} prochains jours.`
+            : `Aucune disponibilité dans les ${HORIZON_DAYS} prochains jours.`}
         </p>
       )}
 
