@@ -209,27 +209,25 @@ export default function PageHomeAlexConversationalLite() {
     && alexMessageCount >= 1
     && detectedContext?.intentKey;
 
-  // Initialize ONCE with the expressed need, before any generic greeting.
-  // Previously initialize() added a message, and the intent effect then
-  // discarded ?q=... because messages.length > 0.
+  // Apply incoming service context BEFORE any generic greeting.
+  // The old welcome-first effect discarded ?q after messages.length became > 0.
   useEffect(() => {
     const deepLink = (urlQuery || detectedContext?.intentLabel || "").trim();
     if (!initRef.current) {
       initRef.current = true;
       lastDeepLinkRef.current = deepLink || null;
       audioEngine.unlock();
-
       if (parseSelectedServiceIntent(deepLink)) {
-        initialize(deepLink); // Clara acknowledges the selected service and asks the next question.
+        initialize(deepLink);
       } else if (deepLink) {
-        void sendMessage(deepLink); // Natural-language searches start as a real user turn.
+        void sendMessage(deepLink);
       } else {
         initialize();
       }
       return;
     }
 
-    // A new in-app link to another service should also reach Clara, once.
+    // Reuse the conversation if a new deep link arrives without remounting.
     if (deepLink && deepLink !== lastDeepLinkRef.current) {
       lastDeepLinkRef.current = deepLink;
       void sendMessage(deepLink);
