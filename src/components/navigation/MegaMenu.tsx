@@ -102,7 +102,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
       {
         title: "Acquisition clients", titleEn: "Client Acquisition",
         items: [
-          { to: "/entrepreneurs", label: "Professionnels et entreprises", labelEn: "Professionals and businesses", icon: Sparkles, description: "Rénovation, construction, entretien, service", descriptionEn: "Renovation, construction, maintenance, service" },
+          { to: "/entrepreneurs", label: "Professionnels et entreprises", labelEn: "Professionals and businesses", icon: Sparkles, description: "Rénovation, construction, entretien, services", descriptionEn: "Renovation, construction, maintenance, services" },
           { to: "/entrepreneurs/calculateur", label: "Combien je perds", labelEn: "How Much Am I Losing", icon: DollarSign, description: "Calculez vos revenus perdus et le bon plan", descriptionEn: "Calculate lost revenue & the right plan", badge: "NEW" },
           { to: "/pro/leads", label: "Mes demandes", labelEn: "My requests", icon: CalendarDays },
           { to: "/entrepreneurs/matching", label: "Matching propriétaires", labelEn: "Homeowner Matching", icon: Heart },

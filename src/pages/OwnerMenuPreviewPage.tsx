@@ -37,7 +37,7 @@ export default function OwnerMenuPreviewPage() {
               L'univers de votre propriété
             </h1>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Rénovation, construction, entretien, service.
+              Rénovation, construction, entretien, services.
             </p>
           </motion.div>
 

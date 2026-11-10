@@ -67,7 +67,7 @@ export const ALLUME_COPY = {
   ],
   pickLabel: "Choisissez un service (facultatif)",
   cta: "Dites à Clara ce qui vous allume.",
-  signature: "UNPRO — Rénovation, construction, entretien, service",
+  signature: "UNPRO — Rénovation, construction, entretien, services",
 } as const;
 
 export function parseAllumeCity(value: string | null): string | null {
