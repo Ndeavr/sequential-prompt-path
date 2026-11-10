@@ -21,6 +21,7 @@
  */
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSelectedServiceIntent } from "@/services/clara/selectedServiceIntent";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
@@ -274,6 +275,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   const [lastPhotoPrompt, setLastPhotoPrompt] = useState<PhotoPromptDecision | null>(null);
   const idRef = useRef(0);
   const welcomeSentRef = useRef(false);
+  const pendingSelectedServiceRef = useRef<string | null>(null);
   const sessionIdRef = useRef(`session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const memoryRef = useRef(new AlexMemoryStore({
     resolved_role: isAuthenticated ? "homeowner" : "unknown",
@@ -318,9 +320,31 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   }, []);
 
   // ─── INITIALIZE ───
-  const initialize = useCallback(() => {
+  const initialize = useCallback((initialQuery?: string) => {
     if (welcomeSentRef.current) return;
     welcomeSentRef.current = true;
+
+    const selected = parseSelectedServiceIntent(initialQuery);
+    if (selected && initialQuery) {
+      // The menu selection is already the user's first turn. Ask for the
+      // next missing datum immediately; do not greet and ask for the need again.
+      pendingSelectedServiceRef.current = initialQuery;
+      memoryRef.current.update({
+        resolved_role: "homeowner",
+        role_confidence: 0.95,
+        role_source: "cta_origin",
+        current_intent: "homeowner_contractor_search",
+        need_summary: initialQuery,
+        service_category: selected.serviceLabel,
+        need_qualified: false,
+        last_question_asked: "city",
+        questions_asked_count: 1,
+      });
+      emitSafe("user", `Je cherche : ${selected.serviceLabel}`);
+      emitSafe("alex", selected.openingFr);
+      return;
+    }
+
     const greeting = userName
       ? `Bonjour ${userName}. Comment puis-je vous aider ?`
       : "Bonjour! Comment puis-je vous aider aujourd'hui?";
@@ -330,6 +354,17 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   // ─── SEND MESSAGE ───
   const sendMessage = useCallback(async (text: string) => {
     emitSafe("user", text);
+    // Include the initial menu request in the FIRST server turn, so a reply
+    // such as "Laval" retains the actual service selected on the prior screen.
+    const selectedNeed = pendingSelectedServiceRef.current;
+    pendingSelectedServiceRef.current = null;
+    const isCorrection = /^(non\b|pas du tout\b|je veux plut[oô]t\b|autre service\b)/i.test(text.trim());
+    if (selectedNeed && isCorrection) {
+      memoryRef.current.update({ need_summary: null, service_category: null, need_qualified: false });
+    }
+    const serverMessage = selectedNeed && !isCorrection
+      ? `${selectedNeed}\nPrécision du client : ${text}`
+      : text;
     setIsThinking(true);
     audioEngine.play("thinking");
 
@@ -432,7 +467,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke("alex-process-turn", {
         body: {
           session_token: sessionIdRef.current,
-          user_message: text,
+          user_message: serverMessage,
           message_mode: "text",
           ui_context: {
             current_route: mem.get().current_route,
