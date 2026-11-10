@@ -70,6 +70,17 @@ export interface SlotCandidate {
   badges: SlotBadge[];
   travelMinutes: number;
   isRecommended: boolean;
+  /** Declared max travel vs a reliable computed ETA; "unverified" when no ETA exists. */
+  travelCheck?: TravelCheck;
+}
+
+export type TravelCheck = "not_declared" | "unverified" | "within" | "exceeds";
+
+/** Compares a declared max travel only to a reliable computed ETA; never invents one. */
+export function classifyTravel(maxTravelMinutes: number | null, etaMinutes: number | null | undefined): TravelCheck {
+  if (maxTravelMinutes === null) return "not_declared";
+  if (etaMinutes === null || etaMinutes === undefined || !Number.isFinite(etaMinutes)) return "unverified";
+  return etaMinutes <= maxTravelMinutes ? "within" : "exceeds";
 }
 
 export type SlotBadge =
@@ -95,12 +106,16 @@ export interface SlotEngineInput {
   clientLng?: number;
   urgencyLevel?: string;
   dnaMatchScore?: number;
+  /** Homeowner explicitly asked for an evening: only visits ending after rules.eveningAfter. */
+  eveningOnly?: boolean;
 }
 
 export interface SlotEngineOutput {
   slots: SlotCandidate[];
   recommendedSlot: SlotCandidate | null;
   alternativeTypes: AppointmentType[];
+  /** Local weeks (Monday YYYY-MM-DD) whose evening cap is already reached by held bookings. */
+  fullEveningWeeks?: string[];
 }
 
 // ─── Smart Defaults ───
@@ -255,6 +270,7 @@ export interface BookingRules {
   maxEveningsPerWeek: number | null; // per local week Mon–Sun; null = no cap
   visitCapacity: 1; // one visit at a time until per-representative calendars exist
   preferCompactSchedule: boolean;
+  maxTravelMinutes?: number | null; // declared; null/undefined = not declared, never defaulted
 }
 
 export const DEFAULT_BOOKING_RULES: BookingRules = {
@@ -262,6 +278,7 @@ export const DEFAULT_BOOKING_RULES: BookingRules = {
   maxEveningsPerWeek: null,
   visitCapacity: 1,
   preferCompactSchedule: false,
+  maxTravelMinutes: null,
 };
 
 /** Every real source the engine reads. Busy windows and bookings carry times only. */
@@ -287,7 +304,7 @@ export async function fetchBookingConstraints(
   } as never);
   if (error) throw error;
   const raw = (data ?? {}) as {
-    evening_after?: string; max_evenings_per_week?: number | null;
+    evening_after?: string; max_evenings_per_week?: number | null; max_travel_minutes?: number | null;
     prefer_compact_schedule?: boolean; bookings?: ExistingBooking[];
   };
   return {
@@ -296,6 +313,7 @@ export async function fetchBookingConstraints(
       maxEveningsPerWeek: raw.max_evenings_per_week ?? null,
       visitCapacity: 1,
       preferCompactSchedule: raw.prefer_compact_schedule === true,
+      maxTravelMinutes: typeof raw.max_travel_minutes === "number" ? raw.max_travel_minutes : null,
     },
     bookings: raw.bookings ?? [],
   };
@@ -433,6 +451,8 @@ export function computeSlotsFromData(
         !eveningDays.has(slotDay) &&
         (eveningsByWeek[localWeekKey(slotDay)] ?? 0) >= rules.maxEveningsPerWeek
       ) continue;
+      // Explicit evening request: never fall back to afternoon slots.
+      if (input.eveningOnly && !isEveningVisit(slotStart, slotEnd, rules.eveningAfter)) continue;
 
       let score = scoreSlot(slotStart, appointmentType, input, existingBookings, now);
       if (rules.preferCompactSchedule) {
@@ -448,6 +468,8 @@ export function computeSlotsFromData(
         badges,
         travelMinutes: travelPadding,
         isRecommended: false,
+        // No reliable ETA source feeds the engine yet: a declared max stays "unverified", no slot removed.
+        travelCheck: classifyTravel(rules.maxTravelMinutes ?? null, null),
       });
     }
   }
@@ -479,6 +501,9 @@ export function computeSlotsFromData(
     slots: filteredSlots.slice(0, 50),
     recommendedSlot: rawSlots[0] ?? null,
     alternativeTypes: allTypes.filter((t) => t.id !== input.appointmentTypeId).slice(0, 3),
+    fullEveningWeeks: rules.maxEveningsPerWeek === null
+      ? []
+      : Object.keys(eveningsByWeek).filter((w) => eveningsByWeek[w] >= (rules.maxEveningsPerWeek as number)).sort(),
   };
 }
 
