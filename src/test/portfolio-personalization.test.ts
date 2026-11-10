@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { completionLabel, completionMonthValid, emptyDraft, validateDraft } from "@/lib/portfolio/freePortfolio";
 import { photoKindOf, suggestService, withPhotoKind } from "@/lib/portfolio/portfolioFlow";
-import { completedCategoriesFrom, quebecSeason, rankProjects, type RankableProject } from "@/lib/portfolio/inspirationRanking";
+import { completedCategoriesFrom, pinOwnFirst, quebecSeason, rankProjects, type RankableProject } from "@/lib/portfolio/inspirationRanking";
 
 const NOW = new Date("2026-11-10T15:40:00Z"); // automne au Québec
 const proj = (id: string, service: string, city: string, minutesAgo: number, author = id): RankableProject => ({
@@ -82,5 +82,14 @@ describe("personalized order of the existing feed (homeowner)", () => {
   });
   it("no candidates → empty list (honest empty state upstream)", () => {
     expect(rankProjects([], { now: NOW }, "for_you")).toEqual([]);
+  });
+  it("logged-in contractor: own approved projects pinned first regardless of ranking, never duplicated", () => {
+    const own = [proj("mine", "Isolation", "Gatineau", 99999)]; // hors saison/zone, ancien, catégorie « terminée »
+    const ranked = rankProjects([proj("gout", "Gouttières", "Laval", 1), proj("mine", "Isolation", "Gatineau", 99999)],
+      { now: NOW, visitorCity: "Laval", completedCategories: ["Isolation"] }, "for_you");
+    const pages = pinOwnFirst(own, [ranked, [proj("mine", "Isolation", "Gatineau", 99999), proj("cuis", "Cuisine", "Laval", 5)]]);
+    expect(pages[0].map((x) => x.id)).toEqual(["mine", "gout"]);
+    expect(pages[1].map((x) => x.id)).toEqual(["cuis"]);
+    expect(pinOwnFirst([], [[proj("a", "Cuisine", "Laval", 1)]])[0].map((x) => x.id)).toEqual(["a"]);
   });
 });

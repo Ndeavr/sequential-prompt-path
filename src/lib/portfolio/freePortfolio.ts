@@ -228,6 +228,62 @@ export interface FeedProject {
   /** Mois déclaré « AAAA-MM-01 » ou null; clé d'auteur opaque (diversité seulement). */
   completed_month?: string | null;
   author_key?: string | null;
+  /** Réalisation approuvée de l'entrepreneur connecté (épinglée, jamais filtrée). */
+  is_own?: boolean;
+}
+
+export const PORTFOLIO_STATUS_LABEL: Record<string, { fr: string; en: string }> = {
+  pending: { fr: "En attente d’approbation", en: "Awaiting approval" },
+  approved: { fr: "Approuvée et affichée", en: "Approved and shown" },
+  rejected: { fr: "Non retenue", en: "Not accepted" },
+  withdrawn: { fr: "Retirée", en: "Withdrawn" },
+};
+
+export interface MyPortfolioItem {
+  id: string; title: string; status: string; review_reason: string | null; thumbUrl: string | null;
+}
+export interface MyPortfolio { items: MyPortfolioItem[]; approved: FeedProject[] }
+
+/**
+ * Réalisations de l'entrepreneur CONNECTÉ seulement : filtrées sur SA fiche
+ * (RLS propriétaire + filtre explicite — même un admin ne voit ici que la
+ * sienne). Les approuvées sont rendues au format du fil pour être épinglées.
+ */
+export async function fetchMyPortfolio(): Promise<MyPortfolio | null> {
+  const q = await fetchMyQuota();
+  if (!q.authenticated || !q.contractor_id) return null;
+  const [{ data: c }, { data, error }] = await Promise.all([
+    supabase.from("contractors").select("business_name,public_status").eq("id", q.contractor_id).maybeSingle(),
+    supabase.from("contractor_portfolio_projects")
+      .select("id,title,status,review_reason,service_name,city,description,gallery_urls,before_image_url,after_image_url,show_company_name,published_at,completed_month")
+      .eq("contractor_id", q.contractor_id).order("created_at", { ascending: false }).limit(20),
+  ]);
+  if (error) throw error;
+  type Row = { id: string; title: string; status: string; review_reason: string | null; service_name: string | null; city: string | null;
+    description: string | null; gallery_urls: unknown; before_image_url: string | null; after_image_url: string | null;
+    show_company_name: boolean | null; published_at: string | null; completed_month: string | null };
+  const rows = (data ?? []) as unknown as Row[];
+  const pathsOf = (r: Row) => (Array.isArray(r.gallery_urls) ? r.gallery_urls.filter((x): x is string => typeof x === "string") : []);
+  const all = [...new Set(rows.flatMap((r) => [...pathsOf(r), r.before_image_url, r.after_image_url].filter((x): x is string => !!x)))];
+  const url = new Map<string, string>();
+  if (all.length) {
+    const { data: signed } = await supabase.storage.from(PORTFOLIO_BUCKET).createSignedUrls(all, 3600);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) url.set(s.path, s.signedUrl);
+  }
+  const biz = (c as { business_name?: string | null; public_status?: string | null } | null) ?? null;
+  return {
+    items: rows.map((r) => ({ id: r.id, title: r.title, status: r.status, review_reason: r.review_reason, thumbUrl: url.get(pathsOf(r)[0] ?? "") ?? null })),
+    approved: rows.filter((r) => r.status === "approved" && r.published_at).map((r) => ({
+      id: r.id, title: r.title, service_name: r.service_name, city: r.city, description: r.description,
+      photo_paths: pathsOf(r), before_path: r.before_image_url, after_path: r.after_image_url,
+      company_name: r.show_company_name ? biz?.business_name ?? null : null,
+      author_verified: biz?.public_status === "verified_active", published_at: r.published_at!,
+      photoUrls: pathsOf(r).map((p) => url.get(p)).filter((u): u is string => !!u),
+      beforeUrl: r.before_image_url ? url.get(r.before_image_url) ?? null : null,
+      afterUrl: r.after_image_url ? url.get(r.after_image_url) ?? null : null,
+      completed_month: r.completed_month, is_own: true,
+    })),
+  };
 }
 
 export interface FeedCursor { publishedAt: string; id: string }

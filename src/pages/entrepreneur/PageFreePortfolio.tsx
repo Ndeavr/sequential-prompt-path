@@ -28,7 +28,7 @@ import { saveRoleIntent } from "@/services/auth/roleIntent";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import {
   emptyDraft, fetchMyQuota, FREE_PORTFOLIO_LIMIT, FREE_PORTFOLIO_PATH, MAX_PHOTOS, portfolioErrorMessage, quotaLabel, sanitizeImage,
-  setProjectCompletion, submitPortfolio, uploadPhotos, validateDraft, type DraftField, type FreeQuota, type PortfolioDraft,
+  PORTFOLIO_STATUS_LABEL, setProjectCompletion, submitPortfolio, uploadPhotos, validateDraft, type DraftField, type FreeQuota, type PortfolioDraft,
 } from "@/lib/portfolio/freePortfolio";
 import { clearDraft, loadDraft, persistDraft } from "@/lib/portfolio/draftStore";
 import {
@@ -41,12 +41,7 @@ interface MyProject { id: string; title: string; status: string; review_reason: 
 interface KnownContractor { business_name: string | null; city: string | null; specialty: string | null }
 
 const AUTH_FLAG = "unpro_portfolio_auth_started";
-const STATUS_LABEL: Record<string, { fr: string; en: string }> = {
-  pending: { fr: "En attente d’approbation", en: "Awaiting approval" },
-  approved: { fr: "Approuvée et affichée", en: "Approved and shown" },
-  rejected: { fr: "Non retenue", en: "Not accepted" },
-  withdrawn: { fr: "Retirée", en: "Withdrawn" },
-};
+const STATUS_LABEL = PORTFOLIO_STATUS_LABEL;
 const STEP_LABEL: Record<string, { fr: string; en: string }> = {
   photos: { fr: "Photos", en: "Photos" }, compte: { fr: "Compte", en: "Account" }, projet: { fr: "Projet", en: "Project" },
   mandats: { fr: "Mandats", en: "Jobs" }, merci: { fr: "Terminé", en: "Done" },

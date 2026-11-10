@@ -94,6 +94,18 @@ export function scoreProject(p: RankableProject, ctx: RankingContext): { total: 
   return { total: parts.local + parts.season + parts.interest + parts.completed + parts.fresh, parts };
 }
 
+/**
+ * Les réalisations APPROUVÉES de l'entrepreneur connecté passent en tête du
+ * premier lot, sans aucun filtre d'intérêt/saison/zone, et sont retirées des
+ * lots publics pour éviter les doublons.
+ */
+export function pinOwnFirst<T extends { id: string }>(own: T[], pages: T[][]): T[][] {
+  if (!own.length) return pages;
+  const ownIds = new Set(own.map((x) => x.id));
+  const rest = pages.map((b) => b.filter((x) => !ownIds.has(x.id)));
+  return [[...own, ...(rest[0] ?? [])], ...rest.slice(1)];
+}
+
 const byRecent = (a: RankableProject, b: RankableProject) =>
   b.published_at.localeCompare(a.published_at) || b.id.localeCompare(a.id);
 

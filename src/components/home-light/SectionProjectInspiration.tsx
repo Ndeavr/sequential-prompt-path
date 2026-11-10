@@ -13,9 +13,10 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Heart, ImageIcon, MessageCircle, RefreshCw, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { completionLabel, fetchInspirationFeed, FREE_PORTFOLIO_PATH, nextFeedCursor, type FeedCursor, type FeedProject } from "@/lib/portfolio/freePortfolio";
-import { categoryOf, completedCategoriesFrom, quebecSeason, rankProjects, SEASON_LABEL, type PassportEvent, type RankingContext, type SortMode } from "@/lib/portfolio/inspirationRanking";
+import { completionLabel, fetchInspirationFeed, fetchMyPortfolio, FREE_PORTFOLIO_PATH, PORTFOLIO_STATUS_LABEL, nextFeedCursor, type FeedCursor, type FeedProject } from "@/lib/portfolio/freePortfolio";
+import { categoryOf, completedCategoriesFrom, pinOwnFirst, quebecSeason, rankProjects, SEASON_LABEL, type PassportEvent, type RankingContext, type SortMode } from "@/lib/portfolio/inspirationRanking";
 import { useAuthSession } from "@/stores/authSessionStore";
+import { loadDraft } from "@/lib/portfolio/draftStore";
 import { supabase } from "@/integrations/supabase/client";
 import { addLike, deckMode, inspirationSessionId, readLikes, swipeDecision } from "@/lib/portfolio/swipeDeck";
 import { CLARA_PROJECT_INSPIRATION_EVENT, type ProjectInspiration } from "@/services/clara/claraProjectInspiration";
@@ -55,6 +56,7 @@ function Attribution({ p, fr }: { p: FeedProject; fr: boolean }) {
   const done = completionLabel(p.completed_month, fr ? "fr" : "en");
   return (
     <>
+      {p.is_own && <p className="text-xs font-semibold text-primary">{fr ? "Votre réalisation — approuvée et visible publiquement" : "Your project — approved and publicly visible"}</p>}
       {done && <p className="text-xs font-medium text-foreground">{done}</p>}
       <p className="text-sm text-muted-foreground">{p.company_name ?? (fr ? "Entreprise non affichée" : "Business not displayed")}</p>
       <p className="text-xs text-muted-foreground">
@@ -70,6 +72,13 @@ function Attribution({ p, fr }: { p: FeedProject; fr: boolean }) {
 }
 
 function ClaraActions({ p, fr, sortMode }: { p: FeedProject; fr: boolean; sortMode?: SortMode }) {
+  if (p.is_own) {
+    return (
+      <Button asChild variant="outline" className="min-h-11 w-full whitespace-normal">
+        <Link to={FREE_PORTFOLIO_PATH}>{fr ? "Gérer mes réalisations" : "Manage my projects"}</Link>
+      </Button>
+    );
+  }
   return (
     <div className="flex flex-col gap-2">
       <Button className="min-h-11 w-full whitespace-normal" onClick={() => openClaraWithProject(p, "similar", sortMode)}>
@@ -330,8 +339,14 @@ export default function SectionProjectInspiration() {
       completedCategories: passport.data ? completedCategoriesFrom(passport.data.events, now) : [],
     };
   }, [rawPages, passport.data]);
+  // Entrepreneur connecté : SES réalisations (tous statuts, privé) + ses approuvées épinglées en tête du fil.
+  const mine = useQuery({ queryKey: ["inspiration-my-portfolio", uid], enabled: !!uid, staleTime: 60_000, queryFn: fetchMyPortfolio });
+  const localDraft = useQuery({ queryKey: ["inspiration-local-draft", uid], enabled: !!uid, staleTime: 60_000, queryFn: async () => (await loadDraft())?.photos.length ?? 0 });
   // Seul l'ordre change, lot par lot : la pagination distincte et l'accès « récents » sont conservés.
-  const pages = useMemo(() => rawPages.map((b) => rankProjects(b, ctx, sortMode)), [rawPages, ctx, sortMode]);
+  const pages = useMemo(
+    () => pinOwnFirst(mine.data?.approved ?? [], rawPages.map((b) => rankProjects(b, ctx, sortMode))),
+    [rawPages, ctx, sortMode, mine.data],
+  );
   const first = pages[0] ?? [];
   const mode = deckMode(first.length);
   const season = SEASON_LABEL[quebecSeason(ctx.now)][fr ? "fr" : "en"];
@@ -340,7 +355,8 @@ export default function SectionProjectInspiration() {
     setSortMode(m);
     void logFunnelEvent({ event_type: "inspiration_sort_changed", step: "home_inspiration", metadata: { sort_mode: m, signed_in: !!uid }, dedupe_key: `inspiration_sort_changed:${m}:${inspirationSessionId()}` });
   };
-  const why = sortMode === "recent"
+  const ownNote = (mine.data?.approved.length ?? 0) > 0 ? (fr ? "Vos réalisations approuvées d’abord. " : "Your approved projects first. ") : "";
+  const why = ownNote + (sortMode === "recent"
     ? (fr ? "Ordre : les plus récentes d’abord." : "Order: most recent first.")
     : sortMode === "other"
       ? (fr ? "Ordre : d’autres types de projets que ceux de la saison et de vos « J’aime » d’abord." : "Order: project types other than the season’s and your likes first.")
@@ -350,7 +366,7 @@ export default function SectionProjectInspiration() {
           ctx.completedCategories?.length ? (fr ? "vos travaux terminés du Passeport passent après" : "your completed Passport work comes later") : null,
           ctx.likedCategories?.length ? (fr ? "vos « J’aime » de cette visite" : "your likes this visit") : null,
           fr ? "fraîcheur et variété. Aucun classement payant." : "freshness and variety. No paid ranking.",
-        ].filter(Boolean).join(fr ? ", " : ", ");
+        ].filter(Boolean).join(", "));
   const cta = (
     <Link to={FREE_PORTFOLIO_PATH} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
       <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -376,6 +392,34 @@ export default function SectionProjectInspiration() {
           {cta}
         </div>
       </div>
+
+      {uid && ((mine.data?.items.length ?? 0) > 0 || (localDraft.data ?? 0) > 0) && (
+        <div className="mb-6 rounded-[28px] border border-border bg-card p-4" aria-labelledby="my-portfolio-title">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="my-portfolio-title" className="text-base font-semibold text-foreground">{fr ? "Mes réalisations" : "My projects"}</h3>
+            <span className="text-xs text-muted-foreground">{fr ? "Visible par vous seulement" : "Visible to you only"}</span>
+          </div>
+          <ul className="mt-3 flex gap-3 overflow-x-auto pb-1">
+            {(localDraft.data ?? 0) > 0 && (
+              <li className="w-40 shrink-0">
+                <Link to={`${FREE_PORTFOLIO_PATH}?etape=photos`} className="block rounded-2xl border border-dashed border-border p-3 text-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <span className="block font-medium">{fr ? "Brouillon sur cet appareil" : "Draft on this device"}</span>
+                  <span className="text-xs text-muted-foreground">{fr ? `${localDraft.data} photo(s) — non envoyé` : `${localDraft.data} photo(s) — not sent`}</span>
+                </Link>
+              </li>
+            )}
+            {(mine.data?.items ?? []).map((m) => (
+              <li key={m.id} className="w-40 shrink-0">
+                <Link to={FREE_PORTFOLIO_PATH} className="block overflow-hidden rounded-2xl border border-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  {m.thumbUrl ? <img src={m.thumbUrl} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" /> : <div className="flex aspect-[4/3] items-center justify-center bg-muted"><ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" /></div>}
+                  <span className="block truncate px-2 pt-2 text-sm font-medium text-foreground">{m.title}</span>
+                  <span className="block px-2 pb-2 text-xs text-muted-foreground">{PORTFOLIO_STATUS_LABEL[m.status]?.[fr ? "fr" : "en"] ?? m.status}{m.status === "rejected" && m.review_reason ? ` — ${m.review_reason}` : ""}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {feed.isSuccess && mode !== "empty" && (
         <div className="mb-4">
