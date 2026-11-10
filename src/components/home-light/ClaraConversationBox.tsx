@@ -99,6 +99,8 @@ import {
   mentionsDossier,
   rememberInDossier,
 } from "@/services/clara/claraDossier";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { authorInterestReply, CLARA_PROJECT_INSPIRATION_EVENT, findCompatibleReply, inspirationChoices, inspirationGreeting, matchInspirationChoice, parseInspirationDetail, type ProjectInspiration } from "@/services/clara/claraProjectInspiration";
 import { CLARA_HOMEOWNER_REQUEST_EVENT, hasExplicitHomeownerFlow, hasActiveContractorFlow, isContractorContext, resolveClaraContractorEntry, pauseActiveContractorFlow, readHomeCursor, rememberActiveContractorFlow, rememberHomeCursor } from "@/services/clara/claraContractorResume";
 import ClaraContractorFlow, { type ClaraContractorFlowHandle } from "@/components/home-light/ClaraContractorFlow";
 import RegisterPropertyCTA from "@/components/home-light/RegisterPropertyCTA";
@@ -439,6 +441,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   const askNextRef = useRef<(() => Promise<boolean>) | null>(null);
   const transitionRef = useRef<((note: string) => Promise<void>) | null>(null);
   const homePromptRef = useRef<() => void>(() => {});
+  const inspirationRef = useRef<ProjectInspiration | null>(null);
 
   useEffect(() => {
     // Remonté explicitement : en double montage (StrictMode), le nettoyage du
@@ -1199,10 +1202,72 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     return () => window.removeEventListener(CLARA_CONTRACTOR_VOICE_FINISHED_EVENT, onVoiceFinished);
   }, [finishContractorTransition]);
 
+  // « Je veux un projet semblable » : même conversation propriétaire, contexte du projet.
+  useEffect(() => {
+    const onInspiration = (event: Event) => {
+      const detail = parseInspirationDetail((event as CustomEvent).detail);
+      if (!detail || forcedContractor) return;
+      inspirationRef.current = detail;
+      rememberClaraReferences({
+        current_intent: "PROJECT", detected_role: "HOMEOWNER",
+        workflow: { ...(workflowRef.current ?? {}), inspiration_project_id: detail.projectId, inspiration_service: detail.serviceName },
+      });
+      trackCopilotEvent("clara_chat_opened", { intent: "project_inspiration", project_id: detail.projectId });
+      // Parcours entrepreneur actif : on revient d'abord au propriétaire (même conversation),
+      // puis Clara reprend le projet choisi sans que l'invite générique l'écrase.
+      const wasContractor = audienceRef.current === "contractor";
+      if (wasContractor) switchToHomeowner();
+      else setAudience("homeowner");
+      window.setTimeout(() => {
+        if (inspirationRef.current?.projectId !== detail.projectId) return;
+        if (detail.intent === "contact_author") {
+          // Demande CET auteur : intérêt NOTÉ seulement; vérification avant toute recommandation.
+          inspirationRef.current = null;
+          let sid = "nosession";
+          try { sid = sessionStorage.getItem("unpro_inspiration_sid") ?? sid; } catch { /* noop */ }
+          void logFunnelEvent({
+            event_type: "owner_interest", step: "home_inspiration",
+            metadata: { project_id: detail.projectId, author_verified: detail.authorVerified, contact_made: false },
+            dedupe_key: `owner_interest:${detail.projectId}:${sid}`,
+          });
+          void sayClara(authorInterestReply(detail));
+          return;
+        }
+        void sayClara(inspirationGreeting(detail), inspirationChoices());
+      }, wasContractor ? 1600 : 0);
+    };
+    window.addEventListener(CLARA_PROJECT_INSPIRATION_EVENT, onInspiration);
+    return () => window.removeEventListener(CLARA_PROJECT_INSPIRATION_EVENT, onInspiration);
+  }, [sayClara, forcedContractor, switchToHomeowner, setAudience]);
+
   const send = useCallback(
     async (raw: string) => {
       const text = raw.trim();
       if (!text || busy) return;
+
+      // Choix après une réalisation : intérêt NOTÉ seulement, aucun contact prétendu.
+      const inspiration = inspirationRef.current;
+      const inspirationChoice = inspiration && audienceRef.current !== "contractor" ? matchInspirationChoice(text) : null;
+      if (inspiration && inspirationChoice) {
+        inspirationRef.current = null;
+        const userId = uid();
+        setError(null);
+        setQuickReplies(null);
+        setMessages((previous) => [...previous, { id: userId, role: "user", text, audience: "homeowner" }]);
+        void appendClaraMessage({ role: "user", text, clientMessageId: userId, audience: "homeowner" }).catch(() => undefined);
+        if (inspirationChoice === "contact_author") {
+          let sid = "nosession";
+          try { sid = sessionStorage.getItem("unpro_inspiration_sid") ?? sid; } catch { /* noop */ }
+          void logFunnelEvent({
+            event_type: "owner_interest", step: "home_inspiration",
+            metadata: { project_id: inspiration.projectId, author_verified: inspiration.authorVerified, contact_made: false },
+            dedupe_key: `owner_interest:${inspiration.projectId}:${sid}`,
+          });
+        }
+        await sayClara(inspirationChoice === "contact_author" ? authorInterestReply(inspiration) : findCompatibleReply(inspiration));
+        focusComposer();
+        return;
+      }
       if (!messages.some((message) => message.role === "user")) {
         logQuestion(text, { source: "chat_composer", lang: lang === "fr" ? "fr-CA" : "en-CA" });
       }

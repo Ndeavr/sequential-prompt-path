@@ -39473,40 +39473,82 @@ export type Database = {
           after_image_url: string | null
           before_image_url: string | null
           city: string | null
+          client_request_id: string | null
           contractor_id: string
           created_at: string
           description: string | null
+          display_consent_at: string | null
           featured_flag: boolean | null
           gallery_urls: Json | null
           id: string
+          is_free_tier: boolean
+          photo_rights_confirmed: boolean
+          published_at: string | null
+          review_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           service_name: string | null
+          show_company_name: boolean
+          source: string
+          status: string
+          submitted_by: string | null
           title: string
+          updated_at: string
+          withdrawn_at: string | null
         }
         Insert: {
           after_image_url?: string | null
           before_image_url?: string | null
           city?: string | null
+          client_request_id?: string | null
           contractor_id: string
           created_at?: string
           description?: string | null
+          display_consent_at?: string | null
           featured_flag?: boolean | null
           gallery_urls?: Json | null
           id?: string
+          is_free_tier?: boolean
+          photo_rights_confirmed?: boolean
+          published_at?: string | null
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           service_name?: string | null
+          show_company_name?: boolean
+          source?: string
+          status?: string
+          submitted_by?: string | null
           title: string
+          updated_at?: string
+          withdrawn_at?: string | null
         }
         Update: {
           after_image_url?: string | null
           before_image_url?: string | null
           city?: string | null
+          client_request_id?: string | null
           contractor_id?: string
           created_at?: string
           description?: string | null
+          display_consent_at?: string | null
           featured_flag?: boolean | null
           gallery_urls?: Json | null
           id?: string
+          is_free_tier?: boolean
+          photo_rights_confirmed?: boolean
+          published_at?: string | null
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           service_name?: string | null
+          show_company_name?: boolean
+          source?: string
+          status?: string
+          submitted_by?: string | null
           title?: string
+          updated_at?: string
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -102915,6 +102957,10 @@ export type Database = {
         }
         Returns: Json
       }
+      moderate_portfolio_project: {
+        Args: { p_decision: string; p_id: string; p_reason: string }
+        Returns: Json
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -102943,6 +102989,7 @@ export type Database = {
           terms_fr: string
         }[]
       }
+      my_portfolio_free_quota: { Args: never; Returns: Json }
       next_send_window_open: {
         Args: { _channel: string; _from?: string }
         Returns: string
@@ -102969,6 +103016,8 @@ export type Database = {
       }
       pipeline_data_integrity_report: { Args: never; Returns: Json }
       places_budget_status: { Args: { p_provider?: string }; Returns: Json }
+      portfolio_object_in_use: { Args: { p_name: string }; Returns: boolean }
+      portfolio_object_is_public: { Args: { p_name: string }; Returns: boolean }
       process_waitlist_replacement: {
         Args: { p_territory_id: string; p_threshold?: number }
         Returns: Json
@@ -102996,6 +103045,38 @@ export type Database = {
           source_last_verified_at: string
           verification_state: string
           verified_at: string
+        }[]
+      }
+      public_portfolio_feed: {
+        Args: never
+        Returns: {
+          after_path: string
+          author_verified: boolean
+          before_path: string
+          city: string
+          company_name: string
+          description: string
+          id: string
+          photo_paths: string[]
+          published_at: string
+          service_name: string
+          title: string
+        }[]
+      }
+      public_portfolio_feed_before: {
+        Args: { p_before_id: string; p_before_published_at: string }
+        Returns: {
+          after_path: string
+          author_verified: boolean
+          before_path: string
+          city: string
+          company_name: string
+          description: string
+          id: string
+          photo_paths: string[]
+          published_at: string
+          service_name: string
+          title: string
         }[]
       }
       qc_now: { Args: never; Returns: string }
@@ -103350,6 +103431,24 @@ export type Database = {
           total_events: number
         }[]
       }
+      submit_portfolio_project: {
+        Args: {
+          p_after_path: string
+          p_before_path: string
+          p_business_name: string
+          p_city: string
+          p_client_request_id: string
+          p_contact_email: string
+          p_contact_phone: string
+          p_description: string
+          p_photo_paths: string[]
+          p_photo_rights: boolean
+          p_service_name: string
+          p_show_company_name: boolean
+          p_title: string
+        }
+        Returns: Json
+      }
       territory_availability: {
         Args: { _city: string; _trade: string }
         Returns: Json
@@ -103390,6 +103489,7 @@ export type Database = {
         Args: { _code: string; _contractor_id?: string; _plan_code: string }
         Returns: Json
       }
+      withdraw_portfolio_project: { Args: { p_id: string }; Returns: Json }
     }
     Enums: {
       ai_trust_position:
