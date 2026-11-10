@@ -170,4 +170,25 @@ describe("free portfolio server rules", { timeout: 60_000 }, () => {
     const policies = await db.query<{ n: number }>(`SELECT count(*)::int n FROM pg_policies WHERE tablename='contractor_portfolio_projects' AND policyname='public_read_portfolio'`);
     expect(policies.rows[0].n).toBe(0);
   });
+
+  it("0054: declared completion month — author-only while pending, validated; meta only for approved", async () => {
+    const db = await setup();
+    await db.exec(readFileSync("drizzle/migrations/0054_portfolio_completion_month.sql", "utf8").replace(/--> statement-breakpoint/g, ""));
+    const r = await submit(db, OWNER);
+    const setMonth = (uid: string | null, m: string | null) => as(db, uid).then(() =>
+      db.query(`SELECT public.set_portfolio_project_completion($1, $2::date)`, [r.id, m]).then(() => "ok", (e: Error) => e.message));
+    expect(await setMonth(null, "2025-10-01")).toContain("auth_required");
+    expect(await setMonth(OTHER, "2025-10-01")).toContain("not_owner");
+    expect(await setMonth(OWNER, "2099-01-01")).toContain("invalid_completion_month");
+    expect(await setMonth(OWNER, "2025-10-15")).toContain("invalid_completion_month");
+    expect(await setMonth(OWNER, "2025-10-01")).toBe("ok");
+    const meta = () => as(db, null).then(() => db.query<{ id: string; completed_month: string | null; author_key: string }>(
+      `SELECT id, completed_month::text completed_month, author_key FROM public.public_portfolio_feed_meta(ARRAY[$1]::uuid[])`, [r.id])).then((x) => x.rows);
+    expect(await meta()).toEqual([]); // pending → never exposed
+    expect(await moderate(db, ADMIN, r.id, "approve")).toBe("ok");
+    const rows = await meta();
+    expect(rows[0].completed_month).toBe("2025-10-01");
+    expect(rows[0].author_key).toMatch(/^[0-9a-f]{32}$/);
+    expect(await setMonth(OWNER, "2025-09-01")).toContain("not_pending");
+  });
 });

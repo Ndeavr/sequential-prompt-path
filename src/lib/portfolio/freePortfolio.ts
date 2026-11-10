@@ -29,17 +29,37 @@ export interface PortfolioDraft {
   showCompanyName: boolean;
   beforeIndex: number | null;
   afterIndex: number | null;
+  /** « AAAA-MM » déclaré par l'entrepreneur, facultatif ("" = non renseigné). Jamais lu dans l'EXIF. */
+  completedMonth: string;
 }
 
 export function emptyDraft(): PortfolioDraft {
   return {
     clientRequestId: crypto.randomUUID(), title: "", serviceName: "", city: "", description: "",
     businessName: "", contactEmail: "", contactPhone: "", photoRights: false, showCompanyName: true,
-    beforeIndex: null, afterIndex: null,
+    beforeIndex: null, afterIndex: null, completedMonth: "",
   };
 }
 
-export type DraftField = "title" | "serviceName" | "city" | "description" | "photos" | "photoRights" | "business" | "contact";
+/** "" accepté (facultatif); sinon AAAA-MM réel, entre 1950 et le mois courant (heure de Montréal). */
+export function completionMonthValid(v: string, now = new Date()): boolean {
+  if (!v) return true;
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v);
+  if (!m) return false;
+  const current = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", timeZone: "America/Toronto" }).format(now).slice(0, 7);
+  return Number(m[1]) >= 1950 && v <= current;
+}
+
+/** « Réalisé en novembre 2026 » — seulement si le mois a été déclaré. */
+export function completionLabel(month: string | null | undefined, lang: "fr" | "en"): string | null {
+  const m = /^(\d{4})-(\d{2})/.exec(month ?? "");
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 15));
+  const txt = new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+  return lang === "fr" ? `Réalisé en ${txt}` : `Completed in ${txt}`;
+}
+
+export type DraftField = "title" | "serviceName" | "city" | "description" | "photos" | "photoRights" | "business" | "contact" | "completedMonth";
 
 /** Miroir client des contrôles serveur (le serveur reste l'autorité). */
 export function validateDraft(d: PortfolioDraft, photoCount: number, needsBusiness: boolean): DraftField[] {
@@ -50,6 +70,7 @@ export function validateDraft(d: PortfolioDraft, photoCount: number, needsBusine
   if (s.length < 2 || s.length > 80) errors.push("serviceName");
   if (c.length < 2 || c.length > 80 || /\d/.test(c)) errors.push("city");
   if (d.description.trim().length > 600) errors.push("description");
+  if (!completionMonthValid(d.completedMonth ?? "")) errors.push("completedMonth");
   if (!d.photoRights) errors.push("photoRights");
   if (needsBusiness) {
     const n = d.businessName.trim();
@@ -183,6 +204,12 @@ export async function submitPortfolio(d: PortfolioDraft, paths: string[]): Promi
   return data as unknown as SubmitResult;
 }
 
+/** Mois de réalisation déclaré (auteur seulement, projet en attente). "" efface. */
+export async function setProjectCompletion(id: string, month: string): Promise<void> {
+  const { error } = await supabase.rpc("set_portfolio_project_completion" as never, { p_id: id, p_month: month ? `${month}-01` : null } as never);
+  if (error) throw error;
+}
+
 export interface FreeQuota { authenticated: boolean; contractor_id?: string | null; used: number; approved: number; limit: number }
 export async function fetchMyQuota(): Promise<FreeQuota> {
   const { data, error } = await supabase.rpc("my_portfolio_free_quota" as never);
@@ -198,6 +225,65 @@ export interface FeedProject {
   photoUrls: string[];
   beforeUrl?: string | null;
   afterUrl?: string | null;
+  /** Mois déclaré « AAAA-MM-01 » ou null; clé d'auteur opaque (diversité seulement). */
+  completed_month?: string | null;
+  author_key?: string | null;
+  /** Réalisation approuvée de l'entrepreneur connecté (épinglée, jamais filtrée). */
+  is_own?: boolean;
+}
+
+export const PORTFOLIO_STATUS_LABEL: Record<string, { fr: string; en: string }> = {
+  pending: { fr: "En attente d’approbation", en: "Awaiting approval" },
+  approved: { fr: "Approuvée et affichée", en: "Approved and shown" },
+  rejected: { fr: "Non retenue", en: "Not accepted" },
+  withdrawn: { fr: "Retirée", en: "Withdrawn" },
+};
+
+export interface MyPortfolioItem {
+  id: string; title: string; status: string; review_reason: string | null; thumbUrl: string | null;
+}
+export interface MyPortfolio { items: MyPortfolioItem[]; approved: FeedProject[] }
+
+/**
+ * Réalisations de l'entrepreneur CONNECTÉ seulement : filtrées sur SA fiche
+ * (RLS propriétaire + filtre explicite — même un admin ne voit ici que la
+ * sienne). Les approuvées sont rendues au format du fil pour être épinglées.
+ */
+export async function fetchMyPortfolio(): Promise<MyPortfolio | null> {
+  const q = await fetchMyQuota();
+  if (!q.authenticated || !q.contractor_id) return null;
+  const [{ data: c }, { data, error }] = await Promise.all([
+    supabase.from("contractors").select("business_name,public_status").eq("id", q.contractor_id).maybeSingle(),
+    supabase.from("contractor_portfolio_projects")
+      .select("id,title,status,review_reason,service_name,city,description,gallery_urls,before_image_url,after_image_url,show_company_name,published_at,completed_month")
+      .eq("contractor_id", q.contractor_id).order("created_at", { ascending: false }).limit(20),
+  ]);
+  if (error) throw error;
+  type Row = { id: string; title: string; status: string; review_reason: string | null; service_name: string | null; city: string | null;
+    description: string | null; gallery_urls: unknown; before_image_url: string | null; after_image_url: string | null;
+    show_company_name: boolean | null; published_at: string | null; completed_month: string | null };
+  const rows = (data ?? []) as unknown as Row[];
+  const pathsOf = (r: Row) => (Array.isArray(r.gallery_urls) ? r.gallery_urls.filter((x): x is string => typeof x === "string") : []);
+  const all = [...new Set(rows.flatMap((r) => [...pathsOf(r), r.before_image_url, r.after_image_url].filter((x): x is string => !!x)))];
+  const url = new Map<string, string>();
+  if (all.length) {
+    const { data: signed } = await supabase.storage.from(PORTFOLIO_BUCKET).createSignedUrls(all, 3600);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) url.set(s.path, s.signedUrl);
+  }
+  const biz = (c as { business_name?: string | null; public_status?: string | null } | null) ?? null;
+  return {
+    items: rows.map((r) => ({ id: r.id, title: r.title, status: r.status, review_reason: r.review_reason, thumbUrl: url.get(pathsOf(r)[0] ?? "") ?? null })),
+    approved: rows.filter((r) => r.status === "approved" && r.published_at).map((r) => ({
+      id: r.id, title: r.title, service_name: r.service_name, city: r.city, description: r.description,
+      photo_paths: pathsOf(r), before_path: r.before_image_url, after_path: r.after_image_url,
+      company_name: r.show_company_name ? biz?.business_name ?? null : null,
+      author_verified: biz?.public_status === "verified_active", published_at: r.published_at!,
+      photoUrls: pathsOf(r).map((p) => url.get(p)).filter((u): u is string => !!u),
+      beforeUrl: r.before_image_url ? url.get(r.before_image_url) ?? null : null,
+      afterUrl: r.after_image_url ? url.get(r.after_image_url) ?? null : null,
+      completed_month: r.completed_month, is_own: true,
+    })),
+  };
 }
 
 export interface FeedCursor { publishedAt: string; id: string }
@@ -227,8 +313,16 @@ export async function fetchInspirationFeed(cursor?: FeedCursor | null): Promise<
     if (signError) throw signError;
     for (const s of signed ?? []) if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
   }
+  // Métadonnées facultatives (mois déclaré, clé d'auteur) : en cas d'échec, le fil reste servi sans elles.
+  const meta = new Map<string, { completed_month: string | null; author_key: string | null }>();
+  if (rows.length) {
+    const { data: m } = await supabase.rpc("public_portfolio_feed_meta" as never, { p_ids: rows.map((r) => r.id) } as never);
+    for (const x of ((m ?? []) as { id: string; completed_month: string | null; author_key: string | null }[])) meta.set(x.id, x);
+  }
   return rows.map((r) => ({
     ...r,
+    completed_month: meta.get(r.id)?.completed_month ?? null,
+    author_key: meta.get(r.id)?.author_key ?? null,
     photoUrls: (r.photo_paths ?? []).map((p) => urlByPath.get(p)).filter((u): u is string => !!u),
     beforeUrl: r.before_path ? urlByPath.get(r.before_path) ?? null : null,
     afterUrl: r.after_path ? urlByPath.get(r.after_path) ?? null : null,

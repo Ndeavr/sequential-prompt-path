@@ -131,8 +131,18 @@ export type FunnelEventType =
   | "swipe_passed"
   | "swipe_liked"
   | "open_clara_from_project"
+  | "inspiration_sort_changed"
+  | "photo_type_set"
   | "activation_checkout_started"
   | "appointment_plan_interest"
+  // Landing /entrepreneurs/realisations — points d'abandon (jamais vente).
+  // Le paiement confirmé est écrit UNIQUEMENT par le webhook Stripe signé
+  // (`entry_350_payment_success`); aucun type client ne peut le simuler.
+  | "photo_selected"
+  | "mandate_preferences_saved"
+  | "free_project_submitted"
+  | "moderation_pending"
+  | "upgrade_viewed"
   | "paid";
 
 export type FunnelEventSource =

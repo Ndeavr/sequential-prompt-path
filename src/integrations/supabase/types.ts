@@ -39474,6 +39474,7 @@ export type Database = {
           before_image_url: string | null
           city: string | null
           client_request_id: string | null
+          completed_month: string | null
           contractor_id: string
           created_at: string
           description: string | null
@@ -39501,6 +39502,7 @@ export type Database = {
           before_image_url?: string | null
           city?: string | null
           client_request_id?: string | null
+          completed_month?: string | null
           contractor_id: string
           created_at?: string
           description?: string | null
@@ -39528,6 +39530,7 @@ export type Database = {
           before_image_url?: string | null
           city?: string | null
           client_request_id?: string | null
+          completed_month?: string | null
           contractor_id?: string
           created_at?: string
           description?: string | null
@@ -103079,6 +103082,14 @@ export type Database = {
           title: string
         }[]
       }
+      public_portfolio_feed_meta: {
+        Args: { p_ids: string[] }
+        Returns: {
+          author_key: string
+          completed_month: string
+          id: string
+        }[]
+      }
       qc_now: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
@@ -103372,6 +103383,10 @@ export type Database = {
       set_lead_pipeline_status: {
         Args: { p_lead_id: string; p_status: string }
         Returns: undefined
+      }
+      set_portfolio_project_completion: {
+        Args: { p_id: string; p_month: string }
+        Returns: Json
       }
       set_system_flag: {
         Args: { _key: string; _value: boolean }

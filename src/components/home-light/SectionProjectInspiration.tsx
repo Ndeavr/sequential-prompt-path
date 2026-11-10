@@ -1,18 +1,23 @@
 /**
  * « Des projets qui donnent des idées » — sous Clara (Clara reste prioritaire).
- * Lot initial = exactement les 10 dernières réalisations APPROUVÉES (tri par
- * date, aucun classement payant). ≥ 5 réalisations réelles → cartes à glisser
+ * Lot initial = exactement les 10 dernières réalisations APPROUVÉES; l'ordre
+ * « Pour vous » réordonne seulement ce lot côté client (inspirationRanking,
+ * déterministe, aucun classement payant); « Récents » garde l'ordre serveur. ≥ 5 réalisations réelles → cartes à glisser
  * (gauche = passer, droite = « J'aime », session locale seulement); fin de lot →
  * recommencer ou lot DISTINCT suivant. < 5 → version limitée honnête.
  * Réalisation déclarée par l'entreprise ≠ qualifications vérifiées.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Heart, ImageIcon, MessageCircle, RefreshCw, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { fetchInspirationFeed, FREE_PORTFOLIO_PATH, nextFeedCursor, type FeedCursor, type FeedProject } from "@/lib/portfolio/freePortfolio";
+import { completionLabel, fetchInspirationFeed, fetchMyPortfolio, FREE_PORTFOLIO_PATH, PORTFOLIO_STATUS_LABEL, nextFeedCursor, type FeedCursor, type FeedProject } from "@/lib/portfolio/freePortfolio";
+import { categoryOf, completedCategoriesFrom, pinOwnFirst, quebecSeason, rankProjects, SEASON_LABEL, type PassportEvent, type RankingContext, type SortMode } from "@/lib/portfolio/inspirationRanking";
+import { useAuthSession } from "@/stores/authSessionStore";
+import { loadDraft } from "@/lib/portfolio/draftStore";
+import { supabase } from "@/integrations/supabase/client";
 import { addLike, deckMode, inspirationSessionId, readLikes, swipeDecision } from "@/lib/portfolio/swipeDeck";
 import { CLARA_PROJECT_INSPIRATION_EVENT, type ProjectInspiration } from "@/services/clara/claraProjectInspiration";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
@@ -25,14 +30,14 @@ function focusClara() {
   field?.focus({ preventScroll: true });
 }
 
-export function openClaraWithProject(p: FeedProject, intent: "similar" | "contact_author" = "similar") {
+export function openClaraWithProject(p: FeedProject, intent: "similar" | "contact_author" = "similar", sortMode?: SortMode) {
   const detail: ProjectInspiration = {
     projectId: p.id, title: p.title, serviceName: p.service_name, city: p.city,
     companyName: p.company_name, authorVerified: p.author_verified, intent,
   };
   void logFunnelEvent({
     event_type: "open_clara_from_project", step: "home_inspiration",
-    metadata: { project_id: p.id, intent, service: p.service_name, author_verified: p.author_verified, is_appointment: false, is_sale: false },
+    metadata: { project_id: p.id, intent, service: p.service_name, author_verified: p.author_verified, sort_mode: sortMode ?? null, is_appointment: false, is_sale: false },
     dedupe_key: `open_clara_from_project:${p.id}:${intent}:${inspirationSessionId()}`,
   });
   window.dispatchEvent(new CustomEvent(CLARA_PROJECT_INSPIRATION_EVENT, { detail }));
@@ -48,8 +53,11 @@ function logViewed(p: FeedProject) {
 }
 
 function Attribution({ p, fr }: { p: FeedProject; fr: boolean }) {
+  const done = completionLabel(p.completed_month, fr ? "fr" : "en");
   return (
     <>
+      {p.is_own && <p className="text-xs font-semibold text-primary">{fr ? "Votre réalisation — approuvée et visible publiquement" : "Your project — approved and publicly visible"}</p>}
+      {done && <p className="text-xs font-medium text-foreground">{done}</p>}
       <p className="text-sm text-muted-foreground">{p.company_name ?? (fr ? "Entreprise non affichée" : "Business not displayed")}</p>
       <p className="text-xs text-muted-foreground">
         {fr ? "Réalisation déclarée par l’entreprise." : "Project declared by the business."}
@@ -63,13 +71,20 @@ function Attribution({ p, fr }: { p: FeedProject; fr: boolean }) {
   );
 }
 
-function ClaraActions({ p, fr }: { p: FeedProject; fr: boolean }) {
+function ClaraActions({ p, fr, sortMode }: { p: FeedProject; fr: boolean; sortMode?: SortMode }) {
+  if (p.is_own) {
+    return (
+      <Button asChild variant="outline" className="min-h-11 w-full whitespace-normal">
+        <Link to={FREE_PORTFOLIO_PATH}>{fr ? "Gérer mes réalisations" : "Manage my projects"}</Link>
+      </Button>
+    );
+  }
   return (
     <div className="flex flex-col gap-2">
-      <Button className="min-h-11 w-full whitespace-normal" onClick={() => openClaraWithProject(p, "similar")}>
+      <Button className="min-h-11 w-full whitespace-normal" onClick={() => openClaraWithProject(p, "similar", sortMode)}>
         {fr ? "Je veux un projet semblable" : "I want a similar project"}
       </Button>
-      <Button variant="outline" className="min-h-11 w-full whitespace-normal" onClick={() => openClaraWithProject(p, "contact_author")}>
+      <Button variant="outline" className="min-h-11 w-full whitespace-normal" onClick={() => openClaraWithProject(p, "contact_author", sortMode)}>
         <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
         {fr ? "Demander cette entreprise à Clara" : "Ask Clara about this business"}
       </Button>
@@ -111,7 +126,7 @@ function ProjectPhoto({ p, fr, className }: { p: FeedProject; fr: boolean; class
   );
 }
 
-function ProjectCard({ p, fr }: { p: FeedProject; fr: boolean }) {
+function ProjectCard({ p, fr, sortMode }: { p: FeedProject; fr: boolean; sortMode?: SortMode }) {
   useEffect(() => { logViewed(p); }, [p]);
   return (
     <article className="flex flex-col overflow-hidden rounded-[28px] border border-border bg-card text-card-foreground shadow-sm">
@@ -120,15 +135,15 @@ function ProjectCard({ p, fr }: { p: FeedProject; fr: boolean }) {
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{[p.service_name, p.city].filter(Boolean).join(" · ")}</p>
         <h3 className="text-base font-semibold leading-snug">{p.title}</h3>
         <Attribution p={p} fr={fr} />
-        <div className="mt-auto pt-2"><ClaraActions p={p} fr={fr} /></div>
+        <div className="mt-auto pt-2"><ClaraActions p={p} fr={fr} sortMode={sortMode} /></div>
       </div>
     </article>
   );
 }
 
 /** Une grande carte à la fois; glisser, flèches clavier ou boutons. */
-function SwipeDeck({ pages, hasNext, fetchNext, fr }: {
-  pages: FeedProject[][]; hasNext: boolean; fetchNext: () => Promise<FeedProject[][]>; fr: boolean;
+function SwipeDeck({ pages, hasNext, fetchNext, fr, sortMode }: {
+  pages: FeedProject[][]; hasNext: boolean; fetchNext: () => Promise<FeedProject[][]>; fr: boolean; sortMode: SortMode;
 }) {
   const [batchIdx, setBatchIdx] = useState(0);
   const [idx, setIdx] = useState(0);
@@ -149,12 +164,12 @@ function SwipeDeck({ pages, hasNext, fetchNext, fr }: {
     if (action === "like") setLikes(addLike(p.id));
     void logFunnelEvent({
       event_type: action === "like" ? "swipe_liked" : "swipe_passed", step: "home_inspiration",
-      metadata: { project_id: p.id, service: p.service_name, batch: batchIdx, is_appointment: false, is_sale: false },
+      metadata: { project_id: p.id, service: p.service_name, batch: batchIdx, sort_mode: sortMode, is_appointment: false, is_sale: false },
       dedupe_key: `${action === "like" ? "swipe_liked" : "swipe_passed"}:${p.id}:${inspirationSessionId()}`,
     });
     setDx(0);
     setIdx((i) => i + 1);
-  }, [p, batchIdx]);
+  }, [p, batchIdx, sortMode]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return;
@@ -246,7 +261,7 @@ function SwipeDeck({ pages, hasNext, fetchNext, fr }: {
               <p className="mt-2 whitespace-pre-line text-muted-foreground">{p.description}</p>
             </details>
           )}
-          <div className="mt-3"><ClaraActions p={p} fr={fr} /></div>
+          <div className="mt-3"><ClaraActions p={p} fr={fr} sortMode={sortMode} /></div>
         </>
       ) : (
         <div className="rounded-[28px] border border-border bg-card p-6 text-center">
@@ -296,9 +311,62 @@ export default function SectionProjectInspiration() {
     staleTime: 5 * 60_000,
     retry: 1,
   });
-  const pages = useMemo(() => feed.data?.pages ?? [], [feed.data]);
+  const rawPages = useMemo(() => feed.data?.pages ?? [], [feed.data]);
+  const [sortMode, setSortMode] = useState<SortMode>("for_you");
+  const { session } = useAuthSession();
+  const uid = session?.user?.id ?? null;
+  // Contexte déclaré par le visiteur connecté (ses propres données, RLS) : ville du Passeport et travaux terminés.
+  const passport = useQuery({
+    queryKey: ["inspiration-passport-context", uid],
+    enabled: !!uid,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data: props } = await supabase.from("properties").select("id,city").eq("user_id", uid!).order("created_at", { ascending: true }).limit(5);
+      const ids = (props ?? []).map((x) => x.id);
+      const { data: events } = ids.length
+        ? await supabase.from("property_events").select("event_type,title,description,event_date").in("property_id", ids).limit(200)
+        : { data: [] as PassportEvent[] };
+      return { city: (props ?? []).find((x) => x.city)?.city ?? null, events: (events ?? []) as PassportEvent[] };
+    },
+  });
+  const ctx = useMemo<RankingContext>(() => {
+    const now = new Date();
+    const liked = new Set(readLikes());
+    const likedCategories = [...new Set(rawPages.flat().filter((x) => liked.has(x.id)).map(categoryOf).filter((c): c is string => !!c))];
+    return {
+      now, likedCategories,
+      visitorCity: passport.data?.city ?? null,
+      completedCategories: passport.data ? completedCategoriesFrom(passport.data.events, now) : [],
+    };
+  }, [rawPages, passport.data]);
+  // Entrepreneur connecté : SES réalisations (tous statuts, privé) + ses approuvées épinglées en tête du fil.
+  const mine = useQuery({ queryKey: ["inspiration-my-portfolio", uid], enabled: !!uid, staleTime: 60_000, queryFn: fetchMyPortfolio });
+  const localDraft = useQuery({ queryKey: ["inspiration-local-draft", uid], enabled: !!uid, staleTime: 60_000, queryFn: async () => (await loadDraft())?.photos.length ?? 0 });
+  // Seul l'ordre change, lot par lot : la pagination distincte et l'accès « récents » sont conservés.
+  const pages = useMemo(
+    () => pinOwnFirst(mine.data?.approved ?? [], rawPages.map((b) => rankProjects(b, ctx, sortMode))),
+    [rawPages, ctx, sortMode, mine.data],
+  );
   const first = pages[0] ?? [];
   const mode = deckMode(first.length);
+  const season = SEASON_LABEL[quebecSeason(ctx.now)][fr ? "fr" : "en"];
+  const changeSort = (m: SortMode) => {
+    if (m === sortMode) return;
+    setSortMode(m);
+    void logFunnelEvent({ event_type: "inspiration_sort_changed", step: "home_inspiration", metadata: { sort_mode: m, signed_in: !!uid }, dedupe_key: `inspiration_sort_changed:${m}:${inspirationSessionId()}` });
+  };
+  const ownNote = (mine.data?.approved.length ?? 0) > 0 ? (fr ? "Vos réalisations approuvées d’abord. " : "Your approved projects first. ") : "";
+  const why = ownNote + (sortMode === "recent"
+    ? (fr ? "Ordre : les plus récentes d’abord." : "Order: most recent first.")
+    : sortMode === "other"
+      ? (fr ? "Ordre : d’autres types de projets que ceux de la saison et de vos « J’aime » d’abord." : "Order: project types other than the season’s and your likes first.")
+      : [
+          fr ? `Ordre : saison (${season})` : `Order: season (${season})`,
+          ctx.visitorCity ? (fr ? "votre ville déclarée" : "your declared city") : null,
+          ctx.completedCategories?.length ? (fr ? "vos travaux terminés du Passeport passent après" : "your completed Passport work comes later") : null,
+          ctx.likedCategories?.length ? (fr ? "vos « J’aime » de cette visite" : "your likes this visit") : null,
+          fr ? "fraîcheur et variété. Aucun classement payant." : "freshness and variety. No paid ranking.",
+        ].filter(Boolean).join(", "));
   const cta = (
     <Link to={FREE_PORTFOLIO_PATH} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
       <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -313,8 +381,8 @@ export default function SectionProjectInspiration() {
           <h2 id="inspiration-title" className="text-2xl font-semibold text-foreground">{fr ? "Des projets qui donnent des idées" : "Projects that spark ideas"}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "swipe"
-              ? (fr ? "Glissez à gauche pour passer, à droite si le projet vous inspire. Les plus récents d’abord." : "Swipe left to skip, right if it inspires you. Most recent first.")
-              : (fr ? "Les dernières réalisations approuvées, par date de publication." : "The latest approved projects, by publication date.")}
+              ? (fr ? "Glissez à gauche pour passer, à droite si le projet vous inspire." : "Swipe left to skip, right if it inspires you.")
+              : (fr ? "Les dernières réalisations approuvées." : "The latest approved projects.")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -324,6 +392,52 @@ export default function SectionProjectInspiration() {
           {cta}
         </div>
       </div>
+
+      {uid && ((mine.data?.items.length ?? 0) > 0 || (localDraft.data ?? 0) > 0) && (
+        <div className="mb-6 rounded-[28px] border border-border bg-card p-4" aria-labelledby="my-portfolio-title">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="my-portfolio-title" className="text-base font-semibold text-foreground">{fr ? "Mes réalisations" : "My projects"}</h3>
+            <span className="text-xs text-muted-foreground">{fr ? "Visible par vous seulement" : "Visible to you only"}</span>
+          </div>
+          <ul className="mt-3 flex gap-3 overflow-x-auto pb-1">
+            {(localDraft.data ?? 0) > 0 && (
+              <li className="w-40 shrink-0">
+                <Link to={`${FREE_PORTFOLIO_PATH}?etape=photos`} className="block rounded-2xl border border-dashed border-border p-3 text-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <span className="block font-medium">{fr ? "Brouillon sur cet appareil" : "Draft on this device"}</span>
+                  <span className="text-xs text-muted-foreground">{fr ? `${localDraft.data} photo(s) — non envoyé` : `${localDraft.data} photo(s) — not sent`}</span>
+                </Link>
+              </li>
+            )}
+            {(mine.data?.items ?? []).map((m) => (
+              <li key={m.id} className="w-40 shrink-0">
+                <Link to={FREE_PORTFOLIO_PATH} className="block overflow-hidden rounded-2xl border border-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  {m.thumbUrl ? <img src={m.thumbUrl} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" /> : <div className="flex aspect-[4/3] items-center justify-center bg-muted"><ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" /></div>}
+                  <span className="block truncate px-2 pt-2 text-sm font-medium text-foreground">{m.title}</span>
+                  <span className="block px-2 pb-2 text-xs text-muted-foreground">{PORTFOLIO_STATUS_LABEL[m.status]?.[fr ? "fr" : "en"] ?? m.status}{m.status === "rejected" && m.review_reason ? ` — ${m.review_reason}` : ""}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {feed.isSuccess && mode !== "empty" && (
+        <div className="mb-4">
+          <div role="radiogroup" aria-label={fr ? "Ordre des réalisations" : "Project order"} className="flex flex-wrap gap-2">
+            {([
+              ["for_you", fr ? "Pour vous" : "For you"],
+              ["recent", fr ? "Récents" : "Recent"],
+              ["other", fr ? "Voir d’autres types de projets" : "See other project types"],
+            ] as [SortMode, string][]).map(([m, label]) => (
+              <button key={m} type="button" role="radio" aria-checked={sortMode === m} onClick={() => changeSort(m)}
+                className={`min-h-11 rounded-full border px-4 text-sm font-medium ${sortMode === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">{why}</p>
+        </div>
+      )}
 
       {feed.isLoading && (
         <div className="mx-auto h-[28rem] max-w-md animate-pulse rounded-[28px] bg-muted" aria-busy="true" aria-label={fr ? "Chargement des réalisations" : "Loading projects"} />
@@ -346,12 +460,14 @@ export default function SectionProjectInspiration() {
 
       {feed.isSuccess && mode === "limited" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {first.map((p) => <ProjectCard key={p.id} p={p} fr={fr} />)}
+          {first.map((p) => <ProjectCard key={p.id} p={p} fr={fr} sortMode={sortMode} />)}
         </div>
       )}
 
       {feed.isSuccess && mode === "swipe" && (
         <SwipeDeck
+          key={sortMode}
+          sortMode={sortMode}
           pages={pages}
           hasNext={!!feed.hasNextPage}
           fetchNext={async () => (await feed.fetchNextPage()).data?.pages ?? []}
