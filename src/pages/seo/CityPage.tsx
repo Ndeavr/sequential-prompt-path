@@ -63,7 +63,7 @@ const CityPage = () => {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: `UNPRO — ${city.name}`,
-    description: `Trouvez des professionnels vérifiés à ${city.name}, ${city.province}. Rénovation, entretien et réparation résidentielle.`,
+    description: `Trouvez des professionnels vérifiés à ${city.name}, ${city.province}. Innovation, construction, entretien, services.`,
     areaServed: {
       "@type": "City",
       name: city.name,

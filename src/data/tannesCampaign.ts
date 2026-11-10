@@ -45,7 +45,7 @@ export const TANNES_COPY = {
     },
     change: "Changer de choix",
     switchTo: { homeowner: "Vous êtes plutôt entrepreneur?", contractor: "Vous cherchez plutôt un pro?" },
-    signature: "UNPRO — Rénovation – Construction",
+    signature: "UNPRO — Innovation, construction, entretien, services",
     tagline: "Le bon pro. Le bon projet.",
   },
   en: {
@@ -80,7 +80,7 @@ export const TANNES_COPY = {
     },
     change: "Change my choice",
     switchTo: { homeowner: "Are you a contractor instead?", contractor: "Looking for a pro instead?" },
-    signature: "UNPRO — Renovation – Construction",
+    signature: "UNPRO — Innovation, construction, maintenance, services",
     tagline: "The right pro. The right project.",
   },
 } as const;
