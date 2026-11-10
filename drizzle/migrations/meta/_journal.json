@@ -372,6 +372,13 @@
       "when": 1794319757815,
       "tag": "0052_free_portfolio_projects_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794321642916,
+      "tag": "0053_public_portfolio_feed_pagination",
+      "breakpoints": true
     }
   ]
 }
