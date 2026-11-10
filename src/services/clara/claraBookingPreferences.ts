@@ -16,6 +16,27 @@ export interface ParsedBookingPreferences {
   maxEveningsPerWeek: number | null;
   preferCompactSchedule: boolean;
   representatives: number | null;
+  /** Declared max travel between two visits, minutes; null = not said (never defaulted). */
+  maxTravelMinutes: number | null;
+}
+
+const TRAVEL_CONTEXT = String.raw`(?:d[ée]placements?|trajets?|routes?|entre (?:les |deux |mes )?(?:visites|rendez-vous|rdv))`;
+
+/** Reads an explicit travel limit, e.g. « maximum 30 minutes entre visites ». */
+export function parseMaxTravelMinutes(input: string): number | null {
+  const t = normalize(input);
+  const amount = String.raw`(\d{1,3})\s*(?:min(?:ute)?s?\b|mn\b)|(une|1)\s*heure|(\d)\s*h(?:eures?)?\b`;
+  const patterns = [
+    new RegExp(`(?:max(?:imum|imal|imale)?|au plus|pas plus de|jusqu'à)[^\\d.;]{0,40}?(?:${amount})[^.;]{0,15}${TRAVEL_CONTEXT}`),
+    new RegExp(`${TRAVEL_CONTEXT}[^\\d.;]{0,40}?(?:max(?:imum|imal|imale)?|au plus|pas plus de|de)?[^\\d.;]{0,10}(?:${amount})`),
+  ];
+  for (const re of patterns) {
+    const m = t.match(re);
+    if (!m) continue;
+    const n = m[1] ? Number(m[1]) : m[2] ? 60 : m[3] ? Number(m[3]) * 60 : NaN;
+    if (Number.isFinite(n) && n >= 5 && n <= 240) return n;
+  }
+  return null;
 }
 
 const DAY_WORDS: Array<[RegExp, number[]]> = [
@@ -80,7 +101,12 @@ function hoursIn(clause: string, defaultKind: "end" | "start" | null): DayHoursC
 
 export function parseBookingPreferences(input: string): ParsedBookingPreferences {
   let text = normalize(input);
-  const result: ParsedBookingPreferences = { hours: {}, maxEveningsPerWeek: null, preferCompactSchedule: false, representatives: null };
+  const result: ParsedBookingPreferences = {
+    hours: {}, maxEveningsPerWeek: null, preferCompactSchedule: false, representatives: null,
+    maxTravelMinutes: parseMaxTravelMinutes(input),
+  };
+  // Travel phrases carry minutes that must not be read as opening hours.
+  text = text.replace(new RegExp(`[^.;]*${TRAVEL_CONTEXT}[^.;]*`, "g"), (m) => (/\d/.test(m) && /min|heure|\bh\b/.test(m) ? " " : m));
 
   const evenings = text.match(/(?:max(?:imum)?|au plus|pas plus de|jusqu'à)\s*(\d|un|une|deux|trois|quatre|cinq|six|sept)\s*(?:soirs?|soirées?)(?:\s*par semaine)?/);
   if (evenings) {
@@ -151,6 +177,9 @@ export function summarizeBookingPreferences(p: ParsedBookingPreferences, evening
   }
   if (p.preferCompactSchedule) lines.push("Rendez-vous regroupés pour limiter les temps morts");
   if (p.representatives !== null) lines.push(`${p.representatives} représentant${p.representatives > 1 ? "s" : ""} pour les visites`);
+  if (p.maxTravelMinutes !== null && p.maxTravelMinutes !== undefined) {
+    lines.push(`Déplacement maximal entre deux visites : ${p.maxTravelMinutes} min (comparé seulement aux trajets calculés)`);
+  }
   return lines;
 }
 
