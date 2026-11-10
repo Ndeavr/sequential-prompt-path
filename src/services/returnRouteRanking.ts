@@ -35,6 +35,18 @@ export interface MeasuredInsertion {
   nextIsBase: boolean;
   /** Existing proven free-time gap, if known, used as a soft tie-breaker. */
   emptyTimeBeforeMinutes?: number | null;
+  /**
+   * Verified crossings of MAJOR water barriers (e.g. Montréal/Laval river
+   * crossings) along each road leg. NOT a count of every highway overpass.
+   * Must come from a trusted route geometry/barrier lookup, never municipality
+   * names, air-line distance or assumptions about a bridge.
+   */
+  strategicBridgeCrossings?: {
+    verified: boolean;
+    previousToCandidate: number;
+    candidateToNext: number;
+    previousToNext: number;
+  } | null;
 }
 
 export interface ReturnRouteRules {
@@ -44,6 +56,8 @@ export interface ReturnRouteRules {
   maxLegMinutes?: number;
   /** Small traffic noise allowance before counting a destination as backward. */
   backwardToleranceMinutes?: number;
+  /** Prefer staying on the same side until all nearby visits are done. Default true. */
+  preferBridgeClusters?: boolean;
 }
 
 export interface RankedInsertion {
@@ -55,6 +69,11 @@ export interface RankedInsertion {
   /** Lower means less itinerary cost. NOT a factual route measurement. */
   rankingCost: number;
   requiresExceptionConfirmation: boolean;
+  /**
+   * Additional major water crossings versus A→B without the added stop.
+   * null means the bridge topology could not be independently verified.
+   */
+  additionalBridgeCrossings: number | null;
 }
 
 export type ReturnRoutePlan = {
@@ -63,6 +82,10 @@ export type ReturnRoutePlan = {
   options: RankedInsertion[];
   /** IDs never promoted as an ordinary route-compatible suggestion. */
   withheldBacktracks: string[];
+  /** Extra cross-river backtracking withheld when better choices exist. */
+  withheldBridgeDetours: string[];
+  /** Slots with valid road ETA but unknown bridge topology (not asserted safe). */
+  bridgeUnverified: string[];
   /** Bookable candidates missing a verified ETA. No route claims may be made. */
   etaUnverified: string[];
   /** Candidates already invalid or exceeding the hard inter-visit trip limit. */
@@ -75,6 +98,38 @@ const validTime = (n: number | null | undefined): n is number =>
 const normalizeLimit = (value: number | undefined, fallback: number): number =>
   validTime(value) ? value : fallback;
 
+function additionalCrossings(c: MeasuredInsertion): number | null {
+  const x = c.strategicBridgeCrossings;
+  if (!x?.verified) return null;
+  const counts = [x.previousToCandidate, x.candidateToNext, x.previousToNext];
+  if (!counts.every((n) => Number.isSafeInteger(n) && n >= 0)) return null;
+  return Math.max(0, x.previousToCandidate + x.candidateToNext - x.previousToNext);
+}
+
+/** Prefer zero additional verified bridge crossings. Use alternatives only when
+ * no verified direct cluster remains; always mark extra crossings as exceptions.
+ * Unknown bridge metadata cannot prove a same-side itinerary.
+ */
+function chooseBridgeCluster(
+  items: RankedInsertion[],
+  enabled: boolean,
+): { options: RankedInsertion[]; withheld: string[] } {
+  if (!enabled) return { options: items, withheld: [] };
+  const noExtra = items.filter((x) => x.additionalBridgeCrossings === 0);
+  const unverified = items.filter((x) => x.additionalBridgeCrossings === null);
+  const extra = items.filter((x) =>
+    x.additionalBridgeCrossings !== null && x.additionalBridgeCrossings > 0);
+  if (noExtra.length) return {
+    options: noExtra,
+    withheld: extra.map((x) => x.id),
+  };
+  if (unverified.length) return {
+    options: unverified,
+    withheld: extra.map((x) => x.id),
+  };
+  return { options: extra, withheld: [] };
+}
+
 /**
  * Route-insertion policy:
  * - The existing booking engine MUST screen hard time/availability rules first.
@@ -86,6 +141,12 @@ const normalizeLimit = (value: number | undefined, fallback: number): number =>
  * - If NO progressive option exists, offer the least-disruptive backward route
  *   only with an explicit "exception" flag and an informed decision.
  * - Never treat missing ETAs as evidence that a stop is on the return route.
+ * - After a major river crossing, prefer visits on the SAME SIDE: a
+ *   candidate causing two avoidable cross-river legs is withheld if another
+ *   valid candidate avoids extra crossings. Back-and-forth trips are a last
+ *   resort with explicit explanation.
+ * - Strategic crossing counts must be validated from route geometry/curated
+ *   barriers. City names alone never prove a river crossing.
  */
 export function rankReturnRouteCandidates(
   candidates: readonly MeasuredInsertion[],
@@ -94,11 +155,13 @@ export function rankReturnRouteCandidates(
   const ideal = normalizeLimit(preferences.idealLegMinutes, 20);
   const maximum = normalizeLimit(preferences.maxLegMinutes, 60);
   const tolerance = normalizeLimit(preferences.backwardToleranceMinutes, 0);
+  const clusterBridges = preferences.preferBridgeClusters !== false;
 
   const progressive: RankedInsertion[] = [];
   const backwards: RankedInsertion[] = [];
   const etaUnverified: string[] = [];
   const excluded: string[] = [];
+  const bridgeUnverified: string[] = [];
 
   for (const c of candidates) {
     if (!c.slotVerified) {
@@ -135,6 +198,8 @@ export function rankReturnRouteCandidates(
     const detour = first + second - original;
     const backwardsFromBase = progress < -tolerance;
     const idle = validTime(c.emptyTimeBeforeMinutes) ? c.emptyTimeBeforeMinutes : 0;
+    const bridgeExtras = additionalCrossings(c);
+    if (bridgeExtras === null) bridgeUnverified.push(c.id);
 
     // Soft ordering only, never an eligibility or travel-time guarantee.
     const rankingCost =
@@ -151,7 +216,9 @@ export function rankReturnRouteCandidates(
       minutesFromPrevious: first,
       minutesToNext: second,
       rankingCost,
-      requiresExceptionConfirmation: backwardsFromBase,
+      requiresExceptionConfirmation: backwardsFromBase ||
+        (clusterBridges && bridgeExtras !== null && bridgeExtras > 0),
+      additionalBridgeCrossings: bridgeExtras,
     };
 
     (backwardsFromBase ? backwards : progressive).push(item);
@@ -163,19 +230,28 @@ export function rankReturnRouteCandidates(
   backwards.sort(sortByCost);
 
   if (progressive.length > 0) {
+    const selected = chooseBridgeCluster(progressive, clusterBridges);
+    const onlyRepeatedCrossings = selected.options.length > 0 &&
+      selected.options.every((x) => x.additionalBridgeCrossings !== null &&
+        x.additionalBridgeCrossings > 0);
     return {
-      status: "return_path",
-      options: progressive,
+      status: onlyRepeatedCrossings && clusterBridges ? "exception_only" : "return_path",
+      options: selected.options,
       withheldBacktracks: backwards.map((x) => x.id),
+      withheldBridgeDetours: selected.withheld,
+      bridgeUnverified,
       etaUnverified,
       excluded,
     };
   }
   if (backwards.length > 0) {
+    const selected = chooseBridgeCluster(backwards, clusterBridges);
     return {
       status: "exception_only",
-      options: backwards,
+      options: selected.options,
       withheldBacktracks: [],
+      withheldBridgeDetours: selected.withheld,
+      bridgeUnverified,
       etaUnverified,
       excluded,
     };
@@ -184,6 +260,8 @@ export function rankReturnRouteCandidates(
     status: etaUnverified.length > 0 ? "needs_route_eta" : "no_valid_slot",
     options: [],
     withheldBacktracks: [],
+    withheldBridgeDetours: [],
+    bridgeUnverified,
     etaUnverified,
     excluded,
   };
