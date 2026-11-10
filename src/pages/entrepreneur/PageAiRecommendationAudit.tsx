@@ -482,7 +482,7 @@ export default function PageAiRecommendationAudit() {
   return (
     <div className="audit-gold audit-pro-page min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Helmet>
-        <title>Audit IA — Innovation, construction, entretien, services | UNPRO</title>
+        <title>Audit IA — Rénovation, construction, entretien, service | UNPRO</title>
         <meta
           name="description"
           content="Audit IA gratuit pour les professionnels de l’immobilier, entreprises d’entretien et rénovateurs au Québec. Profil et admissibilité évalués selon les informations disponibles."
@@ -507,7 +507,7 @@ export default function PageAiRecommendationAudit() {
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
               Voyez ce que l'IA comprend de votre entreprise, ce qui manque et les actions prioritaires
-              pour examiner votre admissibilité aux recommandations UNPRO. Innovation, construction, entretien, services : un seul parcours. Les professions réglementées restent sous examen.
+              pour examiner votre admissibilité aux recommandations UNPRO. Rénovation, construction, entretien, service : un seul parcours. Les professions réglementées restent sous examen.
             </p>
 
 

@@ -12,14 +12,14 @@ export default function HeroHomeownerLight() {
   // Hauteur visible publiée globalement par useKeyboardAwareViewport (App).
   const copy = lang === "fr"
     ? {
-        eyebrow: "Innovation, construction, entretien, services",
+        eyebrow: "Rénovation, construction, entretien, service",
         lead: "Le bon professionnel.",
         accent: "Pour le bon besoin.",
         tail: "",
         title: "Le bon professionnel. Pour le bon besoin.",
       }
     : {
-        eyebrow: "Innovation, construction, maintenance, services",
+        eyebrow: "Renovation, construction, maintenance, service",
         lead: "The right professional.",
         accent: "For the right need.",
         tail: "",

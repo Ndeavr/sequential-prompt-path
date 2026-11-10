@@ -18,8 +18,8 @@ export default function PageHomeLight() {
   const { lang } = useLanguage();
   const title = lang === "fr" ? "UNPRO | De la soumission à la réalisation" : "UNPRO | The right professional. For the right need.";
   const description = lang === "fr"
-    ? "Le lien le plus court entre une soumission et la réalisation. Innovation, construction, entretien, services. Clara vous aide à trouver le bon professionnel."
-    : "UNPRO helps you find a professional based on your situation, criteria and region in Quebec. Innovation, construction, maintenance, services.";
+    ? "Le lien le plus court entre une soumission et la réalisation. Rénovation, construction, entretien, service. Clara vous aide à trouver le bon professionnel."
+    : "UNPRO helps you find a professional based on your situation, criteria and region in Quebec. Renovation, construction, maintenance, service.";
   const ogImage = lang === "fr" ? "https://unpro.ca/og/link/unpro-v1.jpg" : DEFAULT_OG_IMAGE;
   useEffect(() => {
     trackCopilotEvent("homepage_loaded");
@@ -34,7 +34,7 @@ export default function PageHomeLight() {
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: lang === "fr" ? ["Innovation", "Construction", "Entretien", "Services"] : ["Innovation", "Construction", "Maintenance", "Services"],
+    serviceType: lang === "fr" ? ["Rénovation", "Construction", "Entretien", "Service"] : ["Renovation", "Construction", "Maintenance", "Service"],
   };
 
   return (
