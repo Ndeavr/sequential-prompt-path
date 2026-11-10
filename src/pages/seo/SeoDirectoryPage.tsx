@@ -98,6 +98,18 @@ const SeoDirectoryPage = () => {
             Guides pratiques
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link to="/insonorisation">
+              <Card className="hover:shadow-md transition-shadow h-full">
+                <CardHeader>
+                  <CardTitle className="text-base">Insonorisation entre appartements et condos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    Bruits de voix, de pas ou de télé entre deux logements : murs, planchers, plafonds et règles en copropriété.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             {SEO_GUIDES.map((guide) => (
               <Link key={guide.slug} to={`/guides/${guide.slug}`}>
                 <Card className="hover:shadow-md transition-shadow">

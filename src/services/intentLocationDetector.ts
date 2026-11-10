@@ -22,6 +22,10 @@ const QUEBEC_CITIES = [
 ];
 
 const INTENT_KEYWORDS: Record<string, { key: string; labelFr: string; openingFr: string }> = {
+  // Isolation SONORE avant « isolation » (thermique) : l'ordre compte.
+  "insonorisation": { key: "soundproofing", labelFr: "Insonorisation", openingFr: "un problème de bruit entre logements" },
+  "isolation sonore": { key: "soundproofing", labelFr: "Insonorisation", openingFr: "un problème de bruit entre logements" },
+  "isolation acoustique": { key: "soundproofing", labelFr: "Insonorisation", openingFr: "un problème de bruit entre logements" },
   "plomberie": { key: "plumbing", labelFr: "Plomberie", openingFr: "un besoin en plomberie" },
   "plombier": { key: "plumbing", labelFr: "Plomberie", openingFr: "un besoin en plomberie" },
   "électricien": { key: "electrical", labelFr: "Électricité", openingFr: "un besoin en électricité" },

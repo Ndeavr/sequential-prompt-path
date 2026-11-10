@@ -48,6 +48,8 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/diagnostic-ia", changefreq: "weekly", priority: "0.7" },
   { path: "/calculateur-taxes-quebec", changefreq: "monthly", priority: "0.7" },
   { path: "/services", changefreq: "weekly", priority: "0.8" },
+  { path: "/insonorisation", changefreq: "monthly", priority: "0.7" },
+  { path: "/en/soundproofing", changefreq: "monthly", priority: "0.6" },
   { path: "/problemes", changefreq: "weekly", priority: "0.8" },
   { path: "/tarifs", changefreq: "weekly", priority: "0.7" },
   { path: "/communaute", changefreq: "monthly", priority: "0.7" },
