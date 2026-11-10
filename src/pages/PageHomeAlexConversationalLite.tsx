@@ -205,7 +205,7 @@ export default function PageHomeAlexConversationalLite() {
   const alexMessageCount = allMessages.filter(m => m.role === "alex").length;
   const shouldShowAccountPrompt = !isAuthenticated
     && !accountPromptDismissed
-    && userMessageCount >= 1
+    && userMessageCount >= (detectedContext?.intentKey === "selected_home_service" ? 3 : 1)
     && alexMessageCount >= 1
     && detectedContext?.intentKey;
 
