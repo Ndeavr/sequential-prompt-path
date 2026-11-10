@@ -340,7 +340,6 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
         last_question_asked: "city",
         questions_asked_count: 1,
       });
-      emitSafe("user", `Je cherche : ${selected.serviceLabel}`);
       emitSafe("alex", selected.openingFr);
       return;
     }
