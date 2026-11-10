@@ -152,6 +152,15 @@ describe("UNPRO — group appointments on the same side of major bridges", () =>
     expect(result.options.map((x) => x.id)).toEqual(["valid"]);
   });
 
+  it("does not misapply the inter-visit cap to the first commute from base", () => {
+    const firstCommute = candidate("from-base", {
+      previousIsBase: true,
+      previousToCandidateMinutes: 82,
+    });
+    const result = rankReturnRouteCandidates([firstCommute]);
+    expect(result.options.map((x) => x.id)).toEqual(["from-base"]);
+  });
+
   it("does not misapply the inter-visit cap to the return home", () => {
     const home = candidate("home", {
       nextIsBase: true,
