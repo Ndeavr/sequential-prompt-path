@@ -21,6 +21,7 @@
  */
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSelectedServiceIntent } from "@/services/clara/selectedServiceIntent";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
@@ -43,13 +44,6 @@ import { AlexMemoryStore, createEmptyMemory } from "@/services/alexMemoryEngine"
 import { resolveRoute, type AlexRoute } from "@/services/alexRouteEngine";
 import { computeNextBestAction, inferServiceFromProblem } from "@/services/alexNeedResolver";
 import { enforcePolicy } from "@/services/alexResponsePolicyEngine";
-import {
-  advanceSoundproofingIntake,
-  isSoundproofingTopic,
-  NO_VERIFIED_SOUNDPROOFING_PRO,
-  startSoundproofingIntake,
-  type SoundproofingIntakeState,
-} from "@/lib/clara/soundproofingIntake";
 import { diagnoseSession, applyRepairs } from "@/services/alexSessionRepairEngine";
 // V6: Intelligence Core imports
 import { resolveContext, type ResolvedContext } from "@/services/alexContextResolver";
@@ -237,14 +231,6 @@ const CITIES = [
   "repentigny", "brossard", "saint-jérôme", "granby",
 ];
 
-const SOUNDPROOF_BLOCKED_CARDS = new Set<string>([
-  "entrepreneur",
-  "availability",
-  "booking_scheduler",
-  "booking_confirmed",
-  "contractor_picker",
-]);
-
 function detectCity(text: string): string | null {
   const lower = text.toLowerCase();
   return CITIES.find(c => lower.includes(c)) || null;
@@ -289,9 +275,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   const [lastPhotoPrompt, setLastPhotoPrompt] = useState<PhotoPromptDecision | null>(null);
   const idRef = useRef(0);
   const welcomeSentRef = useRef(false);
-  // Parcours isolation SONORE : tant qu'il est actif, aucune carte
-  // d'entrepreneur, de créneaux ou de confirmation n'est affichée.
-  const soundproofRef = useRef<SoundproofingIntakeState | null>(null);
+  const pendingSelectedServiceRef = useRef<string | null>(null);
   const sessionIdRef = useRef(`session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const memoryRef = useRef(new AlexMemoryStore({
     resolved_role: isAuthenticated ? "homeowner" : "unknown",
@@ -308,11 +292,6 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     cardData?: any,
   ) => {
     if (role === "alex" && isInternalContent(content)) return null;
-    if (role === "alex" && soundproofRef.current && cardType && SOUNDPROOF_BLOCKED_CARDS.has(cardType)) {
-      content = NO_VERIFIED_SOUNDPROOFING_PRO;
-      cardType = undefined;
-      cardData = undefined;
-    }
     if (role === "alex" && !content.trim() && !cardType) return null;
 
     // Apply response policy
@@ -341,9 +320,30 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   }, []);
 
   // ─── INITIALIZE ───
-  const initialize = useCallback(() => {
+  const initialize = useCallback((initialQuery?: string) => {
     if (welcomeSentRef.current) return;
     welcomeSentRef.current = true;
+
+    const selected = parseSelectedServiceIntent(initialQuery);
+    if (selected && initialQuery) {
+      // The menu selection is already the user's first turn. Ask for the
+      // next missing datum immediately; do not greet and ask for the need again.
+      pendingSelectedServiceRef.current = initialQuery;
+      memoryRef.current.update({
+        resolved_role: "homeowner",
+        role_confidence: 0.95,
+        role_source: "cta_origin",
+        current_intent: "homeowner_contractor_search",
+        need_summary: initialQuery,
+        service_category: selected.serviceLabel,
+        need_qualified: false,
+        last_question_asked: "city",
+        questions_asked_count: 1,
+      });
+      emitSafe("alex", selected.openingFr);
+      return;
+    }
+
     const greeting = userName
       ? `Bonjour ${userName}. Comment puis-je vous aider ?`
       : "Bonjour! Comment puis-je vous aider aujourd'hui?";
@@ -353,6 +353,17 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
   // ─── SEND MESSAGE ───
   const sendMessage = useCallback(async (text: string) => {
     emitSafe("user", text);
+    // Include the initial menu request in the FIRST server turn, so a reply
+    // such as "Laval" retains the actual service selected on the prior screen.
+    const selectedNeed = pendingSelectedServiceRef.current;
+    pendingSelectedServiceRef.current = null;
+    const isCorrection = /^(non\b|pas du tout\b|je veux plut[oô]t\b|autre service\b)/i.test(text.trim());
+    if (selectedNeed && isCorrection) {
+      memoryRef.current.update({ need_summary: null, service_category: null, need_qualified: false });
+    }
+    const serverMessage = selectedNeed && !isCorrection
+      ? `${selectedNeed}\nPrécision du client : ${text}`
+      : text;
     setIsThinking(true);
     audioEngine.play("thinking");
 
@@ -450,46 +461,12 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       }
     }
 
-    // ─── ISOLATION SONORE (bruit entre logements) ───
-    // Une question à la fois; distingue thermique vs sonore; aucun pro fictif.
-    {
-      const other = detectProblem(text);
-      if (soundproofRef.current && other && other.type !== "isolation" && !isSoundproofingTopic(text)) {
-        soundproofRef.current = null; // nouveau sujet : le fil habituel reprend
-      }
-      const active = soundproofRef.current;
-      if (!active && isSoundproofingTopic(text)) {
-        const turn = startSoundproofingIntake(text, mem.get().city);
-        soundproofRef.current = turn.state;
-        emitSafe("alex", turn.reply);
-        setIsThinking(false);
-        return;
-      }
-      if (active && active.step !== "done") {
-        const turn = advanceSoundproofingIntake(active, text, city);
-        soundproofRef.current = turn.state;
-        emitSafe("alex", turn.reply);
-        setIsThinking(false);
-        return;
-      }
-      if (active && active.step === "done") {
-        const turn = advanceSoundproofingIntake(active, text, city);
-        if (turn.exited) {
-          soundproofRef.current = null;
-          emitSafe("alex", turn.reply);
-          setIsThinking(false);
-          return;
-        }
-        // Sinon : le fil habituel répond, mais les cartes de pro restent bloquées.
-      }
-    }
-
     // ─── TRY REAL AI FIRST ───
     try {
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke("alex-process-turn", {
         body: {
           session_token: sessionIdRef.current,
-          user_message: text,
+          user_message: serverMessage,
           message_mode: "text",
           ui_context: {
             current_route: mem.get().current_route,
