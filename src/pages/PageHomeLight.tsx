@@ -9,6 +9,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
 import { SectionMatchingPaths } from "@/components/home-light/HomeLightSections";
+import SectionProjectInspiration from "@/components/home-light/SectionProjectInspiration";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorResume";
@@ -66,6 +67,7 @@ export default function PageHomeLight() {
 
         <div className="home-light">
           <div id="clara-home"><HeroHomeownerLight /></div>
+          <SectionProjectInspiration />
           <SectionMatchingPaths onStartHomeowner={() => {
             window.dispatchEvent(new Event(CLARA_HOMEOWNER_REQUEST_EVENT));
             const field = document.querySelector<HTMLTextAreaElement>("#clara-home textarea");

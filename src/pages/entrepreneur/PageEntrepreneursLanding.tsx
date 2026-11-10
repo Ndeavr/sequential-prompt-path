@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { contractorProfileEntryPath } from "@/lib/contractorProfileEntry";
 import { campaignLink } from "@/lib/contractorCampaignLinks";
+import { FREE_PORTFOLIO_PATH } from "@/lib/portfolio/freePortfolio";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useCallback } from "react";
@@ -51,7 +52,8 @@ const PageEntrepreneursLanding = () => {
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild className="h-auto min-h-12 whitespace-normal"><Link to={contractorProfileEntryPath(search, lang)}>{fr ? "Préparer mon profil UNPRO" : "Prepare my UNPRO profile"}</Link></Button>
-            
+            <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={FREE_PORTFOLIO_PATH} onClick={() => trackCta("free_portfolio", "registration")}>{fr ? "Publiez vos réalisations gratuitement" : "Publish your projects for free"}</Link></Button>
+
           </div>
         </section>
         <section className="mx-auto max-w-4xl px-5 pb-10">

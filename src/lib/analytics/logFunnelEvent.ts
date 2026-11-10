@@ -119,6 +119,16 @@ export type FunnelEventType =
   | "sales_team_step"
   | "sales_team_submitted"
   | "sales_team_shared"
+  // « Montrez vos réalisations » (palier gratuit) — jamais compté comme vente.
+  // project_submitted / project_approved sont écrits côté serveur (RPC).
+  | "project_form_started"
+  | "minimal_account_created"
+  | "project_submitted"
+  | "project_approved"
+  | "project_viewed"
+  | "owner_interest"
+  | "activation_checkout_started"
+  | "appointment_plan_interest"
   | "paid";
 
 export type FunnelEventSource =

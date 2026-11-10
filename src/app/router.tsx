@@ -42,6 +42,8 @@ const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
 const PageAdminKddV1 = lazyWithRetry(() => import("@/pages/admin/PageAdminKddV1"));
+const PageAdminPortfolioModeration = lazyWithRetry(() => import("@/pages/admin/PageAdminPortfolioModeration"));
+const PageFreePortfolio = lazyWithRetry(() => import("@/pages/entrepreneur/PageFreePortfolio"));
 const PageAdminHistoricalPresenceReview = lazyWithRetry(() => import("@/pages/admin/PageAdminHistoricalPresenceReview"));
 const PageAdminContractGuarantees = lazyWithRetry(() => import("@/pages/admin/PageAdminContractGuarantees"));
 const PageContractGuarantee = lazyWithRetry(() => import("@/pages/pro/PageContractGuarantee"));
@@ -1151,6 +1153,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs/thermopompes" element={<Suspense fallback={<LazyFallback />}><PageThermopompes /></Suspense>} />
         <Route path="/calendrier-intelligent" element={<Suspense fallback={<LazyFallback />}><PageCalendrierIntelligent /></Suspense>} />
         <Route path="/entrepreneurs/activation-350" element={<Suspense fallback={<LazyFallback />}><PageActivation350 /></Suspense>} />
+        <Route path="/entrepreneurs/realisations" element={<Suspense fallback={<LazyFallback />}><PageFreePortfolio /></Suspense>} />
         {/* Profil de matching — complétion progressive avant les forfaits */}
         <Route path="/entrepreneurs/profil" element={<Suspense fallback={<LazyFallback />}><PageMatchingProfileWizard /></Suspense>} />
         {/* Founder offer — local services & professionals (12 mois gratuits, puis 350 $/an) */}
@@ -1766,6 +1769,7 @@ export const AppRouter = () => (
         <Route path="/admin/content-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/kdd" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminKddV1 /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/realisations" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPortfolioModeration /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/presence-historique" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminHistoricalPresenceReview /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/garanties-contrats" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContractGuarantees /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />
