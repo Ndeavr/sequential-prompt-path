@@ -344,6 +344,27 @@
       "when": 1794249038932,
       "tag": "0048_lock_unused_open_rls_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1794262462589,
+      "tag": "0049_contractor_calendar_delegations",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1794267774997,
+      "tag": "0050_contractor_booking_rules_evening_cap",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1794270218495,
+      "tag": "0051_booking_travel_pref_and_calendar_integration_requests",
+      "breakpoints": true
     }
   ]
 }

@@ -1600,6 +1600,10 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition/stripe" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionStripe /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition/activation" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionActivation /></Suspense></AdminProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
+        {/* Pages ISR en double retirées : renvoi vers la fiche canonique. */}
+        <Route path="/aipp/isolation-solution-royal" element={<Navigate to="/entrepreneur/isolation-solution-royal" replace />} />
+        <Route path="/ai-indexed-profiles/isolation-solution-royal" element={<Navigate to="/entrepreneur/isolation-solution-royal" replace />} />
+        <Route path="/ai/isolation-solution-royal" element={<Navigate to="/entrepreneur/isolation-solution-royal" replace />} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
         <Route path="/ai/:slug" element={<Suspense fallback={<LazyFallback />}><PageAiEntity /></Suspense>} />

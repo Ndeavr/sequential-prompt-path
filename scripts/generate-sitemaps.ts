@@ -61,6 +61,8 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/articles/moins-de-soumissions-plus-de-factures", changefreq: "monthly", priority: "0.8" },
   { path: "/articles/badges-choix-consommateur-2026", changefreq: "monthly", priority: "0.7" },
   { path: "/articles/verifier-grenier-avant-fenetres-thermopompe", changefreq: "monthly", priority: "0.7" },
+  // Fiche canonique ISR (les pages /ai, /aipp, /ai-indexed-profiles en double sont retirées).
+  { path: "/entrepreneur/isolation-solution-royal", changefreq: "weekly", priority: "0.7" },
 ];
 
 // --------------------------------------------------------------------------

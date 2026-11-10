@@ -22800,6 +22800,121 @@ export type Database = {
           },
         ]
       }
+      calendar_integration_requests: {
+        Row: {
+          account_holder_name: string
+          admin_note: string | null
+          contact_consent: boolean
+          contractor_id: string | null
+          created_at: string
+          documentation_url: string | null
+          id: string
+          integration_scopes: string[]
+          requester_user_id: string
+          software_key: string
+          software_name: string
+          source_surface: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder_name: string
+          admin_note?: string | null
+          contact_consent?: boolean
+          contractor_id?: string | null
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          integration_scopes: string[]
+          requester_user_id: string
+          software_key: string
+          software_name: string
+          source_surface?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder_name?: string
+          admin_note?: string | null
+          contact_consent?: boolean
+          contractor_id?: string | null
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          integration_scopes?: string[]
+          requester_user_id?: string
+          software_key?: string
+          software_name?: string
+          source_surface?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "calendar_integration_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       calendar_sync_logs: {
         Row: {
           calendar_connection_id: string
@@ -29283,6 +29398,124 @@ export type Database = {
           },
         ]
       }
+      contractor_booking_rules: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          declared_at: string | null
+          declared_by: string | null
+          declared_representatives: number | null
+          evening_after: string
+          max_evenings_per_week: number | null
+          max_travel_minutes: number | null
+          prefer_compact_schedule: boolean
+          preference_status: string
+          preference_summary: string | null
+          preference_text: string | null
+          representatives_note: string | null
+          updated_at: string
+          visit_capacity: number
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          declared_at?: string | null
+          declared_by?: string | null
+          declared_representatives?: number | null
+          evening_after?: string
+          max_evenings_per_week?: number | null
+          max_travel_minutes?: number | null
+          prefer_compact_schedule?: boolean
+          preference_status?: string
+          preference_summary?: string | null
+          preference_text?: string | null
+          representatives_note?: string | null
+          updated_at?: string
+          visit_capacity?: number
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          declared_at?: string | null
+          declared_by?: string | null
+          declared_representatives?: number | null
+          evening_after?: string
+          max_evenings_per_week?: number | null
+          max_travel_minutes?: number | null
+          prefer_compact_schedule?: boolean
+          preference_status?: string
+          preference_summary?: string | null
+          preference_text?: string | null
+          representatives_note?: string | null
+          updated_at?: string
+          visit_capacity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_booking_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_brand_profiles: {
         Row: {
           brand_id: string
@@ -29634,6 +29867,116 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contractor_calendar_delegations: {
+        Row: {
+          calendar_connection_id: string
+          contractor_id: string
+          created_at: string
+          delegated_by: string
+          id: string
+          reason: string
+          revoked_at: string | null
+          revoked_by: string | null
+          selected_calendar_id: string
+          status: string
+        }
+        Insert: {
+          calendar_connection_id: string
+          contractor_id: string
+          created_at?: string
+          delegated_by: string
+          id?: string
+          reason: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          selected_calendar_id: string
+          status?: string
+        }
+        Update: {
+          calendar_connection_id?: string
+          contractor_id?: string
+          created_at?: string
+          delegated_by?: string
+          id?: string
+          reason?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          selected_calendar_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_calendar_delegations_calendar_connection_id_fkey"
+            columns: ["calendar_connection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_calendar_delegations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_free_service_registrations_canonical"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
       }
       contractor_campaigns: {
         Row: {
@@ -101863,6 +102206,10 @@ export type Database = {
         }
         Returns: number
       }
+      contractor_booking_constraints: {
+        Args: { p_contractor_id: string; p_from: string; p_to: string }
+        Returns: Json
+      }
       contractor_busy_windows: {
         Args: { p_contractor_id: string; p_from: string; p_to: string }
         Returns: {
@@ -101873,6 +102220,10 @@ export type Database = {
       contractor_calendar_connected: {
         Args: { _contractor_id: string }
         Returns: boolean
+      }
+      contractor_delegated_calendar_connection: {
+        Args: { p_contractor_id: string }
+        Returns: string
       }
       contractor_feature_access: {
         Args: { _feature_key: string; _user_id: string }
@@ -102774,6 +103125,17 @@ export type Database = {
         Returns: boolean
       }
       repair_mojibake_text: { Args: { input: string }; Returns: string }
+      request_calendar_integration: {
+        Args: {
+          p_account_holder_name: string
+          p_contact_consent: boolean
+          p_documentation_url?: string
+          p_integration_scopes: string[]
+          p_software_name: string
+          p_source_surface?: string
+        }
+        Returns: Json
+      }
       reserve_address_lookup: {
         Args: {
           p_keys: string[]

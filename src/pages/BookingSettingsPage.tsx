@@ -17,6 +17,7 @@ import { SignatureDowngradeBanner } from "@/components/booking/SignatureDowngrad
 import { RevenueAnalyticsDashboard } from "@/components/booking/RevenueAnalyticsDashboard";
 import { PricingRulesManager } from "@/components/booking/PricingRulesManager";
 import { RevenueSplitPreview } from "@/components/booking/RevenueSplitPreview";
+import ClaraBookingPreferences from "@/components/booking/ClaraBookingPreferences";
 
 const LOCATION_MODES = [
   { value: "client_address", label: "Sur place (chez le client)" },
@@ -382,6 +383,14 @@ export default function BookingSettingsPage() {
               </div>
             </div>
           </section>
+
+          {contractorId && (
+            <ClaraBookingPreferences
+              contractorId={contractorId}
+              availability={availability}
+              onApplyHours={setAvailability}
+            />
+          )}
 
           {/* Availability */}
           <section className="space-y-4">
