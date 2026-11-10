@@ -154,6 +154,7 @@ export default function PageHomeAlexConversationalLite() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
   const intentInjectedRef = useRef(false);
+  const intentTimerRef = useRef<number | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
   const prevAuthRef = useRef(isAuthenticated);
   const [accountPromptDismissed, setAccountPromptDismissed] = useState(false);
@@ -216,15 +217,26 @@ export default function PageHomeAlexConversationalLite() {
     if (!initRef.current) return;
 
     intentInjectedRef.current = true;
-    const timer = setTimeout(() => {
+    // Le message d'accueil fait changer messages.length juste après : le
+    // minuteur ne doit pas être annulé par ce re-rendu (sinon ?q= est perdu).
+    intentTimerRef.current = window.setTimeout(() => {
+      intentTimerRef.current = null;
       if (urlQuery) {
         sendMessage(urlQuery);
       } else if (detectedContext.intentLabel) {
         sendMessage(detectedContext.intentLabel);
       }
     }, 300);
-    return () => clearTimeout(timer);
   }, [detectedContext, messages.length, sendMessage, urlQuery]);
+  useEffect(() => () => {
+    // Démontage (ou double montage en développement) avant l'envoi :
+    // on annule et on permet une nouvelle planification au remontage.
+    if (intentTimerRef.current) {
+      window.clearTimeout(intentTimerRef.current);
+      intentTimerRef.current = null;
+      intentInjectedRef.current = false;
+    }
+  }, []);
 
   // GUARD: detect auth change
   useEffect(() => {
