@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRight, BookOpen, Calculator, CheckCircle2, Info, ShieldCheck } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
@@ -49,7 +49,7 @@ function NumericField({ id, label, value, onChange, hint, max = 50000 }: {
 
 export default function PageSubventionCalculator() {
   const { slug } = useParams<{ slug?: string }>();
-  const pageKey = slug && Object.hasOwn(GRANT_SEO_PAGES, slug) ? slug : "calculateur-subventions";
+  const pageKey = slug && Object.prototype.hasOwnProperty.call(GRANT_SEO_PAGES, slug) ? slug : "calculateur-subventions";
   const page = GRANT_SEO_PAGES[pageKey];
   const canonical = pageKey === "calculateur-subventions"
     ? "https://unpro.ca/calculateur-subventions"
@@ -107,6 +107,10 @@ export default function PageSubventionCalculator() {
   const toggleWork = (id: GrantWork) => {
     setSelected((previous) => previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id]);
   };
+
+  if (slug && !Object.prototype.hasOwnProperty.call(GRANT_SEO_PAGES, slug)) {
+    return <Navigate to="/calculateur-subventions" replace />;
+  }
 
   return (
     <MainLayout hideMemorySection>
