@@ -29,7 +29,7 @@ describe("transfert calculateur UNPRO → Clara", () => {
     const text = buildGrantClaraHandoff(example, "cost");
     expect(text).toContain("COÛT probable");
     expect(text).toContain("avant les aides");
-    expect(text).toContain("3 000");
+    expect(text.replace(/[\u00a0\u202f]/g, " ")).toContain("3 000");
   });
 
   it("ne transmet pas les renseignements d'une mesure non sélectionnée", () => {
