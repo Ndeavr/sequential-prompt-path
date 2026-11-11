@@ -43,7 +43,7 @@ describe("calculateur public — boutons Clara", () => {
   });
 
   it("le bouton coût ouvre Clara avec les mêmes entrées et une demande distincte", () => {
-    render(<MemoryRouter initialEntries={["/calculateur-subventions"]}>
+    render(<HelmetProvider><MemoryRouter initialEntries={["/calculateur-subventions"]}>
       <PageSubventionCalculator />
     </MemoryRouter></HelmetProvider>);
     fireEvent.click(screen.getByRole("checkbox", { name: /Murs extérieurs/i }));
