@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import type { ReactNode } from "react";
 
 vi.mock("@/layouts/MainLayout", () => ({
@@ -20,9 +21,9 @@ afterEach(cleanup);
 
 describe("calculateur public — boutons Clara", () => {
   it("lance Clara depuis les valeurs choisies, dans une vraie fenêtre dialog", () => {
-    render(<MemoryRouter initialEntries={["/calculateur-subventions"]}>
+    render(<HelmetProvider><MemoryRouter initialEntries={["/calculateur-subventions"]}>
       <PageSubventionCalculator />
-    </MemoryRouter>);
+    </MemoryRouter></HelmetProvider>);
     // Aucune catégorie n'est implicitement déclarée sur la page générale.
     const toiture = screen.getByRole("checkbox", { name: /Entretoit \/ grenier/i }) as HTMLInputElement;
     expect(toiture.checked).toBe(false);
@@ -44,7 +45,7 @@ describe("calculateur public — boutons Clara", () => {
   it("le bouton coût ouvre Clara avec les mêmes entrées et une demande distincte", () => {
     render(<MemoryRouter initialEntries={["/calculateur-subventions"]}>
       <PageSubventionCalculator />
-    </MemoryRouter>);
+    </MemoryRouter></HelmetProvider>);
     fireEvent.click(screen.getByRole("checkbox", { name: /Murs extérieurs/i }));
     fireEvent.change(screen.getByLabelText(/Surface nette à isoler \(pi²\)/i), { target: { value: "500" } });
     fireEvent.change(screen.getByLabelText(/Valeur R ajoutée/i), { target: { value: "9" } });
