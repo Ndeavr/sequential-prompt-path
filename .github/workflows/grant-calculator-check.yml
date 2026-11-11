@@ -1,0 +1,52 @@
+name: Calculateur subventions SEO — vérifications ciblées
+
+on:
+  push:
+    branches: [feat/calculateur-subventions-seo-active-2026]
+  pull_request:
+    branches: [lovable-sync]
+    paths:
+      - "src/lib/grantCalculator2026.ts"
+      - "src/pages/calculators/PageSubventionCalculator.tsx"
+      - "src/__tests__/grantCalculator2026.test.ts"
+      - "src/app/router.tsx"
+      - "scripts/prerender-grant-pages.ts"
+      - "scripts/generate-sitemaps.ts"
+      - "package.json"
+      - ".github/workflows/grant-calculator-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  grants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Validate grant formula and exclusions
+        run: npx vitest run src/__tests__/grantCalculator2026.test.ts
+      - name: Typecheck entire application
+        run: npm run typecheck
+      - name: Build and generate crawlable snapshots
+        run: npm run build
+      - name: Confirm page and metadata outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in calculateur-subventions subventions/isolation-entretoit subventions/fenetres-portes-patio subventions/murs-exterieurs subventions/isolation-fondations subventions/thermopompes-logisvert subventions/calfeutrage-logisvert; do
+            file="dist/$path/index.html"
+            test -s "$file"
+            grep -q '<h1>' "$file"
+            grep -q "https://unpro.ca/$path" "$file"
+            grep -q 'application/ld+json' "$file"
+            grep -q 'rel="canonical"' "$file"
+          done
+          grep -q "https://unpro.ca/subventions/fenetres-portes-patio" public/sitemap-pages.xml
+          grep -q "https://unpro.ca/calculateur-subventions" public/sitemap-pages.xml
