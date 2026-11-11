@@ -723,9 +723,15 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         const resumedContractor = !forcedHomeowner && !hasExplicitHomeownerFlow() && isContractorContext(state.context);
         // Lien entrepreneur : un fil propriétaire existant reste sur le serveur
         // (historique), mais n'est jamais affiché ni hérité dans ce parcours.
-        const restored = forcedContractor && !resumedContractor
-          ? []
-          : state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
+        const homeownerTexts = forcedHomeowner
+          ? new Set(buildClaraHistory(state.messages, "homeowner").messages.map(message => message.content))
+          : null;
+        const restored = forcedHomeowner
+          ? state.messages.filter(m => homeownerTexts?.has(m.text.slice(0, 2000)))
+              .map(m => ({ id: m.id, role: m.role, text: m.text, type: m.type, audience: "homeowner" as const }))
+          : forcedContractor && !resumedContractor
+            ? []
+            : state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
         setMessages((current) => reconcileMessages(current, restored));
         workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
