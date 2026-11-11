@@ -5,9 +5,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowRight, BookOpen, Calculator, CheckCircle2, Info, ShieldCheck } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { ArrowRight, BookOpen, Calculator, CheckCircle2, Info, MessageCircle, ShieldCheck, X } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
-import ClaraFormAssistant from "@/components/clara/ClaraFormAssistant";
+import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
+import { buildGrantClaraHandoff, type GrantHandoffPurpose } from "@/lib/grantClaraHandoff";
+import "./grantClaraDialog.css";
 import {
   GRANT_SEO_PAGES, GRANT_SOURCES, GRANT_WORKS, calculateGrants,
   type BuildingType, type FoundationType, type GrantRegime, type GrantWork, type RoofType,
@@ -56,7 +59,7 @@ export default function PageSubventionCalculator() {
     : `https://unpro.ca/subventions/${pageKey}`;
   const pageWork = GRANT_WORKS.find((entry) => entry.page.endsWith(`/${pageKey}`))?.id;
 
-  const [selected, setSelected] = useState<GrantWork[]>(pageWork ? [pageWork] : ["toit"]);
+  const [selected, setSelected] = useState<GrantWork[]>(pageWork ? [pageWork] : []);
   const [building, setBuilding] = useState<BuildingType>("maison");
   const [regime, setRegime] = useState<GrantRegime>("nouveau");
   const [roofType, setRoofType] = useState<RoofType>("grenier");
@@ -70,7 +73,9 @@ export default function PageSubventionCalculator() {
   const [foundationRAdded, setFoundationRAdded] = useState(0);
   const [windowCount, setWindowCount] = useState(0);
   const [windowsMostEfficient, setWindowsMostEfficient] = useState(false);
-  useEffect(() => { if (pageWork) setSelected([pageWork]); }, [pageWork]);
+  const [claraOpen, setClaraOpen] = useState(false);
+  const [claraHandoff, setClaraHandoff] = useState<{ id: string; text: string } | null>(null);
+  useEffect(() => { setSelected(pageWork ? [pageWork] : []); }, [pageWork]);
 
   const grants = useMemo(() => calculateGrants({
     selected, building, regime, roofType, roofArea, roofRAdded, roofRFinal,
@@ -106,6 +111,22 @@ export default function PageSubventionCalculator() {
 
   const toggleWork = (id: GrantWork) => {
     setSelected((previous) => previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id]);
+  };
+
+  const openClaraFromCalculator = (purpose: GrantHandoffPurpose) => {
+    const text = buildGrantClaraHandoff({
+      selected, building, regime, roofType, roofArea, roofRAdded, roofRFinal,
+      wallsArea, wallsRAdded, foundationType, foundationArea, foundationRAdded,
+      windowCount, windowsMostEfficient,
+    }, purpose);
+    // Un résumé distinct n'est créé que si la sélection ou l'intention change.
+    // Réouvrir la même conversation n'envoie jamais une copie du même contexte.
+    setClaraHandoff(previous => previous?.text === text ? previous : ({
+      id: typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID() : `grant-${Date.now().toString(36)}`,
+      text,
+    }));
+    setClaraOpen(true);
   };
 
   if (slug && !Object.prototype.hasOwnProperty.call(GRANT_SEO_PAGES, slug)) {
@@ -262,10 +283,16 @@ export default function PageSubventionCalculator() {
               <p className="text-xs leading-relaxed text-muted-foreground">
                 Estimation non contractuelle. Dépenses, preuves, licences RBQ, dates, modalités et fonds disponibles : validation requise avant tout engagement.
               </p>
-              <ClaraFormAssistant form="page_assistance" step="subventions" inlineLabel="Discuter de mon projet avec Clara"/>
-              <Link to="/calculateur-renovation" className="flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary underline underline-offset-4">
-                Estimer aussi le coût de mes travaux <ArrowRight size={16}/>
-              </Link>
+              <button type="button" onClick={() => openClaraFromCalculator("project")}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                data-testid="grant-clara-start">
+                <MessageCircle size={18} aria-hidden="true" /> Discuter de mon projet avec Clara
+              </button>
+              <button type="button" onClick={() => openClaraFromCalculator("cost")}
+                className="flex min-h-11 w-full items-center justify-center gap-2 text-sm font-semibold text-primary underline underline-offset-4"
+                data-testid="grant-clara-cost">
+                Estimer aussi le coût de mes travaux avec Clara <ArrowRight size={16} aria-hidden="true"/>
+              </button>
             </section>
             <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
               <h3 className="flex gap-2 items-center font-semibold"><ShieldCheck size={18}/> Sources gouvernementales</h3>
@@ -276,6 +303,33 @@ export default function PageSubventionCalculator() {
             </section>
           </aside>
         </div>
+
+        <DialogPrimitive.Root open={claraOpen} onOpenChange={setClaraOpen}>
+          <DialogPrimitive.Portal>
+            <DialogPrimitive.Overlay className="fixed inset-0 z-[190] bg-black/70" />
+            <DialogPrimitive.Content
+              className="grant-clara-dialog home-light fixed inset-0 z-[200] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background text-foreground shadow-2xl md:left-1/2 md:top-1/2 md:h-[min(85dvh,720px)] md:w-[min(94vw,650px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:border md:border-border"
+              aria-describedby="grant-clara-description"
+              data-testid="grant-clara-dialog">
+              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-3">
+                <div>
+                  <DialogPrimitive.Title className="font-semibold">Clara · Votre projet de rénovation</DialogPrimitive.Title>
+                  <DialogPrimitive.Description id="grant-clara-description" className="text-xs text-muted-foreground">
+                    Vos réponses au calculateur accompagnent la conversation.
+                  </DialogPrimitive.Description>
+                </div>
+                <DialogPrimitive.Close type="button"
+                  aria-label="Fermer la conversation"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <X size={22} aria-hidden="true" />
+                </DialogPrimitive.Close>
+              </header>
+              <div className="grant-clara-chat min-h-0 flex-1">
+                {claraHandoff && <ClaraConversationBox key="grant-clara-canonical" surface="embedded" grantHandoff={claraHandoff}/>}
+              </div>
+            </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
 
         <article className="mt-14 space-y-8 border-t border-border pt-10">
           <h2 className="text-2xl font-bold">Comprendre les aides avant de faire les travaux</h2>
