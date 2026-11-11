@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "ci:critical": "npm test && npm run typecheck && npm run lint:critical && vite build",
     "content-audit": "tsx scripts/content-audit.ts",
-    "verify:source": "node scripts/verify-source-branch.mjs"
+    "verify:source": "node scripts/verify-source-branch.mjs",
+    "postbuild": "bunx tsx scripts/prerender-grant-pages.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
