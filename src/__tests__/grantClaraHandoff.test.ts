@@ -18,9 +18,9 @@ describe("transfert calculateur UNPRO → Clara", () => {
     expect(text).toContain("1200 pi²");
     expect(text).toContain("R ajouté : 20");
     expect(text).toContain("10 ouvertures");
-    expect(text).toContain("3 000");
+    expect(text.replace(/[\u00a0\u202f]/g, " ")).toContain("3 000");
     expect(text).toContain("déclarées, non vérifiées");
-    expect(text).toContain("ne les redemander");
+    expect(text).toContain("sans les redemander");
     expect(text).toContain("une à la fois");
     expect(text).not.toContain("confirmé par le gouvernement");
   });
