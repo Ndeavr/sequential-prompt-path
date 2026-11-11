@@ -1,0 +1,36 @@
+name: Grant calculator Clara handoff — focused QA
+
+on:
+  push:
+    branches: [fix/grants-clara-handoff-mobile-2026-11-11]
+  pull_request:
+    branches: [lovable-sync]
+    paths:
+      - "src/pages/calculators/PageSubventionCalculator.tsx"
+      - "src/pages/calculators/grantClaraDialog.css"
+      - "src/components/home-light/ClaraConversationBox.tsx"
+      - "src/lib/grantClaraHandoff.ts"
+      - "src/__tests__/grantClara*.test.*"
+      - ".github/workflows/grant-clara-handoff.yml"
+
+permissions:
+  contents: read
+jobs:
+  grant-clara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Focused handoff / button tests
+        run: npx vitest run src/__tests__/grantCalculator2026.test.ts src/__tests__/grantClaraHandoff.test.ts src/__tests__/grantClaraButtons.test.tsx
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Production build and SEO HTML
+        run: npm run build

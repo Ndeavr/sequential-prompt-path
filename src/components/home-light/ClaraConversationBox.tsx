@@ -292,10 +292,13 @@ interface ClaraConversationBoxProps {
   heading?: string;
   /** Clara remplit le formulaire visible de la page (même session entrepreneur). */
   formIntake?: boolean;
+  /** Résumé explicitement transmis par le propriétaire après son clic sur le calculateur. */
+  grantHandoff?: { id: string; text: string } | null;
 }
 
-export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "", formIntake = false }: ClaraConversationBoxProps) {
+export default function ClaraConversationBox({ onConversationActiveChange, surface = "embedded", onDestinationOpened, forcedAudience, contractorOpening, heading, initialComposerText = "", formIntake = false, grantHandoff = null }: ClaraConversationBoxProps) {
   const forcedContractor = forcedAudience === "contractor";
+  const forcedHomeowner = Boolean(grantHandoff);
   const location = useLocation();
   const campaignEntry = !forcedContractor && surface === "home" ? readHomeCampaign(location.search, location.pathname) : null;
   const [activeCampaign, setActiveCampaign] = useState<HomeCampaign | null>(() => campaignEntry ?? (!forcedContractor && hasExplicitHomeownerFlow() ? homeCampaignByIntent(readHomeCursor()?.campaign) : null));
@@ -344,12 +347,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       };
 
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [hydrationComplete, setHydrationComplete] = useState(false);
+  const lastGrantHandoffRef = useRef<string | null>(null);
   /** Fil courant lisible sans fermeture périmée (anti-doublon des tours de Clara). */
   const messagesRef = useRef<Msg[]>([]);
   messagesRef.current = messages;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ClaraSurfaceMode>(() => activeCampaign ? "PROJECT" : forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
+  const [mode, setMode] = useState<ClaraSurfaceMode>(() => activeCampaign || forcedHomeowner ? "PROJECT" : forcedContractor || hasActiveContractorFlow() ? "CONTRACTOR" : "IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
@@ -359,7 +364,7 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
   /** Courte respiration avant la réponse : « Clara écrit… » dans le fil. */
   const [claraBreathing, setClaraBreathing] = useState(false);
 
-  const [audience, setAudienceState] = useState<ClaraAudience>(() => activeCampaign ? "homeowner" : forcedContractor || hasActiveContractorFlow() ? "contractor" : "homeowner");
+  const [audience, setAudienceState] = useState<ClaraAudience>(() => activeCampaign || forcedHomeowner ? "homeowner" : forcedContractor || hasActiveContractorFlow() ? "contractor" : "homeowner");
   /** Rôle courant lisible immédiatement (les rappels asynchrones ne doivent jamais se tromper de parcours). */
   const audienceRef = useRef<ClaraAudience>(audience);
   const audienceEpochRef = useRef(0);
@@ -715,12 +720,18 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
           return;
         }
 
-        const resumedContractor = !hasExplicitHomeownerFlow() && isContractorContext(state.context);
+        const resumedContractor = !forcedHomeowner && !hasExplicitHomeownerFlow() && isContractorContext(state.context);
         // Lien entrepreneur : un fil propriétaire existant reste sur le serveur
         // (historique), mais n'est jamais affiché ni hérité dans ce parcours.
-        const restored = forcedContractor && !resumedContractor
-          ? []
-          : state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
+        const homeownerTexts = forcedHomeowner
+          ? new Set(buildClaraHistory(state.messages, "homeowner").messages.map(message => message.content))
+          : null;
+        const restored = forcedHomeowner
+          ? state.messages.filter(m => homeownerTexts?.has(m.text.slice(0, 2000)))
+              .map(m => ({ id: m.id, role: m.role, text: m.text, type: m.type, audience: "homeowner" as const }))
+          : forcedContractor && !resumedContractor
+            ? []
+            : state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, type: m.type }));
         setMessages((current) => reconcileMessages(current, restored));
         workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
@@ -730,10 +741,14 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
         // Context and qualification must be restored with the messages.
         // A local marker only applies to this exact canonical conversation.
         hydrateClaraQualification(state.context.workflow as Record<string, unknown> | undefined);
-        const contractor = resolveClaraContractorEntry(state.context, forcedAudience);
+        const contractor = !forcedHomeowner && resolveClaraContractorEntry(state.context, forcedAudience);
         if (audienceEpochRef.current !== 0) return;
         if (forcedContractor && !resumedContractor) {
           rememberClaraReferences({ current_intent: "contractor_onboarding", detected_role: "CONTRACTOR" });
+        }
+        if (forcedHomeowner) {
+          pauseActiveContractorFlow();
+          rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" });
         }
         setAudience(contractor ? "contractor" : "homeowner");
         setContractorFlow(contractor);
@@ -748,13 +763,18 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
       } catch {
         // Preserve this session’s in-chat progress when the server is unavailable.
         // An explicit role change made while hydration was pending always wins.
-        if (!campaignEntry && audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())) {
+        if (!forcedHomeowner && !campaignEntry && audienceEpochRef.current === 0 && (forcedContractor || hasActiveContractorFlow())) {
           rememberActiveContractorFlow(true);
           setContractorFlow(true);
         }
+      } finally {
+        // A contextual message must never race the async restore of history.
+        if (mountedRef.current && hydrationRequest === campaignHydrationRequestRef.current) {
+          setHydrationComplete(true);
+        }
       }
     })();
-  }, [campaignEntry, forcedAudience, forcedContractor, lang, location.search, setAudience]);
+  }, [campaignEntry, forcedAudience, forcedContractor, forcedHomeowner, lang, location.search, setAudience]);
 
   const switchToHomeowner = useCallback(() => {
     // Persist first so a remount/hydration cannot restore the contractor view.
@@ -1582,6 +1602,33 @@ export default function ClaraConversationBox({ onConversationActiveChange, surfa
     },
     [askNextQualification, contractorFlow, formIntake, beginTextContractorTransition, busy, copy.fallback, focusComposer, activeCampaign, lang, messages, runOpen, sayClara, scrollToLatest, setAudience],
   );
+
+  // Handoff depuis un calculateur : le clic de l'utilisateur autorise un envoi
+  // dans le fil CANONIQUE, et non un brouillon silencieux. Un identifiant unique
+  // évite les répétitions au remount React / réouverture du panneau.
+  useEffect(() => {
+    if (!grantHandoff || !hydrationComplete || busy ||
+        lastGrantHandoffRef.current === grantHandoff.id ||
+        (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    const dedupeKey = `unpro:clara:grant-handoff:${grantHandoff.id}`;
+    try {
+      if (sessionStorage.getItem(dedupeKey)) {
+        lastGrantHandoffRef.current = grantHandoff.id;
+        return;
+      }
+      sessionStorage.setItem(dedupeKey, "1");
+    } catch {
+      // Navigateur privé : ref React évite tout de même les doublons par montage.
+    }
+    lastGrantHandoffRef.current = grantHandoff.id;
+    // Les mesures du calculateur représentent un projet de propriétaire,
+    // jamais un profil d'entrepreneur ou un dossier déjà vérifié.
+    pauseActiveContractorFlow();
+    setAudience("homeowner");
+    setContractorFlow(false);
+    setMode("PROJECT");
+    void send(grantHandoff.text);
+  }, [grantHandoff, hydrationComplete, busy, send, setAudience]);
 
   const chooseQuickReply = useCallback(
     (option: string) => {
