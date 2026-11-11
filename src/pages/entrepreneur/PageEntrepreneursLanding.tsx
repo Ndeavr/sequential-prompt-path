@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { buildCommissionClaraLink } from "@/lib/commissionPartnershipIntake";
 import HeroV2 from "@/components/entrepreneur-landing/v2/HeroV2";
 import SectionPainV2 from "@/components/entrepreneur-landing/v2/SectionPainV2";
 import SectionSolutionV2 from "@/components/entrepreneur-landing/v2/SectionSolutionV2";
@@ -48,6 +49,7 @@ const PageEntrepreneursLanding = () => {
           <h2 className="text-2xl font-semibold">{fr ? "Ce que votre inscription vous apporte" : "What your registration provides"}</h2>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Votre profil entreprise UNPRO et 12 mois de Présence IA sur UNPRO. Vos services, spécialités et territoire sont présentés aux propriétaires dont le projet correspond, licence vérifiée lorsque requise." : "Your UNPRO business profile and 12 months of AI presence on UNPRO. Your services, specialties and service area are presented to homeowners whose project fits, with licences verified where required."}</p>
           <p className="mt-3 text-base font-semibold">{fr ? "350 $ + taxes par année." : "$350 + taxes per year."}</p>
+          <p className="mt-3 text-base text-muted-foreground">{fr ? "Autre possibilité : partenariat à commission — sur entente personnalisée, convenue par écrit. Rien n’est payé en ligne pour cette formule." : "Another option: commission partnership — under a custom agreement, set in writing. Nothing is paid online for this option."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous voulez des rendez-vous? Ils s’ajoutent selon un devis distinct, avec prix et volume affichés avant le paiement." : "Want appointments? They are added through a separate quote, with price and volume shown before payment."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -55,6 +57,14 @@ const PageEntrepreneursLanding = () => {
             <Button asChild variant="outline" className="h-auto min-h-12 whitespace-normal"><Link to={FREE_PORTFOLIO_PATH} onClick={() => trackCta("free_portfolio", "registration")}>{fr ? "Publiez vos réalisations gratuitement" : "Publish your projects for free"}</Link></Button>
 
           </div>
+        </section>
+        <section className="mx-auto max-w-4xl px-5 pb-10" aria-labelledby="commission-faq">
+          <h2 id="commission-faq" className="text-2xl font-semibold">{fr ? "Questions fréquentes" : "Frequently asked questions"}</h2>
+          <details className="mt-4 rounded-2xl border border-border bg-card px-5 py-4">
+            <summary className="cursor-pointer text-base font-semibold">{fr ? "Est-ce qu’UNPRO fonctionne aussi à commission?" : "Does UNPRO also work on commission?"}</summary>
+            <p className="mt-3 text-base text-muted-foreground">{fr ? "Oui. UNPRO peut fonctionner à 100 % à commission selon une entente personnalisée. Le taux fixe ou variable, le territoire, l’exclusivité éventuelle et les modalités sont convenus par écrit avant tout engagement. Prenez rendez-vous pour discuter de la formule adaptée à votre entreprise." : "Yes. UNPRO can work on a 100% commission basis under a custom agreement. The fixed or variable rate, the territory, any exclusivity and the terms are agreed in writing before any commitment. Book an appointment to discuss the right formula for your business."}</p>
+            <Button asChild variant="outline" className="mt-4 h-auto min-h-12 whitespace-normal"><Link to={buildCommissionClaraLink(fr)} onClick={() => trackCta("commission_partnership", "faq")}>{fr ? "Prendre rendez-vous pour en discuter" : "Book an appointment to discuss it"}</Link></Button>
+          </details>
         </section>
         <section className="mx-auto max-w-4xl px-5 pb-10">
           <h2 className="text-2xl font-semibold">{fr ? "100 millions $ : notre objectif d’économies partagées" : "$100 million: our shared savings objective"}</h2>
