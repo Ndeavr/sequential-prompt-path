@@ -168,6 +168,16 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://unpro.ca/partenariat-performance</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://unpro.ca/en/performance-partnership</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://unpro.ca/problemes</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

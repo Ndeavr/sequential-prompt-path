@@ -133,8 +133,22 @@ const toSlots = (list?: { start: string; end: string }[]) =>
 
 const newKey = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`);
 
-export default function FounderMeetingRequest({ lang, topic, onTopicChange, now }: {
+/** Ajoute une ligne « Source » (page/campagne) au message, dans la limite serveur de 1200 caractères. */
+export function withSourceLine(message: string, source?: string): string {
+  const m = message.trim();
+  if (!source) return m;
+  const line = `Source : ${source.replace(/[\r\n]+/g, " ").slice(0, 200)}`;
+  return [m.slice(0, 1200 - line.length - 1), line].filter(Boolean).join("\n");
+}
+
+export default function FounderMeetingRequest({ lang, topic, onTopicChange, now, source, note, hideTopic = false }: {
   lang: Lang; topic: MeetingTopic; onTopicChange: (t: MeetingTopic) => void; now?: () => Date;
+  /** Page/campagne d'origine (ex. UTM), ajoutée au message enregistré. */
+  source?: string;
+  /** Précision affichée au-dessus des horaires (ex. durée de discussion prévue). */
+  note?: string;
+  /** Masque le choix du sujet quand la page l'impose (ex. partenariat performance). */
+  hideTopic?: boolean;
 }) {
   const c = T[lang];
   const clock = now ?? (() => new Date());
@@ -175,7 +189,7 @@ export default function FounderMeetingRequest({ lang, topic, onTopicChange, now 
       body: {
         company: form.company.trim(), first_name: form.first_name.trim(), last_name: form.last_name.trim(), email: form.email.trim(),
         org_type: "other", network_size: null,
-        message: buildMeetingRequestMessage(topic, chosen, [form.domain.trim() && `Domaine / territoire : ${form.domain.trim()}`, form.message.trim()].filter(Boolean).join(" — "), autoFailed),
+        message: buildMeetingRequestMessage(topic, chosen, withSourceLine([form.domain.trim() && `Domaine / territoire : ${form.domain.trim()}`, form.message.trim()].filter(Boolean).join(" — "), source), autoFailed),
         privacy_consent: true, consent_text: c.consent, locale: lang,
         website: honey.current?.value ?? "", started_at: startedAt.current,
       },
@@ -214,7 +228,7 @@ export default function FounderMeetingRequest({ lang, topic, onTopicChange, now 
       body: {
         action: "book", slot_start: chosen.startIso, topic,
         first_name: form.first_name.trim(), last_name: form.last_name.trim(), company: form.company.trim(), email: form.email.trim(),
-        domain_territory: form.domain.trim() || null, message: form.message.trim() || null,
+        domain_territory: form.domain.trim() || null, message: withSourceLine(form.message, source) || null,
         privacy_consent: true, consent_text: c.consent, locale: lang, idempotency_key: idemKey.current,
         website: honey.current?.value ?? "", started_at: startedAt.current,
       },
@@ -278,20 +292,21 @@ export default function FounderMeetingRequest({ lang, topic, onTopicChange, now 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
       <p className="text-base text-muted-foreground">{mode === "live" ? c.liveIntro : c.intro}</p>
+      {note && <p className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-foreground">{note}</p>}
       {mode === "proposed" && (
         <p className="flex gap-2 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-foreground/90">
           <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />{c.caveat}
         </p>
       )}
 
-      <fieldset className="space-y-2">
+      {!hideTopic && <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-foreground">{c.topicLegend}</legend>
         <div className="flex flex-col gap-2 sm:flex-row">
           {(["commission", "partnership"] as const).map((t) => (
             <button key={t} type="button" aria-pressed={topic === t} onClick={() => onTopicChange(t)} className={chip(topic === t)}>{c.topics[t]}</button>
           ))}
         </div>
-      </fieldset>
+      </fieldset>}
 
       {mode === "live" ? (
         <fieldset className="space-y-2" aria-describedby={errors.slot ? "fm-slot-err" : undefined}>

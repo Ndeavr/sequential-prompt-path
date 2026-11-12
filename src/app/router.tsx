@@ -367,6 +367,7 @@ const AdminSeoArticles = lazyWithRetry(() => import("@/pages/admin/AdminSeoArtic
 const SeoDirectoryPage = lazyWithRetry(() => import("@/pages/seo/SeoDirectoryPage"));
 const PageSoundproofingPillar = lazyWithRetry(() => import("@/pages/seo/PageSoundproofingPillar"));
 const PageCommissionPartnership = lazyWithRetry(() => import("@/pages/entrepreneur/PageCommissionPartnership"));
+const PagePerformancePartnership = lazyWithRetry(() => import("@/pages/entrepreneur/PagePerformancePartnership"));
 const SeoArticlePage = lazyWithRetry(() => import("@/pages/seo/SeoArticlePage"));
 const PageArticlesRecentCompressedFeed = lazyWithRetry(() => import("@/pages/articles/PageArticlesRecentCompressedFeed"));
 const ProblemPage = lazyWithRetry(() => import("@/pages/seo/ProblemPage"));
@@ -1313,6 +1314,8 @@ export const AppRouter = () => (
         <Route path="/en/soundproofing" element={<Suspense fallback={<LazyFallback />}><PageSoundproofingPillar lang="en" /></Suspense>} />
         <Route path="/commission" element={<Suspense fallback={<LazyFallback />}><PageCommissionPartnership /></Suspense>} />
         <Route path="/en/commission" element={<Suspense fallback={<LazyFallback />}><PageCommissionPartnership lang="en" /></Suspense>} />
+        <Route path="/partenariat-performance" element={<Suspense fallback={<LazyFallback />}><PagePerformancePartnership /></Suspense>} />
+        <Route path="/en/performance-partnership" element={<Suspense fallback={<LazyFallback />}><PagePerformancePartnership lang="en" /></Suspense>} />
         <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
         <Route path="/problemes" element={<ProblemGraphPage />} />
         <Route path="/probleme/:slug" element={<ProblemPage />} />
