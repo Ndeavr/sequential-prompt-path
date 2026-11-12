@@ -1,13 +1,13 @@
 /**
  * UNPRO — Landing « Partenariat performance » (/partenariat-performance, /en/performance-partnership).
  * Destination publicitaire : formules de partage négociables (profits globaux, profits de certains contrats,
- * revenus supplémentaires), toujours sur entente écrite.
+ * revenus supplémentaires, bonus sur objectifs), seules ou combinées, toujours sur entente écrite.
  * Aucun taux, garantie, exclusivité ni montant affiché. Le rendez-vous réutilise FounderMeetingRequest
  * (agenda réel du fondateur si disponible, sinon demande en attente) avec le sujet « partenariat ».
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowRight, CalendarDays, FileCheck2, FileSignature, Handshake, Megaphone, MessageSquare, PieChart, SearchCheck, Scale, Target, TrendingUp } from "lucide-react";
+import { ArrowDown, ArrowRight, CalendarDays, FileCheck2, FileSignature, Handshake, Megaphone, MessageSquare, PieChart, SearchCheck, Scale, Target, TrendingUp, Trophy } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SchemaStack from "@/seo/components/SchemaStack";
@@ -29,13 +29,14 @@ const C = {
     eyebrow: "Partenariats sur invitation, selon admissibilité",
     h1: "Votre entreprise a du potentiel. Et si on partageait les profits de sa croissance ?",
     lead: "Vous gérez vos campagnes publicitaires vous-même ou avec une agence ? Prenons une heure pour évaluer vos objectifs, vos besoins et vos possibilités de croissance.",
-    lead2: "Si nous sommes compatibles, trouvons ensemble une formule qui aligne nos intérêts : partage des profits globaux, des profits sur certains contrats ou des revenus supplémentaires — selon une entente personnalisée.",
+    lead2: "Si nous sommes compatibles, trouvons ensemble une formule qui aligne nos intérêts : partage des profits globaux, des profits sur certains contrats ou des revenus supplémentaires, ou bonus à l'atteinte d'objectifs — selon une entente personnalisée.",
     modelsTitle: "Plusieurs façons de partager la croissance",
-    modelsIntro: "Voici des exemples de formules envisageables. Ce ne sont ni des offres automatiques ni des conditions fixes : la formule est choisie ensemble, selon votre situation.",
+    modelsIntro: "Voici des exemples de formules envisageables. Ce ne sont ni des offres automatiques ni des conditions fixes : aucun modèle n'est imposé, et ils peuvent être retenus seuls ou combinés, selon votre situation.",
     models: [
       { t: "Profits globaux", d: "Un partage des profits de l'entreprise ou d'un périmètre convenu (par exemple une division, un service ou un territoire)." },
       { t: "Profits sur certains contrats", d: "Un partage des profits des contrats obtenus ou attribués à la collaboration, selon une méthode d'attribution convenue." },
       { t: "Revenus supplémentaires", d: "Un partage de la croissance incrémentale attribuable au partenariat, mesurée par rapport à une période de référence." },
+      { t: "Bonus à l'atteinte d'objectifs", d: "Une prime versée seulement si des objectifs convenus d'avance et mesurables sont atteints : par exemple ventes incrémentales, contrats conclus ou croissance." },
     ],
     modelsNote: "Exemples seulement : rien n'est garanti et aucun taux n'est fixé d'avance.",
     cta: "Évaluer mon potentiel — prendre rendez-vous",
@@ -52,6 +53,7 @@ const C = {
     alignList: [
       "la base de calcul : profits nets ou bruts, revenus additionnels, périmètre et période de référence;",
       "les coûts imputables et, si la formule en dépend, la méthode d'attribution;",
+      "pour un bonus : les objectifs, leur mesure, la période et le contrôle des résultats;",
       "les seuils, la durée et les obligations de chacun;",
       "les preuves requises, l'événement qui déclenche le paiement, les annulations et les remboursements;",
       "le taux et les autres modalités, convenus avec vous.",
@@ -69,7 +71,7 @@ const C = {
     faqTitle: "Questions fréquentes",
     faqs: [
       { q: "Dois-je arrêter mon agence ou mes publicités ?", a: "Non, pas automatiquement. Nous regardons ensemble ce que vous faites déjà; la place de chaque outil est discutée au cas par cas." },
-      { q: "Est-ce un pourcentage de tout mon chiffre d'affaires ?", a: "Pas nécessairement. Selon la formule retenue, le partage peut porter sur les profits globaux d'un périmètre convenu, sur les profits de certains contrats ou sur les revenus supplémentaires. La base de calcul est définie par écrit." },
+      { q: "Est-ce un pourcentage de tout mon chiffre d'affaires ?", a: "Pas nécessairement. Selon la formule retenue, la rémunération peut porter sur les profits globaux d'un périmètre convenu, sur les profits de certains contrats, sur les revenus supplémentaires ou prendre la forme d'un bonus sur objectifs mesurables. La base de calcul est définie par écrit." },
       { q: "Quelle formule me convient ?", a: "Nous en discutons lors de la rencontre. La formule dépend de vos objectifs, de vos données disponibles et de ce qui peut être mesuré de façon fiable." },
       { q: "Est-ce disponible pour toutes les entreprises ?", a: "Non. Le partenariat est offert à certaines entreprises, après évaluation et acceptation écrite." },
       { q: "Quel est le taux ?", a: "Il est convenu avec vous dans l'entente. Aucun taux n'est fixé d'avance sur cette page." },
@@ -88,13 +90,14 @@ const C = {
     eyebrow: "Partnerships by invitation, subject to eligibility",
     h1: "Your business has potential. What if we shared the profits of its growth?",
     lead: "Do you run your ad campaigns yourself or with an agency? Let's take one hour to assess your goals, your needs and your growth opportunities.",
-    lead2: "If we are a fit, let's find a formula together that aligns our interests: sharing overall profits, profits on certain contracts or additional revenue — under a tailored agreement.",
+    lead2: "If we are a fit, let's find a formula together that aligns our interests: sharing overall profits, profits on certain contracts or additional revenue, or a bonus for reaching goals — under a tailored agreement.",
     modelsTitle: "Several ways to share growth",
-    modelsIntro: "Here are examples of possible formulas. They are neither automatic offers nor fixed conditions: the formula is chosen together, based on your situation.",
+    modelsIntro: "Here are examples of possible formulas. They are neither automatic offers nor fixed conditions: no model is imposed, and they can be used alone or combined, based on your situation.",
     models: [
       { t: "Overall profits", d: "Sharing the profits of the business or of an agreed scope (for example a division, a service or a service area)." },
       { t: "Profits on certain contracts", d: "Sharing the profits of contracts obtained through or attributed to the collaboration, using an agreed attribution method." },
       { t: "Additional revenue", d: "Sharing the incremental growth attributable to the partnership, measured against a reference period." },
+      { t: "Goal-based bonus", d: "A bonus paid only if measurable goals agreed in advance are reached: for example incremental sales, contracts signed or growth." },
     ],
     modelsNote: "Examples only: nothing is guaranteed and no rate is set in advance.",
     cta: "Assess my potential — book a meeting",
@@ -111,6 +114,7 @@ const C = {
     alignList: [
       "the calculation base: net or gross profits, additional revenue, scope and reference period;",
       "deductible costs and, when the formula depends on it, the attribution method;",
+      "for a bonus: the goals, how they are measured, the period and how results are verified;",
       "thresholds, duration and each party's obligations;",
       "required proof, the event that triggers payment, cancellations and refunds;",
       "the rate and other terms, agreed with you.",
@@ -128,7 +132,7 @@ const C = {
     faqTitle: "Frequently asked questions",
     faqs: [
       { q: "Do I have to stop my agency or my ads?", a: "No, not automatically. We look at what you already do together; the role of each tool is discussed case by case." },
-      { q: "Is it a percentage of all my revenue?", a: "Not necessarily. Depending on the formula chosen, sharing may apply to overall profits of an agreed scope, to profits on certain contracts or to additional revenue. The calculation base is defined in writing." },
+      { q: "Is it a percentage of all my revenue?", a: "Not necessarily. Depending on the formula chosen, pay may be based on overall profits of an agreed scope, profits on certain contracts, additional revenue, or take the form of a bonus on measurable goals. The calculation base is defined in writing." },
       { q: "Which formula suits me?", a: "We discuss it during the meeting. It depends on your goals, your available data and what can be measured reliably." },
       { q: "Is it available to every business?", a: "No. The partnership is offered to certain businesses, after review and written acceptance." },
       { q: "What is the rate?", a: "It is agreed with you in the agreement. No rate is set in advance on this page." },
@@ -162,7 +166,7 @@ export default function PagePerformancePartnership({ lang = "fr" }: { lang?: Lan
   const isFr = lang === "fr";
   const source = useMemo(() => performanceSource(lang), [lang]);
   const investIcons = [Megaphone, MessageSquare, Target];
-  const modelIcons = [PieChart, FileCheck2, TrendingUp];
+  const modelIcons = [PieChart, FileCheck2, TrendingUp, Trophy];
   const stepIcons = [MessageSquare, SearchCheck, FileSignature];
   const btn = "h-auto min-h-12 whitespace-normal rounded-button px-6 text-base";
 
@@ -231,7 +235,7 @@ export default function PagePerformancePartnership({ lang = "fr" }: { lang?: Lan
         <section id={HOW_ID} aria-labelledby="perf-models" className="scroll-mt-24 space-y-4">
           <h2 id="perf-models" className="text-2xl font-semibold text-foreground md:text-3xl">{c.modelsTitle}</h2>
           <p className="text-base text-muted-foreground">{c.modelsIntro}</p>
-          <ul className="grid gap-4 md:grid-cols-3">
+          <ul className="grid gap-4 md:grid-cols-2">
             {c.models.map((m, i) => {
               const Icon = modelIcons[i];
               return (

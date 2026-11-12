@@ -38,12 +38,14 @@ describe("Landing partenariat performance", () => {
     expect(screen.getByRole("link", { name: /conditions détaillées/ }).getAttribute("href")).toBe("/commission");
   });
 
-  it("3 formules négociables affichées; plus de formule unique ni « pas sur l'ensemble de vos revenus »", () => {
+  it("4 formules négociables affichées; plus de formule unique ni « pas sur l'ensemble de vos revenus »", () => {
     mount();
     expect(screen.getByRole("heading", { name: "Plusieurs façons de partager la croissance" })).toBeInTheDocument();
-    for (const h of ["Profits globaux", "Profits sur certains contrats", "Revenus supplémentaires"]) expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
+    for (const h of ["Profits globaux", "Profits sur certains contrats", "Revenus supplémentaires", "Bonus à l'atteinte d'objectifs"]) expect(screen.getByRole("heading", { name: h })).toBeInTheDocument();
     const t = document.body.textContent || "";
-    expect(t).toContain("partage des profits globaux, des profits sur certains contrats ou des revenus supplémentaires");
+    expect(t).toContain("partage des profits globaux, des profits sur certains contrats ou des revenus supplémentaires, ou bonus à l'atteinte d'objectifs");
+    expect(t).toMatch(/seuls ou combinés/);
+    expect(t).toMatch(/les objectifs, leur mesure, la période et le contrôle des résultats/);
     expect(t).not.toMatch(/uniquement sur les profits des contrats|l'ensemble de vos revenus/);
     expect(t).toMatch(/profits nets ou bruts, revenus additionnels, périmètre et période de référence/);
     expect(t).toMatch(/Ce ne sont ni des offres automatiques ni des conditions fixes/);
