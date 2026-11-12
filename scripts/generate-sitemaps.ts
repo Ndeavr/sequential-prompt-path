@@ -59,6 +59,8 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/en/soundproofing", changefreq: "monthly", priority: "0.6" },
   { path: "/commission", changefreq: "monthly", priority: "0.6" },
   { path: "/en/commission", changefreq: "monthly", priority: "0.5" },
+  { path: "/partenariat-performance", changefreq: "monthly", priority: "0.6" },
+  { path: "/en/performance-partnership", changefreq: "monthly", priority: "0.5" },
   { path: "/problemes", changefreq: "weekly", priority: "0.8" },
   { path: "/tarifs", changefreq: "weekly", priority: "0.7" },
   { path: "/communaute", changefreq: "monthly", priority: "0.7" },

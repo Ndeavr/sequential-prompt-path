@@ -1,8 +1,10 @@
 /**
  * UNPRO — Page « 100 % à la commission » (/commission, /en/commission).
  * Formule négociée au cas par cas : aucun prix, taux, garantie ou droit automatique affiché.
- * CTA vers l'agenda du fondateur seulement si FOUNDER_BOOKING_URL est validée; sinon /contact.
+ * CTA vers l'agenda du fondateur seulement si FOUNDER_BOOKING_URL est validée; sinon défilement vers
+ * la section « Choisir un moment pour discuter » (horaires proposés, demande enregistrée, confirmation ensuite).
  */
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, FileSignature, Handshake, MessageSquare, SearchCheck, ShieldCheck } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
@@ -10,6 +12,7 @@ import SeoHead from "@/seo/components/SeoHead";
 import SchemaStack from "@/seo/components/SchemaStack";
 import { Button } from "@/components/ui/button";
 import { resolveFounderBookingUrl } from "@/config/founderBooking";
+import FounderMeetingRequest, { type MeetingTopic } from "@/pages/entrepreneur/FounderMeetingRequest";
 
 export const COMMISSION_FR_URL = "https://unpro.ca/commission";
 export const COMMISSION_EN_URL = "https://unpro.ca/en/commission";
@@ -25,8 +28,8 @@ const C = {
     lead: "UNPRO étudie, au cas par cas, des collaborations fondées sur la commission plutôt que sur un forfait standard. Cette formule n'est pas offerte à toutes les entreprises et nécessite une évaluation et une entente spécifique.",
     nuance: "« 100 % à la commission » décrit le mode de rémunération de cette collaboration : UNPRO est rémunérée par une commission convenue, plutôt que par un forfait. Il ne s'agit pas d'un taux de commission de 100 %.",
     bookCta: "Prendre rendez-vous pour en discuter",
-    contactCta: "Nous contacter pour planifier une rencontre",
-    contactNote: "Écrivez-nous ou appelez-nous : nous conviendrons ensemble d'un moment pour en parler.",
+    contactCta: "Choisir un moment pour discuter",
+    contactNote: "Choisissez plus bas l'un des trois prochains moments de 90 minutes, entre 10 h et 15 h.",
     whoTitle: "À qui s'adresse cette formule ?",
     whoIntro: "Les entreprises admissibles sont déterminées après examen. Nous évaluons notamment :",
     who: [
@@ -51,7 +54,7 @@ const C = {
     partnerTitle: "Vous avez une proposition de partenariat ?",
     partner: "Nous sommes ouverts aux propositions sérieuses, qu'elles viennent d'un entrepreneur, d'un fournisseur de services ou d'un partenaire stratégique. Présentez-nous votre idée.",
     partnerCta: "Discuter d'un partenariat",
-    partnerContact: "Nous contacter pour discuter d'un partenariat",
+    partnerContact: "Proposer un moment pour discuter d'un partenariat",
     faqTitle: "Questions fréquentes",
     faqs: [
       { q: "Est-ce que toutes les entreprises peuvent y accéder ?", a: "Non. La formule est réservée à certaines entreprises, après évaluation et entente écrite." },
@@ -71,8 +74,8 @@ const C = {
     lead: "UNPRO considers, case by case, collaborations based on commission rather than a standard package. This formula is not offered to every business and requires a review and a specific agreement.",
     nuance: "\"100% commission\" describes how this collaboration is paid: UNPRO earns an agreed commission instead of a package fee. It does not mean a 100% commission rate.",
     bookCta: "Book an appointment to discuss it",
-    contactCta: "Contact us to schedule a meeting",
-    contactNote: "Write or call us: we will agree together on a time to talk.",
+    contactCta: "Choose a time to talk",
+    contactNote: "Pick one of the next three 90-minute times below, between 10 a.m. and 3 p.m.",
     whoTitle: "Who is this formula for?",
     whoIntro: "Eligible businesses are determined after review. We look at:",
     who: [
@@ -97,7 +100,7 @@ const C = {
     partnerTitle: "Do you have a partnership proposal?",
     partner: "We are open to serious proposals, whether they come from a contractor, a service provider or a strategic partner. Tell us about your idea.",
     partnerCta: "Discuss a partnership",
-    partnerContact: "Contact us to discuss a partnership",
+    partnerContact: "Propose a time to discuss a partnership",
     faqTitle: "Frequently asked questions",
     faqs: [
       { q: "Can every business access it?", a: "No. The formula is reserved for certain businesses, after review and a written agreement." },
@@ -111,8 +114,10 @@ const C = {
   },
 } as const;
 
-function FounderCta({ bookingUrl, bookLabel, contactLabel, external, variant = "default" }: {
-  bookingUrl: string | null; bookLabel: string; contactLabel: string; external: string; variant?: "default" | "outline";
+export const MEETING_SECTION_ID = "choisir-un-moment";
+
+function FounderCta({ bookingUrl, bookLabel, contactLabel, external, onPick, variant = "default" }: {
+  bookingUrl: string | null; bookLabel: string; contactLabel: string; external: string; onPick: () => void; variant?: "default" | "outline";
 }) {
   const cls = "h-auto min-h-12 whitespace-normal rounded-button px-6 text-base";
   if (bookingUrl) {
@@ -126,7 +131,9 @@ function FounderCta({ bookingUrl, bookLabel, contactLabel, external, variant = "
   }
   return (
     <Button asChild variant={variant} className={cls}>
-      <Link to="/contact"><MessageSquare className="h-4 w-4" aria-hidden="true" />{contactLabel}</Link>
+      <a href={`#${MEETING_SECTION_ID}`} onClick={(e) => { e.preventDefault(); onPick(); }}>
+        <CalendarDays className="h-4 w-4" aria-hidden="true" />{contactLabel}
+      </a>
     </Button>
   );
 }
@@ -136,6 +143,13 @@ export default function PageCommissionPartnership({ lang = "fr" }: { lang?: Lang
   const isFr = lang === "fr";
   const bookingUrl = resolveFounderBookingUrl();
   const stepIcons = [MessageSquare, SearchCheck, FileSignature, ShieldCheck];
+  const [topic, setTopic] = useState<MeetingTopic>("commission");
+  const pick = (t: MeetingTopic) => () => {
+    setTopic(t);
+    const el = document.getElementById(MEETING_SECTION_ID);
+    el?.scrollIntoView?.({ behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    (document.getElementById("meeting-title") as HTMLElement | null)?.focus({ preventScroll: true });
+  };
 
   return (
     <MainLayout>
@@ -166,7 +180,7 @@ export default function PageCommissionPartnership({ lang = "fr" }: { lang?: Lang
           <p className="text-lg text-foreground/90">{c.lead}</p>
           <p className="rounded-2xl border border-border bg-background/60 p-4 text-base text-muted-foreground">{c.nuance}</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <FounderCta bookingUrl={bookingUrl} bookLabel={c.bookCta} contactLabel={c.contactCta} external={c.external} />
+            <FounderCta bookingUrl={bookingUrl} bookLabel={c.bookCta} contactLabel={c.contactCta} external={c.external} onPick={pick("commission")} />
           </div>
           {!bookingUrl && <p className="text-sm text-muted-foreground">{c.contactNote}</p>}
         </header>
@@ -214,7 +228,12 @@ export default function PageCommissionPartnership({ lang = "fr" }: { lang?: Lang
         <section aria-labelledby="partner" className="space-y-4 rounded-[28px] border border-border bg-card p-6 md:p-8">
           <h2 id="partner" className="text-2xl font-semibold text-foreground md:text-3xl">{c.partnerTitle}</h2>
           <p className="text-base text-muted-foreground">{c.partner}</p>
-          <FounderCta bookingUrl={bookingUrl} bookLabel={c.partnerCta} contactLabel={c.partnerContact} external={c.external} variant="outline" />
+          <FounderCta bookingUrl={bookingUrl} bookLabel={c.partnerCta} contactLabel={c.partnerContact} external={c.external} onPick={pick("partnership")} variant="outline" />
+        </section>
+
+        <section id={MEETING_SECTION_ID} aria-labelledby="meeting-title" className="scroll-mt-24 space-y-4 rounded-[28px] border border-primary/20 bg-card p-6 md:p-8">
+          <h2 id="meeting-title" tabIndex={-1} className="text-2xl font-semibold text-foreground focus:outline-none md:text-3xl">{isFr ? "Choisir un moment pour discuter" : "Choose a time to talk"}</h2>
+          <FounderMeetingRequest lang={lang} topic={topic} onTopicChange={setTopic} />
         </section>
 
         <section aria-labelledby="faq" className="space-y-3">
