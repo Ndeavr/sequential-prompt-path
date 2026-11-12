@@ -51,6 +51,14 @@ describe("Clara — réponses rapides", () => {
     expect(options).toEqual(["Bois", "Béton", "Fibre de verre", "Je ne sais pas"]);
   });
 
+  it("convertit aussi les marqueurs CHOICE anglais en boutons sans montrer la syntaxe interne", () => {
+    const { text, options } = extractQuickReplies(
+      "Avez-vous remarqué des signes particuliers ? [[CHOICE: Glace sur le toit | Pièces froides | Factures élevées | Je ne sais pas]]",
+    );
+    expect(text).toBe("Avez-vous remarqué des signes particuliers ?");
+    expect(options).toEqual(["Glace sur le toit", "Pièces froides", "Factures élevées", "Je ne sais pas"]);
+  });
+
   it("laisse le texte intact quand la question est ouverte", () => {
     const { text, options } = extractQuickReplies("Décrivez-moi la situation.");
     expect(text).toBe("Décrivez-moi la situation.");
