@@ -98,6 +98,10 @@ Deno.serve(async (req) => {
       },
       metadata: {
         offer_code: "pack_350",
+        // Canonical signed-webhook fulfillment route: validates LIVE CAD 350
+        // and records the unique 12-month receipt before marking activation.
+        // Keep offer_kind for backward-compatible callers and telemetry.
+        offer: "entry_pack_350",
         offer_kind: "pack_350",
         user_id: userId ?? "",
         onboarding_session_id: onboarding_session_id ?? "",

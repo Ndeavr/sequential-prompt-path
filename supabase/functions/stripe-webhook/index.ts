@@ -1074,7 +1074,16 @@ Deno.serve(async (req) => {
         // SMS OUTREACH flow: /invitation/:token → 1$ activation
         // Idempotent + transactional: creates contractor + contractor_profiles,
         // links prospect, and marks recommendable. Safe to replay any # of times.
-        if (session.metadata?.source === "sms_outreach" && session.metadata?.landing_token) {
+        if (
+          session.metadata?.source === "sms_outreach" &&
+          session.metadata?.landing_token &&
+          // $350 invited checkouts share SMS origin metadata but MUST reach
+          // the signed LIVE entry-activation ledger and 12-month entitlement.
+          // Preserve the original guard for historical $1 sessions only.
+          session.metadata?.offer !== "entry_pack_350" &&
+          session.metadata?.offer !== "entry_activation_350" &&
+          session.metadata?.offer_kind !== "pack_350"
+        ) {
           const landingToken = session.metadata.landing_token as string;
           try {
             // Idempotency guard: if any prospect already has this session_id, short-circuit.
