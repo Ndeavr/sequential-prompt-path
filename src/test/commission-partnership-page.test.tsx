@@ -21,14 +21,16 @@ describe("Page 100 % à la commission", () => {
     expect((head('link[hreflang="en-CA"]') as HTMLLinkElement).href).toBe("https://unpro.ca/en/commission");
   });
 
-  it("aucun agenda fondateur vérifié : repli honnête vers /contact, aucun faux calendrier", () => {
+  it("aucun agenda fondateur vérifié : CTA vers la section in-page, aucun lien Google Agenda", () => {
     expect(FOUNDER_BOOKING_URL).toBeNull();
     render(<MemoryRouter><PageCommissionPartnership /></MemoryRouter>);
     expect(screen.queryByRole("link", { name: /Prendre rendez-vous pour en discuter/ })).toBeNull();
-    expect(screen.getByRole("link", { name: /Nous contacter pour planifier une rencontre/ }).getAttribute("href")).toBe("/contact");
-    expect(screen.getByRole("link", { name: /Nous contacter pour discuter d'un partenariat/ }).getAttribute("href")).toBe("/contact");
+    expect(screen.getByRole("link", { name: /Choisir un moment pour discuter/ }).getAttribute("href")).toBe("#choisir-un-moment");
+    expect(screen.getByRole("link", { name: /Proposer un moment pour discuter d'un partenariat/ }).getAttribute("href")).toBe("#choisir-un-moment");
+    expect(document.getElementById("choisir-un-moment")).not.toBeNull();
     const hrefs = Array.from(document.querySelectorAll("a")).map((a) => a.getAttribute("href") || "");
     hrefs.forEach((h) => expect(h).not.toMatch(/calendly|cal\.com|calendar\.google|^#$|^$/));
+    expect(document.body.innerHTML).not.toMatch(/calendar\.google|yturcotte|cid=/);
   });
 
   it("n'accepte qu'une URL https pour l'agenda", () => {
@@ -52,7 +54,7 @@ describe("Page 100 % à la commission", () => {
     render(<MemoryRouter><PageCommissionPartnership lang="en" /></MemoryRouter>);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("100% commission. A formula reserved for certain contractors.");
     expect((head('link[rel="canonical"]') as HTMLLinkElement).href).toBe("https://unpro.ca/en/commission");
-    expect(screen.getByRole("link", { name: /Contact us to schedule a meeting/ }).getAttribute("href")).toBe("/contact");
+    expect(screen.getByRole("link", { name: /Choose a time to talk/ }).getAttribute("href")).toBe("#choisir-un-moment");
   });
 
   it("routeur, sitemap et lien depuis /entrepreneurs; /fondateurs intact", () => {
