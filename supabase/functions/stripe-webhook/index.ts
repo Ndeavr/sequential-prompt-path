@@ -452,7 +452,9 @@ Deno.serve(async (req) => {
         const promoCode = session.metadata?.promo_code;
 
         // Founder / activation flow observability.
-        if (session.payment_status === "paid" || session.status === "complete") {
+        // checkout.session.completed does not prove payment for asynchronous methods.
+        // Only Stripe payment_status=paid may emit payment-success telemetry.
+        if (session.payment_status === "paid") {
           await logActivationStep(supabase, "stripe_payment_succeeded", {
             stripe_event_id: event.id,
             stripe_session_id: session.id,
