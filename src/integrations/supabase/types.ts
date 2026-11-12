@@ -98210,7 +98210,7 @@ export type Database = {
           created_at?: string | null
           current_step?: string | null
           domain?: string | null
-          extraction?: Json | null
+          extraction?: never
           id?: string | null
           input_kind?: string | null
           partial_confidence?: boolean | null
@@ -98218,7 +98218,7 @@ export type Database = {
           recommendation?: Json | null
           recommended_plan?: string | null
           screenshot_url?: string | null
-          signals?: Json | null
+          signals?: never
           updated_at?: string | null
         }
         Update: {
@@ -98228,7 +98228,7 @@ export type Database = {
           created_at?: string | null
           current_step?: string | null
           domain?: string | null
-          extraction?: Json | null
+          extraction?: never
           id?: string | null
           input_kind?: string | null
           partial_confidence?: boolean | null
@@ -98236,7 +98236,7 @@ export type Database = {
           recommendation?: Json | null
           recommended_plan?: string | null
           screenshot_url?: string | null
-          signals?: Json | null
+          signals?: never
           updated_at?: string | null
         }
         Relationships: []
