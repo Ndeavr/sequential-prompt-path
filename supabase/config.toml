@@ -267,3 +267,7 @@ project_id = "clmaqdnphbndvmmqvpff"
 
   [functions.free-service-activate]
     verify_jwt = true
+
+  # Staged security fix; must not be deployed until approved.
+  [functions.painting-guest-upload]
+    verify_jwt = false
