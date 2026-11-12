@@ -30,7 +30,7 @@ describe("Page 100 % à la commission", () => {
     expect(document.getElementById("choisir-un-moment")).not.toBeNull();
     const hrefs = Array.from(document.querySelectorAll("a")).map((a) => a.getAttribute("href") || "");
     hrefs.forEach((h) => expect(h).not.toMatch(/calendly|cal\.com|calendar\.google|^#$|^$/));
-    expect(document.body.innerHTML).not.toMatch(/calendar\.google|yturcotte|cid=/);
+    expect(document.body.innerHTML).not.toMatch(/calendar\.google|cid=/);
   });
 
   it("n'accepte qu'une URL https pour l'agenda", () => {

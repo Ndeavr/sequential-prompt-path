@@ -115,3 +115,11 @@ export function formatSlotTime(slot: ProposedSlot, lang: Lang, tz = FOUNDER_MEET
 export function formatSlotFull(slot: ProposedSlot, lang: Lang, tz = FOUNDER_MEETING_TZ): string {
   return `${formatDayLabel(slot.localDate, lang, tz)}, ${formatSlotTime(slot, lang, tz)}`;
 }
+
+/** Construit un ProposedSlot à partir d'un créneau renvoyé par le serveur (instants UTC). */
+export function slotFromServer(start: string, end: string, tz = FOUNDER_MEETING_TZ): ProposedSlot | null {
+  const s = Date.parse(start), e = Date.parse(end);
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e - s !== FOUNDER_MEETING_DURATION_MIN * 60_000) return null;
+  const p = localParts(s, tz);
+  return { startIso: new Date(s).toISOString(), endIso: new Date(e).toISOString(), localDate: `${p.y}-${pad(p.m)}-${pad(p.d)}`, localStart: `${pad(p.h)}:${pad(p.min)}` };
+}

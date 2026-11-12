@@ -29,7 +29,7 @@ const C = {
     nuance: "« 100 % à la commission » décrit le mode de rémunération de cette collaboration : UNPRO est rémunérée par une commission convenue, plutôt que par un forfait. Il ne s'agit pas d'un taux de commission de 100 %.",
     bookCta: "Prendre rendez-vous pour en discuter",
     contactCta: "Choisir un moment pour discuter",
-    contactNote: "Trois horaires de 90 minutes vous sont proposés plus bas, sous réserve de confirmation.",
+    contactNote: "Choisissez plus bas l'un des trois prochains moments de 90 minutes, entre 10 h et 15 h.",
     whoTitle: "À qui s'adresse cette formule ?",
     whoIntro: "Les entreprises admissibles sont déterminées après examen. Nous évaluons notamment :",
     who: [
@@ -75,7 +75,7 @@ const C = {
     nuance: "\"100% commission\" describes how this collaboration is paid: UNPRO earns an agreed commission instead of a package fee. It does not mean a 100% commission rate.",
     bookCta: "Book an appointment to discuss it",
     contactCta: "Choose a time to talk",
-    contactNote: "Three 90-minute times are proposed below, subject to confirmation.",
+    contactNote: "Pick one of the next three 90-minute times below, between 10 a.m. and 3 p.m.",
     whoTitle: "Who is this formula for?",
     whoIntro: "Eligible businesses are determined after review. We look at:",
     who: [

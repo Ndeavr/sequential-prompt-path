@@ -54920,6 +54920,78 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_meetings: {
+        Row: {
+          company: string
+          confirmed_at: string | null
+          consent_text: string
+          created_at: string
+          domain_territory: string | null
+          email: string
+          failure_reason: string | null
+          first_name: string
+          google_event_id: string | null
+          id: string
+          idempotency_key: string
+          ip_hash: string | null
+          last_name: string
+          locale: string
+          message: string | null
+          privacy_consent: boolean
+          slot_end: string
+          slot_start: string
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          company: string
+          confirmed_at?: string | null
+          consent_text: string
+          created_at?: string
+          domain_territory?: string | null
+          email: string
+          failure_reason?: string | null
+          first_name: string
+          google_event_id?: string | null
+          id?: string
+          idempotency_key: string
+          ip_hash?: string | null
+          last_name: string
+          locale?: string
+          message?: string | null
+          privacy_consent: boolean
+          slot_end: string
+          slot_start: string
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          confirmed_at?: string | null
+          consent_text?: string
+          created_at?: string
+          domain_territory?: string | null
+          email?: string
+          failure_reason?: string | null
+          first_name?: string
+          google_event_id?: string | null
+          id?: string
+          idempotency_key?: string
+          ip_hash?: string | null
+          last_name?: string
+          locale?: string
+          message?: string | null
+          privacy_consent?: boolean
+          slot_end?: string
+          slot_start?: string
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_memberships: {
         Row: {
           attribution: Json
