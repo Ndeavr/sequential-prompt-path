@@ -231,7 +231,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
         : guarantee
         ? <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>, payés une fois. Aucun renouvellement automatique.</p>
-        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
+        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>, paiement unique couvrant 12 mois. Aucun renouvellement automatique.</p>}
       {!guarantee && <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>}
       {guarantee ? null : !(promoOpen || promo.state !== "idle") ? (
         <button type="button" data-testid="entry-350-promo-toggle" aria-expanded={false} aria-controls="activation350-promo-box"
