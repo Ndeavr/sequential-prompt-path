@@ -29,13 +29,30 @@ export async function uploadPaintingPhoto(
   file: File,
   ownerKey: string,
 ): Promise<{ publicUrl: string; storagePath: string } | null> {
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${ownerKey}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const extensions: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = extensions[file.type];
+  if (!ext || file.size === 0 || file.size > 5 * 1024 * 1024) return null;
+
+  // A guest must not use a public Storage read policy: an Edge Function
+  // uploads the image server-side and signs ONLY that newly created object.
+  if (ownerKey === "guest") {
+    const body = new FormData();
+    body.append("file", file, file.name);
+    const { data, error } = await supabase.functions.invoke("painting-guest-upload", { body });
+    if (error || !data?.publicUrl || !data?.storagePath) return null;
+    return { publicUrl: data.publicUrl, storagePath: data.storagePath };
+  }
+
+  // Signed-in users keep their existing owner-folder / RLS upload flow.
+  const path = `${ownerKey}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("painting-photos")
     .upload(path, file, { upsert: false, contentType: file.type });
   if (error) return null;
-  // For private bucket use signed URL
   const { data: signed } = await supabase.storage
     .from("painting-photos")
     .createSignedUrl(path, 60 * 60 * 24 * 7);
