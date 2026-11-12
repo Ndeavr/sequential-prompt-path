@@ -26,16 +26,14 @@ Créer le secret **hors Git** `PAINTING_UPLOAD_RATE_SECRET` (>= 32 caractères a
 
 ```sql
 BEGIN;
-CREATE SCHEMA IF NOT EXISTS private;
-REVOKE ALL ON SCHEMA private FROM PUBLIC;
-CREATE TABLE IF NOT EXISTS private.painting_guest_upload_window (
+CREATE TABLE IF NOT EXISTS public.painting_guest_upload_window (
   fingerprint text NOT NULL,
   window_started_at timestamptz NOT NULL,
   upload_count integer NOT NULL CHECK (upload_count > 0),
   PRIMARY KEY (fingerprint, window_started_at)
 );
-ALTER TABLE private.painting_guest_upload_window ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON TABLE private.painting_guest_upload_window FROM PUBLIC, anon, authenticated;
+ALTER TABLE public.painting_guest_upload_window ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.painting_guest_upload_window FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.try_painting_guest_upload(p_fingerprint text)
 RETURNS boolean
@@ -46,7 +44,7 @@ BEGIN
   IF p_fingerprint IS NULL OR p_fingerprint !~ '^[a-f0-9]{64}$' THEN
     RETURN false;
   END IF;
-  INSERT INTO private.painting_guest_upload_window AS w
+  INSERT INTO public.painting_guest_upload_window AS w
     (fingerprint, window_started_at, upload_count)
   VALUES (p_fingerprint, date_trunc('hour', now()), 1)
   ON CONFLICT (fingerprint, window_started_at) DO UPDATE
