@@ -407,16 +407,6 @@ Deno.serve(async (req) => {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         let session = event.data.object as Stripe.Checkout.Session;
-        // Réservation d'achat : le paiement signé ferme la seule session payable.
-        // La caisse relit toujours Stripe; un échec ici ne crée aucune deuxième session.
-        if (session.payment_status === "paid") {
-          const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
-            ? session.metadata.checkout_reservation_id : null;
-          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
-            _reservation_id: rid, _status: "paid", _stripe_session_id: session.id, _reason: "stripe_paid",
-          });
-          if (resErr) console.error("[stripe-webhook] checkout reservation paid mark failed", resErr.message);
-        }
         // Before paid telemetry, provisioning, roles, subscriptions or flags.
         // Keep legacy/free offers unchanged; only the two paid entry circuits.
         if (session.metadata?.offer === "entry_activation_350" ||
@@ -443,6 +433,18 @@ Deno.serve(async (req) => {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
+        }
+        // Only mark the reservation as paid after the $350 amount/currency/tax
+        // contract has passed its guard. Invalid/discounted payments must not
+        // occupy the checkout reservation or block a subsequent legitimate checkout.
+        // Other offers retain their existing settlement behavior.
+        if (session.payment_status === "paid") {
+          const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
+            ? session.metadata.checkout_reservation_id : null;
+          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
+            _reservation_id: rid, _status: "paid", _stripe_session_id: session.id, _reason: "stripe_paid",
+          });
+          if (resErr) console.error("[stripe-webhook] checkout reservation paid mark failed", resErr.message);
         }
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
