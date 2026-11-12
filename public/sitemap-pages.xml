@@ -158,6 +158,16 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://unpro.ca/commission</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://unpro.ca/en/commission</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://unpro.ca/problemes</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

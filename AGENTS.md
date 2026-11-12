@@ -87,6 +87,7 @@ See `supabase/AGENTS.md` and `src/pages/contractor-funnel/AGENTS.md`, `src/servi
 - First-party phone capture uses the existing canonical prospect anchor and capture helper, never signs consent; batch previews keep candidate counts separate from unverified provider readiness. Why: domain publication and tier C do not establish lawful or technically deliverable SMS.
 
 ## Source-of-truth discipline
+- Founder meeting CTAs read only `src/config/founderBooking.ts` (validated https or null → honest /contact fallback); never reuse contractor `/book/:slug` or homeowner calendars. Why: no invented or misattributed booking links.
 - Affiliate offer drafts reuse affiliate_proposals through assignment-checked RPCs; proposal affiliate_id is the affiliate user UUID, unlike assignment affiliate_id. New drafts keep reloadable bearers outside public payload, reject direct client mutations via a version-scoped trigger, and bind checkout attribution to the saved quote. Why: protect drafts without changing legacy policies or server payment truth.
 
 - Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.

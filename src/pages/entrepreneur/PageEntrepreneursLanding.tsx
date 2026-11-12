@@ -64,6 +64,7 @@ const PageEntrepreneursLanding = () => {
             <summary className="cursor-pointer text-base font-semibold">{fr ? "Est-ce qu’UNPRO fonctionne aussi à commission?" : "Does UNPRO also work on commission?"}</summary>
             <p className="mt-3 text-base text-muted-foreground">{fr ? "Oui. UNPRO peut fonctionner à 100 % à commission selon une entente personnalisée. Le taux fixe ou variable, le territoire, l’exclusivité éventuelle et les modalités sont convenus par écrit avant tout engagement. Prenez rendez-vous pour discuter de la formule adaptée à votre entreprise." : "Yes. UNPRO can work on a 100% commission basis under a custom agreement. The fixed or variable rate, the territory, any exclusivity and the terms are agreed in writing before any commitment. Book an appointment to discuss the right formula for your business."}</p>
             <Button asChild variant="outline" className="mt-4 h-auto min-h-12 whitespace-normal"><Link to={buildCommissionClaraLink(fr)} onClick={() => trackCta("commission_partnership", "faq")}>{fr ? "Prendre rendez-vous pour en discuter" : "Book an appointment to discuss it"}</Link></Button>
+            <Link to={fr ? "/commission" : "/en/commission"} className="mt-3 block text-sm font-semibold text-primary underline underline-offset-4">{fr ? "En savoir plus sur la formule 100 % à la commission" : "Learn more about the 100% commission formula"}</Link>
           </details>
         </section>
         <section className="mx-auto max-w-4xl px-5 pb-10">
