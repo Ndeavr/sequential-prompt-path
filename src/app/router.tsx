@@ -34,6 +34,7 @@ const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendati
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
 import PageLanguagePolicy from "@/pages/static/PageLanguagePolicy";
+import ClaraEntrySeoHead from "@/seo/components/ClaraEntrySeoHead";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
@@ -177,7 +178,6 @@ const PagePIMLanding = lazyWithRetry(() => import("@/pages/PagePIMLanding"));
 const PageAICrawlerLanding = lazyWithRetry(() => import("@/pages/PageAICrawlerLanding"));
 const PageWhyUnpro = lazyWithRetry(() => import("@/pages/PageWhyUnpro"));
 const PageHomeAlexConversationalLite = lazyWithRetry(() => import("@/pages/PageHomeAlexConversationalLite"));
-import ClaraEntrySeoHead from "@/seo/components/ClaraEntrySeoHead";
 const PageAlexConversationAnimated = lazyWithRetry(() => import("@/pages/PageAlexConversationAnimated"));
 
 // Lead Pipe Empire

@@ -134,7 +134,7 @@ function writeSitemap(file: string, urls: string[], ok = true): number {
   return urls.length;
 }
 
-async function sbr<T = any>(path: string): Promise<FetchResult<T>> {
+async function sbr<T = unknown>(path: string): Promise<FetchResult<T>> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return { ok: false, error: "missing backend config" };
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -150,7 +150,7 @@ async function sbr<T = any>(path: string): Promise<FetchResult<T>> {
 }
 
 /** Fetch + log; returns rows and whether the read succeeded. */
-async function sb<T = any>(path: string): Promise<{ ok: boolean; rows: T[] }> {
+async function sb<T = unknown>(path: string): Promise<{ ok: boolean; rows: T[] }> {
   const res = await sbr<T>(path);
   if (!res.ok) {
     console.warn(`[sitemaps] ${path.split("?")[0]} → ${res.error}`);
