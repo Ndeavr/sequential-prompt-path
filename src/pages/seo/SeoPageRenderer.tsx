@@ -30,7 +30,9 @@ interface FaqItem {
 }
 
 export default function SeoPageRenderer() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug?: string; city?: string; service?: string }>();
+  // /s/:slug or /s/:city/:service (slug stored as "city/service").
+  const slug = params.city && params.service ? `${params.city}/${params.service}` : params.slug;
   const alexVoice = useAlexVoice();
 
   const { data: page, isLoading } = useQuery({

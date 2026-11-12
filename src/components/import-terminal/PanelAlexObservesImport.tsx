@@ -27,7 +27,7 @@ export default function PanelAlexObservesImport({ messages }: Props) {
           <Bot className="w-4 h-4 text-emerald-400" />
         </div>
         <div>
-          <p className="text-[10px] font-mono text-emerald-500/50 mb-0.5">ALEX</p>
+          <p className="text-[10px] font-mono text-emerald-500/50 mb-0.5">CLARA</p>
           <p className="text-sm text-foreground/85 leading-snug">{lastMessage}</p>
         </div>
       </motion.div>

@@ -9,14 +9,30 @@
  *   public/sitemap-ai-entities.xml  → ai_entities (published)
  *   public/sitemap-problems.xml     → home_problems + home_problem_city_pages
  *   public/sitemap-contractors.xml  → v_contractor_full_public
+ *   public/sitemap-seo-pages.xml    → seo_pages (published, routable, non-thin) → /s/:slug
+ *   public/sitemap-articles.xml     → seo_articles (published, completed) → /articles/:slug
  *   public/llms-full.txt            → full markdown corpus for LLM crawlers
  *
- * Fail-soft: if Supabase is unreachable, writes empty sitemaps so the
- * build never blocks.
+ * Fail-soft: the build never blocks, but a failed (or suspiciously empty)
+ * read NEVER overwrites a valid artifact — the previous file is kept and the
+ * error is reported. The index lists only sub-sitemaps that contain URLs.
  */
-import { writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { EDITORIAL_REVISIONS, editorialModifiedDate } from "../src/seo/editorialDates";
+import {
+  type FetchResult,
+  type SeoArticleRow,
+  type SeoPageRow,
+  countLocs,
+  dedupeByLoc,
+  escapeXml,
+  isSitemapEligibleSeoArticle,
+  isSitemapEligibleSeoPage,
+  lastmodFrom,
+  planSitemapWrite,
+  CLARA_PUBLIC_PATH,
+} from "../src/seo/sitemapSources";
 
 const BASE_URL = "https://unpro.ca";
 const SUPABASE_URL =
@@ -35,7 +51,8 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   ...["/vision", "/en/vision", "/articles/economiser-ensemble", "/en/articles/saving-together", "/communique", "/en/press-release"].map(path => ({ path, changefreq: "monthly", priority: "0.8" })),
   { path: "/c/isolation-solution-royal/subventions-renoclimat-logisvert", changefreq: "monthly", priority: "0.8" },
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/alex", changefreq: "weekly", priority: "0.9" },
+  // Public Clara entry. Legacy /alex aliases render the same page with a canonical to it and are not listed.
+  { path: CLARA_PUBLIC_PATH, changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-unpro", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-pas-trois-soumissions", changefreq: "monthly", priority: "0.9" },
@@ -95,44 +112,51 @@ function urlNode(loc: string, lastmod?: string, changefreq?: string, priority?: 
   return parts.join("\n");
 }
 
-function escapeXml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+const isoDate = lastmodFrom;
+
+const failures: string[] = [];
+
+function readPublic(file: string): string | null {
+  const p = resolve(`public/${file}`);
+  return existsSync(p) ? readFileSync(p, "utf8") : null;
 }
 
-function isoDate(d?: string | null) {
-  if (!d) return undefined;
-  try {
-    return new Date(d).toISOString();
-  } catch {
-    return undefined;
+/** Writes a sitemap only when the plan allows it; returns the number of URLs now in the file. */
+function writeSitemap(file: string, urls: string[], ok = true): number {
+  const previous = countLocs(readPublic(file));
+  if (planSitemapWrite(ok, urls.length, previous) === "keep") {
+    const why = ok ? "empty result would wipe existing URLs" : "source read failed";
+    failures.push(`${file}: ${why} — kept previous file (${previous} URLs)`);
+    return previous;
   }
-}
-
-function writeSitemap(file: string, urls: string[]) {
-  const xml = `${xmlHeader("urlset")}\n${urls.join("\n")}\n</urlset>\n`;
+  const xml = `${xmlHeader("urlset")}\n${urls.join("\n")}${urls.length ? "\n" : ""}</urlset>\n`;
   writeFileSync(resolve(`public/${file}`), xml);
+  return urls.length;
 }
 
-async function sb<T = any>(path: string): Promise<T[]> {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+async function sbr<T = any>(path: string): Promise<FetchResult<T>> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return { ok: false, error: "missing backend config" };
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
-    if (!r.ok) {
-      console.warn(`[sitemaps] ${path} → HTTP ${r.status}`);
-      return [];
-    }
-    return (await r.json()) as T[];
+    if (!r.ok) return { ok: false, error: `HTTP ${r.status}` };
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return { ok: false, error: "unexpected payload" };
+    return { ok: true, rows: rows as T[] };
   } catch (e) {
-    console.warn(`[sitemaps] ${path} → ${e instanceof Error ? e.message : e}`);
-    return [];
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** Fetch + log; returns rows and whether the read succeeded. */
+async function sb<T = any>(path: string): Promise<{ ok: boolean; rows: T[] }> {
+  const res = await sbr<T>(path);
+  if (!res.ok) {
+    console.warn(`[sitemaps] ${path.split("?")[0]} → ${res.error}`);
+    return { ok: false, rows: [] };
+  }
+  return { ok: true, rows: res.rows };
 }
 
 // --------------------------------------------------------------------------
@@ -147,7 +171,7 @@ async function buildPages() {
 }
 
 async function buildBlog() {
-  const rows = await sb<{ slug: string; published_at: string | null; schema_json: { dateModified?: string } | null }>(
+  const { ok, rows } = await sb<{ slug: string; published_at: string | null; schema_json: { dateModified?: string } | null }>(
     "blog_articles?select=slug,published_at,schema_json&status=eq.published&order=published_at.desc.nullslast",
   );
   const urls = rows.map((r) =>
@@ -158,12 +182,11 @@ async function buildBlog() {
       "0.7",
     ),
   );
-  writeSitemap("sitemap-blog.xml", urls);
-  return rows.length;
+  return writeSitemap("sitemap-blog.xml", urls, ok);
 }
 
 async function buildJournal() {
-  const rows = await sb<{ slug: string; updated_at: string; published_at: string | null }>(
+  const { ok, rows } = await sb<{ slug: string; updated_at: string; published_at: string | null }>(
     "journal_articles?select=slug,updated_at,published_at&status=eq.published&order=published_at.desc.nullslast",
   );
   const urls = rows.map((r) =>
@@ -174,26 +197,24 @@ async function buildJournal() {
       "0.8",
     ),
   );
-  writeSitemap("sitemap-journal.xml", urls);
-  return rows.length;
+  return writeSitemap("sitemap-journal.xml", urls, ok);
 }
 
 async function buildAiEntities() {
-  const rows = await sb<{ slug: string; updated_at: string }>(
+  const { ok, rows } = await sb<{ slug: string; updated_at: string }>(
     "ai_entities?select=slug,updated_at&published=eq.true&order=updated_at.desc",
   );
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/ai/${r.slug}`, isoDate(r.updated_at), "weekly", "0.8"),
   );
-  writeSitemap("sitemap-ai-entities.xml", urls);
-  return rows.length;
+  return writeSitemap("sitemap-ai-entities.xml", urls, ok);
 }
 
 async function buildProblems() {
-  const problems = await sb<{ slug: string; updated_at: string }>(
+  const { ok: okProblems, rows: problems } = await sb<{ slug: string; updated_at: string }>(
     "home_problems?select=slug,updated_at&is_active=eq.true",
   );
-  const cityPages = await sb<{
+  const { ok: okCities, rows: cityPages } = await sb<{
     updated_at: string;
     home_problems: { slug: string } | null;
     cities: { slug: string } | null;
@@ -213,25 +234,56 @@ async function buildProblems() {
       urlNode(`${BASE_URL}/probleme/${ps}/${cs}`, isoDate(c.updated_at), "weekly", "0.7"),
     );
   }
-  writeSitemap("sitemap-problems.xml", urls);
-  return urls.length;
+  return writeSitemap("sitemap-problems.xml", urls, okProblems && okCities);
 }
 
 async function buildContractors() {
-  const rows = await sb<{ slug: string }>(
+  const { ok, rows } = await sb<{ slug: string }>(
     "v_contractor_full_public?select=slug&is_published=eq.true&slug=not.is.null",
   );
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/entrepreneur/${r.slug}`, undefined, "weekly", "0.6"),
   );
-  writeSitemap("sitemap-contractors.xml", urls);
-  return rows.length;
+  return writeSitemap("sitemap-contractors.xml", urls, ok);
+}
+
+/** Static pillar paths win over dynamic duplicates. */
+const PILLAR_LOCS = new Set(PILLAR_ROUTES.map((r) => `${BASE_URL}${r.path}`));
+
+async function buildSeoPages() {
+  const { ok, rows } = await sb<SeoPageRow>(
+    "seo_pages?select=slug,updated_at,title,meta_description,h1,body_md&is_published=eq.true&status=eq.published&order=updated_at.desc",
+  );
+  const items = dedupeByLoc(
+    rows
+      .filter(isSitemapEligibleSeoPage)
+      .map((r) => ({ loc: `${BASE_URL}/s/${r.slug}`, lastmod: isoDate(r.updated_at) }))
+      .filter((i) => !PILLAR_LOCS.has(i.loc)),
+  );
+  if (ok) console.log(`[sitemaps] seo_pages: ${items.length}/${rows.length} published pages pass the quality filter`);
+  return writeSitemap("sitemap-seo-pages.xml", items.map((i) => urlNode(i.loc, i.lastmod, "monthly", "0.6")), ok);
+}
+
+async function buildSeoArticles() {
+  const { ok, rows } = await sb<SeoArticleRow>(
+    "seo_articles?select=slug,updated_at,title,meta_description,content_html,word_count,generation_status&published=eq.true&order=updated_at.desc",
+  );
+  const items = dedupeByLoc(
+    rows
+      .filter(isSitemapEligibleSeoArticle)
+      .map((r) => ({ loc: `${BASE_URL}/articles/${r.slug}`, lastmod: isoDate(r.updated_at) }))
+      .filter((i) => !PILLAR_LOCS.has(i.loc)),
+  );
+  if (ok) console.log(`[sitemaps] seo_articles: ${items.length}/${rows.length} published articles pass the quality filter`);
+  return writeSitemap("sitemap-articles.xml", items.map((i) => urlNode(i.loc, i.lastmod, "monthly", "0.7")), ok);
 }
 
 // --------------------------------------------------------------------------
 // Sitemap index
 // --------------------------------------------------------------------------
-function buildIndex(children: string[]) {
+function buildIndex(candidates: string[]) {
+  // Only list sub-sitemaps that exist and contain at least one URL (an empty urlset is invalid).
+  const children = candidates.filter((c) => countLocs(readPublic(c)) > 0);
   const entries = children.map(
     (c) => `  <sitemap>\n    <loc>${BASE_URL}/${c}</loc>\n  </sitemap>`,
   );
@@ -243,7 +295,7 @@ function buildIndex(children: string[]) {
 // llms-full.txt — full markdown corpus for LLM crawlers
 // --------------------------------------------------------------------------
 async function buildLlmsFull() {
-  const blog = await sb<{
+  const blogRes = await sb<{
     title: string;
     slug: string;
     content_markdown: string | null;
@@ -254,7 +306,7 @@ async function buildLlmsFull() {
     "blog_articles?select=title,slug,content_markdown,meta_description,published_at,tags&status=eq.published&order=published_at.desc.nullslast",
   );
 
-  const journal = await sb<{
+  const journalRes = await sb<{
     title: string;
     slug: string;
     body_md: string | null;
@@ -264,7 +316,7 @@ async function buildLlmsFull() {
     "journal_articles?select=title,slug,body_md,summary_short,published_at&status=eq.published&order=published_at.desc.nullslast",
   );
 
-  const aiEntities = await sb<{
+  const aiRes = await sb<{
     slug: string;
     company_name: string;
     primary_service: string | null;
@@ -273,6 +325,14 @@ async function buildLlmsFull() {
   }>(
     "ai_entities?select=slug,company_name,primary_service,primary_city,ai_summary&published=eq.true",
   );
+
+  if (!blogRes.ok || !journalRes.ok || !aiRes.ok) {
+    failures.push("llms-full.txt: source read failed — kept previous file");
+    return null;
+  }
+  const blog = blogRes.rows;
+  const journal = journalRes.rows;
+  const aiEntities = aiRes.rows;
 
   const out: string[] = [];
   out.push("# UNPRO — Corpus complet pour moteurs de recherche IA");
@@ -335,59 +395,52 @@ async function buildLlmsFull() {
   out.push("Auteur: UNPRO (plateforme d'intelligence résidentielle québécoise)");
   out.push("Licence: contenu public, citation avec lien vers l'URL canonique.");
 
-  writeFileSync(resolve("public/llms-full.txt"), out.join("\n"));
+  // Skip rewrites that would only change the generation timestamp.
+  const next = out.join("\n");
+  const prev = readPublic("llms-full.txt");
+  const strip = (t: string) => t.replace(/^> Généré: .*$/m, "");
+  if (!prev || strip(prev) !== strip(next)) writeFileSync(resolve("public/llms-full.txt"), next);
   return { blog: blog.length, journal: journal.length, aiEntities: aiEntities.length };
 }
 
 // --------------------------------------------------------------------------
 // Main
 // --------------------------------------------------------------------------
+const SUB_SITEMAPS = [
+  "sitemap-pages.xml",
+  "sitemap-blog.xml",
+  "sitemap-journal.xml",
+  "sitemap-ai-entities.xml",
+  "sitemap-problems.xml",
+  "sitemap-contractors.xml",
+  "sitemap-seo-pages.xml",
+  "sitemap-articles.xml",
+];
+
 async function main() {
   try {
-    const [pages, blog, journal, ai, problems, contractors] = await Promise.all([
+    const [pages, blog, journal, ai, problems, contractors, seoPages, seoArticles] = await Promise.all([
       buildPages(),
       buildBlog(),
       buildJournal(),
       buildAiEntities(),
       buildProblems(),
       buildContractors(),
+      buildSeoPages(),
+      buildSeoArticles(),
     ]);
-
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
-
+    buildIndex(SUB_SITEMAPS);
     const corpus = await buildLlmsFull();
-
     console.log(
-      `[sitemaps] pages=${pages} blog=${blog} journal=${journal} ai=${ai} problems=${problems} contractors=${contractors} | llms-full: blog=${corpus.blog} journal=${corpus.journal} ai=${corpus.aiEntities}`,
+      `[sitemaps] pages=${pages} blog=${blog} journal=${journal} ai=${ai} problems=${problems} contractors=${contractors} seo_pages=${seoPages} articles=${seoArticles}` +
+        (corpus ? ` | llms-full: blog=${corpus.blog} journal=${corpus.journal} ai=${corpus.aiEntities}` : " | llms-full: kept"),
     );
   } catch (e) {
-    console.warn(`[sitemaps] fatal: ${e instanceof Error ? e.message : e} — writing empty fallbacks`);
-    for (const f of [
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]) {
-      writeSitemap(f, []);
-    }
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
-    writeFileSync(resolve("public/llms-full.txt"), "# UNPRO — corpus indisponible\n");
+    // Never replace valid artifacts with empty fallbacks: keep what is on disk.
+    failures.push(`fatal: ${e instanceof Error ? e.message : e}`);
+  }
+  if (failures.length) {
+    console.error(`[sitemaps] ⚠️ ${failures.length} issue(s) — previous artifacts preserved:\n  - ${failures.join("\n  - ")}`);
   }
 }
 

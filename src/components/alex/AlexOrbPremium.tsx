@@ -151,7 +151,7 @@ export default function AlexOrbPremium({
 
       {showLabel && (
         <div className="flex flex-col items-center gap-0.5 select-none">
-          <span className="text-[15px] font-bold tracking-[0.22em] text-foreground">ALEX</span>
+          <span className="text-[15px] font-bold tracking-[0.22em] text-foreground">CLARA</span>
           <span className="text-[11px] text-muted-foreground">Assistant projet maison</span>
         </div>
       )}

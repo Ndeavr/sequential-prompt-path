@@ -152,7 +152,7 @@ export default function HeroOrbMockup() {
         </div>
 
         <div className="mt-2 flex items-center gap-3">
-          <span className="text-foreground text-lg font-bold tracking-[0.35em]">ALEX</span>
+          <span className="text-foreground text-lg font-bold tracking-[0.35em]">CLARA</span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/15 border border-success/30">
             <span className="relative flex w-1.5 h-1.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-70 animate-ping" />

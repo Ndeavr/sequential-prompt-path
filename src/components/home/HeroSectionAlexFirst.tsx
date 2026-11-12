@@ -166,7 +166,7 @@ export default function HeroSectionAlexFirst() {
             }}
           >
             <Sparkles className="h-3 w-3" />
-            <span>ALEX · CONSEILLER IA D'INTELLIGENCE RÉSIDENTIELLE</span>
+            <span>CLARA · CONSEILLÈRE IA D'INTELLIGENCE RÉSIDENTIELLE</span>
           </div>
 
           {/* H1 — instant LCP, no animation */}
