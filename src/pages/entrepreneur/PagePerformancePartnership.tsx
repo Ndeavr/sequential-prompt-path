@@ -1,12 +1,13 @@
 /**
  * UNPRO — Landing « Partenariat performance » (/partenariat-performance, /en/performance-partnership).
- * Destination publicitaire : partage des profits des seuls contrats attribuables, sur entente écrite.
+ * Destination publicitaire : formules de partage négociables (profits globaux, profits de certains contrats,
+ * revenus supplémentaires), toujours sur entente écrite.
  * Aucun taux, garantie, exclusivité ni montant affiché. Le rendez-vous réutilise FounderMeetingRequest
  * (agenda réel du fondateur si disponible, sinon demande en attente) avec le sujet « partenariat ».
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowRight, CalendarDays, FileSignature, Handshake, Megaphone, MessageSquare, SearchCheck, Scale, Target } from "lucide-react";
+import { ArrowDown, ArrowRight, CalendarDays, FileCheck2, FileSignature, Handshake, Megaphone, MessageSquare, PieChart, SearchCheck, Scale, Target, TrendingUp } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SchemaStack from "@/seo/components/SchemaStack";
@@ -24,11 +25,19 @@ type Lang = "fr" | "en";
 const C = {
   fr: {
     title: "Partenariat performance pour entrepreneurs | UNPRO",
-    description: "Prenons une heure pour évaluer votre potentiel de croissance. Si nos entreprises sont compatibles, UNPRO est rémunérée sur les profits des contrats obtenus grâce à notre collaboration, selon une entente écrite.",
+    description: "Prenons une heure pour évaluer votre potentiel de croissance. Si nous sommes compatibles, trouvons ensemble une formule de partage qui aligne nos intérêts, selon une entente personnalisée.",
     eyebrow: "Partenariats sur invitation, selon admissibilité",
     h1: "Votre entreprise a du potentiel. Et si on partageait les profits de sa croissance ?",
     lead: "Vous gérez vos campagnes publicitaires vous-même ou avec une agence ? Prenons une heure pour évaluer vos objectifs, vos besoins et vos possibilités de croissance.",
-    lead2: "Si nos entreprises sont compatibles, nous pourrions établir un partenariat où UNPRO est rémunérée uniquement sur les profits des contrats obtenus grâce à notre collaboration, selon une entente écrite.",
+    lead2: "Si nous sommes compatibles, trouvons ensemble une formule qui aligne nos intérêts : partage des profits globaux, des profits sur certains contrats ou des revenus supplémentaires — selon une entente personnalisée.",
+    modelsTitle: "Plusieurs façons de partager la croissance",
+    modelsIntro: "Voici des exemples de formules envisageables. Ce ne sont ni des offres automatiques ni des conditions fixes : la formule est choisie ensemble, selon votre situation.",
+    models: [
+      { t: "Profits globaux", d: "Un partage des profits de l'entreprise ou d'un périmètre convenu (par exemple une division, un service ou un territoire)." },
+      { t: "Profits sur certains contrats", d: "Un partage des profits des contrats obtenus ou attribués à la collaboration, selon une méthode d'attribution convenue." },
+      { t: "Revenus supplémentaires", d: "Un partage de la croissance incrémentale attribuable au partenariat, mesurée par rapport à une période de référence." },
+    ],
+    modelsNote: "Exemples seulement : rien n'est garanti et aucun taux n'est fixé d'avance.",
     cta: "Évaluer mon potentiel — prendre rendez-vous",
     cta2: "Comment fonctionne ce partenariat ?",
     investTitle: "Vous investissez déjà pour trouver des clients",
@@ -37,14 +46,14 @@ const C = {
       { t: "Du temps en soumissions", d: "Chaque demande demande des appels, des visites et des soumissions, qu'elle se transforme en contrat ou non." },
       { t: "Des résultats à mesurer", d: "Savoir quelles dépenses mènent réellement à des contrats signés n'est pas toujours simple." },
     ],
-    alignTitle: "Et si nos intérêts étaient alignés ?",
-    align: "Dans ce partenariat, la rémunération d'UNPRO est reliée aux résultats réels attribuables à notre collaboration. Elle ne porte ni sur l'ensemble de vos revenus, ni sur vos contrats existants, ni sur des contrats qui ne nous sont pas attribuables.",
-    alignListTitle: "L'entente écrite définit notamment :",
+    alignTitle: "Des intérêts alignés, des règles claires",
+    align: "Quelle que soit la formule, la rémunération d'UNPRO suit la croissance de votre entreprise. Tout est défini par écrit et accepté par les deux parties avant le début de la collaboration.",
+    alignListTitle: "L'entente écrite précise notamment :",
     alignList: [
-      "ce qui constitue un profit admissible et les coûts imputables;",
-      "la méthode d'attribution d'un contrat à la collaboration;",
-      "la preuve du contrat et l'événement qui déclenche le paiement;",
-      "le traitement des annulations et des remboursements;",
+      "la base de calcul : profits nets ou bruts, revenus additionnels, périmètre et période de référence;",
+      "les coûts imputables et, si la formule en dépend, la méthode d'attribution;",
+      "les seuils, la durée et les obligations de chacun;",
+      "les preuves requises, l'événement qui déclenche le paiement, les annulations et les remboursements;",
       "le taux et les autres modalités, convenus avec vous.",
     ],
     stepsTitle: "Trois étapes, sans engagement au départ",
@@ -60,7 +69,8 @@ const C = {
     faqTitle: "Questions fréquentes",
     faqs: [
       { q: "Dois-je arrêter mon agence ou mes publicités ?", a: "Non, pas automatiquement. Nous regardons ensemble ce que vous faites déjà; la place de chaque outil est discutée au cas par cas." },
-      { q: "Est-ce un pourcentage de tout mon chiffre d'affaires ?", a: "Non. Seuls les profits des contrats attribuables à notre collaboration sont visés, selon les définitions de l'entente écrite." },
+      { q: "Est-ce un pourcentage de tout mon chiffre d'affaires ?", a: "Pas nécessairement. Selon la formule retenue, le partage peut porter sur les profits globaux d'un périmètre convenu, sur les profits de certains contrats ou sur les revenus supplémentaires. La base de calcul est définie par écrit." },
+      { q: "Quelle formule me convient ?", a: "Nous en discutons lors de la rencontre. La formule dépend de vos objectifs, de vos données disponibles et de ce qui peut être mesuré de façon fiable." },
       { q: "Est-ce disponible pour toutes les entreprises ?", a: "Non. Le partenariat est offert à certaines entreprises, après évaluation et acceptation écrite." },
       { q: "Quel est le taux ?", a: "Il est convenu avec vous dans l'entente. Aucun taux n'est fixé d'avance sur cette page." },
       { q: "Est-ce que vous garantissez des contrats ?", a: "Non. Aucun contrat, aucun volume et aucune exclusivité ne sont garantis." },
@@ -74,11 +84,19 @@ const C = {
   },
   en: {
     title: "Performance partnership for contractors | UNPRO",
-    description: "Let's take one hour to assess your growth potential. If our businesses are a fit, UNPRO is paid on the profits of contracts obtained through our collaboration, under a written agreement.",
+    description: "Let's take one hour to assess your growth potential. If we are a fit, let's find a sharing formula together that aligns our interests, under a tailored agreement.",
     eyebrow: "Partnerships by invitation, subject to eligibility",
     h1: "Your business has potential. What if we shared the profits of its growth?",
     lead: "Do you run your ad campaigns yourself or with an agency? Let's take one hour to assess your goals, your needs and your growth opportunities.",
-    lead2: "If our businesses are a fit, we could set up a partnership where UNPRO is paid only on the profits of contracts obtained through our collaboration, under a written agreement.",
+    lead2: "If we are a fit, let's find a formula together that aligns our interests: sharing overall profits, profits on certain contracts or additional revenue — under a tailored agreement.",
+    modelsTitle: "Several ways to share growth",
+    modelsIntro: "Here are examples of possible formulas. They are neither automatic offers nor fixed conditions: the formula is chosen together, based on your situation.",
+    models: [
+      { t: "Overall profits", d: "Sharing the profits of the business or of an agreed scope (for example a division, a service or a service area)." },
+      { t: "Profits on certain contracts", d: "Sharing the profits of contracts obtained through or attributed to the collaboration, using an agreed attribution method." },
+      { t: "Additional revenue", d: "Sharing the incremental growth attributable to the partnership, measured against a reference period." },
+    ],
+    modelsNote: "Examples only: nothing is guaranteed and no rate is set in advance.",
     cta: "Assess my potential — book a meeting",
     cta2: "How does this partnership work?",
     investTitle: "You already invest to find clients",
@@ -87,14 +105,14 @@ const C = {
       { t: "Time spent on quotes", d: "Every request takes calls, visits and quotes, whether it becomes a contract or not." },
       { t: "Results to measure", d: "Knowing which spending actually leads to signed contracts is not always simple." },
     ],
-    alignTitle: "What if our interests were aligned?",
-    align: "In this partnership, UNPRO's pay is tied to real results attributable to our collaboration. It does not apply to all of your revenue, to your existing contracts, or to contracts not attributable to us.",
-    alignListTitle: "The written agreement defines, among other things:",
+    alignTitle: "Aligned interests, clear rules",
+    align: "Whatever the formula, UNPRO's pay follows your business's growth. Everything is defined in writing and accepted by both parties before the collaboration starts.",
+    alignListTitle: "The written agreement specifies, among other things:",
     alignList: [
-      "what counts as eligible profit and which costs are deductible;",
-      "how a contract is attributed to the collaboration;",
-      "proof of the contract and the event that triggers payment;",
-      "how cancellations and refunds are handled;",
+      "the calculation base: net or gross profits, additional revenue, scope and reference period;",
+      "deductible costs and, when the formula depends on it, the attribution method;",
+      "thresholds, duration and each party's obligations;",
+      "required proof, the event that triggers payment, cancellations and refunds;",
       "the rate and other terms, agreed with you.",
     ],
     stepsTitle: "Three steps, no commitment to start",
@@ -110,7 +128,8 @@ const C = {
     faqTitle: "Frequently asked questions",
     faqs: [
       { q: "Do I have to stop my agency or my ads?", a: "No, not automatically. We look at what you already do together; the role of each tool is discussed case by case." },
-      { q: "Is it a percentage of all my revenue?", a: "No. Only the profits of contracts attributable to our collaboration are covered, as defined in the written agreement." },
+      { q: "Is it a percentage of all my revenue?", a: "Not necessarily. Depending on the formula chosen, sharing may apply to overall profits of an agreed scope, to profits on certain contracts or to additional revenue. The calculation base is defined in writing." },
+      { q: "Which formula suits me?", a: "We discuss it during the meeting. It depends on your goals, your available data and what can be measured reliably." },
       { q: "Is it available to every business?", a: "No. The partnership is offered to certain businesses, after review and written acceptance." },
       { q: "What is the rate?", a: "It is agreed with you in the agreement. No rate is set in advance on this page." },
       { q: "Do you guarantee contracts?", a: "No. No contracts, volume or exclusivity are guaranteed." },
@@ -143,6 +162,7 @@ export default function PagePerformancePartnership({ lang = "fr" }: { lang?: Lan
   const isFr = lang === "fr";
   const source = useMemo(() => performanceSource(lang), [lang]);
   const investIcons = [Megaphone, MessageSquare, Target];
+  const modelIcons = [PieChart, FileCheck2, TrendingUp];
   const stepIcons = [MessageSquare, SearchCheck, FileSignature];
   const btn = "h-auto min-h-12 whitespace-normal rounded-button px-6 text-base";
 
@@ -208,7 +228,27 @@ export default function PagePerformancePartnership({ lang = "fr" }: { lang?: Lan
           </ul>
         </section>
 
-        <section id={HOW_ID} aria-labelledby="perf-align" className="scroll-mt-24 space-y-4 rounded-[28px] border border-primary/20 bg-card p-6 md:p-8">
+        <section id={HOW_ID} aria-labelledby="perf-models" className="scroll-mt-24 space-y-4">
+          <h2 id="perf-models" className="text-2xl font-semibold text-foreground md:text-3xl">{c.modelsTitle}</h2>
+          <p className="text-base text-muted-foreground">{c.modelsIntro}</p>
+          <ul className="grid gap-4 md:grid-cols-3">
+            {c.models.map((m, i) => {
+              const Icon = modelIcons[i];
+              return (
+                <li key={m.t} className="rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"><Icon className="h-5 w-5" aria-hidden="true" /></span>
+                    <h3 className="text-lg font-semibold text-foreground">{m.t}</h3>
+                  </div>
+                  <p className="mt-3 text-base text-muted-foreground">{m.d}</p>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-sm text-muted-foreground">{c.modelsNote}</p>
+        </section>
+
+        <section aria-labelledby="perf-align" className="space-y-4 rounded-[28px] border border-primary/20 bg-card p-6 md:p-8">
           <div className="flex items-center gap-3">
             <Scale className="h-6 w-6 text-primary" aria-hidden="true" />
             <h2 id="perf-align" className="text-2xl font-semibold text-foreground md:text-3xl">{c.alignTitle}</h2>
