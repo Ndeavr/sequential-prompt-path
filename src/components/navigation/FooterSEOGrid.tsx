@@ -55,6 +55,18 @@ export default function FooterSEOGrid() {
   });
 
   sections.push({
+    title: "Aides et subventions",
+    links: [
+      { to: "/calculateur-subventions", label: "Calculateur de subventions 2026" },
+      { to: "/subventions/fenetres-portes-patio", label: "Subvention fenêtres et portes-patio" },
+      { to: "/subventions/isolation-entretoit", label: "Subvention isolation entretoit" },
+      { to: "/subventions/isolation-fondations", label: "Aide isolation du sous-sol" },
+      { to: "/subventions/thermopompes-logisvert", label: "Thermopompes LogisVert" },
+      { to: "/subventions/calfeutrage-logisvert", label: "Calfeutrage LogisVert" },
+    ],
+  });
+
+  sections.push({
     title: lang === "en" ? "Useful Guides" : "Guides utiles",
     links: mockGuides.map(g => ({
       to: `/guides/${g.slug}`,

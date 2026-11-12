@@ -287,12 +287,29 @@ export default function BlogArticlePage() {
             >
               <Sparkles className="h-4 w-4" /> {lang === "en" ? "Talk to Clara" : "Parler à Clara"}
             </button>
-            <Link
-              to="/decrire-mon-projet"
-              className="inline-flex items-center gap-2 border border-border px-6 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
-            >
-              {lang === "en" ? "Describe my project" : "Décrire mon projet"} <ArrowRight className="h-4 w-4" />
-            </Link>
+            {article.cta_variant === "contractor" ? (
+              <>
+                <Link
+                  to="/entrepreneurs"
+                  className="inline-flex items-center gap-2 border border-border px-6 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
+                >
+                  {lang === "en" ? "Are you a contractor? Introduce your business to Clara." : "Vous êtes entrepreneur? Présentez votre entreprise à Clara."} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/entrepreneurs/audit-ia"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition"
+                >
+                  {lang === "en" ? "Free AI audit" : "Audit IA gratuit"} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/decrire-mon-projet"
+                className="inline-flex items-center gap-2 border border-border px-6 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
+              >
+                {lang === "en" ? "Describe my project" : "Décrire mon projet"} <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
         </motion.div>
       </article>

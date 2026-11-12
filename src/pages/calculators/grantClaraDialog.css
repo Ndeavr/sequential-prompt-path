@@ -1,0 +1,32 @@
+/* Modal de transfert subventions → Clara. Contourne les hauteurs
+   prévues pour le chat d'accueil et reste au-dessus du dock mobile. */
+.grant-clara-dialog {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.grant-clara-dialog .grant-clara-chat .home-clara-shell,
+.grant-clara-dialog .grant-clara-chat .home-clara-shell.is-conversation-active {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.grant-clara-dialog .grant-clara-chat .home-clara-main,
+.grant-clara-dialog .grant-clara-chat .home-clara-shell.is-conversation-active .home-clara-main {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  border: 0;
+  border-radius: 0;
+}
+.grant-clara-dialog .grant-clara-chat .home-context-slot {
+  display: none !important;
+}
+.grant-clara-dialog .grant-clara-chat .home-clara-conversation {
+  min-height: 0;
+}
+@media (max-width: 767px) {
+  .grant-clara-dialog .grant-clara-chat .home-clara-main {
+    border-radius: 0 !important;
+  }
+}

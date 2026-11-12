@@ -1,6 +1,13 @@
 /** Editorial dates represent content changes, never builds or generic row updates. */
 export const EDITORIAL_REVISIONS: Record<string, string> = {
   "/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur": "2026-10-11",
+  "/calculateur-subventions": "2026-11-11",
+  "/subventions/isolation-entretoit": "2026-11-11",
+  "/subventions/fenetres-portes-patio": "2026-11-11",
+  "/subventions/murs-exterieurs": "2026-11-11",
+  "/subventions/isolation-fondations": "2026-11-11",
+  "/subventions/thermopompes-logisvert": "2026-11-11",
+  "/subventions/calfeutrage-logisvert": "2026-11-11",
 };
 
 export function validEditorialDate(value: unknown, now = new Date()): string | undefined {
