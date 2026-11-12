@@ -62,6 +62,20 @@ describe("seo_pages eligibility", () => {
     expect(isSitemapEligibleSeoPage(page({ meta_description: "" }))).toBe(false);
     expect(isSitemapEligibleSeoPage(page({ body_md: "Parlez à Alex. " + "x".repeat(2000) }))).toBe(false);
   });
+  it("excludes legacy alex slugs even when the content now says Clara", () => {
+    const clara = page({
+      slug: "alex-ai-home-assistant",
+      title: "Clara, conseillère IA UNPRO",
+      h1: "Clara, conseillère IA UNPRO",
+      body_md: "Clara vous aide. " + "x".repeat(SEO_PAGE_MIN_BODY_CHARS),
+    });
+    expect(isSitemapEligibleSeoPage(clara)).toBe(false);
+    expect(isSitemapEligibleSeoPage({ ...clara, slug: "montreal/alex" })).toBe(false);
+    expect(isSitemapEligibleSeoPage({ ...clara, slug: "alexandria-renovation" })).toBe(true);
+  });
+  it("generated sitemap-seo-pages.xml lists no legacy alex slug", () => {
+    expect(read("sitemap-seo-pages.xml")).not.toMatch(/\/s\/(?:[^<]*[-/])?alex(?:[-/<])/);
+  });
 });
 
 describe("seo_articles eligibility", () => {

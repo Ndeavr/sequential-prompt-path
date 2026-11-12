@@ -26,6 +26,8 @@ const SEO_PAGE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?$
 const NON_PUBLIC_SLUG = /(^|[-/])(test|demo|draft|brouillon|tmp|qa)([-/]|$)/;
 /** Retired assistant brand: pages still naming it are kept out until their copy is corrected. */
 const RETIRED_ASSISTANT = /\balex\b/i;
+/** Legacy-brand slug segment (e.g. alex-ai-home-assistant): kept routable for compatibility, never listed. */
+const RETIRED_ASSISTANT_SLUG = /(^|[-/])alex([-/]|$)/;
 
 /** Minimum rendered body for a programmatic page (~250 words); thinner templates are not submitted. */
 export const SEO_PAGE_MIN_BODY_CHARS = 1500;
@@ -40,7 +42,7 @@ export interface SeoPageRow {
 }
 
 export function isSitemapEligibleSeoPage(r: SeoPageRow): boolean {
-  if (!r.slug || !SEO_PAGE_SLUG.test(r.slug) || NON_PUBLIC_SLUG.test(r.slug)) return false;
+  if (!r.slug || !SEO_PAGE_SLUG.test(r.slug) || NON_PUBLIC_SLUG.test(r.slug) || RETIRED_ASSISTANT_SLUG.test(r.slug)) return false;
   if (!r.title?.trim() || !r.meta_description?.trim() || !r.h1?.trim()) return false;
   const body = r.body_md ?? "";
   if (body.trim().length < SEO_PAGE_MIN_BODY_CHARS) return false;
