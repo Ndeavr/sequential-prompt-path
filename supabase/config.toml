@@ -270,3 +270,7 @@ project_id = "clmaqdnphbndvmmqvpff"
 
 [functions.calendar-google-selection]
 verify_jwt = false
+
+  # Staged security fix; deploy only after explicit approval.
+  [functions.painting-guest-upload]
+    verify_jwt = false
