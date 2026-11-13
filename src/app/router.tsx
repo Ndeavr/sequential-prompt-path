@@ -34,6 +34,7 @@ const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendati
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
 import PageLanguagePolicy from "@/pages/static/PageLanguagePolicy";
+import ClaraEntrySeoHead from "@/seo/components/ClaraEntrySeoHead";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
@@ -995,11 +996,11 @@ export const AppRouter = () => (
 
         {/* Public */}
         <Route path="/home-intent" element={<Suspense fallback={<LazyFallback />}><PageHomeIntentUNPRO /></Suspense>} />
-        <Route path="/alex" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
-        <Route path="/alex/voice" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
+        <Route path="/alex" element={<Suspense fallback={<LazyFallback />}><ClaraEntrySeoHead /><PageHomeAlexConversationalLite /></Suspense>} />
+        <Route path="/alex/voice" element={<Suspense fallback={<LazyFallback />}><ClaraEntrySeoHead /><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/alex/demo" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationAnimated /></Suspense>} />
-        <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
-        <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
+        <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><ClaraEntrySeoHead /><PageHomeAlexConversationalLite /></Suspense>} />
+        <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><ClaraEntrySeoHead /><PageHomeAlexConversationalLite /></Suspense>} />
         {/* `/` = « La fin des 3 soumissions » (PageHomeSimple). Legacy A/B variants stay on /v2 and /v3. */}
         <Route path="/" element={<HomeWithFeatureFlag />} />
         <Route path="/v2" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantB /></Suspense>} />
@@ -1345,6 +1346,8 @@ export const AppRouter = () => (
 
         {/* Programmatic SEO Pages */}
         <Route path="/s/:slug" element={<SeoPageRenderer />} />
+        {/* City-scoped programmatic slugs (e.g. montreal/couvreur) — canonical /s/:city/:service */}
+        <Route path="/s/:city/:service" element={<SeoPageRenderer />} />
         <Route path="/plan-du-site" element={<SeoSitemapPage />} />
 
         {/* Legacy English routes */}

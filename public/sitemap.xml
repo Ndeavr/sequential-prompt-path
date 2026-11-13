@@ -10,12 +10,12 @@
     <loc>https://unpro.ca/sitemap-journal.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://unpro.ca/sitemap-ai-entities.xml</loc>
-  </sitemap>
-  <sitemap>
     <loc>https://unpro.ca/sitemap-problems.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://unpro.ca/sitemap-contractors.xml</loc>
+    <loc>https://unpro.ca/sitemap-seo-pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://unpro.ca/sitemap-articles.xml</loc>
   </sitemap>
 </sitemapindex>
