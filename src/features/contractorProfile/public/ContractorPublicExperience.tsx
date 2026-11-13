@@ -61,6 +61,7 @@ type ProfileData = ContractorRecord & {
   services?: Array<{ service_name_fr?: string | null }>;
   service_areas?: Array<{ city_name?: string | null }>;
   media?: Array<{ media_type?: string | null; public_url?: string | null; title?: string | null; description?: string | null; alt_text?: string | null }>;
+  public_page?: { custom_sections?: Json | null } | null;
 };
 
 type Props = {
@@ -108,6 +109,19 @@ const tabs = [
 export default function ContractorPublicExperience({ profileData, compact = false }: Props) {
   const contractor = profileData.contractor ?? profileData;
   const contractorId = contractor.id as string | undefined;
+  // Membership is explicitly granted and dated in the public-page metadata;
+  // contractor.created_at is a record creation date, not proof of admission.
+  const customSections = profileData.public_page?.custom_sections;
+  const membership = Array.isArray(customSections)
+    ? customSections.find((section) => section && typeof section === "object" && !Array.isArray(section) && section.type === "membership")
+    : null;
+  const memberSinceRaw = typeof membership?.member_since === "string" ? membership.member_since : null;
+  const memberSince = memberSinceRaw && /^\d{4}-\d{2}-\d{2}$/.test(memberSinceRaw)
+    ? new Date(`${memberSinceRaw}T12:00:00Z`).toLocaleDateString("fr-CA", {
+        day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+      })
+    : null;
+  const membershipLabel = typeof membership?.membership_label === "string" ? membership.membership_label : "Membre UNPRO";
   const website = publicWebsite(contractor.website);
   const phone = contractor.phone?.replace(/[^+\d]/g, "");
   const services = profileData.services ?? [];
@@ -188,6 +202,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
                 {contractor.specialty && <p className="mt-1 text-sm text-text-secondary">{contractor.specialty}</p>}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-text-muted-2">
                   {contractor.city && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{contractor.city}</span>}
+                  {memberSince && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" />{membershipLabel} depuis le {memberSince}</span>}
                   {contractor.public_status === "verified_active" ? (
                     <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" />Vérifié par UNPRO</span>
                   ) : contractor.public_status === "published_pending_verification" ? (
