@@ -19,7 +19,13 @@ async function run(session: Record<string, unknown>, livemode = true, badSignatu
         select: () => q, eq: () => q, limit: () => q,
         insert: (v: Record<string, unknown>) => { value = v; return q; },
         update: (v: Record<string, unknown>) => { value = v; return q; },
-        maybeSingle: async () => ({ data: null, error: null }),
+        // The mocked terminal audit update must return its durable event-id receipt.
+        // All other lookups remain empty, so unpaid sessions cannot acquire entitlements.
+        maybeSingle: async () => ({
+          data: table === "stripe_webhook_events" && value?.processing_status === "processed"
+            ? { stripe_event_id: event.id } : null,
+          error: null,
+        }),
         then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
           if (value) writes.push({ table, value });
           return Promise.resolve({ data: null, error: null }).then(res, rej);
@@ -98,6 +104,24 @@ describe("P0: legacy pack_350 Checkout must reject free or discounted payment", 
     expect(result.sensitiveCalls).toBe(0);
     expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
     expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
+  });
+});
+
+// A completed asynchronous checkout may still be unpaid. The fallback wallet is
+// a separate $350 offer; neither credits nor paid funnel events are authorized
+// until the signed Stripe session explicitly reports payment_status='paid'.
+describe("P0: completed/unpaid fallback credit never acts like a paid checkout", () => {
+  it.each(["unpaid", "no_payment_required"])("does not grant $350 or label payment succeeded for %s", async (payment_status) => {
+    const result = await run({
+      ...session("fallback_credit_350"),
+      status: "complete",
+      payment_status,
+    });
+    expect(result.status).toBe(200);
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some(w => w.value.step === "stripe_payment_succeeded")).toBe(false);
+    expect(result.writes.some(w => w.value.transaction_type === "fallback_credit_350")).toBe(false);
+    expect(result.writes.some(w => w.value.event_type === "fallback_350_payment_success")).toBe(false);
   });
 });
 
