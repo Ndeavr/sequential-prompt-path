@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
             tradeSecondary: str(input.trade_secondary),
             planName: quote.recommended_plan,
             planPrice: quote.recommended_monthly_price
-              ? `${quote.recommended_monthly_price} $/mois`
+              ? `${(quote.recommended_monthly_price / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} $/mois`
               : undefined,
             abandonStep: "Plan présenté, paiement non complété",
             source: quote.source,
