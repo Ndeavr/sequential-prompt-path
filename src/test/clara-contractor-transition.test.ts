@@ -34,7 +34,8 @@ describe("Clara — transition entrepreneur", () => {
 describe("Clara — choix entrepreneur pilotés par l'audience", () => {
   it("remplace les choix propriétaire et navigue après 3 pulsations", () => {
     // Propriétaire par défaut, sauf entrée entrepreneur forcée ou reprise de la même conversation.
-    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => activeCampaign \? "homeowner" : forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
+    expect(box).toContain("const forcedHomeowner = Boolean(grantHandoff);");
+    expect(box).toMatch(/useState<ClaraAudience>\(\(\) => activeCampaign \|\| forcedHomeowner \? "homeowner" : forcedContractor \|\| hasActiveContractorFlow\(\) \? "contractor" : "homeowner"\)/);
     expect(box).toContain("Vérifier mon score IA");
     expect(box).toContain("Obtenir plus de contrats");
     expect(box).toContain("Compléter mon profil");
