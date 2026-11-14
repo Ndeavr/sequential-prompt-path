@@ -15,51 +15,75 @@
   - CTA secondaire vers /entrepreneurs/activation-350 (offre existante).
   - UTM : https://unpro.ca/entrepreneurs/ca-depend?utm_source=facebook&utm_medium=organic&utm_campaign=ca_depend_202611&utm_content=entrepreneurs
 
-### Post Facebook 1 — propriétaires (principal)
+### Dialogue central — vidéo / carrousel (environ 30–40 secondes)
 
-« Bonjour! J'ai un gros projet à réaliser le mois prochain. Vous êtes disponible? »
+**CLIENT :** « Êtes-vous ben occupé ces temps-ci? »
 
-« Ouf… on est pas mal occupés. »
+**ENTREPRENEUR :** « Ah, accoté, accoté! »
 
-« Pas grave! Je vais appeler une autre entreprise. »
+**CLIENT :** « Faque si j'ai un beau projet, vous pouvez pu en prendre, c'est ça? »
 
-« Attendez… ça dépend! C'est quoi, votre projet? » 👀
+**ENTREPRENEUR :** « Ben… ça dépend! »
 
-**La disponibilité, ce n'est pas toujours oui ou non.**
+**CLIENT :** « Ça dépend? Vous avez jamais de périodes creuses? »
 
-Un entrepreneur peut être trop occupé pour certains travaux… mais très intéressé par les vôtres.
+**ENTREPRENEUR :** « Bien sûr! Des fois on est débordés, pis des fois ça se calme. C'est quoi le projet, pis pour quand? »
 
-Avec Clara sur UNPRO, commencez par expliquer votre projet, vos priorités et votre échéancier. Nous cherchons ensuite un professionnel qui correspond réellement à votre demande, sous réserve de son admissibilité et de ses disponibilités.
+*Pause, regard caméra.*
 
-🏠 **Rénovation · Construction · Entretien · Services**
+**VOIX OFF :** « Accoté aujourd'hui, ça veut pas dire complet le mois prochain. Ni pour tous les projets. »
 
-👉 Décrivez votre projet : [insérer l'URL UTM propriétaires après publication]
+**UNPRO / CLARA :** « Dites à Clara quels projets vous recherchez et à quel moment vous pourriez avoir de la place. Elle peut tenir compte de vos préférences pour trouver de meilleures compatibilités. »
 
-#UNPRO #Rénovation #Construction #Entrepreneurs
+**SIGNATURE :** **« Trop occupé? Ça dépend! »**
 
-### Post Facebook 2 — entrepreneurs (conversion)
+### Post Facebook 1 — propriétaires
 
-**« J'ai un gros projet le mois prochain. Vous êtes disponible? »**
+🏠 **« Êtes-vous ben occupé ces temps-ci? »**
 
-— « On est pas mal occupés… »
+— « Ah, accoté, accoté! »
 
-— « Aucun problème, je vais appeler ailleurs. »
+— « Faque si j'ai un beau projet, vous pouvez pu en prendre, c'est ça? »
 
-*Puis l'entrepreneur réfléchit…*
+— « Ben… ça dépend! »
 
-— « Attendez… ça dépend! C'est quel genre de projet? »
+— « Vous avez jamais de périodes creuses? » 👀
 
-**Vous n'êtes pas nécessairement trop occupé. Vous êtes peut-être trop occupé pour les mauvais projets.**
+Un entrepreneur peut être débordé cette semaine… et avoir de la place le mois prochain. Pour le bon projet, dans le bon secteur, au bon moment.
 
-Isolation d'entretoit plutôt que murs? Rénovations majeures plutôt que petites réparations? Secteurs précis seulement?
+**C'est pour ça qu'UNPRO commence par comprendre votre projet, pas seulement par demander qui est libre aujourd'hui.**
 
-Dites à Clara quels contrats vous recherchez, ceux que vous refusez et où vous souhaitez travailler. UNPRO utilise ces préférences pour mieux qualifier les compatibilités.
+Expliquez votre projet à Clara : nature des travaux, échéancier, secteur et priorités. UNPRO cherche ensuite une entreprise compatible et admissible, selon les disponibilités confirmées.
 
-👉 Préparez votre profil : [insérer l'URL UTM entrepreneurs après publication]
+👉 Décrivez votre projet : [lien campagne propriétaires après publication]
 
-**UNPRO — Les bons projets. Les bons professionnels. Au bon moment.**
+Rénovation · Construction · Entretien · Services
 
-*Note d'offre, si le post mentionne le prix : profil et 12 mois de présence UNPRO, 350 $ + taxes applicables. Aucun rendez-vous inclus par défaut.*
+#UNPRO #Rénovation #Construction
+
+### Post Facebook 2 — entrepreneurs (principal)
+
+🏗️ **« Êtes-vous ben occupé ces temps-ci? »**
+
+— « Ah, accoté, accoté! »
+
+— « Faque si j'ai un beau projet, vous pouvez pu en prendre, c'est ça? »
+
+— **« Ben… ça dépend! »** 👀
+
+Et voilà!
+
+Vous êtes peut-être complet aujourd'hui… mais dans deux semaines? Le mois prochain? Quand vos gros chantiers seront terminés?
+
+**Vous n'avez pas besoin de plus de demandes aujourd'hui. Vous avez besoin des bons projets pour les bonnes périodes.**
+
+Avec Clara sur UNPRO, indiquez les types de mandats recherchés, votre territoire et vos périodes habituellement plus tranquilles. Ces préférences peuvent aider à rechercher des jumelages compatibles.
+
+👉 Préparez votre profil : [lien campagne entrepreneurs après publication]
+
+**UNPRO — Le bon projet. Le bon entrepreneur. Au bon moment.**
+
+*L'activation à 350 $ + taxes applicables comprend le profil et 12 mois de présence UNPRO; aucun rendez-vous inclus par défaut.*
 
 ### Commentaire épinglé (sur le post entrepreneurs)
 
@@ -67,17 +91,15 @@ Vous avez des spécialités, des exclusions ou des territoires particuliers? C'e
 
 ### Variation courte pour test éditorial
 
-« Désolé, on est complet. » 😬
+« Accoté, accoté! »
 
-« Même pour un projet de 125 000 $ avec les plans prêts? »
+« Faque… jamais de périodes creuses? »
 
-« Ah… ça dépend! » 👀
+« Ben… ça dépend! » 👀
 
-**Le problème, ce n'est pas toujours la disponibilité. C'est le manque d'information.**
+**La bonne question : quel projet, et pour quand?**
 
-Clara aide à qualifier ce qui compte vraiment, avant de chercher un entrepreneur compatible. [lien propriétaires]
-
-*Le chiffre de 125 000 $ est un exemple fictif, pas une demande réelle ni une promesse de contrat.*
+Clara sur UNPRO peut prendre en compte les préférences et les disponibilités réelles des entrepreneurs. [lien après publication]
 
 ## Création / modération
 
