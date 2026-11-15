@@ -65,7 +65,7 @@ export function composeDeclaredAddress(p: DeclaredAddressParts): string {
 
 /** Declared parts complete enough to continue (street + city, valid postal code if typed). */
 export function getCompleteDeclaredAddress(addr: VerifiedAddress | null | undefined): DeclaredAddressParts | null {
-  if (!addr || addr.verified || !addr.declared) return null;
+  if (!addr || addr.verified !== false || !addr.declared) return null;
   const d = addr.declared;
   if (d.street.trim().length < 4 || d.city.trim().length < 2 || !isValidPostalCode(d.postalCode)) return null;
   return {
