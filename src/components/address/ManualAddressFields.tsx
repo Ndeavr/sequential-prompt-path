@@ -24,14 +24,14 @@ interface Props {
 }
 
 function initialParts(value: VerifiedAddress | null | undefined): DeclaredAddressParts {
-  if (value && !value.verified && value.declared) return value.declared;
-  if (value && value.verified) {
+  if (value?.verified === false && value.declared) return value.declared;
+  if (value?.verified === true) {
     return {
       street: [value.streetNumber, value.streetName].filter(Boolean).join(" ") || value.fullAddress,
       unit: value.unit, city: value.city, province: value.province || "QC", postalCode: value.postalCode,
     };
   }
-  return { street: value && !value.verified ? value.raw : "", unit: "", city: "", province: "QC", postalCode: "" };
+  return { street: value?.verified === false ? value.raw : "", unit: "", city: "", province: "QC", postalCode: "" };
 }
 
 export default function ManualAddressFields({ value, onChange, label = "Adresse", required, showUnitField = true }: Props) {
