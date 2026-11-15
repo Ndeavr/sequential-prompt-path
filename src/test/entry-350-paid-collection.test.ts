@@ -16,7 +16,7 @@ async function run(session: Record<string, unknown>, livemode = true, badSignatu
       if (sensitive.has(table)) { sensitiveCalls++; throw new Error("Activation forbidden"); }
       let value: Record<string, unknown> | undefined;
       const q: any = {
-        select: () => q, eq: () => q, limit: () => q,
+        select: () => q, eq: () => q, limit: () => q, order: () => q, neq: () => q, in: () => q,
         insert: (v: Record<string, unknown>) => { value = v; return q; },
         update: (v: Record<string, unknown>) => { value = v; return q; },
         maybeSingle: async () => ({ data: null, error: null }),
@@ -122,5 +122,30 @@ describe("tax contracts and legacy separation", () => {
     for (const values of [{ amount_total: null }, { amount_total: NaN }, { total_details: { amount_tax: -1 } }]) {
       expect(guards.entry350PaymentBlockReason({ ...session("entry_pack_350"), ...values })).toBe("ignored_amount_mismatch");
     }
+  });
+});
+
+describe("P0: completed homeowner Checkout must not grant an unpaid subscription", () => {
+  const homeownerCheckout = (payment_status: string, amount_total: number) => ({
+    ...session("legacy_homeowner"),
+    payment_status,
+    amount_total,
+    metadata: { plan_type: "homeowner", plan_code: "plus", user_id: "fixture-homeowner" },
+  });
+
+  it("does not activate a completed-but-unpaid Checkout", async () => {
+    const result = await run(homeownerCheckout("unpaid", 4900));
+    expect(result.status).toBe(200);
+    expect(result.writes.some(w => w.table === "homeowner_subscriptions")).toBe(false);
+    expect(result.sensitiveCalls).toBe(0);
+  });
+
+  it("preserves legitimate zero-cost Checkout entitlements", async () => {
+    const result = await run(homeownerCheckout("no_payment_required", 0));
+    expect(result.status).toBe(200);
+    expect(result.writes.some(w =>
+      w.table === "homeowner_subscriptions" && w.value.status === "active"
+    )).toBe(true);
+    expect(result.sensitiveCalls).toBe(0);
   });
 });
