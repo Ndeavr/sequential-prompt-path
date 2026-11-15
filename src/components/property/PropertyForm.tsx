@@ -8,7 +8,7 @@ import { useCreateProperty } from "@/hooks/usePropertyPassport";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import AddressVerifiedInput from "@/components/address/AddressVerifiedInput";
-import { emptyAddress, isVerified, type VerifiedAddress } from "@/types/address";
+import { emptyAddress, getCompleteDeclaredAddress, isUsableAddress, isVerified, type VerifiedAddress } from "@/types/address";
 
 const PROPERTY_TYPES = [
   { value: "unifamiliale", label: "Maison unifamiliale" },
@@ -36,22 +36,29 @@ export default function PropertyForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isVerified(address)) {
-      toast.error("Veuillez sélectionner une adresse vérifiée dans la liste.");
+    const declared = getCompleteDeclaredAddress(address);
+    if (!isVerified(address) && !declared) {
+      toast.error("Indiquez au moins le numéro, la rue et la ville.");
       return;
     }
 
     try {
-      const fullAddress = address.unit
-        ? `${address.streetNumber} ${address.streetName}, app. ${address.unit}, ${address.city}, ${address.province} ${address.postalCode}`
-        : address.fullAddress;
+      // Verified (Google) or declared by the user: a declared address is saved
+      // as typed, without coordinates, and never shown as verified.
+      const parts = isVerified(address)
+        ? { address: address.unit
+              ? `${address.streetNumber} ${address.streetName}, app. ${address.unit}, ${address.city}, ${address.province} ${address.postalCode}`
+              : address.fullAddress,
+            city: address.city, province: address.province, postal_code: address.postalCode, country: address.country || "CA" }
+        : { address: declared!.unit ? `${declared!.street}, app. ${declared!.unit}` : declared!.street,
+            city: declared!.city, province: declared!.province, postal_code: declared!.postalCode, country: "CA" };
 
       const data = await create.mutateAsync({
-        address: fullAddress,
-        city: address.city || undefined,
-        province: address.province || undefined,
-        postal_code: address.postalCode || undefined,
-        country: address.country || "CA",
+        address: parts.address,
+        city: parts.city || undefined,
+        province: parts.province || undefined,
+        postal_code: parts.postal_code || undefined,
+        country: parts.country,
         property_type: form.property_type || undefined,
         year_built: form.year_built ? parseInt(form.year_built) : undefined,
         square_footage: form.square_footage ? parseInt(form.square_footage) : undefined,
@@ -107,7 +114,7 @@ export default function PropertyForm() {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={create.isPending || !isVerified(address)}>
+        <Button type="submit" disabled={create.isPending || !isUsableAddress(address)}>
           {create.isPending ? (
             <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Création...</>
           ) : (

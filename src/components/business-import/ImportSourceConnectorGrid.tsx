@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Globe, Search, CreditCard, Shield, Building2, Phone, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { ADDRESS_AUTOCOMPLETE_ENABLED } from "@/lib/addressAutocompleteConfig";
 
 export type ImportSource = "business_card" | "website" | "gmb" | "rbq" | "neq" | "phone";
 
@@ -69,7 +70,8 @@ const SOURCES: {
 export default function ImportSourceConnectorGrid({ onSelectSource }: ImportSourceConnectorGridProps) {
   return (
     <div className="space-y-2.5">
-      {SOURCES.map((s, i) => (
+      {/* Google Business search uses paid Google Places: hidden while the paid lookup is off. */}
+      {SOURCES.filter((s) => ADDRESS_AUTOCOMPLETE_ENABLED || s.id !== "gmb").map((s, i) => (
         <motion.div
           key={s.id}
           initial={{ opacity: 0, y: 10 }}

@@ -1,7 +1,9 @@
 /**
  * UNPRO — AddressVerifiedInput
- * Single, mandatory-verification address capture used everywhere.
- * The user MUST select a Google Places suggestion. Free text is rejected.
+ * Address capture used everywhere. With the paid Google lookup switched on,
+ * a selected suggestion becomes a VERIFIED address. With it off (launch
+ * default) or after "Saisir manuellement", the user fills manual fields and
+ * the address stays DECLARED (never shown as verified).
  */
 import { useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAddressAutocomplete, type AddressPrediction } from "@/hooks/useAddressAutocomplete";
 import type { VerifiedAddress } from "@/types/address";
 import { emptyAddress, isVerified } from "@/types/address";
+import ManualAddressFields from "./ManualAddressFields";
 
 interface AddressVerifiedInputProps {
   value: VerifiedAddress | null | undefined;
@@ -46,7 +49,7 @@ export default function AddressVerifiedInput({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [resolving, setResolving] = useState(false);
 
-  const { predictions, isLoading, error: serviceError, search, fetchDetails, reset } = useAddressAutocomplete();
+  const { predictions, isLoading, error: serviceError, search, fetchDetails, reset, enabled } = useAddressAutocomplete();
   const [manualMode, setManualMode] = useState(false);
 
   // Keep draft in sync if parent value changes externally (e.g. reset)
@@ -126,6 +129,14 @@ export default function AddressVerifiedInput({
     if (!isVerified(value)) return;
     onChange({ ...value, unit: unit || undefined });
   };
+
+  if (!enabled || (manualMode && !verified)) {
+    return (
+      <div ref={containerRef} className={className}>
+        <ManualAddressFields value={value} onChange={onChange} label={label} required={required} showUnitField={showUnitField} />
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={cn("space-y-2", className)}>

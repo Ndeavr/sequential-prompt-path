@@ -3,6 +3,8 @@
  * Uses our `google-places-autocomplete` Edge Function as a proxy.
  * The Google API key never leaves the server, avoiding RefererNotAllowed errors
  * and removing the need to load the Google Maps JS SDK on the client.
+ * When the paid lookup is switched off (launch default), this is a plain
+ * address field: what the user types is a DECLARED address, never verified.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -44,7 +46,7 @@ export default function GooglePlacesInput({
 }: GooglePlacesInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { predictions, isLoading, error, search, fetchDetails, reset } = useAddressAutocomplete();
+  const { predictions, isLoading, error, search, fetchDetails, reset, enabled } = useAddressAutocomplete();
   const [isOpen, setIsOpen] = useState(false);
 
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -100,6 +102,25 @@ export default function GooglePlacesInput({
       setIsOpen(false);
     }
   };
+
+  if (!enabled) {
+    return (
+      <div ref={containerRef} className={cn("relative", className)} data-address-mode="declared">
+        <MapPin className="absolute left-4 top-[1.6rem] -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" aria-hidden />
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          aria-label={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-4 shadow-sm w-full"
+          autoComplete="street-address"
+        />
+        <p className="mt-2 text-xs text-muted-foreground">Adresse déclarée : elle sera confirmée plus tard.</p>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>

@@ -34,7 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import AddressVerifiedInput from "@/components/address/AddressVerifiedInput";
-import { emptyAddress, isVerified, type VerifiedAddress } from "@/types/address";
+import { composeDeclaredAddress, emptyAddress, getCompleteDeclaredAddress, isUsableAddress, isVerified, type VerifiedAddress } from "@/types/address";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent, getFunnelAttribution } from "@/lib/analytics/logFunnelEvent";
 import { toast } from "sonner";
@@ -282,8 +282,8 @@ export default function PageRenovationEstimator() {
     });
   };
 
-  /** Conversion permise seulement avec prénom et adresse vérifiée Google. */
-  const canSave = isVerified(address) && firstName.trim().length >= 2;
+  /** Conversion permise avec prénom et adresse vérifiée Google OU déclarée complète (non géocodée). */
+  const canSave = isUsableAddress(address) && firstName.trim().length >= 2;
 
   const startSave = () => {
     setSaveOpen(true);
@@ -306,7 +306,8 @@ export default function PageRenovationEstimator() {
       return;
     }
     const verified = isVerified(address) ? address : null;
-    if (!verified || firstName.trim().length < 2) {
+    const declared = verified ? null : getCompleteDeclaredAddress(address);
+    if ((!verified && !declared) || firstName.trim().length < 2) {
       setSaveError(
         "Indiquez votre prénom et confirmez l'adresse du projet pour enregistrer votre estimation.",
       );
@@ -322,11 +323,12 @@ export default function PageRenovationEstimator() {
         email: email.trim() || null,
         category,
         category_label: def.label,
-        city: verified.city ?? cityName ?? null,
-        postal_code: verified.postalCode ?? null,
-        address: verified.fullAddress,
-        latitude: verified.latitude ?? null,
-        longitude: verified.longitude ?? null,
+        // Declared address: saved as typed, no coordinates invented.
+        city: verified ? (verified.city ?? cityName ?? null) : declared!.city,
+        postal_code: verified ? (verified.postalCode ?? null) : (declared!.postalCode || null),
+        address: verified ? verified.fullAddress : composeDeclaredAddress(declared!),
+        latitude: verified?.latitude ?? null,
+        longitude: verified?.longitude ?? null,
         property_type: propertyKind,
         budget_min: estimate.totalMin,
         budget_max: estimate.totalMax,
@@ -948,10 +950,9 @@ export default function PageRenovationEstimator() {
                         label="Adresse du projet (obligatoire)"
                         showUnitField={false}
                       />
-                      {!isVerified(address) && (
+                      {!isUsableAddress(address) && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Sélectionnez votre adresse dans la liste proposée pour qu'elle soit
-                          confirmée.
+                          Indiquez au moins le numéro, la rue et la ville.
                         </p>
                       )}
                     </div>

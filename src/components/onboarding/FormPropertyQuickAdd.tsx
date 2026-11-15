@@ -1,11 +1,11 @@
 /**
  * UNPRO — Quick Property Add Form (homeowner onboarding step 2)
- * Address must be verified through Google Places.
+ * Address is verified (Google) or declared manually (never shown as verified).
  */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import AddressVerifiedInput from "@/components/address/AddressVerifiedInput";
-import { emptyAddress, isVerified, type VerifiedAddress } from "@/types/address";
+import { emptyAddress, getCompleteDeclaredAddress, isUsableAddress, isVerified, type VerifiedAddress } from "@/types/address";
 
 const PROPERTY_TYPES = [
   { value: "maison", label: "Maison" },
@@ -31,10 +31,20 @@ export default function FormPropertyQuickAdd({ onSave, loading }: FormPropertyQu
   const [address, setAddress] = useState<VerifiedAddress>(emptyAddress());
   const [propertyType, setPropertyType] = useState("");
 
-  const isValid = isVerified(address) && propertyType;
+  const isValid = isUsableAddress(address) && propertyType;
 
   const handleSubmit = () => {
-    if (!isVerified(address)) return;
+    if (!isVerified(address)) {
+      const declared = getCompleteDeclaredAddress(address);
+      if (!declared) return;
+      onSave({
+        address_line_1: declared.unit ? `${declared.street}, app. ${declared.unit}` : declared.street,
+        city: declared.city,
+        postal_code: declared.postalCode,
+        property_type: propertyType,
+      });
+      return;
+    }
     const line1 = address.unit
       ? `${address.streetNumber} ${address.streetName}, app. ${address.unit}`
       : `${address.streetNumber} ${address.streetName}`.trim() || address.fullAddress;
@@ -50,7 +60,7 @@ export default function FormPropertyQuickAdd({ onSave, loading }: FormPropertyQu
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-bold text-foreground">Votre propriété</h2>
-        <p className="text-sm text-muted-foreground mt-1">Recherchez votre adresse pour commencer</p>
+        <p className="text-sm text-muted-foreground mt-1">Indiquez votre adresse pour commencer</p>
       </div>
 
       <div className="space-y-4">

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAddressAccessToken } from "@/services/addressAccessToken";
 import type { VerifiedAddressData } from "@/types/address";
+import { ADDRESS_AUTOCOMPLETE_ENABLED } from "@/lib/addressAutocompleteConfig";
 
 export interface AddressPrediction {
   place_id: string;
@@ -45,6 +46,8 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
 
   const search = useCallback((input: string) => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    // Paid Google lookup switched off: no request, the address stays declared.
+    if (!ADDRESS_AUTOCOMPLETE_ENABLED) return;
     const query = (input || "").trim().toLowerCase().replace(/\s+/g, " ");
     if (query.length >= minChars && query === lastQueryRef.current) return; // saisie inchangée
     const reqId = ++reqIdRef.current;
@@ -112,6 +115,7 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
   }, [region, language, debounceMs, minChars]);
 
   const fetchDetails = useCallback(async (placeId: string): Promise<VerifiedAddressData | null> => {
+    if (!ADDRESS_AUTOCOMPLETE_ENABLED) return null;
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
         "google-places-autocomplete",
@@ -149,5 +153,5 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
     setError(null);
   }, []);
 
-  return { predictions, isLoading, error, search, fetchDetails, reset };
+  return { predictions, isLoading, error, search, fetchDetails, reset, enabled: ADDRESS_AUTOCOMPLETE_ENABLED };
 }

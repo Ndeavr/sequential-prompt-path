@@ -9,6 +9,7 @@ import { ArrowUp, X, Home, MapPin, AlertTriangle, CheckCircle2 } from "lucide-re
 import AlexOrb from "@/components/alex/AlexOrb";
 import type { DesignChatContext } from "@/lib/design/handoff";
 import GooglePlacesInput from "@/components/property/GooglePlacesInput";
+import { ADDRESS_AUTOCOMPLETE_ENABLED } from "@/lib/addressAutocompleteConfig";
 import { openAuthOverlay } from "@/hooks/useAuthOverlay";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -172,7 +173,7 @@ export default function HomeownerVoiceEntryPage({ designContext, onClose }: { de
       {designContext && projectId && <div className="px-4 pb-3"><Button className="w-full" onClick={() => navigate(`/recommendations?project=${encodeURIComponent(projectId)}${leadId ? `&lead=${encodeURIComponent(leadId)}` : ""}`)}>Voir mon entrepreneur recommandé</Button></div>}
       {designContext && lastReply?.metadata?.dossier_error === "auth_required" && <div className="px-4 pb-3"><Button className="w-full" onClick={() => openAuthOverlay({label:"Créer ma demande avec mes photos",returnPath:"/design"})}>Me connecter pour continuer</Button><Button variant="ghost" className="w-full" onClick={() => sendMessage("Continuer avec mon dossier et mes photos")}>Continuer après connexion</Button></div>}
       {designContext && nextQuestion?.ui === "choice" && <div className="px-4 pb-3 flex flex-wrap gap-2">{(nextQuestion.options ?? []).map((option: {value:string;label_fr:string}) => <Button key={option.value} size="sm" variant="outline" disabled={isProcessing} onClick={() => sendMessage(option.label_fr)}>{option.label_fr}</Button>)}</div>}
-      {designContext && nextQuestion?.ui === "address" && <div className="px-4 pb-3"><GooglePlacesInput value={input} onChange={setInput} onPlaceSelect={place => {setInput("");void sendMessage(`Adresse confirmée : ${place.address}, ${place.city ?? ""}, ${place.postalCode ?? ""}`, place);}} placeholder="Choisir l’adresse de la propriété" /></div>}
+      {designContext && nextQuestion?.ui === "address" && <div className="px-4 pb-3"><GooglePlacesInput value={input} onChange={setInput} onPlaceSelect={place => {setInput("");void sendMessage(`Adresse confirmée : ${place.address}, ${place.city ?? ""}, ${place.postalCode ?? ""}`, place);}} placeholder="Choisir l’adresse de la propriété" />{!ADDRESS_AUTOCOMPLETE_ENABLED && <Button className="w-full mt-2" disabled={isProcessing || input.trim().length < 8} onClick={() => { const declared = input.trim(); setInput(""); /* Declared address only: no coordinates, so the server keeps it pending (never confirmed). */ void sendMessage(`Adresse déclarée : ${declared}`); }}>Utiliser cette adresse</Button>}</div>}
       {/* Quick chips (show only at start) */}
       {!designContext && messages.length <= 2 && !isProcessing && (
         <div className="px-4 pb-2">
