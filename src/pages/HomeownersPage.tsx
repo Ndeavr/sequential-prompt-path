@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
@@ -125,7 +125,6 @@ const PRIVACY_POINTS = [
 export default function HomeownersPage() {
   const { isAuthenticated } = useAuth();
   const [address, setAddress] = useState("");
-  const [neighborCount, setNeighborCount] = useState(0);
   const [alexOpen, setAlexOpen] = useState(false);
   const [alexActivating, setAlexActivating] = useState(false);
 
@@ -138,16 +137,6 @@ export default function HomeownersPage() {
     }, 150);
   }, []);
 
-  // Only show neighbor count after user has typed a real address (min 10 chars)
-  useEffect(() => {
-    if (address.length >= 10) {
-      const target = 3 + Math.floor(Math.random() * 5);
-      const timer = setTimeout(() => setNeighborCount(target), 800);
-      return () => clearTimeout(timer);
-    } else {
-      setNeighborCount(0);
-    }
-  }, [address]);
 
   return (
     <MainLayout>
@@ -212,16 +201,6 @@ export default function HomeownersPage() {
                     <span>2 minutes</span>
                   </div>
 
-                  {neighborCount > 0 && (
-                    <motion.p
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.5 }}
-                      className="text-xs font-semibold text-primary"
-                    >
-                      🏘️ {neighborCount} maisons de votre rue utilisent déjà UNPRO
-                    </motion.p>
-                  )}
                 </motion.div>
               </motion.div>
 
@@ -233,13 +212,13 @@ export default function HomeownersPage() {
                 className="hidden md:block"
               >
                 <div className="rounded-3xl border border-border/30 p-6 shadow-xl" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(24px)" }}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">Score Maison</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">Exemple de Score Maison</p>
                   <div className="flex justify-center my-4">
                     <ScoreGauge score={82} size={140} delay={1} />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-sm font-semibold text-foreground">Quartier Mascouche</p>
-                    <p className="text-xs text-muted-foreground">Score moyen du quartier : <span className="font-bold text-foreground">78</span></p>
+                    <p className="text-sm font-semibold text-foreground">Propriété fictive</p>
+                    <p className="text-xs text-muted-foreground">Chiffres à titre d’exemple seulement</p>
                   </div>
                   {/* Mini breakdown */}
                   <div className="mt-4 space-y-1.5">
@@ -384,10 +363,10 @@ export default function HomeownersPage() {
           <InViewSection className="max-w-4xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="text-center mb-10">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Impact réel sur votre score
+                Exemple d’impact sur un score
               </h2>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                Chaque amélioration augmente la valeur de votre maison.
+                Chiffres illustratifs : l’impact réel dépend de votre propriété.
               </p>
             </motion.div>
 

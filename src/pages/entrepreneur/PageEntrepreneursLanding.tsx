@@ -32,7 +32,7 @@ const PageEntrepreneursLanding = () => {
   return (
     <>
       <Helmet>
-        <title>{fr ? "Les bons projets pour développer votre entreprise | UNPRO" : "Grow your business with the right projects | UNPRO"}</title>
+        <title>{fr ? "Moins de soumissions inutiles. Plus de projets faits pour vous. | UNPRO" : "Fewer pointless quotes. More projects made for you. | UNPRO"}</title>
         <meta
           name="description"
           content={fr ? "Rénovation, construction, entretien, services : présentez vos spécialités à UNPRO. Clara recherche une compatibilité entre les projets des propriétaires et votre entreprise." : "Renovation, construction, maintenance, services: introduce your specialties to UNPRO. Clara looks for a fit between homeowner projects and your business."}

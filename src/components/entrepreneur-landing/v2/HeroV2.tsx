@@ -30,10 +30,10 @@ export default function HeroV2({ onTrackCta }: Props) {
       </div>
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="font-display text-3xl font-bold leading-tight text-foreground sm:text-5xl">
-          {fr ? "Plus de visibilité. Des projets qui correspondent à votre entreprise." : "More visibility. Projects that fit your business."}
+          {fr ? "Moins de soumissions inutiles. Plus de projets faits pour vous." : "Fewer pointless quotes. More projects made for you."}
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          {fr ? "Faites connaître à Clara vos services, votre territoire et les travaux que vous voulez vraiment réaliser. Elle pourra vous proposer aux propriétaires dont le projet correspond à votre profil." : "Tell Clara about your services, your service area and the work you really want to do. She can then put your business forward to homeowners whose projects fit your profile."}
+          {fr ? "Présentez votre entreprise, vos services et vos territoires pour être considéré pour des demandes compatibles avec votre capacité et vos préférences." : "Present your business, services and service areas to be considered for requests that fit your capacity and preferences."}
         </p>
         <form className="mx-auto mt-8 max-w-lg text-left" onSubmit={(event) => {
           event.preventDefault();
@@ -52,7 +52,8 @@ export default function HeroV2({ onTrackCta }: Props) {
             {fr ? "Préparer mon profil UNPRO" : "Prepare my UNPRO profile"}<ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
           </Button>
         </form>
-        <p className="mt-6 text-sm text-muted-foreground">{fr ? "Rénovation, construction, entretien, services" : "Renovation, construction, maintenance, services"}</p>
+        <p className="mx-auto mt-8 max-w-xl text-base font-medium leading-relaxed text-foreground">{fr ? "Chaque entrepreneur mérite de vivre de son travail. Chaque propriétaire mérite d’avoir l’esprit tranquille. Travaillons mieux ensemble." : "Every contractor deserves to make a good living from their work. Every homeowner deserves peace of mind. Let’s work better together."}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{fr ? "Rénovation, construction, entretien, services" : "Renovation, construction, maintenance, services"}</p>
       </div>
     </section>
   );

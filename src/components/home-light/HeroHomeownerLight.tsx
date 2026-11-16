@@ -13,17 +13,17 @@ export default function HeroHomeownerLight() {
   const copy = lang === "fr"
     ? {
         eyebrow: "Rénovation, construction, entretien, services",
-        lead: "Le bon professionnel.",
-        accent: "Pour le bon besoin.",
+        lead: "Trouvez le bon PRO,",
+        accent: "sans multiplier les démarches.",
         tail: "",
-        title: "Le bon professionnel. Pour le bon besoin.",
+        title: "Trouvez le bon PRO, sans multiplier les démarches.",
       }
     : {
         eyebrow: "Renovation, construction, maintenance, services",
-        lead: "The right professional.",
-        accent: "For the right need.",
+        lead: "Find the right PRO,",
+        accent: "without the runaround.",
         tail: "",
-        title: "The right professional. For the right need.",
+        title: "Find the right PRO, without the runaround.",
       };
 
   return (

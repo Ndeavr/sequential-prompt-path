@@ -16,10 +16,10 @@ import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorR
 
 export default function PageHomeLight() {
   const { lang } = useLanguage();
-  const title = lang === "fr" ? "UNPRO | De la soumission à la réalisation" : "UNPRO | The right professional. For the right need.";
+  const title = lang === "fr" ? "UNPRO | Le bon PRO. Le bon projet. Un prix juste." : "UNPRO | The right PRO. The right project. A fair price.";
   const description = lang === "fr"
-    ? "Le lien le plus court entre une soumission et la réalisation. Rénovation, construction, entretien, services. Clara vous aide à trouver le bon professionnel."
-    : "UNPRO helps you find a professional based on your situation, criteria and region in Quebec. Renovation, construction, maintenance, services.";
+    ? "Expliquez votre projet à Clara. Elle vous aide à trouver un professionnel compatible avec vos besoins, vos priorités et votre budget. Rénovation, construction, entretien, services."
+    : "Tell Clara about your project. She helps you find a professional suited to your needs, priorities and budget in Quebec. Renovation, construction, maintenance, services.";
   const ogImage = lang === "fr" ? "https://unpro.ca/og/link/unpro-v1.jpg" : DEFAULT_OG_IMAGE;
   useEffect(() => {
     trackCopilotEvent("homepage_loaded");

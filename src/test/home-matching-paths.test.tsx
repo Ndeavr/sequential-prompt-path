@@ -19,14 +19,14 @@ describe("active homepage matching paths", () => {
     const start = vi.fn();
     render(<MemoryRouter><SectionMatchingPaths onStartHomeowner={start} /></MemoryRouter>);
     expect(document.querySelectorAll("article")).toHaveLength(2);
-    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("UNPRO.Moins de leads.De meilleurs matchs.De vrais rendez-vous.");
-    expect(screen.getByRole("link", { name: /Faire connaître mon entreprise/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("UNPRO.Le bon PRO.Le bon projet.Un prix juste.");
+    expect(screen.getByRole("link", { name: /Je suis entrepreneur/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
     expect(screen.getByRole("link", { name: /Découvrir l’impact/ })).toHaveAttribute("href", "/impact");
-    fireEvent.click(screen.getByRole("button", { name: /Trouver mon professionnel/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Décrire mon projet/ }));
     expect(start).toHaveBeenCalledTimes(1);
     expect(document.body.textContent).not.toMatch(/Ce qu’on offre|première année offerte|1er janvier|Temps total potentiel/);
     expect(screen.queryByText(/Les plateformes d’IA restent libres/)).not.toBeInTheDocument();
-    expect(screen.getByText("Décrivez votre problème ou votre projet à Clara. Téléchargez une photo ou parlez-lui du design souhaité.")).toBeInTheDocument();
+    expect(screen.getByText("Expliquez votre projet à Clara. Elle vous aide à trouver un professionnel compatible avec vos besoins, vos priorités et votre budget.")).toBeInTheDocument();
     const call = screen.getAllByRole("link", { name: "Appeler UNPRO au 450-328-6776" });
     expect(call).toHaveLength(1);
     expect(call[0]).toHaveAttribute("href", "tel:+14503286776");
@@ -37,10 +37,10 @@ describe("active homepage matching paths", () => {
   it("translates the marketing section without changing destinations", () => {
     state.lang = "en";
     render(<MemoryRouter><SectionMatchingPaths onStartHomeowner={() => {}} /></MemoryRouter>);
-    expect(screen.getByText("Better matches.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Get my business discovered/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
-    expect(screen.getByRole("button", { name: /Find my professional/ })).toBeInTheDocument();
-    expect(screen.getByText("Describe your problem or project to Clara. Upload a photo or tell her about the design you have in mind.")).toBeInTheDocument();
+    expect(screen.getByText("A fair price.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /I’m a contractor/ })).toHaveAttribute("href", "/entrepreneurs/audit-ia");
+    expect(screen.getByRole("button", { name: /Describe my project/ })).toBeInTheDocument();
+    expect(screen.getByText("Tell Clara about your project. She helps you find a professional suited to your needs, priorities and budget.")).toBeInTheDocument();
     expect(screen.queryByText(/AI platforms make their own/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Call UNPRO at 450-328-6776" })).toHaveAttribute("href", "tel:+14503286776");
   });
