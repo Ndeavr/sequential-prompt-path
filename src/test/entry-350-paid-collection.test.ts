@@ -52,7 +52,9 @@ const session = (offer: string) => ({
   id: "cs_fixture", object: "checkout.session", status: "complete", mode: "payment",
   payment_status: "paid", currency: "cad", amount_subtotal: 35000,
   amount_total: offer === "entry_activation_350" ? 40241 : 35000,
-  metadata: { offer, contractor_id: "fixture-contractor" },
+  // Exercise the real reservation-bearing checkout path: rejected collections
+  // must never invoke settle_contractor_checkout, even with a valid UUID.
+  metadata: { offer, contractor_id: "fixture-contractor", checkout_reservation_id: "11111111-1111-4111-8111-111111111111" },
 });
 
 describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook collection gate", (offer) => {
