@@ -5,7 +5,7 @@ import { loadWebhookHandler } from "./support/stripeWebhookHarness";
 
 // Execute the complete real handler; only Stripe verification and DB I/O are
 // adapters. No network, accounts, payments or production database writes.
-async function run(session: Record<string, unknown>, livemode = true, badSignature = false) {
+async function run(session: Record<string, unknown>, livemode = true, badSignature = false, eventType = "checkout.session.completed") {
   const writes: { table: string; value: Record<string, unknown> }[] = [];
   let sensitiveCalls = 0;
   const sensitive = new Set(["contractors", "user_roles", "contractor_subscriptions", "contractor_activation_ledger", "billing_checkout_sessions", "verified_contractor_prospects"]);
@@ -28,7 +28,7 @@ async function run(session: Record<string, unknown>, livemode = true, badSignatu
       return q;
     },
   };
-  const event = { id: "evt_fixture", type: "checkout.session.completed", livemode, data: { object: session } };
+  const event = { id: "evt_fixture", type: eventType, livemode, data: { object: session } };
   class StripeFixture {
     webhooks = { constructEventAsync: async () => { if (badSignature) throw new Error("No signatures found matching the expected signature"); return event; } };
   }
@@ -76,6 +76,15 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
     expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
     expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
   });
+  it("blocks invalid asynchronous paid collection before reservation settlement", async () => {
+    // Synthetic async event must satisfy the same amount guard; no live I/O.
+    const result = await run({ ...session(offer), amount_total: 100 }, true, false, "checkout.session.async_payment_succeeded");
+    expect(result.status).toBe(200);
+    expect(result.body.ignored).toMatch(/^ignored_/);
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
+  });
+
   it("accepts its actual creation contract payable amount", () => {
     expect(guards.entry350PaymentBlockReason(session(offer))).toBeNull();
   });
