@@ -7,7 +7,7 @@
     "predev": "bunx tsx scripts/generate-sitemaps.ts",
     "dev": "vite",
     "prebuild": "bunx tsx scripts/generate-sitemaps.ts",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender-ai-entities.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "lint:critical": "eslint src/lib/founderEntitlement.ts src/lib/founderEligibility.ts src/pages/founder/PageFounderLocalServices.tsx src/pages/entrepreneur/PageMatchingProfileWizard.tsx src/hooks/useCalendarConnection.ts src/components/calendar/CardCalendarConnectionRole.tsx src/components/calendar/ButtonConnectGoogleCalendar.tsx src/components/calendar/ButtonSubscribeAppleCalendar.tsx src/pages/calendar/PageCalendarConnectionHub.tsx src/pages/calendar/PageCalendarConnectionSuccess.tsx src/pages/calendar/PageCalendarConnectionFailure.tsx src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/founderCategoryScopeLock.test.ts src/__tests__/founderCategoryScopeLock.integration.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "ci:critical": "npm test && npm run typecheck && npm run lint:critical && vite build",
     "content-audit": "tsx scripts/content-audit.ts",
-    "verify:source": "node scripts/verify-source-branch.mjs"
+    "verify:source": "node scripts/verify-source-branch.mjs",
+    "test:seo": "node --test scripts/audit/seo-prerender-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
