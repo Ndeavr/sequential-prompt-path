@@ -76,13 +76,20 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
     expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
     expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
   });
-  it("blocks invalid asynchronous paid collection before reservation settlement", async () => {
-    // Synthetic async event must satisfy the same amount guard; no live I/O.
-    const result = await run({ ...session(offer), amount_total: 100 }, true, false, "checkout.session.async_payment_succeeded");
+  it.each([
+    ["discounted collection", { amount_total: 100 }],
+    ["wrong currency", { currency: "usd" }],
+    ["no payment required", { payment_status: "no_payment_required", amount_total: 0 }],
+    ["invalid tax collection", { amount_total: 35000, total_details: { amount_tax: 5241 } }],
+  ])("blocks async %s before reservation settlement or paid telemetry", async (_label, changes) => {
+    // Synthetic signed async event: no Stripe API call, production I/O, or money movement.
+    const result = await run({ ...session(offer), ...changes }, true, false, "checkout.session.async_payment_succeeded");
     expect(result.status).toBe(200);
     expect(result.body.ignored).toMatch(/^ignored_/);
     expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some(w => w.value.step === "stripe_payment_succeeded")).toBe(false);
     expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
+    expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
   });
 
   it("accepts its actual creation contract payable amount", () => {
