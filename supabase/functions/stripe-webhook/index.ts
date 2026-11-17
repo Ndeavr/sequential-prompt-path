@@ -407,16 +407,6 @@ Deno.serve(async (req) => {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         let session = event.data.object as Stripe.Checkout.Session;
-        // Réservation d'achat : le paiement signé ferme la seule session payable.
-        // La caisse relit toujours Stripe; un échec ici ne crée aucune deuxième session.
-        if (session.payment_status === "paid") {
-          const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
-            ? session.metadata.checkout_reservation_id : null;
-          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
-            _reservation_id: rid, _status: "paid", _stripe_session_id: session.id, _reason: "stripe_paid",
-          });
-          if (resErr) console.error("[stripe-webhook] checkout reservation paid mark failed", resErr.message);
-        }
         // Before paid telemetry, provisioning, roles, subscriptions or flags.
         // Keep legacy/free offers unchanged; only the two paid entry circuits.
         if (session.metadata?.offer === "entry_activation_350" ||
@@ -444,6 +434,18 @@ Deno.serve(async (req) => {
             });
           }
         }
+        // Close the reservation only after validating the entry-$350 payment contract.
+        // Unrelated offers keep their existing paid settlement path.
+        // Réservation d'achat : le paiement signé ferme la seule session payable.
+        // La caisse relit toujours Stripe; un échec ici ne crée aucune deuxième session.
+        if (session.payment_status === "paid") {
+          const rid = typeof session.metadata?.checkout_reservation_id === "string" && /^[0-9a-f-]{36}$/i.test(session.metadata.checkout_reservation_id)
+            ? session.metadata.checkout_reservation_id : null;
+          const { error: resErr } = await supabase.rpc("settle_contractor_checkout", {
+            _reservation_id: rid, _status: "paid", _stripe_session_id: session.id, _reason: "stripe_paid",
+          });
+          if (resErr) console.error("[stripe-webhook] checkout reservation paid mark failed", resErr.message);
+        }
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
         const planCode = session.metadata?.plan_code;
@@ -452,7 +454,8 @@ Deno.serve(async (req) => {
         const promoCode = session.metadata?.promo_code;
 
         // Founder / activation flow observability.
-        if (session.payment_status === "paid" || session.status === "complete") {
+        // Completion without funds is not a successful payment.
+        if (session.payment_status === "paid") {
           await logActivationStep(supabase, "stripe_payment_succeeded", {
             stripe_event_id: event.id,
             stripe_session_id: session.id,
@@ -855,7 +858,8 @@ Deno.serve(async (req) => {
         // metadata->>'stripe_session_id' empêche tout double crédit.
         if (session.metadata?.offer === "fallback_credit_350") {
           const creditContractorId = session.metadata?.contractor_id ?? null;
-          const paid = session.payment_status === "paid" || session.status === "complete";
+          // Completion without funds cannot grant wallet credit.
+          const paid = session.payment_status === "paid";
 
           if (creditContractorId && paid) {
             // Paiement confirmé → accès à l'espace entrepreneur (idempotent, même

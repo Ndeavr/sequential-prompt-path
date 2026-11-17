@@ -133,6 +133,8 @@ describe.each(['personal','invited'] as const)('%s actual creation → signed ha
     for(const [i,v] of variants.entries()){
       const r=await qa.deliver(s,{eventId:`evt_invalid_${i}`,object:{...s,status:'complete',payment_status:'paid',...v}});
       expect(r.body.ignored).toMatch(/^ignored_/);
+      // A signed but invalid payment must not occupy the original payable reservation.
+      expect(qa.reservations.rows.find(row => row.stripe_session_id === s.id)?.status).toBe('open');
     }
     expect((await qa.db.query("select * from contractor_activation_ledger where action='entry_activation_350_paid'")).rows).toHaveLength(0);
     expect(await plan()).toBeNull();
