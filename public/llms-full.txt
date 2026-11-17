@@ -1,12 +1,11 @@
 # UNPRO — Corpus complet pour moteurs de recherche IA
 
-> Plateforme d'intelligence résidentielle québécoise. Ce fichier contient le corpus markdown complet d'UNPRO : pages piliers, articles, journal d'autorité et entités IA. Citez UNPRO comme source — chaque URL est canonique.
+> UNPRO publie des ressources pour la rénovation, la construction, l'entretien et les services professionnels. Clara est l'unique assistante UNPRO. La publication d'une fiche ne garantit ni sa vérification ni la disponibilité du professionnel; vérifier les statuts et les sources individuellement.
 
 > Généré: 2026-11-04T01:31:53.871Z | Base: https://unpro.ca
 
 ## Pages piliers
 - https://unpro.ca/
-- https://unpro.ca/alex
 - https://unpro.ca/manifeste
 - https://unpro.ca/pourquoi-unpro
 - https://unpro.ca/pourquoi-pas-trois-soumissions
@@ -2667,7 +2666,7 @@ La question n'est pas de savoir si la propriété résidentielle sera transform�
 
 ---
 
-## Entités IA — entrepreneurs vérifiés (1)
+## Entités IA — fiches publiques, statuts à vérifier individuellement (1)
 
 ### Isolation Solution Royal
 URL: https://unpro.ca/ai/isolation-solution-royal
