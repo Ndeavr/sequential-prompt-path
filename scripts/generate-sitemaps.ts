@@ -14,11 +14,12 @@
  * Fail-soft: if Supabase is unreachable, PRESERVE the last valid sitemap/corpus.
  * An outage must never erase indexable public pages at build time.
  */
-import { writeFileSync } from "fs";
+import { writeFileSync, mkdirSync, rmSync } from "fs";
 import { resolve } from "path";
 import { EDITORIAL_REVISIONS, editorialModifiedDate } from "../src/seo/editorialDates";
 
 const BASE_URL = "https://unpro.ca";
+const SEO_SNAPSHOT = resolve(".seo-cache/ai-entities.json"); // ephemeral, never published; refreshed each prebuild
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://clmaqdnphbndvmmqvpff.supabase.co";
 const SUPABASE_KEY =
@@ -163,10 +164,13 @@ async function buildJournal() {
 }
 
 async function buildAiEntities() {
-  const rows = await sb<{ slug: string; updated_at: string }>(
-    "ai_entities?select=slug,updated_at&published=eq.true&order=updated_at.desc",
+  const rows = await sb<{ slug: string; updated_at: string; company_name: string; primary_service: string | null; primary_city: string | null; ai_summary: string | null }>(
+    "ai_entities?select=slug,updated_at,company_name,primary_service,primary_city,ai_summary&published=eq.true&order=updated_at.desc",
   );
   if (!rows) return -1;
+  // Only public/published facts. Build artifacts use this for initial HTML; no RBQ, review, availability or payment claims.
+  mkdirSync(resolve(".seo-cache"), { recursive: true });
+  writeFileSync(SEO_SNAPSHOT, JSON.stringify(rows), "utf8");
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/ai/${r.slug}`, isoDate(r.updated_at), "weekly", "0.8"),
   );
@@ -333,6 +337,8 @@ async function buildLlmsFull() {
 // Main
 // --------------------------------------------------------------------------
 async function main() {
+  // Do not reuse stale snapshot if an entity was withdrawn or Supabase is unavailable.
+  rmSync(SEO_SNAPSHOT, { force: true });
   try {
     const [pages, blog, journal, ai, problems, contractors] = await Promise.all([
       buildPages(),
