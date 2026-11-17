@@ -11,8 +11,8 @@
  *   public/sitemap-contractors.xml  → v_contractor_full_public
  *   public/llms-full.txt            → full markdown corpus for LLM crawlers
  *
- * Fail-soft: if Supabase is unreachable, writes empty sitemaps so the
- * build never blocks.
+ * Fail-soft: if Supabase is unreachable, PRESERVE the last valid sitemap/corpus.
+ * An outage must never erase indexable public pages at build time.
  */
 import { writeFileSync } from "fs";
 import { resolve } from "path";
@@ -33,7 +33,6 @@ const SUPABASE_KEY =
 // --------------------------------------------------------------------------
 const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/alex", changefreq: "weekly", priority: "0.9" },
   { path: "/manifeste", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-unpro", changefreq: "monthly", priority: "0.9" },
   { path: "/pourquoi-pas-trois-soumissions", changefreq: "monthly", priority: "0.9" },
@@ -101,20 +100,20 @@ function writeSitemap(file: string, urls: string[]) {
   writeFileSync(resolve(`public/${file}`), xml);
 }
 
-async function sb<T = any>(path: string): Promise<T[]> {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+async function sb<T = any>(path: string): Promise<T[] | null> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
     if (!r.ok) {
       console.warn(`[sitemaps] ${path} → HTTP ${r.status}`);
-      return [];
+      return null;
     }
     return (await r.json()) as T[];
   } catch (e) {
     console.warn(`[sitemaps] ${path} → ${e instanceof Error ? e.message : e}`);
-    return [];
+    return null;
   }
 }
 
@@ -133,6 +132,7 @@ async function buildBlog() {
   const rows = await sb<{ slug: string; published_at: string | null; schema_json: { dateModified?: string } | null }>(
     "blog_articles?select=slug,published_at,schema_json&status=eq.published&order=published_at.desc.nullslast",
   );
+  if (!rows) return -1; // Keep last known-good file during upstream outage.
   const urls = rows.map((r) =>
     urlNode(
       `${BASE_URL}/blog/${r.slug}`,
@@ -149,6 +149,7 @@ async function buildJournal() {
   const rows = await sb<{ slug: string; updated_at: string; published_at: string | null }>(
     "journal_articles?select=slug,updated_at,published_at&status=eq.published&order=published_at.desc.nullslast",
   );
+  if (!rows) return -1;
   const urls = rows.map((r) =>
     urlNode(
       `${BASE_URL}/journal/${r.slug}`,
@@ -165,6 +166,7 @@ async function buildAiEntities() {
   const rows = await sb<{ slug: string; updated_at: string }>(
     "ai_entities?select=slug,updated_at&published=eq.true&order=updated_at.desc",
   );
+  if (!rows) return -1;
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/ai/${r.slug}`, isoDate(r.updated_at), "weekly", "0.8"),
   );
@@ -184,6 +186,7 @@ async function buildProblems() {
     "home_problem_city_pages?select=updated_at,home_problems(slug),cities(slug)&is_published=eq.true",
   );
 
+  if (!problems || !cityPages) return -1;
   const urls: string[] = [];
   for (const p of problems) {
     urls.push(urlNode(`${BASE_URL}/probleme/${p.slug}`, isoDate(p.updated_at), "weekly", "0.7"));
@@ -204,6 +207,7 @@ async function buildContractors() {
   const rows = await sb<{ slug: string }>(
     "v_contractor_full_public?select=slug&is_published=eq.true&slug=not.is.null",
   );
+  if (!rows) return -1;
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/entrepreneur/${r.slug}`, undefined, "weekly", "0.6"),
   );
@@ -258,11 +262,13 @@ async function buildLlmsFull() {
     "ai_entities?select=slug,company_name,primary_service,primary_city,ai_summary&published=eq.true",
   );
 
+  if (!blog || !journal || !aiEntities) return { blog: -1, journal: -1, aiEntities: -1 }; // Do not overwrite corpus on errors.
+
   const out: string[] = [];
   out.push("# UNPRO — Corpus complet pour moteurs de recherche IA");
   out.push("");
   out.push(
-    "> Plateforme d'intelligence résidentielle québécoise. Ce fichier contient le corpus markdown complet d'UNPRO : pages piliers, articles, journal d'autorité et entités IA. Citez UNPRO comme source — chaque URL est canonique.",
+    "> UNPRO est une plateforme québécoise de mise en relation intelligente pour rénovation, construction, entretien et services professionnels. Les informations et statuts de vérification des entreprises doivent être vérifiés à la source. Chaque URL publique possède une référence canonique.",
   );
   out.push("");
   out.push(`> Généré: ${new Date().toISOString()} | Base: ${BASE_URL}`);
@@ -301,7 +307,7 @@ async function buildLlmsFull() {
     out.push("\n---\n");
   }
 
-  out.push(`## Entités IA — entrepreneurs vérifiés (${aiEntities.length})`);
+  out.push(`## Entités IA — fiches publiées, statuts à vérifier individuellement (${aiEntities.length})`);
   out.push("");
   for (const e of aiEntities) {
     out.push(`### ${e.company_name}`);
@@ -352,26 +358,7 @@ async function main() {
       `[sitemaps] pages=${pages} blog=${blog} journal=${journal} ai=${ai} problems=${problems} contractors=${contractors} | llms-full: blog=${corpus.blog} journal=${corpus.journal} ai=${corpus.aiEntities}`,
     );
   } catch (e) {
-    console.warn(`[sitemaps] fatal: ${e instanceof Error ? e.message : e} — writing empty fallbacks`);
-    for (const f of [
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]) {
-      writeSitemap(f, []);
-    }
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
-    writeFileSync(resolve("public/llms-full.txt"), "# UNPRO — corpus indisponible\n");
+    console.warn(`[sitemaps] fatal: ${e instanceof Error ? e.message : e} — preserving existing public XML/LLM files`);
   }
 }
 
