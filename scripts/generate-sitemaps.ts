@@ -292,7 +292,7 @@ async function buildLlmsFull() {
     if (a.meta_description) out.push(`\n${a.meta_description}`);
     if (a.content_markdown) {
       out.push("");
-      out.push(a.content_markdown);
+      out.push(a.content_markdown.replaceAll("conversationnelle Alex", "conversationnelle Clara"));
     }
     out.push("\n---\n");
   }
