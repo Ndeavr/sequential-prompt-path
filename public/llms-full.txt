@@ -610,7 +610,7 @@ Le Score Confiance est un indicateur permanent qui mesure :
 - le **professionnalisme** (RBQ, assurances, rapidité de réponse)
 - l''**intelligence bâtiment** (recommandations d''entretien, durée de vie des composantes)
 
-Plus vous documentez, plus vous devenez **visible** dans le matching UNPRO, dans l''IA conversationnelle Alex et dans les recommandations aux propriétaires.
+Plus vous documentez, plus vous devenez **visible** dans le matching UNPRO, dans l''IA conversationnelle Clara et dans les recommandations aux propriétaires.
 
 ## Exemples de contributions qui font monter votre Score
 
