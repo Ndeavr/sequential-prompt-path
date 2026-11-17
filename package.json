@@ -20,7 +20,8 @@
     "ci:critical": "npm test && npm run typecheck && npm run lint:critical && vite build",
     "content-audit": "tsx scripts/content-audit.ts",
     "verify:source": "node scripts/verify-source-branch.mjs",
-    "postbuild": "bunx tsx scripts/prerender-grant-pages.ts"
+    "postbuild": "bunx tsx scripts/prerender-grant-pages.ts && node scripts/prerender-ai-entities.mjs",
+    "test:seo": "node --test scripts/audit/seo-prerender-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
