@@ -349,14 +349,18 @@ async function main() {
       buildContractors(),
     ]);
 
-    buildIndex([
-      "sitemap-pages.xml",
-      "sitemap-blog.xml",
-      "sitemap-journal.xml",
-      "sitemap-ai-entities.xml",
-      "sitemap-problems.xml",
-      "sitemap-contractors.xml",
-    ]);
+    if ([pages, blog, journal, ai, problems, contractors].every((count) => count >= 0)) {
+      buildIndex([
+        "sitemap-pages.xml",
+        "sitemap-blog.xml",
+        "sitemap-journal.xml",
+        "sitemap-ai-entities.xml",
+        "sitemap-problems.xml",
+        "sitemap-contractors.xml",
+      ]);
+    } else {
+      console.warn("[sitemaps] Partial upstream outage: preserving previous sitemap index");
+    }
 
     const corpus = await buildLlmsFull();
 
