@@ -10,6 +10,7 @@ import HeroV2 from "@/components/entrepreneur-landing/v2/HeroV2";
 import SectionPainV2 from "@/components/entrepreneur-landing/v2/SectionPainV2";
 import SectionSolutionV2 from "@/components/entrepreneur-landing/v2/SectionSolutionV2";
 import SectionHowItWorksV2 from "@/components/entrepreneur-landing/v2/SectionHowItWorksV2";
+import UnproFacebookVideos from "@/components/media/UnproFacebookVideos";
 import StickyMobileCTAV2 from "@/components/entrepreneur-landing/v2/StickyMobileCTAV2";
 
 const PageEntrepreneursLanding = () => {
@@ -43,6 +44,7 @@ const PageEntrepreneursLanding = () => {
         <SectionPainV2 />
         <SectionSolutionV2 />
         <SectionHowItWorksV2 />
+        <UnproFacebookVideos placement="entrepreneurs" />
         <section className="mx-auto max-w-4xl px-5 py-10">
           <h2 className="text-2xl font-semibold">{fr ? OFFER_350.card.title : "Profile + 12 months of AI Presence on UNPRO"}</h2>
           <p className="mt-3 text-base text-muted-foreground">{fr ? OFFER_350.paymentNote : "One-time activation: CAD 350 plus applicable taxes. No subscription."}</p>
