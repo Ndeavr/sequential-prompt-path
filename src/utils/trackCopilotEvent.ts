@@ -72,7 +72,8 @@ export type CopilotEventName =
   | "service_area_confirmed"
   | "contractor_audit_opened"
   | "profile_completion_clicked"
-  | "contractor_onboarding_resumed";
+  | "contractor_onboarding_resumed"
+  | "facebook_reel_opened";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 
