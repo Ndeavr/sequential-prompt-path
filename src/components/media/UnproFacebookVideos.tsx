@@ -116,7 +116,7 @@ function NativeVideoCard({ video, placement, fr }: {
         )}
       </div>
       <div className="px-4 pb-5 pt-4 sm:px-5">
-        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-primary">UNPRO · {Math.round(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}</p>
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-primary">UNPRO · {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}</p>
         <h3 className="text-lg font-bold leading-snug text-foreground">{title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{fr ? video.descFr : video.descEn}</p>
       </div>
