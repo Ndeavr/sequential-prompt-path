@@ -4,8 +4,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 const upsert = vi.fn().mockResolvedValue({ error: null });
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: null }) }) }),
+    from: (table: string) => ({
+      select: () => table === "calendar_integration_requests"
+        ? { order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }
+        : { eq: () => ({ maybeSingle: () => Promise.resolve({ data: null }) }) },
       upsert,
     }),
     auth: { getUser: () => Promise.resolve({ data: { user: { id: "u" } } }) },
@@ -37,6 +39,8 @@ describe("ClaraBookingPreferences", () => {
     expect(screen.getByText("Combien de représentants peuvent effectuer des visites simultanément?")).toBeTruthy();
     fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "1" } });
     fireEvent.click(screen.getByRole("button", { name: /continuer/i }));
+    expect(screen.getByText(/temps de déplacement maximal/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /pas de limite précisée/i }));
     await waitFor(() => expect(upsert).toHaveBeenCalled());
     const payload = upsert.mock.calls[0][0];
     expect(payload).toMatchObject({ max_evenings_per_week: 3, visit_capacity: 1, declared_representatives: 1 });
@@ -63,6 +67,8 @@ describe("ClaraBookingPreferences", () => {
     expect(screen.getByText(/répartir les agendas/)).toBeTruthy();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Chacun son secteur" } });
     fireEvent.click(screen.getByRole("button", { name: /enregistrer/i }));
+    expect(screen.getByText(/temps de déplacement maximal/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /pas de limite précisée/i }));
     await waitFor(() => expect(upsert).toHaveBeenCalled());
     expect(upsert.mock.calls[0][0]).toMatchObject({ visit_capacity: 1, declared_representatives: 2, representatives_note: "Chacun son secteur" });
   });
