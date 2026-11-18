@@ -32,7 +32,7 @@ const MESSAGES: MessageMap = {
     "Vous pourrez ajuster votre capacité plus tard.",
   ],
   hesitating: [
-    "Vous pouvez commencer par votre Présence IA à 350 $ par année.",
+    "Vous pouvez commencer par votre Présence IA à 350 $ + taxes, en paiement unique.",
     "Aucun engagement long terme requis.",
     "Le plan recommandé peut être ajusté plus tard.",
   ],

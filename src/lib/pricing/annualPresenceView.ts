@@ -33,11 +33,11 @@ export function annualPresenceLines(planCents: number, d: PresenceDecisionView) 
   const today = { gst: plan.gst + pres.gst, qst: plan.qst + pres.qst, total: plan.total + pres.total };
   const note =
     d.state === "required"
-      ? `${d.expired ? "Votre Présence IA est expirée : elle" : "La Présence IA (350 $ + taxes par année)"} est ajoutée une seule fois à ce paiement. Renouvellement manuel dans 12 mois, jamais automatique.`
+      ? `${d.expired ? "Votre Présence IA est expirée : elle" : "La Présence IA (350 $ + taxes, 12 mois)"} est ajoutée une seule fois à ce paiement. Renouvellement manuel dans 12 mois, jamais automatique.`
       : d.state === "covered"
         ? d.reason === "valid_annual_presence" && d.validUntil
           ? `Présence IA déjà valide jusqu'au ${dateFr(d.validUntil)} : non facturée de nouveau.`
           : "Vos droits actuels couvrent la Présence IA : non facturée de nouveau."
-        : "Si votre Présence IA (350 $ + taxes par année) n'est pas déjà valide, elle est ajoutée une seule fois à ce paiement; UNPRO le vérifie avant le paiement.";
+        : "Si votre Présence IA (350 $ + taxes, 12 mois) n'est pas déjà valide, elle est ajoutée une seule fois à ce paiement; UNPRO le vérifie avant le paiement.";
   return { includePresence, today, note };
 }

@@ -1,89 +1,40 @@
 /**
- * SectionPlansPreviewV2 — Plan cards with primary "Pro" highlighted.
+ * SectionPlansPreviewV2 — Présence IA (décision 2026-11-18) : Lancement 350 $ en premier,
+ * Fondateur 1 995 $ en option secondaire. Paiement unique, sans abonnement automatique.
+ * Les anciens forfaits mensuels restent servis à leurs clients historiques ailleurs;
+ * ils ne sont plus présentés ici. Montants indicatifs : le serveur fixe le prix réel.
  */
-import { motion } from "framer-motion";
-import { Check, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ENTRY_350, PRESENCE_FOUNDER } from "@/lib/copy/offer350";
 
 interface Props {
   onTrackCta: (key: string, section: string) => void;
 }
 
-const PLANS = [
-  { code: "recrue", name: "Recrue", price: 149, blurb: "Démarrer en douceur", highlight: false },
-  { code: "pro", name: "Pro", price: 349, blurb: "Plus populaire", highlight: true },
-  { code: "elite", name: "Élite", price: 999, blurb: "Domination locale", highlight: false },
-];
-
 export default function SectionPlansPreviewV2({ onTrackCta }: Props) {
   const navigate = useNavigate();
-
   return (
     <section id="section-plans" className="px-5 py-12">
-      <div className="max-w-md mx-auto">
-        <motion.h2
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="font-display text-2xl sm:text-3xl font-bold text-foreground text-center mb-2"
-        >
-          Forfaits simples et clairs
-        </motion.h2>
-        <p className="text-center text-sm text-muted-foreground mb-6">
-          Aucun contrat long terme. Annulez quand vous voulez.
-        </p>
-
-        <div className="space-y-3">
-          {PLANS.map((p, i) => (
-            <motion.button
-              key={p.code}
-              type="button"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                onTrackCta(`plan_card_${p.code}`, "plans");
-                navigate(`/entrepreneur/plan?plan=${p.code}&validate=1`);
-              }}
-              className={`relative w-full text-left rounded-xl border p-4 backdrop-blur-sm transition-all hover:border-primary/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
-                p.highlight
-                  ? "border-primary/50 bg-gradient-to-br from-primary/10 to-accent/5 shadow-[0_8px_30px_hsl(var(--primary)/0.2)]"
-                  : "border-border/50 bg-card/60"
-              }`}
-            >
-              {p.highlight && (
-                <span className="absolute -top-2.5 left-4 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-primary to-accent text-white">
-                  Recommandé
-                </span>
-              )}
-              <div className="flex items-baseline justify-between gap-3">
-                <div>
-                  <p className="font-display font-bold text-lg text-foreground">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.blurb}</p>
-                </div>
-                <div className="text-right flex items-center gap-2">
-                  <div>
-                    <span className="font-display text-2xl font-extrabold text-foreground">{p.price}$</span>
-                    <span className="text-xs text-muted-foreground">/mois</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground/70 shrink-0" />
-                </div>
-              </div>
-            </motion.button>
-          ))}
+      <div className="mx-auto max-w-md">
+        <h2 className="mb-2 text-center font-display text-2xl font-bold text-foreground sm:text-3xl">Votre Présence IA UNPRO</h2>
+        <p className="mb-6 text-center text-sm text-muted-foreground">{ENTRY_350.paymentLabel}</p>
+        <div className="rounded-xl border border-primary/50 bg-card p-4">
+          <p className="font-display text-lg font-bold text-foreground">Présence IA — Lancement</p>
+          <p className="text-sm text-muted-foreground">Profil entrepreneur + 12 mois de Présence IA sur UNPRO</p>
+          <p className="mt-2 font-display text-2xl font-extrabold text-foreground">350 $ <span className="text-sm font-normal text-muted-foreground">+ taxes · 12 mois</span></p>
+          <Button size="lg" className="mt-3 h-12 w-full gap-2 rounded-xl"
+            onClick={() => { onTrackCta("plans_presence_launch", "plans"); navigate("/entrepreneurs/activation-350"); }}>
+            Activer mon profil — 350 $ + taxes <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-
-        <Button
-          size="lg"
-          variant="outline"
-          className="w-full h-12 rounded-xl mt-5 gap-2 border-primary/30 hover:bg-primary/5"
-          onClick={() => { onTrackCta("plans_open_plan_ia", "plans"); navigate("/entrepreneur/plan-ia"); }}
-        >
-          Générer mon plan IA personnalisé <ArrowRight className="w-4 h-4" />
-        </Button>
+        <div className="mt-3 rounded-xl border border-border bg-card/60 p-4">
+          <p className="font-semibold text-foreground">{PRESENCE_FOUNDER.name}</p>
+          <p className="text-sm text-muted-foreground">{PRESENCE_FOUNDER.price}. Mêmes prestations, sans rendez-vous, priorité ni exclusivité inclus.</p>
+          <p className="mt-2 text-xs text-muted-foreground">{PRESENCE_FOUNDER.illustration}</p>
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground">Rendez-vous : seulement selon un devis distinct, avec quantité et prix affichés avant paiement.</p>
       </div>
     </section>
   );

@@ -88,6 +88,7 @@ export const CLARA_SCRIPT_EN: Record<string,string> = {
   "Préparation de votre activation…": "Preparing your activation…",
   "Vos services, vos spécialités et votre territoire, présentés clairement sur UNPRO pendant 12 mois. Pas un achat de clics ni de leads partagés.": "Your services, specialities and service areas clearly presented on UNPRO for 12 months. You're not buying clicks or shared leads.",
   "+ taxes · par année": "+ tax · per year",
+  "+ taxes · 12 mois": "+ tax · 12 months",
   "Aucun rendez-vous inclus. Aucune apparition garantie dans ChatGPT. Le paiement ne remplace pas la vérification des licences requises.": "No appointments included. Appearance in ChatGPT isn't guaranteed. Payment doesn't replace the verification of required licences.",
   "aucune source vérifiée pour l’instant": "no verified sources yet",
   "Quel est votre métier?": "What is your trade?",

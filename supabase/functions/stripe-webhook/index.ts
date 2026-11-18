@@ -6,6 +6,7 @@ import { guaranteeRecordArgs } from "../_shared/contractGuarantee.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, verifyEntry350PromoContract } from "../_shared/entry350Promo.ts";
 import { reverseEntry350Commission, entry350SessionRevoked } from "../_shared/entry350CommissionReversal.ts";
 import { verifyEntry350TaxContract } from "../_shared/entry350Tax.ts";
+import { PRESENCE_OFFERS, presenceTierFromSession, presenceMonthsFromLedger } from "../_shared/presenceOffers.ts";
 import { webhookEntryDecision } from "../_shared/webhookAuth.ts";
 import { classifyWebhookAuditInsert, assertWebhookAuditFinalized } from "../_shared/webhookAuditPersistence.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
@@ -423,7 +424,7 @@ Deno.serve(async (req) => {
             session.metadata?.offer === "entry_pack_350" ||
             session.metadata?.offer_kind === "pack_350") {
           if (session.metadata?.entry_tax_contract && session.payment_status === "paid") {
-            const preliminary = entry350PaymentBlockReason({ ...session, total_details: session.total_details ?? { amount_tax: 5241 } });
+            const preliminary = entry350PaymentBlockReason({ ...session, total_details: session.total_details ?? { amount_tax: session.metadata.entry_tax_contract === PRESENCE_OFFERS.founder_120m.taxContract ? PRESENCE_OFFERS.founder_120m.tax : 5241 } });
             if (preliminary) {
               await supabase.from("stripe_webhook_events").update({ processing_status: preliminary }).eq("stripe_event_id", event.id);
               return new Response(JSON.stringify({ received: true, ignored: preliminary }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -487,8 +488,11 @@ Deno.serve(async (req) => {
           const paid = session.payment_status === "paid";
           const entryPaymentIntentId = typeof session.payment_intent === "string"
             ? session.payment_intent : session.payment_intent?.id ?? null;
-          // Montant exact exigé : 350 $ CAD hors taxes. Tout écart = aucune activation.
-          const amountOk = session.amount_subtotal === 35000 && (session.currency ?? "").toLowerCase() === "cad";
+          // Montant exact exigé selon l'offre attestée (Lancement 350 $ ou Fondateur 1 995 $ CAD
+          // hors taxes, contrat fiscal concordant). Tout écart = aucune activation.
+          const presenceTier = presenceTierFromSession(session as never);
+          const presenceOffer = presenceTier ? PRESENCE_OFFERS[presenceTier] : null;
+          const amountOk = !!presenceOffer && session.amount_subtotal === presenceOffer.subtotal && (session.currency ?? "").toLowerCase() === "cad";
           if (entryContractorId && paid && !amountOk) {
             console.error("[stripe-webhook][entry_activation_350] amount mismatch", session.id, session.amount_subtotal, session.currency);
             await supabase.from("admin_notifications").insert({
@@ -511,16 +515,19 @@ Deno.serve(async (req) => {
             // annulée). Une Présence expirée n'empêche jamais un renouvellement manuel.
             const { data: otherRows, error: otherError } = await supabase
               .from("contractor_activation_ledger")
-              .select("metadata")
+              .select("metadata, created_at")
               .eq("action", "entry_activation_350_paid")
               .eq("contractor_id", entryContractorId)
               .neq("metadata->>stripe_session_id", session.id)
               .eq("metadata->>livemode", String(event.livemode === true))
-              .gte("created_at", addCalendarMonths(new Date(), -12).toISOString())
-              .limit(20);
+              .gte("created_at", addCalendarMonths(new Date(), -120).toISOString())
+              .limit(50);
+            // Droit encore valide selon SA durée consignée (12 ou 120 mois).
+            const stillValidRows = (otherRows ?? []).filter((r: { metadata?: Record<string, unknown> | null; created_at?: string }) =>
+              !!r.created_at && addCalendarMonths(new Date(r.created_at), presenceMonthsFromLedger(r.metadata)).getTime() > Date.now());
             let otherSession = false;
-            if (!otherError && (otherRows ?? []).length) {
-              const sids = (otherRows ?? []).map((r: { metadata?: Record<string, unknown> | null }) => String(r.metadata?.stripe_session_id ?? "")).filter(Boolean);
+            if (!otherError && stillValidRows.length) {
+              const sids = stillValidRows.map((r: { metadata?: Record<string, unknown> | null }) => String(r.metadata?.stripe_session_id ?? "")).filter(Boolean);
               const { data: voided, error: voidErr } = await supabase.from("contractor_activation_ledger").select("metadata")
                 .eq("action", "deactivated").eq("source", "stripe_webhook").in("metadata->>stripe_session_id", sids);
               if (voidErr) throw new Error("entry_activation_350 void lookup failed");
@@ -535,6 +542,7 @@ Deno.serve(async (req) => {
               sessionId: session.id,
               paymentIntentId: entryPaymentIntentId,
               livemode: event.livemode === true,
+              subtotalCents: presenceOffer?.subtotal,
             };
             if (already) {
               // The existence check may return only an ID. Read the complete
@@ -588,7 +596,8 @@ Deno.serve(async (req) => {
             }
             if (decision === "activate" || decision === "already_processed") {
               const nowIso = new Date().toISOString();
-              const presenceUntil = addCalendarMonths(new Date(), 12).toISOString();
+              const presenceMonths = presenceOffer?.months ?? 12;
+              const presenceUntil = addCalendarMonths(new Date(), presenceMonths).toISOString();
               const guaranteed = Number(session.metadata?.guaranteed_appointments ?? 0) || 0;
               // Le registre d'abord : s'il échoue, rien d'autre n'est modifié.
               const { error: ledgerErr } = decision === "already_processed" ? { error: null } : await supabase.from("contractor_activation_ledger").insert({
@@ -606,6 +615,8 @@ Deno.serve(async (req) => {
                   amount_discount_cents: session.total_details?.amount_discount ?? 0,
                   amount_tax_cents: session.total_details?.amount_tax ?? null,
                   entry_tax_contract: session.metadata?.entry_tax_contract ?? null,
+                  presence_tier: presenceTier,
+                  presence_months: String(presenceMonths),
                   ...(promoCodeId ? { promo_code: "PROMO", promo_code_id: promoCodeId, promo_coupon_id: session.metadata?.promo_coupon_id ?? null, stripe_customer: session.customer ? String(session.customer) : null } : {}),
                   livemode: event.livemode ?? null,
                   quote_id: session.metadata?.quote_id ?? null,

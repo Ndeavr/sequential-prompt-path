@@ -16,7 +16,7 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
-import { ENTRY_350 } from "@/lib/copy/offer350";
+import { ENTRY_350, PRESENCE_FOUNDER } from "@/lib/copy/offer350";
 import { GUARANTEE_COPY, GUARANTEE_OFFER_CODE, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 
 const COPY = ENTRY_350.checkout;
@@ -73,6 +73,11 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   // Offre campagne « 10 contrats garantis » : prix complet, aucun code promo.
   const guarantee = isGuaranteeOfferParam(query.get("offre"));
   const ref = normalizeRef(query.get("ref"));
+  // Option secondaire Fondateur 120 mois : jamais pré-sélectionnée, jamais avec code/garantie/proposition.
+  const founderAllowed = !guarantee && !proposalToken;
+  const [founderOpen, setFounderOpen] = useState(false);
+  const [founderConsent, setFounderConsent] = useState(false);
+  const founder = founderAllowed && founderOpen;
 
   const readReply = async (data: unknown, error: unknown) => {
     let reply = data as { code?: string; error?: string; url?: string } | null;
@@ -112,6 +117,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     if (busy) return;
     const name = company.trim();
     if (name.length < 2) { recordPreCheckoutBlock("company_missing"); setErrorText("Confirmez le nom de votre entreprise."); return; }
+    if (founder && !founderConsent) { setErrorText("Confirmez avoir lu les modalités de l'option Fondateur."); return; }
     setBusy(true);
     setErrorText(null);
     rememberDeclaredName(name);
@@ -138,7 +144,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
           entryActivation: true,
           declaredCompanyName: name,
           ...(proposalToken ? { affiliateProposalToken: proposalToken } : {}),
-          ...(!guarantee && promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
+          ...(!guarantee && !founder && promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
+          ...(founder ? { presenceOffer: "founder_120m" } : {}),
           ...(guarantee ? { offerVersion: GUARANTEE_OFFER_CODE } : {}),
           ...(ref ? { ref } : {}),
           ...(query.get("t") ? { activationToken: query.get("t") } : {}),
@@ -172,6 +179,11 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         // The authenticated company/contact are kept server-side for support.
         // A failed Checkout creation is never presented as a paid transaction.
         setErrorText("Le paiement n'a pas pu s'ouvrir. Vos informations d'inscription sont conservées. Vous pouvez réessayer ou demander de l'aide.");
+        return;
+      }
+      if (reply?.code === "founder_live_not_released" || reply?.code === "founder_offer_incompatible" || reply?.code === "presence_offer_invalid") {
+        recordPreCheckoutBlock("checkout_unavailable");
+        setErrorText(reply.error ?? "L'option Fondateur n'est pas disponible pour le moment. Rien n'a été facturé.");
         return;
       }
       if (reply?.code === "guarantee_promo_incompatible" || reply?.code === "guarantee_quote_incompatible" || reply?.code === "offer_version_invalid" || reply?.code === "offer_version_unverified") {
@@ -215,25 +227,47 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
     <section id="activation-350-review" aria-label="Confirmer mon activation" data-testid="entry-350-direct-review"
       className="mt-5 rounded-[24px] border border-primary/30 bg-card p-5 shadow-lg">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{COPY.eyebrow}</p>
-      <h2 className="mt-2 text-xl font-semibold">{guarantee ? GUARANTEE_COPY.headline : COPY.title}</h2>
+      <h2 className="mt-2 text-xl font-semibold">{guarantee ? GUARANTEE_COPY.headline : founder ? PRESENCE_FOUNDER.title : COPY.title}</h2>
       {guarantee && <p className="mt-2 text-sm font-semibold" data-testid="entry-350-guarantee-conditions">{GUARANTEE_COPY.conditions}</p>}
       <ul className="mt-3 space-y-1.5 text-sm" data-testid="entry-350-benefits">
-        {(guarantee ? GUARANTEE_COPY.details : COPY.benefits).map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
+        {(guarantee ? GUARANTEE_COPY.details : founder ? COPY.benefits.map(b => b.replace("12 mois", "120 mois")) : COPY.benefits).map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
       </ul>
-      <p className="mt-3 text-2xl font-semibold">{guarantee ? "350 $ + taxes · 12 mois" : COPY.price}</p>
+      <p className="mt-3 text-2xl font-semibold" data-testid="entry-350-price">{founder ? PRESENCE_FOUNDER.price : guarantee ? "350 $ + taxes · 12 mois" : COPY.price}</p>
+      <p className="mt-1 text-xs font-semibold text-muted-foreground" data-testid="entry-350-payment-label">{ENTRY_350.paymentLabel}</p>
       {proposalToken && <div className="mt-3 text-sm" role={proposalContext.error ? "alert" : "status"}>{proposalContext.error ?? (proposalContext.proposal ? `Proposition attribuée à ${proposalContext.proposal.company_name} — confirmez le nom ci-dessous.` : "Vérification de la proposition…")}</div>}
       <label htmlFor="activation350-business-name" className="mt-4 block text-sm font-semibold">Quel est le nom de votre entreprise?</label>
       <input id="activation350-business-name" data-testid="entry-350-business-name" autoComplete="organization"
         value={company} onChange={e => { setCompany(e.target.value); setErrorText(null); }} maxLength={160}
         placeholder="Nom de votre entreprise"
         className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-foreground" />
-      {promo.state === "valid"
+      {founder
+        ? <p className="mt-3 text-sm" data-testid="entry-founder-taxes">{PRESENCE_FOUNDER.taxes}</p>
+        : promo.state === "valid"
         ? <p className="mt-3 text-sm" data-testid="entry-350-promo-total">Code PROMO : 350,00 $ − 349,00 $ = 1,00 $ avant taxes. Si les taxes du Québec s'appliquent : 1,00 $ + TPS 0,05 $ + TVQ 0,10 $ = <strong>1,15 $ CA</strong> (prix normal 402,41 $). Usage unique, confirmé par Stripe au paiement.</p>
         : guarantee
         ? <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong>, payés une fois. Aucun renouvellement automatique.</p>
-        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> par année. Couvre 12 mois; renouvellement non automatique.</p>}
+        : <p className="mt-3 text-sm">Si les taxes du Québec s'appliquent : 350,00 $ + TPS 17,50 $ + TVQ 34,91 $ = <strong>402,41 $ CA</strong> payés une fois. Couvre 12 mois; aucun abonnement ni renouvellement automatique.</p>}
       {!guarantee && <p className="mt-2 text-sm text-muted-foreground" data-testid="entry-350-appointments-scope">{COPY.appointments}</p>}
-      {guarantee ? null : !(promoOpen || promo.state !== "idle") ? (
+      {founderAllowed && (founder ? (
+        <div className="mt-4 rounded-xl border border-border p-4 text-sm" data-testid="entry-founder-details">
+          <p className="font-semibold">{PRESENCE_FOUNDER.name}</p>
+          <ul className="mt-2 space-y-1.5">
+            {PRESENCE_FOUNDER.scope.map(b => <li key={b} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{b}</li>)}
+          </ul>
+          <p className="mt-2 text-muted-foreground">{PRESENCE_FOUNDER.availability}</p>
+          <p className="mt-2 text-muted-foreground" data-testid="entry-founder-illustration">{PRESENCE_FOUNDER.illustration}</p>
+          <label className="mt-3 flex min-h-11 items-start gap-2">
+            <input type="checkbox" data-testid="entry-founder-consent" checked={founderConsent}
+              onChange={e => { setFounderConsent(e.target.checked); setErrorText(null); }} className="mt-1 h-4 w-4 shrink-0" />
+            <span>{PRESENCE_FOUNDER.consent}</span>
+          </label>
+          <button type="button" data-testid="entry-founder-back" onClick={() => { setFounderOpen(false); setFounderConsent(false); setErrorText(null); }}
+            className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2">
+            {PRESENCE_FOUNDER.backToLaunch}
+          </button>
+        </div>
+      ) : null)}
+      {guarantee || founder ? null : !(promoOpen || promo.state !== "idle") ? (
         <button type="button" data-testid="entry-350-promo-toggle" aria-expanded={false} aria-controls="activation350-promo-box"
           onClick={() => setPromoOpen(true)}
           className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-2">
@@ -281,9 +315,15 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       )}
       {info && <p role="status" className="mt-3 text-sm">{info} <Link to="/pro" className="underline">Mon espace entrepreneur</Link></p>}
       <Button type="button" data-testid="entry-350-checkout" onClick={() => void begin()}
-        disabled={busy || Boolean(info) || outcome === "success" || Boolean(proposalToken && !proposalContext.proposal)} className="mt-4 min-h-12 w-full whitespace-normal">
-        {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Préparation…</> : "Continuer vers le paiement sécurisé"}
+        disabled={busy || Boolean(info) || outcome === "success" || Boolean(proposalToken && !proposalContext.proposal) || (founder && !founderConsent)} className="mt-4 min-h-12 w-full whitespace-normal">
+        {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Préparation…</> : founder ? "Continuer vers le paiement — 1 995 $ + taxes" : "Continuer vers le paiement sécurisé"}
       </Button>
+      {founderAllowed && !founder && outcome !== "success" && (
+        <button type="button" data-testid="entry-founder-toggle" onClick={() => { setFounderOpen(true); setPromo({ state: "idle" }); setPromoInput(""); setErrorText(null); }}
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center text-sm font-semibold text-primary underline underline-offset-2">
+          {PRESENCE_FOUNDER.toggle}
+        </button>
+      )}
       <p className="mt-2 text-xs text-muted-foreground">Connexion requise avant paiement. Clara garde la conversation dans la session en cours.</p>
     </section>
   );

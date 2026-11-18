@@ -135,7 +135,7 @@ export default function PageAippPublic() {
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground">
-              350 $ + taxes par année. Aucun renouvellement automatique.
+              350 $ + taxes, paiement unique. Aucun abonnement automatique.
             </p>
           </CardContent>
         </Card>

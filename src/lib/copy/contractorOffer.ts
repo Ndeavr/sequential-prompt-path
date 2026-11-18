@@ -17,15 +17,15 @@ export const CONTRACTOR_OFFER = {
   cityLimit: 10,
 
   headline: "Activez votre profil d'entreprise sur UNPRO.",
-  subheadline: "350 $ + taxes par année : votre profil et 12 mois de Présence IA sur UNPRO.",
+  subheadline: "350 $ + taxes, paiement unique : votre profil et 12 mois de Présence IA sur UNPRO.",
   supporting:
-    "Renouvellement non automatique. Aucun rendez-vous inclus, sauf droit contractuel calculé et confirmé avant le paiement. Si les taxes du Québec s'appliquent : total de 402,41 $ CA par année.",
+    "Aucun abonnement ni renouvellement automatique. Aucun rendez-vous inclus, sauf droit contractuel calculé et confirmé avant le paiement. Si les taxes du Québec s'appliquent : total de 402,41 $ CA, payé une fois.",
 
   ctaPrimary: "Activer mon profil — 350 $ + taxes",
   ctaClaim: "Réclamer mon profil",
   ctaSecondary: "Voir mon analyse gratuite",
 
-  noPaymentNote: "350 $ + taxes applicables par année · profil + 12 mois de Présence IA sur UNPRO · renouvellement non automatique · aucun rendez-vous inclus sans droit contractuel confirmé avant paiement",
+  noPaymentNote: "350 $ + taxes applicables, paiement unique · profil + 12 mois de Présence IA sur UNPRO · sans abonnement automatique · aucun rendez-vous inclus sans droit contractuel confirmé avant paiement",
   planNote:
     "Votre plan personnalisé est calculé après l'activation, selon votre territoire et vos objectifs.",
 

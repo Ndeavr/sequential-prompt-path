@@ -10,6 +10,7 @@ import { revokeEntry350 } from "../../../supabase/functions/_shared/entry350Revo
 import { reverseEntry350Commission, entry350SessionRevoked } from "../../../supabase/functions/_shared/entry350CommissionReversal";
 import { OFFER } from "../../../supabase/functions/_shared/offerCopy";
 import * as entryTax from "../../../supabase/functions/_shared/entry350Tax";
+import * as presenceOffers from "../../../supabase/functions/_shared/presenceOffers";
 import * as entryPromo from "../../../supabase/functions/_shared/entry350Promo";
 import * as webhookAuth from "../../../supabase/functions/_shared/webhookAuth";
 import * as webhookAudit from "../../../supabase/functions/_shared/webhookAuditPersistence";
@@ -46,7 +47,7 @@ export async function createQa(taxApproved = true) {
   // Mirror of annual_presence_status: a non-revoked paid 350 receipt < 12 months = valid Presence.
   async function presenceValid(contractorId: string): Promise<boolean> {
     const r = await db.query<Row>(`select exists(select 1 from contractor_activation_ledger l where l.contractor_id=$1 and l.action='entry_activation_350_paid'
-      and l.created_at > now()-interval '12 months' and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[contractorId]);
+      and l.created_at > now()-(case when l.metadata->>'presence_tier'='founder_120m' and l.metadata->>'presence_months'='120' then interval '120 months' else interval '12 months' end) and not exists(select 1 from contractor_activation_ledger d where d.action='deactivated' and d.metadata->>'stripe_session_id'=l.metadata->>'stripe_session_id')) v`,[contractorId]);
     return !!r.rows[0].v;
   }
   await db.exec(`
@@ -303,14 +304,15 @@ export async function createQa(taxApproved = true) {
     retrieve:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s){const e:any=new Error('No such checkout.session');e.code='resource_missing';e.statusCode=404;throw e;}
       return s.delivered ? {...s,payment_status:'paid',status:'complete',livemode:deliveryLive} : {...s};},
     expire:async(id:string)=>{const s=sessions.find(x=>x.id===id);if(!s)throw new Error('missing');if(s.delivered){const e:any=new Error('already complete');e.statusCode=400;throw e;}s.status='expired';return {...s};},
-    listLineItems:async(id:string)=>({has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:35000,amount_total:40241,amount_discount:0,amount_tax:5241,taxes:[{amount:1750,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:3491,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]})}};
+    listLineItems:async(id:string)=>{const st=sessions.find(x=>x.id===id)?.amount_subtotal ?? 35000;const g=Math.round(st*0.05),q=Math.round(st*0.09975);
+      return {has_more:false,data:[{quantity:1,currency:'cad',amount_subtotal:st,amount_total:st+g+q,amount_discount:0,amount_tax:g+q,taxes:[{amount:g,rate:{metadata:{unpro_tax:'gst_5'},percentage:5,inclusive:false,country:'CA'}},{amount:q,rate:{metadata:{unpro_tax:'qst_9975'},percentage:9.975,inclusive:false,country:'CA',state:'QC'}}]}]};}}};
   }
   async function load(name:string) {
     const path=`supabase/functions/${name}/index.ts`;
     const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
-    const imports={...guards,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,...reservation,...annualPresence,...invitedIdentity,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
+    const imports={...guards,...presenceOffers,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,...reservation,...annualPresence,...invitedIdentity,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,
       resolveStripeEnv:(v:unknown)=>v===true?'test':'live',stripeKeyFor:(v:string)=>v==='test'?env.STRIPE_TEST_SECRET_KEY:env.STRIPE_SECRET_KEY};
     new Function('Deno','Stripe','createClient','fetch',...Object.keys(imports),code)(
       {env:{get:(k:string)=>env[k]},serve:(fn:typeof handler)=>{handler=fn;}},LocalStripe,
@@ -355,7 +357,7 @@ export async function createQa(taxApproved = true) {
       expires_at:opts.expired ? new Date(Date.now()-1000).toISOString() : new Date(Date.now()+86400000).toISOString(),revoked_at:opts.revoked ? new Date().toISOString() : null}]);
     return {token,prospectId:id};
   }
-  return {db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,invite,reservations,
+  return {env,db,ownerToken,otherToken,checkout,deliver,queryAs,sessions,configs,peripheral,calls,invite,reservations,
     failRpcNext:(name:string)=>{failRpc=name;},
     failNext:(table:string)=>{failTable=table;},
     failTerminalAuditOnce:()=>{failTerminalWebhookAudit=true;},

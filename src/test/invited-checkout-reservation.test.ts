@@ -124,14 +124,15 @@ describe("invited checkout — proven existing contractor uses the contractor lo
 });
 
 describe("invited checkout — Stripe wording", () => {
-  it("says 350 $ per year + taxes, 12 months, manual renewal; never one-time / no subscription", async () => {
+  it("says 350 $ + taxes, one-time payment, 12 months, no subscription (decision 2026-11-18)", async () => {
     expect((await qa.checkout("invited", { activation_token: qa.invite().token, test_mode: true })).status).toBe(200);
     const c = qa.configs[0];
     const texts = [c.line_items[0].price_data.product_data.name, c.line_items[0].price_data.product_data.description, c.payment_intent_data.description, c.custom_text.submit.message].join(" | ");
-    expect(c.line_items[0].price_data.product_data.name).toContain("350 $ CA par année + taxes");
+    expect(c.mode).toBe("payment");
+    expect(c.line_items[0].price_data.recurring).toBeUndefined();
+    expect(c.line_items[0].price_data.product_data.name).toContain("350 $ CA + taxes");
     expect(c.custom_text.submit.message).toContain("402,41 $");
-    expect(c.custom_text.submit.message).toContain("renouvellement manuel");
-    expect(c.payment_intent_data.description).toContain("Renouvellement manuel, jamais automatique");
-    expect(texts).not.toMatch(/paiement unique|aucun abonnement/i);
+    expect(c.custom_text.submit.message).toContain("Paiement unique");
+    expect(texts).not.toMatch(/par année|per year/i);
   });
 });

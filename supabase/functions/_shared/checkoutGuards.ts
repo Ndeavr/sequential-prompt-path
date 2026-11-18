@@ -1,3 +1,4 @@
+import { PRESENCE_OFFERS } from "./presenceOffers.ts";
 // Pure guards shared by checkout + webhook (no Deno APIs: unit-tested in vitest).
 import { ENTRY350_AMOUNTS, ENTRY350_TAX_CONTRACT } from "./entry350Tax.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, entry350PromoAmountsOk } from "./entry350Promo.ts";
@@ -81,6 +82,13 @@ export function entry350PaymentBlockReason(s: {
   // Separate versioned promo contract: never weakens the full-price checks below.
   if (s.metadata?.entry_tax_contract === ENTRY350_PROMO_TAX_CONTRACT) {
     return entry350PromoAmountsOk(s) ? null : "ignored_amount_mismatch";
+  }
+  if (s.metadata?.entry_tax_contract === PRESENCE_OFFERS.founder_120m.taxContract) {
+    const f = PRESENCE_OFFERS.founder_120m;
+    if (s.metadata.presence_tier !== "founder_120m" || s.metadata.presence_ia_months !== "120" || s.mode !== "payment" ||
+        s.currency !== "cad" || s.amount_subtotal !== f.subtotal || s.amount_total !== f.total ||
+        s.total_details?.amount_tax !== f.tax || (s.total_details?.amount_discount ?? 0) !== 0) return "ignored_amount_mismatch";
+    return null;
   }
   if (s.metadata?.entry_tax_contract) {
     if (s.metadata.entry_tax_contract !== ENTRY350_TAX_CONTRACT || s.mode !== "payment" ||
@@ -259,7 +267,7 @@ export function entryPackReplayReceiptMatches(
  */
 export function entryActivationReplayReceiptMatches(
   prior: { contractor_id?: string | null; source?: string | null; metadata?: Record<string, unknown> | null } | null,
-  expected: { contractorId: string; sessionId: string; paymentIntentId: string | null; livemode: boolean },
+  expected: { contractorId: string; sessionId: string; paymentIntentId: string | null; livemode: boolean; subtotalCents?: number },
 ): boolean {
   const md = prior?.metadata;
   return !!prior &&
@@ -269,7 +277,7 @@ export function entryActivationReplayReceiptMatches(
     md?.stripe_session_id === expected.sessionId &&
     md?.stripe_payment_intent === expected.paymentIntentId &&
     md?.livemode === expected.livemode &&
-    md?.amount_subtotal_cents === 35000;
+    md?.amount_subtotal_cents === (expected.subtotalCents ?? 35000);
 }
 
 /** Classify an entry-350 ledger insert error. The promo index must win over the generic

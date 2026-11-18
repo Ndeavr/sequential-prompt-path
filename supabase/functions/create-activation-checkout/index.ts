@@ -30,11 +30,11 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-/** Libellés Stripe : 350 $ par année + taxes, 12 mois, renouvellement manuel (jamais automatique). */
+/** Libellés Stripe (décision 2026-11-18) : Présence IA — Lancement, 350 $ + taxes, paiement unique, 12 mois, aucun abonnement. */
 const INVITED_STRIPE_COPY = {
-  productName: "UNPRO — Présence IA 12 mois (350 $ CA par année + taxes)",
-  intentDescription: "UNPRO — Présence IA 12 mois, 350 $ CA par année + taxes. Renouvellement manuel, jamais automatique.",
-  submitMessage: "350 $ CA par année, avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Couvre 12 mois; renouvellement manuel, jamais automatique. Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti.",
+  productName: "UNPRO — Présence IA — Lancement, 12 mois (350 $ CA + taxes)",
+  intentDescription: "UNPRO — Présence IA — Lancement, 12 mois, 350 $ CA + taxes. Paiement unique, aucun abonnement automatique.",
+  submitMessage: "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, couvre 12 mois; aucun abonnement automatique. Profil UNPRO + 12 mois de Présence IA; aucun rendez-vous inclus ou garanti.",
 };
 
 Deno.serve(async (req) => {

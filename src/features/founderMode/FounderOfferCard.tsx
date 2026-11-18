@@ -41,12 +41,12 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma ga
           Activez votre profil complet
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Profil + 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut. 350 $ + taxes par année.
+          Profil + 12 mois de Présence IA sur UNPRO. Aucun rendez-vous inclus par défaut. 350 $ + taxes, paiement unique.
         </p>
 
         <div className="mt-4 flex items-end gap-3">
           <div className="text-4xl font-bold tracking-tight text-foreground">350 $</div>
-          <div className="pb-1 text-sm text-muted-foreground">par année · renouvellement non automatique</div>
+          <div className="pb-1 text-sm text-muted-foreground">+ taxes · paiement unique · 12 mois</div>
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">

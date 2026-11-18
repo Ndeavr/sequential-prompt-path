@@ -1,3 +1,4 @@
+import { presenceOfferByTaxContract } from "./presenceOffers.ts";
 /** Founder confirmed GST+QST registration (2026-10-18).
  * Release gate, default CLOSED for LIVE: a LIVE 350 Checkout (and any LIVE tax-rate
  * creation) is allowed only when the server secret ENTRY350_LIVE_CHECKOUT_RELEASED
@@ -47,10 +48,14 @@ export async function ensureQuebecTaxRates(stripe: any): Promise<string[]> {
  */
 export async function verifyEntry350TaxContract(stripe: any, signed: any, live: boolean, replay: boolean) {
   if (!signed.metadata?.entry_tax_contract) return signed; // explicitly historical
-  if (replay || signed.metadata.entry_tax_contract !== ENTRY350_TAX_CONTRACT) throw new Error("entry_tax_contract_unverified");
+  // Offre Lancement (contrat historique) ou Fondateur 120 mois : montants serveur du contrat signé.
+  const offer = presenceOfferByTaxContract(signed.metadata.entry_tax_contract);
+  if (replay || !offer) throw new Error("entry_tax_contract_unverified");
+  const AMOUNTS = offer;
   const session = await stripe.checkout.sessions.retrieve(signed.id);
   if (session.id !== signed.id || session.livemode !== live ||
-      session.metadata?.entry_tax_contract !== ENTRY350_TAX_CONTRACT ||
+      session.metadata?.entry_tax_contract !== offer.taxContract ||
+      (session.metadata?.presence_tier ?? null) !== (signed.metadata?.presence_tier ?? null) ||
       session.metadata?.offer !== signed.metadata?.offer || session.payment_status !== signed.payment_status ||
       session.amount_subtotal !== signed.amount_subtotal || session.amount_total !== signed.amount_total) {
     throw new Error("entry_tax_session_mismatch");
@@ -58,9 +63,9 @@ export async function verifyEntry350TaxContract(stripe: any, signed: any, live: 
   const lines = await stripe.checkout.sessions.listLineItems(signed.id, { limit: 100 });
   const line = lines.data?.[0];
   if (lines.has_more || lines.data?.length !== 1 || line.quantity !== 1 ||
-      line.currency !== "cad" || line.amount_subtotal !== ENTRY350_AMOUNTS.subtotal ||
-      line.amount_total !== ENTRY350_AMOUNTS.total || line.amount_discount !== 0 ||
-      line.amount_tax !== ENTRY350_AMOUNTS.tax || line.taxes?.length !== 2 ||
+      line.currency !== "cad" || line.amount_subtotal !== AMOUNTS.subtotal ||
+      line.amount_total !== AMOUNTS.total || line.amount_discount !== 0 ||
+      line.amount_tax !== AMOUNTS.tax || line.taxes?.length !== 2 ||
       session.automatic_tax?.enabled === true || session.total_details?.amount_discount !== 0) {
     throw new Error("entry_tax_lines_mismatch");
   }
@@ -69,7 +74,7 @@ export async function verifyEntry350TaxContract(stripe: any, signed: any, live: 
     if (taxes.length !== 1 || taxes[0].rate.inclusive !== false ||
         taxes[0].rate.percentage !== def.percentage || taxes[0].rate.country !== "CA" ||
         (def.jurisdiction === "CA-QC" && taxes[0].rate.state !== "QC") ||
-        taxes[0].amount !== (index === 0 ? ENTRY350_AMOUNTS.gst : ENTRY350_AMOUNTS.qst)) {
+        taxes[0].amount !== (index === 0 ? AMOUNTS.gst : AMOUNTS.qst)) {
       throw new Error("entry_tax_rate_mismatch");
     }
   }

@@ -80,7 +80,8 @@ describe("Présence IA annuelle : décision serveur, achat combiné, aucune doub
   });
   it("webhook : renouvellement après expiration permis, doublon < 12 mois refusé par garde SQL", () => {
     const src = readFileSync("supabase/functions/stripe-webhook/index.ts", "utf8");
-    expect(src).toContain('.gte("created_at", addCalendarMonths(new Date(), -12).toISOString())');
+    expect(src).toContain('.gte("created_at", addCalendarMonths(new Date(), -120).toISOString())');
+    expect(src).toContain("presenceMonthsFromLedger(r.metadata)");
     expect(src).toContain("verifyCombinedPresenceLine(session");
     expect(src).toContain("isPresenceOverlapError(ledgerErr.message)");
   });
@@ -106,18 +107,19 @@ describe("plan personnalisé : lignes distinctes et total dû aujourd'hui", () =
   });
 });
 
-describe("formulation commerciale : 350 $ + taxes PAR ANNÉE", () => {
-  it("FR/EN et miroir serveur : par année, 12 mois, aucun « paiement unique »", () => {
+describe("formulation commerciale (décision 2026-11-18) : paiement unique, 12 mois, sans abonnement", () => {
+  it("FR/EN et miroir serveur : paiement unique, 12 mois, jamais « par année »", () => {
     const all = JSON.stringify([OFFER_350, ENTRY_350, homeFin3.en.entrepreneurs.note, OFFER.payment_note]);
-    expect(all).not.toMatch(/Paiement unique|une seule fois|one-time|Aucun abonnement/i);
-    expect(ENTRY_350.paymentNote).toContain("par année");
+    expect(all).not.toMatch(/par année|per year|\/an\b/i);
+    expect(ENTRY_350.paymentLabel).toBe("Paiement unique · sans abonnement automatique · taxes en sus");
+    expect(ENTRY_350.paymentNote).toContain("paiement unique");
     expect(ENTRY_350.paymentNote).toContain("402,41 $");
-    expect(OFFER.payment_note).toContain("par année");
-    expect(homeFin3.en.entrepreneurs.note).toContain("per year");
+    expect(OFFER.payment_note).toContain("payés une fois");
+    expect(homeFin3.en.entrepreneurs.note).toContain("one-time payment");
   });
   it("carte de repli : textes approuvés", () => {
     expect(ENTRY_350.fallback.title).toBe("Pas encore prêt pour un forfait de rendez-vous? Commencez par votre Présence IA.");
-    expect(ENTRY_350.fallback.cta).toBe("Commencer ma Présence IA — 350 $/an");
+    expect(ENTRY_350.fallback.cta).toBe("Commencer ma Présence IA — 350 $ + taxes");
     expect(ENTRY_350.fallback.body).toBe("Commencez à bâtir votre présence dès aujourd’hui. Un profil complet, tenu à jour, aide UNPRO à comprendre votre entreprise et à vous présenter pour les projets adaptés. Ajoutez des rendez-vous lorsque vous êtes prêt.");
   });
 });

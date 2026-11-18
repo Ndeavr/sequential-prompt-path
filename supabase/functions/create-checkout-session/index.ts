@@ -1,6 +1,7 @@
 import { contractorIdentityFromQuote, missingContractorIdentity } from "../_shared/contractorIdentity.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { ensureQuebecTaxRates, entry350TaxCollectionApproved, ENTRY350_TAX_CONTRACT } from "../_shared/entry350Tax.ts";
+import { PRESENCE_OFFERS, resolvePresenceTier } from "../_shared/presenceOffers.ts";
 import { ENTRY350_PROMO_TAX_CONTRACT, ENTRY350_PROMO_AMOUNTS, normalizePromoInput, resolveEntry350Promo } from "../_shared/entry350Promo.ts";
 import { isSessionPaid, safeRedirectUrl, isValidCheckoutSessionId, sessionMismatch, webhookConfirmationFailed, normalizeAffiliateRef } from "../_shared/checkoutGuards.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
       entryPromoCode,
       entryPromoPreview,
       offerVersion,
+      presenceOffer,
       auditId,
       campaign,
       source,
@@ -332,6 +334,27 @@ Deno.serve(async (req) => {
       // client. LIVE exige en plus ENTRY350_PROMO_LIVE_RELEASED === "true".
       const entryMode = useTestMode && stripeTestKey.startsWith("sk_test_") ? "test" : "live";
       const promoInput = isEntryActivation ? normalizePromoInput(entryPromoCode) : null;
+      // ── OFFRE PRÉSENCE IA — Lancement (défaut) ou Fondateur 120 mois ─────
+      // Seul l'identifiant vient du client; montant, taxes et durée = serveur.
+      // Fondateur : prix complet seul (aucun code, devis, proposition, garantie);
+      // LIVE fermé tant que PRESENCE_FOUNDER_LIVE_RELEASED !== "true".
+      const presenceTier = resolvePresenceTier(presenceOffer);
+      const refusePresence = (code: string, error: string, status = 409) => new Response(JSON.stringify({ code, error }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!presenceTier || (presenceTier === "founder_120m" && !isEntryActivation)) {
+        return refusePresence("presence_offer_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.", 400);
+      }
+      const founderTier = presenceTier === "founder_120m";
+      const presence = PRESENCE_OFFERS[presenceTier];
+      if (founderTier) {
+        if (promoInput || entryPromoPreview === true || (offerVersion !== undefined && offerVersion !== null && offerVersion !== "") || quoteId || affiliateProposalToken) {
+          return refusePresence("founder_offer_incompatible", "L'option Fondateur se paie seule, au prix complet, sans code ni devis. Rien n'a été facturé.");
+        }
+        if (entryMode === "live" && Deno.env.get("PRESENCE_FOUNDER_LIVE_RELEASED") !== "true") {
+          return refusePresence("founder_live_not_released", "L'option Fondateur n'est pas encore ouverte au paiement. Rien n'a été facturé.", 503);
+        }
+      }
+
       let entryPromo: { promotionCodeId: string; couponId: string; productId: string } | null = null;
       if (promoInput) {
         const promoRefuse = (code: string, status = 409) => new Response(JSON.stringify({ code, error:
@@ -446,7 +469,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
       }
 
-      const amountCents = assertFallbackCreditAmount(FALLBACK_CREDIT_AMOUNT_CENTS);
+      const amountCents = founderTier ? presence.subtotal : assertFallbackCreditAmount(FALLBACK_CREDIT_AMOUNT_CENTS);
       const origin = req.headers.get("origin") ?? "https://unpro.ca";
       const isEmbeddedFallback = uiMode === "embedded";
 
@@ -546,6 +569,8 @@ Deno.serve(async (req) => {
               ...(entryPromo ? { product: entryPromo.productId } : {}),
               ...(entryPromo ? {} : { product_data: guaranteeOffer
                 ? { name: GUARANTEE_COPY.stripeName, description: GUARANTEE_COPY.stripeDescription }
+                : founderTier
+                ? { name: presence.stripeName, description: presence.stripeDescription }
                 : isEntryActivation
                 ? {
                     name: "Activation du profil UNPRO",
@@ -570,9 +595,10 @@ Deno.serve(async (req) => {
           ...(isEntryActivation
             ? {
                 amount_cents: String(amountCents),
-                entry_tax_contract: entryPromo ? ENTRY350_PROMO_TAX_CONTRACT : ENTRY350_TAX_CONTRACT,
+                entry_tax_contract: entryPromo ? ENTRY350_PROMO_TAX_CONTRACT : founderTier ? presence.taxContract : ENTRY350_TAX_CONTRACT,
+                ...(founderTier ? { presence_tier: presence.tier } : {}),
                 ...(entryPromo ? { promo_code: "PROMO", promo_code_id: entryPromo.promotionCodeId, promo_coupon_id: entryPromo.couponId, promo_discount_cents: String(ENTRY350_PROMO_AMOUNTS.discount) } : {}),
-                presence_ia_months: "12",
+                presence_ia_months: String(presence.months),
                 guaranteed_appointments: String(entryGuaranteed ?? 0),
                 ...(guaranteeOffer ? { offer_version: GUARANTEE_OFFER_CODE, guaranteed_contracts: String(GUARANTEE_OFFER.guaranteedContracts) } : {}),
               }
@@ -592,6 +618,8 @@ Deno.serve(async (req) => {
 
       if (isEntryActivation) fallbackConfig.custom_text = { submit: { message: guaranteeOffer
         ? GUARANTEE_COPY.stripeSubmit
+        : founderTier
+        ? presence.stripeSubmit
         : entryPromo
         ? "350 $ CA − code PROMO 349 $ = 1,00 $ avant taxes. TPS : 0,05 $; TVQ : 0,10 $; total : 1,15 $ CA. Paiement unique."
         : "350 $ CA avant taxes. TPS : 17,50 $; TVQ : 34,91 $; total : 402,41 $ CA. Paiement unique, aucun abonnement." } };
@@ -658,6 +686,7 @@ Deno.serve(async (req) => {
           is_test: useTestMode,
           metadata: {
             offer: "entry_activation_350",
+            presence_tier: presenceTier,
             amount_cents: amountCents,
             ref: entryAffRef || null,
             declared_business_name: fbContractor.business_name,
@@ -728,6 +757,7 @@ Deno.serve(async (req) => {
           payment_status: "unpaid",
           metadata_json: {
             offer: "entry_activation_350",
+            presence_tier: presenceTier,
             user_id: userId,
             amount_subtotal: fbSession.amount_subtotal ?? amountCents,
             ref: entryAffRef || null,
