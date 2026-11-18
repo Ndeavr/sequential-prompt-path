@@ -65,6 +65,6 @@ describe("Page 100 % à la commission", () => {
     expect(readFileSync("scripts/generate-sitemaps.ts", "utf8")).toContain('{ path: "/commission"');
     const landing = readFileSync("src/pages/entrepreneur/PageEntrepreneursLanding.tsx", "utf8");
     expect(landing).toContain('"/commission"');
-    expect(landing).toContain("350 $ + taxes par année.");
+    expect(landing).toContain("350 $ + taxes, paiement unique pour 12 mois.");
   });
 });

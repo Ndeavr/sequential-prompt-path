@@ -1,5 +1,5 @@
 /**
- * Présence IA annuelle (350 $ + taxes par année : profil + 12 mois).
+ * Présence IA — Lancement (350 $ + taxes, paiement unique : profil + 12 mois).
  *
  * Source unique côté serveur : `public.annual_presence_decision(contractor)`
  * (dernier paiement 350 $ signé, non annulé, de moins de 12 mois; abonnement
@@ -75,7 +75,7 @@ export function annualPresenceLineItem() {
       currency: "cad",
       unit_amount: ANNUAL_PRESENCE_CENTS,
       product_data: {
-        name: "Présence IA UNPRO — profil + 12 mois (350 $ + taxes par année, renouvellement manuel)",
+        name: "Présence IA UNPRO — profil + 12 mois (350 $ + taxes, paiement unique, sans renouvellement automatique)",
         metadata: { type: ANNUAL_PRESENCE_LINE_TYPE },
       },
     },

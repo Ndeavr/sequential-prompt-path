@@ -120,6 +120,6 @@ describe("Landing partenariat performance", () => {
     expect(router).toContain('path="/en/performance-partnership"');
     expect(router).toContain('path="/commission"');
     expect(readFileSync("scripts/generate-sitemaps.ts", "utf8")).toContain('{ path: "/partenariat-performance"');
-    expect(readFileSync("src/pages/entrepreneur/PageEntrepreneursLanding.tsx", "utf8")).toContain("350 $ + taxes par année.");
+    expect(readFileSync("src/pages/entrepreneur/PageEntrepreneursLanding.tsx", "utf8")).toContain("350 $ + taxes, paiement unique pour 12 mois.");
   });
 });

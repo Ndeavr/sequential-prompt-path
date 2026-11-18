@@ -70,8 +70,8 @@ export default function PageActivation350() {
   return (
     <main className="home-light activation-clara-page min-h-screen bg-background pb-28 text-foreground sm:pb-10">
       <Helmet>
-        <title>Profil UNPRO — Présence IA 350 $ + taxes par année | UNPRO</title>
-        <meta name="description" content="Le profil AIPP est un profil professionnel structuré qui aide les outils IA à comprendre votre entreprise. 12 mois de présence IA sur UNPRO, 350 $ + taxes par année." />
+        <title>Profil UNPRO — Présence IA 350 $ + taxes, paiement unique | UNPRO</title>
+        <meta name="description" content="Le profil AIPP est un profil professionnel structuré qui aide les outils IA à comprendre votre entreprise. 12 mois de présence IA sur UNPRO, 350 $ + taxes, paiement unique." />
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -86,7 +86,7 @@ export default function PageActivation350() {
 
         <div className="mt-5 rounded-[28px] border border-border bg-card p-5" data-testid="activation-350-offer">
           <p className="text-lg font-semibold">Profil AIPP + 12 mois de présence IA sur UNPRO</p>
-          <p className="mt-1 text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes · par année</span></p>
+          <p className="mt-1 text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes · paiement unique · 12 mois</span></p>
           <p className="mt-1 text-sm text-muted-foreground" data-testid="activation-350-monthly-equivalent">L’équivalent de 29,17 $ par mois pendant un an — 350 $ + taxes, payable en un versement.</p>
           <ul className="mt-4 space-y-2 text-sm">
             {["Profil entreprise UNPRO complet", "12 mois de présence sur UNPRO", "Vos préférences : mandats voulus, exclusions et territoires desservis", "Couvre 12 mois, aucun renouvellement automatique"].map((x) => (
@@ -196,11 +196,14 @@ export default function PageActivation350() {
 
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
-        <Link to={links.activate} onClick={onActivate} className={ctaCls}>
-          Activer mon profil AIPP · 350 $
-        </Link>
-      </div>
+      {/* Barre collante masquée pendant le récapitulatif : le choix Lancement/Fondateur y porte son propre bouton et son prix. */}
+      {!reviewOpen && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden" data-testid="activation-350-sticky">
+          <Link to={links.activate} onClick={onActivate} className={ctaCls}>
+            Activer mon profil AIPP · 350 $
+          </Link>
+        </div>
+      )}
     </main>
   );
 }
