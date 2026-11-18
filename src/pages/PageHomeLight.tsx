@@ -10,6 +10,7 @@ import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
 import { SectionMatchingPaths } from "@/components/home-light/HomeLightSections";
 import SectionProjectInspiration from "@/components/home-light/SectionProjectInspiration";
+import UnproFacebookVideos from "@/components/media/UnproFacebookVideos";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 import { CLARA_HOMEOWNER_REQUEST_EVENT } from "@/services/clara/claraContractorResume";
@@ -75,6 +76,7 @@ export default function PageHomeLight() {
             field.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
             field.focus({ preventScroll: true });
           }} />
+          <UnproFacebookVideos placement="home" />
           <div className="home-afterglow" aria-hidden="true" />
         </div>
       </MainLayout>
