@@ -182,7 +182,7 @@ export default function PaintingCalculatorPage() {
       if (!uploaded) {
         setPhotos((p) =>
           p.map((ph) =>
-            ph === placeholder ? { ...ph, analyzing: false, aiNotes: { summary: "Aperçu uniquement" } } : ph,
+            ph === placeholder ? { ...ph, analyzing: false, aiNotes: { summary: "Analyse indisponible. Utilisez une image JPG, PNG ou WebP de 5 Mo maximum, puis réessayez." } } : ph,
           ),
         );
         continue;
@@ -267,7 +267,7 @@ export default function PaintingCalculatorPage() {
         .single();
       if (error) throw error;
       // Persist photos rows
-      if (photos.length) {
+      if (photos.some((photo) => photo.storagePath)) {
         await supabase.from("painting_photos").insert(
           photos
             .filter((p) => p.storagePath)
