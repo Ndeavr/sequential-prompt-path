@@ -105,6 +105,11 @@ describe("Clara — retour au projet maison sans perte d’état", () => {
     expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" })');
   });
   it("évite les tours identiques consécutifs de Clara", () => {
-    expect(box2).toContain("lastAssistant.text.trim() === text.trim()");
+    // Deduplicate only trailing assistant turns (never swallow a reply after a user turn).
+    expect(box2).toContain("for (let i = messagesRef.current.length - 1; i >= 0; i--)");
+    expect(box2).toContain("if (message.role !== \"assistant\") break;");
+    expect(box2).toContain("const existing = unanswered.find((message) =>");
+    expect(box2).toContain("message.text.trim() === text.trim()");
+    expect(box2).toContain("if (existing) {");
   });
 });
