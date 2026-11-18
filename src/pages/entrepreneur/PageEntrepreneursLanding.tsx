@@ -12,6 +12,7 @@ import HeroV2 from "@/components/entrepreneur-landing/v2/HeroV2";
 import SectionPainV2 from "@/components/entrepreneur-landing/v2/SectionPainV2";
 import SectionSolutionV2 from "@/components/entrepreneur-landing/v2/SectionSolutionV2";
 import SectionHowItWorksV2 from "@/components/entrepreneur-landing/v2/SectionHowItWorksV2";
+import UnproFacebookVideos from "@/components/media/UnproFacebookVideos";
 
 
 const PageEntrepreneursLanding = () => {
@@ -43,6 +44,7 @@ const PageEntrepreneursLanding = () => {
       <div className="alex-immersive min-h-screen bg-background text-foreground">
         <HeroV2 onTrackCta={trackCta} />
         <SectionHowItWorksV2 />
+        <UnproFacebookVideos placement="entrepreneurs" />
         <SectionSolutionV2 />
         <SectionPainV2 />
         <section className="mx-auto max-w-4xl px-5 py-10">
