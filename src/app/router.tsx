@@ -26,6 +26,8 @@ const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVarian
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 const PageVisibiliteIA = lazyWithRetry(() => import("@/pages/marketing/PageVisibiliteIA"));
+const PageCaDependHomeowner = lazyWithRetry(() => import("@/pages/marketing/PageCaDepend").then(m => ({ default: m.PageCaDependHomeowner })));
+const PageCaDependContractor = lazyWithRetry(() => import("@/pages/marketing/PageCaDepend").then(m => ({ default: m.PageCaDependContractor })));
 const AdminVisibiliteIALeads = lazyWithRetry(() => import("@/pages/admin/AdminVisibiliteIALeads"));
 import { LEGACY_REDIRECTS } from "@/config/routeRegistry";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
@@ -1079,6 +1081,7 @@ export const AppRouter = () => (
         {/* Isolation Solution Royal résout vers la fiche publique canonique (/entrepreneur/:slug). */}
         <Route path="/entrepreneurs/pavage-alpha-laval" element={<Navigate to="/entrepreneur/pavage-alpha-laval" replace />} />
         <Route path="/entrepreneurs/rendez-vous-intelligents" element={<Suspense fallback={<LazyFallback />}><PageAppointmentSetterExplainer /></Suspense>} />
+        <Route path="/entrepreneurs/ca-depend" element={<Suspense fallback={<LazyFallback />}><PageCaDependContractor /></Suspense>} />
         <Route path="/entrepreneurs/:slug" element={<Suspense fallback={<LazyFallback />}><PageHomeownerBookingFunnel /></Suspense>} />
         <Route path="/entrepreneur/bienvenue" element={<Suspense fallback={<LazyFallback />}><PageClaimWelcome /></Suspense>} />
         <Route path="/entrepreneur/:slug/reclamer" element={<Suspense fallback={<LazyFallback />}><PageClaimWizard /></Suspense>} />
@@ -1089,6 +1092,7 @@ export const AppRouter = () => (
         <Route path="/signup" element={<LoginPageUnpro />} />
         <Route path="/role" element={<PreLoginRolePage />} />
         <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
+        <Route path="/ca-depend" element={<Suspense fallback={<LazyFallback />}><PageCaDependHomeowner /></Suspense>} />
         <Route path="/start" element={<StartPage />} />
 
         {/* Contractor AI Activation */}
