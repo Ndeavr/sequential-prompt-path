@@ -21,24 +21,17 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import {
   useHomeownerPlan,
   useHomeownerPlanCatalog,
-  useRefreshEntitlements,
   toCheckoutPlanCode,
+  normalizeHomeownerPlanCode,
   type HomeownerPlanCode,
 } from "@/features/planSystem/useHomeownerPlan";
+import { homeownerFeatureLine, isUnlimitedLine, HOMEOWNER_WALL_LABELS } from "@/features/planSystem/homeownerFeatureLabels";
+import { FAIR_USE_NOTICE } from "@/lib/copy/usagePolicy";
 
-const FEATURE_LABELS: Record<string, string> = {
-  properties_max: "Ajouter une adresse supplémentaire",
-  quote_analysis_monthly: "Analyser plus de soumissions",
-  quote_comparison: "Comparer vos soumissions",
-  contractor_verification_detailed: "Vérification entrepreneur détaillée",
-  maintenance_reminders: "Rappels d'entretien",
-  document_archive_advanced: "Archivage avancé des documents",
-  project_history: "Historique des projets et dépenses",
-  alex_priority: "Accompagnement Clara avancé",
-  work_prioritization: "Priorisation des travaux",
-  proactive_suggestions: "Suggestions proactives",
-  priority_support: "Support prioritaire",
-};
+/** Retour de Stripe : l'URL n'est jamais une preuve; seul l'abonnement lu côté serveur l'est. */
+type ReturnState = "idle" | "verifying" | "confirmed" | "pending" | "canceled";
+const VERIFY_ATTEMPTS = 10;
+const VERIFY_INTERVAL_MS = 3000;
 
 const PLAN_ICON: Record<string, typeof Home> = {
   home_decouverte: Home,
@@ -56,23 +49,35 @@ export default function PageUpgradeHomeowner() {
   const returnPath = params.get("return") || "/compte";
   const suggested = params.get("suggested");
 
-  const { planCode, isPaid, currentPeriodEnd, cancelAtPeriodEnd } = useHomeownerPlan();
+  const { planCode, isPaid, currentPeriodEnd, cancelAtPeriodEnd, refetch, isLoading: planLoading } = useHomeownerPlan();
   const { data: catalog, isLoading } = useHomeownerPlanCatalog();
-  const refreshEntitlements = useRefreshEntitlements();
 
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Entitlements refresh as soon as the user comes back from Stripe.
+  // Plan attendu au retour de Stripe (?plan=plus|signature ou ?suggested=…). Sans plan attendu
+  // identifiable, aucune confirmation n'est affichée : on montre seulement le plan lu côté serveur.
+  const expectedPlan = useMemo(() => {
+    const raw = params.get("plan") ?? suggested;
+    const code = normalizeHomeownerPlanCode(raw);
+    return raw && code !== "home_decouverte" ? code : null;
+  }, [params, suggested]);
+  const [returnState, setReturnState] = useState<ReturnState>(
+    params.get("success") ? "verifying" : params.get("canceled") ? "canceled" : "idle",
+  );
+  const [attempts, setAttempts] = useState(0);
+
   useEffect(() => {
-    if (params.get("success")) {
-      refreshEntitlements();
-      toast.success("Paiement confirmé. Votre plan est activé.");
+    if (returnState !== "verifying" || planLoading) return;
+    if (!session || !expectedPlan) { setReturnState("pending"); return; }
+    if (planCode === expectedPlan) {
+      setReturnState("confirmed");
+      toast.success("Paiement confirmé. Votre plan est actif.");
+      return;
     }
-    if (params.get("canceled")) {
-      toast.info("Paiement annulé. Aucun montant n'a été prélevé.");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (attempts >= VERIFY_ATTEMPTS) { setReturnState("pending"); return; }
+    const t = window.setTimeout(() => { void refetch(); setAttempts((a) => a + 1); }, VERIFY_INTERVAL_MS);
+    return () => window.clearTimeout(t);
+  }, [returnState, planLoading, session, expectedPlan, planCode, attempts, refetch]);
 
   const plans = catalog?.plans ?? [];
   const features = catalog?.features ?? [];
@@ -153,10 +158,10 @@ export default function PageUpgradeHomeowner() {
           <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
             Améliorer mon plan
           </h1>
-          {featureKey && FEATURE_LABELS[featureKey] ? (
+          {featureKey && HOMEOWNER_WALL_LABELS[featureKey] ? (
             <p className="mt-3 text-base text-muted-foreground max-w-2xl">
               <span className="font-semibold text-foreground">
-                {FEATURE_LABELS[featureKey]}
+                {HOMEOWNER_WALL_LABELS[featureKey]}
               </span>{" "}
               nécessite un plan supérieur. Activez-le en moins d'une minute.
             </p>
@@ -167,6 +172,19 @@ export default function PageUpgradeHomeowner() {
             </p>
           )}
         </motion.div>
+
+        {returnState !== "idle" && (
+          <div role="status" aria-live="polite" data-testid="upgrade-return-status" className="mt-6 rounded-2xl border border-border/40 bg-card/60 p-4 text-sm text-foreground">
+            {returnState === "verifying" && (
+              <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Nous vérifions votre paiement auprès de Stripe…</span>
+            )}
+            {returnState === "confirmed" && "Paiement confirmé. Votre plan est actif."}
+            {returnState === "pending" && (session
+              ? "La confirmation de votre paiement n'est pas encore reçue. Votre plan s'affichera ici dès qu'elle arrivera; aucun accès n'est activé sans confirmation."
+              : "Connectez-vous pour voir l'état de votre paiement et de votre plan.")}
+            {returnState === "canceled" && "Paiement interrompu. Votre plan actuel reste inchangé."}
+          </div>
+        )}
 
         {/* Current plan */}
         <div className="mt-6 rounded-2xl border border-border/40 bg-card/60 p-4 flex flex-wrap items-center justify-between gap-3">
@@ -203,7 +221,10 @@ export default function PageUpgradeHomeowner() {
               const isCurrent = plan.code === planCode;
               const isDowngrade = plan.tierRank < currentRank;
               const highlight = suggested ? plan.code === suggested : plan.code === "home_plus";
-              const planFeatures = (featuresByPlan[plan.code] ?? []).filter((f) => f.enabled);
+              const planFeatures = (featuresByPlan[plan.code] ?? [])
+                .filter((f) => f.enabled)
+                .map((f) => ({ ...f, label: homeownerFeatureLine(f.key, f.limit) }))
+                .filter((f): f is typeof f & { label: string } => f.label !== null);
 
               return (
                 <div
@@ -244,15 +265,7 @@ export default function PageUpgradeHomeowner() {
                     {planFeatures.map((f) => (
                       <li key={f.key} className="flex items-start gap-2 text-sm text-foreground/90">
                         <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                        <span>
-                          {FEATURE_LABELS[f.key] ?? f.key}
-                          {f.limit !== null && f.limit > 0 && f.limit !== 1 && (
-                            <span className="text-muted-foreground"> · {f.limit}</span>
-                          )}
-                          {f.limit === -1 && (
-                            <span className="text-muted-foreground"> · illimité</span>
-                          )}
-                        </span>
+                        <span>{f.label}</span>
                       </li>
                     ))}
                   </ul>
@@ -286,6 +299,10 @@ export default function PageUpgradeHomeowner() {
               );
             })}
           </div>
+        )}
+
+        {features.some((f) => f.enabled && isUnlimitedLine(f.featureKey, f.limitValue)) && (
+          <p className="mt-6 text-center text-xs text-muted-foreground" data-testid="upgrade-fair-use">{FAIR_USE_NOTICE}</p>
         )}
 
         <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
