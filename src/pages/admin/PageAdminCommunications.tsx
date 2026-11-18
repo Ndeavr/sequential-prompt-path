@@ -40,34 +40,59 @@ const statusTone: Record<string, string> = {
 export default function PageAdminCommunications() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [kpi, setKpi] = useState<KPI>({ smsSent: 0, smsDelivered: 0, emailSent: 0, emailDelivered: 0, failed: 0, fallbacks: 0 });
+  const [kpi, setKpi] = useState<KPI | null>(null);
   const [loading, setLoading] = useState(true);
-  const [testPhone, setTestPhone] = useState("");
-  const [testEmail, setTestEmail] = useState("");
-  const [testSending, setTestSending] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
 
   const load = async () => {
+    setLoading(true);
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-    const [rulesQ, logsQ, kpiQ] = await Promise.all([
-      supabase.from("outbound_contact_rules").select("*").order("priority", { ascending: true }),
-      supabase.from("communication_logs").select("*").order("created_at", { ascending: false }).limit(80),
-      supabase.from("communication_logs").select("channel,delivery_status,fallback_triggered").gte("created_at", since),
-    ]);
-    if (rulesQ.data) setRules(rulesQ.data as Rule[]);
-    if (logsQ.data) setLogs(logsQ.data as Log[]);
-    if (kpiQ.data) {
-      const k: KPI = { smsSent: 0, smsDelivered: 0, emailSent: 0, emailDelivered: 0, failed: 0, fallbacks: 0 };
-      for (const r of kpiQ.data as any[]) {
-        if (r.channel === "sms" && r.delivery_status === "sent") k.smsSent++;
-        if (r.channel === "sms" && r.delivery_status === "delivered") k.smsDelivered++;
-        if (r.channel === "email" && r.delivery_status === "sent") k.emailSent++;
-        if (r.channel === "email" && r.delivery_status === "delivered") k.emailDelivered++;
-        if (["failed", "undelivered"].includes(r.delivery_status)) k.failed++;
-        if (r.fallback_triggered) k.fallbacks++;
-      }
-      setKpi(k);
+    // Exact server-side counts: never silently truncate daily totals at the API row limit.
+    // These figures describe communication_logs ONLY, not all acquisition SMS/email or Gmail.
+    const countLogs = (channel: "sms" | "email" | null, statuses?: string[], fallbackOnly = false) => {
+      let q = supabase.from("communication_logs").select("id", { count: "exact", head: true }).gte("created_at", since);
+      if (channel) q = q.eq("channel", channel);
+      if (statuses) q = q.in("delivery_status", statuses);
+      if (fallbackOnly) q = q.eq("fallback_triggered", true);
+      return q;
+    };
+
+    try {
+      const [rulesQ, logsQ, smsAttemptQ, smsDeliveredQ, emailAttemptQ, emailDeliveredQ, failedQ, fallbackQ] = await Promise.all([
+        supabase.from("outbound_contact_rules").select("*").order("priority", { ascending: true }),
+        supabase.from("communication_logs").select("*").order("created_at", { ascending: false }).limit(80),
+        countLogs("sms", ["sent", "delivered", "undelivered", "read"]),
+        countLogs("sms", ["delivered", "read"]),
+        countLogs("email", ["sent", "delivered", "bounced", "complained"]),
+        countLogs("email", ["delivered"]),
+        countLogs(null, ["failed", "undelivered", "bounced", "complained", "blocked"]),
+        countLogs(null, undefined, true),
+      ]);
+
+      setRules(rulesQ.error ? [] : ((rulesQ.data ?? []) as Rule[]));
+      setLogs(logsQ.error ? [] : ((logsQ.data ?? []) as Log[]));
+
+      const metricQueries = [smsAttemptQ, smsDeliveredQ, emailAttemptQ, emailDeliveredQ, failedQ, fallbackQ];
+      const metricsValid = metricQueries.every((r) => !r.error && typeof r.count === "number");
+      setKpi(metricsValid ? {
+        smsSent: smsAttemptQ.count!,
+        smsDelivered: smsDeliveredQ.count!,
+        emailSent: emailAttemptQ.count!,
+        emailDelivered: emailDeliveredQ.count!,
+        failed: failedQ.count!,
+        fallbacks: fallbackQ.count!,
+      } : null);
+      setDataError(rulesQ.error || logsQ.error || !metricsValid
+        ? "Lecture incomplète des journaux. Les valeurs indisponibles ne signifient pas zéro. Vérifiez l'accès à la base et réessayez."
+        : null);
+    } catch {
+      setRules([]);
+      setLogs([]);
+      setKpi(null);
+      setDataError("Impossible de joindre le registre des communications. Aucun total ne peut être certifié.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -89,27 +114,7 @@ export default function PageAdminCommunications() {
     if (error) toast.error(error.message); else load();
   };
 
-  const runTest = async () => {
-    if (!testPhone && !testEmail) { toast.error("Téléphone ou courriel requis"); return; }
-    setTestSending(true);
-    const { data, error } = await supabase.functions.invoke("contact-router", {
-      body: {
-        contact: { phone: testPhone || undefined, email: testEmail || undefined, sms_consent: true, email_consent: true, first_name: "Test" },
-        template_key: "router-smoke-test",
-        sms_body: "UNPRO — test de routage SMS. Répondez STOP pour vous retirer.",
-        email_subject: "UNPRO — test de routage",
-        idempotency_key: `smoke-${Date.now()}`,
-      },
-    });
-    setTestSending(false);
-    const d = data as any;
-    if (error) toast.error(error.message);
-    else if (d?.ok === false) toast.error(`Échec (${d?.channel_used}) : ${d?.error ?? "raison inconnue"}`);
-    else toast.success(
-      `Canal: ${d?.channel_used ?? "—"} · type: ${d?.phone_type ?? "n/a"}${d?.phone_verified ? " ✓" : ""}${d?.fallback_scheduled ? " · fallback email planifié" : ""}`
-    );
-    load();
-  };
+
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
@@ -118,21 +123,23 @@ export default function PageAdminCommunications() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-[-0.04em] md:text-4xl">Routage des communications</h1>
-            <p className="mt-2 text-sm text-white/60">SMS d'abord si mobile, courriel en relais — moteur unique, logs en temps réel.</p>
+            <p className="mt-2 text-sm text-white/60">Journaux du routeur (24 h). Les SMS d’acquisition, les courriels marketing et Gmail ont d’autres registres : ce tableau n’est pas le total UNPRO.</p>
           </div>
           <Button variant="ghost" onClick={load} className="gap-2 text-white/70 hover:text-white">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
         </div>
 
+        {dataError && <p role="alert" className="mb-5 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-200">{dataError}</p>}
+
         {/* KPIs */}
         <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-6">
-          <KpiCard icon={<MessageSquare className="h-4 w-4" />} label="SMS envoyés (24h)" value={kpi.smsSent} />
-          <KpiCard icon={<Zap className="h-4 w-4" />} label="SMS livrés" value={kpi.smsDelivered} accent="emerald" />
-          <KpiCard icon={<Mail className="h-4 w-4" />} label="Courriels envoyés" value={kpi.emailSent} />
-          <KpiCard icon={<Mail className="h-4 w-4" />} label="Courriels livrés" value={kpi.emailDelivered} accent="emerald" />
-          <KpiCard icon={<Activity className="h-4 w-4" />} label="Échecs" value={kpi.failed} accent="rose" />
-          <KpiCard icon={<RefreshCw className="h-4 w-4" />} label="Relais déclenchés" value={kpi.fallbacks} accent="cyan" />
+          <KpiCard icon={<MessageSquare className="h-4 w-4" />} label="SMS signalés envoyés (24 h)" value={kpi?.smsSent ?? "—"} />
+          <KpiCard icon={<Zap className="h-4 w-4" />} label="SMS livrés (confirmés)" value={kpi?.smsDelivered ?? "—"} accent="emerald" />
+          <KpiCard icon={<Mail className="h-4 w-4" />} label="Courriels signalés envoyés" value={kpi?.emailSent ?? "—"} />
+          <KpiCard icon={<Mail className="h-4 w-4" />} label="Courriels livrés (confirmés)" value={kpi?.emailDelivered ?? "—"} accent="emerald" />
+          <KpiCard icon={<Activity className="h-4 w-4" />} label="Échecs / blocages" value={kpi?.failed ?? "—"} accent="rose" />
+          <KpiCard icon={<RefreshCw className="h-4 w-4" />} label="Relais déclenchés" value={kpi?.fallbacks ?? "—"} accent="cyan" />
         </div>
 
         {/* Routing Rules */}
@@ -168,30 +175,17 @@ export default function PageAdminCommunications() {
                 </div>
               </div>
             ))}
-            {rules.length === 0 && !loading && <p className="text-sm text-white/40">Aucune règle.</p>}
+            {rules.length === 0 && !loading && !dataError && <p className="text-sm text-white/40">Aucune règle.</p>}
           </div>
         </Glass>
 
-        {/* Smoke test */}
-        <Glass className="mb-8 p-6">
-          <h2 className="mb-1 text-lg font-medium">Test de routage</h2>
-          <p className="mb-4 text-xs text-white/50">Saisissez un téléphone et/ou un courriel — le moteur choisit le bon canal automatiquement.</p>
-          <div className="flex flex-col gap-3 md:flex-row">
-            <Input placeholder="+15145551234" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} className="border-white/10 bg-white/[0.03]" />
-            <Input placeholder="test@exemple.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} className="border-white/10 bg-white/[0.03]" />
-            <Button onClick={runTest} disabled={testSending} className="rounded-2xl bg-cyan-500 px-6 text-[#050816] hover:bg-cyan-400">
-              {testSending ? "Envoi…" : "Tester le routage"}
-            </Button>
-          </div>
-        </Glass>
+        {/* No live-send smoke test in a read-only monitoring screen: prior test forged consent flags. */}
 
         {/* Live feed */}
         <Glass className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-medium">Activité en direct</h2>
-            <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
-              <span className="mr-2 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> realtime
-            </Badge>
+            <h2 className="text-lg font-medium">Derniers événements du routeur</h2>
+            <Badge variant="outline" className="border-white/20 text-white/60">Journaux</Badge>
           </div>
           <div className="space-y-2">
             {logs.map((l) => (
@@ -209,7 +203,7 @@ export default function PageAdminCommunications() {
                 </div>
               </div>
             ))}
-            {logs.length === 0 && !loading && <p className="text-sm text-white/40">Aucun envoi récent.</p>}
+            {logs.length === 0 && !loading && !dataError && <p className="text-sm text-white/40">Aucun événement récent dans ce registre.</p>}
           </div>
         </Glass>
       </div>
@@ -223,7 +217,7 @@ function Glass({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
-function KpiCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: "emerald" | "rose" | "cyan" }) {
+function KpiCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number | string; accent?: "emerald" | "rose" | "cyan" }) {
   const tone = accent === "emerald" ? "text-emerald-300" : accent === "rose" ? "text-rose-300" : accent === "cyan" ? "text-cyan-300" : "text-white";
   return (
     <Glass className="p-4">
