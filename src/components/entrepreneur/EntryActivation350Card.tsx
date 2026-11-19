@@ -79,6 +79,9 @@ export function EntryActivation350Card(p: Props) {
       if (payload?.code === "payment_received_pending") {
         // Paiement déjà reçu par Stripe : jamais de deuxième facturation.
         setError("Votre paiement a déjà été reçu. Ne payez pas une deuxième fois : la confirmation est en cours chez UNPRO.");
+        // A confirmed receipt awaiting entitlement reconciliation must not invite
+        // a second Checkout attempt from this component.
+        setPendingReconciliation(true);
         setLoading(false);
         return;
       }
