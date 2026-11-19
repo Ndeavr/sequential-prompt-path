@@ -104,6 +104,20 @@ describe("350 $ quote card telemetry privacy — synthetic only", () => {
       body: expect.objectContaining({ entryActivation: true, quoteId: "PRIVATE-QUOTE-IDENTIFIER" }),
     });
   });
+  it("blocks another checkout when Stripe payment was received but activation is pending — synthetic only", async () => {
+    mock.invoke.mockResolvedValue({ data: { code: "payment_received_pending" }, error: null });
+    clickCheckout();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Votre paiement a déjà été reçu");
+    const checkoutButton = within(screen.getByTestId("entry-350-card")).getAllByRole("button")[0];
+    expect(checkoutButton).toBeDisabled();
+    fireEvent.click(checkoutButton);
+    expect(mock.invoke).toHaveBeenCalledTimes(1);
+    expect(mock.redirect).not.toHaveBeenCalled();
+    await waitFor(() => expect(mock.telemetry).toHaveBeenCalledTimes(1));
+    expect(mock.telemetry.mock.calls[0][0].event_type).toBe("entry_350_clicked");
+  });
+
   it("keeps a non-2xx reconciliation-pending reservation from looking like a failed payment — synthetic only", async () => {
     const responseBody = { code: "checkout_reconciliation_pending", error: "checkout_record_unavailable" };
     mock.invoke.mockResolvedValue({
