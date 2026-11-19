@@ -119,7 +119,10 @@ describe("350 $ quote card telemetry privacy — synthetic only", () => {
 
     clickCheckout();
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Ne payez pas deux fois");
+    expect(alert).toHaveTextContent("Ne payez pas une deuxième fois");
+    const checkoutButton = within(screen.getByTestId("entry-350-card")).getAllByRole("button")[0];
+    expect(checkoutButton).toBeDisabled();
+    fireEvent.click(checkoutButton);
     expect(alert.textContent).not.toMatch(/rien n.a été facturé|aucun paiement n.a été/i);
     expect(mock.redirect).not.toHaveBeenCalled();
     expect(mock.invoke).toHaveBeenCalledTimes(1);
