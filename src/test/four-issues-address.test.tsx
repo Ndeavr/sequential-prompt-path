@@ -4,6 +4,8 @@ import { useState } from "react";
 const mocks = vi.hoisted(() => ({ start: vi.fn(), invoke: vi.fn() }));
 vi.mock("@/services/clara/claraSession", () => ({ startOrResumeClaraSession: mocks.start }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
+// Exercise the opt-in paid Places protocol with synthetic mocks only. Production remains disabled.
+vi.mock("@/lib/addressAutocompleteConfig", () => ({ ADDRESS_AUTOCOMPLETE_ENABLED: true }));
 import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { getAddressAccessToken } from "@/services/addressAccessToken";
 import GooglePlacesAutocomplete from "@/components/business-import/GooglePlacesAutocomplete";
