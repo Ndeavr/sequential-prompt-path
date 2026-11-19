@@ -80,6 +80,13 @@ export function EntryActivation350Card(p: Props) {
         setLoading(false);
         return;
       }
+      if (payload?.code === "checkout_reconciliation_pending") {
+        // La réservation serveur peut encore pointer vers une session Stripe : ne
+        // jamais affirmer qu'aucun paiement n'a été ouvert sur ce retour non-2xx.
+        setError("La confirmation du paiement est en cours chez UNPRO. Ne payez pas deux fois : réessayez dans quelques minutes, la même demande reprendra le même paiement.");
+        setLoading(false);
+        return;
+      }
       if (payload?.error) throw new Error(payload.error);
       if (fnErr) throw fnErr;
       if (!payload?.url) throw new Error("url_manquante");
@@ -87,8 +94,9 @@ export function EntryActivation350Card(p: Props) {
       setTimeout(() => setLoading(false), 2500);
     } catch {
       recordQuoteCardEvent("entry_350_checkout_failed");
-      setError(ENTRY_350.errorRetry);
-      toast.error("Le paiement n'a pas pu démarrer.");
+      // Une erreur réseau ne prouve pas l'absence d'une session Stripe.
+      setError("Impossible de confirmer l'ouverture du paiement. Avant de réessayer, vérifiez que vous n'avez pas déjà payé ou appelez UNPRO.");
+      toast.error("L'ouverture du paiement n'a pas pu être confirmée.");
       setLoading(false);
     }
   };
