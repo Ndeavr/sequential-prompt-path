@@ -11,6 +11,8 @@ import { validateSmsBody } from "./smsGreeting.ts";
 function classifyMessage(type: string): MessageClass {
   switch (type) {
     case "otp":
+    case "auth":
+    case "transactional":
     case "test":
       return "transactional";
     case "founder":
