@@ -65,6 +65,14 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
           },
           eq(key: string, value: string) { if (key === "id") contractor = value; return q; },
           neq() { return q; }, limit() { return q; },
+          // The race fixture deliberately returns stale reads; it still must
+          // accept the production webhook's bounded, valid created_at filter.
+          gte(column: string, cutoff: string) {
+            if (column !== "created_at" || !Number.isFinite(Date.parse(cutoff))) {
+              throw new Error("Unexpected promo fixture date filter");
+            }
+            return q;
+          },
           insert(value: any) { payload = value; operation = "insert"; return q; },
           upsert(value: any) { payload = value; operation = "upsert"; return q; },
           update(value: any) { payload = value; operation = "update"; return q; },
