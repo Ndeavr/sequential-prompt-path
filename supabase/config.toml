@@ -19,6 +19,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.verify-otp]
     verify_jwt = false
+  [functions.clara-sms]
+    verify_jwt = true
   [functions.twilio-inbound]
     verify_jwt = false
   [functions.twilio-voice-inbound]
