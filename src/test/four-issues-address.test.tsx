@@ -4,6 +4,9 @@ import { useState } from "react";
 const mocks = vi.hoisted(() => ({ start: vi.fn(), invoke: vi.fn() }));
 vi.mock("@/services/clara/claraSession", () => ({ startOrResumeClaraSession: mocks.start }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
+// Launch defaults to manual/declared addresses; exercise the optional enabled
+// proxy path only against mocked functions, without turning on paid Google calls.
+vi.mock("@/lib/addressAutocompleteConfig", () => ({ ADDRESS_AUTOCOMPLETE_ENABLED: true }));
 import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { getAddressAccessToken } from "@/services/addressAccessToken";
 import GooglePlacesAutocomplete from "@/components/business-import/GooglePlacesAutocomplete";
