@@ -206,10 +206,9 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
     if (!vm.auditId) return;
     const res = await safeAsyncOperation(
       async () => {
+        // Progress-only read: full audits are owner/admin-only.
         const { data, error } = await supabase
-          .from("contractor_aipp_audits")
-          .select("analysis_status, overall_score, confidence_level")
-          .eq("id", vm.auditId!)
+          .rpc("aipp_audit_poll_status", { _audit_id: vm.auditId! })
           .single();
         if (error) throw error;
         return data;

@@ -414,6 +414,20 @@
       "when": 1795205442270,
       "tag": "0058_tighten_open_rules_round2",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1795205575228,
+      "tag": "0059_restrict_remaining_public_lists",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1795205626843,
+      "tag": "0060_public_contractor_visibility_helper",
+      "breakpoints": true
     }
   ]
 }
