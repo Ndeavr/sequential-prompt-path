@@ -1,0 +1,102 @@
+diff --git a/supabase/functions/compute-pricing-quote/index.ts b/supabase/functions/compute-pricing-quote/index.ts
+index 7af5769d7..057050a84 100644
+--- a/supabase/functions/compute-pricing-quote/index.ts
++++ b/supabase/functions/compute-pricing-quote/index.ts
+@@ -11,6 +11,7 @@
+ 
+ 
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
++import { benchmarkCategory, publicQuoteView } from "../_shared/pricingParity.ts";
+ import {
+   evaluateMargin,
+   marginConfigFrom,
+@@ -257,8 +258,12 @@ async function resolveAppointmentUnitPrice(
+   const share = Number(w.appointment_value_share ?? 0.08);
+   const minCents = Number(w.extra_appointment_min_cents ?? 4900);
+   const maxCents = Number(w.extra_appointment_max_cents ?? 99900);
++  // Alias déterministe vers une catégorie EXISTANTE (ex. isolation-d-entretoit → isolation),
++  // pour la lecture du repère seulement; capacité et territoire restent sur le métier exact.
++  const benchCategory = benchmarkCategory(tradeSlug) ?? tradeSlug;
+   const basis: Record<string, unknown> = {
+     trade_slug: tradeSlug,
++    benchmark_category: benchCategory,
+     city_slug: citySlug,
+     close_rate: round2(close),
+   };
+@@ -266,7 +271,7 @@ async function resolveAppointmentUnitPrice(
+   const { data: benchRows, error: benchErr } = await svc
+     .from("appointment_pricing_benchmarks")
+     .select("category_slug,market_slug,final_appointment_price_cents,data_source")
+-    .eq("category_slug", tradeSlug)
++    .eq("category_slug", benchCategory)
+     .eq("is_active", true);
+ 
+   if (benchErr) {
+@@ -411,7 +416,7 @@ Deno.serve(async (req) => {
+           headers: { ...corsHeaders, "Content-Type": "application/json" },
+         });
+       }
+-      return new Response(JSON.stringify({ quote: quoteRow ?? null }), {
++      return new Response(JSON.stringify({ quote: publicQuoteView(quoteRow ?? null) }), {
+         status: 200,
+         headers: { ...corsHeaders, "Content-Type": "application/json" },
+       });
+diff --git a/supabase/functions/create-checkout-session/index.ts b/supabase/functions/create-checkout-session/index.ts
+index ce6288803..d24929398 100644
+--- a/supabase/functions/create-checkout-session/index.ts
++++ b/supabase/functions/create-checkout-session/index.ts
+@@ -17,6 +17,7 @@ import {
+ } from "../_shared/fallbackCredit350.ts";
+ import { GUARANTEE_COPY, GUARANTEE_OFFER, GUARANTEE_OFFER_CODE } from "../_shared/contractGuarantee.ts";
+ import { appointmentPlanPayable } from "../_shared/pricingModes.ts";
++import { checkoutParity, quoteCheckoutTotals } from "../_shared/pricingParity.ts";
+ import { ANNUAL_PRESENCE_CENTS, ANNUAL_PRESENCE_SESSION_METADATA, HISTORICAL_REVIEW_MESSAGE, annualPresenceLineItem, decideAnnualPresence, isPreRuleProposal } from "../_shared/annualPresence.ts";
+ import {
+   acquireCheckoutReservation, attachCheckoutSession, expireUndeliverable, liveReservationDeps,
+@@ -94,6 +95,8 @@ Deno.serve(async (req) => {
+       displayedPriceCents,
+       displayedGuaranteedAppointments,
+       includeProfileFee,
++      displayedTodayCents,
++      displayedPresenceIncluded,
+       ref: rawRef,
+       affiliateProposalToken,
+       offerId,
+@@ -1456,9 +1459,36 @@ Deno.serve(async (req) => {
+     }
+ 
+     // La Présence IA comprend le profil : aucun frais de profil en plus.
+-    if (presenceIncluded) profileFeeCents = 0;
++    // Devis de rendez-vous : la seule ligne unique possible est la Présence
++    // décidée par le serveur — jamais un frais de profil demandé par le navigateur.
++    if (presenceIncluded || quoteRow) profileFeeCents = 0;
+     if (presenceIncluded) lineItems.push(annualPresenceLineItem());
+ 
++    // Parité écran ↔ Stripe : même Présence et même total du premier paiement,
++    // au cent près (taxes par ligne). Avec un code promo, Stripe calcule la remise.
++    if (quoteRow && !promoCode) {
++      const parity = checkoutParity(
++        { presenceIncluded: displayedPresenceIncluded, todayCents: displayedTodayCents },
++        {
++          planCents: personalizedPriceCents ?? 0,
++          presenceIncluded,
++          presenceCents: ANNUAL_PRESENCE_CENTS,
++          packCents: appointmentPack && appointmentPack.totalPriceCents > 0 ? appointmentPack.totalPriceCents : 0,
++        },
++      );
++      if (!parity.ok) {
++        console.warn("[checkout:parity]", { quote_id: quoteId, code: parity.code, expected: parity.expected_today_cents, displayed: parity.displayed_today_cents });
++        return new Response(JSON.stringify({
++          error: parity.code === "presence_mismatch"
++            ? "Votre Présence IA a changé depuis l'affichage. Vérifiez le nouveau montant; aucun paiement n'a été créé."
++            : "Le montant affiché ne correspond plus au montant à payer. Vérifiez le nouveau total; aucun paiement n'a été créé.",
++          code: parity.code,
++          expected_today_cents: parity.expected_today_cents,
++          recurring_cents: quoteCheckoutTotals({ planCents: personalizedPriceCents ?? 0, presenceIncluded, presenceCents: ANNUAL_PRESENCE_CENTS }).recurring_cents,
++        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
++      }
++    }
++
+     // ── Taxes du Québec (TPS 5 % + TVQ 9,975 %) ──
+     // Les taux sont créés une seule fois puis réutilisés (repérés par metadata).
+     const quebecTaxRateIds = await ensureQuebecTaxRates(stripe);

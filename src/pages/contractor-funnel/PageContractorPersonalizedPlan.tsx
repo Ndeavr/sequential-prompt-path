@@ -43,6 +43,7 @@ import { PlanGoalAdjuster, type GoalAdjusterState } from "@/components/contracto
 import { ClaraBudgetFallback } from "@/components/contractor-plan/ClaraBudgetFallback";
 import { quebecTaxes } from "@/lib/pricing/planGoalModel";
 import { ENTRY_350 } from "@/lib/copy/offer350";
+import { needsFromExplanation } from "@/lib/pricing/planNeedsView";
 import { EntryActivation350Card } from "@/components/entrepreneur/EntryActivation350Card";
 import { annualPresenceLines, readPresenceDecision, type PresenceDecisionView } from "@/lib/pricing/annualPresenceView";
 import {
@@ -337,6 +338,10 @@ export default function PageContractorPersonalizedPlan() {
             // Le montant affiché est transmis pour contrôle : le serveur refuse
             // la transaction si elle ne correspond pas au devis, au cent près.
             displayedPriceCents: quote.recommended_monthly_price,
+            // Contrôle de parité : le serveur refuse si sa Présence IA ou le
+            // total du premier paiement diffère de ce qui est affiché.
+            displayedTodayCents: presenceLines.today.total,
+            ...(presenceDecision.state !== "unknown" && { displayedPresenceIncluded: presenceLines.includePresence }),
             ...(promoCode && { promoCode }),
             ...(affiliateRef && { ref: affiliateRef }),
             ...(offerId && { offerId }),
@@ -356,6 +361,12 @@ export default function PageContractorPersonalizedPlan() {
         setCheckoutError(payload.error ?? "Le nombre de rendez-vous inclus n'est pas encore confirmé. Aucun paiement n'a été créé.");
         setCheckoutLoading(false);
         setQuote((q) => (q ? { ...q, guaranteed_appointments: 0 } : q));
+        return;
+      }
+      if (payload?.code === "presence_mismatch" || payload?.code === "checkout_total_mismatch") {
+        setCheckoutError(payload.error ?? "Le montant affiché ne correspond plus au montant à payer. Aucun paiement n'a été créé.");
+        setCheckoutLoading(false);
+        setPresenceRefresh((n) => n + 1);
         return;
       }
       if (payload?.code === "annual_presence_due_with_free_plan" || payload?.code === "annual_presence_unverified") {
@@ -683,6 +694,7 @@ export default function PageContractorPersonalizedPlan() {
                     </dl>
                   );
                 })()}
+                <p className="text-sm text-white/85 mt-1" data-testid="plan-promise">Moins de soumissions inutiles, plus de contrats adaptés.</p>
                 <p className="text-sm text-white/70 mt-1" data-testid="plan-relevance">
                   {entryTier
                     ? "Pour atteindre vos objectifs, nous vous recommandons de commencer avec cette entente."
@@ -696,10 +708,19 @@ export default function PageContractorPersonalizedPlan() {
 
                 <div className="mt-5 space-y-2 text-sm text-white/85">
                   <p className="text-xs uppercase tracking-wider text-white/50">Ce qui est inclus</p>
-                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{commitmentReady && included ? (entryTier ? `${included} rendez-vous qualifiés exclusifs inclus par mois` : guarantee.checkoutPrimaryLabel) : "Forfait de rendez-vous à confirmer : le nombre de rendez-vous inclus n'est pas encore établi."}</p>
+                  <p className="flex gap-2" data-testid="included-appointments"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{commitmentReady && included ? (entryTier ? `Rendez-vous inclus selon votre entente : ${included} par mois (qualifiés, exclusifs)` : guarantee.checkoutPrimaryLabel) : "Forfait de rendez-vous à confirmer : le nombre de rendez-vous inclus n'est pas encore établi."}</p>
                   {(initialTarget ?? 0) > 0 && (
                     <p className="pl-6 text-xs text-white/65" data-testid="target-appointments">Votre objectif : {initialTarget} RDV/mois. C'est un objectif, pas un nombre inclus.</p>
                   )}
+                  {(() => {
+                    const needs = needsFromExplanation(quote.pricing_explanation);
+                    if (!needs) return null;
+                    return (
+                      <p className="pl-6 text-xs text-white/65" data-testid="appointments-needed">
+                        Scénario déclaré, non garanti : {needs.contractsPerMonth.toLocaleString("fr-CA")} contrats par mois avec {needs.closeRatePct.toLocaleString("fr-CA")} % de fermeture demandent environ {needs.needed} rendez-vous par mois.{commitmentReady && included ? ` Votre entente en comprend ${included}.` : ""}
+                      </p>
+                    );
+                  })()}
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Chaque rendez-vous est exclusif, jamais partagé avec d'autres entrepreneurs</p>
                   <p className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />Profil UNPRO pour {quote.trade_primary}, publié après vérification</p>
                 </div>
@@ -749,10 +770,13 @@ export default function PageContractorPersonalizedPlan() {
                     <div className="flex justify-between"><span>TPS (5 %)</span><span data-testid="gst-today">{formatCADCents(presenceLines.today.gst)}</span></div>
                     <div className="flex justify-between"><span>TVQ (9,975 %)</span><span data-testid="qst-today">{formatCADCents(presenceLines.today.qst)}</span></div>
                     <div className="flex justify-between border-t border-white/10 pt-1 font-semibold text-white">
-                      <span>Total dû aujourd'hui</span><span data-testid="total-with-tax">{formatCADCents(presenceLines.today.total)}</span>
+                      <span>À payer aujourd'hui</span><span data-testid="total-with-tax">{formatCADCents(presenceLines.today.total)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 font-semibold text-white" data-testid="recurring-total">
+                      <span>Ensuite par mois (forfait, taxes incluses)</span><span>{formatCADCents(totalWithTaxCents)}</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-white/60 mt-2">Ensuite, le forfait seul : {formatCADCents(totalWithTaxCents)} taxes incluses chaque mois. Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
+                  <p className="text-[11px] text-white/60 mt-2">Les dates de facturation sont celles confirmées par Stripe au paiement.</p>
                   <p className="text-[11px] text-white/70 mt-1" data-testid="presence-note">{presenceLines.note}</p>
                 </div>
 
