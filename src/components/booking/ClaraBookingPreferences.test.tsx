@@ -7,7 +7,7 @@ vi.mock("@/integrations/supabase/client", () => ({
     from: () => {
       // Both booking preferences and the embedded calendar-request widget
       // share this synthetic client. Model PostgREST's chained query shape.
-      const query = {
+      const query: any = {
         select: () => query,
         eq: () => query,
         order: () => query,
