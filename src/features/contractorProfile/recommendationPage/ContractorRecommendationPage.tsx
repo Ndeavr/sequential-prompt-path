@@ -81,7 +81,7 @@ export default function ContractorRecommendationPage() {
       monogram: { initials: (c.business_name || "?").slice(0, 2).toUpperCase(), bg: "#0F1A2E", fg: "#F5C542" },
     },
     hero: {
-      tagline: c.description || `${c.business_name} — recommandé par UNPRO`,
+      tagline: c.description || (verified ? `${c.business_name} — recommandé par UNPRO` : `${c.business_name} — profil UNPRO`),
       territories: c.service_areas ?? [cityName],
       phone: c.phone || "N/A",
       website: c.website || undefined,
@@ -107,7 +107,8 @@ export default function ContractorRecommendationPage() {
 
   return (
     <MainLayout>
-      <SeoHead title={title} description={description} canonical={canonical} />
+      {/* Hors index tant que la fiche n'est pas vérifiée (verified_active). */}
+      <SeoHead title={title} description={description} canonical={canonical} noindex={!verified} />
       <ContractorSchemaStack input={schemaInput} breadcrumbs={breadcrumbs} />
 
       {/* GeoCircle for service radius */}
@@ -128,7 +129,8 @@ export default function ContractorRecommendationPage() {
         }}
       />
 
-      <AIReferenceBlock reference={aiReference} />
+      {/* Aucune recommandation de Clara avant vérification serveur. */}
+      {verified && <AIReferenceBlock reference={aiReference} />}
 
       <div className="mx-auto max-w-3xl overflow-hidden border-x border-border/60 shadow-2xl">
         {registeredLabel(data.registeredAt) && (

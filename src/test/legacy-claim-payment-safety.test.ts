@@ -17,7 +17,8 @@ describe("legacy profile-claim payment retirement", () => {
     expect(claimPage).toContain('to="/contractor/join"');
     expect(claimPage).not.toContain("claim-create-checkout");
     expect(claimPage).not.toMatch(/appointmentsLow|appointmentsHigh|revLow|revHigh|projectionRange|Rendez-vous estimés/);
-    expect(claimPage).toContain("nom indicatif non vérifié");
+    // Aucun nom déduit du slug : seule une fiche réellement lisible est nommée.
+    expect(claimPage).not.toMatch(/suggestedName|nom indicatif/);
     expect(claimPage).toContain("Aucun paiement sur cette page");
   });
 });

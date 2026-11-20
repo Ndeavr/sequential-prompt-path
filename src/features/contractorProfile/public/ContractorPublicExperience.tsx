@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ProfessionalVerificationsCard from "@/components/compliance/ProfessionalVerificationsCard";
+import ServiceTerritoryMap from "./ServiceTerritoryMap";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -59,7 +60,7 @@ type ProfileData = ContractorRecord & {
     photos?: Json;
   }>;
   services?: Array<{ service_name_fr?: string | null }>;
-  service_areas?: Array<{ city_name?: string | null }>;
+  service_areas?: Array<{ city_name?: string | null; city_slug?: string | null; is_primary?: boolean | null }>;
   media?: Array<{ media_type?: string | null; public_url?: string | null; title?: string | null; description?: string | null; alt_text?: string | null }>;
 };
 
@@ -143,7 +144,6 @@ export default function ContractorPublicExperience({ profileData, compact = fals
   const projectImages = Array.from(new Set(projects.flatMap((project) => [project.after_url, project.before_url, ...(Array.isArray(project.photos) ? project.photos.filter((p): p is string => typeof p === "string") : [])]).filter((u): u is string => !!u).concat(gallery as string[]))).slice(0, 9);
   const visibleTabs = tabs.filter((tab) => tab.id !== "projects" || projectImages.length > 0);
   const serviceNames = (services.length ? services.map((service) => service.service_name_fr) : [contractor.specialty]).filter((service): service is string => !!service);
-  const cityNames = Array.from(new Set((areas.length ? areas.map((area) => area.city_name) : [contractor.city]).filter((city): city is string => !!city)));
   const placeId = googleSource?.profile_url?.match(/query_place_id=([\w-]+)/)?.[1] ?? null;
   const googleReviewsUrl = placeId ? `https://search.google.com/local/reviews?placeid=${placeId}` : googleSource?.profile_url ?? null;
   const unproRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null;
@@ -256,12 +256,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
 
         <section ref={(node) => { sectionRefs.current.territory = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="territory-title">
           <h2 id="territory-title" className="flex items-center gap-2 font-semibold text-text-strong"><MapPin className="h-4 w-4 text-primary" />Territoire</h2>
-          {placeId && <iframe title={`Emplacement de ${contractor.business_name} sur Google Maps`} src={`https://www.google.com/maps?q=place_id:${placeId}&z=9&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="mt-3 h-52 w-full rounded-lg border border-border" />}
-          {placeId && <p className="mt-1 text-[11px] text-text-muted-2">Carte : emplacement de l’entreprise (Google). Les villes desservies sont déclarées par l’entreprise.</p>}
-          {cityNames.length ? <details className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
-            <summary className="cursor-pointer text-sm font-medium text-text-strong">{cityNames.length} ville{cityNames.length > 1 ? "s" : ""} desservie{cityNames.length > 1 ? "s" : ""}</summary>
-            <p className="mt-2 text-sm text-text-secondary">{cityNames.join(" · ")}</p>
-          </details> : <p className="mt-3 text-sm text-text-muted-2">Aucun territoire publié.</p>}
+          <ServiceTerritoryMap businessName={contractor.business_name} areas={areas} fallbackCity={contractor.city} />
         </section>
 
         {projectImages.length > 0 && <section ref={(node) => { sectionRefs.current.projects = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="projects-title">
