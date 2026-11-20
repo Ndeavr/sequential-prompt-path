@@ -33,9 +33,16 @@ export async function persistClaraQualification(value: ClaraContractorQualificat
   if (data?.error === "authentication_required") throw error;
   if (error || data?.ok !== true) throw new Error("Le profil n’a pas pu être sauvegardé. Vos critères restent dans ce navigateur; réessayez.");
 }
-export async function loadClaraQualification(): Promise<ClaraContractorQualification | null> {
-  const { data, error } = await invokeMatchingProfile({ action: "get", session_key: getMatchingSessionKey(), ...auditContext() });
-  if (data?.error === "authentication_required") throw error;
+/** silent: background resume; an account-owned draft while signed out simply means nothing to resume here. */
+export async function loadClaraQualification(options: { silent?: boolean } = {}): Promise<ClaraContractorQualification | null> {
+  const { data, error } = await invokeMatchingProfile(
+    { action: "get", session_key: getMatchingSessionKey(), ...auditContext() },
+    { promptSignIn: !options.silent },
+  );
+  if (data?.error === "authentication_required") {
+    if (options.silent) return null;
+    throw error;
+  }
   if (error || data?.ok !== true) throw new Error("La reprise du profil est indisponible.");
   const value = data.profile?.answers?.clara_qualification;
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;

@@ -19,11 +19,11 @@ export function useLikes(entityType: LikeEntityType, entityId: string | null) {
     queryFn: async () => {
       if (!entityId) return { count: 0, liked: false };
 
-      const { count } = await supabase
-        .from("user_likes" as any)
-        .select("*", { count: "exact", head: true })
-        .eq("entity_type", entityType)
-        .eq("entity_id", entityId);
+      // Public like count via security-definer RPC; individual likes stay private.
+      const { data: count } = await supabase.rpc("like_count", {
+        _entity_type: entityType,
+        _entity_id: entityId,
+      });
 
       let liked = false;
       if (user?.id) {

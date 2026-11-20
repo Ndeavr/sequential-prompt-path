@@ -102095,6 +102095,14 @@ export type Database = {
           status: string
         }[]
       }
+      aipp_audit_poll_status: {
+        Args: { _audit_id: string }
+        Returns: {
+          analysis_status: string
+          confidence_level: string
+          overall_score: number
+        }[]
+      }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       annual_presence_decision: {
         Args: { _contractor_id: string; _include_test?: boolean }
@@ -102371,6 +102379,10 @@ export type Database = {
         }[]
       }
       contractor_plan_code: { Args: { _user_id: string }; Returns: string }
+      contractor_visible_to_caller: {
+        Args: { _contractor_id: string }
+        Returns: boolean
+      }
       create_auth_role_intent: {
         Args: {
           _account_type?: string
@@ -102524,6 +102536,14 @@ export type Database = {
           p_phone: string
         }
         Returns: Json
+      }
+      founder_slots_summary: {
+        Args: never
+        Returns: {
+          claimed: number
+          remaining: number
+          total: number
+        }[]
       }
       free_service_registration_progress: { Args: never; Returns: Json }
       generate_curiosity_slug: {
@@ -102854,6 +102874,10 @@ export type Database = {
       is_within_send_window: {
         Args: { _at?: string; _channel: string }
         Returns: boolean
+      }
+      like_count: {
+        Args: { _entity_id: string; _entity_type: string }
+        Returns: number
       }
       local_service_offer_status: {
         Args: { p_category_slug: string; p_city: string }

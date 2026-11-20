@@ -30,3 +30,17 @@ describe("matching profile ownership recovery", () => {
     expect(openAuthOverlay).not.toHaveBeenCalled();
   });
 });
+describe("background resume of an account-owned draft while signed out", () => {
+  it("never opens the sign-in overlay and remembers the refusal for the tab", async () => {
+    const body = { action: "get", session_key: "owned_background_draft" };
+    invoke.mockResolvedValueOnce({ data: null, error: { context: new Response(JSON.stringify({ ok: false, error: "authentication_required" }), { status: 401 }) } });
+    const first = await invokeMatchingProfile(body, { promptSignIn: false });
+    expect(first.data?.error).toBe("authentication_required");
+    expect(openAuthOverlay).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem("unpro_matching_blocked_drafts") || "[]")).toContain("owned_background_draft");
+    getSession.mockResolvedValueOnce({ data: { session: null }, error: null });
+    await invokeMatchingProfile(body, { promptSignIn: false });
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(openAuthOverlay).not.toHaveBeenCalled();
+  });
+});

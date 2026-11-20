@@ -40,7 +40,7 @@ export async function flushClaraQualification(): Promise<void> {
 }
 export async function resumeClaraQualification(): Promise<void> {
   const snapshot = read();
-  const remote = await loadClaraQualification();
+  const remote = await loadClaraQualification({ silent: true });
   if (!remote || read().updated_at !== snapshot.updated_at) return;
   // Server ownership is authoritative; keep only genuinely unsaved local edits.
   if (pendingQualification || syncError) return;
