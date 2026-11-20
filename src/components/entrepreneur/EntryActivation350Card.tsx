@@ -29,6 +29,7 @@ interface Props {
 export function EntryActivation350Card(p: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingReconciliation, setPendingReconciliation] = useState(false);
 
   // Do not inherit invitation tokens or query strings into analytics. A failed
   // checkout request may contain upstream error details; never persist them.
@@ -47,6 +48,7 @@ export function EntryActivation350Card(p: Props) {
   const start = async () => {
     setLoading(true);
     setError(null);
+    setPendingReconciliation(false);
     recordQuoteCardEvent("entry_350_clicked");
     try {
       const { data: s } = await supabase.auth.getSession();
@@ -77,6 +79,17 @@ export function EntryActivation350Card(p: Props) {
       if (payload?.code === "payment_received_pending") {
         // Paiement déjà reçu par Stripe : jamais de deuxième facturation.
         setError("Votre paiement a déjà été reçu. Ne payez pas une deuxième fois : la confirmation est en cours chez UNPRO.");
+        // A confirmed receipt awaiting entitlement reconciliation must not invite
+        // a second Checkout attempt from this component.
+        setPendingReconciliation(true);
+        setLoading(false);
+        return;
+      }
+      if (payload?.code === "checkout_reconciliation_pending") {
+        // La réservation serveur peut encore pointer vers une session Stripe : ne
+        // jamais affirmer qu'aucun paiement n'a été ouvert sur ce retour non-2xx.
+        setError("Nous vérifions si votre session de paiement a été créée. Ne payez pas une deuxième fois. Pour obtenir de l’aide, appelez UNPRO.");
+        setPendingReconciliation(true);
         setLoading(false);
         return;
       }
@@ -87,8 +100,9 @@ export function EntryActivation350Card(p: Props) {
       setTimeout(() => setLoading(false), 2500);
     } catch {
       recordQuoteCardEvent("entry_350_checkout_failed");
-      setError(ENTRY_350.errorRetry);
-      toast.error("Le paiement n'a pas pu démarrer.");
+      // Une erreur réseau ne prouve pas l'absence d'une session Stripe.
+      setError("Impossible de confirmer l'ouverture du paiement. Avant de réessayer, vérifiez que vous n'avez pas déjà payé ou appelez UNPRO.");
+      toast.error("L'ouverture du paiement n'a pas pu être confirmée.");
       setLoading(false);
     }
   };
@@ -120,10 +134,10 @@ export function EntryActivation350Card(p: Props) {
       <button
         type="button"
         onClick={start}
-        disabled={loading}
+        disabled={loading || pendingReconciliation}
         className="mt-5 w-full min-h-12 rounded-[18px] bg-amber-500 px-5 py-3 font-semibold text-black transition-transform hover:-translate-y-0.5 disabled:opacity-60"
       >
-        {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Ouverture du paiement…</span> : error ? "Réessayer" : fallback ? ENTRY_350.fallback.cta : ENTRY_350.cta}
+        {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Ouverture du paiement…</span> : pendingReconciliation ? "Vérification de la session en cours" : error ? "Réessayer" : fallback ? ENTRY_350.fallback.cta : ENTRY_350.cta}
       </button>
       {p.onMore && !fallback && <button type="button" onClick={p.onMore} className="mt-3 w-full min-h-11 rounded-[18px] border border-white/15 px-5 py-3 text-sm text-white/85 hover:bg-white/5">
         {ENTRY_350.ctaMore}
