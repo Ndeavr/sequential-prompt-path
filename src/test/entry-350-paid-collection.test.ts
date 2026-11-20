@@ -74,6 +74,22 @@ describe.each(["entry_activation_350", "entry_pack_350"])("%s — actual webhook
     expect(result.writes.some(w => w.value.payment_status === "paid")).toBe(false);
     expect(result.writes.some(w => w.value.processing_status === "processed")).toBe(false);
   });
+  it("never settles a checkout reservation when the amount is invalid", async () => {
+    // A valid reservation UUID must not be marked paid before the offer guard.
+    const result = await run({
+      ...session(offer),
+      amount_total: 100,
+      metadata: {
+        offer,
+        contractor_id: "fixture-contractor",
+        checkout_reservation_id: "11111111-1111-4111-8111-111111111111",
+      },
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.ignored).toMatch(/^ignored_/);
+    expect(result.sensitiveCalls).toBe(0);
+    expect(result.writes.some((w) => w.value.payment_status === "paid")).toBe(false);
+  });
   it("accepts its actual creation contract payable amount", () => {
     expect(guards.entry350PaymentBlockReason(session(offer))).toBeNull();
   });
