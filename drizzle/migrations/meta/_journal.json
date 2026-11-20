@@ -407,6 +407,13 @@
       "when": 1795205188415,
       "tag": "0057_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1795205442270,
+      "tag": "0058_tighten_open_rules_round2",
+      "breakpoints": true
     }
   ]
 }
