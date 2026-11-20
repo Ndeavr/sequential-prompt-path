@@ -27,6 +27,17 @@ export type ManualQueueRow = {
   opted_out: boolean;
   paid_at: string | null;
   last_activity_at: string | null;
+  /** Traces agrégées du CRM, jamais des confirmations de réception indépendantes. */
+  sms_sent: number;
+  sms_delivered: number;
+  sms_undelivered: number;
+  sms_failed: number;
+  emails_sent: number;
+  sent_at: string | null;
+  last_sent_at: string | null;
+  delivered_at: string | null;
+  clicked_at: string | null;
+  last_email_at: string | null;
   hours_since_last_activity: number | null;
   /** Assignation */
   assignment_id: string | null;
