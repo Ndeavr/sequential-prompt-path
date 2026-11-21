@@ -22,7 +22,7 @@
     },
     {
       "@type": "SoftwareApplication",
-      "@id": "https://unpro.ca/#alex",
+      "@id": "https://unpro.ca/#clara",
       "name": "Clara",
       "alternateName": ["UNPRO AI Home Intelligence Advisor", "AI Matchmaker", "Property Intelligence Guide", "Home Passport Advisor", "Property Planning Assistant"],
       "applicationCategory": "AI Home Intelligence Advisor",
