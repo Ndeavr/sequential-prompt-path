@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, RefreshCw, Search, UserPlus, Undo2, AlertTriangle } from "lucide-react";
 import ManualContactPanel from "@/components/crm/ManualContactPanel";
+import { CONTACT_EVIDENCE_FILTERS, contactEvidence, matchesContactEvidence, type ContactEvidenceKey } from "@/lib/crm/contactEvidence";
 import {
   QUEUE_FILTERS, OUTCOME_LABELS, applyQueueFilter, queueActions, queueExpectedValue,
   useEligibleAffiliates, useManualContactQueue,
@@ -24,6 +25,7 @@ export default function ManualContactQueue() {
   const { rows, loading, error, reload, counts, userId } = useManualContactQueue(15_000);
   const { rows: affiliates } = useEligibleAffiliates();
   const [filter, setFilter] = useState<QueueFilter>("all");
+  const [contactFilter, setContactFilter] = useState<"all" | ContactEvidenceKey>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [affiliateId, setAffiliateId] = useState<string>("");
@@ -31,6 +33,7 @@ export default function ManualContactQueue() {
 
   const filtered = useMemo(() => {
     let out = applyQueueFilter(rows, filter, userId);
+    out = out.filter((row) => matchesContactEvidence(row, contactFilter));
     const q = search.trim().toLowerCase();
     if (q) {
       out = out.filter((r) =>
@@ -43,7 +46,7 @@ export default function ManualContactQueue() {
       if (a.is_overdue !== b.is_overdue) return a.is_overdue ? -1 : 1;
       return queueExpectedValue(b) - queueExpectedValue(a) || b.priority_score - a.priority_score;
     });
-  }, [rows, filter, search, userId]);
+  }, [rows, filter, contactFilter, search, userId]);
 
   async function run(kind: "self" | "affiliate" | "unassign" | "reclaim") {
     if (selected.length === 0) return;
@@ -97,6 +100,16 @@ export default function ManualContactQueue() {
             {f.label}
           </Badge>
         ))}
+        <Select value={contactFilter} onValueChange={(value) => setContactFilter(value as "all" | ContactEvidenceKey)}>
+          <SelectTrigger aria-label="Filtrer par preuve de sollicitation" className="h-9 w-full sm:w-[218px] text-xs">
+            <SelectValue placeholder="Historique de contact" />
+          </SelectTrigger>
+          <SelectContent>
+            {CONTACT_EVIDENCE_FILTERS.map((f) => (
+              <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="relative ml-auto w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)}
@@ -220,6 +233,24 @@ function QueueCard({
           {row.last_outcome && (
             <Badge variant="outline" className="text-[9px]">{OUTCOME_LABELS[row.last_outcome] ?? row.last_outcome}</Badge>
           )}
+        </div>
+
+        <div className="flex flex-wrap gap-1" aria-label="Preuves de sollicitation">
+          {contactEvidence(row).map((evidence) => (
+            <Badge
+              key={evidence.key}
+              variant="outline"
+              title={evidence.detail}
+              className="max-w-full whitespace-normal text-[10px] leading-snug"
+            >
+              {evidence.label}
+              {evidence.date && (
+                <span className="ml-1 opacity-70">
+                  · {new Date(evidence.date).toLocaleDateString("fr-CA", { timeZone: "America/Toronto" })}
+                </span>
+              )}
+            </Badge>
+          ))}
         </div>
 
         <p className="text-[10px] text-muted-foreground truncate">
