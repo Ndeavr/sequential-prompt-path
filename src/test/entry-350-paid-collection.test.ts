@@ -7,21 +7,44 @@ import { loadWebhookHandler } from "./support/stripeWebhookHarness";
 // adapters. No network, accounts, payments or production database writes.
 async function run(session: Record<string, unknown>, livemode = true, badSignature = false) {
   const writes: { table: string; value: Record<string, unknown> }[] = [];
+  const reservationSettlements: Record<string, unknown>[] = [];
   let sensitiveCalls = 0;
+  let auditRecorded = false;
   const sensitive = new Set(["contractors", "user_roles", "contractor_subscriptions", "contractor_activation_ledger", "billing_checkout_sessions", "verified_contractor_prospects"]);
   const db = {
     auth: { admin: { createUser: () => { sensitiveCalls++; throw new Error("Provisioning forbidden"); } } },
-    rpc: () => { sensitiveCalls++; throw new Error("RPC forbidden"); },
+    // Payment-reservation reconciliation is outside the entitlement assertions.
+    // Record every attempt instead of masking the real handler's RPC call.
+    rpc: (name: string, args: Record<string, unknown>) => {
+      if (name === "settle_contractor_checkout") {
+        reservationSettlements.push(args);
+        return Promise.resolve({ data: null, error: null });
+      }
+      sensitiveCalls++;
+      throw new Error(`Unexpected RPC: ${name}`);
+    },
     from(table: string) {
       if (sensitive.has(table)) { sensitiveCalls++; throw new Error("Activation forbidden"); }
       let value: Record<string, unknown> | undefined;
       const q: any = {
-        select: () => q, eq: () => q, limit: () => q,
+        select: () => q, eq: () => q, limit: () => q, order: () => q, neq: () => q, in: () => q,
         insert: (v: Record<string, unknown>) => { value = v; return q; },
         update: (v: Record<string, unknown>) => { value = v; return q; },
-        maybeSingle: async () => ({ data: null, error: null }),
+        // The canonical audit's terminal update must return the saved event id.
+        // Return null for all other lookups; a missing audit insert cannot pass.
+        maybeSingle: async () => ({
+          data: table === "stripe_webhook_events" &&
+            value?.processing_status === "processed" && auditRecorded
+              ? { stripe_event_id: "evt_fixture" } : null,
+          error: null,
+        }),
         then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
-          if (value) writes.push({ table, value });
+          if (value) {
+            writes.push({ table, value });
+            if (table === "stripe_webhook_events" && value.processing_status === "processing") {
+              auditRecorded = true;
+            }
+          }
           return Promise.resolve({ data: null, error: null }).then(res, rej);
         },
       };
@@ -45,7 +68,7 @@ async function run(session: Record<string, unknown>, livemode = true, badSignatu
   const response = await handler(new Request("https://fixture.invalid", {
     method: "POST", headers: { "stripe-signature": "fixture-only" }, body: "{}",
   }));
-  return { status: response.status, body: await response.json(), writes, sensitiveCalls };
+  return { status: response.status, body: await response.json(), writes, sensitiveCalls, reservationSettlements };
 }
 
 const session = (offer: string) => ({
@@ -122,5 +145,30 @@ describe("tax contracts and legacy separation", () => {
     for (const values of [{ amount_total: null }, { amount_total: NaN }, { total_details: { amount_tax: -1 } }]) {
       expect(guards.entry350PaymentBlockReason({ ...session("entry_pack_350"), ...values })).toBe("ignored_amount_mismatch");
     }
+  });
+});
+
+describe("P0: completed homeowner Checkout must not grant an unpaid subscription", () => {
+  const homeownerCheckout = (payment_status: string, amount_total: number) => ({
+    ...session("legacy_homeowner"),
+    payment_status,
+    amount_total,
+    metadata: { plan_type: "homeowner", plan_code: "plus", user_id: "fixture-homeowner" },
+  });
+
+  it("does not activate a completed-but-unpaid Checkout", async () => {
+    const result = await run(homeownerCheckout("unpaid", 4900));
+    expect(result.status).toBe(200);
+    expect(result.writes.some(w => w.table === "homeowner_subscriptions")).toBe(false);
+    expect(result.sensitiveCalls).toBe(0);
+  });
+
+  it("preserves legitimate zero-cost Checkout entitlements", async () => {
+    const result = await run(homeownerCheckout("no_payment_required", 0));
+    expect(result.status).toBe(200);
+    expect(result.writes.some(w =>
+      w.table === "homeowner_subscriptions" && w.value.status === "active"
+    )).toBe(true);
+    expect(result.sensitiveCalls).toBe(0);
   });
 });

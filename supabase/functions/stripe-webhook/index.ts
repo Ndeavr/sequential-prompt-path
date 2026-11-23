@@ -1020,7 +1020,11 @@ Deno.serve(async (req) => {
 
         // HOMEOWNER PLANS: activate entitlements immediately after payment.
         // Idempotent — replaying the event just re-affirms the active row.
-        if (session.metadata?.plan_type === "homeowner") {
+        // A completed Checkout can still be unpaid (asynchronous payment methods).
+        // Preserve valid zero-cost coupon sessions; only settle a paid entitlement.
+        const homeownerPaymentSettled = session.payment_status === "paid" ||
+          (session.payment_status === "no_payment_required" && session.amount_total === 0);
+        if (session.metadata?.plan_type === "homeowner" && homeownerPaymentSettled) {
           const hoUserId = session.metadata?.user_id ?? null;
           const hoPlanCode = session.metadata?.plan_code ?? null;
           const stripeSubId = session.subscription ? String(session.subscription) : null;
