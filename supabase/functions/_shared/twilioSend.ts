@@ -12,6 +12,8 @@ import { prepareColdOutreachSms, smsSegmentInfo, toGsm7 } from "./smsEncoding.ts
 function classifyMessage(type: string): MessageClass {
   switch (type) {
     case "otp":
+    case "auth":
+    case "transactional":
     case "test":
       return "transactional";
     case "founder":

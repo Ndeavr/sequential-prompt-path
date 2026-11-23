@@ -8,7 +8,7 @@ const source = readFileSync("supabase/functions/twilio-inbound/index.ts", "utf8"
 const url = "https://example.test/functions/v1/twilio-inbound";
 const token = "test-only-signature-secret";
 
-function harness(authToken = token) {
+function harness(authToken = token, pilot?: { enabled: boolean; allowlist: string }) {
   let handler: ((request: Request) => Promise<Response>) | undefined;
   const writes: { table: string; operation: string }[] = [];
   const invocations: string[] = [];
@@ -32,12 +32,15 @@ function harness(authToken = token) {
   }).outputText;
   const env: Record<string, string> = {
     SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test-only", TWILIO_AUTH_TOKEN: authToken,
+    CLARA_SMS_ENABLED: pilot?.enabled ? "true" : "false",
+    CLARA_SMS_PILOT_ALLOWLIST: pilot?.allowlist ?? "",
   };
   runInNewContext(javascript, {
     serve: (callback: typeof handler) => { handler = callback; },
     createClient: () => sb, Request, Response, URL, TextEncoder, Uint8Array,
     crypto: webcrypto, btoa, console: { warn() {}, error() {} },
     Deno: { env: { get: (key: string) => env[key] } },
+    EdgeRuntime: { waitUntil: (p: Promise<unknown>) => p },
   });
   return {
     writes, invocations,
@@ -87,6 +90,25 @@ describe("inbound HELP — simulated handler, no real SMS/database", () => {
     expect(h.writes).toContainEqual({ table: "sms_opt_outs", operation: "upsert" });
     expect(h.writes).toContainEqual({ table: "outreach_suppressions", operation: "insert" });
     expect(h.invocations).toHaveLength(0);
+  });
+  it("routes signed, allowlisted homeowner SMS to Clara without sales checkout", async () => {
+    const h = harness(token, { enabled: true, allowlist: "+15005550006" });
+    const res = await h.request("J'ai une question difficile sur la rénovation de ma cuisine.");
+    expect(res.status).toBe(200);
+    expect(h.invocations).toEqual(["clara-sms"]);
+    expect(h.writes.some((w) => w.table === "outreach_replies")).toBe(false);
+    expect(await res.text()).not.toContain("<Message>");
+  });
+  it("does not route unlisted numbers, unsigned payloads or STOP to Clara", async () => {
+    const unlisted = harness(token, { enabled: true, allowlist: "+15145550123" });
+    await unlisted.request("Mon toit coule.");
+    expect(unlisted.invocations).toEqual(["agent-activation-reply"]);
+    const unsigned = harness(token, { enabled: true, allowlist: "+15005550006" });
+    expect((await unsigned.request("Mon toit coule.", {}, false)).status).toBe(403);
+    expect(unsigned.invocations).toHaveLength(0);
+    const stop = harness(token, { enabled: true, allowlist: "+15005550006" });
+    await stop.request("STOP");
+    expect(stop.invocations).toHaveLength(0);
   });
   it("preserves ordinary reply routing without touching OTP", async () => {
     const h = harness();

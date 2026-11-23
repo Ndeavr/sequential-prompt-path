@@ -100,6 +100,29 @@ Deno.serve(async (req) => {
 
     if (intent === "stop") await suppress();
 
+    // Separate homeowner SMS pilot from contractor acquisition. Keep old flow
+    // untouched unless this recipient has explicitly been allowlisted.
+    // Twilio signature was checked above and STOP/HELP retain existing handling.
+    const smsPilot = Deno.env.get("CLARA_SMS_ENABLED") === "true";
+    const pilotNumbers = new Set((Deno.env.get("CLARA_SMS_PILOT_ALLOWLIST") ?? "")
+      .split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean));
+    if (!leadId && smsPilot && pilotNumbers.has(From) &&
+        To === "+14503286776" && REQUIRE_SIGNATURE && !!TWILIO_AUTH_TOKEN &&
+        !providerAlreadyReplied && !["stop", "help", "contractor_intent"].includes(intent)) {
+      const task = sb.functions.invoke("clara-sms", {
+        body: { from: From, to: To, message_sid: MessageSid, body: Body },
+      }).then(({ error }) => {
+        if (error) console.error("clara-sms dispatch failed", { message_sid: MessageSid });
+      }).catch(() => {
+        console.error("clara-sms dispatch exception", { message_sid: MessageSid });
+      });
+      // Twilio receives a prompt empty TwiML while Clara computes her reply.
+      // EdgeRuntime.waitUntil keeps the dispatcher alive after responding.
+      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(task);
+      else await task;
+      return twiml();
+    }
+
     const { data: reply } = await sb.from("outreach_replies").insert({
       lead_id: leadId, channel: "sms", provider: "twilio", provider_message_id: MessageSid,
       from_address: from, body, intent, processed: intent === "auto_reply" || intent === "stop",
