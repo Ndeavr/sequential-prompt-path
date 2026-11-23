@@ -127,6 +127,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
           { to: "/aide", label: "Centre d'aide", labelEn: "Help Center", icon: HelpCircle },
           { to: "/entrepreneurs/ambassadeur", label: "Programme ambassadeur", labelEn: "Ambassador Program", icon: Users },
           { to: "/ambassadeurs", label: "Devenir ambassadeur", labelEn: "Become an Ambassador", icon: Award },
+          { to: "/carrieres/representants-construction", label: "Carrières — représentants", labelEn: "Careers — representatives", icon: Users },
         ],
       },
     ],

@@ -4878,54 +4878,87 @@ export type Database = {
       affiliate_applications: {
         Row: {
           city: string | null
+          consent_text: string | null
+          consented_at: string | null
           created_at: string
           email: string
           experience: string | null
           first_name: string
           id: string
+          idempotency_key: string | null
+          ip_hash: string | null
+          is_synthetic: boolean
+          journey: Json
           last_name: string | null
+          locale: string | null
           notes: string | null
           phone: string | null
           province: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          source: string | null
           status: string
           submitted_at: string
+          terms_acknowledged: boolean
           updated_at: string
+          utm: Json
+          wants_team_lead: boolean
         }
         Insert: {
           city?: string | null
+          consent_text?: string | null
+          consented_at?: string | null
           created_at?: string
           email: string
           experience?: string | null
           first_name: string
           id?: string
+          idempotency_key?: string | null
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          journey?: Json
           last_name?: string | null
+          locale?: string | null
           notes?: string | null
           phone?: string | null
           province?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source?: string | null
           status?: string
           submitted_at?: string
+          terms_acknowledged?: boolean
           updated_at?: string
+          utm?: Json
+          wants_team_lead?: boolean
         }
         Update: {
           city?: string | null
+          consent_text?: string | null
+          consented_at?: string | null
           created_at?: string
           email?: string
           experience?: string | null
           first_name?: string
           id?: string
+          idempotency_key?: string | null
+          ip_hash?: string | null
+          is_synthetic?: boolean
+          journey?: Json
           last_name?: string | null
+          locale?: string | null
           notes?: string | null
           phone?: string | null
           province?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source?: string | null
           status?: string
           submitted_at?: string
+          terms_acknowledged?: boolean
           updated_at?: string
+          utm?: Json
+          wants_team_lead?: boolean
         }
         Relationships: [
           {
