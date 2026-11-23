@@ -10,6 +10,13 @@
 - Si toutes les taxes TPS/TVQ Québec sont applicables, le total de prix 402,41 $ par activation représenterait **1 207 230 $ encaissés taxes comprises**, dont les taxes ne sont pas le revenu propre d'UNPRO. Ne jamais mélanger ces montants.
 - Vitesse linéaire depuis 0 : **45,45 activations vérifiées par jour**, arrondir cible opérationnelle à **46/jour**, **318/semaine**. Les deux premières ventes ne sont qu'un test du canal et du paiement, PAS la cible de lancement.
 - Baseline source vérifiée aux derniers audits : **aucun paiement unique LIVE 350 $ suffisamment rapproché Stripe/webhook/droits**. Revalider avant tout communiqué; les états historiques « paid » ou Stripe 1 $ ne qualifient pas.
+
+### Alerte de classification — nouvelle option Présence Fondateur (source du 18 novembre 2026)
+
+Le commit [`bbb04b7`](https://github.com/Ndeavr/sequential-prompt-path/commit/bbb04b72143d46a1e648f7d6c9ea4ab6d89d8c31) sur `lovable-sync` ajoute au **code source** une option distincte de **1 995 $ CA hors taxes / 120 mois (10 ans)**, à côté du tarif principal **350 $ CA / 12 mois**. Le code serveur prévoit `PRESENCE_FOUNDER_LIVE_RELEASED` pour bloquer le nouveau Checkout LIVE sans ouverture explicite; la présence dans GitHub/Lovable n'établit ni le déploiement de la nouvelle logique Edge/SQL, ni une autorisation de publication ou de changement de flag, ni un achat.
+
+**Garde du KPI 3 000 :** une transaction Fondateur de 1 995 $ ne vaut **jamais** une activation de base 350 $ dans le numérateur, ni 350 $ dans le revenu cible de 1 050 000 $. Attention : ce parcours partage les libellés `offer=entry_activation_350` et `contractor_activation_ledger.action=entry_activation_350_paid`. Donc **compter l'action/le champ `offer` seuls peut faussement gonfler les ventes 350 $**. La réconciliation doit exiger notamment `amount_subtotal_cents=35000` (ou montant Stripe hors taxes équivalent), `presence_tier` de lancement/12 mois, montant réellement réglé en Stripe LIVE, événement webhook signé, droits de 12 mois, identité entreprise unique et absence de remboursement/litige. Les 1 995 $ doivent être rapportés **dans un compteur et des revenus séparés**, seulement si vérifiés, jamais convertis en ventes 350 $. Les tests synthétiques de l'offre Fondateur ne remplacent pas le P0 [#86](https://github.com/Ndeavr/sequential-prompt-path/issues/86) d'intégration isolée. Aucun changement de production ne découle de cette note.
+
 - Inclure les professionnels au-delà de la rénovation, avec vérification réglementaire adaptée au métier. Ne pas imposer RBQ si non requise; ne jamais recommander un entrepreneur dont la licence nécessaire est invalide/suspendue.
 
 ## 2. Faisabilité — le véritable problème est la distribution
