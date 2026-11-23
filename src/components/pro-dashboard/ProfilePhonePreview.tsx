@@ -5,7 +5,8 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Phone, Globe, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
+import ProfileSummary from "@/features/contractorProfile/public/ProfileSummary";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 
 type Profile = {
@@ -17,6 +18,8 @@ type Profile = {
   phone?: string | null;
   website?: string | null;
   logo_url?: string | null;
+  public_status?: string | null;
+  portfolio_urls?: string[] | null;
 };
 
 const COPY = {
@@ -30,7 +33,6 @@ export default function ProfilePhonePreview({ profile }: { profile: Profile }) {
   const t = COPY[lang] ?? COPY.fr;
   const [opening, setOpening] = useState(false);
   const name = profile.business_name || "—";
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
   const open = () => {
     if (opening) return;
@@ -48,21 +50,21 @@ export default function ProfilePhonePreview({ profile }: { profile: Profile }) {
         className={`group relative w-[220px] sm:w-[240px] rounded-[2.25rem] border border-border bg-card p-2 shadow-2xl transition-transform duration-[420ms] ease-[cubic-bezier(.22,1,.36,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${opening ? "rotate-0" : "-rotate-6 hover:-translate-y-0.5 hover:-rotate-3"}`}
       >
         <span className="absolute left-1/2 top-3 z-10 h-4 w-16 -translate-x-1/2 rounded-full bg-muted" aria-hidden />
-        <div className="flex h-[400px] flex-col overflow-hidden rounded-[1.75rem] bg-background text-left">
-          <div className="flex flex-col items-center gap-2 bg-muted/40 px-4 pb-4 pt-9">
-            {profile.logo_url ? (
-              <img src={profile.logo_url} alt={`Logo ${name}`} className="h-14 w-14 rounded-xl bg-card object-contain p-1" />
-            ) : (
-              <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-lg font-semibold text-primary-foreground" aria-hidden>{initials}</span>
-            )}
-            <p className="text-center text-sm font-semibold leading-tight text-foreground break-words">{name}</p>
-            {profile.specialty && <p className="text-center text-xs text-muted-foreground">{profile.specialty}</p>}
-          </div>
-          <div className="flex-1 space-y-2 px-4 py-3 text-xs text-foreground">
-            {profile.city && <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />{profile.city}</p>}
-            {profile.phone && <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-primary" aria-hidden />{profile.phone}</p>}
-            {profile.website && <p className="flex items-center gap-1.5 truncate"><Globe className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden /><span className="truncate">{profile.website.replace(/^https?:\/\//, "")}</span></p>}
-            <p className="line-clamp-6 pt-1 leading-relaxed text-muted-foreground">{profile.description || t.empty}</p>
+        <div className="flex h-[460px] flex-col overflow-hidden rounded-[1.75rem] bg-background text-left">
+          <div className="flex-1 space-y-3 overflow-hidden px-4 pb-3 pt-9">
+            <ProfileSummary
+              preview
+              lang={lang}
+              name={name}
+              logoUrl={profile.logo_url}
+              specialty={profile.specialty}
+              publicStatus={profile.public_status}
+              chips={profile.specialty ? [profile.specialty] : []}
+              area={profile.city}
+              photoUrl={profile.portfolio_urls?.find(Boolean) ?? null}
+              phone={profile.phone}
+            />
+            <p className="line-clamp-3 text-[11px] leading-relaxed text-muted-foreground">{profile.description || t.empty}</p>
           </div>
           <div className="m-3 flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2 text-xs font-medium text-primary-foreground">
             <PenLine className="h-3.5 w-3.5" aria-hidden />{t.edit}

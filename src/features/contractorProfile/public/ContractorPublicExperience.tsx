@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ProfessionalVerificationsCard from "@/components/compliance/ProfessionalVerificationsCard";
 import ServiceTerritoryMap from "./ServiceTerritoryMap";
+import ProfileSummary, { areaLabel } from "./ProfileSummary";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -134,12 +136,6 @@ export default function ContractorPublicExperience({ profileData, compact = fals
     const mediaUrls = projectMedia.map((item) => item.public_url).filter(Boolean);
     return Array.from(new Set([...mediaUrls, ...(contractor.portfolio_urls ?? [])]));
   }, [contractor.portfolio_urls, projectMedia]);
-  const initials = (contractor.business_name ?? "UN")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word: string) => word[0])
-    .join("")
-    .toUpperCase();
   const googleSource = reviewSources.find((source) => source.source_name.toLowerCase().includes("google"));
   const projectImages = Array.from(new Set(projects.flatMap((project) => [project.after_url, project.before_url, ...(Array.isArray(project.photos) ? project.photos.filter((p): p is string => typeof p === "string") : [])]).filter((u): u is string => !!u).concat(gallery as string[]))).slice(0, 9);
   const visibleTabs = tabs.filter((tab) => tab.id !== "projects" || projectImages.length > 0);
@@ -162,41 +158,40 @@ export default function ContractorPublicExperience({ profileData, compact = fals
     );
   };
 
+  const { lang } = useLanguage();
+  const checkWithClara = () => {
+    if (!contractorId) return;
+    clara.openAlex(
+      "contractor_compatibility",
+      `Le propriétaire veut vérifier si ${contractor.business_name} convient à son projet. Comprendre le besoin d'abord, une question à la fois, puis évaluer la compatibilité selon les données vérifiées seulement. Entrepreneur: ${contractorId}`,
+    );
+  };
+
   const bookingPath = user ? `/dashboard/book/${contractorId}` : `/login?redirect=${encodeURIComponent(`/dashboard/book/${contractorId}`)}`;
 
   return (
     <article className={`alex-immersive min-h-full bg-background text-foreground ${compact ? "text-[13px]" : ""}`}>
       <section ref={(node) => { sectionRefs.current.overview = node; }} className="scroll-mt-28">
-        <div className={`relative overflow-hidden ${compact ? "h-52" : cover ? "h-[280px] sm:h-[380px]" : "h-auto min-h-44 sm:min-h-52"}`}>
+        <div className="relative overflow-hidden">
           {cover ? (
-            <img src={cover} alt={`Réalisation de ${contractor.business_name}`} className="h-full w-full object-cover" />
+            <img src={cover} alt={`Réalisation de ${contractor.business_name}`} className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-[#152443] via-[#0c1629] to-background" aria-hidden="true" />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background" aria-hidden="true" />
-          <div className={`${cover || compact ? "absolute inset-x-0 bottom-0" : "relative pt-8"} px-4 pb-5 sm:px-6`}>
-            <div className="flex items-end gap-3">
-              <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/40 bg-card shadow-glow sm:h-20 sm:w-20">
-                {logoUrl && !logoBroken ? (
-                  <img src={logoUrl} alt={`Logo ${contractor.business_name}`} onError={() => setLogoBroken(true)} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-xl font-bold text-primary">{initials}</span>
-                )}
-              </div>
-              <div className="min-w-0 pb-1">
-                <h1 className="text-xl font-bold leading-tight text-text-strong sm:text-3xl">{contractor.business_name}</h1>
-                {contractor.specialty && <p className="mt-1 text-sm text-text-secondary">{contractor.specialty}</p>}
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-text-muted-2">
-                  {contractor.city && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{contractor.city}</span>}
-                  {contractor.public_status === "verified_active" ? (
-                    <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" />Vérifié par UNPRO</span>
-                  ) : contractor.public_status === "published_pending_verification" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-text-secondary">Profil publié — vérification en cours</span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-            {!compact && contractorId && <Button asChild className="mt-4 h-11 w-full rounded-button sm:w-auto"><Link to={bookingPath}><CalendarDays className="h-4 w-4" />Prendre rendez-vous</Link></Button>}
+          <div className={`relative px-4 pb-5 sm:px-6 ${cover ? (compact ? "pt-24" : "pt-40 sm:pt-56") : "pt-8"}`}>
+            <ProfileSummary
+              name={contractor.business_name ?? ""}
+              logoUrl={logoUrl && !logoBroken ? logoUrl : null}
+              onLogoError={() => setLogoBroken(true)}
+              specialty={contractor.specialty}
+              publicStatus={contractor.public_status}
+              chips={serviceNames}
+              area={areaLabel(areas.find((a) => a.is_primary)?.city_name ?? areas[0]?.city_name ?? contractor.city, areas.length, lang)}
+              phone={phone}
+              lang={lang}
+              onPrimary={!compact && contractorId ? checkWithClara : undefined}
+            />
           </div>
         </div>
       </section>
