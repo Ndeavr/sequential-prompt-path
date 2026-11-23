@@ -40,6 +40,25 @@ Le marché potentiel existe mais ne garantit pas 3 000 achats : RBQ 2024–25 d�
 
 Ne pas envoyer un SMS à un numéro professionnel simplement parce qu'il figure en ligne. Préférer pages d'inscription volontaire, partenaires et audiences inbound pour volume. Ne pas utiliser fichiers d'annuaires achetés avec sollicitations massives.
 
+### Priorité opérationnelle du 12 novembre — TOP 25 entreprises faciles à activer (non publiable)
+
+**Instruction fondateur :** chaque canal travaille dans la **même liste dédoublonnée de maximum 25 entreprises**, classées selon des **signaux observés** de progression probable vers une inscription/activation réelle, non selon le nombre de messages envoyés. Cette liste de travail n'est ni un contingent à remplir ni une preuve de consentement ou de paiement. **Les entreprises externes qui ont elles-mêmes demandé à être contactées passent avant les nouvelles entreprises froides.**
+
+**Priorité de sélection :**
+1. Réponse volontaire récente ou demande explicite d'inscription/démonstration; entreprise et décideur identifiables.
+2. Inscription commencée, profil incomplet, essai de Checkout ou abandon démontré **pour une entreprise externe** et non un compte interne de QA; rechercher le blocage concret avant de relancer, et respecter l'autorisation de communication.
+3. Introduction chaude d'un partenaire/affilié avec coordonnées volontairement transmises et finalité de contact documentée.
+4. Entreprise offrant publiquement ses propres services, dans un métier/territoire admissible et avec **base LCAP/CASL individuelle validée** pour le canal.
+5. Autre prospection froide seulement après les précédents, **sans inférer un consentement de la publication d'un numéro**.
+
+Pour chaque ligne, conserver dans le **CRM existant** : identifiant stable d'entreprise, nom normalisé/domaine/téléphone professionnel pour dédoublonnage, univers/service/territoire, **signal daté + URL ou événement de première partie**, étape réelle du parcours, dernier contact/réponse, destinataire/canal, preuve CASL examinée par humain, STOP/suppression, licence vérifiée lorsqu'exigée, prochain obstacle à lever, statut du message et attribution source/canal connue. Aucune création de contact à partir de données privées de propriétaires ni aucune signature CASL automatique. En l'absence de preuve, marquer **À VALIDER** et préparer un brouillon plutôt que d'envoyer. **Ne jamais enregistrer un score de probabilité d'achat inventé.**
+
+**Message personnalisé, très court, une seule action facile :** pour une demande explicite, répondre au besoin posé et guider vers Clara ou le profil à terminer; pour un abandon, résoudre exactement la friction observée (connexion, renseignements, paiement) sans déclarer que le paiement a échoué sans preuve; pour un partenaire, référer seulement à l'introduction authentifiée; pour un pro qui cherche de nouveaux contrats, montrer concrètement la valeur pertinente du profil et des préférences. Ne jamais inventer une demande client, une garantie de résultats IA, une vérification de licence, un rendez-vous exclusif ou une urgence artificielle. Utiliser uniquement une URL de parcours **réellement vérifiée**. Préserver les mentions légales, coordonnées et STOP/désabonnement opérationnels.
+
+**Exécution coordonnée :** les automations de découverte et de campagne sont des sources de candidats, **pas deux files d'envoi**. Un seul canal initial par entreprise, pas de seconde invitation automatique lorsqu'interdite, dédoublonnage tous workers confondus, 25 contacts/jour **au maximum** et plafonds plus stricts applicables, garde de sécurité worker, horaire, pause et consentement vérifiés **avant** tout contact. Aucun changement de flags/outreach, abonnement, prix ou déploiement n'est autorisé par cette note. L'offre gratuite « 30 entreprises / 48 h », si réellement vérifiée/active et autorisée, demeure **distincte** de l'activation payante 350 $ : ne jamais la compter parmi les 3 000.
+
+**Mesurer par canal et par cohorte top 25 :** entreprises distinctes éligibles → contactables avec preuve légale → envoyées → livrées → réponses volontaires → inscriptions commencées → inscriptions terminées → Checkout démarrés → paiements Stripe LIVE réglés **350 $ HT** → droits 12 mois authentifiés → payeurs uniques nets. Inclure refus/désabonnements et obstacles observés; noter **INCONNU** pour une étape non accessible. Un taux est calculé sur une cohorte homogène de **mêmes entreprises**, pas sur des événements de dates/sources disjointes. Si moins de 25 entreprises ont des preuves suffisantes, afficher le vrai nombre; ne pas compléter artificiellement ni renvoyer des messages pour atteindre un quota. Les campagnes médias restent soumises au budget et à l'autorisation explicite.
+
 ## 4. Offre commerciale — convertissez sans inventer de rendez-vous
 La promesse principale n'est pas « plus de leads », mais :
 **« Choisissez les contrats que vous voulez. Pas ceux qu'on vous impose. »**
