@@ -104,4 +104,63 @@ describe("350 $ quote card telemetry privacy — synthetic only", () => {
       body: expect.objectContaining({ entryActivation: true, quoteId: "PRIVATE-QUOTE-IDENTIFIER" }),
     });
   });
+  it("blocks another checkout when Stripe payment was received but activation is pending — synthetic only", async () => {
+    mock.invoke.mockResolvedValue({ data: { code: "payment_received_pending" }, error: null });
+    clickCheckout();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Votre paiement a déjà été reçu");
+    const checkoutButton = within(screen.getByTestId("entry-350-card")).getAllByRole("button")[0];
+    expect(checkoutButton).toBeDisabled();
+    fireEvent.click(checkoutButton);
+    expect(mock.invoke).toHaveBeenCalledTimes(1);
+    expect(mock.redirect).not.toHaveBeenCalled();
+    await waitFor(() => expect(mock.telemetry).toHaveBeenCalledTimes(1));
+    expect(mock.telemetry.mock.calls[0][0].event_type).toBe("entry_350_clicked");
+  });
+
+  it("keeps a non-2xx reconciliation-pending reservation from looking like a failed payment — synthetic only", async () => {
+    const responseBody = { code: "checkout_reconciliation_pending", error: "checkout_record_unavailable" };
+    mock.invoke.mockResolvedValue({
+      data: null,
+      error: {
+        message: "FunctionsHttpError",
+        context: {
+          json: async () => responseBody,
+          clone: () => ({ json: async () => responseBody }),
+        },
+      },
+    });
+
+    clickCheckout();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Ne payez pas une deuxième fois");
+    const checkoutButton = within(screen.getByTestId("entry-350-card")).getAllByRole("button")[0];
+    expect(checkoutButton).toBeDisabled();
+    fireEvent.click(checkoutButton);
+    expect(alert.textContent).not.toMatch(/rien n.a été facturé|aucun paiement n.a été/i);
+    expect(mock.redirect).not.toHaveBeenCalled();
+    expect(mock.invoke).toHaveBeenCalledTimes(1);
+    // Pending reconciliation is not a confirmed checkout failure or a second Stripe request.
+    await waitFor(() => expect(mock.telemetry).toHaveBeenCalledTimes(1));
+    expect(mock.telemetry.mock.calls[0][0].event_type).toBe("entry_350_clicked");
+    expect(JSON.stringify(mock.telemetry.mock.calls)).not.toContain("checkout_record_unavailable");
+  });
+
+  it("does not claim that no charge occurred when the network result is unknown — synthetic only", async () => {
+    mock.invoke.mockRejectedValue(new Error("SYNTHETIC_PROVIDER_INTERNAL_DETAIL"));
+    clickCheckout();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Impossible de confirmer l'ouverture du paiement");
+    expect(alert.textContent).not.toMatch(/rien n.a été facturé|aucun paiement n.a été/i);
+    expect(alert.textContent).not.toContain("SYNTHETIC_PROVIDER_INTERNAL_DETAIL");
+    expect(mock.redirect).not.toHaveBeenCalled();
+    await waitFor(() => expect(mock.telemetry).toHaveBeenCalledTimes(2));
+    expect(mock.telemetry.mock.calls.map(([event]) => event.event_type)).toEqual([
+      "entry_350_clicked",
+      "entry_350_checkout_failed",
+    ]);
+    expect(JSON.stringify(mock.telemetry.mock.calls)).not.toContain("SYNTHETIC_PROVIDER_INTERNAL_DETAIL");
+  });
+
 });
