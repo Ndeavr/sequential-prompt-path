@@ -17,7 +17,7 @@
  * read NEVER overwrites a valid artifact — the previous file is kept and the
  * error is reported. The index lists only sub-sitemaps that contain URLs.
  */
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "fs";
 import { resolve } from "path";
 import { EDITORIAL_REVISIONS, editorialModifiedDate } from "../src/seo/editorialDates";
 import {
@@ -35,6 +35,7 @@ import {
 } from "../src/seo/sitemapSources";
 
 const BASE_URL = "https://unpro.ca";
+const AI_SNAPSHOT = resolve(".seo-cache/ai-entities.json"); // build-only, never published
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://clmaqdnphbndvmmqvpff.supabase.co";
 const SUPABASE_KEY =
@@ -203,9 +204,13 @@ async function buildJournal() {
 }
 
 async function buildAiEntities() {
-  const { ok, rows } = await sb<{ slug: string; updated_at: string }>(
-    "ai_entities?select=slug,updated_at&published=eq.true&order=updated_at.desc",
+  const { ok, rows } = await sb<{ slug: string; updated_at: string; company_name: string; primary_service: string | null; primary_city: string | null; ai_summary: string | null }>(
+    "ai_entities?select=slug,updated_at,company_name,primary_service,primary_city,ai_summary&published=eq.true&order=updated_at.desc",
   );
+  if (ok) {
+    mkdirSync(resolve(".seo-cache"), { recursive: true });
+    writeFileSync(AI_SNAPSHOT, JSON.stringify(rows), "utf8"); // published rows only; no licences/assurances inferred
+  }
   const urls = rows.map((r) =>
     urlNode(`${BASE_URL}/ai/${r.slug}`, isoDate(r.updated_at), "weekly", "0.8"),
   );
@@ -360,7 +365,7 @@ async function buildLlmsFull() {
     if (a.meta_description) out.push(`\n${a.meta_description}`);
     if (a.content_markdown) {
       out.push("");
-      out.push(a.content_markdown);
+      out.push(a.content_markdown.replaceAll("conversationnelle Alex", "conversationnelle Clara"));
     }
     out.push("\n---\n");
   }
@@ -379,7 +384,7 @@ async function buildLlmsFull() {
     out.push("\n---\n");
   }
 
-  out.push(`## Entités IA — entrepreneurs vérifiés (${aiEntities.length})`);
+  out.push(`## Entités IA — fiches publiées, vérifier les statuts individuellement (${aiEntities.length})`);
   out.push("");
   for (const e of aiEntities) {
     out.push(`### ${e.company_name}`);
@@ -420,6 +425,7 @@ const SUB_SITEMAPS = [
 ];
 
 async function main() {
+  rmSync(AI_SNAPSHOT, { force: true }); // never prerender previously withdrawn profiles from a stale build
   try {
     const [pages, blog, journal, ai, problems, contractors, seoPages, seoArticles] = await Promise.all([
       buildPages(),
