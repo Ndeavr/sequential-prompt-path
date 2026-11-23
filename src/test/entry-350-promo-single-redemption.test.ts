@@ -64,7 +64,7 @@ describe("PROMO : un seul reçu global", { timeout: 30_000 }, () => {
             return q;
           },
           eq(key: string, value: string) { if (key === "id") contractor = value; return q; },
-          neq() { return q; }, limit() { return q; },
+          neq() { return q; }, gte() { return q; }, limit() { return q; },
           insert(value: any) { payload = value; operation = "insert"; return q; },
           upsert(value: any) { payload = value; operation = "upsert"; return q; },
           update(value: any) { payload = value; operation = "update"; return q; },
