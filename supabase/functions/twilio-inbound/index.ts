@@ -1,268 +1,164 @@
 /**
- * UNPRO — twilio-inbound webhook (hardened for CASL/LCAP)
+ * UNPRO — twilio-inbound webhook (CASL/LCAP).
  *
- * Hardening in this revision:
- *   1. X-Twilio-Signature validation (HMAC-SHA1 over URL + sorted body params, base64).
- *      When TWILIO_AUTH_TOKEN is set and the signature is missing or invalid we
- *      return 403 instead of accepting the payload. This closes the risk of a
- *      forged inbound message spoofing a STOP or a false reply.
- *   2. On STOP we now insert the number into `sms_opt_outs` (canonical), and
- *      also into `outreach_suppressions` (unified suppression source). This
- *      guarantees the SAME phone will be blocked by the pre-send commercial
- *      gate regardless of which suppression source the sender consults.
- *   3. Classifier expanded: STOP, ARRET, ARRÊT, UNSUBSCRIBE, CANCEL, END, QUIT.
- *   4. Structured logging preserved. This function does NOT send anything.
+ * - POST + application/x-www-form-urlencoded only; X-Twilio-Signature validated against the
+ *   exact public URL (SUPABASE_URL/functions/v1/twilio-inbound + query). Invalid → 403.
+ * - Idempotent by MessageSid (unique index on sms_messages.message_sid): a Twilio retry
+ *   re-applies the opt-out (idempotent) and returns empty TwiML without new side effects.
+ * - STOP/ARRÊT/UNSUBSCRIBE and explicit refusals → sms_opt_outs + outreach_suppressions.
+ * - Legitimate replies go to the human admin queue; auto-responders are stored only.
+ * - Never auto-sells: no checkout link, no automatic commercial reply. HELP gets one
+ *   informational GSM-7 segment unless Twilio Advanced Opt-Out already answered.
+ * - Inbound text is stored verbatim (accents preserved).
  */
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { isValidTwilioSignature } from "../_shared/twilioSignature.ts";
+import { classifyInbound, maskPhone, normalizeE164 } from "../_shared/smsInbound.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type, x-twilio-signature",
-};
-
-function classify(body: string): string {
-  const b = body.toLowerCase().trim().replace(/[!.?,;:]+$/g, "");
-  if (/\b(stop|arret|arrêt|unsubscribe|cancel|end|quit|desabonner|désabonner)\b/.test(b)) return "stop";
-  if (/\b(help|aide|info)\b/.test(b)) return "help";
-  // Simple positive acknowledgements — must route to onboarding.
-  // Match short one-word replies and common French/English affirmations.
-  if (/^(oui|yes|y|ok|okay|okey|d'accord|daccord|correct|parfait|allons-y|go|sure|oui svp|oui merci|ouais|ya|yeah|yep|yup|absolument|certainement|volontiers|intéressé|interesse|interessé|intéressée|interessee|ca m'intéresse|ça m'intéresse|ca minteresse|je suis intéressé|je suis interesse|dites-m'en plus|dis m'en plus|plus d'info|plus dinfo|expliquez|explique|allo|hello|salut|bonjour|hi|hey)$/.test(b)) return "positive";
-  if (/\b(entrepreneur|pro|contracteur)\b/.test(b)) return "contractor_intent";
-  if (/\b(propri[ée]taire|proprio|maison|condo)\b/.test(b)) return "homeowner_intent";
-  if (/\b(rdv|rendez-vous|booking|appointment)\b/.test(b)) return "appointment_request";
-  return "general";
-}
+const XML = { "Content-Type": "text/xml; charset=utf-8" };
+const HELP_TEXT = "UNPRO - Aide: unpro.ca/contact. Questions par SMS: 450-328-6776. Pour ne plus recevoir de SMS commerciaux, répondez STOP.";
 
 function twiml(message?: string): Response {
   const xml = message
-    ? `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}</Message></Response>`
+    ? `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</Message></Response>`
     : `<?xml version="1.0" encoding="UTF-8"?><Response/>`;
-  return new Response(xml, {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "text/xml" },
-  });
+  return new Response(xml, { status: 200, headers: XML });
 }
+const plain = (status: number, text: string) => new Response(text, { status, headers: { "Content-Type": "text/plain" } });
 
-function forbidden(reason: string): Response {
-  return new Response(`Forbidden: ${reason}`, {
-    status: 403,
-    headers: { ...corsHeaders, "Content-Type": "text/plain" },
-  });
-}
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return plain(405, "Method Not Allowed");
+  const ctype = (req.headers.get("content-type") ?? "").toLowerCase();
+  if (!ctype.startsWith("application/x-www-form-urlencoded")) return plain(415, "Unsupported Media Type");
 
-/**
- * Validate X-Twilio-Signature per Twilio docs:
- *   signature = base64( HMAC-SHA1( authToken, url + concat(sortedParams) ) )
- * where sortedParams = keys sorted ascending, each rendered as key+value with no separator.
- */
-async function validateTwilioSignature(
-  url: string,
-  params: Record<string, string>,
-  signatureHeader: string,
-  authToken: string,
-): Promise<boolean> {
-  const sortedKeys = Object.keys(params).sort();
-  const concatenated = sortedKeys.reduce((acc, k) => acc + k + params[k], url);
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(authToken),
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(concatenated));
-  const bytes = new Uint8Array(sig);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  const expected = btoa(binary);
-  // Constant-time compare
-  if (expected.length !== signatureHeader.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ signatureHeader.charCodeAt(i);
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+  const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+  if (!SUPABASE_URL || !SERVICE_ROLE || !TWILIO_AUTH_TOKEN) {
+    console.error("twilio-inbound: missing configuration");
+    return plain(503, "Service Unavailable");
   }
-  return mismatch === 0;
-}
 
-function normalizeTail10(raw: string): string {
-  return raw.replace(/\D/g, "").slice(-10);
-}
+  const raw: Record<string, string> = {};
+  for (const [k, v] of new URLSearchParams(await req.text())) raw[k] = v;
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const signature = req.headers.get("x-twilio-signature") ?? "";
+  const publicUrl = `${SUPABASE_URL}/functions/v1/twilio-inbound${new URL(req.url).search}`;
+  if (!(await isValidTwilioSignature(publicUrl, raw, signature, TWILIO_AUTH_TOKEN))) {
+    console.warn("twilio-inbound: rejected signature", { has_header: !!signature });
+    return plain(403, "Forbidden");
+  }
+
+  const MessageSid = raw.MessageSid ?? raw.SmsSid ?? "";
+  if (!/^(SM|MM)[0-9a-f]{32}$/i.test(MessageSid)) return twiml();
+
+  const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { autoRefreshToken: false, persistSession: false } });
+  const from = normalizeE164(raw.From ?? "");
+  const to = raw.To ?? "";
+  const body = raw.Body ?? "";
+  const optOutType = (raw.OptOutType ?? "").toUpperCase();
+  const intent = classifyInbound(body, optOutType);
+  const tail = from.replace(/\D/g, "").slice(-10);
+  let persisted = false;
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_URL || !SERVICE_ROLE) return forbidden("missing_configuration");
-    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
-    const REQUIRE_SIGNATURE = (Deno.env.get("TWILIO_REQUIRE_SIGNATURE") ?? "true").toLowerCase() !== "false";
-
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    const form = await req.formData();
-    const rawPayload: Record<string, string> = {};
-    for (const [k, v] of form.entries()) rawPayload[k] = String(v);
-
-    const From = rawPayload.From ?? "";
-    const To = rawPayload.To ?? "";
-    const Body = rawPayload.Body ?? "";
-    const MessageSid = rawPayload.MessageSid ?? "";
-    const AccountSid = rawPayload.AccountSid ?? "";
-
-    // --- 1. Signature validation ---
-    // The webhook URL used to compute the signature must be the exact URL Twilio requested,
-    // reconstructed from Host + original path. Deno gives us the request URL directly.
-    const signatureHeader = req.headers.get("x-twilio-signature") ?? "";
-    if (REQUIRE_SIGNATURE && TWILIO_AUTH_TOKEN) {
-      if (!signatureHeader) {
-        console.warn("twilio-inbound: rejected — missing X-Twilio-Signature");
-        return forbidden("missing_signature");
+    const suppress = async () => {
+      await sb.from("sms_opt_outs").upsert(
+        { normalized_phone: tail, reason: optOutType === "STOP" ? "sms_stop_keyword" : "sms_stop_or_refusal_reply", source: "twilio-inbound" },
+        { onConflict: "normalized_phone", ignoreDuplicates: true },
+      );
+      const { data: sup } = await sb.from("outreach_suppressions").select("id")
+        .eq("contact_type", "phone").eq("contact_value", from).limit(1).maybeSingle();
+      if (!sup) {
+        await sb.from("outreach_suppressions").insert({
+          contact_type: "phone", contact_value: from, suppression_reason: "sms_stop_reply", source: "twilio-inbound",
+        });
       }
-      // Edge runtime req.url is internal (http, no /functions/v1); Twilio signs the public URL.
-      const search = new URL(req.url).search;
-      const url = `${SUPABASE_URL}/functions/v1/twilio-inbound${search}`;
-      const ok = await validateTwilioSignature(url, rawPayload, signatureHeader, TWILIO_AUTH_TOKEN);
-      if (!ok) {
-        console.warn("twilio-inbound: rejected — invalid X-Twilio-Signature", { url, MessageSid });
-        return forbidden("invalid_signature");
-      }
-    } else if (REQUIRE_SIGNATURE) {
-      console.error("twilio-inbound: signature validation unavailable");
-      return forbidden("signature_validation_unavailable");
-    }
+    };
 
-    // Signed marker means Advanced Opt-Out already sent its confirmation.
-    const optOutType = (rawPayload.OptOutType ?? "").toUpperCase();
-    const providerAlreadyReplied = ["HELP", "STOP", "START"].includes(optOutType);
-    const intent = optOutType === "STOP" ? "stop" : optOutType === "HELP" ? "help" : classify(Body);
+    // Prospect association by normalized E.164 (canonical verified prospects, then legacy leads).
+    const { data: vcp } = await sb.from("verified_contractor_prospects").select("id")
+      .or(`phone_e164.eq.${from},phone_primary.ilike.%${tail}`).limit(1).maybeSingle();
+    const { data: lead } = await sb.from("contractor_leads").select("id")
+      .or(`phone.ilike.%${tail},mobile_phone.ilike.%${tail}`).limit(1).maybeSingle();
+    const prospectId = vcp?.id ?? null;
+    const leadId = lead?.id ?? null;
 
-    const { data: smsRow } = await sb.from("sms_messages").insert({
-      message_sid: MessageSid,
-      phone_number: From,
-      direction: "inbound",
-      message_body: Body,
-      status: "received",
-      intent,
-      provider: "twilio",
+    // Idempotency gate: first writer wins on MessageSid.
+    const { data: smsRow, error: insErr } = await sb.from("sms_messages").insert({
+      message_sid: MessageSid, phone_number: from, direction: "inbound", message_body: body,
+      status: "received", intent, provider: "twilio", prospect_id: prospectId,
     }).select("id").maybeSingle();
-
-    await sb.from("message_events").insert({
-      channel: "sms",
-      provider: "twilio",
-      provider_message_id: MessageSid,
-      message_event_type: "inbound",
-      status: "received",
-      source_table: "sms_messages",
-      source_row_id: smsRow?.id ?? null,
-      payload: {
-        ...rawPayload,
-        from: From, to: To, body: Body, intent,
-        account_sid: AccountSid ? `${AccountSid.slice(0, 4)}…${AccountSid.slice(-4)}` : null,
-        signature_verified: REQUIRE_SIGNATURE && !!TWILIO_AUTH_TOKEN,
-      },
-    });
-
-    const tail = normalizeTail10(From);
-    let leadId: string | null = null;
-    if (tail) {
-      const { data: lead } = await sb.from("contractor_leads")
-        .select("id").or(`phone.ilike.%${tail},mobile_phone.ilike.%${tail}`)
-        .limit(1).maybeSingle();
-      leadId = lead?.id ?? null;
+    if (insErr) {
+      if (insErr.code === "23505") {
+        if (intent === "stop") await suppress();
+        return twiml();
+      }
+      throw insErr;
     }
+    persisted = true;
+
+    if (intent === "stop") await suppress();
 
     const { data: reply } = await sb.from("outreach_replies").insert({
       lead_id: leadId, channel: "sms", provider: "twilio", provider_message_id: MessageSid,
-      from_address: From, body: Body, intent,
-    }).select("id").single();
+      from_address: from, body, intent, processed: intent === "auto_reply" || intent === "stop",
+      metadata: { verified_prospect_id: prospectId, to, opt_out_type: optOutType || null, needs_human: !["auto_reply", "stop"].includes(intent) },
+    }).select("id").maybeSingle();
+
+    await sb.from("message_events").insert({
+      channel: "sms", provider: "twilio", provider_message_id: MessageSid, message_event_type: "inbound",
+      status: "received", source_table: "sms_messages", source_row_id: smsRow?.id ?? null,
+      payload: { intent, to, verified_prospect_id: prospectId, lead_id: leadId, signature_verified: true },
+    });
 
     if (reply?.id) {
       await sb.from("acquisition_events").insert({
-        channel: "sms",
-        event_type: intent === "stop" ? "unsubscribed" : "contacted",
-        provider: "twilio",
-        provider_event_id: MessageSid,
-        source_table: "outreach_replies",
-        source_row_id: reply.id,
-        metadata: { lead_id: leadId, from: From, to: To, intent, inbound_reply: true, body_preview: Body.slice(0, 160) },
+        channel: "sms", event_type: intent === "stop" ? "unsubscribed" : "contacted", provider: "twilio",
+        provider_event_id: MessageSid, source_table: "outreach_replies", source_row_id: reply.id,
+        metadata: { lead_id: leadId, verified_prospect_id: prospectId, intent, inbound_reply: true },
         occurred_at: new Date().toISOString(),
       });
     }
 
-    // --- 2. STOP → write to canonical suppression sources ---
-    // These writes are idempotent (upsert on normalized_phone unique index / dedup insert).
-    if (intent === "stop") {
-      // Canonical (used by is_phone_suppressed())
-      await sb.from("sms_opt_outs").upsert(
-        { normalized_phone: tail, reason: "sms_stop_reply", source: "twilio-inbound" },
-        { onConflict: "normalized_phone", ignoreDuplicates: true },
-      );
-
-      // Unified suppression (also read by is_phone_suppressed())
-      const { data: existingSup } = await sb.from("outreach_suppressions")
-        .select("id").eq("contact_type", "phone").eq("contact_value", From).limit(1).maybeSingle();
-      if (!existingSup) {
-        await sb.from("outreach_suppressions").insert({
-          contact_type: "phone",
-          contact_value: From,
-          suppression_reason: "sms_stop_reply",
-          source: "twilio-inbound",
-        });
-      }
+    if (intent !== "auto_reply") {
+      await sb.from("admin_notifications").insert({
+        type: intent === "stop" ? "sms_opt_out" : "sms_inbound_reply",
+        severity: intent === "stop" ? "info" : "warning",
+        title: intent === "stop" ? "Désabonnement SMS enregistré" : "Réponse SMS à traiter par un humain",
+        body: `${maskPhone(from)} — ${intent} — ${body.slice(0, 280)}`,
+        payload_json: { reply_id: reply?.id ?? null, sms_message_id: smsRow?.id ?? null, intent, verified_prospect_id: prospectId, lead_id: leadId },
+      });
     }
 
     if (leadId) {
-      const newStatus = intent === "stop" ? "unsubscribed" : "replied";
-      const patch: Record<string, unknown> = { pipeline_status: newStatus };
-      if (intent === "stop") patch.unsubscribed_at = new Date().toISOString();
-      await sb.from("contractor_leads").update(patch).eq("id", leadId);
-
+      const now = new Date().toISOString();
       if (intent === "stop") {
-        await sb.from("onboarding_sequences").update({
-          status: "completed_unsubscribed",
-          stopped_reason: "sms_stop",
-        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
-        await sb.from("contractor_onboarding_messages").update({
-          status: "skipped",
-          skip_reason: "unsubscribed",
-        }).eq("contractor_lead_id", leadId).eq("status", "queued");
-        await sb.from("curiosity_sequences").update({
-          status: "completed_unsubscribed",
-          stopped_reason: "sms_stop",
-        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
-        await sb.from("curiosity_funnel_events").insert({
-          contractor_lead_id: leadId, event_type: "unsubscribed", metadata: { via: "sms_stop" },
-        });
-      } else {
-        await sb.from("onboarding_sequences").update({
-          status: "paused",
-          stopped_reason: "reply_received",
-        }).eq("contractor_lead_id", leadId).eq("status", "active");
-        await sb.from("curiosity_sequences").update({
-          status: "completed_replied",
-          stopped_reason: "reply_received",
-        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting"]);
+        await sb.from("contractor_leads").update({ pipeline_status: "unsubscribed", unsubscribed_at: now }).eq("id", leadId);
+        await sb.from("onboarding_sequences").update({ status: "completed_unsubscribed", stopped_reason: "sms_stop" })
+          .eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
+        await sb.from("contractor_onboarding_messages").update({ status: "skipped", skip_reason: "unsubscribed" })
+          .eq("contractor_lead_id", leadId).eq("status", "queued");
+        await sb.from("curiosity_sequences").update({ status: "completed_unsubscribed", stopped_reason: "sms_stop" })
+          .eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
+        await sb.from("curiosity_funnel_events").insert({ contractor_lead_id: leadId, event_type: "unsubscribed", metadata: { via: "sms_stop" } });
+      } else if (intent !== "auto_reply") {
+        await sb.from("contractor_leads").update({ pipeline_status: "replied" }).eq("id", leadId);
+        await sb.from("onboarding_sequences").update({ status: "paused", stopped_reason: "reply_received" })
+          .eq("contractor_lead_id", leadId).eq("status", "active");
+        await sb.from("curiosity_sequences").update({ status: "completed_replied", stopped_reason: "reply_received" })
+          .eq("contractor_lead_id", leadId).in("status", ["active", "waiting"]);
       }
     }
 
-    // We deliberately DO NOT auto-reply to STOP with any promotional wording.
-    // Twilio itself sends the native opt-out confirmation; we return empty TwiML.
-    if (intent === "stop") return twiml();
-    if (providerAlreadyReplied) return twiml();
-    // One GSM-7 segment. Voice forwarding is not call-tested: SMS only.
-    if (intent === "help") return twiml("UNPRO - Aide: unpro.ca/contact. Questions par SMS: 450-328-6776. Pour ne plus recevoir de SMS commerciaux, répondez STOP.");
-
-    if (reply?.id) {
-      sb.functions.invoke("agent-activation-reply", { body: { reply_id: reply.id } }).catch(() => {});
-    }
+    // Twilio already confirmed STOP/HELP/START when OptOutType is set; never send promotional text.
+    if (intent === "help" && !optOutType) return twiml(HELP_TEXT);
     return twiml();
   } catch (e) {
-    console.error("twilio-inbound", e);
+    console.error("twilio-inbound: processing error", { sid: MessageSid, intent, err: String((e as Error)?.message ?? e) });
+    // Opt-outs must never be lost: ask Twilio to retry (then fallback) instead of acknowledging.
+    // Unpersisted messages and opt-outs must never be lost: let Twilio retry/fallback.
+    if (!persisted || intent === "stop") return plain(500, "retry");
     return twiml();
   }
 });

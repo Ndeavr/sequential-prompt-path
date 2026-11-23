@@ -6,6 +6,7 @@ import { validateBeforeSend } from "./smsGuard.ts";
 import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
 import { assertCommercialOutreachAllowed, isTransactionalMessageType } from "./outreachGate.ts";
 import { validateSmsBody } from "./smsGreeting.ts";
+import { prepareColdOutreachSms, smsSegmentInfo, toGsm7 } from "./smsEncoding.ts";
 
 // Map sendSms message_type to the central send-window MessageClass.
 function classifyMessage(type: string): MessageClass {
@@ -122,6 +123,35 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       metadata: { prospect_id: input.prospect_id ?? null, body_issues: bodyCheck.issues },
     }).select("id").maybeSingle();
     return { event_id: inv?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
+  }
+
+  // GSM-7 provider copy (original text stays stored untouched). Commercial texts are converted
+  // only when needed; cold outreach must fit ONE 160-septet segment including identity,
+  // opt-out and URL, otherwise it is rejected (never truncated).
+  const isCommercial = !isTransactionalMessageType(input.message_type);
+  let sendBody = input.body;
+  let encodingMeta: Record<string, unknown> = {};
+  if (isCommercial && messageClass === "prospection") {
+    const cold = prepareColdOutreachSms(input.body);
+    encodingMeta = { septets: cold.septets, segments: cold.segments, transliterated: cold.transliterated };
+    if (!cold.ok) {
+      const reason = `cold_sms_rejected:${cold.issues.join(",")}`;
+      const { data: rej } = await supabase.from("sms_events_v2").insert({
+        lead_id: input.lead_id ?? null, contractor_id: input.contractor_id ?? null, campaign_id: input.campaign_id ?? null,
+        template_key: input.template_key ?? null, message_type: input.message_type, raw_phone: null, normalized_phone: null,
+        from_number: TWILIO_FROM_NUMBER || null, message_preview: null, body_hash: await hashBody(input.body),
+        attempt_number: input.attempt_number ?? 1, status: "blocked", error_code: reason,
+        error_message: "Envoi bloqué : SMS de prospection hors limite d'un segment GSM-7 (identification, STOP et lien inclus).",
+        status_callback_url: STATUS_CALLBACK_URL,
+        metadata: { prospect_id: input.prospect_id ?? null, sms_encoding: encodingMeta, issues: cold.issues },
+      }).select("id").maybeSingle();
+      return { event_id: rej?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
+    }
+    sendBody = cold.send_body;
+  } else if (isCommercial) {
+    const conv = toGsm7(input.body);
+    if (conv.gsm7) sendBody = conv.text;
+    encodingMeta = { ...smsSegmentInfo(sendBody), transliterated: conv.gsm7 && conv.changed };
   }
 
   // P0 fail-closed kill switch — prospection/follow-up may never reach a
@@ -250,6 +280,33 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     };
   }
 
+  // Systemic delivery failure pause: when recent commercial sends fail massively
+  // (e.g. 30006 landline/unreachable, 30034 unregistered sender), stop sending. Fail-closed.
+  if (isCommercial && !isAdminMonitoringTest) {
+    const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+    const { data: recent, error: recentErr } = await supabase.from("sms_events_v2")
+      .select("status, error_code")
+      .in("message_type", ["outreach", "onboarding", "reengagement", "other"])
+      .not("twilio_sid", "is", null).gte("created_at", since).limit(500);
+    const total = recent?.length ?? 0;
+    const failed = (recent ?? []).filter((r: { status: string | null; error_code: string | null }) =>
+      ["failed", "undelivered", "contact_required"].includes(String(r.status)) || /^300(03|05|06|07|08|34)$/.test(String(r.error_code ?? ""))).length;
+    const systemic = !!recentErr || (total >= 10 && failed / total >= 0.3);
+    if (systemic) {
+      const reason = recentErr ? "delivery_health_unreadable" : "systemic_delivery_failure_pause";
+      const { data: paused } = await supabase.from("sms_events_v2").insert({
+        lead_id: input.lead_id ?? null, contractor_id: input.contractor_id ?? null, campaign_id: input.campaign_id ?? null,
+        template_key: input.template_key ?? null, message_type: input.message_type, raw_phone: input.to, normalized_phone: input.to,
+        from_number: TWILIO_FROM_NUMBER || null, message_preview: input.body.slice(0, 160), body_hash: await hashBody(input.body),
+        attempt_number: input.attempt_number ?? 1, status: "blocked", error_code: reason,
+        error_message: "Envoi suspendu : taux d'échec de livraison anormal sur 24 h.",
+        status_callback_url: STATUS_CALLBACK_URL,
+        metadata: { prospect_id: input.prospect_id ?? null, recent_total: total, recent_failed: failed },
+      }).select("id").maybeSingle();
+      return { event_id: paused?.id ?? "", status: "blocked", twilio_sid: null, error_code: reason };
+    }
+  }
+
   // Shared daily cap (≤25/day, all dispatchers, race-safe). Fail-closed:
   // an unreadable reservation never reaches the provider.
   if (!isTransactionalMessageType(input.message_type) && !isAdminMonitoringTest) {
@@ -326,6 +383,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       prospect_id: input.prospect_id ?? null,
       ...(guard.ok && (guard as any).phone_type ? { phone_type: (guard as any).phone_type } : {}),
       ...(guard.ok && (guard as any).sms_guard_reason ? { sms_guard_reason: (guard as any).sms_guard_reason } : {}),
+      ...(Object.keys(encodingMeta).length ? { sms_encoding: encodingMeta } : {}),
     },
   };
 
@@ -387,7 +445,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_message: "twilio_not_configured" };
   }
 
-  const form = new URLSearchParams({ To: guard.normalized, Body: input.body, StatusCallback: SIGNED_STATUS_CALLBACK_URL });
+  const form = new URLSearchParams({ To: guard.normalized, Body: sendBody, StatusCallback: SIGNED_STATUS_CALLBACK_URL });
   form.set("From", CANONICAL_FROM_NUMBER);
 
   const url = useGateway
@@ -449,7 +507,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         const mirrorForm = new URLSearchParams({
           To: bccPhone,
           From: CANONICAL_FROM_NUMBER,
-          Body: `[UNPRO BCC → ${guard.normalized}]\n${input.body}`.slice(0, 1500),
+          Body: `[UNPRO BCC → ${guard.normalized}]\n${sendBody}`.slice(0, 1500),
         });
         await fetch(url, { method: "POST", headers, body: mirrorForm.toString() }).catch(() => {});
       }
