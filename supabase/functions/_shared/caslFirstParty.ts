@@ -4,7 +4,7 @@ import { normalizeServiceCategory } from "./localServiceCategories.ts";
 import { resolveOfficialDomain, parseRobots, isAllowedByRobots, UNPRO_USER_AGENT } from "./officialSiteCrawler.ts";
 
 export const POLICY = { version: "first-party-observation-v1", auto_eligibility_enabled: false, maxPages: 6, maxBytes: 250_000, timeoutMs: 4_000, freshMs: 300_000 } as const;
-export type Observation = { status: "machine_verified" | "pending" | "rejected"; reason: string; checked_at: string; evidence_id: string; business_name: string; building_service: string; relevance: string; pages: { url: string; page_sha256: string; snippet: string; refusal: boolean }[]; policy: typeof POLICY; legal_consent_established: false };
+export type Observation = { status: "machine_verified" | "pending" | "rejected"; reason: string; checked_at: string; evidence_id: string; business_name: string; building_service: string; relevance: string; pages: { url: string; page_sha256: string; snippet: string; refusal: boolean; challenge?: boolean }[]; policy: typeof POLICY; legal_consent_established: false };
 type Target = { id: string; destination_type: string; destination_normalized: string; source_type: string; source_url: string; source_publisher?: string; business_relevance_explanation?: string; contractor_lead_id?: string; contractor_prospect_id?: string; reviewer_id?: string };
 type Company = { business_name: string; website_url?: string; official_domain?: string; category_primary?: string; specialty?: string; category?: string; trade?: string; trade_category?: string; category_slug?: string };
 type IO = { fetch: typeof fetch; resolve: (host: string) => Promise<string[]>; now?: () => number };
@@ -34,6 +34,8 @@ export function safeUrl(raw: string, expectedHost?: string): URL {
 function text(html: string) {
   return html.replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]*(?:hidden|display\s*:\s*none)[^>]*>[\s\S]*?<\/[^>]+>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 }
+// Real bot-challenge interstitials only (a reCAPTCHA form widget is not a challenge page).
+export const BOT_CHALLENGE = /cf-challenge|challenge-platform|<title>\s*(?:just a moment|attention required)|cf_chl_/i;
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const refusal = (s: string) => /(?:no|not|unsolicited|do not).{0,60}(?:solicitation|marketing|commercial|spam)|(?:pas|aucun|refus|interdit|ne.{0,12}pas).{0,70}(?:sollicit|publicit|commercial|prospect)|(?:sollicit|publicit).{0,50}(?:interdit|refus)/i.test(norm(s));
 async function read(raw: string, io: IO, host: string, plain = false): Promise<string> {
@@ -44,7 +46,7 @@ async function read(raw: string, io: IO, host: string, plain = false): Promise<s
   const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), POLICY.timeoutMs);
   try {
     const r = await io.fetch(u.toString(), { redirect: "manual", signal: ctrl.signal, headers: { "User-Agent": UNPRO_USER_AGENT, "Cache-Control": "no-cache" } });
-    if (!r.ok || r.status >= 300 || r.headers.get("location")) { await r.body?.cancel(); throw new Error("unreachable_or_redirect"); }
+    if (r.status !== 200 || r.headers.get("location")) { await r.body?.cancel(); throw new Error("unreachable_or_redirect"); }
     if (Number(r.headers.get("age") ?? "0") > 300 || /\bstale\b/i.test(r.headers.get("warning") ?? "")) { await r.body?.cancel(); throw new Error("stale_content"); }
     if (!(r.headers.get("content-type") ?? "").includes(plain ? "text/" : "text/html")) { await r.body?.cancel(); throw new Error("unsupported_content"); }
     const reader = r.body?.getReader(); if (!reader) throw new Error("empty_page");
@@ -129,7 +131,7 @@ export async function observeFirstParty(e: Target, company: Company, io: IO): Pr
         phoneContactContext ||= /\b(call\s+(?:us|now)|get\s+in\s+touch|phone|telephone|contact|text\s+us|sms|texto|appeler|appelez|nous\s+joindre)\b/.test(nearby);
       }
       const refused = refusal(visible); const at = found ? Math.max(0, visible.toLowerCase().indexOf(isPhone ? matchedPhone ?? "" : email ?? "")) : 0;
-      result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused });
+      result.pages.push({ url: u.toString(), page_sha256: await sha256Hex(html), snippet: visible.slice(Math.max(0, at - 180), at + 350), refusal: refused, challenge: BOT_CHALLENGE.test(html) });
       if (refused) { result.status = "rejected"; result.reason = "solicitation_refused"; return result; }
       for (const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
         const label = norm(`${m[1]} ${text(m[2])}`); const isContact = /contact|joindre/.test(label); const isPolicy = /privacy|politique|confidential|terms|conditions/.test(label);
@@ -224,4 +226,66 @@ export async function captureFirstPartyPhone(sb: any, id: string, io: IO, dryRun
     }
   }
   return { observation, service, evidence_id: evidenceId, human_review_required: true, legal_consent_established: false, dry_run: dryRun, sent: 0 };
+}
+
+/**
+ * Machine email capture (casl-machine-v1). Re-observes an EXISTING pending
+ * email publication on the official HTTPS site, appends a NEW evidence row
+ * (never mutates the old one, never signs reviewer_id) and submits the real
+ * capture to public.casl_machine_evaluate, which alone decides. Fail-closed.
+ */
+export async function machineCaptureEmail(sb: any, evidenceId: string, campaignKey: string, io: IO, dryRun: boolean) {
+  const { data: e, error } = await sb.from("casl_consent_evidence").select("*").eq("id", evidenceId).maybeSingle();
+  if (error || !e) throw new Error("evidence_lookup_failed");
+  if (e.destination_type !== "email" || e.reviewer_id || e.invalidated_at || e.refusal_statement_found) throw new Error("evidence_not_machine_eligible");
+  if (!e.contractor_prospect_id) throw new Error("prospect_anchor_missing");
+  const { data: p, error: pe } = await sb.from("contractor_prospects")
+    .select("id,business_name,website_url,normalized_domain,trade,trade_category,category_slug,do_not_contact,suppression_reason")
+    .eq("id", e.contractor_prospect_id).maybeSingle();
+  if (pe || !p) throw new Error("company_lookup_failed");
+  if (p.do_not_contact || p.suppression_reason) throw new Error("opted_out_or_suppressed");
+  const official = p.normalized_domain ? `https://${String(p.normalized_domain).replace(/^https?:\/\//, "")}` : p.website_url;
+  const target: Target = { ...e, source_type: "company_website" };
+  const observation = await observeFirstParty(target, { ...p, website_url: official }, io);
+  const email = String(e.destination_normalized).toLowerCase();
+  const page = observation.pages.find(x => x.snippet.toLowerCase().includes(email));
+  const challenge = observation.pages.some(x => x.challenge);
+  if (observation.status !== "machine_verified" || !page || challenge) {
+    return { decision: "not_captured", reason: challenge ? "bot_challenge" : observation.reason, evidence_id: null, dry_run: dryRun, sent: 0 };
+  }
+  const capture = {
+    capture_agent: "enrich-official-website", policy: "casl-machine-v1",
+    final_url: page.url, http_status: "200", challenge_detected: "false", crawl_error: "",
+    page_sha256: page.page_sha256, extract: page.snippet, destination_visible: "true",
+    refusal_found: "false", refusal_pages_checked: observation.pages.map(x => x.url),
+    retrieved_at: observation.checked_at,
+  };
+  if (dryRun) {
+    const { data, error: re } = await sb.rpc("casl_machine_evaluate", { p_evidence_id: e.id, p_campaign_key: campaignKey, p_capture: capture, p_dry_run: true });
+    if (re) throw new Error("machine_evaluate_failed");
+    return { decision: "dry_run", evaluation: data, evidence_id: null, dry_run: true, sent: 0 };
+  }
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  const { data: prior, error: priorErr } = await sb.from("casl_consent_evidence").select("id")
+    .eq("contractor_prospect_id", p.id).eq("destination_type", "email").eq("destination_normalized", email)
+    .eq("source_type", "company_website").eq("capture_agent", "enrich-official-website")
+    .is("invalidated_at", null).gte("retrieved_at", since).order("created_at", { ascending: false }).limit(1);
+  if (priorErr || !prior) throw new Error("evidence_dedupe_unreadable");
+  let newId: string | null = prior[0]?.id ?? null;
+  if (!newId) {
+    const { data: ins, error: insErr } = await sb.from("casl_consent_evidence").insert({
+      contractor_prospect_id: p.id, destination_type: "email", destination_normalized: email,
+      lawful_basis: "implicit_public_conspicuous", source_url: page.url, source_type: "company_website",
+      source_publisher: p.business_name, retrieved_at: observation.checked_at, page_sha256: page.page_sha256,
+      refusal_statement_found: false,
+      business_relevance_explanation: `${String(e.business_relevance_explanation ?? "").slice(0, 600)} Extrait observé : ${page.snippet}`.slice(0, 2000),
+      verification_method: "automated_fetch_pending_human_review", is_valid: false, auto_captured: true,
+      capture_agent: "enrich-official-website",
+    }).select("id").single();
+    if (insErr || !ins) throw new Error("evidence_insert_failed");
+    newId = ins.id;
+  }
+  const { data: decision, error: de } = await sb.rpc("casl_machine_evaluate", { p_evidence_id: newId, p_campaign_key: campaignKey, p_capture: capture, p_dry_run: false });
+  if (de) throw new Error("machine_evaluate_failed");
+  return { decision: (decision as any)?.decision ?? "unknown", evaluation: decision, evidence_id: newId, source_evidence_id: e.id, dry_run: false, sent: 0, human_signature_claimed: false };
 }

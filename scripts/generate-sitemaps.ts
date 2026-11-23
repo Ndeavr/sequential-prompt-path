@@ -74,6 +74,8 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/services", changefreq: "weekly", priority: "0.8" },
   { path: "/insonorisation", changefreq: "monthly", priority: "0.7" },
   { path: "/en/soundproofing", changefreq: "monthly", priority: "0.6" },
+  { path: "/carrieres/representants-construction", changefreq: "monthly", priority: "0.6" },
+  { path: "/en/careers/construction-sales-representatives", changefreq: "monthly", priority: "0.5" },
   { path: "/commission", changefreq: "monthly", priority: "0.6" },
   { path: "/en/commission", changefreq: "monthly", priority: "0.5" },
   { path: "/partenariat-performance", changefreq: "monthly", priority: "0.6" },

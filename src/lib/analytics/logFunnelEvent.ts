@@ -119,6 +119,13 @@ export type FunnelEventType =
   | "sales_team_step"
   | "sales_team_submitted"
   | "sales_team_shared"
+  // Recrutement représentants (/carrieres/representants-construction) — jamais vente.
+  | "rep_page_view"
+  | "rep_cta_clicked"
+  | "rep_form_started"
+  | "rep_form_error"
+  | "rep_application_submitted"
+  | "rep_contractor_cta_clicked"
   // « Montrez vos réalisations » (palier gratuit) — jamais compté comme vente.
   // project_submitted / project_approved sont écrits côté serveur (RPC).
   | "project_form_started"

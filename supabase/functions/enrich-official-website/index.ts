@@ -29,7 +29,7 @@ import {
 } from "../_shared/officialSiteCrawler.ts";
 import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { requireAdminCaller } from "../_shared/requireAdminCaller.ts";
-import { captureFirstPartyPhone, recheckCasl } from "./caslFirstParty.ts";
+import { captureFirstPartyPhone, machineCaptureEmail, recheckCasl } from "./caslFirstParty.ts";
 import { runAgentEvidenceBatch } from "./agentEvidenceBatch.ts";
 import { pinnedPublicFetch, PINNED_TLS_TRANSPORT_VERSION } from "./pinnedPublicFetch.ts";
 import { z } from "https://esm.sh/zod@3.25.76";
@@ -99,6 +99,45 @@ Deno.serve(async (req) => {
       } catch (err) {
         return jr({ ok: false, code: err instanceof Error ? err.message : "phone_capture_failed", sent: 0, legal_consent_established: false }, 422, rid);
       }
+    }
+    // Autonomous casl-machine-v1 email sweep (service only, autonomy-loop):
+    // ≤5 pending first-party email publications per run, 24h re-check cooldown,
+    // only for an active, operational email campaign policy. Never sends.
+    if (body.action === "agent_machine_capture_email") {
+      if (caller.kind !== "service") return jr({ ok: false, code: "service_role_required", sent: 0 }, 403, rid);
+      const { data: pol, error: polErr } = await supabase.from("casl_campaign_policies").select("campaign_key,channel_scope")
+        .eq("active", true).eq("offer_operational", true);
+      const campaign = (pol ?? []).find((c: any) => (c.channel_scope ?? []).includes("email"))?.campaign_key;
+      if (polErr || !campaign) return jr({ ok: true, blocked: true, reason: "no_operational_email_campaign", sent: 0 }, 200, rid);
+      const { data: logs, error: logErr } = await supabase.from("agent_logs").select("metadata")
+        .eq("agent_name", "casl-machine-email-capture").gte("created_at", new Date(Date.now() - 24 * 3600_000).toISOString()).limit(500);
+      if (logErr || !logs) return jr({ ok: false, code: "agent_history_unreadable", sent: 0 }, 503, rid);
+      const recent = new Set<string>();
+      for (const l of logs) for (const r of (l as any)?.metadata?.results ?? []) if (typeof r?.id === "string") recent.add(r.id);
+      const { data: pending, error: pendErr } = await supabase.from("casl_consent_evidence").select("id,capture_agent")
+        .eq("destination_type", "email").is("reviewer_id", null).is("invalidated_at", null).eq("refusal_statement_found", false)
+        .not("contractor_prospect_id", "is", null).neq("source_type", "government_registry").like("source_url", "https://%").order("created_at", { ascending: true }).limit(500);
+      if (pendErr || !pending) return jr({ ok: false, code: "pending_evidence_unreadable", sent: 0 }, 503, rid);
+      const ids = pending.filter((e: any) => e.capture_agent !== "enrich-official-website" && !recent.has(e.id)).slice(0, 5).map((e: any) => e.id);
+      body.action = "machine_capture_email"; body.evidence_ids = ids; body.campaign_key = campaign; body.dry_run = false;
+      delete body.source;
+      if (!ids.length) return jr({ ok: true, checked: 0, reason: "no_pending_email_evidence", sent: 0 }, 200, rid);
+    }
+    // casl-machine-v1: real official-site email capture → append-only evidence
+    // → public.casl_machine_evaluate decides. Never signs, never sends.
+    if (body.action === "machine_capture_email") {
+      const parsed = z.object({ action: z.literal("machine_capture_email"), evidence_ids: z.array(z.string().uuid()).min(1).max(25), campaign_key: z.string().min(3).max(80), dry_run: z.boolean().default(true) }).strict().safeParse(body);
+      if (!parsed.success) return jr({ ok: false, code: "invalid_machine_capture_request", sent: 0 }, 400, rid);
+      const io = { fetch: pinnedPublicFetch, resolve: async (host: string) => { try { return await Deno.resolveDns(host, "A"); } catch { return []; } } };
+      const results: Record<string, unknown>[] = [];
+      for (const id of parsed.data.evidence_ids) {
+        try { results.push({ id, ...(await machineCaptureEmail(supabase, id, parsed.data.campaign_key, io, parsed.data.dry_run)) }); }
+        catch (e) { results.push({ id, decision: "error", reason: e instanceof Error && /^[a-z_]{3,70}$/.test(e.message) ? e.message : "capture_failed", sent: 0 }); }
+      }
+      await supabase.from("agent_logs").insert({ agent_name: "casl-machine-email-capture", log_type: "info",
+        message: `Capture machine courriel : ${results.length} preuve(s) examinée(s); aucun envoi.`,
+        metadata: { campaign_key: parsed.data.campaign_key, dry_run: parsed.data.dry_run, results: results.map(r => ({ id: r.id, decision: r.decision, reason: (r as any).reason ?? null, evidence_id: (r as any).evidence_id ?? null })), sent: 0 } });
+      return jr({ ok: true, dry_run: parsed.data.dry_run, results, sent: 0 }, 200, rid);
     }
     if (body.action === "verify_casl") {
       const parsed = z.object({ action: z.literal("verify_casl"), evidence_id: z.string().uuid(), dry_run: z.boolean().default(false) }).strict().safeParse(body);
