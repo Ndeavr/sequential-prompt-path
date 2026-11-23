@@ -21,6 +21,7 @@ const STEPS: Array<{ phase: string; fn: string; body?: Record<string, unknown> }
   { phase: "measure", fn: "fn-detect-automation-blockers" },
   { phase: "diagnose", fn: "outreach-repair-agent" },
   { phase: "act", fn: "enrich-official-website", body: { action: "agent_capture_firstparty_casl", source: "autonomy-loop", limit: 1, dry_run: false } },
+  { phase: "act", fn: "enrich-official-website", body: { action: "agent_machine_capture_email", source: "autonomy-loop" } },
   { phase: "act", fn: "acquisition-queue-worker" },
   { phase: "act", fn: "auto-repair-tick" },
   { phase: "learn", fn: "learning-loop" },
