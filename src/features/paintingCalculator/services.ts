@@ -28,7 +28,18 @@ export async function fetchCityPricing(citySlug: string | null): Promise<CityPri
 export async function uploadPaintingPhoto(
   file: File,
   ownerKey: string,
-): Promise<{ publicUrl: string; storagePath: string } | null> {
+): Promise<{ publicUrl: string; storagePath?: string } | null> {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) return null;
+  // Guests send only the selected bytes to analysis; never share a Storage folder.
+  if (ownerKey === 'guest') {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? { publicUrl: reader.result } : null);
+      reader.onerror = () => resolve(null);
+      reader.onabort = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
   const ext = file.name.split(".").pop() || "jpg";
   const path = `${ownerKey}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const { error } = await supabase.storage
@@ -38,7 +49,7 @@ export async function uploadPaintingPhoto(
   // For private bucket use signed URL
   const { data: signed } = await supabase.storage
     .from("painting-photos")
-    .createSignedUrl(path, 60 * 60 * 24 * 7);
+    .createSignedUrl(path, 60 * 60);
   if (!signed?.signedUrl) return null;
   return { publicUrl: signed.signedUrl, storagePath: path };
 }

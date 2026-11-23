@@ -16,7 +16,7 @@ export function loadSession(): CalculatorSessionData | null {
 
 export function saveSession(data: CalculatorSessionData) {
   try {
-    sessionStorage.setItem(KEY, JSON.stringify(data));
+    sessionStorage.setItem(KEY, JSON.stringify({ ...data, photos: data.photos.filter((photo) => !!photo.storagePath) }));
   } catch {
     // ignore quota errors silently
   }
