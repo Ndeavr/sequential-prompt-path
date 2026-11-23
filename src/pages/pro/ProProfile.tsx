@@ -91,6 +91,11 @@ const ProProfile = () => {
       <PageHeader title="Mon profil entrepreneur" description="Complétez votre profil pour être visible" />
       <Card className="max-w-3xl">
         <CardContent className="pt-6 space-y-6">
+          <nav className="flex flex-wrap gap-2" aria-label="Autres sections de la fiche">
+            <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => navigate("/pro/expertise")}>Services offerts</Button>
+            <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => navigate("/pro/territories")}>Zones desservies</Button>
+            {profile?.id && <Button type="button" variant="ghost" size="sm" className="min-h-11" onClick={() => navigate(`/pro/profile/public/${profile.id}`)}>Voir l'aperçu</Button>}
+          </nav>
           <SetupStepPhotos contractorId={profile?.id} embedded />
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

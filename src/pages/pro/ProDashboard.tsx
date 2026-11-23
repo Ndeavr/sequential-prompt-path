@@ -11,6 +11,7 @@ import { useContractorProfile } from "@/hooks/useContractor";
 import { useContractorAppointments } from "@/hooks/useAppointments";
 import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
 import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
+import ProfilePhonePreview from "@/components/pro-dashboard/ProfilePhonePreview";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
 const ProDashboard = () => {
@@ -54,13 +55,7 @@ const ProDashboard = () => {
           </h1>
         </div>
 
-        {profile?.id && <section className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-3" aria-label="Votre fiche entreprise">
-          <div className="flex items-center gap-3">
-            {profile.logo_url && <img src={profile.logo_url} alt={`Logo ${profile.business_name}`} className="h-16 w-24 rounded-lg bg-white p-2 object-contain" />}
-            <div className="min-w-0"><h2 className="font-semibold break-words">{profile.business_name}</h2><p className="text-sm text-muted-foreground">{[profile.specialty, profile.city].filter(Boolean).join(" · ")}</p></div>
-          </div>
-          <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => navigate(`/pro/profile/public/${profile.id}`)}>Voir ma fiche</Button><Button variant="ghost" className="h-auto min-h-11 whitespace-normal" onClick={() => navigate("/pro/profile")}>Compléter mon logo et mes photos</Button></div>
-        </section>}
+        {profile?.id && <ProfilePhonePreview profile={profile} />}
         <section className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-2" aria-label="Recycler un lead">
           <h2 className="font-semibold text-foreground">Recycler un lead</h2>
           <p className="text-sm text-muted-foreground">Une demande hors territoire, spécialité ou disponibilité? Transmettez-la à UNPRO pour évaluation.</p>
