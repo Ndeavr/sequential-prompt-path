@@ -108,6 +108,18 @@ Chaque rapport UNPRO doit afficher :
 
 ## 9. Audit d'entonnoir reproductible en lecture seule (29 octobre 2026)
 
+### Contrôle ponctuel du 23 novembre 2026 — preuve et limites
+
+**Lecture seule** depuis Stripe LIVE `acct_19AhHrCvZwK1QnPV` et la base associée au projet Lovable UNPRO. Cette dernière a 179 lignes `market_capacity`, dernière mise à jour le 16 août, comme l'audit antérieur; toutefois, l'accès direct à Supabase `clmaqdnphbndvmmqvpff` reste refusé. Ce recoupement n'est pas une preuve cryptographique d'identité du backend.
+
+- **Ventes :** 91 PaymentIntents Stripe LIVE, pagination complète, aucun depuis le 27 octobre; les quatre Checkout Sessions de la période, dont deux à 40 241 cents CAD, sont expirées et impayées; aucune charge récente. **0 activation unique 350 $ certifiable**. Ne jamais convertir les sessions, les événements ou les statuts CRM en ventes.
+- **Droits :** la base consultée contient un seul `contractor_entitlements`, créé le 13 novembre, profil public activé, `can_be_matched=false`, `valid_until` en 2036; son registre porte `user_directed_admin:repaired`. **Pas une preuve de paiement ni de droit commercial de 12 mois issu d'un webhook.** L'exception administrative doit être comprise avant toute correction.
+- **Webhooks :** une seule trace LIVE récente `stripe_webhook_events` est un `checkout.session.expired` traité le 19 novembre; zéro trace récente dans `unpro_stripe_webhook_events`. L'expiration n'est pas un règlement.
+- **CASL SMS :** 863 preuves `phone_sms` sont marquées `is_valid=true`, mais toutes proviennent de `automated_scrape` / `google_business_profile`, avec **aucun `reviewer_id`** et **zéro décision `casl_machine_decisions`**. Dernière preuve SMS datée du 25 octobre. Le drapeau `is_valid` historique ne vaut pas autorisation individuelle d'envoi : vérifier la portée légale, la preuve et la barrière opérationnelle, sans auto-signature ni envoi massif. Voir [issue #53](https://github.com/Ndeavr/sequential-prompt-path/issues/53) pour le déploiement Edge CASL distinct.
+- **Mesure :** six marqueurs CRM `registered_at` depuis le 27 octobre ne sont pas audités pour QA/doublons. `v_activation_funnel` compte zéro checkout depuis cette date, contre quatre sessions Stripe expirées; la vue et Stripe ne partagent donc pas une mesure exhaustivement réconciliée. Ne pas déduire un taux d'abandon ou un CAC par canal.
+
+**Action suivante autorisée :** revue individuelle CASL/STOP/idempotence, rapprochement des sources, et validation isolée Stripe TEST du [P0 #86](https://github.com/Ndeavr/sequential-prompt-path/issues/86). Cette note ne modifie ni production, ni paiement, ni consentement, ni déploiement.
+
 **Usage :** contrôles agrégés sur le backend UNPRO existant, sans modification SQL ni divulgation de coordonnées. Ces requêtes ne prouvent **jamais** un achat à elles seules. Périmètre temporel de la campagne : depuis le 27 octobre 2026 à 00 h au Québec (`2026-10-27T04:00:00+00`; heure d'été à cette date). Exclure les tests et acteurs internes avant de qualifier des sessions. Ne pas assimiler visiteur, événement, session, entreprise ou revenu.
 
 ```sql
