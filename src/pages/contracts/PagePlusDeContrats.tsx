@@ -93,7 +93,7 @@ export default function PagePlusDeContrats({ lang = "fr" }: { lang?: Lang }) {
         frenchCanonical={`https://unpro.ca${PDC_FR_PATH}`} englishCanonical={`https://unpro.ca${PDC_EN_PATH}`} lang={fr ? "fr-CA" : "en-CA"} />
       <header className="utp-header">
         <Link to="/" aria-label="UNPRO"><UnproLogo size={120} tone="dark" /></Link>
-        <Link className="utp-link" to={fr ? PDC_EN_PATH : PDC_FR_PATH} hrefLang={fr ? "en-CA" : "fr-CA"}>{c.other}</Link>
+        <Link className="utp-link" to={buildContractorEntryUrl({}, fr ? PDC_EN_PATH : PDC_FR_PATH)} hrefLang={fr ? "en-CA" : "fr-CA"}>{c.other}</Link>
       </header>
       <main>
         <section className="utp-wrap utp-section pdc-hero">
