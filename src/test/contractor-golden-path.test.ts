@@ -71,6 +71,25 @@ describe("Parcours entrepreneur — points d'abandon", () => {
     expect(intake).toContain('trackFunnelStep("goals_completed"');
   });
 
+  it("ne compte pas le montage ni la reprise comme une nouvelle analyse", () => {
+    const intake = read("src/pages/contractor-funnel/PageContractorPricingIntake.tsx");
+    const start = intake.indexOf('const onBusinessSearchState = useCallback');
+    const end = intake.indexOf('const onBusinessSelected', start);
+    const search = intake.slice(start, end);
+    expect(start).toBeGreaterThan(-1);
+    expect(search).toContain('if (state.loading)');
+    expect(search).toContain('trackFunnelStep("analysis_started"');
+    expect(intake).toContain('onSearchState={onBusinessSearchState}');
+    expect(intake.match(/trackFunnelStep\("analysis_started"/g)).toHaveLength(1);
+    const next = intake.slice(intake.indexOf('const next = () => {'), intake.indexOf('if (booting) {'));
+    expect(next).toContain('if (!current.isValid(data))');
+    expect(next).toContain('trackFunnelStep("profile_started"');
+    expect(intake.match(/trackFunnelStep\("profile_started"/g)).toHaveLength(1);
+    expect(intake).not.toContain('verifie_source_google');
+    expect(intake).toContain('surface: "pricing_intake", provenance: "selected_unpro_index"');
+    expect(intake).toContain('surface: "pricing_intake", provenance: "declare_non_verifie"');
+  });
+
   it("le code de vérification est journalisé sans jamais exposer le code", () => {
     const otp = read("src/lib/auth/phoneOtp.ts");
     expect(otp).toContain('trackFunnelStep("otp_requested"');
