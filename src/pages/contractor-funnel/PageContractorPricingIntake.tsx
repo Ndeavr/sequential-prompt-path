@@ -394,13 +394,16 @@ export default function PageContractorPricingIntake() {
   /** L'audit vient de mesurer la présence : on ne la redemande pas. */
   const auditScoreKnown = typeof audit?.readiness_score === "number";
 
-  /* ---------- Points d'abandon mesurables (une seule table, dédupliqués) ---------- */
-  useEffect(() => {
-    void trackFunnelStep("analysis_started", {
-      metadata: { has_audit: Boolean(auditId), surface: "pricing_intake" },
-    });
-    void trackFunnelStep("profile_started", { metadata: { surface: "pricing_intake" } });
-  }, [auditId]);
+  /* Une visite ou une reprise d'audit n'est pas une nouvelle analyse.
+   * BusinessNameSearch signale loading=true uniquement au lancement d'une recherche. */
+  const onBusinessSearchState = useCallback((state: { loading: boolean; count: number; searched: boolean }) => {
+    setSearchState(state);
+    if (state.loading) {
+      void trackFunnelStep("analysis_started", {
+        metadata: { surface: "pricing_intake", trigger: "business_search" },
+      });
+    }
+  }, []);
 
   const onBusinessSelected = useCallback((r: BusinessSearchResult) => {
     setData((d) => ({
@@ -424,12 +427,12 @@ export default function PageContractorPricingIntake() {
     void trackFunnelStep("company_recognized", {
       subjectId: r.business_name,
       city: r.city ?? null,
-      metadata: { source: "business_lookup", has_website: Boolean(r.website) },
+      metadata: { surface: "pricing_intake", source: "unpro_index", has_website: Boolean(r.website) },
     });
     void trackFunnelStep("analysis_completed", {
       subjectId: r.business_name,
       city: r.city ?? null,
-      metadata: { provenance: "verifie_source_google" },
+      metadata: { surface: "pricing_intake", provenance: "selected_unpro_index" },
     });
   }, [confirmedFields]);
 
@@ -456,7 +459,7 @@ export default function PageContractorPricingIntake() {
             setBusinessConfirmed(false);
           }}
           onBusinessSelected={onBusinessSelected}
-          onSearchState={setSearchState}
+          onSearchState={onBusinessSearchState}
         />
 
         {!businessConfirmed && !manualEntry && (d.company_name ?? "").trim().length >= 2 && (
@@ -487,7 +490,7 @@ export default function PageContractorPricingIntake() {
                   setBusinessConfirmed(true);
                   void trackFunnelStep("analysis_completed", {
                     subjectId: (d.company_name ?? "").trim() || null,
-                    metadata: { provenance: "declare_non_verifie" },
+                    metadata: { surface: "pricing_intake", provenance: "declare_non_verifie" },
                   });
                 }}
                 className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
@@ -1150,7 +1153,7 @@ export default function PageContractorPricingIntake() {
     void trackFunnelStep("profile_completed", {
       subjectId: payload.company_name ?? null,
       city: payload.city ?? null,
-      metadata: { manual_entry: manualEntry, linked_contractor: linked?.id ?? null },
+      metadata: { surface: "pricing_intake", manual_entry: manualEntry, linked_contractor: linked?.id ?? null },
     });
     void trackFunnelStep("goals_completed", {
       subjectId: payload.company_name ?? null,
@@ -1193,6 +1196,10 @@ export default function PageContractorPricingIntake() {
       toast.error("Complétez les champs pour continuer.");
       return;
     }
+    // Un profil est commencé par une progression volontaire, pas par le montage.
+    void trackFunnelStep("profile_started", {
+      metadata: { surface: "pricing_intake", trigger: "continue", resumed_audit: auditValid },
+    });
     if (isLast) void submit();
     else setStep(safeStep + 1);
   };
