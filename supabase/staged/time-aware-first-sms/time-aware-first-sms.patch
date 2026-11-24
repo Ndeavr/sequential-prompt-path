@@ -1,0 +1,117 @@
+diff -ruN a/supabase/functions/_shared/smsGreeting.ts b/supabase/functions/_shared/smsGreeting.ts
+--- a/supabase/functions/_shared/smsGreeting.ts	2026-11-24 00:23:12.783549390 +0000
++++ b/supabase/functions/_shared/smsGreeting.ts	2026-11-24 00:23:12.866392226 +0000
+@@ -56,7 +56,7 @@
+   if (/(bonjour|salut|allo|hello|hi)\s+,/i.test(s)) issues.push("empty_greeting");
+   if (/\bnull\b/i.test(s)) issues.push("null_token");
+   if (/\bundefined\b|\bNaN\b|\[object Object\]/.test(s)) issues.push("undefined_token");
+-  if (/\{\{[^}]*\}\}|\$\{[^}]*\}|\{[a-z_]+\}|%[a-z_]+%/i.test(s)) issues.push("unresolved_template");
++  if (/\{\{[^}]*\}\}|\$\{[^}]*\}|\{[a-z_]+\}|%[a-z_]+%|\[[A-Z_]{3,}\]/i.test(s)) issues.push("unresolved_template");
+   if (/\b(à|a|de|chez)\s+(null|undefined)\b/i.test(s)) issues.push("a_null");
+   if (opts.commercial && FABRICATED.test(s)) issues.push("fabricated_claim");
+   if (s.length > 640) issues.push("too_long");
+diff -ruN a/supabase/functions/_shared/twilioSend.ts b/supabase/functions/_shared/twilioSend.ts
+--- a/supabase/functions/_shared/twilioSend.ts	2026-11-24 00:23:12.745484718 +0000
++++ b/supabase/functions/_shared/twilioSend.ts	2026-11-24 00:23:12.866161002 +0000
+@@ -3,7 +3,8 @@
+ 
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ import { validateBeforeSend } from "./smsGuard.ts";
+-import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
++import { assertSendAllowed, isFounderModeActive, nextAllowedSendAt, type MessageClass } from "./sendWindow.ts";
++import { resolveTimeAwareQuestion, SEND_TIME_ZONE } from "./timeAwareFirstSms.ts";
+ import { assertCommercialOutreachAllowed, isTransactionalMessageType } from "./outreachGate.ts";
+ import { validateSmsBody } from "./smsGreeting.ts";
+ import { prepareColdOutreachSms, smsSegmentInfo, toGsm7 } from "./smsEncoding.ts";
+@@ -95,6 +96,28 @@
+ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
+   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+ 
++  // Time-aware first touch: the call question is resolved at the REAL send instant
++  // (America/Toronto). Outside 08:00-19:00 -> no provider call, deferred to the later of
++  // the next question slot and the canonical send window; recomputed on that attempt.
++  const sendAt = new Date();
++  const timed = resolveTimeAwareQuestion(input.body, sendAt);
++  if (!timed.ok) {
++    const windowNext = await nextAllowedSendAt("sms", sendAt);
++    const next = new Date(Math.max(windowNext.getTime(), Date.parse(timed.not_before))).toISOString();
++    const { data: dq } = await supabase.from("sms_events_v2").insert({
++      lead_id: input.lead_id ?? null, contractor_id: input.contractor_id ?? null, campaign_id: input.campaign_id ?? null,
++      template_key: input.template_key ?? null, message_type: input.message_type, raw_phone: null, normalized_phone: null,
++      from_number: TWILIO_FROM_NUMBER || null, message_preview: null, body_hash: await hashBody(input.body),
++      attempt_number: input.attempt_number ?? 1, status: "deferred_window", error_code: "OUT_OF_WINDOW",
++      error_message: `Hors créneau de question — reprise prévue ${next}`, status_callback_url: STATUS_CALLBACK_URL,
++      metadata: { ...(input.metadata ?? {}), prospect_id: input.prospect_id ?? null, next_send_at: next, send_window_blocked: true, time_question: { reason: timed.reason, tz: SEND_TIME_ZONE } },
++    }).select("id").maybeSingle();
++    return { event_id: dq?.id ?? "", status: "deferred_window", twilio_sid: null, error_code: "OUT_OF_WINDOW", error_message: `next_send_at=${next}` };
++  }
++  if (timed.slot) {
++    input = { ...input, body: timed.body, metadata: { ...(input.metadata ?? {}), time_question: { slot: timed.slot, resolved_at: timed.resolved_at, tz: SEND_TIME_ZONE } } };
++  }
++
+   // Send-window gate (skipped for transactional, OTP, founder bypass).
+   const messageClass = classifyMessage(input.message_type);
+ 
+@@ -246,6 +269,7 @@
+     channel: "sms",
+     messageClass,
+     founderBypass,
++    at: sendAt,
+   });
+   if (!windowCheck.ok) {
+     const body_hash_block = await hashBody(input.body);
+diff -ruN a/supabase/functions/send-verified-batch/index.ts b/supabase/functions/send-verified-batch/index.ts
+--- a/supabase/functions/send-verified-batch/index.ts	2026-11-24 00:23:12.818125096 +0000
++++ b/supabase/functions/send-verified-batch/index.ts	2026-11-24 00:23:12.868510202 +0000
+@@ -27,6 +27,8 @@
+   type FreeYearContext,
+ } from "../_shared/offerCopy.ts";
+ import { categoryName } from "../_shared/localServiceCategories.ts";
++import { buildSmsGreeting } from "../_shared/smsGreeting.ts";
++import { renderTimeAwareFirstSmsDraft, resolveTimeAwareQuestion, TIME_AWARE_TEMPLATE_KEY } from "../_shared/timeAwareFirstSms.ts";
+ import { sanitizeEmail } from "../_shared/emailHygiene.ts";
+ import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
+ import { assertCommercialOutreachAllowed } from "../_shared/outreachGate.ts";
+@@ -271,6 +273,11 @@
+     // Opt-in email-only wave: used for prospects whose SMS channel is proven
+     // dead (landline 30006 / A2P 30034). Never sends SMS in this mode.
+     const forceEmail = String(body.channel ?? "").toLowerCase() === "email";
++    // Opt-in time-aware first touch (question resolved inside sendSms at the real send instant).
++    const timeAware = String(body.template ?? "") === TIME_AWARE_TEMPLATE_KEY;
++    const timeAwareDraft = (biz: string) => renderTimeAwareFirstSmsDraft({
++      greeting: buildSmsGreeting({ company_name: biz }), sender_first_name: body.sender_first_name,
++    });
+     // Campagne gratuite : n'envoyer QU'aux entreprises réellement admissibles
+     // à l'offre 12 mois gratuits (aucun repli sur l'offre payante).
+     const freeOnly = body.free_only === true || String(body.offer ?? "") === "free_year";
+@@ -552,7 +559,9 @@
+             "reviewed_casl_suppression_daily_cap_cooldown_not_verified"],
+           skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
+           // Exact first-touch body; the real token is minted only at send time.
+-          sms_preview: dup ? null : safeFirstTouchBody(p.business_name, typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim() ? messageOverrides[p.id].trim() : null, "https://unpro.ca/unpro/audit/<jeton>"),
++          sms_preview: dup ? null : timeAware
++            ? (() => { const r = resolveTimeAwareQuestion(timeAwareDraft(p.business_name), new Date()); return r.ok ? r.body : `[report ${r.not_before}] ${timeAwareDraft(p.business_name)}`; })()
++            : safeFirstTouchBody(p.business_name, typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim() ? messageOverrides[p.id].trim() : null, "https://unpro.ca/unpro/audit/<jeton>"),
+         };
+       });
+       const dupCount = previews.filter((p) => p.duplicate_guard).length;
+@@ -683,7 +692,9 @@
+         });
+         continue;
+       }
+-      const smsBody = freeYear
++      const smsBody = timeAware && !freeYear
++        ? timeAwareDraft(p.business_name)
++        : freeYear
+         ? smsWithLink(localServiceFreeYearSms(freeYear), buildOutreachUrl(link, { campaign: FIRST_TOUCH_CAMPAIGN }))
+         : safeFirstTouchBody(p.business_name, personalized, auditLink);
+       // Canonical selection event — proves the agent chose this prospect.
+@@ -731,7 +742,7 @@
+           to: p.phone_e164,
+           body: smsBody,
+           message_type: "outreach",
+-          template_key: FIRST_TOUCH_CAMPAIGN,
++          template_key: timeAware && !freeYear ? TIME_AWARE_TEMPLATE_KEY : FIRST_TOUCH_CAMPAIGN,
+           prospect_id: p.id,
+           campaign_id: campaignId ?? undefined,
+           attempt_number: Number(p.retry_count ?? 0) + 1,
