@@ -913,6 +913,7 @@ const PageAffiliateActionMode = lazyWithRetry(() => import("@/pages/affiliate/Pa
 const PageAffiliateCompanyWorkspace = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateCompanyWorkspace"));
 const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAssignment"));
 const PageAffiliateAttribution = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAttribution"));
+const PagePlusDeContrats = lazyWithRetry(() => import("@/pages/contracts/PagePlusDeContrats"));
 const PageRepresentantsConstruction = lazyWithRetry(() => import("@/pages/careers/PageRepresentantsConstruction"));
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
 const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
@@ -1314,6 +1315,8 @@ export const AppRouter = () => (
         <Route path="/services" element={<SeoDirectoryPage />} />
         <Route path="/insonorisation" element={<Suspense fallback={<LazyFallback />}><PageSoundproofingPillar /></Suspense>} />
         <Route path="/en/soundproofing" element={<Suspense fallback={<LazyFallback />}><PageSoundproofingPillar lang="en" /></Suspense>} />
+        <Route path="/plus-de-contrats" element={<Suspense fallback={<LazyFallback />}><PagePlusDeContrats /></Suspense>} />
+        <Route path="/en/more-contracts" element={<Suspense fallback={<LazyFallback />}><PagePlusDeContrats lang="en" /></Suspense>} />
         <Route path="/carrieres/representants-construction" element={<Suspense fallback={<LazyFallback />}><PageRepresentantsConstruction /></Suspense>} />
         <Route path="/en/careers/construction-sales-representatives" element={<Suspense fallback={<LazyFallback />}><PageRepresentantsConstruction lang="en" /></Suspense>} />
         <Route path="/commission" element={<Suspense fallback={<LazyFallback />}><PageCommissionPartnership /></Suspense>} />

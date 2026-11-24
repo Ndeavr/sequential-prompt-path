@@ -120,6 +120,9 @@ export type FunnelEventType =
   | "sales_team_submitted"
   | "sales_team_shared"
   // Recrutement représentants (/carrieres/representants-construction) — jamais vente.
+  // /plus-de-contrats — attribution facebook_public_requests.
+  | "pdc_page_view"
+  | "pdc_cta_clicked"
   | "rep_page_view"
   | "rep_cta_clicked"
   | "rep_form_started"

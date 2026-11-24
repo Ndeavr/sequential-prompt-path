@@ -1,0 +1,14 @@
+.pdc-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}
+.pdc-phone{justify-self:center;width:min(300px,82vw);aspect-ratio:9/18.5;border-radius:42px;padding:12px;background:linear-gradient(150deg,#2b3f55,#0a1420);box-shadow:0 30px 80px #009dff22,inset 0 0 0 2px #3c5671;transform:rotate(-5deg);margin:0}
+.pdc-screen{position:relative;height:100%;border-radius:32px;background:#f4f6f8;color:#1a2633;padding:16px 12px;display:flex;flex-direction:column;overflow:hidden}
+.pdc-tag{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#1a2633;color:#f4f6f8;border-radius:999px;padding:3px 9px;margin-bottom:10px}
+.pdc-post b{font-size:12px}.pdc-post p{color:#1a2633!important;font-size:13px;line-height:1.45;margin:4px 0}
+.pdc-bath{height:70px;border-radius:12px;background:linear-gradient(135deg,#cfe3f2,#9fc1da);display:flex;align-items:center;justify-content:center;font-size:34px}
+.pdc-count{font-size:12px;color:#44566a;margin:10px 0 6px;border-bottom:1px solid #d6dde4;padding-bottom:6px}.pdc-count strong{font-variant-numeric:tabular-nums;color:#1a2633}
+.pdc-list{flex:1;overflow-y:auto;display:grid;align-content:start;gap:6px;scrollbar-width:none}
+.pdc-comment{display:flex;gap:8px;align-items:center;font-size:12px;background:#e6ebf0;border-radius:14px;padding:7px 10px;animation:utp-enter .4s both}.pdc-comment i{width:20px;height:20px;border-radius:50%;background:#9aaabb;flex-shrink:0}
+.pdc-pause{position:absolute;right:12px;bottom:12px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1a2633;color:#f4f6f8}
+.pdc-vs{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pdc-card{border:1px solid var(--line);border-radius:20px;padding:24px;background:#0c1724}.pdc-card h3{font-size:18px;font-weight:600;margin-bottom:12px}.pdc-card li{color:#dbe7f3;line-height:1.8}.pdc-card.is-clara{border-color:var(--blue)}
+.pdc-fine{margin-top:16px}
+@media(max-width:860px){.pdc-hero{grid-template-columns:1fr;gap:32px}.pdc-vs{grid-template-columns:1fr}.pdc h1{font-size:clamp(34px,9vw,52px)}}
+@media(prefers-reduced-motion:reduce){.pdc-phone{transform:rotate(-5deg)}}
