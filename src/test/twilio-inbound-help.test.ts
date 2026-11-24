@@ -5,6 +5,11 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync("supabase/functions/twilio-inbound/index.ts", "utf8");
+// Exercise the real pure SMS classification and signature utilities in this isolated VM.
+const shared = [
+  "supabase/functions/_shared/twilioSignature.ts",
+  "supabase/functions/_shared/smsInbound.ts",
+].map((file) => readFileSync(file, "utf8").replace(/^export /gm, "")).join("\n");
 const url = "https://example.test/functions/v1/twilio-inbound";
 const token = "test-only-signature-secret";
 
@@ -27,22 +32,22 @@ function harness(authToken = token) {
     },
     functions: { invoke: async (name: string) => { invocations.push(name); return {}; } },
   };
-  const javascript = ts.transpileModule(source.replace(/^import .*;\n/gm, ""), {
+  const javascript = ts.transpileModule(`${shared}\n${source.replace(/^import .*;\n/gm, "")}`, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText;
   const env: Record<string, string> = {
     SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test-only", TWILIO_AUTH_TOKEN: authToken,
   };
   runInNewContext(javascript, {
-    serve: (callback: typeof handler) => { handler = callback; },
+    URLSearchParams,
     createClient: () => sb, Request, Response, URL, TextEncoder, Uint8Array,
     crypto: webcrypto, btoa, console: { warn() {}, error() {} },
-    Deno: { env: { get: (key: string) => env[key] } },
+    Deno: { serve: (callback: typeof handler) => { handler = callback; }, env: { get: (key: string) => env[key] } },
   });
   return {
     writes, invocations,
     async request(body: string, extra: Record<string, string> = {}, signed = true) {
-      const params: Record<string, string> = { From: "+15005550006", To: "+14503286776", Body: body, MessageSid: "SM_TEST_ONLY", ...extra };
+      const params: Record<string, string> = { From: "+15005550006", To: "+14503286776", Body: body, MessageSid: `SM${"0".repeat(32)}`, ...extra };
       const payload = Object.keys(params).sort().reduce((sum, key) => sum + key + params[key], url);
       const headers: Record<string, string> = { "Content-Type": "application/x-www-form-urlencoded" };
       if (signed) headers["X-Twilio-Signature"] = createHmac("sha1", token).update(payload).digest("base64");
@@ -59,7 +64,7 @@ describe("inbound HELP — simulated handler, no real SMS/database", () => {
     expect(h.writes).toHaveLength(0);
   });
   it("fails closed without a signature secret", async () => {
-    expect((await harness("").request("HELP")).status).toBe(403);
+    expect((await harness("").request("HELP")).status).toBe(503);
   });
   it("signed HELP returns exactly one GSM-7 segment with public SMS contact", async () => {
     const h = harness();
@@ -91,7 +96,9 @@ describe("inbound HELP — simulated handler, no real SMS/database", () => {
   it("preserves ordinary reply routing without touching OTP", async () => {
     const h = harness();
     await h.request("bonjour");
-    expect(h.invocations).toEqual(["agent-activation-reply"]);
+    expect(h.writes).toContainEqual({ table: "outreach_replies", operation: "insert" });
+    expect(h.writes).toContainEqual({ table: "admin_notifications", operation: "insert" });
+    expect(h.invocations).toHaveLength(0);
     expect(source).not.toMatch(/invoke\("(?:send-otp|verify-otp|auth-otp-dispatch)"/);
   });
 });
