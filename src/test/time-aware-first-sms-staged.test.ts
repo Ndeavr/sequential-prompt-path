@@ -34,8 +34,7 @@ describe("report et recalcul à l'instant d'envoi", () => {
   it("19:00 : aucun envoi, report au lendemain 08:00 au plus tôt; la phrase est recalculée au nouvel instant", () => {
     const deferred = resolveTimeAwareQuestion(draft, at("19:00"));
     expect(deferred.ok).toBe(false);
-    if (deferred.ok) return;
-    expect(deferred.not_before).toBe("2026-11-25T13:00:00.000Z");
+    expect((deferred as { not_before?: string }).not_before).toBe("2026-11-25T13:00:00.000Z");
     // Le brouillon conserve le jeton : la question n'est pas figée au moment de la rédaction.
     expect(draft).toContain(QUESTION_TOKEN);
     // Reprise à 09:00 (fenêtre SMS existante) → « aujourd'hui », plus « demain ».
