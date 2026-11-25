@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const mock = vi.hoisted(() => ({
   session: vi.fn(),
@@ -10,7 +11,7 @@ const mock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke } },
+  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } }) },
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
   getClaraQualification: () => ({ business_name: "" }),
@@ -20,8 +21,14 @@ vi.mock("@/lib/redirectToCheckout", () => ({ redirectToCheckout: mock.redirect }
 
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
 
+// Match the application provider and keep GOLD reads synthetic and fail-closed.
+function renderCheckout(query = "") {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter></QueryClientProvider>);
+}
+
 function start(query = "") {
-  render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter>);
+  renderCheckout(query);
   fireEvent.change(screen.getByTestId("entry-350-business-name"), { target: { value: "Atelier de test" } });
   fireEvent.click(screen.getByTestId("entry-350-checkout"));
 }
@@ -131,14 +138,14 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
   });
 
   it("keeps the promo code folded behind its toggle and the server-validated discount logic", () => {
-    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams()} /></MemoryRouter>);
+    renderCheckout();
     expect(screen.queryByTestId("entry-350-promo-input")).toBeNull();
     fireEvent.click(screen.getByTestId("entry-350-promo-toggle"));
     expect(screen.getByTestId("entry-350-promo-input")).toBeTruthy();
   });
 
   it("shows a human pending message with a dashboard link on return, never paid, and blocks a second payment", () => {
-    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams("?checkout=success")} /></MemoryRouter>);
+    renderCheckout("?checkout=success");
     const box = screen.getByTestId("entry-350-return-pending");
     expect(box).toHaveTextContent("Confirmation de votre activation en cours");
     expect(screen.getByRole("link", { name: "Voir mon espace entrepreneur" }).getAttribute("href")).toBe("/pro");
