@@ -1,16 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const mock = vi.hoisted(() => ({ session: vi.fn(), invoke: vi.fn(), redirect: vi.fn() }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke } } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } }) } }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({ getClaraQualification: () => ({ business_name: "" }) }));
 vi.mock("@/lib/analytics/logFunnelEvent", () => ({ logFunnelEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/redirectToCheckout", () => ({ redirectToCheckout: mock.redirect }));
 
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
 
-const view = (q = "") => render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams(q)} /></MemoryRouter>);
+// Match the application provider without network reads or fabricated GOLD availability.
+const view = (q = "") => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(q)} /></MemoryRouter></QueryClientProvider>);
+};
 
 describe("Option Fondateur 1 995 $ — secondaire, consentement exigé (synthétique)", () => {
   beforeEach(() => {
