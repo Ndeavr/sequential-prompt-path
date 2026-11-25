@@ -4,6 +4,8 @@
  * Statut affiché uniquement s'il provient de `contractors.public_status`.
  */
 import { CheckCircle2, Clock3, MapPin, MessageSquare, Phone, Sparkles } from "lucide-react";
+import GoldBadge from "@/features/gold/GoldBadge";
+import type { GoldMembership } from "@/features/gold/model";
 
 export type SummaryLang = "fr" | "en";
 export type SummaryStatus = { kind: "verified" | "pending"; label: string } | null;
@@ -27,6 +29,8 @@ export function areaLabel(primary: string | null | undefined, total: number, lan
 }
 
 type Props = {
+  gold?: GoldMembership | null;
+  registeredAt?: string | null;
   name: string;
   logoUrl?: string | null;
   onLogoError?: () => void;
@@ -42,7 +46,7 @@ type Props = {
   onPrimary?: () => void;
 };
 
-export default function ProfileSummary({ name, logoUrl, onLogoError, specialty, publicStatus, chips = [], area, photoUrl, phone, lang = "fr", preview = false, onPrimary }: Props) {
+export default function ProfileSummary({ name, logoUrl, onLogoError, specialty, publicStatus, chips = [], area, photoUrl, phone, lang = "fr", preview = false, onPrimary, gold, registeredAt }: Props) {
   const t = COPY[lang] ?? COPY.fr;
   const status = profileStatus(publicStatus, lang);
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "UN";
@@ -68,6 +72,7 @@ export default function ProfileSummary({ name, logoUrl, onLogoError, specialty, 
           )}
         </div>
       </div>
+      <GoldBadge member={gold} registeredAt={registeredAt} lang={lang} />
       {shownChips.length > 0 && (
         <ul className="flex flex-wrap gap-1.5" aria-label="Services">
           {shownChips.map((chip) => <li key={chip} className={`rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-text-strong ${small}`}>{chip}</li>)}

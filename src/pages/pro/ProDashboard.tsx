@@ -12,6 +12,7 @@ import { useContractorAppointments } from "@/hooks/useAppointments";
 import ProActivationCompact from "@/components/pro-dashboard/ProActivationCompact";
 import ProNextActionCard from "@/components/pro-dashboard/ProNextActionCard";
 import ProfilePhonePreview from "@/components/pro-dashboard/ProfilePhonePreview";
+import GoldPanel from "@/features/gold/GoldPanel";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
 const ProDashboard = () => {
@@ -56,6 +57,7 @@ const ProDashboard = () => {
         </div>
 
         {profile?.id && <ProfilePhonePreview profile={profile} />}
+        <GoldPanel contractorId={profile?.id} slug={profile?.slug} name={profile?.business_name} />
         <section className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-2" aria-label="Recycler un lead">
           <h2 className="font-semibold text-foreground">Recycler un lead</h2>
           <p className="text-sm text-muted-foreground">Une demande hors territoire, spécialité ou disponibilité? Transmettez-la à UNPRO pour évaluation.</p>

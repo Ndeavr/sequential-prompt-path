@@ -17,6 +17,7 @@ import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 import { ENTRY_350, PRESENCE_FOUNDER } from "@/lib/copy/offer350";
+import GoldPanel from "@/features/gold/GoldPanel";
 import { GUARANTEE_COPY, GUARANTEE_OFFER_CODE, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 
 const COPY = ENTRY_350.checkout;
@@ -325,6 +326,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         </button>
       )}
       <p className="mt-2 text-xs text-muted-foreground">Connexion requise avant paiement. Clara garde la conversation dans la session en cours.</p>
+      <GoldPanel />
     </section>
   );
 }

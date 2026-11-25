@@ -23,6 +23,7 @@ import ContractorCommsTimeline from "@/components/contractor/ContractorCommsTime
 import ContractorAccountOriginCard from "@/components/admin/contractor/ContractorAccountOriginCard";
 import ContractorRevenueJourneyCard from "@/components/admin/contractor/ContractorRevenueJourneyCard";
 import CompatibilityAdminPanel from "@/components/contractor-compatibility/CompatibilityAdminPanel";
+import GoldPanel from "@/features/gold/GoldPanel";
 
 const statusLabels: Record<string, string> = {
   unverified: "Non vérifié",
@@ -146,6 +147,7 @@ const AdminContractorDetail = () => {
 
         {/* Origine du compte */}
         <ContractorAccountOriginCard contractorId={contractor.id} />
+        <GoldPanel contractorId={contractor.id} slug={contractor.slug} name={contractor.business_name} admin />
 
         {/* Parcours revenu */}
         <ContractorRevenueJourneyCard contractorId={contractor.id} />

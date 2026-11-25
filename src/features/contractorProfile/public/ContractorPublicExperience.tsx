@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import ProfessionalVerificationsCard from "@/components/compliance/ProfessionalVerificationsCard";
 import ServiceTerritoryMap from "./ServiceTerritoryMap";
 import ProfileSummary, { areaLabel } from "./ProfileSummary";
+import { useGold } from "@/features/gold/useGold";
+import GoldBadge from "@/features/gold/GoldBadge";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +32,7 @@ import { usePublicContractorReviews } from "@/hooks/usePublicContractors";
 import type { Json } from "@/integrations/supabase/types";
 
 type ContractorRecord = {
+  unpro_registered_at?: string | null;
   id?: string;
   business_name?: string | null;
   specialty?: string | null;
@@ -111,6 +114,7 @@ const tabs = [
 export default function ContractorPublicExperience({ profileData, compact = false }: Props) {
   const contractor = profileData.contractor ?? profileData;
   const contractorId = contractor.id as string | undefined;
+  const gold = useGold(contractorId);
   const website = publicWebsite(contractor.website);
   const phone = contractor.phone?.replace(/[^+\d]/g, "");
   const services = profileData.services ?? [];
@@ -169,6 +173,10 @@ export default function ContractorPublicExperience({ profileData, compact = fals
 
   const bookingPath = user ? `/dashboard/book/${contractorId}` : `/login?redirect=${encodeURIComponent(`/dashboard/book/${contractorId}`)}`;
 
+  if (new URLSearchParams(window.location.search).get("gold_badge") === "1") {
+    return <article className="alex-immersive bg-background p-2 text-foreground"><GoldBadge member={gold.data} lang={lang} /></article>;
+  }
+
   return (
     <article className={`alex-immersive min-h-full bg-background text-foreground ${compact ? "text-[13px]" : ""}`}>
       <section ref={(node) => { sectionRefs.current.overview = node; }} className="scroll-mt-28">
@@ -181,6 +189,8 @@ export default function ContractorPublicExperience({ profileData, compact = fals
           <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background" aria-hidden="true" />
           <div className={`relative px-4 pb-5 sm:px-6 ${cover ? (compact ? "pt-24" : "pt-40 sm:pt-56") : "pt-8"}`}>
             <ProfileSummary
+              gold={gold.data}
+              registeredAt={contractor.unpro_registered_at}
               name={contractor.business_name ?? ""}
               logoUrl={logoUrl && !logoBroken ? logoUrl : null}
               onLogoError={() => setLogoBroken(true)}
