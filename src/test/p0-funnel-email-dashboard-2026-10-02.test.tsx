@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isIdentityKnown } from "@/pages/contractor-funnel/PageContractorPricingIntake";
 import { isContractorAgreementActive } from "@/lib/billing/contractorActivationState";
 
@@ -12,13 +13,17 @@ vi.mock("@/hooks/useContractor", () => ({ useContractorProfile: () => ({ data: m
 vi.mock("@/hooks/useAppointments", () => ({ useContractorAppointments: () => ({ data: mockAppointments, isLoading: false }) }));
 vi.mock("@/components/pro-dashboard/ProActivationCompact", () => ({ default: () => <div data-testid="compact-activation" /> }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: () => ({ select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }) }) }) }) },
+  supabase: { from: (table: string) => table === "contractor_gold_memberships"
+    ? { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }
+    : { select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }) }) }) } },
 }));
 import ProDashboard from "@/pages/pro/ProDashboard";
 
 const renderDash = (p: any) => {
   mockProfile = p;
-  return render(<MemoryRouter><ProDashboard /></MemoryRouter>);
+  // Match the app provider; synthetic membership lookup returns no GOLD membership.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}><MemoryRouter><ProDashboard /></MemoryRouter></QueryClientProvider>);
 };
 
 describe("pricing intake — editing never drops back to business search", () => {
