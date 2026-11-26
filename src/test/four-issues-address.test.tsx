@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 const mocks = vi.hoisted(() => ({ start: vi.fn(), invoke: vi.fn() }));
+// Exercise the opt-in paid Places flow synthetically; production remains disabled.
+vi.mock("@/lib/addressAutocompleteConfig", () => ({ ADDRESS_AUTOCOMPLETE_ENABLED: true }));
 vi.mock("@/services/clara/claraSession", () => ({ startOrResumeClaraSession: mocks.start }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
 import GooglePlacesInput from "@/components/property/GooglePlacesInput";

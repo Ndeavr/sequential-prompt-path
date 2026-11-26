@@ -105,6 +105,6 @@ describe("Clara — retour au projet maison sans perte d’état", () => {
     expect(box2).toContain('rememberClaraReferences({ current_intent: "PROJECT", detected_role: "HOMEOWNER" })');
   });
   it("évite les tours identiques consécutifs de Clara", () => {
-    expect(box2).toContain("lastAssistant.text.trim() === text.trim()");
+    expect(box2).toContain("last.text.trim().toLowerCase() === normalized");
   });
 });

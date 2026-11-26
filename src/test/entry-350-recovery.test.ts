@@ -11,7 +11,7 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
     from(table: string) {
       let operation = "read", payload: any, other = false;
       const query: any = {
-        select: () => query, eq: () => query, limit: () => query,
+        select: () => query, eq: () => query, gte: () => query, limit: () => query,
         neq: (key: string) => { other = key === "metadata->>stripe_session_id"; return query; },
         insert: (value: any) => { operation = "insert"; payload = value; return query; },
         update: (value: any) => { operation = "update"; payload = value; return query; },
