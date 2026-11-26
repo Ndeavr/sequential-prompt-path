@@ -29,7 +29,10 @@ type Row = Record<string, any>;
 // Test-only environment. Never reads process.env or .env, never connects remotely.
 // PGlite enforces actual Postgres roles/RLS; auth and peripheral RPCs are adapters,
 // not a hosted Auth/PostgREST/Edge stack. Stripe uses its actual HMAC verifier.
-export async function createQa(taxApproved = true) {
+export async function createQa(taxApproved = true, options: {
+  checkoutSource?: (source: string) => string;
+  rpcOverride?: (name: string, args: Row) => { data: unknown; error: { message: string } | null } | undefined;
+} = {}) {
   const db = new PGlite();
   const secret = randomBytes(32).toString("hex");
   const testSecret = randomBytes(32).toString("hex");
@@ -188,6 +191,8 @@ export async function createQa(taxApproved = true) {
       functions: { invoke: async (name: string) => { calls.push(`blocked-function:${name}`); return {data:null,error:{message:'Disabled in isolated QA'}}; } },
       rpc: async (name: string, args: Row) => {
         calls.push(name);
+        const override = options.rpcOverride?.(name, args);
+        if (override) return override;
         if (name === 'activate_contractor_unified') {
           const r = await db.query<Row>('select activate_contractor_unified($1,$2,$3,$4,$5) data',[args.p_contractor_id,args.p_source,args.p_plan_id,args.p_actor,JSON.stringify(args.p_metadata)]);
           return {data:r.rows[0].data,error:null};
@@ -309,7 +314,8 @@ export async function createQa(taxApproved = true) {
   }
   async function load(name:string) {
     const path=`supabase/functions/${name}/index.ts`;
-    const raw=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'');
+    const source=readFileSync(path,'utf8');
+    const raw=(name==='create-checkout-session' && options.checkoutSource ? options.checkoutSource(source) : source).replace(/^import[\s\S]*?;\n/gm,'');
     const {code}=await transform(raw,{loader:'ts',target:'es2022'});
     let handler:((r:Request)=>Promise<Response>)|undefined;
     const imports={...guards,...presenceOffers,...identity,...fallback,...entryTax,...entryPromo,...webhookAuth,...webhookAudit,...reservation,...annualPresence,...invitedIdentity,handleCondoBillingEvent,entry350TaxCollectionApproved:()=>taxApproved,revokeEntry350,reverseEntry350Commission,entry350SessionRevoked,OFFER,

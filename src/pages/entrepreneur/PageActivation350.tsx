@@ -22,6 +22,7 @@ import UnproLogo from "@/components/brand/UnproLogo";
 import AuditVideoBlock from "@/components/audit-ia/AuditVideoBlock";
 import { buildActivation350Links, normalizeRef } from "@/lib/activation350Links";
 import WinterFreeCodeClaim from "@/components/entrepreneur/WinterFreeCodeClaim";
+import PioneerOffer from "@/features/gold/PioneerOffer";
 
 export const ACTIVATION_350_APPT_DISCLOSURE =
   "Profil + 12 mois de présence UNPRO.";
@@ -106,6 +107,7 @@ export default function PageActivation350() {
           </div>
         </div>
 
+        {!guarantee && !reviewOpen && <PioneerOffer />}
         <p className="mt-4 text-sm text-muted-foreground">
           Vous désirez aussi des rendez-vous exclusifs&nbsp;? C'est une option distincte, jamais incluse par défaut. <Link to={links.more} className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Voir les options</Link>
         </p>
@@ -159,7 +161,7 @@ export default function PageActivation350() {
 
           <div className="mt-5 border-t border-border pt-5">
             <p className="text-3xl font-semibold">350 $ <span className="text-base font-normal text-muted-foreground">+ taxes</span></p>
-            <p className="mt-2 text-xs text-muted-foreground">Valeur de référence : l'ancien forfait Présence (49 $/mois) totalisait 588 $ sur 12 mois.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Tarifs réguliers Pionnier : 50 $/mois ou 500 $/an payé d’avance, avant taxes. Renouvellement seulement avec consentement explicite.</p>
           </div>
 
           <Link to={links.activate} onClick={onActivate} className={`mt-5 ${ctaCls}`}>

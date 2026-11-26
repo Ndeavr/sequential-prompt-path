@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mock = vi.hoisted(() => ({
   session: vi.fn(),
@@ -10,7 +11,7 @@ const mock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke } },
+  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: async () => ({ data: { status: 'draft', available: null, pioneer_status: 'draft', checkout_supported: false }, error: null }) },
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
   getClaraQualification: () => ({ business_name: "" }),
@@ -19,9 +20,12 @@ vi.mock("@/lib/analytics/logFunnelEvent", () => ({ logFunnelEvent: mock.telemetr
 vi.mock("@/lib/redirectToCheckout", () => ({ redirectToCheckout: mock.redirect }));
 
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
+function view(query = '') {
+  return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter></QueryClientProvider>);
+}
 
 function start(query = "") {
-  render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter>);
+  view(query);
   fireEvent.change(screen.getByTestId("entry-350-business-name"), { target: { value: "Atelier de test" } });
   fireEvent.click(screen.getByTestId("entry-350-checkout"));
 }
@@ -37,6 +41,13 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     mock.telemetry.mockResolvedValue(undefined);
   });
   afterEach(() => cleanup());
+
+  it('Pionnier query refuses unconfirmed inventory instead of opening another offer', async () => {
+    start('?pioneer=2026');
+    await screen.findByRole('alert');
+    expect(mock.invoke).not.toHaveBeenCalled();
+    expect(mock.redirect).not.toHaveBeenCalled();
+  });
 
   it("redirects when the server returned Checkout URL and optional telemetry finishes", async () => {
     start("?ref=LORRAINE-UNPRO");
@@ -131,14 +142,14 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
   });
 
   it("keeps the promo code folded behind its toggle and the server-validated discount logic", () => {
-    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams()} /></MemoryRouter>);
+    view();
     expect(screen.queryByTestId("entry-350-promo-input")).toBeNull();
     fireEvent.click(screen.getByTestId("entry-350-promo-toggle"));
     expect(screen.getByTestId("entry-350-promo-input")).toBeTruthy();
   });
 
   it("shows a human pending message with a dashboard link on return, never paid, and blocks a second payment", () => {
-    render(<MemoryRouter><Entry350FastCheckout query={new URLSearchParams("?checkout=success")} /></MemoryRouter>);
+    view('?checkout=success');
     const box = screen.getByTestId("entry-350-return-pending");
     expect(box).toHaveTextContent("Confirmation de votre activation en cours");
     expect(screen.getByRole("link", { name: "Voir mon espace entrepreneur" }).getAttribute("href")).toBe("/pro");
