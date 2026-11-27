@@ -210,6 +210,29 @@ const LegacyRedirect = ({ to }: { to: string }) => {
   return <Navigate to={`${to}${search}${hash}`} replace />;
 };
 
+const PageAvenirCampaign = () => {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const english = params.get("lang") === "en" || params.get("lang") === "EN";
+  const destination = `/entrepreneurs/audit-ia${search}`;
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <section className="mx-auto flex min-h-[85vh] max-w-4xl flex-col justify-center px-6 py-20 sm:px-12">
+        <p className="mb-8 text-xl font-bold tracking-widest">UNPRO <span className="block text-xs font-normal tracking-wide text-slate-300">{english ? "RENOVATION – CONSTRUCTION" : "RÉNOVATION – CONSTRUCTION"}</span></p>
+        <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-emerald-300">{english ? "The future of customer acquisition" : "L’avenir de l’acquisition de clients"}</p>
+        <h1 className="max-w-3xl text-4xl font-bold leading-tight sm:text-6xl">{english ? "In five years, how will new customers find your business?" : "Dans 5 ans, comment vos nouveaux clients trouveront-ils votre entreprise?"}</h1>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">{english ? "Search is changing. Prepare your professional profile for UNPRO’s AI-powered matching and help Clara understand which projects are right for your business." : "La recherche évolue. Préparez votre profil professionnel pour les recommandations IA d’UNPRO et aidez Clara à comprendre quels projets correspondent à votre entreprise."}</p>
+        <a href={destination} className="mt-8 inline-flex w-fit items-center justify-center rounded-xl bg-white px-6 py-4 text-base font-semibold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">{english ? "Start my free AI assessment" : "Commencer mon audit IA gratuit"}</a>
+        <p className="mt-3 text-sm text-slate-400">{english ? "Discover your next steps before choosing an offer." : "Découvrez les prochaines étapes avant de choisir une offre."}</p>
+        <div className="mt-12 grid gap-5 border-t border-slate-700 pt-8 sm:grid-cols-3">
+          {(english ? ["A professional profile", "AI-powered project matching", "Qualified, exclusive appointments when available"] : ["Un profil professionnel", "Des projets compatibles grâce à l’IA", "Des rendez-vous qualifiés et exclusifs, selon disponibilité"]).map(item => <p key={item} className="text-sm font-medium text-slate-200">{item}</p>)}
+        </div>
+        <a className="mt-10 w-fit text-sm underline text-slate-300" href={`/avenir?${new URLSearchParams([...Array.from(params.entries()).filter(([key]) => key !== "lang"), ["lang", english ? "fr" : "en"]]).toString()}`}>{english ? "Français" : "English"}</a>
+      </section>
+    </main>
+  );
+};
+
 // ─── Lazy loaded pages ───
 const PlaceholderPage = lazyWithRetry(() => import("@/pages/PlaceholderPage"));
 const Unsubscribe = lazyWithRetry(() => import("@/pages/Unsubscribe"));
@@ -1149,6 +1172,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageEntrepreneurDiagnosticLanding /></Suspense>} />
         <Route path="/entrepreneur/aipp-import" element={<PageEntrepreneurLandingAIPP />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
+        <Route path="/avenir" element={<PageAvenirCampaign />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
         <Route path="/aipp/:token/results" element={<PageAIPPScoreReveal />} />
