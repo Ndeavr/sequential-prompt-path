@@ -64,6 +64,7 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/diagnostic-photo", changefreq: "weekly", priority: "0.7" },
   { path: "/diagnostic-ia", changefreq: "weekly", priority: "0.7" },
   { path: "/calculateur-taxes-quebec", changefreq: "monthly", priority: "0.7" },
+  { path: "/subventions/renoclimat", changefreq: "monthly", priority: "0.9" },
   { path: "/calculateur-subventions", changefreq: "monthly", priority: "0.9" },
   { path: "/subventions/isolation-entretoit", changefreq: "monthly", priority: "0.8" },
   { path: "/subventions/fenetres-portes-patio", changefreq: "monthly", priority: "0.8" },
