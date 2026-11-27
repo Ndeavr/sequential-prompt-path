@@ -1,4 +1,4 @@
-export type GoldMembership = { contractor_id: string; member_number: number; status: 'active' | 'refunded'; joined_at: string };
+export type GoldMembership = { contractor_id: string; member_number: number; status: 'active' | 'refunded'; joined_at: string; pioneer_2026?: boolean };
 export function goldNumber(n: number): string | null {
   return Number.isInteger(n) && n >= 1 && n <= 1000 ? `#${String(n).padStart(6, '0')}` : null;
 }

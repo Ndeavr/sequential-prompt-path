@@ -7,7 +7,7 @@ export function useGold(id?: string) {
     queryFn: async (): Promise<GoldMembership | null> => {
       if (!id) return null;
       const { data, error } = await supabase.from('contractor_gold_memberships' as never)
-        .select('contractor_id,member_number,status,joined_at').eq('contractor_id', id).maybeSingle();
+        .select('contractor_id,member_number,status,joined_at,pioneer_2026').eq('contractor_id', id).maybeSingle();
       if (error) throw error;
       return data as GoldMembership | null;
     }, staleTime: 0,
@@ -17,7 +17,7 @@ export function useGoldAvailability() {
   return useQuery({ queryKey: ['gold-availability'], retry: false, queryFn: async () => {
     const { data, error } = await supabase.rpc('gold_availability' as never);
     if (error) throw error;
-    return data as { status: string; available: number | null };
+    return data as { status: string; available: number | null; pioneer_status?: string; checkout_supported?: boolean; first_reserved?: boolean; pioneer_available?: number | null; pioneer_next_number?: number | null; pioneer_sales?: number | null };
   }});
 }
 export function useGoldAudit(id: string | undefined, enabled: boolean) {

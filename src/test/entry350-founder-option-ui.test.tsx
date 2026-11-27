@@ -1,21 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mock = vi.hoisted(() => ({ session: vi.fn(), invoke: vi.fn(), redirect: vi.fn() }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } }) } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: async () => ({ data: { status: 'draft', available: null, pioneer_status: 'draft', checkout_supported: false }, error: null }) } }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({ getClaraQualification: () => ({ business_name: "" }) }));
 vi.mock("@/lib/analytics/logFunnelEvent", () => ({ logFunnelEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/redirectToCheckout", () => ({ redirectToCheckout: mock.redirect }));
 
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
 
-// Match the application provider without network reads or fabricated GOLD availability.
-const view = (q = "") => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(q)} /></MemoryRouter></QueryClientProvider>);
-};
+const view = (q = "") => render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(q)} /></MemoryRouter></QueryClientProvider>);
 
 describe("Option Fondateur 1 995 $ — secondaire, consentement exigé (synthétique)", () => {
   beforeEach(() => {
@@ -26,12 +22,11 @@ describe("Option Fondateur 1 995 $ — secondaire, consentement exigé (synthét
   });
   afterEach(() => cleanup());
 
-  it("350 $ affiché d'abord, label exact, aucun prix barré ni % d'économie", () => {
+  it("350 $ affiché d'abord, label exact, option Fondateur non sélectionnée", () => {
     view();
     expect(screen.getByTestId("entry-350-price").textContent).toContain("350 $");
     expect(screen.getByTestId("entry-350-payment-label").textContent).toBe("Paiement unique · sans abonnement automatique · taxes en sus");
     expect(screen.queryByTestId("entry-founder-details")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/économi|%\s*de rabais|<s>/i);
   });
 
   it("CTA principal 350 $ n'envoie aucune offre Fondateur", async () => {

@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mock = vi.hoisted(() => ({
   session: vi.fn(),
   invoke: vi.fn(),
   telemetry: vi.fn(),
   redirect: vi.fn(),
+  goldAvailability: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } }) },
+  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: mock.goldAvailability },
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
   getClaraQualification: () => ({ business_name: "" }),
@@ -20,15 +21,12 @@ vi.mock("@/lib/analytics/logFunnelEvent", () => ({ logFunnelEvent: mock.telemetr
 vi.mock("@/lib/redirectToCheckout", () => ({ redirectToCheckout: mock.redirect }));
 
 import Entry350FastCheckout from "@/components/entrepreneur/Entry350FastCheckout";
-
-// Match the application provider and keep GOLD reads synthetic and fail-closed.
-function renderCheckout(query = "") {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter></QueryClientProvider>);
+function view(query = '') {
+  return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><Entry350FastCheckout query={new URLSearchParams(query)} /></MemoryRouter></QueryClientProvider>);
 }
 
 function start(query = "") {
-  renderCheckout(query);
+  view(query);
   fireEvent.change(screen.getByTestId("entry-350-business-name"), { target: { value: "Atelier de test" } });
   fireEvent.click(screen.getByTestId("entry-350-checkout"));
 }
@@ -42,8 +40,25 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
       data: { url: "https://checkout.stripe.com/c/pay/cs_test_synthetic" }, error: null,
     });
     mock.telemetry.mockResolvedValue(undefined);
+    mock.goldAvailability.mockResolvedValue({ data: { status: 'draft', available: null, pioneer_status: 'draft', checkout_supported: false }, error: null });
   });
   afterEach(() => cleanup());
+
+  it('Pionnier query refuses unconfirmed inventory instead of opening another offer', async () => {
+    start('?pioneer=2026');
+    await screen.findByRole('alert');
+    expect(mock.invoke).not.toHaveBeenCalled();
+    expect(mock.redirect).not.toHaveBeenCalled();
+  });
+
+  it("ordinary checkout remains independent of an unavailable GOLD RPC", async () => {
+    mock.goldAvailability.mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } });
+    start();
+    await waitFor(() => expect(mock.redirect).toHaveBeenCalledExactlyOnceWith("https://checkout.stripe.com/c/pay/cs_test_synthetic"));
+    expect(mock.invoke).toHaveBeenCalledWith("create-checkout-session", {
+      body: expect.objectContaining({ entryActivation: true }),
+    });
+  });
 
   it("redirects when the server returned Checkout URL and optional telemetry finishes", async () => {
     start("?ref=LORRAINE-UNPRO");
@@ -138,14 +153,14 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
   });
 
   it("keeps the promo code folded behind its toggle and the server-validated discount logic", () => {
-    renderCheckout();
+    view();
     expect(screen.queryByTestId("entry-350-promo-input")).toBeNull();
     fireEvent.click(screen.getByTestId("entry-350-promo-toggle"));
     expect(screen.getByTestId("entry-350-promo-input")).toBeTruthy();
   });
 
   it("shows a human pending message with a dashboard link on return, never paid, and blocks a second payment", () => {
-    renderCheckout("?checkout=success");
+    view('?checkout=success');
     const box = screen.getByTestId("entry-350-return-pending");
     expect(box).toHaveTextContent("Confirmation de votre activation en cours");
     expect(screen.getByRole("link", { name: "Voir mon espace entrepreneur" }).getAttribute("href")).toBe("/pro");

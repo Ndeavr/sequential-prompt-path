@@ -24,6 +24,7 @@ import {
   type BillingInterval,
 } from "@/hooks/usePlanCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
+import PioneerOffer from "@/features/gold/PioneerOffer";
 
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
@@ -65,6 +66,7 @@ export default function PageEntrepreneurPlans() {
 
       <div className="min-h-screen bg-background py-12 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">
+          <div className="mx-auto mb-8 max-w-3xl"><PioneerOffer /></div>
           {joinDemo && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
