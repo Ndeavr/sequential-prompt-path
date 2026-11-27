@@ -8,10 +8,11 @@ const mock = vi.hoisted(() => ({
   invoke: vi.fn(),
   telemetry: vi.fn(),
   redirect: vi.fn(),
+  goldAvailability: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: async () => ({ data: { status: 'draft', available: null, pioneer_status: 'draft', checkout_supported: false }, error: null }) },
+  supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke }, rpc: mock.goldAvailability },
 }));
 vi.mock("@/services/clara/claraContractorQualification", () => ({
   getClaraQualification: () => ({ business_name: "" }),
@@ -39,6 +40,7 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
       data: { url: "https://checkout.stripe.com/c/pay/cs_test_synthetic" }, error: null,
     });
     mock.telemetry.mockResolvedValue(undefined);
+    mock.goldAvailability.mockResolvedValue({ data: { status: 'draft', available: null, pioneer_status: 'draft', checkout_supported: false }, error: null });
   });
   afterEach(() => cleanup());
 
@@ -47,6 +49,15 @@ describe("350 $ direct checkout — client handoff, all providers synthetic", ()
     await screen.findByRole('alert');
     expect(mock.invoke).not.toHaveBeenCalled();
     expect(mock.redirect).not.toHaveBeenCalled();
+  });
+
+  it("ordinary checkout remains independent of an unavailable GOLD RPC", async () => {
+    mock.goldAvailability.mockResolvedValue({ data: null, error: { message: "synthetic GOLD unavailable" } });
+    start();
+    await waitFor(() => expect(mock.redirect).toHaveBeenCalledExactlyOnceWith("https://checkout.stripe.com/c/pay/cs_test_synthetic"));
+    expect(mock.invoke).toHaveBeenCalledWith("create-checkout-session", {
+      body: expect.objectContaining({ entryActivation: true }),
+    });
   });
 
   it("redirects when the server returned Checkout URL and optional telemetry finishes", async () => {
