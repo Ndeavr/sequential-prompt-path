@@ -15,6 +15,7 @@ export type RoofType = "grenier" | "plat";
 
 export const GRANT_SOURCES = {
   renoclimat: "https://www.quebec.ca/habitation-territoire/chauffage-consommation-energie/aide-financiere-renovation-ecoenergetique/renoclimat/nouveautes-adaptation-inondations",
+  calculateurOfficiel: "https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-renoclimat/renoclimat-calculateur.xlsm",
   guide: "https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-renoclimat/renoclimat-guide-participant.pdf",
   logisvert: "https://www.hydroquebec.com/residentiel/mieux-consommer/aides-financieres/logisvert/residentiel.html",
 } as const;
@@ -114,6 +115,17 @@ export function calculateGrants(input: GrantInputs): {
 }
 
 export const GRANT_SEO_PAGES: Record<string, { title: string; h1: string; description: string; intro: string; faq: { question: string; answer: string }[] }> = {
+  renoclimat: {
+    title: "Calculateur Rénoclimat 2026–2027 | Estimez votre aide au Québec | UNPRO",
+    h1: "Calculateur Rénoclimat pour vos travaux au Québec",
+    description: "Estimez votre aide Rénoclimat pour isoler votre grenier, vos murs ou vos fondations, ou remplacer vos fenêtres. Sauvegardez votre estimation dans UNPRO.",
+    intro: "Planifiez vos travaux de rénovation énergétique et estimez l’aide financière Rénoclimat selon votre habitation. Calculez en ligne, puis connectez-vous à UNPRO pour retrouver votre estimation.",
+    faq: [
+      { question: "Combien puis-je recevoir pour isoler mon entretoit?", answer: "La nouvelle grille prévoit 1,75 $ par pied carré admissible, jusqu’à 2 000 $ pour une maison et 5 000 $ pour un duplex, triplex ou immeuble résidentiel à logements multiples. Pour un grenier, le calcul tient compte d’au moins 300 pi² isolés, d’un ajout minimal de R-20 et d’une valeur finale de R-60." },
+      { question: "Faut-il une évaluation énergétique avant les travaux?", answer: "Depuis le 1er octobre 2026, l’évaluation avant travaux est recommandée et facultative dans le nouveau parcours d’efficacité énergétique. Si votre dossier est déjà ouvert, consultez les règles de transition du Québec." },
+      { question: "Où calculer une aide pour une batterie ou plusieurs types de toits?", answer: "Le classeur officiel Rénoclimat permet de préciser plusieurs surfaces et d’estimer d’autres mesures, dont l’ajout d’une batterie fixe selon les conditions du programme." },
+    ],
+  },
   "calculateur-subventions": {
     title: "Calculateur de subventions rénovation Québec 2026-2027 | UNPRO",
     h1: "Calculez les subventions possibles pour vos travaux au Québec",

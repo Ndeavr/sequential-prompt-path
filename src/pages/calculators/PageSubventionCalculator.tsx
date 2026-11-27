@@ -7,13 +7,14 @@ import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "react-router-dom";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, Calculator, CheckCircle2, Info, MessageCircle, ShieldCheck, X } from "lucide-react";
+import GrantEstimateActions from "./GrantEstimateActions";
 import MainLayout from "@/layouts/MainLayout";
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import { buildGrantClaraHandoff, type GrantHandoffPurpose } from "@/lib/grantClaraHandoff";
 import "./grantClaraDialog.css";
 import {
   GRANT_SEO_PAGES, GRANT_SOURCES, GRANT_WORKS, calculateGrants,
-  type BuildingType, type FoundationType, type GrantRegime, type GrantWork, type RoofType,
+  type GrantInputs, type BuildingType, type FoundationType, type GrantRegime, type GrantWork, type RoofType,
 } from "@/lib/grantCalculator2026";
 
 const CAD = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
@@ -54,6 +55,7 @@ export default function PageSubventionCalculator() {
   const { slug } = useParams<{ slug?: string }>();
   const pageKey = slug && Object.prototype.hasOwnProperty.call(GRANT_SEO_PAGES, slug) ? slug : "calculateur-subventions";
   const page = GRANT_SEO_PAGES[pageKey];
+  const isRenoclimatPage = pageKey === "renoclimat";
   const canonical = pageKey === "calculateur-subventions"
     ? "https://unpro.ca/calculateur-subventions"
     : `https://unpro.ca/subventions/${pageKey}`;
@@ -77,13 +79,31 @@ export default function PageSubventionCalculator() {
   const [claraHandoff, setClaraHandoff] = useState<{ id: string; text: string } | null>(null);
   useEffect(() => { setSelected(pageWork ? [pageWork] : []); }, [pageWork]);
 
-  const grants = useMemo(() => calculateGrants({
+  const inputs = useMemo<GrantInputs>(() => ({
     selected, building, regime, roofType, roofArea, roofRAdded, roofRFinal,
     wallsArea, wallsRAdded, foundationType, foundationArea, foundationRAdded,
     windowCount, windowsMostEfficient,
   }), [selected, building, regime, roofType, roofArea, roofRAdded, roofRFinal,
     wallsArea, wallsRAdded, foundationType, foundationArea, foundationRAdded,
     windowCount, windowsMostEfficient]);
+  const grants = useMemo(() => calculateGrants(inputs), [inputs]);
+
+  const restoreInputs = (saved: GrantInputs) => {
+    setSelected(saved.selected);
+    setBuilding(saved.building);
+    setRegime(saved.regime);
+    setRoofType(saved.roofType);
+    setRoofArea(saved.roofArea);
+    setRoofRAdded(saved.roofRAdded);
+    setRoofRFinal(saved.roofRFinal);
+    setWallsArea(saved.wallsArea);
+    setWallsRAdded(saved.wallsRAdded);
+    setFoundationType(saved.foundationType);
+    setFoundationArea(saved.foundationArea);
+    setFoundationRAdded(saved.foundationRAdded);
+    setWindowCount(saved.windowCount);
+    setWindowsMostEfficient(saved.windowsMostEfficient);
+  };
 
   const jsonLd = useMemo(() => JSON.stringify([
     {
@@ -114,11 +134,7 @@ export default function PageSubventionCalculator() {
   };
 
   const openClaraFromCalculator = (purpose: GrantHandoffPurpose) => {
-    const text = buildGrantClaraHandoff({
-      selected, building, regime, roofType, roofArea, roofRAdded, roofRFinal,
-      wallsArea, wallsRAdded, foundationType, foundationArea, foundationRAdded,
-      windowCount, windowsMostEfficient,
-    }, purpose);
+    const text = buildGrantClaraHandoff(inputs, purpose);
     // Un résumé distinct n'est créé que si la sélection ou l'intention change.
     // Réouvrir la même conversation n'envoie jamais une copie du même contexte.
     setClaraHandoff(previous => previous?.text === text ? previous : ({
@@ -160,6 +176,9 @@ export default function PageSubventionCalculator() {
           <p className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
             Sans inscription ni coordonnées. Ces montants sont indicatifs et conditionnels. UNPRO ne représente ni le gouvernement du Québec ni Hydro-Québec.
           </p>
+          {isRenoclimatPage && <a href={GRANT_SOURCES.calculateurOfficiel} className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline underline-offset-4">
+            <BookOpen size={17} aria-hidden="true" /> Télécharger le calculateur officiel du Québec (Excel)
+          </a>}
         </header>
 
         <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.8fr)]">
@@ -283,6 +302,7 @@ export default function PageSubventionCalculator() {
               <p className="text-xs leading-relaxed text-muted-foreground">
                 Estimation non contractuelle. Dépenses, preuves, licences RBQ, dates, modalités et fonds disponibles : validation requise avant tout engagement.
               </p>
+              {isRenoclimatPage && <GrantEstimateActions inputs={inputs} onRestore={restoreInputs} url={canonical} />}
               <button type="button" onClick={() => openClaraFromCalculator("project")}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 data-testid="grant-clara-start">
@@ -348,6 +368,7 @@ export default function PageSubventionCalculator() {
           </div>
           <h2 className="text-xl font-bold">Tous les calculateurs et guides de subventions</h2>
           <div className="grid gap-3 sm:grid-cols-2">
+            {!isRenoclimatPage && <Link to="/subventions/renoclimat" className="rounded-xl border border-border p-4 font-semibold hover:border-primary/50">Calculateur Rénoclimat</Link>}
             {GRANT_WORKS.map(item => <Link key={item.id} to={item.page} className="rounded-xl border border-border p-4 hover:border-primary/50">
               <span className="font-semibold">{item.label}</span><span className="mt-1 flex items-center gap-2 text-xs text-primary">Consulter le guide <ArrowRight size={14}/></span>
             </Link>)}

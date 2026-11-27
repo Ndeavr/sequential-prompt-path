@@ -18,6 +18,7 @@ function escapeHtml(value: string): string {
 
 const routes = [
   { path: "/calculateur-subventions", key: "calculateur-subventions" },
+  { path: "/subventions/renoclimat", key: "renoclimat" },
   ...GRANT_WORKS.map((work) => ({
     path: work.page,
     key: work.page.split("/").at(-1)!,
@@ -31,8 +32,9 @@ for (const { path, key } of routes) {
   const title = escapeHtml(content.title);
   const description = escapeHtml(content.description);
   const faqHtml = content.faq.map(f => `<section><h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p></section>`).join("\n");
-  const routeLinks = GRANT_WORKS.map(w => `<li><a href="${w.page}">${escapeHtml(w.label)}</a></li>`).join("\n");
-  const sourceLinks = Object.entries(GRANT_SOURCES).map(([name, href]) => `<li><a href="${href}">${escapeHtml(name)}</a></li>`).join("\n");
+  const renoclimatLink = key !== "renoclimat" ? '<li><a href="/subventions/renoclimat">Calculateur Rénoclimat</a></li>' : "";
+  const routeLinks = renoclimatLink + GRANT_WORKS.map(w => `<li><a href="${w.page}">${escapeHtml(w.label)}</a></li>`).join("\n");
+  const sourceLinks = Object.entries(GRANT_SOURCES).map(([name, href]) => `<li><a href="${href}">${escapeHtml(name === "calculateurOfficiel" ? "Télécharger le calculateur officiel Rénoclimat (Excel)" : name)}</a></li>`).join("\n");
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org", "@type": "WebPage", name: content.title, url,
     description: content.description, inLanguage: "fr-CA",
