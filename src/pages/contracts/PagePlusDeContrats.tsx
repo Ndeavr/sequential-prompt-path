@@ -10,6 +10,7 @@ import UnproLogo from "@/components/brand/UnproLogo";
 import SeoHead from "@/seo/components/SeoHead";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { buildContractorEntryUrl } from "@/config/contractorFunnel";
+import PioneerOffer from "@/features/gold/PioneerOffer";
 import "../entrepreneur/thermopompes.css";
 import "./plusDeContrats.css";
 
@@ -133,6 +134,7 @@ export default function PagePlusDeContrats({ lang = "fr" }: { lang?: Lang }) {
             <div className="utp-price"><strong>{c.price}</strong><small>{c.priceSub}</small><div className="utp-actions"><Cta position="offer" /></div></div>
           </div>
           <p className="utp-fine pdc-fine">{c.fine}</p>
+          <div className="alex-immersive mt-6"><PioneerOffer language={lang} /></div>
         </section>
       </main>
     </div>

@@ -425,7 +425,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
       if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) await nextQuestion();
     },
     captureVoice: (text: string) => {
-      const close = activationCloseAnswer(text);
+      const close = activationCloseAnswer(text, lang);
       if (close) { setStep("proposal"); proposalReadyRef.current = true; return; }
       const current = stepRef.current;
       if (["appointments", "avg_value"].includes(current) || (current === "goal_detail" && readFlow().priority === "contracts")) {
@@ -461,7 +461,7 @@ const ClaraContractorFlow = forwardRef<ClaraContractorFlowHandle, Props>(functio
     resumeAfterVoice: () => { if (!["name", "pick", "goals", "priority", "proposal"].includes(stepRef.current)) void Promise.resolve(pendingVoiceSummary.current).then(() => nextQuestion()); },
     handleText: (text: string) => {
       const s = stepRef.current;
-      const close = activationCloseAnswer(text);
+      const close = activationCloseAnswer(text, lang);
       if (close) {
         addUser(text);
         setStep("proposal");

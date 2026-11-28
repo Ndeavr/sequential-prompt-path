@@ -7,6 +7,7 @@ import {
   buildGuaranteePromptBlock,
 } from "../_shared/appointmentGuarantee.ts";
 import { buildFallbackCreditPromptBlock } from "../_shared/fallbackCredit350.ts";
+import { handleRenoBullesTurn, renoBullesCorsHeaders } from "../_shared/renoBullesTurn.ts";
 
 
 const corsHeaders = {
@@ -605,18 +606,23 @@ import { captureInsulationTurn, nextInsulationQuestion, sanitizeInsulationContex
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: renoBullesCorsHeaders(req, corsHeaders) });
   }
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const bodyText = await req.text();
+    const body = JSON.parse(bodyText);
+    if (body.action === "reno_bulles_turn") {
+      return await handleRenoBullesTurn(req, body, LOVABLE_API_KEY, corsHeaders, bodyText.length);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const body = await req.json();
     if (body.action === "summarize_contractor_answer") return await summarizeContractorAnswer(body, LOVABLE_API_KEY, corsHeaders);
     const context = { ...(body.context ?? {}) };
     const responseLanguage: "fr-CA" | "en-CA" = context.responseLanguage === "en-CA" ? "en-CA" : "fr-CA";
