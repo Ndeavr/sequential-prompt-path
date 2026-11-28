@@ -11,6 +11,13 @@ vi.mock("@/layouts/ContractorLayout", () => ({ default: ({ children }: any) => <
 vi.mock("@/hooks/useContractor", () => ({ useContractorProfile: () => ({ data: mockProfile, isLoading: false }) }));
 vi.mock("@/hooks/useAppointments", () => ({ useContractorAppointments: () => ({ data: mockAppointments, isLoading: false }) }));
 vi.mock("@/components/pro-dashboard/ProActivationCompact", () => ({ default: () => <div data-testid="compact-activation" /> }));
+// GOLD is a separate query-backed feature; keep this activation/dashboard fixture offline.
+// Unknown membership and availability must not imply a badge or available number.
+vi.mock("@/features/gold/useGold", () => ({
+  useGold: () => ({ data: null, isError: false }),
+  useGoldAvailability: () => ({ data: undefined, isLoading: false, isError: true }),
+  useGoldAudit: () => ({ data: undefined, isError: false }),
+}));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }) }) }) }) },
 }));
@@ -52,8 +59,8 @@ describe("contractor dashboard — agreement status is server-authoritative", ()
     expect(screen.getByText("Cuisine confirmée")).toBeTruthy();
     expect(screen.getByText(new Date(mockAppointments[0].scheduled_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }))).toBeTruthy();
     expect(screen.getByAltText("Logo Atelier QA")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Voir ma fiche" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Compléter mon logo et mes photos" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Voir ma fiche publique" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Modifier ma fiche publique" })).toBeTruthy();
   });
   it("missing profile (load error) never claims activation", () => {
     expect(isContractorAgreementActive(null)).toBe(false);

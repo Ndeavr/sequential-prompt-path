@@ -14,6 +14,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 const request = vi.fn();
 vi.mock("@/lib/permissionManager", () => ({ request: (...a: unknown[]) => request(...a) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+// The calendar integration has its own tests; keep this suite focused on booking preferences.
+vi.mock("@/components/calendar/CalendarIntegrationRequest", () => ({ default: () => null }));
 
 import ClaraBookingPreferences from "./ClaraBookingPreferences";
 
@@ -37,6 +39,9 @@ describe("ClaraBookingPreferences", () => {
     expect(screen.getByText("Combien de représentants peuvent effectuer des visites simultanément?")).toBeTruthy();
     fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "1" } });
     fireEvent.click(screen.getByRole("button", { name: /continuer/i }));
+    // Travel time is asked separately and must never be invented or defaulted.
+    expect(screen.getByText(/temps de déplacement maximal/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /pas de limite précisée/i }));
     await waitFor(() => expect(upsert).toHaveBeenCalled());
     const payload = upsert.mock.calls[0][0];
     expect(payload).toMatchObject({ max_evenings_per_week: 3, visit_capacity: 1, declared_representatives: 1 });
@@ -63,6 +68,9 @@ describe("ClaraBookingPreferences", () => {
     expect(screen.getByText(/répartir les agendas/)).toBeTruthy();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Chacun son secteur" } });
     fireEvent.click(screen.getByRole("button", { name: /enregistrer/i }));
+    // Confirm the optional travel question before asserting persistence.
+    expect(screen.getByText(/temps de déplacement maximal/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /pas de limite précisée/i }));
     await waitFor(() => expect(upsert).toHaveBeenCalled());
     expect(upsert.mock.calls[0][0]).toMatchObject({ visit_capacity: 1, declared_representatives: 2, representatives_note: "Chacun son secteur" });
   });

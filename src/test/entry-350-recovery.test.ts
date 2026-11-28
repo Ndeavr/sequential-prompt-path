@@ -12,6 +12,13 @@ async function fixture(options: { failRole?: boolean; lookupError?: boolean; liv
       let operation = "read", payload: any, other = false;
       const query: any = {
         select: () => query, eq: () => query, limit: () => query,
+        // All synthetic receipts in this fixture are recent; reject unknown date filters.
+        gte: (column: string, value: string) => {
+          if (column !== "created_at" || !Number.isFinite(Date.parse(value))) {
+            throw new Error("Unexpected fixture date filter");
+          }
+          return query;
+        },
         neq: (key: string) => { other = key === "metadata->>stripe_session_id"; return query; },
         insert: (value: any) => { operation = "insert"; payload = value; return query; },
         update: (value: any) => { operation = "update"; payload = value; return query; },
