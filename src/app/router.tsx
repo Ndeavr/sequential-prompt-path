@@ -305,6 +305,7 @@ const PageAdminCriticalPathAudit = lazyWithRetry(() => import("@/pages/admin/Pag
 const AdminUIHealthMonitor = lazyWithRetry(() => import("@/pages/admin/AdminUIHealthMonitor"));
 const Search = lazyWithRetry(() => import("@/pages/Search"));
 const ContractorProfile = lazyWithRetry(() => import("@/pages/ContractorProfile"));
+const RenoBullesProfile = lazyWithRetry(() => import("@/pages/RenoBullesProfile"));
 const Login = lazyWithRetry(() => import("@/pages/Login"));
 const Signup = lazyWithRetry(() => import("@/pages/Signup"));
 const HomeownersPage = lazyWithRetry(() => import("@/pages/HomeownersPage"));
@@ -979,6 +980,7 @@ export const AppRouter = () => (
     <AuthOverlayPremium />
     <Suspense fallback={<LazyFallback />}>
       <Routes>
+        <Route path="/reno-bulles/profile" element={<Suspense fallback={<LazyFallback />}><RenoBullesProfile /></Suspense>} />
         {/* Redirects for common mismatched entry points */}
         <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/isolation-solution-royal" element={<ContractorProfile slug="isolation-solution-royal" />} />
