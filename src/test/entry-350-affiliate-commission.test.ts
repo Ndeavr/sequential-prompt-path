@@ -67,4 +67,13 @@ describe("câblage", () => {
     expect(branch).toContain("addCalendarMonths(new Date(), 12)");
     expect(branch).not.toContain("365 * 24 * 3600");
   });
+  it("webhook : une erreur PostgREST de commission n'est pas silencieusement ignorée", () => {
+    // Une commission manquée ne doit pas invalider la vente, mais l'erreur
+    // retournée par .rpc(...) doit atteindre le journal de rapprochement.
+    const i = wh.indexOf("// AFFILIATE ATTRIBUTION — canonical economics:");
+    expect(i).toBeGreaterThan(-1);
+    const block = wh.slice(i, wh.indexOf("// Canonical funnel event.", i));
+    expect(block).toContain("if (affRes.error) throw new Error(affRes.error.message);");
+    expect(block).toContain('console.warn("[stripe-webhook] affiliate conversion soft-fail", String(e))');
+  });
 });

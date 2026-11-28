@@ -1623,6 +1623,9 @@ Deno.serve(async (req) => {
                   agent_run_id: session.metadata?.agent_run_id ?? null,
                 },
               });
+              // PostgREST RPC failures are returned as { data, error }, not thrown.
+              // Keep the paid activation, but never silently lose affiliate evidence.
+              if (affRes.error) throw new Error(affRes.error.message);
               if ((affRes.data as any)?.recorded) {
                 console.log("[stripe-webhook] affiliate conversion recorded", affRes.data);
               }
