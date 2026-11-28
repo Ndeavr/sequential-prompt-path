@@ -1,0 +1,48 @@
+--- a/supabase/functions/create-checkout-session/index.ts
++++ b/supabase/functions/create-checkout-session/index.ts
+@@ -106,6 +106,7 @@
+       entryPromoPreview,
+       offerVersion,
+       presenceOffer,
++      pioneerOffer,
+       auditId,
+       campaign,
+       source,
+@@ -343,6 +344,13 @@
+         { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+       if (!presenceTier || (presenceTier === "founder_120m" && !isEntryActivation)) {
+         return refusePresence("presence_offer_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.", 400);
++      }
++      const pioneer = pioneerOffer === "pioneer_2026";
++      if (pioneerOffer !== undefined && pioneerOffer !== null && pioneerOffer !== "" && !pioneer) {
++        return refusePresence("pioneer_invalid", "Cette offre n'est pas disponible. Rien n'a été facturé.", 400);
++      }
++      if (pioneer && (!isEntryActivation || presenceTier !== "launch_12m" || promoInput || entryPromoPreview === true || quoteId || affiliateProposalToken || offerVersion)) {
++        return refusePresence("pioneer_incompatible", "L'offre Pionnier se paie séparément, au prix affiché de 350 $ + taxes. Rien n'a été facturé.");
+       }
+       const founderTier = presenceTier === "founder_120m";
+       const presence = PRESENCE_OFFERS[presenceTier];
+@@ -590,6 +598,7 @@
+         ],
+         metadata: {
+           offer: isEntryActivation ? "entry_activation_350" : FALLBACK_CREDIT_OFFER_KEY,
++          ...(pioneer ? { pioneer_offer: "pioneer_2026", renewal_consent: "false" } : {}),
+           contractor_id: fbContractor.id,
+           user_id: userId,
+           ...(isEntryActivation
+@@ -658,6 +667,15 @@
+           return new Response(JSON.stringify({ error: acquired.message, code: acquired.code }), {
+             status: acquired.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+           });
++        }
++        if (pioneer) {
++          const { data: slot, error: slotError } = await serviceClient.rpc("reserve_pioneer_checkout", { p_reservation_id: acquired.reservationId });
++          if (slotError || slot?.ok !== true || !Number.isInteger(slot?.member_number) || typeof slot?.expires_at !== "number") {
++            if (acquired.kind === "create") await releaseBeforeSessionCreate(deps, acquired.reservationId, acquired.fresh, "pioneer_refused");
++            return refusePresence(slotError ? "pioneer_unavailable" : slot?.code ?? "pioneer_unavailable", "L'admissibilité ou la place Pionnier n'a pas pu être confirmée. Aucun autre prix ne sera facturé sans votre accord.");
++          }
++          (fallbackConfig.metadata as Record<string, string>).pioneer_member_number = String(slot.member_number);
++          if (acquired.kind === "create") acquired.expiresAt = slot.expires_at;
+         }
+         if (acquired.kind === "reuse") {
+           return new Response(JSON.stringify(isEmbeddedFallback

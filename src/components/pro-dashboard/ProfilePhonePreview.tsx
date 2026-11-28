@@ -8,8 +8,10 @@ import { useNavigate } from "react-router-dom";
 import { PenLine } from "lucide-react";
 import ProfileSummary from "@/features/contractorProfile/public/ProfileSummary";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useGold } from "@/features/gold/useGold";
 
 type Profile = {
+  unpro_registered_at?: string | null;
   id: string;
   business_name?: string | null;
   specialty?: string | null;
@@ -30,6 +32,7 @@ const COPY = {
 export default function ProfilePhonePreview({ profile }: { profile: Profile }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const gold = useGold(profile.id);
   const t = COPY[lang] ?? COPY.fr;
   const [opening, setOpening] = useState(false);
   const name = profile.business_name || "—";
@@ -53,6 +56,8 @@ export default function ProfilePhonePreview({ profile }: { profile: Profile }) {
         <div className="flex h-[460px] flex-col overflow-hidden rounded-[1.75rem] bg-background text-left">
           <div className="flex-1 space-y-3 overflow-hidden px-4 pb-3 pt-9">
             <ProfileSummary
+              gold={gold.data}
+              registeredAt={profile.unpro_registered_at}
               preview
               lang={lang}
               name={name}

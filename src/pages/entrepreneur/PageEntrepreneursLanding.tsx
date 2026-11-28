@@ -12,6 +12,7 @@ import HeroV2 from "@/components/entrepreneur-landing/v2/HeroV2";
 import SectionPainV2 from "@/components/entrepreneur-landing/v2/SectionPainV2";
 import SectionSolutionV2 from "@/components/entrepreneur-landing/v2/SectionSolutionV2";
 import SectionHowItWorksV2 from "@/components/entrepreneur-landing/v2/SectionHowItWorksV2";
+import PioneerOffer from "@/features/gold/PioneerOffer";
 
 
 const PageEntrepreneursLanding = () => {
@@ -49,6 +50,7 @@ const PageEntrepreneursLanding = () => {
           <h2 className="text-2xl font-semibold">{fr ? "Ce que votre inscription vous apporte" : "What your registration provides"}</h2>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Votre profil entreprise UNPRO et 12 mois de Présence IA sur UNPRO. Vos services, spécialités et territoire sont présentés aux propriétaires dont le projet correspond, licence vérifiée lorsque requise." : "Your UNPRO business profile and 12 months of AI presence on UNPRO. Your services, specialties and service area are presented to homeowners whose project fits, with licences verified where required."}</p>
           <p className="mt-3 text-base font-semibold">{fr ? "350 $ + taxes, paiement unique pour 12 mois." : "$350 + taxes, one-time payment for 12 months."}</p>
+          <div className="mt-5"><PioneerOffer /></div>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Autre possibilité : partenariat à commission — sur entente personnalisée, convenue par écrit. Rien n’est payé en ligne pour cette formule." : "Another option: commission partnership — under a custom agreement, set in writing. Nothing is paid online for this option."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Vous voulez des rendez-vous? Ils s’ajoutent selon un devis distinct, avec prix et volume affichés avant le paiement." : "Want appointments? They are added through a separate quote, with price and volume shown before payment."}</p>
           <p className="mt-3 text-base text-muted-foreground">{fr ? "Professions réglementées : inscription et demande d’information sous examen. Aucune recommandation rémunérée avant autorisation et vérification appropriées." : "Regulated professions: registration and information requests subject to review. No paid recommendation before appropriate authorization and verification."}</p>

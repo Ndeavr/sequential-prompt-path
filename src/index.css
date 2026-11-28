@@ -6,6 +6,9 @@
 
 /* Existing auth overlay: brand surfaces scoped here, never to other routes. */
 :root {
+  --gold-surface: hsl(220 25% 7%);
+  --gold-foreground: hsl(43 78% 74%);
+  --gold-border: hsl(43 46% 47%);
   --auth-modal-start: #071329;
   --auth-modal-end: #102345;
   --auth-electric: #1269F3;
@@ -18,6 +21,11 @@
   --auth-modal-gradient: linear-gradient(160deg, var(--auth-modal-start), var(--auth-modal-end));
 }
 .dark { --auth-backdrop: hsl(220 71% 9% / 0.94); }
+.unpro-gold-badge {
+  background: var(--gold-surface);
+  color: var(--gold-foreground);
+  border-color: var(--gold-border);
+}
 .auth-overlay-backdrop {
   background: var(--auth-backdrop);
   backdrop-filter: blur(12px);

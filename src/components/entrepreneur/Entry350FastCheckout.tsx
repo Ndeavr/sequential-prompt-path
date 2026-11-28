@@ -17,6 +17,10 @@ import { normalizeRef } from "@/lib/activation350Links";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useProposalContext } from "@/features/affiliate/components/ProposalContext";
 import { ENTRY_350, PRESENCE_FOUNDER } from "@/lib/copy/offer350";
+import GoldPanel from "@/features/gold/GoldPanel";
+import PioneerOffer from "@/features/gold/PioneerOffer";
+import { useGoldAvailability } from '@/features/gold/useGold';
+import { useLanguage } from '@/components/ui/LanguageToggle';
 import { GUARANTEE_COPY, GUARANTEE_OFFER_CODE, isGuaranteeOfferParam } from "../../../supabase/functions/_shared/contractGuarantee";
 
 const COPY = ENTRY_350.checkout;
@@ -58,6 +62,7 @@ function recordPreCheckoutBlock(
 }
 
 export default function Entry350FastCheckout({ query }: { query: URLSearchParams }) {
+  const { lang } = useLanguage();
   const navigate = useNavigate();
   const proposalToken = query.get("proposal");
   const proposalContext = useProposalContext(proposalToken);
@@ -78,6 +83,9 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   const [founderOpen, setFounderOpen] = useState(false);
   const [founderConsent, setFounderConsent] = useState(false);
   const founder = founderAllowed && founderOpen;
+  const pioneerRequested = query.get('pioneer') === '2026';
+  const pioneerStock = useGoldAvailability();
+  const pioneerReady = pioneerStock.data?.pioneer_status === 'active' && pioneerStock.data?.checkout_supported === true;
 
   const readReply = async (data: unknown, error: unknown) => {
     let reply = data as { code?: string; error?: string; url?: string } | null;
@@ -115,6 +123,10 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
   const begin = async () => {
     if (proposalToken && !proposalContext.proposal) { recordPreCheckoutBlock("proposal_unverified"); setErrorText("La proposition doit être vérifiée avant paiement."); return; }
     if (busy) return;
+    if (pioneerRequested && (!pioneerReady || guarantee || founder || proposalToken || promo.state === 'valid')) {
+      setErrorText(lang === 'en' ? 'The Pioneer offer must be confirmed separately before payment. No different price will be charged without your agreement.' : "L'offre Pionnier doit être confirmée séparément avant le paiement. Aucun autre prix ne sera facturé sans votre accord.");
+      return;
+    }
     const name = company.trim();
     if (name.length < 2) { recordPreCheckoutBlock("company_missing"); setErrorText("Confirmez le nom de votre entreprise."); return; }
     if (founder && !founderConsent) { setErrorText("Confirmez avoir lu les modalités de l'option Fondateur."); return; }
@@ -142,6 +154,7 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           entryActivation: true,
+          ...(pioneerRequested ? { pioneerOffer: 'pioneer_2026' } : {}),
           declaredCompanyName: name,
           ...(proposalToken ? { affiliateProposalToken: proposalToken } : {}),
           ...(!guarantee && !founder && promo.state === "valid" && promo.code ? { entryPromoCode: promo.code } : {}),
@@ -325,6 +338,8 @@ export default function Entry350FastCheckout({ query }: { query: URLSearchParams
         </button>
       )}
       <p className="mt-2 text-xs text-muted-foreground">Connexion requise avant paiement. Clara garde la conversation dans la session en cours.</p>
+      <GoldPanel />
+      {!guarantee && !founder && !proposalToken && <PioneerOffer />}
     </section>
   );
 }

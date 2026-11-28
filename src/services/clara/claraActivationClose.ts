@@ -1,10 +1,15 @@
 import { buildActivation350Links } from "@/lib/activation350Links";
 import { getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { OFFER_350 } from "@/lib/copy/offer350";
+import { PIONEER_COPY } from '@/lib/pricing/pioneer2026';
 
 /** Bounded commercial answers, not a replacement for Clara's general conversation. */
-export function activationCloseAnswer(text: string): string | null {
+export function activationCloseAnswer(text: string, lang: 'fr' | 'en' = 'fr'): string | null {
   const value = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/\b(pionnier|pioneer|renouvellement|renewal)\b/.test(value)) {
+    const copy = PIONEER_COPY[lang];
+    return `${copy.name}. ${copy.price}. ${copy.regular} ${copy.savings} ${copy.limit} ${copy.renewal} ${copy.scope} ${copy.pending}`;
+  }
   if (/\b(plus tard|pas maintenant|pas interesse|non merci|refuse)\b/.test(value))
     return "D’accord. Votre contexte est conservé dans cette conversation; vous pourrez reprendre ici quand vous le souhaiterez. Aucun rappel n’est programmé.";
   if (/\b(rbq|licence)\b/.test(value))
