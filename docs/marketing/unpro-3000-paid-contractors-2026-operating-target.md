@@ -4,6 +4,13 @@
 **Périmètre :** 3 univers UNPRO (rénovation/construction, entretien/services aux immeubles, immobilier et professionnels), Québec en priorité, élargissement hors Laval à l'échelle provinciale. Réutiliser l'application, Clara, le CRM, l'activation 350 $ et les contrôles actuels. Aucune nouvelle plateforme ni réinitialisation de file. 
 **Date butoir :** 31 décembre 2026 (66 jours calendaires du 27 octobre au 31 décembre inclus).
 
+## Directive opérationnelle prioritaire — 27 novembre 2026
+
+- **Top 5 dynamique et ventes = agent non expéditeur.** Il ne doit jamais envoyer ni faire envoyer de courriel commercial, SMS, message social ou autre prospection, réserver une capacité de claim ou déclencher un worker d'envoi. Cette règle remplace ses anciennes autorisations et toute ambiguïté historique de ce document.
+- Seul l'agent « UNPRO — Envoi contrôlé et suivi » est responsable des envois commerciaux dans le périmètre explicitement autorisé. Le Top 5 prépare et documente au plus 25 entreprises distinctes, transmet les candidats et preuves au registre existant, sans déclencher d'envoi. Si le registre est inaccessible, conserver les preuves sans envoyer ni créer une file concurrente.
+- Les preuves CASL individuelles, suppressions/STOP, dédoublonnage, consentement, identité et plafond partagé de 25 entreprises/jour restent impératifs. Aucune auto-signature, réactivation de la file historique, ouverture de flags ni nouvelle dépense.
+- Vente, paiement et activation sont distincts : ne pas suspendre un checkout LIVE légitime ni la prospection admissible de l'agent expéditeur du seul fait d'un E2E incomplet. Un paiement admissible confirmé sans droit effectif nécessite un rapprochement et une alerte d'activation manuelle, pas une activation comptabilisée. Préserver les protections et les autorisations de production. Ce document ne déclenche et n'autorise aucun envoi.
+
 ## 1. Contrat métrique
 - KPI nord : **3 000 entreprises UNIQUES ayant réellement payé l'activation au prix de base de 350 $ CA hors taxes**, reliées à la bonne entité légale/compte, avec preuve Stripe LIVE de paiement réglé, webhook signé et droits de profil/12 mois matérialisés. Dédupliquer les tentatives/réémissions et exclure remboursements, litiges, transactions de 1 $, promo 1 $, données TEST, étiquettes CRM « paid », simples checkouts commencés et revenus d'abonnement antérieurs.
 - **Recettes d'activations théoriques : 1 050 000 $ CA hors taxes**, sous hypothèse des 3 000 activations à 350 $ réellement perçus sans réduction ni remboursement. Pas un revenu enregistré aujourd'hui ni un EBITDA.
