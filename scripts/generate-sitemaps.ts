@@ -76,6 +76,7 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/insonorisation", changefreq: "monthly", priority: "0.7" },
   { path: "/en/soundproofing", changefreq: "monthly", priority: "0.6" },
   { path: "/plus-de-contrats", changefreq: "monthly", priority: "0.7" },
+  { path: "/visibilite-ia-entrepreneurs", changefreq: "monthly", priority: "0.8" },
   { path: "/carrieres/representants-construction", changefreq: "monthly", priority: "0.6" },
   { path: "/en/careers/construction-sales-representatives", changefreq: "monthly", priority: "0.5" },
   { path: "/commission", changefreq: "monthly", priority: "0.6" },
@@ -348,7 +349,7 @@ async function buildLlmsFull() {
   out.push(`> Généré: ${new Date().toISOString()} | Base: ${BASE_URL}`);
   out.push("");
   out.push("## Pages piliers");
-  for (const r of PILLAR_ROUTES.slice(0, 12)) {
+  for (const r of PILLAR_ROUTES) {
     out.push(`- ${BASE_URL}${r.path}`);
   }
   out.push("");
